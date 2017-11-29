@@ -34,7 +34,7 @@ CALDERA consists of:
   * Agent - Client on endpoint systems used for communication
   * RAT - Remote access tool used during operations to emulate adversary behavior
 
-![CALDERA Architecture](https://user-images.githubusercontent.com/379437/33387234-bdb09534-d4fa-11e7-8e23-bed607db6caf.png)
+![CALDERA Architecture](https://user-images.githubusercontent.com/379437/33388868-28491af2-d4ff-11e7-8ba4-b1c475b0c3ca.png)
 
 ### Planning System
 
@@ -44,7 +44,7 @@ represented by pre-configured ATT&CK-based techniques that have been logically e
 with pre and post conditions allowing CALDERA to chain together sequences of actions to reach an 
 objective state.
 
-![CALDERA Planner Algorithm](https://user-images.githubusercontent.com/379437/33387252-c7d2fb42-d4fa-11e7-9551-01a6094c5dfb.png)
+![CALDERA Planner Algorithm](https://user-images.githubusercontent.com/379437/33388878-30673ebc-d4ff-11e7-84d1-79fdb719d467.png)
 
 The system follows this algorithm:
 1. Update the world state
