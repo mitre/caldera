@@ -1,0 +1,33 @@
+<div id="attack_matrix" data-bind="with: attack_matrix" class="page">
+
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel panel-heading"><h3>ATT&CK Matrix Coverage</h3>
+            </div>
+            <div class="form-group">
+            <div class="btn-group" role="group">
+                <button id="btn_a" class="btn btn-default btn-md active" data-bind="click:set_all" type="button">All
+                </button>
+                <button id="btn_w" class="btn btn-info btn-md" data-bind="click:set_windows" type="button">Windows</button>
+                <button id="btn_m" class="btn btn-warning btn-md" data-bind="click:set_mac" type="button">Mac</button>
+                <button id="btn_l" class="btn btn-danger btn-md" data-bind="click:set_linux" type="button">Linux
+                </button>
+            </div>
+            </div>
+    <table class="table table-bordered attack-matrix" id="active_table">
+        <thead>
+            <tr data-bind="foreach: matrixCols">
+                <th data-bind="text: name"></th>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach: matrix">
+            <tr data-bind="foreach: $data">
+                <td data-bind="attr: {class: $data.class}">
+                    <a style="text-decoration: none; color: inherit;" data-bind="text: name, attr: {href: '#steps?techniques=' + $data._id}"></a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+        </div>
+    </div>
+</div>

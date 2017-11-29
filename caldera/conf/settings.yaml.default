@@ -1,0 +1,15 @@
+crypto:
+  cert: conf/cert.pem
+  key: conf/key.pem
+server:
+  host: 0.0.0.0
+  https: true
+  port: 8888
+users:
+- name: admin
+  password: caldera
+proxy:
+  default:
+    cert: ''
+    http: ''
+    https: ''

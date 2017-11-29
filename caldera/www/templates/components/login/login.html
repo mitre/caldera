@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--
+For limited external release. For release authorization contact Blake Strom: bstrom@mitre.org
+NOTICE
+
+This software was produced for the U. S. Government under Basic Contract No. W15P7T-13-C-A802,
+and is subject to the Rights in Noncommercial Computer Software and Noncommercial Computer
+Software Documentation Clause 252.227-7014 (FEB 2012)
+
+(C) 2016 The MITRE Corporation. All Rights Reserved.
+-->
+<html>
+<head>
+    <title>{% if title %}{{ title }} - {% endif %}CALDERA</title>
+    {% for css in ["bootstrap.min.css", "bootstrap-theme.min.css", "bootstrap-multiselect.css"] %}
+    <link href="/css/{{ css }}" rel="stylesheet" type="text/css">
+    {% endfor %}
+
+    <style>
+        {% include "style.css" %}
+    </style>
+    <link rel="icon" type="image/png" href="image/favicon.png"/>
+    {% block head %}
+    {% endblock %}
+</head>
+
+<body style="padding-top:70px;">
+{% block body %}
+{% endblock %}
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand"><span style="color: red;">•</span> CALDERA</a>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-offset-4 col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="modal-title" id="exampleModalLabel">Please Login</h4>
+                </div>
+                <div class="panel-body" data-bind="with: login">
+                    <form class="form-horizontal panel-body" data-bind="submit: login">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+                                <input name="username" placeholder="Username" type="text" class="form-control"
+                                       data-bind="value: username">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
+                                <input name="password" placeholder="Password" type="password" class="form-control"
+                                       data-bind="value: password">
+                            </div>
+                            <div data-bind="text: failure" style="color: red"></div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0">
+                            <button class="btn btn-block btn-primary" type="submit">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- body load js -->
+{% for js in ["jquery-2.0.3.min.js", "bootstrap.min.js", "knockout-3.4.2.js", "d3.v3.min.js", "signals.min.js",
+"crossroads.min.js", "hasher.min.js", "lodash.min.js", "bootstrap-multiselect.js", "bson.js"] %}
+<script type="text/javascript" src="/js/{{ js }}"></script>
+{% endfor %}
+<script type="text/javascript">
+    var app = {bindings: {}};
+    {% include "components/login/login.js" %}
+    ko.applyBindings(app.bindings);
+</script>
+</body>
+</html>

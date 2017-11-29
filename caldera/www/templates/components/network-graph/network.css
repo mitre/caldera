@@ -1,0 +1,19 @@
+.active circle{
+	fill: #d9534f;
+}
+ 
+.involved circle { 
+	fill: #f0ad4e;
+}
+
+.down circle {
+	fill: lightgray;
+}
+
+.visible circle {
+	fill: #337ab7;
+}
+
+.node text {
+	fill: #333;
+}

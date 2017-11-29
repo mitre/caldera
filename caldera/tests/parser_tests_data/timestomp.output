@@ -1,0 +1,50 @@
+TimestampModified :	True
+TimestompedWith :	C:\Users\bob\Documents\Empty\stuff.txt
+OldCreationTime :	06/21/2017 11:06:12
+OldAccessTime :	06/21/2017 11:06:12
+OldWriteTime :	04/27/2017 20:34:21
++
+
+
+PSPath            : Microsoft.PowerShell.Core\FileSystem::C:\Users\bob\Documents\Empty\Timestompme.txt
+PSParentPath      : Microsoft.PowerShell.Core\FileSystem::C:\Users\bob\Documents\Empty
+PSChildName       : Timestompme.txt
+PSDrive           : C
+PSProvider        : Microsoft.PowerShell.Core\FileSystem
+PSIsContainer     : False
+Mode              : -a----
+VersionInfo       : File:             C:\Users\bob\Documents\Empty\Timestompme.txt
+                    InternalName:     
+                    OriginalFilename: 
+                    FileVersion:      
+                    FileDescription:  
+                    Product:          
+                    ProductVersion:   
+                    Debug:            False
+                    Patched:          False
+                    PreRelease:       False
+                    PrivateBuild:     False
+                    SpecialBuild:     False
+                    Language:         
+                    
+BaseName          : Timestompme
+Target            : {}
+LinkType          : 
+Name              : Timestompme.txt
+Length            : 0
+DirectoryName     : C:\Users\bob\Documents\Empty
+Directory         : C:\Users\bob\Documents\Empty
+IsReadOnly        : False
+Exists            : True
+FullName          : C:\Users\bob\Documents\Empty\Timestompme.txt
+Extension         : .txt
+CreationTime      : 6/23/2017 10:11:53 AM
+CreationTimeUtc   : 6/23/2017 2:11:53 PM
+LastAccessTime    : 6/23/2017 10:11:53 AM
+LastAccessTimeUtc : 6/23/2017 2:11:53 PM
+LastWriteTime     : 5/31/2017 10:06:59 AM
+LastWriteTimeUtc  : 5/31/2017 2:06:59 PM
+Attributes        : Archive
+
+
+

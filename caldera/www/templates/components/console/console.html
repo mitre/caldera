@@ -1,0 +1,10 @@
+{% macro console(console, id=None, class=None) -%}
+<div {% if id %} id="{{ id }}"{% endif %} class="console {{ class }}" data-bind="foreach: {{ console }}.stdout">
+    <div class="row" >
+        <span data-bind="text: hostname" class="host mono"></span>
+        <span data-bind="text: command" class="command mono"></span>
+        <span data-bind="text: error" class="error mono"></span>
+        <span data-bind="text: text" class="text mono"></span>
+    </div>
+</div>
+{%- endmacro %}

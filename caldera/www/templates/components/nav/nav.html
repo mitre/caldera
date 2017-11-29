@@ -1,0 +1,118 @@
+<!-- Navigation -->
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#main"><span data-bind="style: { color: nav.color }">&#8226;</span> CALDERA</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="navbar-collapse-1" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-fire" aria-hidden="true"></span> Threat<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="#attack_matrix">
+                            <span class="glyphicon glyphicon-th" aria-hidden="true"></span> ATT&CK Matrix</a>
+                        </li>
+                        <li><a href="#steps">
+                            <span class="glyphicon glyphicon-magnet" aria-hidden="true"></span> View Steps</a>
+                        </li>
+                        <li><a href="#adversaries">
+                            <span class="glyphicon glyphicon-globe" aria-hidden="true"></span> View Adversaries</a>
+                        </li>
+                        <li><a href="#add_adversary">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Create Adversary</a>
+                        </li>
+                        <li><a href="#artifactlists">
+                            <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> View Artifact Lists</a>
+                        </li>
+                        <li><a href="#add_fancy_artifactlist">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Create Artifact List</a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="dropdown" data-bind="with: nav">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-road" aria-hidden="true"></span> Networks<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="#networks">
+                            <span class="glyphicon glyphicon-globe" aria-hidden="true"></span> View Network</a>
+                        </li>
+                        <li><a href="#add_network">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                            Create Network</a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-scissors" aria-hidden="true"></span> Operations<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="#operations">
+                            <span class="glyphicon glyphicon-globe" aria-hidden="true"></span> View Operations</a>
+                        </li>
+                        <li><a data-bind="attr: {href: nav.active_op}">
+                            <span class="glyphicon glyphicon-play" aria-hidden="true"></span> Current Operation</a>
+                        </li>
+                        <li><a href="#add_operation">
+                            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Create Operation</a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-screenshot" aria-hidden="true"></span> Debug<span class="caret"></span></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="#command_window">
+                            <span class="glyphicon glyphicon-console" aria-hidden="true"></span>
+                            Send Command</a>
+                        </li>
+                        <li><a href="#rat_command_window">
+                            <span class="glyphicon glyphicon-console" aria-hidden="true"></span>
+                            Send Command to RAT</a>
+                        </li>
+                        <li><a href="#client">
+                            <span class="glyphicon glyphicon-pawn" aria-hidden="true"></span>
+                            Connected RATs</a>
+                        </li>
+                        <li><a href="#agent">
+                            <span class="glyphicon glyphicon-knight" aria-hidden="true"></span>
+                            Connected Agents</a>
+                        </li>
+                        <li><a href="#incomplete_jobs">
+                            <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+                            Incomplete Jobs</a>
+                        </li>
+                        <li> <a data-bind="click: () => $('#about').modal('show')">
+                            <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> About CALDERA
+                            </a>
+                        </li>
+                        {{additional_nav_html}}
+                    </ul>
+                </li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#editor" data-target="#login" data-bind="visible: login_modal.loggedInUserType() === 'Admin'"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Script Editor</a></li>
+                <li><a href="#settings" data-target="#login" data-bind="visible: login_modal.loggedInUserType() === 'Admin'"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span> Settings</a></li>
+                <li><a data-bind="visible: (! login_modal.loggedin())" data-toggle="modal" data-target="#login"><span class="glyphicon glyphicon-log-in" aria-hidden="true"></span> Login</a></li>
+                <li class="dropdown" data-bind="visible: login_modal.loggedin()">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> <span data-bind='text: login_modal.loggedInUserText'></span> <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" data-bind="click: password_modal.show"><span class="glyphicon glyphicon-lock"></span> Change Password</a></li>
+                        <li><a href="#" data-bind="click: login_modal.logout"><span class="glyphicon glyphicon-log-out" aria-hidden="true"></span> Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</nav>

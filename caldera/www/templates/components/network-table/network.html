@@ -1,0 +1,24 @@
+<div id="networks" data-bind="with: networks" class="page">
+	<div class="row">
+		<div class="col-md-6 col-md-offset-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title">Networks</h3>
+				</div>
+				<table class="table">
+					<thead>
+						<tr><th></th><th>Name</th><th>Number Hosts</th></tr>
+					</thead>
+					<tbody data-bind="foreach: networks">
+						<tr class="host_row deleteHover" onclick="$('.host_row').removeClass('active'); $(this).addClass('active');">
+							<td><button class="delete" data-bind="click: $parent.remove"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button></td>
+							<td data-bind="text: name, click: x => hasher.setHash('active_network/' + x._id)"></td>
+							<td data-bind="text: hosts.length, click: x => hasher.setHash('active_network/' + x._id)"></td>
+						</tr>
+					</tbody>
+				</table>
+				<a class="btn btn-primary center-block" href="#/add_network"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a>
+			</div>
+		</div>
+	</div>
+</div>

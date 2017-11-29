@@ -1,0 +1,25 @@
+<div id="agent" data-bind="with: agent" class="page">
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h1 class="panel-title">Connected Agents</h1>
+                </div>
+                <div class="panel-body">
+                    Total connected: <span data-bind="text: connections().length"></span>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr><th>IP</th><th>Hostname</th></tr>
+                    </thead>
+                    <tbody data-bind="foreach: connections">
+                        <tr>
+                            <td data-bind="text: ip"></td>
+                            <td data-bind="text: host_fqdn"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

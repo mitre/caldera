@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% if title %}{{ title }} - {% endif %}CALDERA</title>
+    {% for css in ["bootstrap.min.css", "bootstrap-theme.min.css", "bootstrap-multiselect.css"] %}
+        <link href="/css/{{ css }}" rel="stylesheet" type="text/css">
+    {% endfor %}
+
+    <style>
+    {% for css in ["style.css", "components/console/console.css", "components/network-graph/network.css",
+    "components/attack-matrix/attack-matrix.css", "components/step-table/steps.css",
+    "components/artifactlist-fancy/artifactlist.css", "components/operation-view/operation.css"] %}
+        /* {{ css }} */
+        {% include css %}
+    {% endfor %}
+    </style>
+    <link rel="icon" type="image/png" href="image/favicon.png"/>
+    {% block head %}
+    {% endblock %}
+</head>
+
+<body style="padding-top:70px;">
+    {% block body %}
+    {% endblock %}
+
+    {% include "components/nav/nav.html" %}
+
+    {% include "main.html" %}
+
+    <!-- group views together -->
+    <div id="views" class="container-fluid">
+        {% include "components/network-form/network.html" %}
+        {% include "components/network-table/network.html" %}
+        {% include "components/network-view/network.html" %}
+        {% include "components/operation-form/operation.html" %}
+        {% include "components/operation-table/operation.html" %}
+        {% include "components/operation-view/operation.html" %}
+        {% include "components/command-window/command.html" %}
+        {% include "components/active-agents/agent.html" %}
+        {% include "components/active-clients/client.html" %}
+        {% include "components/adversary-form/adversary.html" %}
+        {% include "components/adversary-table/adversary.html" %}
+        {% include "components/adversary-view/adversary.html" %}
+        {% include "components/incomplete-jobs/incomplete-jobs.html" %}
+        {% include "components/settings/settings.html" %}
+        {% include "components/editor/editor.html" %}
+        {% include "components/password/password.html" %}
+        {% include "components/attack-matrix/attack-matrix.html" %}
+        {% include "components/step-config/step-config.html" %}
+        {% include "components/step-table/steps.html" %}
+        {% include "components/step-view/step-view.html" %}
+        {% include "components/rat-command-window/command.html" %}
+        {% include "components/artifactlist-table/artifactlist.html" %}
+        {% include "components/artifactlist-form/artifactlist.html" %}
+        {% include "components/artifactlist-fancy/artifactlist.html" %}
+        {{additional_views}}
+
+    </div>
+
+    {% include "components/about/about.html" %}
+    {% include "components/settings/settings-edit.html" %}
+    {% from "components/console/console.html" import console %}
+    {{ console('globalconsole', 'globalconsole', 'console-global') }}
+
+    <!-- body load js -->
+
+    {% for js in ["jquery-2.0.3.min.js", "bootstrap.min.js", "knockout-3.4.2.js", "d3.v3.min.js", "signals.min.js",
+                  "crossroads.min.js", "hasher.min.js", "lodash.min.js", "bootstrap-multiselect.js", "bson.js",
+                  "jstree.min.js"] %}
+    <script type="text/javascript" src="/js/{{ js }}"></script>
+    {% endfor %}
+    <script src="/js/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <!-- include js from components -->
+    <script type="text/javascript">
+        var app = {bindings: {}};
+        {% include "main.js" %}
+        {% include "broker.js" %}
+        {% include "routing.js" %}
+
+        {% include "components/console/console.js" %}
+
+        {% include "components/nav/nav.js" %}
+        {% include "components/network-graph/network.js" %}
+        {% include "components/network-form/network.js" %}
+        {% include "components/network-table/network.js" %}
+        {% include "components/network-view/network.js" %}
+        {% include "components/operation-form/operation.js" %}
+        {% include "components/operation-table/operation.js" %}
+        {% include "components/operation-view/operation.js" %}
+        {% include "components/command-window/command.js" %}
+        {% include "components/active-agents/agent.js" %}
+        {% include "components/active-clients/client.js" %}
+        {% include "components/adversary-form/adversary.js" %}
+        {% include "components/adversary-table/adversary.js" %}
+        {% include "components/adversary-view/adversary.js" %}
+        {% include "components/incomplete-jobs/incomplete-jobs.js" %}
+        {% include "components/settings/settings.js" %}
+        {% include "components/editor/editor.js" %}
+        {% include "components/password/password.js" %}
+        {% include "components/login-modal/login.js" %}
+        {% include "components/attack-matrix/attack-matrix.js" %}
+        {% include "components/step-config/step-config.js" %}
+        {% include "components/step-table/steps.js" %}
+        {% include "components/step-view/step-view.js" %}
+        {% include "components/rat-command-window/command.js" %}
+        {% include "components/artifactlist-table/artifactlist.js" %}
+        {% include "components/artifactlist-form/artifactlist.js" %}
+        {% include "components/artifactlist-fancy/artifactlist.js" %}
+        {{additional_js}}
+
+        //Setup routing
+        crossroads.addRoute('{*}', function (x) {console.error('Unhandled route: ' + x);});
+        hasher.changed.add(handleChanges); //add hash change listener
+        hasher.initialized.add(handleChanges); //add initialized listener (to grab initial value in case it is already set)
+        hasher.init(); //initialize hasher (start listening for history changes)
+        ko.applyBindings(app.bindings);
+    </script>
+</body>
+</html>

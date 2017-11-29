@@ -1,0 +1,54 @@
+<div id="rat_command_window" data-bind="with: rat_command_window" class="page">
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h1 class="panel-title">Execute a RAT Command</h1>
+          </div>
+
+          <form class="form-horizontal panel-body" data-bind="submit: submit">
+            <div class="form-group">
+              <label class="control-label col-sm-3">RAT</label>
+              <div class="col-sm-9">
+                <select class="form-control"
+                  data-bind="options: rats,
+                  optionsText: 'display_name',
+                  value: rat">
+                </select>
+              </div>
+            </div>
+
+            <!-- <h3>Console for <span data-bind="text: host.hostname"></span></h3> -->
+            <div class="command-console" data-bind="foreach: commands">  
+              <pre data-bind="text: $data"></pre>
+            </div>
+
+            <div class="form-group">
+              <label class="control-label col-sm-3">Action Type</label>
+              <div class="col-sm-9">
+                <select class="form-control"
+                  data-bind="options: opcodes,
+                  value: opcode">
+                </select>
+              </div>
+            </div>
+
+            <div data-bind="foreach: opcodeParams">
+              <div class="form-group">
+                <label class="control-label col-sm-3" data-bind="text: $data"></label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" data-bind="value: $parent.params()[$data]">
+                </div>
+              </div>
+            </div>
+
+
+            <div class="form-group">
+              <label class="control-label col-sm-3">
+              <button type="submit" class="btn btn-default">Submit</button> </label>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+</div>

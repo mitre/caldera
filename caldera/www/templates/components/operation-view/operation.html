@@ -1,0 +1,186 @@
+{% from "components/console/console.html" import console %}
+<style>
+
+</style>
+<div id="active_operation" data-bind="with: active_operation" class="page">
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h1 class="panel-title">Operation Overview</h1>
+        </div>
+
+          <ul class="list-group">
+            <li class="list-group-item">
+              <div class="row">
+                <div class="col-md-4">
+                  <label>Status: <span class="label"
+                                       data-bind="text: status, css: {'label-default': status() === 'complete',
+                                          'label-warning': status() === 'pending',
+                                          'label-success': status() !== 'complete' && status() !== 'start'}"></span>
+                  </label>
+                </div>
+                <div class="col-md-4" data-bind="visible: showPhasePanel">
+                  <label>Phase: <span class="label"
+                                      data-bind="text: phase, css: {'label-default': phase() === 'N/A',
+                                          'label-warning': phase() === 'bootstrap',
+                                          'label-success': phase() === 'operation' || phase() === 'cleanup'}"></span></label>
+                </div>
+                <div class="col-md-4" data-bind="visible: showActionPanel">
+                  <label>Action: <span class="label"
+                                       data-bind="text: action, css: {'label-default': action() === 'N/A',
+                                          'label-warning': action() === 'planning',
+                                          'label-success': action() === 'execution'}"></span></label>
+                </div>
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="row">
+                <div class="col-sm-6">
+                  <div class="">
+                    <label>Operation:</label> <span data-bind="text: active_name"></span>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="">
+                    <label>Adversary:</label> <span data-bind="text: active_adversary"></span>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <div class="">
+                    <label>Start Time:</label> <span data-bind="text: start_time"></span>
+                  </div>
+                </div>
+                <div class="col-sm-6">
+                  <label>Starting Host:</label> <span data-bind="text: start_host"></span>
+                </div>
+                <div class="col-sm-6">
+                  <label>Compromised Hosts</label> <span class="badge"
+                                                         data-bind="text: compromised_hosts"></span>
+                </div>
+                <div class="col-sm-6">
+                  <label>Compromised Creds</label> <span class="badge"
+                                                         data-bind="text: compromised_creds"></span>
+                </div>
+              </div>
+            </li>
+          </ul>
+      </div>
+      <div id="graphWindow">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h1 class="panel-title">Operation Graph</h1>
+          </div>
+          <div class="panel-body">
+            <div id="operationGraph"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="panel panel-default">
+        <div class="panel-heading"><h3 class="panel-title">Operation Details</h3></div>
+        <div class="panel-body">
+          <div data-bind="visible: showCleanupPanel" style="margin-bottom: 10px">
+            <label class="panel-title">Clean-Up Operation?</label>
+            <div class="input-group">
+              <div class="btn-group" role="group">
+                <button data-bind="click: function() {decide_cleanup(true)}" type="button"
+                        class="btn btn-primary">Cleanup the operation
+                </button>
+                <button data-bind="click: function() {decide_cleanup(false)}" type="button"
+                        class="btn btn-warning">Do NOT cleanup the operation
+                </button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom: 10px" data-bind="visible: showCancelButton">
+            <button type="button" class="btn btn-danger" data-bind="click: cancel"><span
+                    class="glyphicon glyphicon-stop" aria-hidden="true"></span> Cancel Operation
+            </button>
+          </div>
+          <ul class="nav nav-tabs">
+            <li id="active_operation_tab_steps" class="active" role="presentation"
+                data-bind="click: () => active_tab('steps')"><a href="#">Steps</a></li>
+            <li id="active_operation_tab_jobs" role="presentation"
+                data-bind="click: () => active_tab('jobs')"><a href="#">Jobs</a></li>
+            <li id="active_operation_tab_artifacts" role="presentation"
+                data-bind="click: () => active_tab('artifacts')"><a href="#">Artifacts</a></li>
+            <li id="active_operation_tab_cleanup" role="presentation"
+                data-bind="click: () => active_tab('cleanup')"><a href="#">Cleanup Log</a></li>
+            <li id="active_operation_tab_bsf" role="presentation"
+                data-bind="click: () => active_tab('bsf')"><a href="#">BSF</a></li>
+          </ul>
+          <div id="operation-steps"
+               class="panel-group active-operation-reveal-steps active-tab operation-detail" role="tablist"
+               style="margin-bottom: 0" aria-multiselectable="true" data-bind="foreach: steps">
+            <div class="panel" data-bind="css: {'panel-success': status === 'success',
+                              'panel-danger': status === 'failed',
+                              'panel-info': status === 'running'}">
+              <div class="panel-heading" role="tab" data-toggle="collapse" data-parent="#operation-steps"
+                   style="cursor: pointer;"
+                   data-bind="attr: {id: 'heading' + $index(), 'data-target': '#collapse' + $index()}">
+                <h4 class="panel-title">
+                  <span class="badge" data-bind="text: jobs.length"></span> <span class="collapsed"
+                                                                                  style="font-size: 10pt"
+                                                                                  data-bind="text: description"></span>
+                </h4>
+              </div>
+              <div class="panel-collapse collapse" role="tabpanel"
+                   data-bind="attr: {id: 'collapse' + $index(), 'aria-labelledby': 'heading' + $index()}">
+                <div class="panel-body">
+                  <label>Step</label>
+                  <p>
+                    <a data-bind="text: step.display_name, attr: {href: '#step_view/' + step._id}"></a>
+                  </p>
+                  <label>ATT&CK Tags</label>
+                  <div data-bind="foreach: step.step_bindings" style="margin-bottom: 15px">
+                    <a style="text-decoration: none;" data-bind="attr: {href: $data.technique.url}">
+                      <span class="label label-default"
+                            data-bind="text: $data.technique.name + ' (' + $data.tactic.name + ')'"></span>
+                    </a>
+                  </div>
+                  <label>Commands</label>
+                  <div data-bind="foreach: jobs">
+                    <pre data-bind="text: $data"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <pre id="operation-console" style="display: none; margin-bottom: 0"
+               class="operation-detail active-operation-reveal-jobs" data-bind="text: console_output"></pre>
+          <div id="operation-artifacts" style="display: none; margin-bottom: 0"
+               class="panel-group active-operation-reveal-artifacts">
+            <label style="margin-top: 1em">Files</label>
+            <ul data-bind="foreach: known_files">
+              <li data-bind="text: $data.path + ' on ' + $data.host.fqdn"></li>
+            </ul>
+            <label style="margin-top: 1em">Processes</label>
+            <ul data-bind="foreach: known_rat_processes">
+              <li data-bind="text: 'rat pid: ' + $data.pid + ' on ' + $data.host.fqdn + ' [operating as ' + $data.username + ']'"></li>
+            </ul>
+            <ul data-bind="foreach: known_processes">
+              <li data-bind="text: 'pid: ' + $data.action.result.pid + ' on ' + $data.action.rats.hostname"></li>
+            </ul>
+            <label style="margin-top: 1em">Scheduled Tasks</label>
+            <ul data-bind="foreach: known_schtasks">
+              <li data-bind="text: $data.name + ' on ' + $data.host.fqdn"></li>
+            </ul>
+          </div>
+          <div id="operation-cleanup" style="display: none; margin-bottom: 0"
+               class="panel-group active-operation-reveal-cleanup">
+            <label style="margin-top: 1em">Errors</label>
+            <ul data-bind="foreach: clean_log">
+              <li data-bind="text: $data.host + ' &rarr; ' + $data.error"></li>
+            </ul>
+          </div>
+          <div id="operation-bsf" style="display: none; margin-bottom: 0"
+               class="panel-group active-operation-reveal-bsf">
+            <a class="btn btn-primary" data-bind="attr: {href: bsfDownloadLink}">Download BSF</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

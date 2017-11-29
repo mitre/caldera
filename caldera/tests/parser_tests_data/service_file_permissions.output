@@ -1,0 +1,32 @@
+
+
+ServiceName                     : cagent
+Path                            : {"C:\cagent.exe"}
+ModifiableFile                  : {C:\cagent.exe}
+ModifiableFilePermissions       : ReadAttributes ReadControl Execute/Traverse W
+                                  riteAttributes Delete WriteExtendedAttributes
+                                   WriteData/AddFile AppendData/AddSubdirectory
+                                   ReadExtendedAttributes Synchronize ReadData/
+                                  ListDirectory
+ModifiableFileIdentityReference : NT AUTHORITY\Authenticated Users
+StartName                       : LocalSystem
+AbuseFunction                   : Install-ServiceBinary -Name 'cagent'
+CanRestart                      : False
+
+ServiceName                     : testservice
+Path                            : {C:\Users\bob\My Documents\space here\whateve
+                                  r.exe}
+ModifiableFile                  : {C:\Users\bob\My Documents\space here\whateve
+                                  r.exe}
+ModifiableFilePermissions       : ReadAttributes ReadControl Execute/Traverse D
+                                  eleteChild WriteDAC WriteAttributes Delete Wr
+                                  iteExtendedAttributes WriteData/AddFile Appen
+                                  dData/AddSubdirectory ReadExtendedAttributes 
+                                  Synchronize WriteOwner ReadData/ListDirectory
+ModifiableFileIdentityReference : FAKEDOMAIN\bob
+StartName                       : LocalSystem
+AbuseFunction                   : Install-ServiceBinary -Name 'testservice'
+CanRestart                      : True
+
+
+

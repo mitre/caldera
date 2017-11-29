@@ -1,0 +1,123 @@
+<div id="settings" data-bind="with: settings" class="page">
+    <div class="row">
+         <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">ATT&CK Integration</h3></div>
+                <div class="panel-body">
+                    <button class="btn btn-default center-block" data-bind="click: loadAttack">Load ATT&CK</button>
+                    <p>Last updated: <span data-bind="text: last_attack_update().toLocaleString()"></span></p>
+                    <p>Contains <span data-bind="text: num_tactics"></span> Tactics, <span
+                            data-bind="text: num_techniques"></span> Techniques and
+                        <span data-bind="text: num_groups"></span> Groups</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">External Tools</h3></div>
+                <div class="panel-body">
+                    <button class="btn btn-default center-block" data-bind="click: loadPsExec">Load PsExec
+                        (PSTools)</button>
+                    <p>PsExec Last Downloaded: <span data-bind="text: last_ps_update().toLocaleString()"></span></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">Planner Configuration</h3></div>
+                <div class="panel-body">
+                    <p>Current Limit on Failed Actions:
+                        <span data-bind="text: recursion_limit"></span></p>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="rec_number">New Limit:</label>
+                        </div>
+                        <div class="col-md-4">
+                        <input id="rec_number" type="number" class="form-control"
+                           data-bind="textInput: new_recursion_depth">
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary" data-bind="click: update_depth">Update</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">User Management</h3></div>
+                <table class="table table-bordered table-condensed fat-table">
+                    <thead><tr><th style="text-align: center"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span></th><th>Username</th><th>Email</th><th>Last Login</th></tr></thead>
+                    <tbody data-bind="foreach: users">
+                        <tr>
+                            <td align="center">
+                                <button type="button" class="btn btn-sm btn-danger" data-bind="click: $parent.deleteUser"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></button>
+                                    <ul class="dropdown-menu">
+                                        <li><a data-bind="click: $parent.editUser">Edit</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a data-bind="click: $parent.revokeAdmin, visible: groups.indexOf('admin') !== -1">Demote to User</a></li>
+                                        <li><a data-bind="click: $parent.makeAdmin, visible: groups.indexOf('admin') === -1">Promote to Admin</a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                            <td><span data-bind="text: username"></span> <span class="label label-default" data-bind="visible: groups.indexOf('admin') !== -1">Admin</span></td>
+                            <td data-bind="text: email"></td>
+                            <td data-bind="text: last_login.toLocaleString(options={formatMatcher: 'basic'})"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title">Create New User Account</h3></div>
+                <form class="form-horizontal panel-body" data-bind="submit: newUserSubmit">
+                    <div class="form-group">
+                        <label for='settings1' class="control-label required col-sm-3"><abbr title="required">*</abbr>Username</label>
+                        <div class="col-sm-9">
+                            <input id="settings1" type="text" class="form-control" data-bind="value: username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for='settings2' class="control-label required col-sm-3">Email</label>
+                        <div class="col-sm-9">
+                            <input id="settings2" type="text" class="form-control" data-bind="value: email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="SettingsEditPassword1" class="control-label required col-sm-3">Password</label>
+                        <div class="col-sm-9">
+                            <input id="SettingsEditPassword1" type="password" class="form-control" data-bind="textInput: password1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="SettingsEditPassword2" class="control-label required col-sm-3">Retype Password</label>
+                        <div class="col-sm-9">
+                            <input id="SettingsEditPassword2" type="password" class="form-control" data-bind="textInput: password2">
+                        </div>
+                    </div>
+                    <div class="form-group" data-bind="visible: !passwordOK()">
+                        <div class="col-sm-offset-3">
+                            <span style="color:red" data-bind="text: password_message"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-3 col-sm-9">
+                            <div class="checkbox">
+                                <label><input type="checkbox" data-bind="checked: admin"> Make Admin</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-sm-offset-3 col-sm-9">
+                            <button class="btn btn-default" data-bind="css: {disabled: !passwordOK()}" type="submit">Create Account</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

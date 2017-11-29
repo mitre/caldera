@@ -1,0 +1,10 @@
+
+
+ServiceName   : testservice
+Path          : {C:\Users\bob\My Documents\space here\whatever.exe}
+StartName     : LocalSystem
+AbuseFunction : Invoke-ServiceAbuse -Name 'testservice'
+CanRestart    : True
+
+
+

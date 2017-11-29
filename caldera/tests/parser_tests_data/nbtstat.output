@@ -1,0 +1,12 @@
+
+              Ethernet:
+Node IpAddress: [172.16.1.10] Scope Id: []
+
+                NetBIOS Local Name Table
+
+       Name               Type         Status
+    ---------------------------------------------
+    WIN-HOST01     <00>  UNIQUE      Registered
+    CALDERA        <00>  GROUP       Registered
+    WIN-HOST01     <20>  UNIQUE      Registered
+    

@@ -1,0 +1,70 @@
+<div id="add_adversary" data-bind="with: add_adversary" class="article page">
+    <div class="row">
+        <div class="col-xs-8 col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h1 class="panel-title"><span data-bind="visible: !active_id">Create New</span><span data-bind="visible: active_id">Edit</span> Adversary</h1></div>
+                <form class="form-horizontal panel-body" data-bind="submit: submit">
+                    <div class="form-group">
+                        <label for="name" class="control-label required col-sm-3"><abbr title="required">*</abbr>Name</label>
+                        <div class="col-sm-9">
+                            <input name="name" type="text" id="name" class="form-control" data-bind="value: name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="steps" class="control-label required col-sm-3"><abbr title="required">*</abbr>Steps</label>
+                        <div class="col-sm-9">
+                            <select id="steps" class="form-control"
+                                    data-bind="options: all_steps_drop,
+                                               optionsText: 'coded_name',
+                                               optionsValue: '_id',
+                                               selectedOptions: steps,
+                                               multiselect: {
+                                                    includeSelectAllOption: true
+                                               }"
+                                    multiple="multiple">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="steps" class="control-label required col-sm-3"><abbr title="required">*</abbr>Artifact Lists</label>
+                        <div class="col-sm-9">
+                            <select id="artifactlists" class="form-control"
+                                    data-bind="options: all_artifactlists,
+                                               optionsText: 'name',
+                                               optionsValue: '_id',
+                                               selectedOptions: artifactlists,
+                                               multiselect: {
+                                                    includeSelectAllOption: true
+                                               }"
+                                    multiple="multiple">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exfil_method" class="control-label required col-sm-3"><abbr title="required">*</abbr>Exfil Method</label>
+                        <div class="col-sm-9">
+                            <select id="exfil_method" class="form-control"
+                                    data-bind="options: all_exfil_methods,
+                                               value: exfil_method">
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exfil_address" class="control-label required col-sm-3"><abbr title="required">*</abbr>
+                            <abbr title="x.x.x.x will automatically use caldera's IP at runtime"> ? </abbr>Exfil Address</label>
+                        <div class="col-sm-9">
+                            <input name="exfil address" type="text" id="exfil_address" class="form-control" data-bind="value: exfil_address">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exfil_port" class="control-label required col-sm-3"><abbr title="required">*</abbr>Exfil Port</label>
+                        <div class="col-sm-9">
+                            <input name="exfil port" type="text" id="exfil_port" class="form-control" data-bind="value: exfil_port">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

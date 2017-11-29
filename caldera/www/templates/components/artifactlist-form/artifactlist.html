@@ -1,0 +1,46 @@
+<div id="add_artifactlist" data-bind="with: add_artifactlist" class="article page">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-6 col-md-offset-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h1 class="panel-title">Create New Artifact List</h1></div>
+                    <form class="panel-body" data-bind="submit: submit">
+                        <div class="form-group">
+                            <label for="name" class="control-label required"><abbr title="required">*</abbr>Name</label>
+                            <div class="">
+                                <input type="text" id="name" class="form-control" data-bind="value: name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description" class="control-label required"><abbr title="required">*</abbr>Description</label>
+                            <div class="">
+                                <input type="text" id="description" class="form-control" data-bind="value: description">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="service" class="control-label required"><abbr title="required">*</abbr>Services</label>
+                            <textarea id="service" class="form-control" data-bind="value: services"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="dlls" class="control-label required"><abbr title="required">*</abbr>DLLs</label>
+                            <textarea id="dlls" class="form-control" data-bind="value: dlls"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="file_paths" class="control-label required"><abbr title="required">*</abbr>File Paths</label>
+                            <textarea id="file_paths" class="form-control" data-bind="value: file_paths"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="executables" class="control-label required"><abbr title="required">*</abbr>Executables</label>
+                            <textarea id="executables" class="form-control" data-bind="value: executables"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="schtasks" class="control-label required"><abbr title="required">*</abbr>Schtasks</label>
+                            <textarea id="schtasks" class="form-control" data-bind="value: schtasks"></textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+        </div>  
+    </div>
+</div>

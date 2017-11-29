@@ -1,0 +1,46 @@
+<div class="modal fade" id="settingsEdit" tabindex="-1" role="dialog" aria-labelledby="settingsEditModalLabel">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="exampleModalLabel">Edit User</h4>
+      </div>
+      <div class="modal-body" data-bind="with: settings_modal">
+        <form data-bind="submit: changeUsername" style="margin-bottom: 2em;">
+          <div class="form-group">
+              <label for="settingsEditUsername">Username</label>
+              <input id="settingsEditUsername" type="text" class="form-control" data-bind="value: username">
+          </div>
+          <div class="form-group" style="margin-bottom: 0">
+            <button class="btn btn-block btn-primary" type="submit">Change Username</button>
+          </div>
+        </form>
+        <form data-bind="submit: changePassword" style="margin-bottom: 2em;">
+          <div class="form-group">
+            <label for="SettingsEditPassword1">Password</label>
+            <input id="SettingsEditPassword1" type="password" class="form-control" data-bind="value: password1">
+          </div>
+          <div class="form-group">
+            <label for="SettingsEditPassword2">Retype Password</label>
+            <input id="SettingsEditPassword2" type="password" class="form-control" data-bind="value: password2">
+          </div>
+          <div class="form-group" data-bind="visible: !passwordOK()">
+            <span style="color:red" data-bind="text: password_message"></span>
+          </div>
+          <div class="form-group" style="margin-bottom: 0">
+            <button class="btn btn-block btn-primary" data-bind="css: {disabled: !passwordOK()}" type="submit">Change Password</button>
+            </div>
+        </form>
+        <form data-bind="submit: changeEmail">
+          <div class="form-group">
+              <label for="settingsEditEmail">Email</label>
+              <input id="settingsEditEmail" type="text" class="form-control" data-bind="value: email">
+          </div>
+          <div class="form-group" style="margin-bottom: 0">
+            <button class="btn btn-block btn-primary" type="submit">Change Email</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
