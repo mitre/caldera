@@ -71,7 +71,9 @@ Detailed installation instructions are included in the [Installation](docs/insta
 Project dependencies:
 
 [Crater](https://github.com/mitre/caldera-crater)
+
 [CALDERA agent](https://github.com/mitre/caldera-agent)
+
 [Custom py2exe](https://github.com/mitre/caldera-py2exe)
 
 ## Considerations and Limitations
