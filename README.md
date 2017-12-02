@@ -68,6 +68,12 @@ Requirements are detailed in the [Requirements](docs/requirements.rst) documenta
 
 Detailed installation instructions are included in the [Installation](docs/installation.rst) documentation.
 
+Project dependencies:
+
+[Crater](https://github.com/mitre/caldera-crater)
+[CALDERA agent](https://github.com/mitre/caldera-agent)
+[Custom py2exe](https://github.com/mitre/caldera-py2exe)
+
 ## Considerations and Limitations
 
 The path chaining problems CALDERA's planning system is designed to solve are computationally intensive. 
