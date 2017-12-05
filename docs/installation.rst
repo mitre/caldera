@@ -25,6 +25,12 @@ Windows requires extra installation steps.
 #. *Install Python 3.5.4 or later*
     Python 3.5.4 or later can be acquired from the Operating System's package manager or from https://www.python.org/ .
     The standard installation is straightforward.
+    
+    .. note:: On Linux, the development package for Python is needed. For example (may vary based on distribution and version): 
+    
+        .. code-block:: console
+        
+            apt-get install python3-dev
 
 #. *Upgrade to setuptools 24.0 or later*
     The python package, setuptools, version 24.0 or later must be installed. Setuptools comes with Python 3.5, but some
