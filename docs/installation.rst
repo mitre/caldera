@@ -111,6 +111,7 @@ Windows requires extra installation steps.
 #. *Install CraterMain.exe*
     The `CraterMain.exe` binary needs to be accessible to CALDERA. It should be placed
     in: `caldera/dep/crater/crater/CraterMain.exe` on the computer that the CALDERA server is installed on.
+    Pre-built copies of CraterMain.exe are available `here <https://github.com/mitre/caldera-crater/releases>`_.
 
 #. *Start the CALDERA server*
     The Caldera server can now be started by navigating to the `caldera/caldera` directory and running
@@ -140,7 +141,8 @@ CALDERA Agent Installation
 
 The CALDERA Agent or cagent, is installed on every computer participating in the Adversary Emulation. It should be
 accessible over the network to the CALDERA server. Once configured, each cagent will register with the CALDERA server
-making its computer available as an option in an operation.
+making its computer available as an option in an operation. Pre-built cagent binaries are available 
+`here <https://github.com/mitre/caldera-agent/releases>`_.
 
 Operating System Support
 ------------------------
