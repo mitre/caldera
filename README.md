@@ -15,6 +15,8 @@ how the intrinsic security dependencies of their network allow an adversary to b
 is useful for identifying new data sources, creating and refining behavioral-based intrusion detection analytics, 
 testing defenses and security configurations, and generating experience for training.
 
+BlackHat Europe 2017 presentation slides: [CALDERA - Automating Adversary Emulation](https://www.blackhat.com/docs/eu-17/materials/eu-17-Miller-CALDERA-Automating-Adversary-Emulation.pdf)
+
 ## How CALDERA is Used
 
 Demo coming soon
