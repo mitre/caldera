@@ -34,6 +34,10 @@ See [Requirements](docs/requirements.rst) for more detailed information.
 
 Detailed installation instructions are included in the [Installation](docs/installation.rst) documentation.
 
+## Documentation
+
+Documentation is available [here](https://caldera.readthedocs.io)
+
 ## Architecture
 
 CALDERA consists of:
