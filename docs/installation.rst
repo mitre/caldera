@@ -166,7 +166,7 @@ Installation Instructions
    .. note:: The Visual C++ Redistributable may fail to install if Windows is not fully updated. If you encounter
        problems try fully updating Windows.
 
-#. Place cagent.exe in the desired installation location (the recommended location is `C:\\Program Files\\cagent\\cagent.exe`)
+#. Download the `latest release of cagent <https://github.com/mitre/caldera-agent/releases>`_. Place cagent.exe in the desired installation location (the recommended location is `C:\\Program Files\\cagent\\cagent.exe`)
 
 #. In the same directory, place the `conf.yml` file which can be downloaded from the CALDERA server by navigating to ::
 
