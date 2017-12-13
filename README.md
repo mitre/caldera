@@ -1,7 +1,7 @@
 # CALDERA
 
 CALDERA is an automated adversary emulation system that performs post-compromise adversarial behavior within
-enterprise networks. It generates plans during operation using a [planning system](#planning-system) and a
+Windows Enterprise networks. It generates plans during operation using a [planning system](#planning-system) and a
 pre-configured adversary model based on the
 [Adversarial Tactics, Techniques & Common Knowledge](https://attack.mitre.org) (ATT&CK™) project. 
 These features allow CALDERA to dynamically operate over a set of systems using variable behavior,
@@ -17,9 +17,22 @@ testing defenses and security configurations, and generating experience for trai
 
 BlackHat Europe 2017 presentation slides: [CALDERA - Automating Adversary Emulation](https://www.blackhat.com/docs/eu-17/materials/eu-17-Miller-CALDERA-Automating-Adversary-Emulation.pdf)
 
-## How CALDERA is Used
+## Demo
 
-Demo coming soon
+Coming soon
+
+## Requirements
+
+CALDERA only supports Windows Enterprise networks that are configured as a
+[Windows Domain](https://en.wikipedia.org/wiki/Windows_domain). This is because the techniques and 
+tactics currently built into CALDERA are unique to Windows domains. Despite this, the CALDERA server can
+be installed on either Linux or Windows. 
+
+See [Requirements](docs/requirements.rst) for more detailed information.
+
+## Installation 
+
+Detailed installation instructions are included in the [Installation](docs/installation.rst) documentation.
 
 ## Architecture
 
@@ -61,22 +74,6 @@ The system follows this algorithm:
 New techniques can be added to CALDERA without having to recompute new decision models because of how techniques are
 logically defined. It is encouraged to develop new techniques and variations of techniques to better represent the 
 variations in how adversaries can behave and contribute them back to the project.
-
-## Requirements
-
-Requirements are detailed in the [Requirements](docs/requirements.rst) documentation.
-
-## Installation 
-
-Detailed installation instructions are included in the [Installation](docs/installation.rst) documentation.
-
-Project dependencies:
-
-[Crater](https://github.com/mitre/caldera-crater)
-
-[CALDERA agent](https://github.com/mitre/caldera-agent)
-
-[Custom py2exe](https://github.com/mitre/caldera-py2exe)
 
 ## Considerations and Limitations
 
