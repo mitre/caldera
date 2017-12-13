@@ -72,6 +72,9 @@ Considerations for Windows 8 and Above
 Windows 8 and above contain some differences from Windows 7. On those systems, several commands must be run
 on each computer taking part in the operation to make configuration changes that reflect enterprise networks.
 
+.. warning:: The below firewall and registry changes are intended to make a test network appear more like a real network.  
+     They should not be executed on a real network because they will weaken the security of that network
+
 #. Enable Firewall Rules
     Several Firewall rules must be enabled to allow CALDERA techniques to operate correctly. The following commands
     modify the Windows Firewall to allow this traffic
@@ -84,7 +87,7 @@ on each computer taking part in the operation to make configuration changes that
 
         powershell -command Enable-NetFirewallRule -DisplayName "'Remote Scheduled Tasks Management (RPC)'"
 
-#. WDigest caching must be enabled for mimikatz to detect credentials correctly.
+#. WDigest caching must be enabled for mimikatz to detect plaintext credentials.
 
     .. code-block:: console
 
