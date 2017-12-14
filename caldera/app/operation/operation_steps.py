@@ -449,6 +449,9 @@ class Timestomp(Step):
                                                      PSFunction('Perform-Timestomp', PSArg('FileLocation', file.path),
                                                                 PSArg('Verbose')), parsers.timestomp.timestomp)
 
+        # Don't parse if type 0 failure
+        if results == {}:
+            return False
         # Unpack parser...
         if results["TimestampModified"] == "True":
             timestamp_modified = True

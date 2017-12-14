@@ -33,7 +33,10 @@ class PSArg(object):
         if argval and escape:
             argval = escape(argval)
 
-        self.text = "-{} {}".format(argname, argval)
+        if argval is not None:
+            self.text = "-{} {}".format(argname, argval)
+        else:
+            self.text = "-{}".format(argname)
 
 
 class PSFunction(object):
