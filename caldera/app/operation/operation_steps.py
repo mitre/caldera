@@ -276,7 +276,7 @@ class PassTheHashSc(Step):
 
     preconditions = [("rat", OPRat({"elevated": True})),
                      ("dest_host", OPHost),
-                     ('rat_file', OPFile({'host': OPVar('dest_host')})),
+                     ('rat_file', OPFile({'host': OPVar('dest_host'), 'use_case': 'rat'})),
                      ("cred", OPCredential({'$in': {'user': OPVar("dest_host.admins")}})),
                      ('user', OPUser(OPVar("cred.user"))),
                      ('domain', OPDomain(OPVar("user.domain")))]
@@ -664,14 +664,14 @@ class Schtasks(Step):
     preconditions = [("rat", OPRat),
                      ('dest_host', OPHost),
                      ('time_delta', OPTimeDelta({"host": OPVar("dest_host")})),
-                     ('rat_file', OPFile({'host': OPVar('dest_host')})),
+                     ('rat_file', OPFile({'host': OPVar('dest_host'), 'use_case': 'rat'})),
                      ("cred", OPCredential({'$in': {'user': OPVar("dest_host.admins")}})),
                      ('user', OPUser(OPVar("cred.user"))),
                      ('domain', OPDomain(OPVar("user.domain")))]
 
     postconditions = [('schtask_g', OPSchtask({"host": OPVar("dest_host")})),
                       ("rat_g", OPRat({"host": OPVar("dest_host"), "elevated": True,
-                                         "executable": OPVar("rat_file.path")}))]
+                                       "executable": OPVar("rat_file.path")}))]
 
     not_equal = [('dest_host', 'rat.host')]
 
@@ -732,7 +732,7 @@ class WMIRemoteProcessCreate(Step):
 
     preconditions = [("rat", OPRat),
                      ('dest_host', OPHost),
-                     ('rat_file', OPFile({'host': OPVar('dest_host')})),
+                     ('rat_file', OPFile({'host': OPVar('dest_host'), 'use_case': 'rat'})),
                      ("cred", OPCredential({'$in': {'user': OPVar("dest_host.admins")}})),
                      ('user', OPUser(OPVar("cred.user"))),
                      ('domain', OPDomain(OPVar("user.domain")))]
@@ -790,7 +790,7 @@ class ScPersist(Step):
 
     preconditions = [("rat", OPRat({"elevated": True})),
                      ("host", OPHost(OPVar("rat.host"))),
-                     ('rat_file', OPFile({'host': OPVar('host')}))]
+                     ('rat_file', OPFile({'host': OPVar('host'), 'use_case': 'rat'}))]
 
     postconditions = [("service_g", OPService({"host": OPVar("host")})),
                       ("persist_g", OPPersistence({"host": OPVar("host"), "elevated": True}))]
@@ -893,7 +893,7 @@ class SchtasksPersist(Step):
 
     preconditions = [("rat", OPRat({"elevated": True})),
                      ("host", OPHost(OPVar("rat.host"))),
-                     ("rat_file", OPFile({"host": OPVar("host")}))]
+                     ("rat_file", OPFile({"host": OPVar("host"), 'use_case': 'rat'}))]
 
     postconditions =[("schtask_g", OPSchtask({"host": OPVar("host"), "schedule_type": "onstart"})),
                      ("persist_g", OPPersistence({"host": OPVar("host"), "elevated": True}))]

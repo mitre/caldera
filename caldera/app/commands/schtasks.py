@@ -45,11 +45,17 @@ def create(task_name: str, exe_path: str, arguments: Union[str, List[str]]=None,
     if arguments is not None and isinstance(arguments, list):
         arguments = ' '.join(["'{}'".format(x) if ' ' in x else x for x in arguments])
 
+    double_quote = False
     if ' ' in exe_path:
-        exe_path = "\"'{}'\"".format(exe_path)
+        exe_path = "'{}'".format(exe_path)
+        double_quote = True
 
-    if len(arguments) > 0:
-        exe_path = "\"{} {}\"".format(exe_path, arguments)
+    if arguments:
+        exe_path = "{} {}".format(exe_path, arguments)
+        double_quote = True
+
+    if double_quote:
+        exe_path = '"{}"'.format(exe_path)
 
     args.append('/TR ' + exe_path)
 
