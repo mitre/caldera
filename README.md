@@ -19,7 +19,7 @@ BlackHat Europe 2017 presentation slides: [CALDERA - Automating Adversary Emulat
 
 ## Demo
 
-Coming soon
+[![CALDERA Demo Video](https://img.youtube.com/vi/xjDrWStR68E/0.jpg)](https://www.youtube.com/watch?v=xjDrWStR68E)
 
 ## Requirements
 
