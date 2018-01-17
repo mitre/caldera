@@ -233,7 +233,7 @@ async def login(request: web.Request):
 
     if token is not None:
         resp = web.Response(text=token)
-        resp.set_cookie('AUTH', token)
+        resp.set_cookie('AUTH', token, secure=True)
     else:
         resp = web.HTTPUnauthorized()
     return resp
