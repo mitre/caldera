@@ -10,6 +10,9 @@ def net(args: List[str]=None) -> CommandLine:
 
     Args:
         args: Additional command line arguments to net.exe
+
+    Returns:
+        The CommandLine
     """
 
     command_line = ['net']
@@ -32,6 +35,7 @@ def use(remote_host: str, remote_share: str, device: str=None, remote_volume: st
         user: (Optional) The remote credential to be used
         password: (Optional) The password to be used
         user_domain: The (Windows) domain of the user account
+
     Returns:
         The CommandLine and a parser
     """
@@ -81,6 +85,9 @@ def use_delete(remote_host: str, remote_share: str) -> Tuple[CommandLine, Callab
     Args:
         remote_host: The remote computer
         remote_share: The remote share
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['use',
             '\\\\{}\\{}'.format(remote_host, remote_share),

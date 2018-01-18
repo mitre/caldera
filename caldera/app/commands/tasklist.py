@@ -1,15 +1,16 @@
 from .command import CommandLine
-from typing import List, Callable, Tuple, NamedTuple
+from typing import List, Callable, Tuple, NamedTuple, Union
 from . import parsers
-import datetime
 
 
 def tasklist(args: List[str]=None) -> CommandLine:
-    """
-    The net command is one of Windows' many swiss army knives.
+    """Commandline wrapper for the windows tasklist command.
 
     Args:
-        args: Additional command line arguments to net.exe
+        args: Additional command line arguments
+
+    Returns:
+        The CommandLine
     """
 
     command_line = ['tasklist']
@@ -19,8 +20,25 @@ def tasklist(args: List[str]=None) -> CommandLine:
     return CommandLine(command_line)
 
 
-def main(verbose: bool=False, services: bool=False, modules: bool=False, remote_host: str=None, user: str=None,
-        password: str = None, user_domain: str=None) -> Tuple[CommandLine, Callable[[str], List[NamedTuple]]]:
+def main(verbose: bool=False, services: bool=False, modules: bool=False, remote_host: Union[None, str]=None,
+         user: Union[None, str]=None, password: Union[None, str]=None, user_domain: Union[None, str]=None) -> \
+        Tuple[CommandLine, Callable[[str], List[NamedTuple]]]:
+    """Create a tasklist command
+
+    Args:
+        verbose: If ``True`` runs tasklist in verbose mode (the "/V" flag)
+        services: If ``True`` lists services in each process (the "/SVC" flag)
+        modules: If ``True`` lists the modules loaded in each process (the "/M" flag)
+        remote_host: The system to list the process of, or ``None`` to list the processes on the local computer
+            (the "/S" flag)
+        user: The user name that the command should execute under (the "/U" flag)
+        password: The password of the user, required if the `user` argument is provided. (the "/P" flag)
+        user_domain: The Windows name for the domain of the user
+
+    Returns:
+        The generated CommandLine and a parser for the output of this command
+
+    """
 
     args = ['/FO CSV']
 

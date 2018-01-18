@@ -4,8 +4,7 @@ from . import parsers
 
 
 def copy(ps_file_path: str, rat_file_path: str, user_domain: str, username: str, password: str, target: str) -> Tuple[CommandLine, Callable[[str], None]]:
-    """
-    Net use will mount a network share on this host
+    """Builds a commandline for PsExec to copy and execute a file remotely
 
     Args:
         ps_file_path: The path to the psexec binary

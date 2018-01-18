@@ -4,11 +4,13 @@ from . import parsers
 
 
 def wmic(args: List[str]=None) -> CommandLine:
-    """
-    Wrapper for the windows tool wmic.exe
+    """Wrapper for the windows tool wmic.exe
 
     Args:
         args: The additional arguments for the command line
+
+    Returns:
+        The CommandLine
     """
     command_line = ["wmic"]
 
@@ -20,8 +22,7 @@ def wmic(args: List[str]=None) -> CommandLine:
 
 def create(exe_path: str, arguments: str=None, remote_host: str=None, user: str=None, user_domain: str=None,
            password: str=None) -> Tuple[CommandLine, Callable[[str], None]]:
-    """
-    Perform a remote process create with wmic
+    """Perform a remote process create with wmic
 
     Args:
         exe_path: The path to the program that will be run
@@ -30,6 +31,9 @@ def create(exe_path: str, arguments: str=None, remote_host: str=None, user: str=
         user: The username of the user whose credentials will be used to authenticate with the remote_host
         user_domain: The (Windows) domain of the user
         password: The password of the user account that will be used to authenticate to the remote_host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     if '-' in remote_host:
         remote_host = '"' + remote_host + '"'

@@ -9,6 +9,9 @@ def nbtstat(args: List[str]=None) -> CommandLine:
 
     Args:
         args: Additional command line arguments to nbtstat.exe
+
+    Returns:
+        The CommandLine
     """
 
     command_line = ['nbtstat']

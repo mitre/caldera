@@ -10,6 +10,9 @@ def sc(args: List[str]=None, remote_host: str=None) -> CommandLine:
     Args:
         args: The additional arguments for the command line
         remote_host: Optional - run on a remote host via RPC.
+
+    Returns:
+        The CommandLine
     """
     command_line = ["sc.exe"]
 
@@ -30,6 +33,9 @@ def create(path: str=None, name: str=None, remote_host: str=None) -> Tuple[Comma
         path: Path to the binary (binPath)
         name: Name of the service (svcName)
         remote_host:  Optional - IP or hostname of remote host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['create', name, 'binPath= ' + path, 'start= auto']
 
@@ -38,11 +44,14 @@ def create(path: str=None, name: str=None, remote_host: str=None) -> Tuple[Comma
 
 def start(name: str=None, remote_host: str=None) -> Tuple[CommandLine, Callable[[str], None]]:
     """
-    Gain privileged execution by starting a service (locally or remotely).
+    Start a service (locally or remotely).
 
     Args:
         name: Name of the service (svcName)
         remote_host:  Optional - IP or hostname of remote host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['start', name]
 
@@ -56,6 +65,9 @@ def stop(name: str=None, remote_host: str=None) -> Tuple[CommandLine, Callable[[
     Args:
          name: Name of the service
          remote_host: Optional - IP or hostname of remote host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['stop', name]
     return sc(args=args, remote_host=remote_host), parsers.sc.stop
@@ -68,6 +80,9 @@ def query(name: str=None, remote_host: str=None) -> Tuple[CommandLine, Callable[
     Args:
         name: Name of the service (svcName)
         remote_host:  Optional - IP or hostname of remote host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['query']
     if name:
@@ -78,11 +93,14 @@ def query(name: str=None, remote_host: str=None) -> Tuple[CommandLine, Callable[
 
 def delete(name: str=None, remote_host: str=None) -> Tuple[CommandLine, Callable[[str], None]]:
     """
-    Remove a service. Used to revert from sc_create.
+    Remove a service. (Remember the service cannot be running)
 
     Args:
         name: Name of the service (svcName)
         remote_host:  Optional - IP or hostname of remote host
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['delete', name]
 

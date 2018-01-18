@@ -9,6 +9,9 @@ def systeminfo(args: List[str]=None) -> CommandLine:
 
     Args:
         args: The additional arguments for the command line
+
+    Returns:
+        The CommandLine
     """
     command_line = ["systeminfo.exe"]
 
@@ -20,12 +23,16 @@ def systeminfo(args: List[str]=None) -> CommandLine:
 
 def csv(remote_host: str=None, user_domain: str=None, user: str=None, password: str=None) \
         -> Tuple[CommandLine, Callable[[str], Dict]]:
-    """
-    Systeminfo.exe with CSV formatted output.
-    :param remote_host: (Optional) The host to get systeminfo about. If blank, the output will be for the local system.
-    :param user: (Optional) Credentials for running systeminfo remotely.
-    :param password: (Optional) Credentials for running systeminfo remotely.
-    :return:
+    """Systeminfo.exe with CSV formatted output.
+
+
+    Args:
+        remote_host: (Optional) The host to get systeminfo about. If blank, the output will be for the local system.
+        user: (Optional) Credentials for running systeminfo remotely.
+        password: (Optional) Credentials for running systeminfo remotely.
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['/fo csv']
 

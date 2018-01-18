@@ -27,8 +27,8 @@ def shutdown(reboot: bool, delay: int, force: bool) -> Tuple[CommandLine, Callab
         delay: how long the computer should wait until starting to shutdown
         force: boolean if the computer should force close all open programs or prompt user for input
 
-    Return:
-        The CommandLine (no parser because the box should be rebooting)
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['shutdown', '/t', str(delay)]
     if reboot:
@@ -47,6 +47,9 @@ def move(src_file_path: str, dst_file_path: str, suppress_overwrite: bool) -> Tu
          src_file_path: path of current file
          dst_file_path: path where the new file will be
          suppress_overwrite: bool to overwrite a file if it already exists
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['move']
     if suppress_overwrite:
@@ -61,6 +64,9 @@ def delete(path: str) -> Tuple[CommandLine, Callable[[str], None]]:
 
     Args:
         path: the path of the file to be deleted
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ['cmd /c del', "\"" + path + "\""]
 
@@ -77,6 +83,9 @@ def dir_list(search: Union[str, list], b: bool, s: bool, a: str) -> Tuple[Comman
         b: bool on if we should include the /b flag in the query (bare info, just filename)
         s: bool on if we should include the /s flag in the query (recursive)
         a: potential arguments to include with the /a flag if a is not None
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     args = ["cmd /c dir"]
     if isinstance(search, str):
@@ -103,6 +112,9 @@ def powershell(command: str) -> Tuple[CommandLine, Callable[[str], None]]:
 
     Args:
         command: the PowerShell command to run. Remmeber that you can separate multiple PowerShell commands with ;
+
+    Returns:
+        The CommandLine and a parser for the output of the command
     """
     ps_command = "powershell -ExecutionPolicy Bypass -WindowStyle Minimized -Command "+command
 

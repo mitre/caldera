@@ -30,13 +30,13 @@ CALDERA User Documentation
    limitations
    configuration
    security
+   add_technique
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer Information
 
    techniques
-   add_technique
    legal
    developer
    build
