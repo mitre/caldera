@@ -86,8 +86,7 @@ def create(task_name: str, exe_path: str, arguments: Union[str, List[str]]=None,
     args.append('/TR ' + exe_path)
 
     if start_time is not None:
-        print(start_time)
-        print(datetime_mod.datetime.now())
+        start_time = start_time + datetime_mod.timedelta(days=1)
         args.append('/ST ' + start_time.strftime('%H:%M'))
         args.append('/SD ' + start_time.strftime('%m/%d/%Y'))
 
