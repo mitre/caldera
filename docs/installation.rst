@@ -19,7 +19,7 @@ CALDERA Server Installation
 ===========================
 
 The CALDERA server is installed on a single central server. It should be accessible over the network to all computers
-that are taking part in the emulated adversary operation. Both Windows and Linux are supported however installation on
+that are taking part in the emulated adversary operation. Both Windows and Linux are supported, however installation on
 Windows requires extra installation steps. 
 
 Several options exist for installing the server.
@@ -27,13 +27,13 @@ Several options exist for installing the server.
 Option 1: Install with Docker Compose
 -------------------------------------
 
-The easiest way to install CALDERA is with Docker Compose. After installing Docker and Docker Compose. From the top-level directory simply run the following:
+The easiest way to install CALDERA is with Docker Compose. After installing Docker and Docker Compose, from the top-level directory simply run the following:
 
     .. code-block:: console
 
         docker-compose up
 
-This will start the Caldera server and an instance of MongoDB. Follow the last instructions above to login to the Caldera server and change the Administrator password.
+This will start the Caldera server and an instance of MongoDB. Follow the `Post-install steps`_ to login to the Caldera server and change the Administrator password.
 
 For advanced options, customize the `docker-compose.yml` file. If you are behind a proxy, uncomment three lines in the `build` section and edit the lines to include the correct information for your proxy. If you need to specify a different version of Crater (for example, if you need the Windows 7 version), you can specify it with another item under `args`: `"crater=https://github.com/mitre/caldera-crater/releases/download/v0.1.0/CraterMain7.exe"`. Other configuration options can be set in the `command` section under `server`.
 
@@ -72,7 +72,7 @@ If you need to change any configuration parameters, for example to use a differe
 
         docker run --net=host caldera --database.port 27020
 
-Finally, follow the last instructions above to login to the Caldera server and change the Administrator password.
+After installation, follow the `Post-install steps`_ to login to the Caldera server and change the Administrator password.
 
 Option 3: Installing Without Docker
 -----------------------------------
@@ -183,6 +183,13 @@ If you would like to install without docker, please follow the below instruction
     for encrypted communication. If CALDERA is installed on a Linux machine, OpenSSL is typically already installed and
     available. On Windows computers, OpenSSL can be installed or, this command should be executed on a Linux computer
     (with the appropriate hostname substituted).
+
+See the following section for login information.
+
+Post-install steps
+------------------
+
+After installing, perform the below steps
 
 #. *Login to the Caldera server*
     The CALDERA server exposes a web service available on `<https://localhost:8888>`_. Navigate to this URL to access
