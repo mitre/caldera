@@ -50,7 +50,10 @@ def initialize_setting(settings, setting, message, default, arglist):
 
     if argval:
         write_settings = True
-        v[final] = argval
+        if isinstance(default, int):
+            v[final] = int(argval)
+        else:
+            v[final] = argval
     elif final not in v:
         write_settings = True
         v[final] = default
@@ -190,7 +193,7 @@ def web_process(settings, debug):
     if settings['server']['https']:
         ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 
-        ssl_cmd = "openssl req -new -x509 -days 3652 -subj /CN='hostname --fqdn'/OU=Servers/O='hostname -d'/C=US -nodes -out {} -keyout {}".format(settings['crypto']['cert'], settings['crypto']['key'])
+        ssl_cmd = "openssl req -new -x509 -days 3652 -subj /CN=$(hostname --fqdn)/OU=Servers/O=$(hostname --fqdn)/C=US -nodes -out {} -keyout {}".format(settings['crypto']['cert'], settings['crypto']['key'])
         if not os.path.isfile(settings['crypto']['cert']) and not os.path.isfile(settings['crypto']['key']):
             log.info("No SSL certificate or key found. Generating a self-signed SSL certificate for you.")
             os.system(ssl_cmd)

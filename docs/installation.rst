@@ -20,7 +20,64 @@ CALDERA Server Installation
 
 The CALDERA server is installed on a single central server. It should be accessible over the network to all computers
 that are taking part in the emulated adversary operation. Both Windows and Linux are supported however installation on
-Windows requires extra installation steps.
+Windows requires extra installation steps. 
+
+Several options exist for installing the server.
+
+Option 1: Install with Docker Compose
+-------------------------------------
+
+The easiest way to install CALDERA is with Docker Compose. After installing Docker and Docker Compose. From the top-level directory simply run the following:
+
+    .. code-block:: console
+
+        docker-compose up
+
+This will start the Caldera server and an instance of MongoDB. Follow the last instructions above to login to the Caldera server and change the Administrator password.
+
+For advanced options, customize the `docker-compose.yml` file. If you are behind a proxy, uncomment three lines in the `build` section and edit the lines to include the correct information for your proxy. If you need to specify a different version of Crater (for example, if you need the Windows 7 version), you can specify it with another item under `args`: `"crater=https://github.com/mitre/caldera-crater/releases/download/v0.1.0/CraterMain7.exe"`. Other configuration options can be set in the `command` section under `server`.
+
+Option 2: Building the Docker Container By Itself
+-------------------------------------------------
+
+Alternatively, if you want to connect to an already existing MongoDB instance, you can build the server container by itself:
+
+    .. code-block:: console
+
+        docker build . -t caldera
+
+If you are behind a proxy, provide proxy information to the build process:
+
+    .. code-block:: console
+
+        docker build . -t caldera --build-arg http_proxy=http://proxy.example:80 --build-arg https_proxy=http://proxy.example:80
+
+If you need to specify a different version of Crater (for example, if you need the Windows 7 version), you can specify it with another `--build-arg`:
+
+    .. code-block:: console
+
+        docker build . -t caldera --build-arg http_proxy=http://proxy.example:80 --build-arg https_proxy=http://proxy.example:80 --build-arg crater=https://github.com/mitre/caldera-crater/releases/download/v0.1.0/CraterMain7.exe
+
+Then follow the instructions above regarding MongoDB.
+
+Next run the container:
+
+    .. code-block:: console
+
+        docker run --net=host caldera
+
+If you need to change any configuration parameters, for example to use a different port for MongoDB, you can do the following:
+
+    .. code-block:: console
+
+        docker run --net=host caldera --database.port 27020
+
+Finally, follow the last instructions above to login to the Caldera server and change the Administrator password.
+
+Option 3: Installing Without Docker
+-----------------------------------
+
+If you would like to install without docker, please follow the below instructions.
 
 #. *Install Python 3.5.4 or later*
     Python 3.5.4 or later can be acquired from the Operating System's package manager or from https://www.python.org/ .

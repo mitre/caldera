@@ -5,6 +5,7 @@ import asyncio
 import threading
 from collections import defaultdict
 from .. import util
+from bson import ObjectId
 
 
 log = logging.getLogger(__name__)
@@ -84,7 +85,7 @@ class OplogTailer(object):
                                 cb("u", c)
 
                         # perform check on id_notifies
-                        if id:
+                        if id and isinstance(id, ObjectId):
                             check, nocheck = [], []
                             [check.append(x) if util.nested_cmp(c, x[0]) else nocheck.append(x) for x in id_notifies[id]]
                             id_notifies[id] = nocheck

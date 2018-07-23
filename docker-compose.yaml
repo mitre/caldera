@@ -1,0 +1,29 @@
+version: '3'
+services:
+    db:
+        image: mongo
+        hostname: mongo
+        volumes:
+            - /data/db:/data/db
+        command: 'mongod --bind_ip 0.0.0.0 --replSet caldera'
+    server:
+        build:
+            context: .
+            # If you are behind a proxy, you must set the
+            # proxy settings here (uncomment the next 3 lines)
+            # args:
+            #  - "http_proxy=http://proxy.example:80"
+            #  - "https_proxy=https://proxy.example:443"
+        depends_on:
+            - db
+        links:
+            - "db:mongo"
+        ports:
+            - "8888:8888"
+        volumes:
+            - ./caldera/conf:/opt/caldera/caldera/conf
+        command:
+            # Override any configuration defaults here
+            - --database.host
+            - mongo
+

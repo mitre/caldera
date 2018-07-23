@@ -49,7 +49,7 @@ def initialize(db_key, host, port) -> None:
         client = pymongo.MongoClient(host, port)
         oplog = client.local.oplog.rs
         a = next(oplog.find().sort('$natural', pymongo.DESCENDING).limit(-1))['ts']
-    except StopIteration:
+    except (StopIteration, pymongo.errors.NotMasterError):
         log.info("Performing first time replication set initialization on MongoDB")
         _setup_replica_set(host, port)
     finally:
