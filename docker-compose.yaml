@@ -4,7 +4,7 @@ services:
         image: mongo
         hostname: mongo
         volumes:
-            - /data/db:/data/db
+            - mongo:/data/db
         command: 'mongod --bind_ip 0.0.0.0 --replSet caldera'
     server:
         build:
@@ -27,3 +27,5 @@ services:
             - --database.host
             - mongo
 
+volumes:
+    mongo:
