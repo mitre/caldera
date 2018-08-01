@@ -11,7 +11,7 @@ idna==2.6
 itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
-mongoengine==0.15.0
+mongoengine==0.15.3
 multidict==4.0.0
 multipledispatch==0.4.9
 pycparser==2.18
