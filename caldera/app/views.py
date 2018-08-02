@@ -298,8 +298,8 @@ async def download_generated_reflective_pe_script(request: web.Request):
     encoded_pe = get_file_base64(pe_file_name)
 
     # Create a new powershell script with Invoke-ReflectivePEInjection and a b64'd PE file and return it to the client.
-    prototype = '{script}{endl}$EncodedPE = "{b64pe}"{endl}$DecodedPE = [Byte[]][Convert]::FromBase64String($EncodedPE)'
-    built = prototype.format(script=powersploit_script, endl=powershell.remote_endl, b64pe=encoded_pe)
+    template = '{script}{endl}$EncodedPE = "{b64pe}"'
+    built = template.format(script=powersploit_script, endl=powershell.remote_endl, b64pe=encoded_pe)
     compressed = powershell.ps_compressed(built, var_name='expr')
     stdin = ''.join(compressed) + powershell.remote_endl
     resp = web.Response()

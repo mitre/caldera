@@ -31,8 +31,8 @@ def powershell_function(rat: Rat, script_anchor: str, command: PSFunction) -> Jo
 
 def invoke_reflective_pe_injection(rat: Rat, binary_name: str, command: CommandLine):
     anchor = "reflectivepe.{}".format(binary_name)
-    # command = 'Invoke-ReflectivePEInjection -PEBytes $DecodedPE -ExeArgs "{}"'.format(command)
-    command = PSFunction('Invoke-ReflectivePEInjection', PSArg('PEBytes', '$DecodedPE', escape=None),
+    # command = 'Invoke-ReflectivePEInjection -PEBytes $EncodedPE -ExeArgs "{}"'.format(command)
+    command = PSFunction('Invoke-ReflectivePEInjection', PSArg('PEbase64', '$EncodedPE', escape=None),
                          PSArg('ExeArgs', command.command_line))
     return powershell_function(rat, anchor, command)
 

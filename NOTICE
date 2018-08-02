@@ -53,3 +53,4 @@ Many libraries are used within this software and where appropriate their respect
 - Python - Python Software Foundation - [Python License Version 2](https://github.com/python/cpython/blob/master/LICENSE) - Changes made to the subprocess module
 - ACE - Ajax.org B.V. - [BSD](https://github.com/ajaxorg/ace/blob/master/LICENSE)
 - jsTree - Ivan Bozhanov - [MIT](https://github.com/vakata/jstree/blob/master/LICENSE-MIT)
+- Empire - Will Schroeder, Justin Warner, Matt Nelson, Steve Borosh, Alex Rymdeko-harvey, Chris Ross [BSD](https://github.com/EmpireProject/Empire)

