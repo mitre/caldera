@@ -105,7 +105,9 @@ Here is the second precondition:
 The first item names the precondition: :code:`'host'`. The second item starts with :code:`OPHost`, specifying that this 
 precondition refers to objects that are `Hosts`. The next part of the expression
 denotes conditions on the :code:`OPHost`. :code:`OPVar` is a special keyword which matches to a previously defined 
-precondition. The entire expression, :code:`OPVar("rat.host")`, matches to the `host` field of the previously defined `rat` precondition. In plain terms, the precondition :code:`OPHost(OPVar("rat.host"))` matches to an of object of type :code:`OPHost` that is the same object as the :code'`host` field of the :code:`rat` precondition.
+precondition. The entire expression, :code:`OPVar("rat.host")`, matches to the `host` field of the previously defined
+`rat` precondition. In plain terms, the precondition :code:`OPHost(OPVar("rat.host"))` matches to an of object of
+type :code:`OPHost` that is the same object as the :code:`host` field of the :code:`rat` precondition.
 
 In psuedocode this would look something like this:
 
@@ -119,7 +121,7 @@ Now that you understand these preconditions, we're going to jump down a bit to a
    :pyobject: DirListCollection
    :lines: 28
 
-This defines the Step's :code:`action` function. The action function is called when CALERA decides to
+This defines the Step's :code:`action` function. The action function is called when CALDERA decides to
 execute the Step. Notice the parameters :code:`rat` and :code:`host` these match the preconditions that 
 are defined above (because they match the precondition's names). When the Step is called, objects that
 match the :code:`rat` and :code:`host` preconditions will be passed into the :code:`action` function.
@@ -160,7 +162,8 @@ The class variable :code:`significant_parameters` allows the user to specify whi
    :pyobject: DirListCollection
    :lines: 19
 
-By default CALDERA will not re-run an action if all of the parameters are the same as an action that has previously been executed.
+By default CALDERA will not re-run an action if all of the parameters are the same as an action that has previously
+been executed.
 However, this behavior can be overridden using the :code:`significant_parameters` class variable.
 Here we set the significant_parameter as "host" because we want this Step to only be performed 
 once per host. If we had left
@@ -275,7 +278,7 @@ computer.
 
 
 We only want this to be run once per host, so we'd like to set the significant parameters to be
-the host that the Step is being exceuted on, which is the Rat's host (that is, :code:`rat.host`), 
+the host that the Step is being exceuted on, which is the Rat's host (that is, :code:`rat.host`),
 however we need to have the host as a named precondition in order to do this, so we will also
 have to modify our preconditions to create a new precondition to refer to the Rat's host.  
 

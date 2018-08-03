@@ -19,8 +19,6 @@ CommandLine generators
 
 .. automodule:: caldera.app.commands.cmd
    :members:
-.. automodule:: caldera.app.commands.footprint
-   :members:
 .. automodule:: caldera.app.commands.mimikatz
    :members:
 .. automodule:: caldera.app.commands.nbtstat

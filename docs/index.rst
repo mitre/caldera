@@ -37,6 +37,7 @@ CALDERA User Documentation
    :caption: Developer Information
 
    techniques
+   encoding_external_files
    legal
    developer
    build
