@@ -8,7 +8,7 @@ WORKDIR /opt/caldera/caldera
 # Install pre-requisites
 RUN pip install --no-cache-dir -r requirements.txt && \
     mkdir -p ../dep/crater/crater && \
-    curl $crater -k -o ../dep/crater/crater/CraterMain.exe
+    curl $crater -L -k -o ../dep/crater/crater/CraterMain.exe
 
 # Run from a non-root user
 RUN groupadd -r caldera && \
