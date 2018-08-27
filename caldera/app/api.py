@@ -468,10 +468,7 @@ async def query_operation(request, network, operation, wait):
         json['hosts'] = network.hosts
         return operation.update(**json)
     elif request.method == 'DELETE':
-        if operation.status == "complete":
-            return operation.delete()
-        else:
-            return "Cannot delete an operation that is not complete"
+        return operation.delete()
     elif request.method == 'PATCH':
         json = await request.json()
         operation.update(__raw__={'$set': json})
