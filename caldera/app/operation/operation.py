@@ -601,7 +601,7 @@ class ServerOperation(object):
             """
             # todo make async
             if self._operation.delay != 0 or self._operation.jitter != 0:
-                wait_time = self._operation.delay + random.uniform(-1 * self._operation.jitter, self._operation.jitter)
+                wait_time = self._operation.delay + random.uniform(-1 * self._operation.delay, self._operation.jitter)
                 time.sleep(wait_time / 1000)
 
         self._interface.register_callback(job_append)
