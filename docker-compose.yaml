@@ -20,6 +20,7 @@ services:
             - "db:mongo"
         ports:
             - "8888:8888"
+            - "8889:8889"
         volumes:
             - ./caldera/conf:/opt/caldera/caldera/conf
         command:
