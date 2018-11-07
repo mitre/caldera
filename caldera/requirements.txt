@@ -18,7 +18,7 @@ pycparser==2.18
 pyDatalog==0.17.1
 pymongo==3.7.0
 PyYAML==3.12
-requests==2.18.4
+requests==2.20.0
 six==1.11.0
 toolz==0.9.0
 ujson==1.35
