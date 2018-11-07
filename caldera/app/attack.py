@@ -5,7 +5,7 @@ import re
 from .util import grab_site
 
 
-attack_url = 'https://attack.mitre.org'
+attack_url = 'https://attack-old.mitre.org'
 
 def refresh_attack():
     params = dict(action='ask', format='json', query="[[Category:Tactic]]")
