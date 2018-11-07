@@ -42,8 +42,8 @@ def refresh_attack():
         technique.save()
     ordered_list_raw = grab_site("{}/wiki/Template:Ordered_Tactics".format(attack_url), params=None, stream=False,
                                  mode='attack')
-    extract_s1 = re.search('</div><p>[^<]*', str(ordered_list_raw.content), re.M | re.I)
-    extract_s2 = extract_s1.group()[9:-2]
+    extract_s1 = re.search('<div class="mw-parser-output"><p>[^<]*', str(ordered_list_raw.content), re.M | re.I)
+    extract_s2 = extract_s1.group().split("<p>")[1].strip()
     listing = AttackList.objects().first()
     if listing is None:
         listing = AttackTechnique.objects()
