@@ -52,7 +52,7 @@ actions that occur after this point of initial compromise. This concept of "post
 has several important implications:
 
 **CALDERA** doesn't focus on the things an adversary will do to "get in". Things like vulnerability
-scanning, penetration testing, intelligence gathering, and spearphising, that commonly occur as
+scanning, penetration testing, intelligence gathering, and spearphishing, that commonly occur as
 a precursor to an attack are out of scope for **CALDERA**.
 
 **CALDERA**'s behavior reflects what attackers do after initially compromising a network, which
