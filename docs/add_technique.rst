@@ -177,7 +177,7 @@ The last class variable in this example is the :code:`postproperties` variable.
    :pyobject: DirListCollection
    :lines: 21
 
-The is a list of the fields that will be set on postconditions that are defined in the :code:`postconditions` 
+The :code:`postproperties` is a list of the fields that will be set on postconditions that are defined in the :code:`postconditions` 
 class variable. 
 
 Every Step must have a :code:`description` function:
