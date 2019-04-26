@@ -6,9 +6,8 @@ terminal_port: 8880
 debug_level: DEBUG
 planner: plugins.open.app.sequential
 plugins:
+  - stockpile
   - sandcat
-  - open
-  - closed
   - gui
   - chain
 users:
