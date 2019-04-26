@@ -122,7 +122,10 @@ monitor >>> op 1
 ```
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
-the mission a success? Did the mission1 adversary run without a trace?
+the mission a success? Did the mission1 adversary run without a trace? 
+
+*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
+click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
 
 ## Developers
 
