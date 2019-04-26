@@ -208,13 +208,12 @@ by major.minor.bugfix numbers and can be checked out using the syntax (example)
 git checkout tags/0.8.0
 ```
 
-## Research
+## Closed-source
 
-CALDERA is a MITRE research project and is an implementation of some of the ideas described in the following papers:
-
-[Intelligent, Automated Red Team Emulation](https://dl.acm.org/citation.cfm?id=2991111)
-
-[Analysis of Automated Adversary Emulation Techniques](https://dl.acm.org/citation.cfm?id=3140081)
+In addition to CALDERA's open source capabilities, MITRE maintains several in-house CALDERA plugins that offer 
+more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
+caldera@mitre.org or directly to MITRE's Technology Transfer Office at 
+https://www.mitre.org/about/corporate-overview/contact-us#technologycontact.
 
 ## Related MITRE Work
 
