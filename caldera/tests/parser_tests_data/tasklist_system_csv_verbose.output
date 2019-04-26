@@ -1,7 +1,0 @@
-"Image Name","PID","Session Name","Session#","Mem Usage","User Name","CPU Time"
-"System Idle Process","0","","0","24 K","N/A","3:06:17"
-"System","4","","0","456 K","N/A","0:00:17"
-"smss.exe","280","","0","140 K","NT AUTHORITY\SYSTEM","0:00:00"
-"csrss.exe","352","","0","1,112 K","NT AUTHORITY\SYSTEM","0:00:00"
-"csrss.exe","388","","1","1,496 K","NT AUTHORITY\SYSTEM","0:00:00"
-"wininit.exe","396","","0","280 K","NT AUTHORITY\SYSTEM","0:00:00"

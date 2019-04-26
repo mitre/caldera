@@ -1,109 +1,197 @@
 # CALDERA
 
-CALDERA is an automated adversary emulation system that performs post-compromise adversarial behavior within
-Windows Enterprise networks. It generates plans during operation using a [planning system](#planning-system) and a
-pre-configured adversary model based on the
-[Adversarial Tactics, Techniques & Common Knowledge](https://attack.mitre.org) (ATT&CK™) project. 
-These features allow CALDERA to dynamically operate over a set of systems using variable behavior,
-which better represents how human adversaries perform operations than systems that follow 
-prescribed sequences of actions.
+CALDERA is an automated adversary emulation system, built on the ATT&CK framework, that performs 
+post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
 
-CALDERA is useful for defenders who want to generate real data that represents how an adversary 
-would typically behave within their networks. Since CALDERA's knowledge about a network is gathered
-during its operation and is used to drive its use of techniques to reach a goal, defenders can get a glimpse into
-how the intrinsic security dependencies of their network allow an adversary to be successful. CALDERA 
-is useful for identifying new data sources, creating and refining behavioral-based intrusion detection analytics, 
-testing defenses and security configurations, and generating experience for training.
+CALDERA requires Python 3.6+ to run and is designed on top of the asyncio library.
 
-BlackHat Europe 2017 presentation slides: [CALDERA - Automating Adversary Emulation](https://www.blackhat.com/docs/eu-17/materials/eu-17-Miller-CALDERA-Automating-Adversary-Emulation.pdf)
+![alt text](readme.png)
 
-## Demo
+## Installation
 
-[![CALDERA Demo Video](https://img.youtube.com/vi/xjDrWStR68E/0.jpg)](https://www.youtube.com/watch?v=xjDrWStR68E)
+Start by cloning this repository recursively. This will pull all available plugins. 
 
-## Requirements
+*Clone via SSH or cache your GIT credentials, otherwise each plugin will require you to enter creds*
+```
+git clone https://github.com/mitre/caldera.git --recursive
+```
 
-CALDERA only supports Windows Enterprise networks that are configured as a
-[Windows Domain](https://en.wikipedia.org/wiki/Windows_domain). This is because the techniques and 
-tactics currently built into CALDERA are unique to Windows domains. Despite this, the CALDERA server can
-be installed on either Linux or Windows. 
+From the root of this project, install the PIP requirements.
+```
+pip install -r requirements.txt
+```
 
-See [Requirements](https://caldera.readthedocs.io/en/latest/requirements.html) for more detailed information.
+Then start the server, passing in a reference to an environment configuration file. Config files live inside
+the conf/ directory. The default configuration is local.yml (or just "local" from the command line)
+```
+python server.py -E local
+```
 
-## Installation 
+Once running, open a terminal into CALDERA and enter help to see the options.
+```
+nc localhost 8880
+monitor >>> help
+```
 
-Detailed installation instructions are included in the [Installation](https://caldera.readthedocs.io/en/latest/installation.html) documentation.
+## Terminology
 
-## Documentation
+CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
 
-Documentation is [available on Read the Docs](https://caldera.readthedocs.io)
+* **Ability**: A specific task or set of commands, written in any language
+* **Adversary**: A threat profile that that contains a set of abilities, making it easy to form repeatable operations 
+* **Agent**: An individual computer running a CALDERA agent, such as 54ndc47
+* **Group**: A collection of agents
+* **Operation**: A start-to-finish execution of an adversary profile against a group
 
-## Architecture
+CALDERA ships with a few pre-built abilities and adversaries - through the Stockpile plugin - 
+but it's easy to add your own. 
 
-CALDERA consists of:
+## Plugins
 
-* Server
-  * Planner - Decision engine allowing CALDERA to chose actions
-    * Attacker Model - Actions available based on ATT&CK
-    * World Model - Representation of the environment
-  * Execution Engine - Drives actuation of techniques and updates the database
-  * Database - Stores knowledge learned about the environment
-  * HTTP Server
-* Clients
-  * Agent - Client on endpoint systems used for communication
-  * RAT - Remote access tool used during operations to emulate adversary behavior
+CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
+software components that plug new features and behavior into the core system. Plugins reside
+in the plugins/ directory. For more information on each one, refer to their respective README files.
 
-![CALDERA Architecture](https://user-images.githubusercontent.com/379437/33388868-28491af2-d4ff-11e7-8ba4-b1c475b0c3ca.png)
+### How to load a plugin
 
-### Planning System
+Load plugins into the core system by listing them in the conf/local.yml file, then restart
+CALDERA for them to become available:
+```
+plugins:
+  - gui
+  - chain
+  - open
+  - sandcat
+```
 
-CALDERA's planning system allows it to "decide" the next best action to take based upon its current
-knowledge of the environment and the actions available at a given point in time. CALDERA's attacker model is 
-represented by pre-configured ATT&CK-based techniques that have been logically encoded
-with pre and post conditions allowing CALDERA to chain together sequences of actions to reach an 
-objective state.
+## Getting started
 
-![CALDERA Planner Algorithm](https://user-images.githubusercontent.com/379437/33388878-30673ebc-d4ff-11e7-84d1-79fdb719d467.png)
+To understand CALDERA, it helps to run an operation. Below are pre-built missions you can follow
+along with to understand the system. These missions will assume CALDERA is running locally on a laptop.
 
-The system follows this algorithm:
-1. Update the world state
-2. Figure out all valid actions to execute
-3. Construct plans that lead off with those actions, chain actions together by leveraging model
-5. Run heuristic to determine best plan
-6. Execute the first action in the best plan
-6. Repeat
+### Mission #1: OSX reconnaissance
 
-#### Extensibility
+*This mission requires an OSX laptop*
 
-New techniques can be added to CALDERA without having to recompute new decision models because of how techniques are
-logically defined. It is encouraged to develop new techniques and variations of techniques to better represent the 
-variations in how adversaries can behave and contribute them back to the project.
+Perform reconnaissance on a compromised OSX laptop. Collect what you can but your employer 
+needs a list of the user’s preferred WIFI networks to perform surveillance on them. 
+Grab this list then get out of town. Quickly. Leave no trace. There is one caveat: 
+the laptop’s AV scans the machine in full every minute. So this mission should be completed in 
+less than 60 seconds. 
 
-## Considerations and Limitations
+Start by booting up the core system on your OSX laptop
+```
+python server.py -E local
+```
 
-The path chaining problems CALDERA's planning system is designed to solve are computationally intensive. 
-While CALDERA's server does not have hardware requirements beyond a typical software developer's system, there are
-limitations on the number of systems CALDERA can operate over before the planning time between actions will cause
-significant delays or the system to fail. **Thus it is not recommended that CALDERA be used against sets of systems 
-larger than 20.**
+Then start a 54ndc47 agent on the same machine
+```
+eval "$(curl -sk -X POST -H "file:54ndc47.sh" https://localhost:8888/file/render?group=client)"
+```
 
-CALDERA performs real actions on systems when operating. If it is being used in a production network, beyond an 
-isolated lab network, then care should be taken to inform any network security staff, administrators, or users who 
-may be impacted prior to using CALDERA to deconflict any issues that may arise.
+Then, in a new terminal window, open a shell to the core system. Type help to see all options. Then
+view the connected agent and the group that was created with the appropriate keystrokes.
+```
+nc localhost 8880
+monitor >>> help
+monitor >>> ag
+monitor >>> gr
+```
 
-CALDERA uses other open source tools as part of its repository of techniques. Some of these tools
-are categorized as penetration testing or security auditing tools. See [Security](https://caldera.readthedocs.io/en/latest/security.html) for
-more information.
+Next, look at the loaded adversaries, then dive deeper into the basic adversary
+```
+monitor >>> ad
+monitor >>> ad 1
+```
 
-CALDERA does not use or repurpose known adversary malware. It focuses on using adversary behavior documented
-within ATT&CK, which can be employed in many different ways regardless of specific pieces of malware an adversary 
-may use.
+Then queue up a new operation, passing in an operation name (test1), adversary ID (1), group ID (1)
+and jitter fraction. The fraction determines how often each agent will check in with CALDERA. The 
+below fraction means it will be between every 3 to 5 seconds. Finally, start your operation and 
+confirm it is in progress.
+```
+monitor >>> qu test1 1 1 3/5
+monitor >>> st 1
+monitor >>> op
+``` 
 
-CALDERA does not emulate adversary command and control (C2) channels. The variation in adversary C2 protocols
-and communication methods is vast and is considered out of scope.
+It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
+according to the jitter time chosen. Every few seconds, check the progress of the operation by 
+entering
+```
+monitor >>> op 1
+```
 
-CALDERA also does not use software exploitation. There are many free and commercial tools that can be used
-to assess software weakness and exploitability. CALDERA should not be used for this purpose.
+Once all tasks are completed, the operation will have a finish time associated to it, which will be
+visible when viewing all operations
+```
+monitor >>> op
+```
+
+## Developers
+
+Be a ninja committer: changes should aim for the smallest change set possible to achieve the goal. 
+Additionally, changes should be consistent with the general format and design of what already exists.
+
+### GIT flow
+
+We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge 
+request. Make branch names and commits descriptive. A merge request should solve one problem,
+not many. 
+
+### Build your own plugin
+
+Creating your own plugin allows you to hook into the core system and manipulate existing functionality or 
+or add your own. To do so, create a directory inside the plugins directory that has a hook.py module at the root. 
+This module should have an <i>initialize</i> function that accepts two parameters "app" and "services". 
+App is the aiohttp server instance itself. You can attach new REST endpoints and functionality to it.
+Services is a dictionary of core services passed to each plugin at server boot time, allowing them
+to hook into the core code. 
+
+Inside the hook.py module, a plugin must also define the following
+
+* name: what would you like to call it
+* description: a phrase describing its purpose
+* address: the URI of the main GUI page. This can be None.
+* store: the directory containing files the core /file/download endpoint should be aware of. This can be None.
+
+These are the current services each plugin receives via the services dictionary:
+
+#### data_svc
+
+Contains logic for performing all CRUD operations against the core database objects. 
+This service can be injected into all other core service at boot time.
+
+#### utility_svc
+
+Contains a handful of utility functions to encourage consistency across plugins.
+This service can be injected into all other core service at boot time.
+
+#### auth_svc
+
+Contains the login and create user functionality.
+
+#### operation_svc
+
+Contains logic for running and manipulating operations.
+
+#### logger
+
+A custom logger shared with all plugins. When used, all logs by default will print to the console and
+the .logs directory. Additionally, they can easily be sent to an ELK stack by enabling that option 
+inside the Logger module.
+
+#### plugins
+
+A complete list of the loaded plugin modules. 
+
+## Versions
+
+Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
+by major.minor.bugfix numbers and can be checked out using the syntax (example)
+
+```
+git checkout tags/0.8.0
+```
 
 ## Research
 
