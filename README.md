@@ -60,7 +60,7 @@ CALDERA for them to become available:
 plugins:
   - gui
   - chain
-  - open
+  - stockpile
   - sandcat
 ```
 
@@ -73,11 +73,11 @@ along with to understand the system. These missions will assume CALDERA is runni
 
 *This mission requires an OSX laptop*
 
-Perform reconnaissance on a compromised OSX laptop. Collect what you can but your employer 
+> Perform reconnaissance on a compromised OSX laptop. Collect what you can but your employer 
 needs a list of the user’s preferred WIFI networks to perform surveillance on them. 
 Grab this list then get out of town. Quickly. Leave no trace. There is one caveat: 
-the laptop’s AV scans the machine in full every minute. So this mission should be completed in 
-less than 60 seconds. 
+the laptop’s AV scans the machine in full every two minutes. So this mission should be completed in 
+less than 120 seconds. 
 
 Start by booting up the core system on your OSX laptop
 ```
@@ -122,7 +122,7 @@ monitor >>> op 1
 ```
 
 Once all tasks are completed, the operation will have a finish time associated to it, which will be
-visible when viewing all operations
+visible when viewing all operations. Check the start and end time of the operation - did you succeed?
 ```
 monitor >>> op
 ```
