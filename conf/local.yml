@@ -4,7 +4,7 @@ host: 127.0.0.1
 port: 8888
 terminal_port: 8880
 debug_level: DEBUG
-planner: plugins.open.app.sequential
+planner: plugins.stockpile.app.sequential
 plugins:
   - stockpile
   - sandcat
