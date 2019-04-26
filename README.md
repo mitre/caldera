@@ -13,7 +13,7 @@ Start by cloning this repository recursively. This will pull all available plugi
 
 *Clone via SSH or cache your GIT credentials, otherwise each plugin will require you to enter creds*
 ```
-git clone https://github.com/mitre/caldera.git --recursive
+git clone git@github.com:mitre/caldera.git --recursive
 ```
 
 From the root of this project, install the PIP requirements.
@@ -39,11 +39,11 @@ CALDERA works by attaching abilities to an adversary and running the adversary i
 
 * **Ability**: A specific task or set of commands, written in any language
 * **Adversary**: A threat profile that that contains a set of abilities, making it easy to form repeatable operations 
-* **Agent**: An individual computer running a CALDERA agent, such as 54ndc47
+* **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
 * **Group**: A collection of agents
 * **Operation**: A start-to-finish execution of an adversary profile against a group
 
-CALDERA ships with a few pre-built abilities and adversaries - through the Stockpile plugin - 
+CALDERA ships with a few pre-built abilities and adversaries - through the [Stockpile plugin](https://github.com/mitre/stockpile) - 
 but it's easy to add your own. 
 
 ## Plugins
@@ -76,8 +76,8 @@ along with to understand the system. These missions will assume CALDERA is runni
 > Perform reconnaissance on a compromised OSX laptop. Collect what you can but your employer 
 needs a list of the user’s preferred WIFI networks to perform surveillance on them. 
 Grab this list then get out of town. Quickly. Leave no trace. There is one caveat: 
-the laptop’s AV scans the machine in full every two minutes. So this mission should be completed in 
-less than 120 seconds. 
+the laptop’s AV scans the machine in full every minute. So this mission should be completed in 
+less than 60 seconds. 
 
 Start by booting up the core system on your OSX laptop
 ```
@@ -98,7 +98,7 @@ monitor >>> ag
 monitor >>> gr
 ```
 
-Next, look at the loaded adversaries, then dive deeper into the basic adversary
+Next, look at the loaded adversaries, then dive deeper into the mission1 adversary
 ```
 monitor >>> ad
 monitor >>> ad 1
@@ -107,7 +107,8 @@ monitor >>> ad 1
 Then queue up a new operation, passing in an operation name (test1), adversary ID (1), group ID (1)
 and jitter fraction. The fraction determines how often each agent will check in with CALDERA. The 
 below fraction means it will be between every 3 to 5 seconds. Finally, start your operation and 
-confirm it is in progress.
+confirm it is in progress by viewing all operations. The operation will have completed when a finish
+timestamp is visible.
 ```
 monitor >>> qu test1 1 1 3/5
 monitor >>> st 1
@@ -115,17 +116,13 @@ monitor >>> op
 ``` 
 
 It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
-according to the jitter time chosen. Every few seconds, check the progress of the operation by 
-entering
+according to the jitter time chosen. Every few seconds, check the progress of the operation.
 ```
 monitor >>> op 1
 ```
 
-Once all tasks are completed, the operation will have a finish time associated to it, which will be
-visible when viewing all operations. Check the start and end time of the operation - did you succeed?
-```
-monitor >>> op
-```
+Once the operation is complete, compare the execution time of the first and last commands. Was
+the mission a success? Did the mission1 adversary run without a trace?
 
 ## Developers
 
@@ -177,7 +174,7 @@ Contains logic for running and manipulating operations.
 #### logger
 
 A custom logger shared with all plugins. When used, all logs by default will print to the console and
-the .logs directory. Additionally, they can easily be sent to an ELK stack by enabling that option 
+the .logs/ directory. Additionally, they can easily be sent to an ELK stack by enabling that option 
 inside the Logger module.
 
 #### plugins
