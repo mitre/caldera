@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ```
 
 Then start the server, passing in a reference to an environment configuration file. Config files live inside
-the conf/ directory. The default configuration is local.yml (or just "local" from the command line)
+the conf/ directory. The default configuration is local.yml (or just "local" from the command line).
 ```
 python server.py -E local
 ```
@@ -38,26 +38,26 @@ monitor >>> help
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
 
 * **Ability**: A specific task or set of commands, written in any language
-* **Adversary**: A threat profile that that contains a set of abilities, making it easy to form repeatable operations 
+* **Adversary**: A threat profile that contains a set of abilities, making it easy to form repeatable operations 
 * **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
 * **Group**: A collection of agents
 * **Operation**: A start-to-finish execution of an adversary profile against a group
 
-CALDERA ships with a few pre-built abilities and adversaries - through the [Stockpile plugin](https://github.com/mitre/stockpile) - 
+CALDERA ships with a few pre-built abilities and adversaries with the [Stockpile plugin](https://github.com/mitre/stockpile), 
 but it's easy to add your own. 
 
 ## Plugins
 
 CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
 software components that plug new features and behavior into the core system. Plugins reside
-in the plugins/ directory. For more information on each one, refer to their respective README files.
+in the plugins/ directory. For more information on each plugin, refer to their respective README files.
 
 Load plugins into the core system by listing them in the conf/local.yml file, then restart
 CALDERA for them to become available.
 
 ## Planning
 
-When running an operation, CALDERA hooks in a planning module, which determines which order to run each ability. 
+When running an operation, CALDERA hooks in a planning module that determines in which order to run each ability. 
 An operation executes abilities within phases, but if there are multiple abilities in a phase, the planning module
 determines which to run first. The planning module can be changed in the configuration file, local.yml.
 
@@ -66,30 +66,24 @@ determines which to run first. The planning module can be changed in the configu
 To understand CALDERA, it helps to run an operation. Below are pre-built missions you can follow
 along with to understand the system. These missions will assume CALDERA is running locally on a laptop.
 
-*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
-click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
-
 ### Mission #1: OSX reconnaissance
 
-*This mission requires an OSX laptop*
+*This mission requires an OSX laptop.*
 
-> Perform reconnaissance on a compromised OSX laptop. Collect what you can but your employer 
-needs a list of the user’s preferred WIFI networks to perform surveillance on them. 
-Grab this list then get out of town. Quickly. Leave no trace. There is one caveat: 
-the laptop’s AV scans the machine in full every minute. So this mission should be completed in 
-less than 60 seconds. 
+> Perform reconnaissance on a compromised OSX laptop. Your employer needs a list of the user’s preferred WIFI networks to perform surveillance on them. Grab this list and collect anything else you can, then get out of town. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. 
+You must complete this mission in less than 60 seconds. 
 
-Start by booting up the core system on your OSX laptop
+Start by booting up the core system on your OSX laptop.
 ```
 python server.py -E local
 ```
 
-Then start a 54ndc47 agent on the same machine
+Then start a 54ndc47 agent on the same machine.
 ```
 eval "$(curl -sk -X POST -H "file:54ndc47.sh" https://localhost:8888/file/render?group=client)"
 ```
 
-Then, in a new terminal window, open a shell to the core system. Type help to see all options. Then
+Then, in a new terminal window, open a shell to the core system. Type help to see all options. Then,
 view the connected agent and the group that was created with the appropriate keystrokes.
 ```
 nc localhost 8880
@@ -98,15 +92,15 @@ monitor >>> ag
 monitor >>> gr
 ```
 
-Next, look at the loaded adversaries, then dive deeper into the mission1 adversary
+Next, look at the loaded adversaries, and dive deeper into the mission1 adversary.
 ```
 monitor >>> ad
 monitor >>> ad 1
 ```
 
-Then queue up a new operation, passing in an operation name (test1), adversary ID (1), group ID (1)
+Then queue up a new operation, passing in an operation name (test1), adversary ID (1), group ID (1),
 and jitter fraction. The fraction determines how often each agent will check in with CALDERA. The 
-below fraction means it will be between every 3 to 5 seconds. Finally, start your operation and 
+fraction below (3/5) means the check-in will happen between every 3 to 5 seconds. Finally, start your operation and 
 confirm it is in progress by viewing all operations. The operation will have completed when a finish
 timestamp is visible.
 ```
@@ -125,22 +119,25 @@ Once the operation is complete, compare the execution time of the first and last
 the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
 
+*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
+click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
+
 ### Mission #2: PowerShell reconnaissance
 
 *This mission requires PowerShell 3.0+ and is compatible with the open-source version.*
 
 > Perform reconnaissance on a compromised Windows laptop. Your employer needs a list of all processes running
- on the machine, so make sure this is fetched first. Then perform other recon abilities and get out
+ on the machine, so make sure this is fetched first. Then, perform other recon tasks and get out
  before you get caught. 
 
 Perform the same steps as mission #1 - with the exception of:
 
-1. Start a PowerShell version of 54ndc47, instead of a bash one
+1. Start a PowerShell version of 54ndc47, instead of a bash version.
 ```
 $url="https://localhost:8888/file/render?group=client"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$resp=$web.UploadString("$url",'');iex($resp);}
 ```
 
-2. Run the mission2 adversary, instead of mission1
+2. Run the mission2 adversary, instead of mission1.
 
 ## Developers
 
@@ -157,29 +154,29 @@ not many.
 
 Creating your own plugin allows you to hook into the core system and manipulate existing functionality or 
 or add your own. To do so, create a directory inside the plugins directory that has a hook.py module at the root. 
-This module should have an <i>initialize</i> function that accepts two parameters "app" and "services". 
+This module should have an <i>initialize</i> function that accepts two parameters: "app" and "services". 
 App is the aiohttp server instance itself. You can attach new REST endpoints and functionality to it.
 Services is a dictionary of core services passed to each plugin at server boot time, allowing them
 to hook into the core code. 
 
-Inside the hook.py module, a plugin must also define the following
+Inside the hook.py module, a plugin must also define the following:
 
-* name: what would you like to call it
-* description: a phrase describing its purpose
-* address: the URI of the main GUI page. This can be None.
-* store: the directory containing files the core /file/download endpoint should be aware of. This can be None.
+* Name: the name of the plugin
+* Description: a phrase describing its purpose
+* Address: the URI of the main GUI page. This can be None.
+* Store: the directory containing files the core /file/download endpoint should be aware of. This can be None.
 
 These are the current services each plugin receives via the services dictionary:
 
 #### data_svc
 
 Contains logic for performing all CRUD operations against the core database objects. 
-This service can be injected into all other core service at boot time.
+This service can be injected into all other core services at boot time.
 
 #### utility_svc
 
 Contains a handful of utility functions to encourage consistency across plugins.
-This service can be injected into all other core service at boot time.
+This service can be injected into all other core services at boot time.
 
 #### auth_svc
 
@@ -202,7 +199,7 @@ A complete list of the loaded plugin modules.
 ## Versions
 
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be checked out using the syntax (example)
+by major.minor.bugfix numbers and can be checked out using the sample syntax below:
 
 ```
 git checkout tags/0.8.0
