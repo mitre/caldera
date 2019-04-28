@@ -1,7 +1,7 @@
 # CALDERA
 
-CALDERA is an automated adversary emulation system, built on the ATT&CK framework, that performs 
-post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
+CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/), 
+that performs post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
 
 CALDERA requires Python 3.6+ to run and is designed on top of the asyncio library.
 
@@ -37,7 +37,7 @@ monitor >>> help
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
 
-* **Ability**: A specific task or set of commands, written in any language
+* **Ability**: A specific task or set of commands mapped to ATT&CK Tactics and Techniques, written in any language
 * **Adversary**: A threat profile that contains a set of abilities, making it easy to form repeatable operations 
 * **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
 * **Group**: A collection of agents
@@ -218,3 +218,7 @@ https://www.mitre.org/about/corporate-overview/contact-us#technologycontact.
 one CALDERA operation with data collected by Microsoft Sysmon and other sensors.
 
 [CASCADE](https://github.com/mitre/cascade-server) - Prototype blue team analysis tool to automate investigative work.
+
+## Acknowledgements
+
+[Atomic Red Team](https://github.com/redcanaryco/atomic-red-team)
