@@ -35,7 +35,7 @@ class DataService:
 
     """ CREATE """
 
-    async def create_ability(self, id, tactic, technique, name, test, description, cleanup=''):
+    async def create_ability(self, id, tactic, technique, name, test, description, cleanup=None):
         await self.dao.delete('core_ability', dict(id=id))
         await self.dao.delete('core_attack', dict(attack_id=technique['attack_id']))
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
