@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 import ssl
 import sys
 from importlib import import_module
@@ -31,13 +32,13 @@ async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
 
 
-async def load_plugins(app, services):
+async def attach_plugins(app, services):
     services['auth_svc'].set_app(app)
     for pm in plugin_modules:
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
-        logging.debug('Loaded plugin: %s' % pm.name)
-    templates = ['plugins/%s/templates' % p for p in plugins]
+        logging.debug('Attached plugin: %s' % pm.name)
+    templates = ['plugins/%s/templates' % p.name.lower() for p in services['plugins']]
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
@@ -52,7 +53,7 @@ async def init(address, port, services, users):
     await data_svc.reload_database()
     for user, pwd in users.items():
         await auth_svc.register(username=user, password=pwd)
-    await load_plugins(app, services)
+    await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, address, port, ssl_context=context).start()
@@ -70,23 +71,32 @@ def main(services, host, port, terminal_port, users):
         pass
 
 
+def build_plugins(plugs):
+    modules = []
+    for plug in plugs if plugs else []:
+        if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
+            logging.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+            exit(0)
+        modules.append(import_module('plugins.%s.hook' % plug))
+    return modules
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('CALDERA application')
     parser.add_argument('-E', '--environment', required=True, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         config = yaml.load(c)
-        plugins = config['plugins'] if config['plugins'] else []
         logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
         logging.getLogger().setLevel(config['debug_level'])
         sys.path.append('')
 
+        plugin_modules = build_plugins(config['plugins'])
         utility_svc = UtilityService()
         data_svc = DataService(CoreDao('core.db'))
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=config['planner'])
         auth_svc = AuthService(data_svc=data_svc, ssl_cert=SSL_CERT)
-        plugin_modules = [import_module('plugins.%s.hook' % p) for p in plugins]
 
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
