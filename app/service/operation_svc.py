@@ -41,7 +41,7 @@ class OperationService:
     async def cleanup(self, op_id):
         self.log.debug('Starting cleanup on: %s' % op_id)
         clean_commands = await self.data_svc.dao.get('core_cleanup', dict(op_id=op_id))
-        for c in clean_commands:
+        for c in reversed(clean_commands):
             link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability_id=c['ability_id'], decide=datetime.now(),
                         command=c['command'], score=0)
             await self.data_svc.create_link(link)
