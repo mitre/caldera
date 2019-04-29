@@ -11,4 +11,7 @@
 .logs/*
 !.logs/.gitkeep
 core.db
+.gitmodules
+plugins/dark/*
+plugins/clips/*
 
