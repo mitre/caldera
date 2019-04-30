@@ -20,7 +20,6 @@ class TerminalApp(aiomonitor.Monitor):
         self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction' + '\n')
         self._sout.write('\t'+'re: view a specific result (required) link ID - from the decision chain.' + '\n')
         self._sout.write('\t'+'st: start an operation. (required) a queued operation ID.' + '\n')
-        self._sout.write('\t'+'up: pre-seed an operation with facts (required) full path to csv and an operation ID' + '\n')
         self._sout.write('\n'+'Generic commands:' + '\n')
         self._sout.write('\t'+'help: see this output again' + '\n')
         self._sout.write('\t'+'console: open an aysnc Python console' + '\n')
@@ -109,7 +108,7 @@ class TerminalApp(aiomonitor.Monitor):
             reader = csv.reader(f, delimiter=',')
             for line in reader:
                 fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
-                asyncio.run_coroutine_threadsafe(service.dao.create('core_fact', fact), loop=self._loop)
+                asyncio.run_coroutine_threadsafe(service.dao.create('dark_fact', fact), loop=self._loop)
                 self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
 
     """ PRIVATE """
