@@ -32,6 +32,15 @@ Once running, open a terminal into CALDERA and enter help to see the options.
 nc localhost 8880
 monitor >>> help
 ```
+## Versions
+
+Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
+by major.minor.bugfix numbers and can be checked out using the sample syntax below:
+```
+git checkout tags/2.0.0
+```
+
+Check the GitHub releases for the most stable release versions.
 
 ## Terminology
 
@@ -195,15 +204,6 @@ inside the Logger module.
 #### plugins
 
 A complete list of the loaded plugin modules. 
-
-## Versions
-
-Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be checked out using the sample syntax below:
-
-```
-git checkout tags/0.8.0
-```
 
 ## Closed-source
 
