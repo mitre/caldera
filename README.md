@@ -35,9 +35,9 @@ monitor >>> help
 ## Versions
 
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be checked out using the sample syntax below:
+by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
 ```
-git checkout tags/2.0.0
+git clone --branch 2.0.0 git@github.com:mitre/caldera.git --recursive
 ```
 
 Check the GitHub releases for the most stable release versions.
