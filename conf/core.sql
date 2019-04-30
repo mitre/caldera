@@ -1,5 +1,6 @@
 CREATE TABLE if not exists core_result (link_id integer, output text, parsed data);
 CREATE TABLE if not exists core_ability (id text, technique integer, name text, test text, description text, cleanup text, UNIQUE (id));
+CREATE TABLE if not exists core_ability_os (ability_id text, executor text, UNIQUE (ability_id, executor));
 CREATE TABLE if not exists core_group (id integer primary key AUTOINCREMENT, name text, UNIQUE(name));
 CREATE TABLE if not exists core_group_map (group_id integer, agent_id integer, UNIQUE(group_id, agent_id));
 CREATE TABLE if not exists core_adversary (id integer primary key AUTOINCREMENT, name text, description text, UNIQUE (name));

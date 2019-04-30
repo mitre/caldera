@@ -22,26 +22,30 @@ class DataService:
             with open(config) as seed:
                 for doc in yaml.load_all(seed):
                     for adv in doc[0]['adversaries']:
-                        await self.create_adversary(**adv)
+                        phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
+                        await self.create_adversary(adv['name'], adv['description'], phases)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             with open(filename) as ability:
                 for ab in yaml.load(ability):
+                    executors = [dict(ability_id=ab['id'], executor=ex) for ex in ab.get('executors', [])]
                     encoded_test = b64encode(ab['command'].strip().encode('utf-8'))
                     await self.create_ability(id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
-                                              test=encoded_test.decode(), description=ab.get('description'),
+                                              test=encoded_test.decode(), description=ab.get('description'), executors=executors,
                                               cleanup=b64encode(ab['cleanup'].strip().encode('utf-8')).decode() if ab.get('cleanup') else None)
 
     """ CREATE """
 
-    async def create_ability(self, id, tactic, technique, name, test, description, cleanup=None):
+    async def create_ability(self, id, tactic, technique, name, test, description, executors=None, cleanup=None):
         await self.dao.delete('core_ability', dict(id=id))
         await self.dao.delete('core_attack', dict(attack_id=technique['attack_id']))
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
         await self.dao.create('core_ability', dict(id=id, name=name, test=test, technique=entry_id, description=description, cleanup=cleanup))
+        for entry in executors:
+            await self.dao.create('core_ability_os', entry)
         return 'Saved ability: %s' % id
 
     async def create_adversary(self, name, description, phases):
@@ -76,7 +80,9 @@ class DataService:
     async def explode_abilities(self, criteria=None):
         abilities = await self.dao.get('core_ability', criteria=criteria)
         for ab in abilities:
+            ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability_id=ab['id']))
+            ab['executors'] = [ex['executor'] for ex in await self.dao.get('core_ability_os', dict(ability_id=ab['id']))]
             ab['technique'] = (await self.dao.get('core_attack', dict(attack_id=ab['technique'])))[0]
         return abilities
 
