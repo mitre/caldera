@@ -105,12 +105,12 @@ class TerminalApp(aiomonitor.Monitor):
 	def add_facts_from_csv(self, csv_path, table_name, op_id):
 		service = self._locals['services']['data_svc']
 		with open(csv_path, 'r') as f:
-		next(f)
-		reader = csv.reader(f, delimiter=',')
-		for line in reader:
-			fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
-			asyncio.run_coroutine_threadsafe(service.dao.create(table_name, fact), loop=self._loop)
-			self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
+			next(f)
+			reader = csv.reader(f, delimiter=',')
+			for line in reader:
+				fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
+				asyncio.run_coroutine_threadsafe(service.dao.create(table_name, fact), loop=self._loop)
+				self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
 
 	def do_up(self, csv_path, op_id):
 		self.add_facts_from_csv(csv_path, 'dark_fact', op_id)
