@@ -133,5 +133,5 @@ class TerminalApp(aiomonitor.Monitor):
         for row in rows:
             for n, el in enumerate(row):
                 if isinstance(el, str):
-                    row[n] = '\n'.join(textwrap.wrap(el, 50))
+                    row[n] = '\n'.join(textwrap.wrap(el, 75))
         return rows

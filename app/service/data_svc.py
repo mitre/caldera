@@ -33,11 +33,12 @@ class DataService:
                     encoded_test = b64encode(ab['command'].strip().encode('utf-8'))
                     await self.create_ability(id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
                                               test=encoded_test.decode(), description=ab.get('description'), executors=executors,
-                                              cleanup=b64encode(ab['cleanup'].strip().encode('utf-8')).decode() if ab.get('cleanup') else None)
+                                              cleanup=b64encode(ab['cleanup'].strip().encode('utf-8')).decode() if ab.get('cleanup') else None,
+                                              parser=ab.get('parser'))
 
     """ CREATE """
 
-    async def create_ability(self, id, tactic, technique, name, test, description, executors=None, cleanup=None):
+    async def create_ability(self, id, tactic, technique, name, test, description, executors=None, cleanup=None, parser=None):
         await self.dao.delete('core_ability', dict(id=id))
         await self.dao.delete('core_attack', dict(attack_id=technique['attack_id']))
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
@@ -46,6 +47,9 @@ class DataService:
         await self.dao.create('core_ability', dict(id=id, name=name, test=test, technique=entry_id, description=description, cleanup=cleanup))
         for entry in executors:
             await self.dao.create('core_ability_os', entry)
+        if parser:
+            parser['ability_id'] = id
+            await self.dao.create('core_parser', parser)
         return 'Saved ability: %s' % id
 
     async def create_adversary(self, name, description, phases):
