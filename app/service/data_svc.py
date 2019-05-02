@@ -106,8 +106,13 @@ class DataService:
             g['agents'] = await self.dao.get('core_group_map', dict(group_id=g['id']))
         return groups
 
-    async def explode_agents(self, criteria=None):
-        return await self.dao.get('core_agent', criteria)
+    async def explode_agents(self, criteria: object = None) -> object:
+        agents = await self.dao.get('core_agent', criteria)
+        for a in agents:
+            sql = 'SELECT g.id, g.name FROM core_group g JOIN core_group_map m on g.id=m.group_id ' \
+                  'WHERE m.agent_id = %s;' % a['id']
+            a['groups'] = await self.dao.raw_select(sql)
+        return agents
 
     async def explode_results(self, criteria=None):
         return await self.dao.get('core_result', criteria=criteria)
