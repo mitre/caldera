@@ -13,3 +13,6 @@
 [submodule "plugins/stockpile"]
 	path = plugins/stockpile
 	url = https://github.com/mitre/stockpile.git
+[submodule "plugins/dark"]
+	path = plugins/dark
+	url = https://gitlab.mitre.org/caldera/dark.git

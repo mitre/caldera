@@ -20,7 +20,6 @@ class TerminalApp(aiomonitor.Monitor):
         self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction' + '\n')
         self._sout.write('\t'+'re: view a specific result (required) link ID - from the decision chain.' + '\n')
         self._sout.write('\t'+'st: start an operation. (required) a queued operation ID.' + '\n')
-		self._sout.write('\t'+'bl: Import blacklist of facts via a csv file with columns [fact, value, score]. Command usage: bl [csv file path] [op_id]' + '\n')
         self._sout.write('\n'+'Generic commands:' + '\n')
         self._sout.write('\t'+'help: see this output again' + '\n')
         self._sout.write('\t'+'console: open an aysnc Python console' + '\n')
@@ -101,22 +100,12 @@ class TerminalApp(aiomonitor.Monitor):
         service = self._locals['services']['operation_svc']
         asyncio.run_coroutine_threadsafe(service.run(op_id), loop=self._loop)
         self._sout.write(str(colored('Started!', 'yellow')) + '\n')
-	
-	def add_facts_from_csv(self, csv_path, table_name, op_id):
-		service = self._locals['services']['data_svc']
-		with open(csv_path, 'r') as f:
-			next(f)
-			reader = csv.reader(f, delimiter=',')
-			for line in reader:
-				fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
-				asyncio.run_coroutine_threadsafe(service.dao.create(table_name, fact), loop=self._loop)
-				self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
 
-	def do_up(self, csv_path, op_id):
-		self.add_facts_from_csv(csv_path, 'dark_fact', op_id)
+    def do_up(self, csv_path, op_id):
+        self._add_facts_from_csv(csv_path, 'dark_fact', op_id)
 
-	def do_bl(self, csv_path, op_id):
-		self.add_facts_from_csv(csv_path,'dark_black_list',op_id)
+    def do_bl(self, csv_path, op_id):
+        self._add_facts_from_csv(csv_path,'dark_black_list',op_id)
 
 
     """ PRIVATE """
@@ -135,6 +124,16 @@ class TerminalApp(aiomonitor.Monitor):
     def _flush(self, content):
         content = colored(content, 'yellow')
         self._sout.write(str(content) + '\n')
+
+    def _add_facts_from_csv(self, csv_path, table_name, op_id):
+        service = self._locals['services']['data_svc']
+        with open(csv_path, 'r') as f:
+            next(f)
+            reader = csv.reader(f, delimiter=',')
+            for line in reader:
+                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
+                asyncio.run_coroutine_threadsafe(service.dao.create(table_name, fact), loop=self._loop)
+                self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
 
     @staticmethod
     def _adjust_width(rows):
