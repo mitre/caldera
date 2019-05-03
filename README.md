@@ -45,6 +45,11 @@ Check the GitHub releases for the most stable release versions.
 > **IMPORTANT**: The core system relies on plugins (git submodules). If you are unfamiliar with this concept and want to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. You will also need to update the submodules to ensure all plugins are current. One way to do this is by using an alias, such as:
 ```alias tig="git reset --hard origin/master && git checkout master && git reset --hard origin/master && git pull && git submodule foreach git checkout master && git submodule foreach git pull"```
 
+> *NOTE*: The functionality and schema used by the first release of CALDERA is now stored within the *ADVERSARY* 
+plugin. This plugin is loaded automatically with the rest of the submodules, but will not be loaded in 
+CALDERA at runtime unless added to the list of submodules in *conf/local.yml*. More information about the *ADVERSARY*
+ plugin can be found at the repository for the [Adversary plugin](https://github.com/mitre/adversary).
+
 ## Terminology
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
