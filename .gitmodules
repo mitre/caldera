@@ -1,15 +1,15 @@
-[submodule "plugins/stockpile"]
-	path = plugins/stockpile
-	url = git@github.com:mitre/stockpile.git
-[submodule "plugins/gui"]
-	path = plugins/gui
-	url = git@github.com:mitre/gui.git
-[submodule "plugins/chain"]
-	path = plugins/chain
-	url = git@github.com:mitre/chain.git
-[submodule "plugins/sandcat"]
-	path = plugins/sandcat
-	url = git@github.com:mitre/sandcat.git
 [submodule "plugins/adversary"]
 	path = plugins/adversary
-	url = git@github.com:mitre/adversary.git
+	url = https://github.com/mitre/adversary.git
+[submodule "plugins/chain"]
+	path = plugins/chain
+	url = https://github.com/mitre/chain.git
+[submodule "plugins/gui"]
+	path = plugins/gui
+	url = https://github.com/mitre/gui.git
+[submodule "plugins/sandcat"]
+	path = plugins/sandcat
+	url = https://github.com/mitre/sandcat.git
+[submodule "plugins/stockpile"]
+	path = plugins/stockpile
+	url = https://github.com/mitre/stockpile.git
