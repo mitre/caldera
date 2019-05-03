@@ -7,7 +7,6 @@ import aiomonitor
 from tabulate import tabulate
 from termcolor import colored
 
-
 class TerminalApp(aiomonitor.Monitor):
 
     def do_help(self):
@@ -102,10 +101,7 @@ class TerminalApp(aiomonitor.Monitor):
         self._sout.write(str(colored('Started!', 'yellow')) + '\n')
 
     def do_up(self, csv_path, op_id):
-        self._add_facts_from_csv(csv_path, 'dark_fact', op_id)
-
-    def do_bl(self, csv_path, op_id):
-        self._add_facts_from_csv(csv_path,'dark_black_list',op_id)
+        self._add_facts_from_csv(csv_path, op_id)
 
 
     """ PRIVATE """
@@ -125,14 +121,14 @@ class TerminalApp(aiomonitor.Monitor):
         content = colored(content, 'yellow')
         self._sout.write(str(content) + '\n')
 
-    def _add_facts_from_csv(self, csv_path, table_name, op_id):
+    def _add_facts_from_csv(self, csv_path, op_id):
         service = self._locals['services']['data_svc']
         with open(csv_path, 'r') as f:
             next(f)
             reader = csv.reader(f, delimiter=',')
             for line in reader:
-                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
-                asyncio.run_coroutine_threadsafe(service.dao.create(table_name, fact), loop=self._loop)
+                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, is_blacklisted=line[3])
+                asyncio.run_coroutine_threadsafe(service.dao.create('dark_fact', fact), loop=self._loop)
                 self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
 
     @staticmethod
