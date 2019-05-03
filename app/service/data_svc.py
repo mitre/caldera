@@ -78,6 +78,7 @@ class DataService:
         if cleanup and cleanup.get('command'):
             cleanup['link_id'] = link_id
             await self.dao.create('core_cleanup', cleanup)
+        return link_id
 
     """ VIEW """
 
