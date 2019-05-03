@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  caldera:
+    image: python:3
+
+    expose:
+    - "8880"
+    - "8888"
+
+    ports:
+      - "8880:8880"
+      - "8888:8888"
+    working_dir: /usr/src/app
+
+    volumes:
+      - $PWD:/usr/src/app
+
+    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py -E local"
+
+
+# docker run -it --name caldera2 -p 8880:8880 -p 8888:8888 -v "$PWD":/usr/src/app -w /usr/src/app python:3 /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py -E local"

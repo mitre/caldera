@@ -59,12 +59,12 @@ async def init(address, port, services, users):
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
-def main(services, host, port, terminal_port, users):
+def main(services, host, port, terminal_host, terminal_port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
     try:
         loc = dict(services=services)
-        with aiomonitor.start_monitor(loop=loop, monitor=TerminalApp, port=terminal_port, locals=loc):
+        with aiomonitor.start_monitor(loop=loop, monitor=TerminalApp, host=terminal_host, port=terminal_port, locals=loc):
             logging.debug('Starting CALDERA at %s:%s' % (host, port))
             loop.run_forever()
     except KeyboardInterrupt:
@@ -102,4 +102,4 @@ if __name__ == '__main__':
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             logger=Logger('plugin'), plugins=plugin_modules
         )
-        main(services=services, host=config['host'], port=config['port'], terminal_port=config['terminal_port'], users=config['users'])
+        main(services=services, host=config['host'], port=config['port'], terminal_host=config['terminal_host'], terminal_port=config['terminal_port'], users=config['users'])
