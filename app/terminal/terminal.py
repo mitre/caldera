@@ -11,7 +11,7 @@ from termcolor import colored
 class TerminalApp(aiomonitor.Monitor):
 
     def do_help(self):
-        self._sout.write('\n'+'CALDERA commands:' + '\n')
+        self._sout.write('\n'+'Application commands:' + '\n')
         self._sout.write('\t'+'ab: view abilities (optional) ability ID' + '\n')
         self._sout.write('\t'+'ad: view adversaries (optional) adversary ID' + '\n')
         self._sout.write('\t'+'ag: view all running agents' + '\n')
