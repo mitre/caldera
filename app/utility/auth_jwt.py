@@ -12,10 +12,10 @@ async def authenticated_login(auth_svc, *args):
         default_login = auth_handle.redirect_landing
         try:
             session = await get_session(args[0])
-            if 'CALDERA_token' not in session or 'ref_key' not in session:
+            if 'app_token' not in session or 'ref_key' not in session:
                 return web.HTTPFound(default_login)
             webauth_data = await auth_handle.data_svc.dao.get('webauth', dict(ref_insert=session['ref_key']))
-            token_data = jwt.decode(session['CALDERA_token'], webauth_data[0]['passkey'], algorithm='HS256')
+            token_data = jwt.decode(session['app_token'], webauth_data[0]['passkey'], algorithm='HS256')
         except (jwt.InvalidSignatureError, IndexError):
             return web.HTTPFound(default_login, reason='Token Key Invalid - Please log in again.')
         except jwt.DecodeError:
@@ -35,24 +35,24 @@ async def login_session(auth_svc, session, user):
     issue_date = datetime.now().timestamp()
     token_data = jwt.encode(dict(user=user, issued=issue_date), key, algorithm='HS256')
     await auth_svc.data_svc.dao.create('webauth', dict(ref_insert=ref_key, passkey=key, issued=issue_date))
-    session['CALDERA_token'] = token_data.decode()
+    session['app_token'] = token_data.decode()
     session['ref_key'] = ref_key
 
 
 async def logout_session(auth_svc, session):
     webauth_data = await auth_svc.data_svc.dao.get('webauth', dict(ref_insert=session['ref_key']))
     try:
-        token_data = jwt.decode(session['CALDERA_token'], webauth_data[0]['passkey'], algorithm='HS256')
+        token_data = jwt.decode(session['app_token'], webauth_data[0]['passkey'], algorithm='HS256')
         await auth_svc.data_svc.dao.update('webauth', 'issued', token_data['issued'], dict(issued=0))
     except jwt.DecodeError:
         pass
     session['ref_key'] = ''
-    session['CALDERA_token'] = ''
+    session['app_token'] = ''
 
 
 async def reset_password(auth_svc, submission, session):
     webauth_data = await auth_svc.data_svc.dao.get('webauth', dict(ref_insert=session['ref_key']))
-    token_data = jwt.decode(session['CALDERA_token'], webauth_data[0]['passkey'], algorithm='HS256')
+    token_data = jwt.decode(session['app_token'], webauth_data[0]['passkey'], algorithm='HS256')
     if not await auth_svc.login(token_data.get('user'), submission.get('old')):
         return web.json_response('INVALID PASSWORD')
     s1, k1 = await auth_svc.generate(submission.get('new'))
