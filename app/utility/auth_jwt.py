@@ -1,5 +1,5 @@
 import jwt
-import secrets
+import random
 import string
 from datetime import datetime
 from aiohttp import web
@@ -30,8 +30,8 @@ async def authenticated_login(auth_svc, *args):
 
 
 async def login_session(auth_svc, session, user):
-    key = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(256))
-    ref_key = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(16))
+    key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(256))
+    ref_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
     issue_date = datetime.now().timestamp()
     token_data = jwt.encode(dict(user=user, issued=issue_date), key, algorithm='HS256')
     await auth_svc.data_svc.dao.create('webauth', dict(ref_insert=ref_key, passkey=key, issued=issue_date))
