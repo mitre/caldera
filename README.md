@@ -13,7 +13,7 @@ Start by cloning this repository recursively. This will pull all available plugi
 
 *Clone via SSH or cache your GIT credentials, otherwise each plugin will require you to enter creds*
 ```
-git clone git@github.com:mitre/caldera.git --recursive
+git clone https://github.com/mitre/caldera.git --recursive
 ```
 
 From the root of this project, install the PIP requirements.
