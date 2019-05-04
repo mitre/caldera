@@ -10,8 +10,6 @@ CALDERA requires Python 3.6+ to run and is designed on top of the asyncio librar
 ## Installation
 
 Start by cloning this repository recursively. This will pull all available plugins. 
-
-*Clone via SSH or cache your GIT credentials, otherwise each plugin will require you to enter creds*
 ```
 git clone https://github.com/mitre/caldera.git --recursive
 ```
