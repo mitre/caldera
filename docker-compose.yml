@@ -14,7 +14,7 @@ services:
     working_dir: /usr/src/app
 
     volumes:
-      - $PWD:/usr/src/app
+      - ./:/usr/src/app
 
     command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py -E local"
 
