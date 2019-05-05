@@ -165,53 +165,7 @@ We use the basic feature branch GIT flow. Create a feature branch off of master 
 request. Make branch names and commits descriptive. A merge request should solve one problem,
 not many. 
 
-### Build your own plugin
-
-Creating your own plugin allows you to hook into the core system and manipulate existing functionality or 
-or add your own. To do so, create a directory inside the plugins directory that has a hook.py module at the root. 
-This module should have an <i>initialize</i> function that accepts two parameters: "app" and "services". 
-App is the aiohttp server instance itself. You can attach new REST endpoints and functionality to it.
-Services is a dictionary of core services passed to each plugin at server boot time, allowing them
-to hook into the core code. 
-
-Inside the hook.py module, a plugin must also define the following:
-
-* Name: the name of the plugin
-* Description: a phrase describing its purpose
-* Address: the URI of the main GUI page. This can be None.
-* Store: the directory containing files the core /file/download endpoint should be aware of. This can be None.
-
-These are the current services each plugin receives via the services dictionary:
-
-#### data_svc
-
-Contains logic for performing all CRUD operations against the core database objects. 
-This service can be injected into all other core services at boot time.
-
-#### utility_svc
-
-Contains a handful of utility functions to encourage consistency across plugins.
-This service can be injected into all other core services at boot time.
-
-#### auth_svc
-
-Contains the login and create user functionality.
-
-#### operation_svc
-
-Contains logic for running and manipulating operations.
-
-#### logger
-
-A custom logger shared with all plugins. When used, all logs by default will print to the console and
-the .logs/ directory. Additionally, they can easily be sent to an ELK stack by enabling that option 
-inside the Logger module.
-
-#### plugins
-
-A complete list of the loaded plugin modules. 
-
-## Closed-source
+## Licensing
 
 In addition to CALDERA's open source capabilities, MITRE maintains several in-house CALDERA plugins that offer 
 more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
