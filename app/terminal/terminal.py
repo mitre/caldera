@@ -18,7 +18,7 @@ class TerminalApp(aiomonitor.Monitor):
         self._sout.write('\t'+'cl: run cleanup commands(required) operation ID' + '\n')
         self._sout.write('\t'+'gr: view groups (optional) group ID' + '\n')
         self._sout.write('\t'+'op: view started operations (optional) operation ID to see the decision chain' + '\n')
-        self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction' + '\n')
+        self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction, cleanup and stealth' + '\n')
         self._sout.write('\t'+'re: view a specific result (required) link ID - from the decision chain.' + '\n')
         self._sout.write('\t'+'st: start an operation. (required) a queued operation ID.' + '\n')
         self._sout.write('\n'+'Generic commands:' + '\n')
