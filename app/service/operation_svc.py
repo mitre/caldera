@@ -31,7 +31,8 @@ class OperationService:
                 self.log.debug('Operation phase %s: completed' % phase)
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
-            await self.cleanup(op_id)
+            if operation[0]['cleanup']:
+                await self.cleanup(op_id)
             self.log.debug('Operation complete: %s' % op_id)
             update = dict(finish=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=update)
@@ -39,9 +40,9 @@ class OperationService:
             traceback.print_exc()
 
     async def cleanup(self, op_id):
-        self.log.debug('Starting cleanup on: %s' % op_id)
+        self.log.debug('Running cleanup on: %s' % op_id)
         clean_commands = await self.data_svc.dao.get('core_cleanup', dict(op_id=op_id))
         for c in reversed(clean_commands):
             link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability_id=c['ability_id'], decide=datetime.now(),
-                        command=c['command'], score=0)
+                        command=c['command'], score=0, jitter=1)
             await self.data_svc.create_link(link)

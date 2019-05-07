@@ -1,13 +1,11 @@
-import string
-
 from base64 import b64encode
 from random import randint, choice
 
 
 def obfuscate_ps1(code):
-    ran1 = ''.join([choice(string.ascii_letters + string.digits) for x in range(3)])
-    ran2 = ''.join([choice(string.ascii_letters + string.digits) for x in range(3)])
-    ran3 = ''.join([choice(string.ascii_letters + string.digits) for x in range(3)])
+    ran1 = 'P4j'
+    ran2 = 'X5x'
+    ran3 = '5x4'
 
     avblah = b64encode(code.encode('utf_16_le'))
     avsux = randint(4000, 5000)

@@ -6,9 +6,9 @@ from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 class UtilityService:
 
-    def obfuscate(self, executor, code):
-        options = dict(psh=lambda c: self.encode_string(obfuscate_ps1(self.decode_bytes(c))),
-                       bash=lambda c: obfuscate_bash(c))
+    @staticmethod
+    def apply_stealth(executor, code):
+        options = dict(psh=lambda c: obfuscate_ps1(c), bash=lambda c: obfuscate_bash(c))
         return options[executor](code)
 
     @staticmethod

@@ -7,10 +7,13 @@ class Sql:
         self.database = database
 
     async def build(self, schema):
-        with sqlite3.connect(self.database) as conn:
-            cursor = conn.cursor()
-            cursor.executescript(schema)
-            conn.commit()
+        try:
+            with sqlite3.connect(self.database) as conn:
+                cursor = conn.cursor()
+                cursor.executescript(schema)
+                conn.commit()
+        except Exception:
+            pass
 
     async def get(self, table, criteria=None):
         with sqlite3.connect(self.database) as conn:
