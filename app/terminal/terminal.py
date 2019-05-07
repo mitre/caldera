@@ -15,6 +15,7 @@ class TerminalApp(aiomonitor.Monitor):
         self._sout.write('\t'+'ab: view abilities (optional) ability ID' + '\n')
         self._sout.write('\t'+'ad: view adversaries (optional) adversary ID' + '\n')
         self._sout.write('\t'+'ag: view all running agents' + '\n')
+        self._sout.write('\t'+'cl: run cleanup commands(required) operation ID' + '\n')
         self._sout.write('\t'+'gr: view groups (optional) group ID' + '\n')
         self._sout.write('\t'+'op: view started operations (optional) operation ID to see the decision chain' + '\n')
         self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction' + '\n')
@@ -69,6 +70,11 @@ class TerminalApp(aiomonitor.Monitor):
         rows = [[adv['id'], adv['name'], adv['description']] for adv in adversaries]
         self._output(['id', 'name', 'description'], rows)
 
+    def do_cl(self, op_id):
+        service = self._locals['services']['operation_svc']
+        asyncio.run_coroutine_threadsafe(service.cleanup(op_id), loop=self._loop)
+        self._sout.write(str(colored('Clean up commands queued', 'yellow')) + '\n')
+
     def do_op(self, identifier=None):
         service = self._locals['services']['data_svc']
         co = asyncio.run_coroutine_threadsafe(service.explode_operation(dict(id=identifier)), loop=self._loop)
@@ -84,9 +90,9 @@ class TerminalApp(aiomonitor.Monitor):
             rows.append([o['id'], o['name'], group, adversary, o['start'], o['finish'], o['phase']])
         self._output(['id', 'name', 'group', 'adversary', 'start', 'finish', 'completed phase'], rows)
 
-    def do_qu(self, name, adversary_name, group_name, jitter='3/5'):
+    def do_qu(self, name, adv_name, group_name, jitter='3/5', cleanup=True, stealth=False):
         service = self._locals['services']['data_svc']
-        op = dict(name=name, group=group_name, adversary=adversary_name, jitter=jitter)
+        op = dict(name=name, group=group_name, adversary=adv_name, jitter=jitter, cleanup=cleanup, stealth=stealth)
         co = asyncio.run_coroutine_threadsafe(service.create_operation(**op), loop=self._loop)
         self._sout.write(str(colored('\nQueued operation #%s. Start it with "st %s"' % (co.result(), co.result()), 'yellow')) + '\n')
 
