@@ -34,12 +34,8 @@ class OperationService(OpControl):
         try:
             for phase in operation[0]['adversary']['phases']:
                 self.log.debug('Operation phase %s: started' % phase)
-                cancel = await self.planner.execute(operation[0], phase, self.opcontrol.check_status)
+                await self.planner.execute(operation[0], phase)
                 self.log.debug('Operation phase %s: completed' % phase)
-                if cancel:
-                    self.log.debug('Operation cancel requested')
-                    await self.close_operation(op_id)
-                    return
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
             if operation[0]['cleanup']:
