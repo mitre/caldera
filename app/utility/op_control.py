@@ -19,13 +19,13 @@ class OpControl:
 
     async def check_status(self, operation):
         while True:
-            state = self.get_state(operation)
+            state = await self.get_state(operation)
             if state == OpState.RUN.value or state == "":
                 break
             elif state == OpState.CANCEL.value:
                 return "Cancel Requested"
             else:
-                asyncio.sleep(5)
+                await asyncio.sleep(5)
 
     async def is_canceled(self, operation):
         state = await self.get_state(operation)
