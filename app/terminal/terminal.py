@@ -7,7 +7,6 @@ import aiomonitor
 from tabulate import tabulate
 from termcolor import colored
 
-
 class TerminalApp(aiomonitor.Monitor):
 
     def do_help(self):
@@ -113,9 +112,10 @@ class TerminalApp(aiomonitor.Monitor):
             next(f)
             reader = csv.reader(f, delimiter=',')
             for line in reader:
-                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0)
+                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, action=line[3])
                 asyncio.run_coroutine_threadsafe(service.dao.create('dark_fact', fact), loop=self._loop)
                 self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
+
 
     """ PRIVATE """
 
