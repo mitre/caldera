@@ -29,24 +29,21 @@ class DataService:
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             with open(filename) as ability:
                 for ab in yaml.load(ability):
-                    executors = [dict(ability_id=ab['id'], executor=ex) for ex in ab.get('executors', [])]
-                    encoded_test = b64encode(ab['command'].strip().encode('utf-8'))
-                    await self.create_ability(id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
-                                              test=encoded_test.decode(), description=ab.get('description'), executors=executors,
-                                              cleanup=b64encode(ab['cleanup'].strip().encode('utf-8')).decode() if ab.get('cleanup') else None,
-                                              parser=ab.get('parser'))
+                    for ex,el in ab['executors'].items():
+                        encoded_test = b64encode(el['command'].strip().encode('utf-8'))
+                        await self.create_ability(id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
+                                                  test=encoded_test.decode(), description=ab.get('description'), executor=ex,
+                                                  cleanup=b64encode(el['cleanup'].strip().encode('utf-8')).decode() if el.get('cleanup') else None,
+                                                  parser=el.get('parser'))
 
     """ CREATE """
 
-    async def create_ability(self, id, tactic, technique, name, test, description, executors=None, cleanup=None, parser=None):
-        await self.dao.delete('core_ability', dict(id=id))
-        await self.dao.delete('core_attack', dict(attack_id=technique['attack_id']))
+    async def create_ability(self, id, tactic, technique, name, test, description, executor, cleanup=None, parser=None):
+        await self.dao.delete('core_ability', dict(id=id, executor=executor))
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
-        await self.dao.create('core_ability', dict(id=id, name=name, test=test, technique=entry_id, description=description, cleanup=cleanup))
-        for entry in executors:
-            await self.dao.create('core_ability_os', entry)
+        await self.dao.create('core_ability', dict(id=id, name=name, test=test, technique=entry_id, executor=executor, description=description, cleanup=cleanup))
         if parser:
             parser['ability_id'] = id
             await self.dao.create('core_parser', parser)
@@ -87,7 +84,6 @@ class DataService:
         for ab in abilities:
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability_id=ab['id']))
-            ab['executors'] = [ex['executor'] for ex in await self.dao.get('core_ability_os', dict(ability_id=ab['id']))]
             ab['technique'] = (await self.dao.get('core_attack', dict(attack_id=ab['technique'])))[0]
         return abilities
 
