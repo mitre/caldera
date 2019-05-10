@@ -20,7 +20,7 @@ def obfuscate_ps1(code):
         empty_string = empty_string.replace("==", "'+'==")
         c = 1
     mangle_quotes = (choice(["''"]))
-    return '''powershell /w 1 /C "s%sv %s -;s%sv %s e%sc;s%sv %s ((g%sv %s).value.toString()+(g%sv %s).value.toString());powershell (g%sv %s).value.toString() %s)''' % (mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, mangle_quotes, ran3, mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, ran3, empty_string)
+    return '''"s%sv %s -;s%sv %s e%sc;s%sv %s ((g%sv %s).value.toString()+(g%sv %s).value.toString());powershell (g%sv %s).value.toString() %s)''' % (mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, mangle_quotes, ran3, mangle_quotes, ran1, mangle_quotes, ran2, mangle_quotes, ran3, empty_string)
 
 
 def obfuscate_bash(code):
