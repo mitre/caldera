@@ -30,11 +30,14 @@ class OperationService(OpControl):
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
+        await self.run_operation(op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
             for phase in operation[0]['adversary']['phases']:
                 self.log.debug('Operation phase %s: started' % phase)
-                await self.planner.execute(operation[0], phase)
+                cancel = await self.planner.execute(operation[0], phase, self)
+                if cancel == 'Cancel Requested':
+                    break
                 self.log.debug('Operation phase %s: completed' % phase)
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
