@@ -17,6 +17,7 @@ from aiohttp_session import SimpleCookieStorage, session_middleware
 from app.database.core_dao import CoreDao
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
+from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.utility_svc import UtilityService
 from app.utility.logger import Logger
@@ -49,6 +50,9 @@ async def init(address, port, services, users):
     mw = [session_middleware(SimpleCookieStorage()), normalize_path_middleware()]
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
+
+    app.router.add_route('POST', '/file/render', file_svc.render)
+    app.router.add_route('POST', '/file/download', file_svc.download)
 
     await data_svc.reload_database()
     for user, pwd in users.items():
@@ -97,9 +101,9 @@ if __name__ == '__main__':
         data_svc = DataService(CoreDao('core.db'))
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=config['planner'])
         auth_svc = AuthService(data_svc=data_svc, ssl_cert=SSL_CERT)
-
+        file_svc = FileSvc(config['stores'])
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
-            logger=Logger('plugin'), plugins=plugin_modules
+            file_svc=file_svc, logger=Logger('plugin'), plugins=plugin_modules
         )
         main(services=services, host=config['host'], port=config['port'], terminal_host=config['terminal_host'], terminal_port=config['terminal_port'], users=config['users'])

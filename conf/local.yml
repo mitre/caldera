@@ -6,6 +6,9 @@ terminal_host: 127.0.0.1
 terminal_port: 8880
 debug_level: DEBUG
 planner: plugins.stockpile.app.sequential
+stores:
+  - plugins/stockpile/filestore
+  - plugins/adversary/filestore
 plugins:
   - stockpile
   - sandcat
