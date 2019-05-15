@@ -25,7 +25,7 @@ the conf/ directory. The default configuration is local.yml (or just "local" fro
 python server.py -E local
 ```
 
-Once running, you can log in to CALDERA through the web interface at https://localhost:8888, using the default credentials of admin:admin. Alternatively, if you have netcat, you can open a terminal into CALDERA and enter help to see the options.
+Once running, you can log in to CALDERA through the web interface at hxxps://localhost:8888, using the default credentials of admin:admin. Alternatively, if you have netcat, you can open a terminal into CALDERA and enter help to see the options.
 ```
 nc localhost 8880
 monitor >>> help
