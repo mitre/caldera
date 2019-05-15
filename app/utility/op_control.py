@@ -27,13 +27,18 @@ class OpControl:
             elif state == OpState.CANCEL.value:
                 return 'Cancel Requested'
             else:
-                asyncio.sleep(5)
+                await asyncio.sleep(5)
 
     async def is_canceled(self, operation):
         state = await self.get_state(operation)
         if state == 'CANCELED':
             return True
         return False
+
+    async def init_operation(self, operation):
+        state = await self.get_state(operation)
+        if state != 'PAUSED' and state != 'CANCELED':
+           await self.run_operation(operation)
 
     async def pause_operation(self, operation):
         if not await self.is_canceled(operation):

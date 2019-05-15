@@ -30,7 +30,7 @@ class OperationService(OpControl):
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
-        await self.run_operation(op_id)
+        await self.init_operation(op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
             for phase in operation[0]['adversary']['phases']:
