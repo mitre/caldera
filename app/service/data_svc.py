@@ -50,7 +50,11 @@ class DataService:
         return 'Saved ability: %s' % id
 
     async def create_adversary(self, name, description, phases):
-        identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
+        id = await self.dao.get('core_adversary', dict(name=name.lower()))
+        if len(id) == 0:
+            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
+        else:
+            identifier = id[0]['id']
         await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
         for ability in phases:
             a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
