@@ -2,7 +2,7 @@ CREATE TABLE if not exists core_result (link_id integer, output text, parsed dat
 CREATE TABLE if not exists core_ability (id text, technique integer, name text, test text, description text, cleanup text, executor, UNIQUE (id, executor) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_group (id integer primary key AUTOINCREMENT, name text, UNIQUE(name));
 CREATE TABLE if not exists core_group_map (group_id integer, agent_id integer, UNIQUE(group_id, agent_id));
-CREATE TABLE if not exists core_adversary (id integer primary key AUTOINCREMENT, name text, description text, UNIQUE (name));
+CREATE TABLE if not exists core_adversary (id integer primary key AUTOINCREMENT, name text, description text, locked integer, UNIQUE (name));
 CREATE TABLE if not exists core_adversary_map (phase integer, adversary_id integer, ability_id text, UNIQUE (adversary_id, phase, ability_id));
 CREATE TABLE if not exists core_operation (id integer primary key AUTOINCREMENT, name text, host_group integer, adversary integer, jitter text, start date, finish date, phase integer);
 CREATE TABLE if not exists core_agent (id integer primary key AUTOINCREMENT, hostname text, paw text, checks integer, last_seen date, sleep integer, executor text, server text);

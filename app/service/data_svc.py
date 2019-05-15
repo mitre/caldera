@@ -23,7 +23,7 @@ class DataService:
                 for doc in yaml.load_all(seed):
                     for adv in doc[0]['adversaries']:
                         phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
-                        await self.create_adversary(adv['name'], adv['description'], phases)
+                        await self.create_adversary(adv['name'], adv['description'], phases, adv['locked'], True)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
@@ -49,11 +49,13 @@ class DataService:
             await self.dao.create('core_parser', parser)
         return 'Saved ability: %s' % id
 
-    async def create_adversary(self, name, description, phases):
+    async def create_adversary(self, name, description, phases, locked, init=False):
         id = await self.dao.get('core_adversary', dict(name=name.lower()))
         if len(id) == 0:
-            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
+            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description, locked=locked))
         else:
+            if id[0]['locked'] and not init:
+                return await self.create_adversary(name + "[*]", description, phases, locked)
             identifier = id[0]['id']
         await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
         for ability in phases:
