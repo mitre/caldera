@@ -17,3 +17,4 @@ CREATE TABLE if not exists opstate (operation text primary key, state text, UNIQ
 ALTER TABLE core_operation ADD COLUMN stealth integer;
 ALTER TABLE core_operation ADD COLUMN cleanup integer;
 ALTER TABLE core_ability ADD COLUMN executor integer;
+ALTER TABLE core_adversary ADD COLUMN locked integer;
