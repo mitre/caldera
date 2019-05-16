@@ -4,7 +4,7 @@ from datetime import datetime
 from importlib import import_module
 
 from app.utility.logger import Logger
-from app.utility.op_control import OpControl
+from app.utility.op_control import OpControl, OpState
 
 
 class OperationService(OpControl):
@@ -36,7 +36,7 @@ class OperationService(OpControl):
             for phase in operation[0]['adversary']['phases']:
                 self.log.debug('Operation phase %s: started' % phase)
                 cancel = await self.planner.execute(operation[0], phase, self)
-                if cancel == 'Cancel Requested':
+                if cancel == OpState.CANCEL:
                     break
                 self.log.debug('Operation phase %s: completed' % phase)
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))

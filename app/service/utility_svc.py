@@ -13,7 +13,7 @@ class UtilityService:
 
     @staticmethod
     def decode_bytes(s):
-        return b64decode(s).decode('utf-8').replace("\n","")
+        return b64decode(s).decode('utf-8').replace('\n','')
 
     @staticmethod
     def encode_string(s):

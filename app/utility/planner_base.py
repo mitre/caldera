@@ -1,4 +1,5 @@
 import asyncio
+from app.utility.op_control import OpState
 
 
 class PlannerBase:
@@ -17,7 +18,7 @@ class PlannerBase:
         while True:
             operation = await self.wait_for_agent(operation['id'], agent['id'])
             cancel = await controller.check_status(operation['id'])
-            if cancel == 'Cancel Requested':
+            if cancel == OpState.CANCEL:
                 return cancel
             link, cleanup = await self.choose_next_link(operation, agent, phase)
             if not link:
@@ -25,13 +26,13 @@ class PlannerBase:
             await self.handle_links(link, cleanup)
 
     async def handle_links(self, link, cleanup):
-        print("This function needs to be implemented/made available in your planner.")
+        self.log.warning('This function needs to be implemented/made available in your planner.')
         return None
 
     async def wait_for_agent(self, op_id, agent_id):
-        print("This function needs to be implemented/made available in your planner.")
+        self.log.warning('This function needs to be implemented/made available in your planner.')
         return None
 
     async def choose_next_link(self, operation, agent, phase):
-        print("This function needs to be implemented/made available in your planner.")
+        self.log.warning('This function needs to be implemented/made available in your planner.')
         return None, None
