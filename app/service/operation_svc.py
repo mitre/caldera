@@ -7,6 +7,10 @@ from app.utility.logger import Logger
 from app.utility.op_control import OpControl, OpState
 
 
+class OpCancelled(Exception):
+    pass
+
+
 class OperationService(OpControl):
 
     def __init__(self, data_svc, utility_svc, planner):
@@ -16,14 +20,16 @@ class OperationService(OpControl):
         self.loop = asyncio.get_event_loop()
         self.log = Logger('operation')
         planning_module = import_module(planner)
-        self.planner = getattr(planning_module, 'LogicalPlanner')(self.data_svc, self.utility_svc, self.log)
+        self.planner = getattr(planning_module, 'LogicalPlanner')(self, self.data_svc, self.utility_svc, self.log)
 
     async def resume(self):
         for op in await self.data_svc.dao.get('core_operation'):
             if not op['finish']:
                 self.loop.create_task(self.run(op['id']))
 
-    async def close_operation(self, op_id):
+    async def handle_close(self, run_cleanup, op_id):
+        if run_cleanup:
+            await self.cleanup(op_id)
         self.log.debug('Operation complete: %s' % op_id)
         update = dict(finish=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=update)
@@ -35,15 +41,13 @@ class OperationService(OpControl):
         try:
             for phase in operation[0]['adversary']['phases']:
                 self.log.debug('Operation phase %s: started' % phase)
-                cancel = await self.planner.execute(operation[0], phase, self)
-                if cancel == OpState.CANCEL:
-                    break
+                await self.planner.execute(operation[0], phase)
                 self.log.debug('Operation phase %s: completed' % phase)
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
-            if operation[0]['cleanup']:
-                await self.cleanup(op_id)
-            await self.close_operation(op_id)
+            await self.handle_close(operation[0]['cleanup'], op_id)
+        except OpCancelled:
+            await self.handle_close(operation[0]['cleanup'], op_id)
         except Exception:
             traceback.print_exc()
 
@@ -55,3 +59,9 @@ class OperationService(OpControl):
                         command=c['command'], score=0, jitter=1)
             await self.data_svc.create_link(link)
         await self.cleanup_operation(op_id)
+
+    async def execute_step(self, link, cleanup):
+        state = await self.check_status(link['op_id'])
+        if state == OpState.CANCEL:
+            raise OpCancelled
+        return await self.data_svc.create_link(link, cleanup)
