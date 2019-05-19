@@ -2,8 +2,12 @@ import glob
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
-
+from uuid import UUID, uuid4
+import logging
 import yaml
+
+logger = logging.getLogger('DataService')
+logger.setLevel('INFO')
 
 
 class DataService:
@@ -25,9 +29,12 @@ class DataService:
                         phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
                         await self.create_adversary(adv['name'], adv['description'], phases)
 
+
+
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            with open(filename) as ability:
+            f = make_uuid(filename)
+            with open(f) as ability:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
@@ -131,3 +138,25 @@ class DataService:
               'ON a.ability_id=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+
+def make_uuid(_filename):
+    uuid_string = _filename.split('/')[-1].split('.')[0]
+    try:
+        val = UUID(uuid_string, version=4)
+        return _filename
+    except ValueError:
+        _uuid = str(uuid4())
+        new_ability_file = _filename.split('/')[:-1]
+        new_ability_file.append('{}.yml'.format(_uuid))
+        new_ability_file = '/'.join(new_ability_file)
+        with open(_filename, 'r') as ability:
+            with open(new_ability_file, 'w') as new_ability:
+                for line in ability:
+                    if '- id:' in line:
+                        l = '- id: {}\n'.format(_uuid)
+                        new_ability.write(l)
+                    else:
+                        new_ability.write(line)
+        logger.warning("Created new ability file with uuid: {}".format( new_ability_file))
+        return new_ability_file
