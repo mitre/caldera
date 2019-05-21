@@ -80,7 +80,7 @@ class Client(object):
 def main():
     parser = argparse.ArgumentParser('A reverse TCP shell')
     parser.add_argument('-H', '--host', required=False, default='0.0.0.0')
-    parser.add_argument('-P', '--port', required=False, default=8889)
+    parser.add_argument('-P', '--port', required=False, default=8880)
     args = parser.parse_args()
 
     client = Client(args.host, args.port)

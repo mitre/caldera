@@ -7,7 +7,6 @@ import sys
 from importlib import import_module
 
 import aiohttp_jinja2
-import aiomonitor
 import jinja2
 import yaml
 from aiohttp import web
@@ -21,7 +20,6 @@ from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.utility_svc import UtilityService
 from app.utility.logger import Logger
-from app.terminal.terminal import TerminalApp
 
 SSL_CERT_FILE = 'conf/cert.pem'
 SSL_KEY_FILE = 'conf/key.pem'
@@ -63,14 +61,12 @@ async def init(address, port, services, users):
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
-def main(services, host, port, terminal_host, terminal_port, users):
+def main(services, host, port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
     try:
-        loc = dict(services=services)
-        with aiomonitor.start_monitor(loop=loop, monitor=TerminalApp, host=terminal_host, port=terminal_port, locals=loc):
-            logging.debug('Starting CALDERA at %s:%s' % (host, port))
-            loop.run_forever()
+        logging.debug('Starting system at %s:%s' % (host, port))
+        loop.run_forever()
     except KeyboardInterrupt:
         pass
 
@@ -106,4 +102,4 @@ if __name__ == '__main__':
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, logger=Logger('plugin'), plugins=plugin_modules
         )
-        main(services=services, host=config['host'], port=config['port'], terminal_host=config['terminal_host'], terminal_port=config['terminal_port'], users=config['users'])
+        main(services=services, host=config['host'], port=config['port'], users=config['users'])
