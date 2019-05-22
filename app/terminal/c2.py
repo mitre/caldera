@@ -1,24 +1,17 @@
 import asyncio
 import csv
-
-from termcolor import colored
 from base64 import b64decode
 from multiprocessing import Process
 
-from app.database.core_dao import CoreDao
-from app.service.data_svc import DataService
-from app.service.operation_svc import OperationService
-from app.service.utility_svc import UtilityService
+from termcolor import colored
 
 
 class C2:
 
-    def __init__(self):
+    def __init__(self, services):
         self.shell_prompt = 'caldera> '
-        self.data_svc = DataService(CoreDao('core.db'))
-        self.operation_svc = OperationService(
-            data_svc=self.data_svc, utility_svc=UtilityService(), planner='plugins.stockpile.app.sequential'
-        )
+        self.data_svc = services.get('data_svc')
+        self.operation_svc = services.get('operation_svc')
         self.modes = dict(
             agent=dict(view=lambda: self.view_agent(),
                        pick=lambda i: self.pick_agent(i)),
@@ -70,7 +63,7 @@ class C2:
             print(colored('[-] No results found', 'red'))
 
     def view_agent(self):
-        for a in self.loop.run_until_complete(self.data_svc.explode_agents()):
+        for a in asyncio.run(self.data_svc.explode_agents()):
             print('--> id:%s | host:%s | groups:%s' % (a['id'], a['hostname'], [g['id'] for g in a['groups']]))
 
     def pick_agent(self, i):

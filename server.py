@@ -33,7 +33,7 @@ async def background_tasks(app):
 
 async def attach_plugins(app, services):
     services['auth_svc'].set_app(app)
-    for pm in plugin_modules:
+    for pm in services.get('plugins'):
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
         logging.debug('Attached plugin: %s' % pm.name)
@@ -49,12 +49,12 @@ async def init(address, port, services, users):
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
 
-    app.router.add_route('POST', '/file/render', file_svc.render)
-    app.router.add_route('POST', '/file/download', file_svc.download)
+    app.router.add_route('POST', '/file/render', services.get('file_svc').render)
+    app.router.add_route('POST', '/file/download', services.get('file_svc').download)
 
-    await data_svc.reload_database()
+    await services.get('data_svc').reload_database()
     for user, pwd in users.items():
-        await auth_svc.register(username=user, password=pwd)
+        await services.get('auth_svc').register(username=user, password=pwd)
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()

