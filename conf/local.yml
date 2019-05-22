@@ -12,7 +12,6 @@ plugins:
   - sandcat
   - gui
   - chain
-  - dark
 users:
   admin: admin
 
