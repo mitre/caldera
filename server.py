@@ -82,8 +82,8 @@ def build_plugins(plugs):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('CALDERA application')
-    parser.add_argument('-E', '--environment', required=True, default='local', help='Select an env. file to use')
+    parser = argparse.ArgumentParser('Welcome to the system')
+    parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         config = yaml.load(c)

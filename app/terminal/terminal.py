@@ -7,7 +7,8 @@ import sys
 import time
 
 from threading import Thread
-
+from termcolor import colored
+sys.path.append('')
 from app.terminal.c2 import C2
 
 
@@ -21,11 +22,10 @@ class ListeningPost(C2):
         self.sessions = []
         self.addresses = []
         self.connection_retry = 5
-        self.shell_prompt = 'caldera> '
         self.help = dict(
-            help=dict(dsc='Show this help'),
-            sessions=dict(dsc='Show active sessions'),
-            enter=dict(dsc='Enter a session by index')
+            help=dict(help='Show this help'),
+            sessions=dict(help='Show active sessions'),
+            enter=dict(help='Enter a session by index')
         )
 
     def accept_connections(self):
@@ -37,17 +37,17 @@ class ListeningPost(C2):
                 address = address + (client_hostname,)
                 self.sessions.append(conn)
                 self.addresses.append(address)
-                print('\n[*] New session: %s:%s' % (address[0], address[1]))
+                print(colored('\n[*] New session: %s:%s' % (address[0], address[1]), 'green'))
             except Exception as e:
-                print('[-] Error accepting connections: %s' % e)
+                print(colored('[-] Error accepting connections: %s' % e, 'red'))
 
     def start_shell(self):
         while True:
             cmd = input(self.shell_prompt)
             mode = re.search(r'\((.*?)\)', self.shell_prompt)
-            if cmd == 'deactivate':
-                self.shell_prompt = 'caldera> '
-            elif cmd in ['agent', 'ability', 'adversary', 'operation']:
+            if cmd == 'help':
+                self._print_help()
+            elif cmd in self.modes.keys():
                 self.shell_prompt = 'caldera (%s)> ' % cmd
             elif mode:
                 self.execute_mode(mode.group(1), cmd)
@@ -55,10 +55,10 @@ class ListeningPost(C2):
                 self._list_sessions()
             elif cmd.startswith('enter'):
                 self._send_target_commands(int(cmd.split(' ')[-1]))
-            elif cmd == 'help':
-                self._print_help()
-            else:
+            elif cmd == '':
                 pass
+            else:
+                print(colored('[-] Bad command', 'red'))
 
     def register_signal_handler(self):
         signal.signal(signal.SIGINT, self._quit_gracefully)
@@ -71,7 +71,7 @@ class ListeningPost(C2):
             self.socket.bind((self.host, self.port))
             self.socket.listen(self.connection_retry)
         except socket.error as e:
-            print('[-] Socket binding error: %s' % e)
+            print(colored('[-] Socket binding error: %s' % e, 'red'))
             time.sleep(self.connection_retry)
             self.socket_bind()
 
@@ -79,23 +79,34 @@ class ListeningPost(C2):
         for conn in self.sessions:
             conn.shutdown(2)
             conn.close()
-        print('\n[*] Connection closed')
+        print(colored('\n[*] Connection closed', 'red'))
         sys.exit(0)
 
     def _print_help(self):
-        print('CLASSIC COMMANDS:')
+        print(colored('COMMANDS:', 'yellow'))
         for cmd, v in self.help.items():
-            print('--- %s: %s' % (cmd, v['dsc']))
-        print('APPLICATION COMMANDS:')
-        for cmd, v in self.special_help.items():
-            print('--- %s: %s' % (cmd, v['dsc']))
+            print(colored('--- %s: %s' % (cmd, v['help']), 'yellow'))
+        print(colored('MODES:', 'yellow'))
+        for cmd, v in self.modes.items():
+            print(colored('--- %s' % cmd, 'yellow'))
+        print(colored('Each mode allows the following commands:', 'yellow'))
+        print(colored('-- view: see all entries for the mode', 'yellow'))
+        print(colored('-- pick: select an entry by ID', 'yellow'))
+        print(colored('-- back: exit the mode', 'yellow'))
+        print(colored('Operation mode allows additional commands:', 'yellow'))
+        print(colored('-- run: execute the mode', 'yellow'))
+        print(colored('-- options: see all args required for the "run" command', 'yellow'))
+        print(colored('-- set: use the syntax "set arg 1" to set arg values', 'yellow'))
+        print(colored('-- missing: shows the missing options for the "run" command to work', 'yellow'))
+        print(colored('-- unset: reset all options', 'yellow'))
 
     def _list_sessions(self):
         for i, conn in enumerate(self.sessions):
             try:
                 conn.send(str.encode(' '))
                 conn.recv(20480)
-                print('--> index:%s | ip:%s | host:%s | port:%s' % (i, self.addresses[i][0], self.addresses[i][2], self.addresses[i][1]))
+                print('--> index:%s | ip:%s | host:%s | port:%s' % (
+                i, self.addresses[i][0], self.addresses[i][2], self.addresses[i][1]))
             except socket.error:
                 del self.sessions[i]
                 del self.addresses[i]
@@ -134,7 +145,7 @@ class ListeningPost(C2):
                     client_response = str(cmd_output, 'utf-8')
                     print(client_response, end='')
             except Exception as e:
-                print('[-] Connection was lost %s' % e)
+                print(colored('[-] Connection was lost %s' % e, 'green'))
                 break
 
 

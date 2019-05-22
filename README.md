@@ -19,17 +19,17 @@ From the root of this project, install the PIP requirements.
 pip install -r requirements.txt
 ```
 
-Then start the server, passing in a reference to an environment configuration file. Config files live inside
-the conf/ directory. The default configuration is local.yml (or just "local" from the command line).
+Then start the server:
 ```
-python server.py -E local
+python server.py
 ```
 
-Once running, you can log in to CALDERA through the web interface at hxxps://localhost:8888, using the default credentials of admin:admin. Alternatively, if you have netcat, you can open a terminal into CALDERA and enter help to see the options.
+Once running, you can log in to the system through the web interface at https://localhost:8888, using the default creds of admin:admin. 
+Alternatively, you can open a terminal into CALDERA and enter help to see the options:
 ```
-nc localhost 8880
-monitor >>> help
+caldera> help
 ```
+
 ## Versions
 
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
