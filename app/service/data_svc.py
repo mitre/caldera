@@ -55,7 +55,7 @@ class DataService:
             identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description, locked=locked))
         else:
             if ident[0]['locked']:
-                return await self.create_adversary(name + "[*]", description, phases, locked)
+                return 'Adversary %s locked... skipping...' % name
             identifier = ident[0]['id']
         await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
         for ability in phases:
