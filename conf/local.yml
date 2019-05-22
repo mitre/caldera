@@ -2,8 +2,9 @@
 
 host: 127.0.0.1
 port: 8888
-terminal_host: 127.0.0.1
-terminal_port: 8880
+terminal:
+  host: 127.0.0.1
+  port: 8880
 debug_level: DEBUG
 planner: plugins.stockpile.app.sequential
 stores:

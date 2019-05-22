@@ -51,3 +51,4 @@ class OpControl:
 
     async def cleanup_operation(self, operation):
         await self.dao.delete('opstate', dict(operation=operation))
+
