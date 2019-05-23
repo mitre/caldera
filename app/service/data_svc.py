@@ -50,11 +50,15 @@ class DataService:
         return 'Saved ability: %s' % id
 
     async def create_adversary(self, name, description, phases, locked):
-        identifier = await self._get_adversary_identifier(name, description, locked)
-        if not identifier:
-            return 'Locked adversary: %s... Skipping...' % name
-        await self._remap_adversary_abilities(identifier, phases)
-        return 'Saved adversary: %s' % name
+        adversary = await self.dao.get('core_adversary', dict(name=name.lower()))
+        if not adversary or not adversary[0]['locked']:
+            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description, locked=locked))
+            await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
+            for ability in phases:
+                a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
+                await self.dao.create('core_adversary_map', a)
+            return 'Saved adversary: %s' % name
+        return 'Cannot save adversary - it is locked'
 
     async def create_group(self, name, paws):
         identifier = await self.dao.create('core_group', dict(name=name))
@@ -75,23 +79,6 @@ class DataService:
             cleanup['link_id'] = link_id
             await self.dao.create('core_cleanup', cleanup)
         return link_id
-
-    async def _get_adversary_identifier(self, name, description, locked):
-        lock_state = False
-        try:
-            ident = await self.dao.get('core_adversary', dict(name=name.lower()))
-            identifier = ident[0]['id']
-            lock_state = ident[0]['locked']
-        except KeyError:
-            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description,
-                                                                      locked=locked))
-        return [False if lock_state else identifier][0]
-
-    async def _remap_adversary_abilities(self, target, phases):
-        await self.dao.delete('core_adversary_map', dict(adversary_id=target))
-        for ability in phases:
-            a = (dict(adversary_id=target, phase=ability['phase'], ability_id=ability['id']))
-            await self.dao.create('core_adversary_map', a)
 
     """ VIEW """
 
