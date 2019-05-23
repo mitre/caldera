@@ -7,7 +7,6 @@ import sys
 from importlib import import_module
 
 import aiohttp_jinja2
-import aiomonitor
 import jinja2
 import yaml
 from aiohttp import web
@@ -21,7 +20,6 @@ from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.utility_svc import UtilityService
 from app.utility.logger import Logger
-from app.terminal.terminal import TerminalApp
 
 SSL_CERT_FILE = 'conf/cert.pem'
 SSL_KEY_FILE = 'conf/key.pem'
@@ -35,7 +33,7 @@ async def background_tasks(app):
 
 async def attach_plugins(app, services):
     services['auth_svc'].set_app(app)
-    for pm in plugin_modules:
+    for pm in services.get('plugins'):
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
         logging.debug('Attached plugin: %s' % pm.name)
@@ -51,26 +49,24 @@ async def init(address, port, services, users):
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
 
-    app.router.add_route('POST', '/file/render', file_svc.render)
-    app.router.add_route('POST', '/file/download', file_svc.download)
+    app.router.add_route('POST', '/file/render', services.get('file_svc').render)
+    app.router.add_route('POST', '/file/download', services.get('file_svc').download)
 
-    await data_svc.reload_database()
+    await services.get('data_svc').reload_database()
     for user, pwd in users.items():
-        await auth_svc.register(username=user, password=pwd)
+        await services.get('auth_svc').register(username=user, password=pwd)
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
-def main(services, host, port, terminal_host, terminal_port, users):
+def main(services, host, port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
     try:
-        loc = dict(services=services)
-        with aiomonitor.start_monitor(loop=loop, monitor=TerminalApp, host=terminal_host, port=terminal_port, locals=loc):
-            logging.debug('Starting CALDERA at %s:%s' % (host, port))
-            loop.run_forever()
+        logging.debug('Starting system at %s:%s' % (host, port))
+        loop.run_forever()
     except KeyboardInterrupt:
         pass
 
@@ -86,8 +82,8 @@ def build_plugins(plugs):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('CALDERA application')
-    parser.add_argument('-E', '--environment', required=True, default='local', help='Select an env. file to use')
+    parser = argparse.ArgumentParser('Welcome to the system')
+    parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         config = yaml.load(c)
@@ -106,4 +102,4 @@ if __name__ == '__main__':
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, logger=Logger('plugin'), plugins=plugin_modules
         )
-        main(services=services, host=config['host'], port=config['port'], terminal_host=config['terminal_host'], terminal_port=config['terminal_port'], users=config['users'])
+        main(services=services, host=config['host'], port=config['port'], users=config['users'])
