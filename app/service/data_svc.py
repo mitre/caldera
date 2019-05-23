@@ -29,8 +29,6 @@ class DataService:
                         phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
                         await self.create_adversary(adv['name'], adv['description'], phases)
 
-
-
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             f = make_uuid(filename)
@@ -138,7 +136,6 @@ class DataService:
               'ON a.ability_id=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
-
 
 def make_uuid(_filename):
     uuid_string = _filename.split('/')[-1].split('.')[0]
