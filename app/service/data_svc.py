@@ -23,7 +23,7 @@ class DataService:
                 for doc in yaml.load_all(seed):
                     for adv in doc[0]['adversaries']:
                         phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
-                        await self.create_adversary(adv['name'], adv['description'], phases, adv['locked'])
+                        await self.create_adversary(adv['name'], adv['description'], phases)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
