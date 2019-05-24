@@ -34,13 +34,13 @@ class CustomShell(Listener):
                            pick=lambda i: self.pick_operation(i),
                            run=lambda: self.run_operation(),
                            options=[
-                               dict(name='name', required=1, default=None, doc='1-word name for operation'),
-                               dict(name='group', required=1, default=1, doc='group ID'),
-                               dict(name='adversary', required=1, default=1, doc='adversary ID'),
-                               dict(name='jitter', required=0, default='2/5', doc='seconds each agent will check in'),
-                               dict(name='cleanup', required=0, default=1, doc='run cleanup for each ability'),
-                               dict(name='stealth', required=0, default=0, doc='obfuscate the ability commands'),
-                               dict(name='seed', required=0, default=None, doc='absolute path to a facts csv')
+                               dict(name='name', required=1, value=None, doc='1-word name for operation'),
+                               dict(name='group', required=1, value=1, doc='group ID'),
+                               dict(name='adversary', required=1, value=1, doc='adversary ID'),
+                               dict(name='jitter', required=0, value='2/5', doc='seconds each agent will check in'),
+                               dict(name='cleanup', required=0, value=1, doc='run cleanup for each ability'),
+                               dict(name='stealth', required=0, value=0, doc='obfuscate the ability commands'),
+                               dict(name='seed', required=0, value=None, doc='absolute path to a facts csv')
                            ])
         )
 
@@ -94,13 +94,13 @@ class CustomShell(Listener):
             elif cmd.startswith('set'):
                 pieces = cmd.split(' ')
                 option = next((o for o in chosen['options'] if o['name'] == pieces[1]), False)
-                option['default'] = pieces[2]
+                option['value'] = pieces[2]
             elif cmd == 'unset':
                 for option in chosen['options']:
-                    option['default'] = None
+                    option['value'] = None
             elif cmd == 'missing':
-                missing = [option for option in chosen['options'] if option['default'] is None and option['required']]
-                self.log.console_table([missing])
+                missing = [option for option in chosen['options'] if option['value'] is None and option['required']]
+                self.log.console_table(missing)
             elif len(cmd.split(' ')) == 2:
                 pieces = cmd.split(' ')
                 await self.modes[mode][pieces[0]](pieces[1])
