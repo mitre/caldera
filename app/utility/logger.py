@@ -45,4 +45,3 @@ class Logger:
         rows.insert(0, headers)
         table = tabulate(rows, headers='firstrow', tablefmt='orgtbl')
         print(table, flush=True)
-
