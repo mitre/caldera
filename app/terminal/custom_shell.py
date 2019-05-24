@@ -46,21 +46,24 @@ class CustomShell(Listener):
 
     async def start_shell(self):
         while True:
-            cmd = await ainput(self.shell_prompt)
-            mode = re.search(r'\((.*?)\)', self.shell_prompt)
-            if cmd == 'help':
-                await self.print_help()
-            elif cmd in self.modes.keys():
-                self.shell_prompt = 'caldera (%s)> ' % cmd
-            elif mode:
-                await self.execute_mode(mode.group(1), cmd)
-            elif cmd == 'sessions':
-                await self.list_sessions()
-            elif cmd.startswith('enter'):
-                await self.send_target_commands(int(cmd.split(' ')[-1]))
-            elif cmd == '':
-                pass
-            else:
+            try:
+                cmd = await ainput(self.shell_prompt)
+                mode = re.search(r'\((.*?)\)', self.shell_prompt)
+                if cmd == 'help':
+                    await self.print_help()
+                elif cmd in self.modes.keys():
+                    self.shell_prompt = 'caldera (%s)> ' % cmd
+                elif mode:
+                    await self.execute_mode(mode.group(1), cmd)
+                elif cmd == 'sessions':
+                    await self.list_sessions()
+                elif cmd.startswith('enter'):
+                    await self.send_target_commands(int(cmd.split(' ')[-1]))
+                elif cmd == '':
+                    pass
+                else:
+                    self.log.console('Bad command', 'red')
+            except Exception:
                 self.log.console('Bad command', 'red')
 
     async def print_help(self):
@@ -105,10 +108,10 @@ class CustomShell(Listener):
                 pass
             else:
                 await self.modes[mode][cmd]()
-        except KeyError:
-            self.log.console('Bad command', 'red')
         except IndexError:
             self.log.console('No results found', 'red')
+        except Exception:
+            self.log.console('Bad command', 'red')
 
     async def view_agent(self):
         self.log.console_table(await self.data_svc.explode_agents())

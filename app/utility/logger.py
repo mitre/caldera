@@ -1,7 +1,6 @@
 import logging
 
 from tabulate import tabulate
-from prettytable import PrettyTable
 from termcolor import colored
 
 
