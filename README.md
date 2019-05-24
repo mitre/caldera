@@ -90,7 +90,7 @@ You must complete this mission in less than 60 seconds.
 
 Start by booting up the core system.
 ```
-python server.py
+python -u server.py
 ```
 
 Then start a 54ndc47 agent on the same machine.
