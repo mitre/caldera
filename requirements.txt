@@ -8,3 +8,4 @@ PyJWT==1.7.1
 termcolor==1.1.0
 tabulate==0.8.3
 cryptography==2.3.1
+pyfiglet==0.8.post1

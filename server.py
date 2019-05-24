@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import random
 import ssl
 import sys
 from importlib import import_module
@@ -12,6 +13,7 @@ import yaml
 from aiohttp import web
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_session import SimpleCookieStorage, session_middleware
+from pyfiglet import Figlet
 
 from app.database.core_dao import CoreDao
 from app.service.auth_svc import AuthService
@@ -62,6 +64,13 @@ async def init(address, port, services, users):
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
+def welcome_msg():
+    custom_fig = Figlet(font='contrast')
+    new_font = random.choice(custom_fig.getFonts())
+    custom_fig.setFont(font=new_font)
+    print(custom_fig.renderText('caldera'))
+
+
 def main(services, host, port, sockets, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
@@ -107,4 +116,5 @@ if __name__ == '__main__':
             file_svc=file_svc, plugins=plugin_modules, logger=Logger('plugin')
         )
         terminal = CustomShell(services)
+        welcome_msg()
         main(services=services, host=cfg['host'], port=cfg['port'], sockets=cfg['sockets'], users=cfg['users'])
