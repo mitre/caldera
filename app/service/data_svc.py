@@ -49,16 +49,13 @@ class DataService:
             await self.dao.create('core_parser', parser)
         return 'Saved ability: %s' % id
 
-    async def create_adversary(self, name, description, phases, locked):
-        adversary = await self.dao.get('core_adversary', dict(name=name.lower()))
-        if not adversary or not adversary[0]['locked']:
-            identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description, locked=locked))
-            await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
-            for ability in phases:
-                a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
-                await self.dao.create('core_adversary_map', a)
-            return 'Saved adversary: %s' % name
-        return 'Cannot save adversary - it is locked'
+    async def create_adversary(self, name, description, phases):
+        identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
+        await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
+        for ability in phases:
+            a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
+            await self.dao.create('core_adversary_map', a)
+        return 'Saved adversary: %s' % name
 
     async def create_group(self, name, paws):
         identifier = await self.dao.create('core_group', dict(name=name))

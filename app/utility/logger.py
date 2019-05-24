@@ -1,7 +1,6 @@
 import logging
 
 from tabulate import tabulate
-from prettytable import PrettyTable
 from termcolor import colored
 
 
@@ -46,4 +45,3 @@ class Logger:
         rows.insert(0, headers)
         table = tabulate(rows, headers='firstrow', tablefmt='orgtbl')
         print(table, flush=True)
-
