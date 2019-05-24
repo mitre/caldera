@@ -93,7 +93,7 @@ if __name__ == '__main__':
         cfg = yaml.load(c)
         logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
-        logging.getLogger().setLevel('ERROR')
+        logging.getLogger().setLevel(cfg['debug_level'])
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])

@@ -7,7 +7,7 @@ sockets:
 terminal:
   host: 127.0.0.1
   port: 8880
-debug_level: DEBUG
+debug_level: ERROR
 planner: plugins.stockpile.app.sequential
 stores:
   - plugins/stockpile/filestore
