@@ -24,10 +24,9 @@ Then start the server:
 python server.py
 ```
 
-Once running, you can log in to the system through the web interface at https://localhost:8888, using the default creds of admin:admin. 
-Alternatively, you can open a new terminal into CALDERA and enter help to see the options:
+Once running, you can log in to the system through the web interface at https://localhost:8888, 
+using the default creds of admin:admin. Alternatively, you can use the provided shell prompt:
 ```
-python app/terminal/terminal.py
 caldera> help
 ```
 
@@ -89,10 +88,9 @@ along with to understand the system. These missions will assume CALDERA is runni
 > Perform reconnaissance on a compromised OSX laptop. Your employer needs a list of the user’s preferred WIFI networks to perform surveillance on them. Grab this list and collect anything else you can, then get out of town. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. 
 You must complete this mission in less than 60 seconds. 
 
-Start by booting up the core system and the terminal view on your OSX laptop.
+Start by booting up the core system.
 ```
 python server.py
-python app/terminal/terminal.py
 ```
 
 Then start a 54ndc47 agent on the same machine.
