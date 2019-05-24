@@ -105,6 +105,11 @@ class ListeningPost(C2):
         print(colored('-- set: use the syntax "set arg 1" to set arg values', 'yellow'))
         print(colored('-- missing: shows the missing options for the "run" command to work', 'yellow'))
         print(colored('-- unset: reset all options', 'yellow'))
+        print(colored('-- delete: delete an operation', 'yellow'))
+        print(colored('-- Operation Runtime Controls:', 'yellow'))
+        print(colored('---- pause: pause an operation', 'yellow'))
+        print(colored('---- cancel: cancel an operation', 'yellow'))
+        print(colored('---- resume: resume a paused operation', 'yellow'))
 
     def _list_sessions(self):
         for i, conn in enumerate(self.sessions):

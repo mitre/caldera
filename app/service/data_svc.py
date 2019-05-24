@@ -134,3 +134,9 @@ class DataService:
               'ON a.ability_id=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+    """ DELETE """
+
+    async def delete_operations(self, criteria=None):
+        await self.dao.delete('core_operation', dict(id=criteria['id']))
+        await self.dao.delete('core_chain', dict(op_id=criteria['id']))

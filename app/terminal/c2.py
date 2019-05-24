@@ -22,6 +22,10 @@ class C2:
             operation=dict(view=lambda: self.view_operation(),
                            pick=lambda i: self.pick_operation(i),
                            run=lambda: self.run_operation(),
+                           delete=lambda i: self.delete_operation(i),
+                           pause=lambda i: self.pause_operation(i),
+                           resume=lambda i: self.resume_operation(i),
+                           cancel=lambda i: self.cancel_operation(i),
                            options=[
                                 dict(name='name', required=1, default=None, doc='1-word name for operation'),
                                 dict(name='group', required=1, default=1, doc='group ID'),
@@ -95,8 +99,12 @@ class C2:
 
     def view_operation(self):
         for a in asyncio.run(self.data_svc.explode_operation()):
-            print('--> id:%s | name:%s | group:%s | adversary:%s | start:%s | finish:%s' % (
-                a['id'], a['name'], a['host_group']['id'], a['adversary']['id'], a['start'], a['finish']))
+            state = asyncio.run(self.operation_svc.get_state(a['id']))
+            message = '--> id:%s | name:%s | group:%s | adversary:%s | start:%s | finish:%s' % (
+                a['id'], a['name'], a['host_group']['id'], a['adversary']['id'], a['start'], a['finish'])
+            if a['finish'] is None:
+                message = message + ' | state:%s' % state
+            print(message)
 
     def pick_operation(self, i):
         for a in asyncio.run(self.data_svc.explode_operation(criteria=dict(id=i))):
@@ -118,6 +126,18 @@ class C2:
                     print(str(colored('[*] Pre-seeding %s' % line[0], 'green')))
         Process(target=lambda: asyncio.run(self.operation_svc.run(op_id))).start()
         print(colored('[*] Operation %s started' % op_id, 'green'))
+
+    def cancel_operation(self, target):
+        asyncio.run(self.operation_svc.cancel_operation(target))
+
+    def pause_operation(self, target):
+        asyncio.run(self.operation_svc.pause_operation(target))
+
+    def resume_operation(self, target):
+        asyncio.run(self.operation_svc.run_operation(target))
+
+    def delete_operation(self, target):
+        asyncio.run(self.data_svc.delete_operations(dict(id=target)))
 
     @staticmethod
     def _decode(blob):
