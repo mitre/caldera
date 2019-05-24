@@ -129,7 +129,8 @@ class CustomShell(Listener):
     async def pick_ability(self, i):
         abilities = await self.data_svc.explode_abilities()
         for a in await self.data_svc.explode_abilities(criteria=dict(id=abilities[int(i)]['id'])):
-            self.log.console_table([dict(test=self.utility_svc.decode_bytes(a['test']),
+            self.log.console_table([dict(executor=a['executor'],
+                                         test=self.utility_svc.decode_bytes(a['test']),
                                          cleanup=self.utility_svc.decode_bytes(a['cleanup']))])
 
     async def view_adversary(self):

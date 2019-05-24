@@ -1,6 +1,5 @@
 import logging
 
-from tabulate import tabulate
 from termcolor import colored
 
 
@@ -40,8 +39,12 @@ class Logger:
 
     @staticmethod
     def console_table(data):
-        headers = [str(colored(h, 'red')) for h in data[0].keys()]
-        rows = [list(dictionary.values()) for dictionary in data]
-        rows.insert(0, headers)
-        table = tabulate(rows, headers='firstrow', tablefmt='orgtbl')
-        print(table, flush=True)
+        headers = list(data[0].keys())
+        header_list = [headers]
+        for item in data:
+            header_list.append([str(item[col] or '') for col in headers])
+        column_size = [max(map(len, col)) for col in zip(*header_list)]
+        row_format = ' | '.join(['{{:<{}}}'.format(i) for i in column_size])
+        header_list.insert(1, ['-' * i for i in column_size])
+        for item in header_list:
+            print(row_format.format(*item))
