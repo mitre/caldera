@@ -20,14 +20,16 @@ class Listener:
         self.log.console('New session: %s:%s' % (address[0], address[1]))
 
     async def list_sessions(self):
+        active = []
         for i, conn in enumerate(self.sessions):
             try:
                 conn.send(str.encode(' '))
                 conn.recv(20480)
-                print('--> index:%s | connection:%s' % (i, self.addresses[i]))
+                active.append(dict(index=i, address=self.addresses[i]))
             except socket.error:
                 del self.sessions[i]
                 del self.addresses[i]
+        self.log.console_table(active)
 
     async def read_command_output(self, conn):
         raw_msg_len = await self.recvall(conn, 4)
