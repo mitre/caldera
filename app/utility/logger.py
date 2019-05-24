@@ -1,16 +1,13 @@
 import logging
 
+from tabulate import tabulate
+from prettytable import PrettyTable
+from termcolor import colored
+
 
 class Logger:
     """
-    Custom logger. By default, all logs will be:
-        1) logged to console
-        2) To a file in the .logs directory
-        3) (optionally) sent to a 3rd party like Logstash
-
-    EXAMPLE: To direct logs to Logstash: replace the handler with:
-        import logstash
-        self.logger.addHandler(logstash.LogstashHandler(logstash_fqdn, 5959))
+    Custom logger: all logs will be sent to the .logs directory
     """
     def __init__(self, name):
         self.name = name
@@ -19,6 +16,9 @@ class Logger:
         formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        self.console_colors = dict(red=lambda msg: print(colored('[-] %s' % msg, 'red')),
+                                   green=lambda msg: print(colored('[*] %s' % msg, 'green')),
+                                   yellow=lambda msg: print(colored(msg, 'yellow')))
 
     def debug(self, msg):
         self.logger.setLevel(logging.DEBUG)
@@ -35,3 +35,15 @@ class Logger:
     def error(self, msg):
         self.logger.setLevel(logging.ERROR)
         self.logger.error(msg)
+
+    def console(self, msg, color='green'):
+        self.console_colors[color](msg)
+
+    @staticmethod
+    def console_table(data):
+        headers = [str(colored(h, 'red')) for h in data[0].keys()]
+        rows = [list(dictionary.values()) for dictionary in data]
+        rows.insert(0, headers)
+        table = tabulate(rows, headers='firstrow', tablefmt='orgtbl')
+        print(table, flush=True)
+

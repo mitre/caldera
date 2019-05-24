@@ -6,4 +6,5 @@ jinja2==2.10.1
 pyyaml==4.2b1
 PyJWT==1.7.1
 termcolor==1.1.0
+tabulate==0.8.3
 cryptography==2.3.1

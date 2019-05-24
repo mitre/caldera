@@ -58,3 +58,4 @@ async def reset_password(auth_svc, submission, session):
     s1, k1 = await auth_svc.generate(submission.get('new'))
     await auth_svc.data_svc.dao.update('users', 'username', token_data.get('user'), dict(password=k1, salt=s1))
     return web.json_response('PASSWORD CHANGED SUCCESSFULLY')
+
