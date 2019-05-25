@@ -64,11 +64,12 @@ async def init(address, port, services, users):
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
-def welcome_msg():
+def welcome_msg(host, port):
     custom_fig = Figlet(font='contrast')
     new_font = random.choice(custom_fig.getFonts())
     custom_fig.setFont(font=new_font)
     print(custom_fig.renderText('caldera'))
+    print('Also available at https://%s:%s' % (host, port))
 
 
 def main(services, host, port, sockets, users):
@@ -116,5 +117,5 @@ if __name__ == '__main__':
             file_svc=file_svc, plugins=plugin_modules, logger=Logger('plugin')
         )
         terminal = CustomShell(services)
-        welcome_msg()
+        welcome_msg(cfg['host'], cfg['port'])
         main(services=services, host=cfg['host'], port=cfg['port'], sockets=cfg['sockets'], users=cfg['users'])

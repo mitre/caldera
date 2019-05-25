@@ -67,22 +67,22 @@ class CustomShell(Listener):
                 self.log.console('Bad command', 'red')
 
     async def print_help(self):
-        self.log.console('COMMANDS:', 'yellow')
+        self.log.console('COMMANDS:', 'white')
         for cmd, v in self.help.items():
-            self.log.console('--- %s: %s' % (cmd, v['help']), 'yellow')
-        self.log.console('MODES:', 'yellow')
+            self.log.console('--- %s: %s' % (cmd, v['help']), 'white')
+        self.log.console('MODES:', 'white')
         for cmd, v in self.modes.items():
-            self.log.console('--- %s' % cmd, 'yellow')
-        self.log.console('Each mode allows the following commands:', 'yellow')
-        self.log.console('-- view: see all entries for the mode', 'yellow')
-        self.log.console('-- pick: select an entry by ID', 'yellow')
-        self.log.console('-- back: exit the mode', 'yellow')
-        self.log.console('Operation mode allows additional commands:', 'yellow')
-        self.log.console('-- run: execute the mode', 'yellow')
-        self.log.console('-- options: see all args required for the "run" command', 'yellow')
-        self.log.console('-- set: use the syntax "set arg 1" to set arg values', 'yellow')
-        self.log.console('-- missing: shows the missing options for the "run" command to work', 'yellow')
-        self.log.console('-- unset: reset all options', 'yellow')
+            self.log.console('--- %s' % cmd, 'white')
+        self.log.console('Each mode allows the following commands:', 'white')
+        self.log.console('-- view: see all entries for the mode', 'white')
+        self.log.console('-- pick: select an entry by ID', 'white')
+        self.log.console('-- back: exit the mode', 'white')
+        self.log.console('Operation mode allows additional commands:', 'white')
+        self.log.console('-- run: execute the mode', 'white')
+        self.log.console('-- options: see all args required for the "run" command', 'white')
+        self.log.console('-- set: use the syntax "set arg 1" to set arg values', 'white')
+        self.log.console('-- missing: shows the missing options for the "run" command to work', 'white')
+        self.log.console('-- unset: reset all options', 'white')
 
     async def execute_mode(self, mode, cmd):
         try:
@@ -163,7 +163,7 @@ class CustomShell(Listener):
             self.log.console_table(links)
 
     async def run_operation(self):
-        operation = {o['name']: o['default'] for o in self.modes['operation']['options']}
+        operation = {o['name']: o['value'] for o in self.modes['operation']['options']}
         seed_file = operation.pop('seed')
         op_id = await self.data_svc.create_operation(**operation)
         if seed_file:

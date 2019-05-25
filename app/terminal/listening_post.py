@@ -53,7 +53,7 @@ class Listener:
         conn.send(str.encode(' '))
         cwd_bytes = await self.read_command_output(conn)
         cwd = str(cwd_bytes, 'utf-8')
-        print(cwd, end='')
+        print('(inside) %s' % cwd, end='')
         while True:
             try:
                 cmd = await ainput()
