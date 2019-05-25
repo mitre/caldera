@@ -53,18 +53,18 @@ class Listener:
         conn.send(str.encode(' '))
         while True:
             try:
-                cwd_bytes = self.read_command_output(conn)
+                cwd_bytes = await self.read_command_output(conn)
                 cwd = str(cwd_bytes, 'utf-8')
                 print(cwd, end='')
 
-                cmd = input()
+                cmd = await ainput()
                 if not cmd:
                     cmd = ' '
                 if len(str.encode(cmd)) > 0:
 
                     # UN encrypted
                     conn.send(str.encode(cmd))
-                    cmd_output = self.read_command_output(conn)
+                    cmd_output = await self.read_command_output(conn)
                     client_response = str(cmd_output, 'utf-8')
                     print(client_response, end='')
 
@@ -74,5 +74,5 @@ class Listener:
                         print('\n')
                         break
             except Exception as e:
-                print('Connection was lost %s' % e)
+                self.log.console('Connection was lost %s' % e, 'red')
                 break
