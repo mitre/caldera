@@ -69,7 +69,7 @@ def welcome_msg(host, port):
     new_font = random.choice(custom_fig.getFonts())
     custom_fig.setFont(font=new_font)
     print(custom_fig.renderText('caldera'))
-    print('Also available at https://%s:%s' % (host, port))
+    print('Enter help or go to https://%s:%s in a browser' % (host, port))
 
 
 def main(services, host, port, sockets, users):

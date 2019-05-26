@@ -10,13 +10,12 @@ class Logger:
     def __init__(self, name):
         self.name = name
         self.logger = logging.getLogger(name)
-        handler = logging.FileHandler('%s/%s' % ('.logs', name))
-        formatter = logging.Formatter('%(asctime)s;%(levelname)s;%(message)s')
-        handler.setFormatter(formatter)
+        handler = logging.FileHandler('%s/%s.log' % ('.logs', name))
+        handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s', '%Y-%m-%d %H:%M:%S'))
         self.logger.addHandler(handler)
         self.console_colors = dict(red=lambda msg: print(colored('[-] %s' % msg, 'red')),
-                                   green=lambda msg: print(colored('[*] %s' % msg, 'green')),
-                                   white=lambda msg: print(colored(msg, 'white')))
+                                   green=lambda msg: print(colored('[+] %s' % msg, 'green')),
+                                   blue=lambda msg: print(colored('[*] %s' % msg, 'blue')))
 
     def debug(self, msg):
         self.logger.setLevel(logging.DEBUG)
