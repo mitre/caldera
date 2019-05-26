@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 Then start the server:
 ```
-python server.py
+python -u server.py
 ```
 
 Once running, you can log in to the system through the web interface at https://localhost:8888, 
