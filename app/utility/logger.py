@@ -15,8 +15,8 @@ class Logger:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.console_colors = dict(red=lambda msg: print(colored('[-] %s' % msg, 'red')),
-                                   green=lambda msg: print(colored('[*] %s' % msg, 'green')),
-                                   white=lambda msg: print(colored(msg, 'white')))
+                                   green=lambda msg: print(colored('[+] %s' % msg, 'green')),
+                                   blue=lambda msg: print(colored('[*] %s' % msg, 'blue')))
 
     def debug(self, msg):
         self.logger.setLevel(logging.DEBUG)

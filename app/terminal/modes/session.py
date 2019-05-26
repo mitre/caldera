@@ -2,24 +2,20 @@ import socket
 import struct
 
 from aioconsole import ainput
+from app.terminal.mode import Mode
 
 
-class Listener:
+class Session(Mode):
 
-    def __init__(self, log):
-        self.log = log
+    def __init__(self, services, logger):
+        super().__init__(services, logger)
         self.sessions = []
         self.addresses = []
 
-    async def accept_sessions(self, reader, writer):
-        address = writer.get_extra_info('peername')
-        connection = writer.get_extra_info('socket')
-        connection.setblocking(1)
-        self.sessions.append(connection)
-        self.addresses.append('%s:%s' % (address[0], address[1]))
-        self.log.console('New session: %s:%s' % (address[0], address[1]))
+    async def info(self):
+        print('SESSIONS mode allows you to view and enter compromised hosts')
 
-    async def list_sessions(self):
+    async def search(self):
         active = []
         for i, conn in enumerate(self.sessions):
             try:
@@ -31,29 +27,18 @@ class Listener:
                 del self.addresses[i]
         self.log.console_table(active)
 
-    async def read_command_output(self, conn):
-        raw_msg_len = await self.recvall(conn, 4)
-        if not raw_msg_len:
-            return None
-        msg_len = struct.unpack('>I', raw_msg_len)[0]
-        return await self.recvall(conn, msg_len)
+    async def use(self, i):
+        await self._send_target_commands(int(i.split(' ')[-1]))
 
-    @staticmethod
-    async def recvall(conn, n):
-        data = b''
-        while len(data) < n:
-            packet = conn.recv(n - len(data))
-            if not packet:
-                return None
-            data += packet
-        return data
+    async def execute(self, cmd):
+        await self.execute_mode(cmd)
 
-    async def send_target_commands(self, target):
+    async def _send_target_commands(self, target):
         conn = self.sessions[target]
         conn.send(str.encode(' '))
         while True:
             try:
-                cwd_bytes = await self.read_command_output(conn)
+                cwd_bytes = await self._read_command_output(conn)
                 cwd = str(cwd_bytes, 'utf-8')
                 print(cwd, end='')
 
@@ -62,7 +47,7 @@ class Listener:
                     cmd = ' '
                 if len(str.encode(cmd)) > 0:
                     conn.send(str.encode(cmd))
-                    cmd_output = await self.read_command_output(conn)
+                    cmd_output = await self._read_command_output(conn)
                     client_response = str(cmd_output, 'utf-8')
                     print(client_response, end='')
 
@@ -74,3 +59,20 @@ class Listener:
             except Exception as e:
                 self.log.console('Connection was lost %s' % e, 'red')
                 break
+
+    async def _read_command_output(self, conn):
+        raw_msg_len = await self._recvall(conn, 4)
+        if not raw_msg_len:
+            return None
+        msg_len = struct.unpack('>I', raw_msg_len)[0]
+        return await self._recvall(conn, msg_len)
+
+    @staticmethod
+    async def _recvall(conn, n):
+        data = b''
+        while len(data) < n:
+            packet = conn.recv(n - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data

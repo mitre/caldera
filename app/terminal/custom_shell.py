@@ -1,47 +1,26 @@
-import asyncio
-import csv
 import re
-from multiprocessing import Process
 
 from aioconsole import ainput
 
-from app.terminal.listening_post import Listener
+from app.terminal.modes.ability import Ability
+from app.terminal.modes.adversary import Adversary
+from app.terminal.modes.agent import Agent
+from app.terminal.modes.operation import Operation
+from app.terminal.modes.session import Session
 from app.utility.logger import Logger
 
 
-class CustomShell(Listener):
+class CustomShell:
 
     def __init__(self, services):
         self.log = Logger('terminal')
-        super().__init__(self.log)
         self.shell_prompt = 'caldera> '
-        self.data_svc = services.get('data_svc')
-        self.utility_svc = services.get('utility_svc')
-        self.operation_svc = services.get('operation_svc')
-        self.help = dict(
-            help=dict(help='Show this help'),
-            sessions=dict(help='Show active sessions'),
-            enter=dict(help='Enter a session by index')
-        )
         self.modes = dict(
-            agent=dict(view=lambda: self.view_agent(),
-                       pick=lambda i: self.pick_agent(i)),
-            ability=dict(view=lambda: self.view_ability(),
-                         pick=lambda i: self.pick_ability(i)),
-            adversary=dict(view=lambda: self.view_adversary(),
-                           pick=lambda i: self.pick_adversary(i)),
-            operation=dict(view=lambda: self.view_operation(),
-                           pick=lambda i: self.pick_operation(i),
-                           run=lambda: self.run_operation(),
-                           options=[
-                               dict(name='name', required=1, value=None, doc='1-word name for operation'),
-                               dict(name='group', required=1, value=1, doc='group ID'),
-                               dict(name='adversary', required=1, value=1, doc='adversary ID'),
-                               dict(name='jitter', required=0, value='2/5', doc='seconds each agent will check in'),
-                               dict(name='cleanup', required=0, value=1, doc='run cleanup for each ability'),
-                               dict(name='stealth', required=0, value=0, doc='obfuscate the ability commands'),
-                               dict(name='seed', required=0, value=None, doc='absolute path to a facts csv')
-                           ])
+            session=Session(services, self.log),
+            agent=Agent(services, self.log),
+            ability=Ability(services, self.log),
+            adversary=Adversary(services, self.log),
+            operation=Operation(services, self.log)
         )
 
     async def start_shell(self):
@@ -50,128 +29,35 @@ class CustomShell(Listener):
                 cmd = await ainput(self.shell_prompt)
                 mode = re.search(r'\((.*?)\)', self.shell_prompt)
                 if cmd == 'help':
-                    await self.print_help()
+                    await self._print_help()
                 elif cmd in self.modes.keys():
                     self.shell_prompt = 'caldera (%s)> ' % cmd
                 elif mode:
-                    await self.execute_mode(mode.group(1), cmd)
-                elif cmd == 'sessions':
-                    await self.list_sessions()
-                elif cmd.startswith('enter'):
-                    await self.send_target_commands(int(cmd.split(' ')[-1]))
+                    await self.modes[mode.group(1)].execute(cmd)
                 elif cmd == '':
                     pass
-                else:
-                    self.log.console('Bad command', 'red')
             except Exception:
                 self.log.console('Bad command', 'red')
 
-    async def print_help(self):
-        self.log.console('COMMANDS:', 'white')
-        for cmd, v in self.help.items():
-            self.log.console('--- %s: %s' % (cmd, v['help']), 'white')
-        self.log.console('MODES:', 'white')
+    async def accept_sessions(self, reader, writer):
+        address = writer.get_extra_info('peername')
+        connection = writer.get_extra_info('socket')
+        connection.setblocking(1)
+        self.modes['session'].sessions.append(connection)
+        self.modes['session'].addresses.append('%s:%s' % (address[0], address[1]))
+        self.log.console('New session: %s:%s' % (address[0], address[1]))
+
+    async def _print_help(self):
+        print('MODES:')
         for cmd, v in self.modes.items():
-            self.log.console('--- %s' % cmd, 'white')
-        self.log.console('Each mode allows the following commands:', 'white')
-        self.log.console('-- view: see all entries for the mode', 'white')
-        self.log.console('-- pick: select an entry by ID', 'white')
-        self.log.console('-- back: exit the mode', 'white')
-        self.log.console('Operation mode allows additional commands:', 'white')
-        self.log.console('-- run: execute the mode', 'white')
-        self.log.console('-- options: see all args required for the "run" command', 'white')
-        self.log.console('-- set: use the syntax "set arg 1" to set arg values', 'white')
-        self.log.console('-- missing: shows the missing options for the "run" command to work', 'white')
-        self.log.console('-- unset: reset all options', 'white')
-
-    async def execute_mode(self, mode, cmd):
-        try:
-            chosen = self.modes.get(mode)
-            if cmd == 'back':
-                self.shell_prompt = 'caldera> '
-            elif cmd == 'options':
-                self.log.console_table(chosen['options'])
-            elif cmd.startswith('set'):
-                pieces = cmd.split(' ')
-                option = next((o for o in chosen['options'] if o['name'] == pieces[1]), False)
-                option['value'] = pieces[2]
-            elif cmd == 'unset':
-                for option in chosen['options']:
-                    option['value'] = None
-            elif cmd == 'missing':
-                missing = [option for option in chosen['options'] if option['value'] is None and option['required']]
-                self.log.console_table(missing)
-            elif len(cmd.split(' ')) == 2:
-                pieces = cmd.split(' ')
-                await self.modes[mode][pieces[0]](pieces[1])
-            elif cmd == '':
-                pass
-            else:
-                await self.modes[mode][cmd]()
-        except IndexError:
-            self.log.console('No results found', 'red')
-        except Exception:
-            self.log.console('Bad command', 'red')
-
-    async def view_agent(self):
-        self.log.console_table(await self.data_svc.explode_agents())
-
-    async def pick_agent(self, i):
-        self.log.console_table(await self.data_svc.explode_agents(criteria=dict(id=i)))
-
-    async def view_ability(self):
-        abilities = []
-        for i, a in enumerate(await self.data_svc.explode_abilities()):
-            abilities.append(dict(id=i, technique=a['technique']['attack_id'], executor=a['executor'],
-                                  name=a['name'], description=a['description']))
-        self.log.console_table(abilities)
-
-    async def pick_ability(self, i):
-        abilities = await self.data_svc.explode_abilities()
-        for a in await self.data_svc.explode_abilities(criteria=dict(id=abilities[int(i)]['id'])):
-            self.log.console_table([dict(executor=a['executor'],
-                                         test=self.utility_svc.decode_bytes(a['test']),
-                                         cleanup=self.utility_svc.decode_bytes(a['cleanup']))])
-
-    async def view_adversary(self):
-        adversaries = await self.data_svc.explode_adversaries()
-        for adv in adversaries:
-            adv.pop('phases')
-        self.log.console_table(adversaries)
-
-    async def pick_adversary(self, i):
-        data = [dict(phase=phase, executor=ab['executor'], test=self.utility_svc.decode_bytes(ab['test']))
-                for a in await self.data_svc.explode_adversaries(criteria=dict(id=i))
-                for phase, abilities in a['phases'].items()
-                for ab in abilities]
-        self.log.console_table(data)
-
-    async def view_operation(self):
-        operations = await self.data_svc.explode_operation()
-        for op in operations:
-            op.pop('host_group')
-            op.pop('adversary')
-            op.pop('chain')
-        self.log.console_table(operations)
-
-    async def pick_operation(self, i):
-        for op in await self.data_svc.explode_operation(criteria=dict(id=i)):
-            links = []
-            for link in op['chain']:
-                links.append(dict(score=link['score'], status=link['status'], collect=link['collect'],
-                                  command=self.utility_svc.decode_bytes(link['command'])))
-            self.log.console_table(links)
-
-    async def run_operation(self):
-        operation = {o['name']: o['value'] for o in self.modes['operation']['options']}
-        seed_file = operation.pop('seed')
-        op_id = await self.data_svc.create_operation(**operation)
-        if seed_file:
-            with open(seed_file, 'r') as f:
-                next(f)
-                reader = csv.reader(f, delimiter=',')
-                for line in reader:
-                    fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, action=line[3])
-                    asyncio.run(self.data_svc.dao.create('dark_fact', fact))
-                    self.log.console('Pre-seeding %s' % line[0])
-        Process(target=lambda: asyncio.run(self.operation_svc.run(op_id))).start()
+            print('--- %s' % cmd)
+        print('Each mode allows the following commands:')
+        print('-- info: documentation about the mode')
+        print('-- search: see all entries for the mode')
+        print('-- use: select an entry by ID')
+        print('Operation mode allows additional commands:')
+        print('-- run: execute the mode')
+        print('-- options: see all args required for the "run" command')
+        print('-- set: use the syntax "set arg 1" to set arg values')
+        print('-- missing: shows the missing options for the "run" command to work')
+        print('-- unset: reset all options')
