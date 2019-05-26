@@ -127,13 +127,13 @@ caldera (operation)> run
 ``` 
 
 It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
-according to the jitter time chosen. Every few seconds, check the progress of the operation.
+according to the jitter time chosen. 
 ```
 caldera (operation)> search
 caldera (operation)> pick 1
 ```
 
-Once the operation is complete, compare the execution time of the first and last commands. Was
+Once the operation is complete (the terminal should report an alert), compare the execution time of the first and last commands. Was
 the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
 
