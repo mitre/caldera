@@ -7,7 +7,12 @@ class Ability(Mode):
         super().__init__(services, logger)
 
     async def info(self):
-        print('ABILITY mode allows you to view all ATT&CK technique implementations')
+        print('ABILITY allows you to view all ATT&CK technique implementations')
+        print('-> search: list all abilities')
+        print('-> pick: show the command and cleanup for a specified ability ID')
+
+    async def execute(self, cmd):
+        await self.execute_mode(cmd)
 
     async def search(self):
         abilities = []
@@ -16,12 +21,9 @@ class Ability(Mode):
                                   name=a['name'], description=a['description']))
         self.log.console_table(abilities)
 
-    async def use(self, i):
+    async def pick(self, i):
         abilities = await self.data_svc.explode_abilities()
         for a in await self.data_svc.explode_abilities(criteria=dict(id=abilities[int(i)]['id'])):
             self.log.console_table([dict(executor=a['executor'],
                                          test=self.utility_svc.decode_bytes(a['test']),
                                          cleanup=self.utility_svc.decode_bytes(a['cleanup']))])
-
-    async def execute(self, cmd):
-        await self.execute_mode(cmd)

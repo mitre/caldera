@@ -12,8 +12,14 @@ class Session(Mode):
         self.sessions = []
         self.addresses = []
 
+    async def execute(self, cmd):
+        await self.execute_mode(cmd)
+
     async def info(self):
-        print('SESSIONS mode allows you to view and enter compromised hosts')
+        print('SESSION allows you to view and enter compromised hosts')
+        print('** This mode requires a reverse-shell payload to be deployed on a compromised host')
+        print('-> search: list all active sessions')
+        print('-> pick: jump into an active session')
 
     async def search(self):
         active = []
@@ -27,15 +33,13 @@ class Session(Mode):
                 del self.addresses[i]
         self.log.console_table(active)
 
-    async def use(self, i):
+    async def pick(self, i):
         await self._send_target_commands(int(i.split(' ')[-1]))
-
-    async def execute(self, cmd):
-        await self.execute_mode(cmd)
 
     async def _send_target_commands(self, target):
         conn = self.sessions[target]
         conn.send(str.encode(' '))
+        self.log.console('Entered session - try "ls"')
         while True:
             try:
                 cwd_bytes = await self._read_command_output(conn)
@@ -57,7 +61,7 @@ class Session(Mode):
                         print('\n')
                         break
             except Exception as e:
-                self.log.console('Connection was lost %s' % e, 'red')
+                self.log.console('Connection was dropped', 'red')
                 break
 
     async def _read_command_output(self, conn):

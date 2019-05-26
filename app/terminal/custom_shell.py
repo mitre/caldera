@@ -48,16 +48,7 @@ class CustomShell:
         self.log.console('New session: %s:%s' % (address[0], address[1]))
 
     async def _print_help(self):
-        print('MODES:')
+        print('Enter one of the following modes. Once inside, enter "info" to see available commands.')
         for cmd, v in self.modes.items():
-            print('--- %s' % cmd)
-        print('Each mode allows the following commands:')
-        print('-- info: documentation about the mode')
-        print('-- search: see all entries for the mode')
-        print('-- use: select an entry by ID')
-        print('Operation mode allows additional commands:')
-        print('-- run: execute the mode')
-        print('-- options: see all args required for the "run" command')
-        print('-- set: use the syntax "set arg 1" to set arg values')
-        print('-- missing: shows the missing options for the "run" command to work')
-        print('-- unset: reset all options')
+            print('-> %s' % cmd)
+

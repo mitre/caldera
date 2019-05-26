@@ -9,9 +9,28 @@ class Operation(Mode):
 
     def __init__(self, services, logger):
         super().__init__(services, logger)
+        self.options = [
+            dict(name='name', required=1, value=None, doc='1-word name for operation'),
+            dict(name='group', required=1, value=1, doc='group ID'),
+            dict(name='adversary', required=1, value=1, doc='adversary ID'),
+            dict(name='jitter', required=0, value='2/5', doc='seconds each agent will check in'),
+            dict(name='cleanup', required=0, value=1, doc='run cleanup for each ability'),
+            dict(name='stealth', required=0, value=0, doc='obfuscate the ability commands'),
+            dict(name='seed', required=0, value=None, doc='absolute path to a facts csv')
+        ]
+
+    async def execute(self, cmd):
+        await self.execute_mode(cmd)
 
     async def info(self):
-        print('OPERATION mode allows you to build and run operations')
+        print('OPERATION allows you to build and run operations')
+        print('-> search: list all started operations')
+        print('-> pick: show all commands for a specified operation ID')
+        print('-> show options: show all configurable options an operation uses')
+        print('-> show missing: show all options required to run an operation but not set')
+        print('-> set: change an option value by name; example: "set name test1"')
+        print('-> unset: change all option values to None')
+        print('-> run: start a new operation using the options set')
 
     async def search(self):
         operations = await self.data_svc.explode_operation()
@@ -21,7 +40,7 @@ class Operation(Mode):
             op.pop('chain')
         self.log.console_table(operations)
 
-    async def use(self, i):
+    async def pick(self, i):
         for op in await self.data_svc.explode_operation(criteria=dict(id=i)):
             links = []
             for link in op['chain']:
@@ -29,11 +48,8 @@ class Operation(Mode):
                                   command=self.utility_svc.decode_bytes(link['command'])))
             self.log.console_table(links)
 
-    async def execute(self, cmd):
-        await self.execute_mode(cmd)
-
     async def run(self):
-        operation = {o['name']: o['value'] for o in self.modes['operation']['options']}
+        operation = {o['name']: o['value'] for o in self.options}
         seed_file = operation.pop('seed')
         op_id = await self.data_svc.create_operation(**operation)
         if seed_file:
@@ -42,7 +58,7 @@ class Operation(Mode):
                 reader = csv.reader(f, delimiter=',')
                 for line in reader:
                     fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, action=line[3])
-                    asyncio.run(self.data_svc.dao.create('dark_fact', fact))
+                    await self.data_svc.dao.create('dark_fact', fact)
                     self.log.console('Pre-seeding %s' % line[0])
         Process(target=lambda: asyncio.run(self.operation_svc.run(op_id))).start()
 
