@@ -39,7 +39,7 @@ class Session(Mode):
     async def _send_target_commands(self, target):
         conn = self.sessions[target]
         conn.send(str.encode(' '))
-        self.log.console('Entered session - try "ls"')
+        self.log.console('Entered session - try "whoami"')
         while True:
             try:
                 cwd_bytes = await self._read_command_output(conn)
