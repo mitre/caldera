@@ -102,13 +102,13 @@ In the terminal window, type help to see all options. Then view the connected ag
 ```
 caldera> help
 caldera> agent
-caldera (agent)> view
+caldera (agent)> search
 ```
 
 Next, look at the loaded adversaries, and dive deeper into the mission1 adversary.
 ```
 caldera (agent)> adversary
-caldera (adversary)> view
+caldera (adversary)> search
 caldera (adversary)> pick 1
 ```
 
@@ -129,7 +129,7 @@ caldera (operation)> run
 It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
 according to the jitter time chosen. Every few seconds, check the progress of the operation.
 ```
-caldera (operation)> view
+caldera (operation)> search
 caldera (operation)> pick 1
 ```
 
