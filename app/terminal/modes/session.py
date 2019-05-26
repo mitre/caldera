@@ -17,7 +17,7 @@ class Session(Mode):
 
     async def info(self):
         print('SESSION allows you to view and enter compromised hosts')
-        print('** This mode requires a reverse-shell payload to be deployed on a compromised host')
+        print('** This mode requires the (stockpile) tcp_client.py payload to be deployed on a compromised host')
         print('-> search: list all active sessions')
         print('-> pick: jump into an active session')
 
