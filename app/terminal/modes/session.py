@@ -17,9 +17,9 @@ class Session(Mode):
 
     async def info(self):
         print('SESSION allows you to view and enter compromised hosts')
-        print('** This mode requires the (stockpile) tcp_client.py payload to be deployed on a compromised host')
+        self.log.console('This mode requires the (stockpile) tcp_client.py payload to be deployed on a compromised host', 'blue')
         print('-> search: list all active sessions')
-        print('-> pick: jump into an active session')
+        print('-> pick [index]: jump into an active session')
 
     async def search(self):
         active = []

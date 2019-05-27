@@ -24,12 +24,6 @@ Then start the server:
 python -u server.py
 ```
 
-Once running, you can log in to the system through the web interface at https://localhost:8888, 
-using the default creds of admin:admin. Alternatively, you can use the provided shell prompt:
-```
-caldera> help
-```
-
 ## Versions
 
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
