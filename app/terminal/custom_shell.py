@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import re
 
@@ -25,6 +26,7 @@ class CustomShell:
         )
 
     async def start_shell(self):
+        await asyncio.sleep(1)
         while True:
             try:
                 cmd = await ainput(self.shell_prompt)
@@ -33,13 +35,15 @@ class CustomShell:
                 if cmd == 'help':
                     await self._print_help()
                 elif cmd.startswith('log'):
-                    await self._print_logs()
+                    await self._print_logs(int(cmd.split(' ')[1]))
                 elif cmd in self.modes.keys():
                     self.shell_prompt = 'caldera (%s)> ' % cmd
                 elif mode:
                     await self.modes[mode.group(1)].execute(cmd)
                 elif cmd == '':
                     pass
+                else:
+                    self.log.console('Bad command - are you in the right mode?', 'red')
             except Exception as e:
                 self.log.console('Bad command: %s' % e, 'red')
 
@@ -54,16 +58,16 @@ class CustomShell:
     async def _print_help(self):
         print('HELP MENU:')
         print('-> help: show this help menu')
-        print('-> logs: view the last 25 lines of each log file')
+        print('-> logs [n]: view the last n-lines of each log file')
         print('Enter one of the following modes. Once inside, enter "info" to see available commands.')
         for cmd, v in self.modes.items():
             print('-> %s' % cmd)
 
     @staticmethod
-    async def _print_logs():
+    async def _print_logs(n):
         for name in glob.iglob('.logs/*.log', recursive=False):
             with open(name, 'r') as f:
                 print('***** %s ***** ' % name)
                 lines = f.readlines()
-                print(*lines[-25:])
+                print(*lines[-n:])
 

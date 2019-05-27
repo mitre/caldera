@@ -12,7 +12,7 @@ class Adversary(Mode):
     async def info(self):
         print('ADVERSARY allows you to view and build adversary profiles')
         print('-> search: list all adversaries')
-        print('-> pick: show all commands for a specified adversary ID')
+        print('-> pick [id]: show all commands for a specified adversary ID')
 
     async def search(self):
         adversaries = await self.data_svc.explode_adversaries()

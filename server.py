@@ -58,6 +58,7 @@ async def init(address, port, services, users):
     await services.get('data_svc').reload_database()
     for user, pwd in users.items():
         await services.get('auth_svc').register(username=user, password=pwd)
+        print('...Created user: %s:%s' % (user, pwd))
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
@@ -78,6 +79,7 @@ def main(services, host, port, sockets, users):
     try:
         loop = asyncio.get_event_loop()
         for sock in sockets:
+            print('...Socket opened on port %s' % sock)
             handler = asyncio.start_server(terminal.accept_sessions, host, sock, loop=loop)
             loop.run_until_complete(handler)
         loop.run_forever()

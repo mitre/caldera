@@ -12,7 +12,7 @@ class Agent(Mode):
     async def info(self):
         print('AGENT allows you to view all hosts running 54ndc47 agents')
         print('-> search: list all compromised hosts running an agent')
-        print('-> pick: show a given agent by ID')
+        print('-> pick [id]: show a given agent by ID')
 
     async def search(self):
         self.log.console_table(await self.data_svc.explode_agents())

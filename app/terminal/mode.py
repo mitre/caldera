@@ -25,6 +25,10 @@ class Mode(ABC):
     async def run(cls):
         pass
 
+    @classmethod
+    async def dump(cls, i):
+        pass
+
     async def execute_mode(self, cmd):
         try:
             if cmd == 'info':
@@ -48,6 +52,9 @@ class Mode(ABC):
                 option['value'] = pieces[2]
             elif cmd == 'run':
                 await self.run()
+            elif cmd.startswith('dump'):
+                pieces = cmd.split(' ')
+                await self.dump(pieces[1])
             elif cmd == '':
                 pass
             else:

@@ -25,12 +25,13 @@ class Operation(Mode):
     async def info(self):
         print('OPERATION allows you to build and run operations')
         print('-> search: list all started operations')
-        print('-> pick: show all commands for a specified operation ID')
+        print('-> pick [id]: show all commands for a specified operation ID')
         print('-> show options: show all configurable options an operation uses')
         print('-> show missing: show all options required to run an operation but not set')
-        print('-> set: change an option value by name; example: "set name test1"')
+        print('-> set [name] [value]: change an option value by name')
         print('-> unset: change all option values to None')
         print('-> run: start a new operation using the options set')
+        print('-> dump [id]: view raw shell output from a specific link ID')
 
     async def search(self):
         operations = await self.data_svc.explode_operation()
@@ -44,8 +45,8 @@ class Operation(Mode):
         for op in await self.data_svc.explode_operation(criteria=dict(id=i)):
             links = []
             for link in op['chain']:
-                links.append(dict(score=link['score'], status=link['status'], collect=link['collect'],
-                                  command=self.utility_svc.decode_bytes(link['command'])))
+                links.append(dict(link_id=link['id'], score=link['score'], status=link['status'],
+                                  collect=link['collect'], command=self.utility_svc.decode_bytes(link['command'])))
             self.log.console_table(links)
 
     async def run(self):
@@ -59,6 +60,9 @@ class Operation(Mode):
                 for line in reader:
                     fact = dict(op_id=op_id, fact=line[0], value=line[1], score=line[2], link_id=0, action=line[3])
                     await self.data_svc.dao.create('dark_fact', fact)
-                    self.log.console('Pre-seeding %s' % line[0])
+                    self.log.console('Pre-seeding %s' % line[0], 'blue')
         Process(target=lambda: asyncio.run(self.operation_svc.run(op_id))).start()
 
+    async def dump(self, i):
+        result = await self.data_svc.explode_results(criteria=dict(link_id=i))
+        self.log.console(self.utility_svc.decode_bytes(result[0]['output']), 'yellow')

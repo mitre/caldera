@@ -9,7 +9,7 @@ class Ability(Mode):
     async def info(self):
         print('ABILITY allows you to view all ATT&CK technique implementations')
         print('-> search: list all abilities')
-        print('-> pick: show the command and cleanup for a specified ability ID')
+        print('-> pick [id]: show the command and cleanup for a specified ability ID')
 
     async def execute(self, cmd):
         await self.execute_mode(cmd)
