@@ -3,7 +3,7 @@
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/), 
 that performs post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
 
-CALDERA requires Python 3.5.3+ to run and is designed on top of the asyncio library.
+Python 3.5.3+ is required to run this system.
 
 ![alt text](readme.png)
 
