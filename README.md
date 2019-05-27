@@ -19,7 +19,7 @@ From the root of this project, install the PIP requirements.
 pip install -r requirements.txt
 ```
 
-Then start the server:
+Then start the server.
 ```
 python -u server.py
 ```
