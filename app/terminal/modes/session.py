@@ -30,8 +30,6 @@ class Session(Mode):
             try:
                 await self._send(conn, ' ')
                 await self._receive(conn)
-                # conn.send(str.encode(' '))
-                # conn.recv(2048)
                 active.append(dict(index=i, address=self.addresses[i]))
             except socket.error:
                 del self.sessions[i]
