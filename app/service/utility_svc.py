@@ -1,6 +1,7 @@
 from base64 import b64encode, b64decode
 from random import randint
 
+from app.utility.logger import Logger
 from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 
@@ -23,3 +24,7 @@ class UtilityService:
     def jitter(fraction):
         i = fraction.split('/')
         return randint(int(i[0]), int(i[1]))
+
+    @staticmethod
+    def create_logger(name):
+        return Logger(name)

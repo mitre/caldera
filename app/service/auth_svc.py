@@ -10,7 +10,7 @@ class AuthService:
         self.data_svc = data_svc
         self.ssl_cert = ssl_cert
         self.auth_funcs = dict(auth = authenticated_login, login = login_session, logout = logout_session, reset = reset_password)
-        self.redirect_landing = '/enter' # set to default address to prevent redirection errors that occur if invalid
+        self.redirect_landing = '/enter'  # set to default address to prevent redirection errors that occur if invalid
 
     def set_app(self, app):
         self.app_handle = app

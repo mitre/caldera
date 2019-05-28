@@ -2,14 +2,12 @@
 
 host: 127.0.0.1
 port: 8888
-terminal:
-  host: 127.0.0.1
-  port: 8880
-debug_level: DEBUG
+sockets:
+  - 8880
 planner: plugins.stockpile.app.sequential
 stores:
-  - plugins/stockpile/filestore
-  - plugins/adversary/filestore
+  - plugins/stockpile/payloads
+  - plugins/adversary/payloads
 plugins:
   - stockpile
   - sandcat
