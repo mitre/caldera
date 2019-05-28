@@ -116,7 +116,7 @@ if __name__ == '__main__':
         file_svc = FileSvc(cfg['stores'])
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
-            file_svc=file_svc, plugins=plugin_modules, logger=Logger('plugin')
+            file_svc=file_svc, plugins=plugin_modules
         )
         terminal = CustomShell(services)
         welcome_msg(cfg['host'], cfg['port'])
