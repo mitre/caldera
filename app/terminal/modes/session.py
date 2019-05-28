@@ -1,6 +1,7 @@
 import socket
 import struct
 
+from cryptography.fernet import Fernet
 from aioconsole import ainput
 from app.terminal.mode import Mode
 
