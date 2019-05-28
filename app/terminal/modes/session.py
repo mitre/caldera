@@ -11,6 +11,7 @@ class Session(Mode):
         super().__init__(services, logger)
         self.sessions = []
         self.addresses = []
+        self.encryption_key = b'secretsecretsecretwbsecretsecretsecretsecre='
 
     async def execute(self, cmd):
         await self.execute_mode(cmd)
@@ -42,17 +43,15 @@ class Session(Mode):
         self.log.console('Entered session - try "whoami"')
         while True:
             try:
-                cwd_bytes = await self._read_command_output(conn)
-                cwd = str(cwd_bytes, 'utf-8')
+                cwd = await self._read_command_output(conn)
                 print(cwd, end='')
 
                 cmd = await ainput()
                 if not cmd:
                     cmd = ' '
                 if len(str.encode(cmd)) > 0:
-                    conn.send(str.encode(cmd))
-                    cmd_output = await self._read_command_output(conn)
-                    client_response = str(cmd_output, 'utf-8')
+                    conn.send(self.encrypt(cmd))
+                    client_response = await self._read_command_output(conn)
                     print(client_response, end='')
 
                     if cmd == 'cd':
@@ -69,7 +68,8 @@ class Session(Mode):
         if not raw_msg_len:
             return None
         msg_len = struct.unpack('>I', raw_msg_len)[0]
-        return await self._recvall(conn, msg_len)
+        cmd_bytes = self.recvall(conn, msg_len)
+        return str(self.decrypt(cmd_bytes), 'utf-8')
 
     @staticmethod
     async def _recvall(conn, n):
@@ -80,3 +80,12 @@ class Session(Mode):
                 return None
             data += packet
         return data
+    
+    async def encrypt(self, message):
+        f = Fernet(self.encryption_key)
+        token = f.encrypt(message.encode('utf-8'))
+        return token
+
+    async def decrypt(self, ciphertext):
+        f = Fernet(self.encryption_key)
+        return f.decrypt(ciphertext)
