@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
         plugin_modules = build_plugins(config['plugins'])
         utility_svc = UtilityService()
-        data_svc = DataService(CoreDao('core.db'))
+        data_svc = DataService(CoreDao('core.db'), config['debug_level'])
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=config['planner'])
         auth_svc = AuthService(data_svc=data_svc, ssl_cert=SSL_CERT)
         file_svc = FileSvc(config['stores'])

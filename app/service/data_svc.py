@@ -3,17 +3,18 @@ from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
 from uuid import UUID, uuid4
-import logging
+import logging, os
 import yaml
 
-logger = logging.getLogger('DataService')
-logger.setLevel('INFO')
+
 
 
 class DataService:
 
-    def __init__(self, dao):
+    def __init__(self, dao, debug_level):
         self.dao = dao
+        self.logger = logging.getLogger('DataService')
+        self.logger.setLevel(debug_level)
 
     async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None):
         with open(schema) as schema:
@@ -31,7 +32,7 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            f = make_uuid(filename)
+            f = self.make_uuid(filename)
             with open(f) as ability:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
@@ -137,23 +138,22 @@ class DataService:
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
 
-def make_uuid(_filename):
-    uuid_string = _filename.split('/')[-1].split('.')[0]
-    try:
-        val = UUID(uuid_string, version=4)
-        return _filename
-    except ValueError:
-        _uuid = str(uuid4())
-        new_ability_file = _filename.split('/')[:-1]
-        new_ability_file.append('{}.yml'.format(_uuid))
-        new_ability_file = '/'.join(new_ability_file)
-        with open(_filename, 'r') as ability:
+    def make_uuid(self, _filename):
+        uuid_string = _filename.split('/')[-1].split('.')[0]
+        try:
+            val = UUID(uuid_string, version=4)
+            return _filename
+        except ValueError:
+            _uuid = str(uuid4())
+            with open(_filename, 'r') as ability:
+                ability_yaml = yaml.load(ability)
+                ability_yaml[0]['id'] = _uuid
+            os.remove(_filename)
+            new_ability_file = _filename.split('/')[:-1]
+            new_ability_file.append('{}.yml'.format(_uuid))
+            new_ability_file = '/'.join(new_ability_file)
+
             with open(new_ability_file, 'w') as new_ability:
-                for line in ability:
-                    if '- id:' in line:
-                        l = '- id: {}\n'.format(_uuid)
-                        new_ability.write(l)
-                    else:
-                        new_ability.write(line)
-        logger.warning("Created new ability file with uuid: {}".format( new_ability_file))
-        return new_ability_file
+                yaml.dump(ability_yaml,new_ability)
+            self.logger.info('Created new ability file with uuid: {}'.format( new_ability_file))
+            return new_ability_file
