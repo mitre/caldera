@@ -51,7 +51,7 @@ class Session(Mode):
                 if not cmd:
                     cmd = ' '
                 if len(str.encode(cmd)) > 0:
-                    conn.send(self.encrypt(cmd))
+                    conn.send(await self.encrypt(cmd))
                     client_response = await self._read_command_output(conn)
                     print(client_response, end='')
 
@@ -69,8 +69,8 @@ class Session(Mode):
         if not raw_msg_len:
             return None
         msg_len = struct.unpack('>I', raw_msg_len)[0]
-        cmd_bytes = self.recvall(conn, msg_len)
-        return str(self.decrypt(cmd_bytes), 'utf-8')
+        cmd_bytes = await self._recvall(conn, msg_len)
+        return str(await self.decrypt(cmd_bytes), 'utf-8')
 
     @staticmethod
     async def _recvall(conn, n):
