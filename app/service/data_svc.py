@@ -11,10 +11,9 @@ import yaml
 
 class DataService:
 
-    def __init__(self, dao, debug_level):
+    def __init__(self, dao):
         self.dao = dao
         self.logger = logging.getLogger('DataService')
-        self.logger.setLevel(debug_level)
 
     async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None):
         with open(schema) as schema:
@@ -138,7 +137,7 @@ class DataService:
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
 
-    def make_uuid(self, _filename):
+    def _make_uuid(self, _filename):
         uuid_string = _filename.split('/')[-1].split('.')[0]
         try:
             val = UUID(uuid_string, version=4)
