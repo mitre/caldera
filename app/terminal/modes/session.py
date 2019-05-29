@@ -1,3 +1,4 @@
+import os
 import socket
 import struct
 
@@ -44,47 +45,72 @@ class Session(Mode):
         token = f.encrypt(message.encode('utf-8'))
         return token
 
-    async def decrypt(self, ciphertext):
+    async def decrypt(self, cipher_text):
         f = Fernet(self.encryption_key)
-        return f.decrypt(ciphertext)
+        return f.decrypt(cipher_text)
 
     async def _send_target_commands(self, target):
         conn = self.sessions[target]
         await self._send(conn, ' ')
         self.log.console('Entered session - try "whoami"')
+
         while True:
             try:
                 cwd = await self._receive(conn)
                 print(cwd, end='')
 
-                cmd = await ainput()
+                data = await ainput()
+                cmd = self.parse_command(data)
                 if not cmd:
-                    cmd = ' '
-                if len(str.encode(cmd)) > 0:
-                    await self._send(conn, cmd)
-                    client_response = await self._receive(conn)
-                    print(client_response, end='')
-
-                    if cmd == 'cd':
+                    data = ' '
+                elif cmd == 'transfer':
+                    """
+                    put	Copy a file from the local computer to the remote host. 'put localFile remoteFile' 
+                    get	Copy a file from the remote host to the local computer. 'get remoteFile localFile'
+                    """
+                    transfer_command = [arg for arg in data.split(' ') if arg]
+                    if len(transfer_command) != 4 or transfer_command[1] not in ['get', 'put']:
+                        print('command should be of form \'transfer get|put remoteFile|localFile localFile|remoteFile\'\n')
+                        data = ' '
+                    elif transfer_command[1] == 'get':
+                        await self._send(conn, data)
+                        file_data = await self._receive(conn)
+                        local_file = transfer_command[3]
+                        with open(local_file, 'w+') as f:
+                            f.write(file_data)
                         continue
-                    if cmd == 'background':
-                        print('\n')
-                        break
+                    elif transfer_command[1] == 'put':
+                        local_file = transfer_command[2]
+                        if not os.path.exists(local_file):
+                            print('local file does not exist\n')
+                        else:
+                            with open(local_file, 'r') as f:
+                                file_data = f.read()
+                            await self._send(conn, data)
+                            data = file_data
+                elif cmd == 'background':
+                    print('\n')
+                    break
+
+                await self._send(conn, data)
+                client_response = await self._receive(conn)
+                print(client_response, end='')
+
             except Exception as e:
-                self.log.console('Connection was dropped', 'red')
+                self.log.console('Connection was dropped ' + str(e), 'red')
                 break
 
     async def _send(self, conn, msg):
-        ciphertext = await self.encrypt(msg)
-        conn.send(ciphertext)
+        cipher_text = await self.encrypt(msg)
+        conn.send(struct.pack('>I', len(cipher_text)) + cipher_text)
 
     async def _receive(self, conn):
         raw_msg_len = await self._recvall(conn, 4)
         if not raw_msg_len:
             return None
         msg_len = struct.unpack('>I', raw_msg_len)[0]
-        ciphertext = await self._recvall(conn, msg_len)
-        output = await self.decrypt(ciphertext)
+        cipher_text = await self._recvall(conn, msg_len)
+        output = await self.decrypt(cipher_text)
         return str(output, 'utf-8')
 
     @staticmethod
@@ -96,3 +122,9 @@ class Session(Mode):
                 return None
             data += packet
         return data
+
+    @staticmethod
+    def parse_command(data):
+        if not data.strip():
+            return None
+        return data.partition(' ')[0]
