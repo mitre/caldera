@@ -31,7 +31,7 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            f = self.make_uuid(filename)
+            f = self._make_uuid(filename)
             with open(f) as ability:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
