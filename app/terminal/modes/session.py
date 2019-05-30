@@ -2,8 +2,6 @@ import socket
 import struct
 
 from aioconsole import ainput
-from cryptography.fernet import Fernet
-
 from app.terminal.mode import Mode
 
 
@@ -13,7 +11,6 @@ class Session(Mode):
         super().__init__(services, logger)
         self.sessions = []
         self.addresses = []
-        self.encryption_key = b'secretsecretsecretwbsecretsecretsecretsecre='
 
     async def execute(self, cmd):
         await self.execute_mode(cmd)
@@ -28,8 +25,8 @@ class Session(Mode):
         active = []
         for i, conn in enumerate(self.sessions):
             try:
-                await self._send(conn, ' ')
-                await self._receive(conn)
+                conn.send(str.encode(' '))
+                conn.recv(20480)
                 active.append(dict(index=i, address=self.addresses[i]))
             except socket.error:
                 del self.sessions[i]
@@ -39,30 +36,23 @@ class Session(Mode):
     async def pick(self, i):
         await self._send_target_commands(int(i.split(' ')[-1]))
 
-    async def encrypt(self, message):
-        f = Fernet(self.encryption_key)
-        token = f.encrypt(message.encode('utf-8'))
-        return token
-
-    async def decrypt(self, ciphertext):
-        f = Fernet(self.encryption_key)
-        return f.decrypt(ciphertext)
-
     async def _send_target_commands(self, target):
         conn = self.sessions[target]
-        await self._send(conn, ' ')
+        conn.send(str.encode(' '))
         self.log.console('Entered session - try "whoami"')
         while True:
             try:
-                cwd = await self._receive(conn)
+                cwd_bytes = await self._read_command_output(conn)
+                cwd = str(cwd_bytes, 'utf-8')
                 print(cwd, end='')
 
                 cmd = await ainput()
                 if not cmd:
                     cmd = ' '
                 if len(str.encode(cmd)) > 0:
-                    await self._send(conn, cmd)
-                    client_response = await self._receive(conn)
+                    conn.send(str.encode(cmd))
+                    cmd_output = await self._read_command_output(conn)
+                    client_response = str(cmd_output, 'utf-8')
                     print(client_response, end='')
 
                     if cmd == 'cd':
@@ -74,18 +64,12 @@ class Session(Mode):
                 self.log.console('Connection was dropped', 'red')
                 break
 
-    async def _send(self, conn, msg):
-        ciphertext = await self.encrypt(msg)
-        conn.send(ciphertext)
-
-    async def _receive(self, conn):
+    async def _read_command_output(self, conn):
         raw_msg_len = await self._recvall(conn, 4)
         if not raw_msg_len:
             return None
         msg_len = struct.unpack('>I', raw_msg_len)[0]
-        ciphertext = await self._recvall(conn, msg_len)
-        output = await self.decrypt(ciphertext)
-        return str(output, 'utf-8')
+        return await self._recvall(conn, msg_len)
 
     @staticmethod
     async def _recvall(conn, n):
