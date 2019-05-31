@@ -54,6 +54,7 @@ async def init(address, port, services, users):
 
     app.router.add_route('POST', '/file/render', services.get('file_svc').render)
     app.router.add_route('POST', '/file/download', services.get('file_svc').download)
+    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
 
     await services.get('data_svc').reload_database()
     for user, pwd in users.items():
