@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import random
 import ssl
 import sys
 from importlib import import_module
@@ -13,7 +12,6 @@ import yaml
 from aiohttp import web
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiohttp_session import SimpleCookieStorage, session_middleware
-from pyfiglet import Figlet
 
 from app.database.core_dao import CoreDao
 from app.service.auth_svc import AuthService
@@ -21,8 +19,6 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.utility_svc import UtilityService
-from app.terminal.custom_shell import CustomShell
-from app.utility.logger import Logger
 
 SSL_CERT_FILE = 'conf/cert.pem'
 SSL_KEY_FILE = 'conf/key.pem'
@@ -32,7 +28,6 @@ with open(SSL_CERT_FILE) as cert_file:
 
 async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
-    app.loop.create_task(terminal.start_shell())
 
 
 async def attach_plugins(app, services):
@@ -59,30 +54,17 @@ async def init(address, port, services, users):
     await services.get('data_svc').reload_database()
     for user, pwd in users.items():
         await services.get('auth_svc').register(username=user, password=pwd)
-        print('...Created user: %s:%s' % (user, pwd))
+        logging.debug('...Created user: %s:%s' % (user, pwd))
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, address, port, ssl_context=context).start()
 
 
-def welcome_msg(host, port):
-    custom_fig = Figlet(font='contrast')
-    new_font = random.choice(custom_fig.getFonts())
-    custom_fig.setFont(font=new_font)
-    print(custom_fig.renderText('caldera'))
-    print('Enter help or go to https://%s:%s in a browser' % (host, port))
-
-
-def main(services, host, port, sockets, users):
+def main(services, host, port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
     try:
-        loop = asyncio.get_event_loop()
-        for sock in sockets:
-            print('...Socket opened on port %s' % sock)
-            handler = asyncio.start_server(terminal.accept_sessions, host, sock, loop=loop)
-            loop.run_until_complete(handler)
         loop.run_forever()
     except KeyboardInterrupt:
         pass
@@ -106,7 +88,7 @@ if __name__ == '__main__':
         cfg = yaml.load(c)
         logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
-        logging.getLogger().setLevel('CRITICAL')
+        logging.getLogger().setLevel('DEBUG')
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
@@ -119,6 +101,5 @@ if __name__ == '__main__':
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, plugins=plugin_modules
         )
-        terminal = CustomShell(services)
-        welcome_msg(cfg['host'], cfg['port'])
-        main(services=services, host=cfg['host'], port=cfg['port'], sockets=cfg['sockets'], users=cfg['users'])
+        logging.debug('Serving at %s:%s' % (cfg['host'], cfg['port']))
+        main(services=services, host=cfg['host'], port=cfg['port'], users=cfg['users'])

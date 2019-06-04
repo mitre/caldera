@@ -2,8 +2,6 @@
 
 host: 127.0.0.1
 port: 8888
-sockets:
-  - 8880
 planner: plugins.stockpile.app.sequential
 stores:
   - plugins/stockpile/payloads
@@ -15,4 +13,3 @@ plugins:
   - chain
 users:
   admin: admin
-
