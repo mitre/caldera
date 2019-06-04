@@ -1,7 +1,5 @@
 import logging
 
-from termcolor import colored
-
 
 class Logger:
     """
@@ -13,10 +11,6 @@ class Logger:
         handler = logging.FileHandler('%s/%s.log' % ('.logs', name))
         handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s', '%Y-%m-%d %H:%M:%S'))
         self.logger.addHandler(handler)
-        self.console_colors = dict(red=lambda msg: print(colored('[-] %s' % msg, 'red')),
-                                   green=lambda msg: print(colored('[+] %s' % msg, 'green')),
-                                   blue=lambda msg: print(colored('[*] %s' % msg, 'blue')),
-                                   yellow=lambda msg: print(colored(msg, 'yellow')))
 
     def debug(self, msg):
         self.logger.setLevel(logging.DEBUG)
