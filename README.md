@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 Then start the server.
 ```
-python -u server.py
+python server.py
 ```
 
 ## Versions
@@ -84,7 +84,7 @@ You must complete this mission in less than 60 seconds.
 
 Start by booting up the core system.
 ```
-python -u server.py
+python server.py
 ```
 
 Then start a 54ndc47 agent on the same machine.
@@ -92,47 +92,11 @@ Then start a 54ndc47 agent on the same machine.
 while true; do eval "$(curl -sk -X POST -H "file:54ndc47.sh" https://localhost:8888/file/render?group=client)"; sleep 60; done
 ```
 
-In the terminal window, type help to see all options. Then view the connected agent with the appropriate keystrokes.
-```
-caldera> help
-caldera> agent
-caldera (agent)> search
-```
+Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. Click into the Chain plugin and use the "Manage Operations" section to fire off an operation using the mission1 adversary. 
 
-Next, look at the loaded adversaries, and dive deeper into the mission1 adversary.
-```
-caldera (agent)> adversary
-caldera (adversary)> search
-caldera (adversary)> pick 1
-```
-
-Switch to operation mode and set the following arguments: name (test1), adversary (1), group (1),
-and jitter fraction. The fraction determines how often each agent will check in with CALDERA. The 
-fraction below (3/5) means the check-in will happen between every 3 to 5 seconds. Finally, start your operation and 
-confirm it is in progress by viewing all operations. The operation will have completed when a finish
-timestamp is visible.
-```
-caldera (adversary)> operation
-caldera (operation)> set name test1
-caldera (operation)> set adversary 1
-caldera (operation)> set group 1
-caldera (operation)> set jitter 3/5
-caldera (operation)> run
-``` 
-
-It will take up to 60 seconds for the agent to join the operation, at which point it will check in 
-according to the jitter time chosen. 
-```
-caldera (operation)> search
-caldera (operation)> pick 1
-```
-
-Once the operation is complete (the terminal should report an alert), compare the execution time of the first and last commands. Was
+Once the operation is complete, compare the execution time of the first and last commands. Was
 the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
-
-*Extra credit: go to https://localhost:8888 in a browser, logging in with the credentials admin:admin, and 
-click into the Chain mode plugin. Can you see how you'd manage an operation from the GUI?*
 
 ### Mission #2: PowerShell reconnaissance
 
