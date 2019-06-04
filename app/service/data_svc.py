@@ -3,10 +3,9 @@ from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
 from uuid import UUID, uuid4
-import logging, os
+import logging
+import os
 import yaml
-
-
 
 
 class DataService:
@@ -31,7 +30,7 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            f = self._make_uuid(filename)
+            f = self._check_uuid(filename)
             with open(f) as ability:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
@@ -138,21 +137,23 @@ class DataService:
         return await self.dao.raw_select(sql)
 
     def _make_uuid(self, _filename):
+        _uuid = str(uuid4())
+        with open(_filename, 'r') as ability:
+            ability_yaml = yaml.load(ability)
+            ability_yaml[0]['id'] = _uuid
+        directory = os.path.dirname(_filename)
+        new_ability_file = os.path.join(directory, '{}.yml'.format(_uuid))
+        with open(new_ability_file, 'w') as new_ability:
+            yaml.dump(ability_yaml, new_ability)
+        self.logger.info('Created new ability file with uuid: {}'.format(new_ability_file))
+        os.remove(_filename)
+        return new_ability_file
+
+    def _check_uuid(self, _filename):
         uuid_string = _filename.split('/')[-1].split('.')[0]
         try:
             val = UUID(uuid_string, version=4)
             return _filename
         except ValueError:
-            _uuid = str(uuid4())
-            with open(_filename, 'r') as ability:
-                ability_yaml = yaml.load(ability)
-                ability_yaml[0]['id'] = _uuid
-            os.remove(_filename)
-            new_ability_file = _filename.split('/')[:-1]
-            new_ability_file.append('{}.yml'.format(_uuid))
-            new_ability_file = '/'.join(new_ability_file)
+            return self._make_uuid(_filename)
 
-            with open(new_ability_file, 'w') as new_ability:
-                yaml.dump(ability_yaml,new_ability)
-            self.logger.info('Created new ability file with uuid: {}'.format( new_ability_file))
-            return new_ability_file
