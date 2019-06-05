@@ -2,6 +2,7 @@ import glob
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
+import csv
 
 import yaml
 
@@ -64,11 +65,24 @@ class DataService:
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return 'Saved %s host group' % name
 
-    async def create_operation(self, name, group, adversary, jitter='3/5', cleanup=True, stealth=False):
-        return await self.dao.create('core_operation', dict(
+    async def create_operation(self, name, group, adversary, jitter='3/5', cleanup=True, stealth=False, seed=None):
+        op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
-        )
+                                      )
+        if seed:
+            try:
+                reader = csv.DictReader(seed.split('\n'))
+                for fact in reader:
+                    print(fact)
+                    fact['fact'] = fact.pop('property')
+                    await self.dao.create('dark_fact', dict(op_id=op_id, link_id=0, **fact))
+                    print('big success')
+                    print(fact)
+            except:
+                print('no dark table')
+                pass
+        return op_id
 
     async def create_link(self, link, cleanup=None):
         link_id = await self.dao.create('core_chain', link)
