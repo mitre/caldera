@@ -29,7 +29,7 @@ class Logger:
         self.logger.error(msg)
 
     def console(self, msg, color='green'):
-        self.console_colors[color](msg)
+        pass
 
     @staticmethod
     def console_table(data):
