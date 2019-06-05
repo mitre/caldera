@@ -74,13 +74,9 @@ class DataService:
             try:
                 reader = csv.DictReader(seed.split('\n'))
                 for fact in reader:
-                    print(fact)
                     fact['fact'] = fact.pop('property')
                     await self.dao.create('dark_fact', dict(op_id=op_id, link_id=0, **fact))
-                    print('big success')
-                    print(fact)
             except:
-                print('no dark table')
                 pass
         return op_id
 
