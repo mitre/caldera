@@ -28,8 +28,9 @@ class Logger:
         self.logger.setLevel(logging.ERROR)
         self.logger.error(msg)
 
-    def console(self, msg, color='green'):
-        pass
+    @staticmethod
+    def console(msg):
+        print('[*] %s' % msg)
 
     @staticmethod
     def console_table(data):
