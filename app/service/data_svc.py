@@ -2,7 +2,9 @@ import glob
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
-
+from uuid import UUID, uuid4
+import logging
+import os
 import yaml
 
 
@@ -10,6 +12,7 @@ class DataService:
 
     def __init__(self, dao):
         self.dao = dao
+        self.logger = logging.getLogger('DataService')
 
     async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None):
         with open(schema) as schema:
@@ -27,7 +30,8 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            with open(filename) as ability:
+            f = self._check_uuid(filename)
+            with open(f) as ability:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
@@ -131,3 +135,25 @@ class DataService:
               'ON a.ability_id=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+    def _make_uuid(self, _filename):
+        _uuid = str(uuid4())
+        with open(_filename, 'r') as ability:
+            ability_yaml = yaml.load(ability)
+            ability_yaml[0]['id'] = _uuid
+        directory = os.path.dirname(_filename)
+        new_ability_file = os.path.join(directory, '{}.yml'.format(_uuid))
+        with open(new_ability_file, 'w') as new_ability:
+            yaml.dump(ability_yaml, new_ability)
+        self.logger.info('Created new ability file with uuid: {}'.format(new_ability_file))
+        os.remove(_filename)
+        return new_ability_file
+
+    def _check_uuid(self, _filename):
+        uuid_string = _filename.split('/')[-1].split('.')[0]
+        try:
+            val = UUID(uuid_string, version=4)
+            return _filename
+        except ValueError:
+            return self._make_uuid(_filename)
+
