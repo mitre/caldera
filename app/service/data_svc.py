@@ -150,7 +150,7 @@ class DataService:
         return new_ability_file
 
     def _check_uuid(self, _filename):
-        uuid_string = os.path.basename(_filename).split(',')[0]
+        uuid_string = os.path.basename(_filename).split('.')[0]
         try:
             val = UUID(uuid_string, version=4)
             return _filename
