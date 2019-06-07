@@ -3,9 +3,9 @@
 host: 127.0.0.1
 port: 8888
 planner: plugins.stockpile.app.sequential
+proxy: haproxy
 stores:
-  - plugins/stockpile/payloads
-  - plugins/adversary/payloads
+  - payloads
 plugins:
   - stockpile
   - sandcat

@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import ssl
 import sys
 from importlib import import_module
 
@@ -36,13 +35,14 @@ async def attach_plugins(app, services):
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
     templates = ['plugins/%s/templates' % p.name.lower() for p in services['plugins']]
+    payloads = ['plugins/%s/payloads' % p.name.lower() for p in services['plugins']]
+    print('...Building payload filestore')
+    await services['file_svc'].build_payload_store(payloads)
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
 @asyncio.coroutine
 async def init(address, port, services, users):
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
     mw = [session_middleware(SimpleCookieStorage()), normalize_path_middleware()]
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
@@ -58,7 +58,7 @@ async def init(address, port, services, users):
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, address, port, ssl_context=context).start()
+    await web.TCPSite(runner, address, port, ssl_context=None).start()
 
 
 def main(services, host, port, users):
@@ -90,7 +90,6 @@ if __name__ == '__main__':
         logging.getLogger('asyncio').setLevel(logging.FATAL)
         logging.getLogger().setLevel('DEBUG')
         sys.path.append('')
-
         plugin_modules = build_plugins(cfg['plugins'])
         utility_svc = UtilityService()
         data_svc = DataService(CoreDao('core.db'))
