@@ -64,6 +64,16 @@ class FileSvc:
                                  dst=os.path.abspath(os.path.join("payloads", item)))
 
     @staticmethod
+    async def build_payload_store(payloads):
+        for p in payloads:
+            plugin_payload_path = os.path.abspath(p)
+            if os.path.exists(plugin_payload_path):
+                for item in os.listdir(plugin_payload_path):
+                    if os.path.isfile(os.path.join(plugin_payload_path, item)):
+                        copyfile(src=os.path.join(plugin_payload_path, item),
+                                 dst=os.path.abspath(os.path.join("payloads", item)))
+
+    @staticmethod
     async def _render(name, group, environment, url_root):
         try:
             t = environment.get_template(name)
