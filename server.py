@@ -36,8 +36,9 @@ async def attach_plugins(app, services):
         await plugin(app, services)
     templates = ['plugins/%s/templates' % p.name.lower() for p in services['plugins']]
     payloads = ['plugins/%s/payloads' % p.name.lower() for p in services['plugins']]
-    print('...Building payload filestore')
+    logging.debug("...Decrypting payload file stores")
     await services['file_svc'].build_payload_store(payloads)
+    logging.debug("...Decrypted payload file stores")
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
@@ -67,7 +68,7 @@ def main(services, host, port, users):
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        pass
+        services['file_svc'].destroy_payload_store()
 
 
 def build_plugins(plugs):
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         data_svc = DataService(CoreDao('core.db'))
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=cfg['planner'])
         auth_svc = AuthService(data_svc=data_svc, ssl_cert=SSL_CERT)
-        file_svc = FileSvc(cfg['stores'])
+        file_svc = FileSvc(cfg['stores'], cfg['xorkey'])
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, plugins=plugin_modules

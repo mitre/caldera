@@ -6,6 +6,7 @@ planner: plugins.stockpile.app.sequential
 proxy: haproxy
 stores:
   - payloads
+xorkey: 9Nkx8EKZuo6guQi4PKrmO1KoxHePcQ4z5EKuHqSLYEaVzV00My0DYPHREJo73gzzUtCrP9QYiul9WTrYwqQBbs2hU5Hmxilgu5wn
 plugins:
   - stockpile
   - sandcat

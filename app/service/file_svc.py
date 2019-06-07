@@ -9,9 +9,10 @@ from app.utility.logger import Logger
 
 class FileSvc:
 
-    def __init__(self, file_stores):
+    def __init__(self, file_stores, xorkey):
         self.file_stores = file_stores
         self.log = Logger('file_svc')
+        self.xorkey = xorkey.encode('utf-8')
 
     async def render(self, request):
         name = request.headers.get('file')
@@ -53,25 +54,32 @@ class FileSvc:
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
 
-    @staticmethod
-    async def build_payload_store(payloads):
+    async def build_payload_store(self, payloads):
         for p in payloads:
             plugin_payload_path = os.path.abspath(p)
             if os.path.exists(plugin_payload_path):
                 for item in os.listdir(plugin_payload_path):
                     if os.path.isfile(os.path.join(plugin_payload_path, item)):
                         copyfile(src=os.path.join(plugin_payload_path, item),
-                                 dst=os.path.abspath(os.path.join("payloads", item)))
+                                 dst=os.path.abspath(os.path.join('payloads', item)))
+                        if ".txt" not in item:
+                            await self.xor_payload(os.path.abspath(os.path.join('payloads', item)))
+
+    async def xor_payload(self, payload):
+        with open(payload, 'rb') as p:
+            p_bytes = bytearray(p.read())
+            key = await self.extend_xor_key(len(p_bytes))
+            xor_stream = bytearray(len(p_bytes))
+            for b in range(len(p_bytes)):
+                xor_stream[b] = p_bytes[b] ^ key[b]
+        with open(payload, 'wb') as p:
+            p.write(xor_stream)
 
     @staticmethod
-    async def build_payload_store(payloads):
-        for p in payloads:
-            plugin_payload_path = os.path.abspath(p)
-            if os.path.exists(plugin_payload_path):
-                for item in os.listdir(plugin_payload_path):
-                    if os.path.isfile(os.path.join(plugin_payload_path, item)):
-                        copyfile(src=os.path.join(plugin_payload_path, item),
-                                 dst=os.path.abspath(os.path.join("payloads", item)))
+    def destroy_payload_store():
+        payload_path = os.path.abspath('payloads')
+        for f in os.listdir(payload_path):
+            os.remove(os.path.join(payload_path, f))
 
     @staticmethod
     async def _render(name, group, environment, url_root):
@@ -88,3 +96,6 @@ class FileSvc:
                     headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
                     return os.path.join(root, name), headers
         return None, None
+
+    async def extend_xor_key(self, length):
+        return (self.xorkey * (int(length/len(self.xorkey))+1))[:length]
