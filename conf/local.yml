@@ -5,9 +5,9 @@ port: 8888
 sockets:
   - 8880
 planner: plugins.stockpile.app.sequential
+proxy: haproxy
 stores:
-  - plugins/stockpile/payloads
-  - plugins/adversary/payloads
+  - payloads
 plugins:
   - stockpile
   - sandcat

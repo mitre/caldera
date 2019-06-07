@@ -11,3 +11,5 @@
 .logs/*
 !.logs/.gitkeep
 core.db
+payloads/*
+conf/*-rendered.conf
