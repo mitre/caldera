@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import ssl
 import sys
 from importlib import import_module
 
@@ -41,8 +40,6 @@ async def attach_plugins(app, services):
 
 @asyncio.coroutine
 async def init(address, port, services, users):
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
     mw = [session_middleware(SimpleCookieStorage()), normalize_path_middleware()]
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
@@ -58,7 +55,7 @@ async def init(address, port, services, users):
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, address, port, ssl_context=context).start()
+    await web.TCPSite(runner, address, port, ssl_context=None).start()
 
 
 def main(services, host, port, users):

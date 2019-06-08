@@ -13,3 +13,6 @@
 [submodule "plugins/stockpile"]
 	path = plugins/stockpile
 	url = https://github.com/mitre/stockpile.git
+[submodule "plugins/proxy"]
+	path = plugins/proxy
+	url = https://github.com/mitre/proxy.git
