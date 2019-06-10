@@ -19,7 +19,7 @@ class FileSvc:
         proxy_port = request.headers.get('proxy_port')
         forwarded_proto = request.headers.get('x-forwarded-proto')
         if proxy_port and forwarded_proto:
-            url_root = '{scheme}://{host}:{port}'.format(scheme=forwarded_proto, host=request.host, port=proxy_port)
+            url_root = '{scheme}://{host}:{port}'.format(scheme=forwarded_proto, host=request.remote, port=proxy_port)
         else:
             url_root = '{scheme}://{host}'.format(scheme=request.scheme, host=request.host)
         headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
