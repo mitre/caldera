@@ -55,7 +55,7 @@ async def init(address, port, services, users):
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, address, port, ssl_context=None).start()
+    await web.TCPSite(runner, address, port).start()
 
 
 def main(services, host, port, users):
