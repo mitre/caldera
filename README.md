@@ -5,8 +5,6 @@ that performs post-compromise adversarial behavior inside computer networks. It 
 
 Python 3.5.3+ is required to run this system.
 
-![alt text](readme.png)
-
 ## Installation
 
 Start by cloning this repository recursively. This will pull all available plugins. 
@@ -89,7 +87,7 @@ python server.py
 
 Then start a 54ndc47 agent on the same machine.
 ```
-while true; do curl -sk -X POST -H 'file:sandcat' https://localhost:8888/file/download > /tmp/sandcat.txt && chmod +x /tmp/sandcat.txt && /tmp/sandcat.txt https://localhost:8888 my_group && rm /tmp/sandcat.txt; sleep 60; done
+while true; do curl -sk -X POST -H 'file:sandcat-osx' https://localhost:8888/file/download > /tmp/sandcat-osx && chmod +x /tmp/sandcat-osx && /tmp/sandcat-osx https://localhost:8888 my_group; sleep 60; done
 ```
 
 Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. 
