@@ -89,10 +89,11 @@ python server.py
 
 Then start a 54ndc47 agent on the same machine.
 ```
-while true; do eval "$(curl -sk -X POST -H "file:54ndc47.sh" https://localhost:8888/file/render?group=client)"; sleep 60; done
+while true; do curl -sk -X POST -H 'file:sandcat' https://localhost:8888/file/download > /tmp/sandcat.txt && chmod +x /tmp/sandcat.txt && /tmp/sandcat.txt https://localhost:8888 my_group && rm /tmp/sandcat.txt; sleep 60; done
 ```
 
-Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. Click into the Chain plugin and use the "Manage Operations" section to fire off an operation using the mission1 adversary. 
+Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. 
+Click into the Chain plugin and use the "Manage Operations" section to fire off an operation using the mission1 adversary. 
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
 the mission a success? Did the mission1 adversary run without a trace? Can you figure out why the 
