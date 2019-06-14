@@ -87,7 +87,7 @@ python server.py
 
 Then start a 54ndc47 agent on the same machine.
 ```
-while true; do curl -sk -X POST -H 'file:sandcat-osx' https://localhost:8888/file/download > /tmp/sandcat-osx && chmod +x /tmp/sandcat-osx && /tmp/sandcat-osx https://localhost:8888 my_group; sleep 60; done
+while true; do curl -sk -X POST -H 'file:sandcat-darwin' https://localhost:8888/file/download > /tmp/sandcat-osx && chmod +x /tmp/sandcat-osx && /tmp/sandcat-osx https://localhost:8888 my_group; sleep 60; done
 ```
 
 Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. 
