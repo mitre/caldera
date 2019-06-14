@@ -47,8 +47,7 @@ async def init(address, port, services, users):
     app = web.Application(middlewares=mw)
     app.on_startup.append(background_tasks)
 
-    app.router.add_route('POST', '/file/render', services.get('file_svc').render)
-    app.router.add_route('POST', '/file/download', services.get('file_svc').download)
+    app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
 
     await services.get('data_svc').reload_database()
