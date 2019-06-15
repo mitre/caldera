@@ -75,6 +75,7 @@ def build_plugins(plugs):
         if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
             print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
             exit(0)
+        logging.debug('Loading plugin %s' % plug)
         modules.append(import_module('plugins.%s.hook' % plug))
     return modules
 

@@ -126,7 +126,11 @@ class DataService:
         return agents
 
     async def explode_results(self, criteria=None):
-        return await self.dao.get('core_result', criteria=criteria)
+        results = await self.dao.get('core_result', criteria=criteria)
+        for r in results:
+            link = await self.dao.get('core_chain', dict(id=r['link_id']))
+            r['link'] = link[0]
+        return results
 
     async def explode_chain(self, op_id):
         sql = 'SELECT a.*, b.name as abilityName, b.description as abilityDescription ' \
