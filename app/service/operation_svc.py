@@ -14,7 +14,7 @@ class OperationService(OpControl):
         self.data_svc = data_svc
         self.utility_svc = utility_svc
         self.loop = asyncio.get_event_loop()
-        self.log = Logger('operation')
+        self.log = Logger('operation_svc')
         planning_module = import_module(planner)
         self.planner = getattr(planning_module, 'LogicalPlanner')(self.data_svc, self.utility_svc, self.log)
 
@@ -24,12 +24,12 @@ class OperationService(OpControl):
                 self.loop.create_task(self.run(op['id']))
 
     async def close_operation(self, op_id):
-        self.log.console('Operation complete: %s' % op_id)
+        self.log.debug('Operation complete: %s' % op_id)
         update = dict(finish=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=update)
 
     async def run(self, op_id):
-        self.log.console('Starting operation: %s' % op_id)
+        self.log.debug('Starting operation: %s' % op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
             for phase in operation[0]['adversary']['phases']:
@@ -45,7 +45,7 @@ class OperationService(OpControl):
             traceback.print_exc()
 
     async def cleanup(self, op_id):
-        self.log.console('Cleanup started for operation: %s' % op_id)
+        self.log.debug('Cleanup started for operation: %s' % op_id)
         clean_commands = await self.data_svc.dao.get('core_cleanup', dict(op_id=op_id))
         for c in reversed(clean_commands):
             link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability_id=c['ability_id'], decide=datetime.now(),

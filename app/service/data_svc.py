@@ -1,18 +1,18 @@
 import glob
+import os
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
 from uuid import UUID, uuid4
-import logging
-import os
+
 import yaml
 
 
 class DataService:
 
-    def __init__(self, dao):
+    def __init__(self, dao, utility_svc):
         self.dao = dao
-        self.logger = logging.getLogger('DataService')
+        self.log = utility_svc.create_logger('data_svc')
 
     async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None):
         with open(schema) as schema:
@@ -149,7 +149,7 @@ class DataService:
         new_ability_file = os.path.join(directory, '{}.yml'.format(_uuid))
         with open(new_ability_file, 'w') as new_ability:
             yaml.dump(ability_yaml, new_ability)
-        self.logger.info('Created new ability file with uuid: {}'.format(new_ability_file))
+        self.log.info('Created new ability file with uuid: {}'.format(new_ability_file))
         os.remove(_filename)
         return new_ability_file
 
