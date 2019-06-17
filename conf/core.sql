@@ -12,4 +12,3 @@ CREATE TABLE if not exists core_attack (attack_id text primary key, name text, t
 CREATE TABLE if not exists core_cleanup (op_id integer, link_id integer, command text, ability_id text, agent_id integer, UNIQUE(link_id, command));
 CREATE TABLE if not exists users (username text primary key, password blob, salt blob, last_login date);
 CREATE TABLE if not exists webauth (ref_insert text primary key, passkey text, issued date);
-CREATE TABLE if not exists opstate (operation text primary key, state text, UNIQUE(operation));
