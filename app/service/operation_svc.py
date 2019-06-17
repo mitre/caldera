@@ -4,13 +4,11 @@ from datetime import datetime
 from importlib import import_module
 
 from app.utility.logger import Logger
-from app.utility.op_control import OpControl
 
 
-class OperationService(OpControl):
+class OperationService:
 
     def __init__(self, data_svc, utility_svc, planner):
-        super().__init__(data_svc.dao)
         self.data_svc = data_svc
         self.utility_svc = utility_svc
         self.loop = asyncio.get_event_loop()
