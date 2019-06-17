@@ -49,4 +49,3 @@ class OperationService:
             link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability_id=c['ability_id'], decide=datetime.now(),
                         command=c['command'], score=0, jitter=1)
             await self.data_svc.create_link(link)
-        await self.cleanup_operation(op_id)
