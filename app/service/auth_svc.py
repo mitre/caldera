@@ -6,7 +6,8 @@ from functools import wraps
 
 class AuthService:
 
-    def __init__(self, data_svc, ssl_cert):
+    def __init__(self, data_svc, ssl_cert, utility_svc):
+        self.log = utility_svc.create_logger('auth_svc')
         self.data_svc = data_svc
         self.ssl_cert = ssl_cert
         self.auth_funcs = dict(auth = authenticated_login, login = login_session, logout = logout_session, reset = reset_password)
@@ -44,6 +45,7 @@ class AuthService:
     async def login(self, username, password):
         if not username:
             return False
+        self.log.debug('%s logging in' % username)
         user = await self.data_svc.dao.get('users', dict(username=username))
         if not user or not await Authorize().verify(password.encode(), user[0]['password'], user[0]['salt']):
             return False
