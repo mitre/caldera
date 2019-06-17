@@ -9,7 +9,9 @@ class UtilityService:
 
     @staticmethod
     def apply_stealth(executor, code):
-        options = dict(psh=lambda c: obfuscate_ps1(c), bash=lambda c: obfuscate_bash(c))
+        options = dict(windows=lambda c: obfuscate_ps1(c),
+                       darwin=lambda c: obfuscate_bash(c),
+                       linux=lambda c: obfuscate_bash(c))
         return options[executor](code)
 
     @staticmethod

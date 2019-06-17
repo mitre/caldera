@@ -26,4 +26,4 @@ def obfuscate_ps1(code):
 
 
 def obfuscate_bash(code):
-    return code
+    return 'eval "$(echo %s | base64 --decode)"' % str(b64encode(code.encode()), 'utf-8')
