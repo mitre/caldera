@@ -10,8 +10,6 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 from aiohttp import web
-from aiohttp.web_middlewares import normalize_path_middleware
-from aiohttp_session import SimpleCookieStorage, session_middleware
 
 from app.database.core_dao import CoreDao
 from app.service.auth_svc import AuthService
@@ -31,7 +29,6 @@ async def background_tasks(app):
 
 
 async def attach_plugins(app, services):
-    services['auth_svc'].set_app(app)
     for pm in services.get('plugins'):
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
@@ -43,17 +40,14 @@ async def attach_plugins(app, services):
 async def init(address, port, services, users):
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
-    mw = [session_middleware(SimpleCookieStorage()), normalize_path_middleware()]
-    app = web.Application(middlewares=mw)
+    app = web.Application()
+    await auth_svc.apply(app, users)
     app.on_startup.append(background_tasks)
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
 
     await services.get('data_svc').reload_database()
-    for user, pwd in users.items():
-        await services.get('auth_svc').register(username=user, password=pwd)
-        logging.debug('...Created user: %s:%s' % (user, pwd))
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
@@ -86,7 +80,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         cfg = yaml.load(c)
-        logging.getLogger('aiohttp.access').setLevel(logging.WARNING)
+        logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
+        logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
         logging.getLogger().setLevel('DEBUG')
         sys.path.append('')
@@ -95,7 +90,7 @@ if __name__ == '__main__':
         utility_svc = UtilityService()
         data_svc = DataService(CoreDao('core.db'), utility_svc)
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=cfg['planner'])
-        auth_svc = AuthService(data_svc=data_svc, ssl_cert=SSL_CERT, utility_svc=utility_svc)
+        auth_svc = AuthService(utility_svc=utility_svc)
         file_svc = FileSvc(cfg['stores'])
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,

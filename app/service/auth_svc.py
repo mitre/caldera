@@ -1,78 +1,90 @@
-from datetime import datetime
-from app.utility.authorize import Authorize
-from app.utility.auth_jwt import authenticated_login, login_session, logout_session, reset_password
-from functools import wraps
+import base64
+from collections import namedtuple
+
+from aiohttp import web
+from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
+from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
+from aiohttp_security import setup as setup_security
+from aiohttp_security.abc import AbstractAuthorizationPolicy
+from aiohttp_session import setup as setup_session
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from cryptography import fernet
 
 
 class AuthService:
 
-    def __init__(self, data_svc, ssl_cert, utility_svc):
+    User = namedtuple('User', ['username', 'password', 'permissions'])
+
+    def __init__(self, utility_svc):
         self.log = utility_svc.create_logger('auth_svc')
-        self.data_svc = data_svc
-        self.ssl_cert = ssl_cert
-        self.auth_funcs = dict(auth = authenticated_login, login = login_session, logout = logout_session, reset = reset_password)
-        self.redirect_landing = '/enter'  # set to default address to prevent redirection errors that occur if invalid
+        self.user_map = dict()
 
-    def set_app(self, app):
-        self.app_handle = app
-
-    def set_new_auth(self, auth_handler, login_handler, logout_handler, reset_handler):
-        self.auth_funcs['auth'] = auth_handler
-        self.auth_funcs['login'] = login_handler
-        self.auth_funcs['logout'] = logout_handler
-        self.auth_funcs['reset'] = reset_handler
-
-    def set_new_login_landing(self, landing):
-        self.redirect_landing = landing
-
-    async def login_wrapper(self, session, user):
-        await self.auth_funcs['login'](self, session, user)
-
-    async def logout_wrapper(self, session):
-        await self.auth_funcs['logout'](self, session)
-
-    async def reset_wrapper(self, submission, session):
-        return await self.auth_funcs['reset'](self, submission, session)
+    async def apply(self, app, users):
+        for k, v in users.items():
+            self.user_map[k] = self.User(k, v, ('admin', 'user'),)
+        app.user_map = self.user_map
+        fernet_key = fernet.Fernet.generate_key()
+        secret_key = base64.urlsafe_b64decode(fernet_key)
+        storage = EncryptedCookieStorage(secret_key, cookie_name='API_SESSION')
+        setup_session(app, storage)
+        policy = SessionIdentityPolicy()
+        setup_security(app, policy, DictionaryAuthorizationPolicy(self.user_map))
 
     @staticmethod
-    async def generate(password):
-        return await Authorize().registration_salt_key(password)
+    async def logout_user(request):
+        await forget(request, web.Response())
+        raise web.HTTPFound('/login')
 
-    async def register(self, username, password):
-        salt, key = await self.generate(password)
-        await self.data_svc.dao.create('users', dict(username=username, password=key, salt=salt, last_login=datetime.now()))
+    async def login_user(self, request):
+        data = await request.post()
+        response = web.HTTPFound('/')
+        verified = await self._check_credentials(
+            request.app.user_map, data.get('username'), data.get('password'))
+        if verified:
+            await remember(request, response, data.get('username'))
+            return response
+        raise web.HTTPFound('/login')
 
-    async def login(self, username, password):
-        if not username:
-            return False
+    @staticmethod
+    async def check_permissions(request):
+        try:
+            await check_permission(request, 'admin')
+        except HTTPUnauthorized:
+            raise web.HTTPFound('/login')
+        except HTTPForbidden:
+            raise web.HTTPFound('/login')
+
+    async def _check_credentials(self, user_map, username, password):
         self.log.debug('%s logging in' % username)
-        user = await self.data_svc.dao.get('users', dict(username=username))
-        if not user or not await Authorize().verify(password.encode(), user[0]['password'], user[0]['salt']):
+        user = user_map.get(username)
+        if not user:
             return False
-        await self.data_svc.dao.update('users', key='username', value=username, data=dict(last_login=datetime.now()))
-        return True
+        return user.password == password
 
-    def set_unauthorized_route(self, allowed_requests, endpoint, target_function):
-        if isinstance(allowed_requests, list):
-            for ar in allowed_requests:
-                self.app_handle.router.add_route(ar, endpoint, target_function)
-        else:
-            self.app_handle.router.add_route(allowed_requests, endpoint, target_function)
 
-    def set_unauthorized_static(self, endpoint, target, append_version=True):
-        self.app_handle.router.add_static(endpoint, target, append_version=append_version)
+class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
 
-    def set_authorized_route(self, allowed_requests, endpoint, target_function):
-        @wraps(target_function)
-        async def wrapped_function(*args, **kwargs):
-            core = await self.auth_funcs['auth'](self, *args, **kwargs)
-            if not core:
-                return await target_function(*args, **kwargs)
-            else:
-                return core
+    def __init__(self, user_map):
+        super().__init__()
+        self.user_map = user_map
 
-        if isinstance(allowed_requests, list):
-            for ar in allowed_requests:
-                self.app_handle.router.add_route(ar, endpoint, wrapped_function)
-        else:
-            self.app_handle.router.add_route(allowed_requests, endpoint, wrapped_function)
+    async def authorized_userid(self, identity):
+        """Retrieve authorized user id.
+        Return the user_id of the user identified by the identity
+        or 'None' if no user exists related to the identity.
+        """
+        if identity in self.user_map:
+            return identity
+
+    async def permits(self, identity, permission, context=None):
+        """Check user permissions.
+        Return True if the identity is allowed the permission in the
+        current context, else return False.
+        """
+        user = self.user_map.get(identity)
+        if not user:
+            return False
+        return permission in user.permissions
+
+
+

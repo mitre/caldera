@@ -10,5 +10,3 @@ CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_
 CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability_id text, name text, property text, script text, UNIQUE(ability_id, property) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_attack (attack_id text primary key, name text, tactic text, UNIQUE(attack_id));
 CREATE TABLE if not exists core_cleanup (op_id integer, link_id integer, command text, ability_id text, agent_id integer, UNIQUE(link_id, command));
-CREATE TABLE if not exists users (username text primary key, password blob, salt blob, last_login date);
-CREATE TABLE if not exists webauth (ref_insert text primary key, passkey text, issued date);
