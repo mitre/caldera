@@ -93,17 +93,17 @@ your operating system.
 
 **OSX**:
 ```
-while true; do curl -sk -X POST -H 'file:sandcat-darwin' https://localhost:8888/file/download > /tmp/sandcat-darwin && chmod +x /tmp/sandcat-darwin && /tmp/sandcat-darwin https://localhost:8888 my_group; sleep 60; done
+while true; do curl -sk -X POST -H 'file:sandcat-darwin' http://localhost:8888/file/download > /tmp/sandcat-darwin && chmod +x /tmp/sandcat-darwin && /tmp/sandcat-darwin http://localhost:8888 my_group; sleep 60; done
 ```
 
 **Linux**:
 ```
-while true; do curl -sk -X POST -H 'file:sandcat-linux' https://localhost:8888/file/download > /tmp/sandcat-linux && chmod +x /tmp/sandcat-linux && /tmp/sandcat-linux https://localhost:8888 my_group; sleep 60; done
+while true; do curl -sk -X POST -H 'file:sandcat-linux' http://localhost:8888/file/download > /tmp/sandcat-linux && chmod +x /tmp/sandcat-linux && /tmp/sandcat-linux http://localhost:8888 my_group; sleep 60; done
 ```
 
 **Windows**:
 ```
-while($true) {[System.Net.ServicePointManager]::ServerCertificateValidationCallback={$True};$url="https://localhost:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("file","sandcat.exe");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe https://localhost:8888 my_group; sleep 60}
+while($true) {$url="http://localhost:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("file","sandcat.exe");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe http://localhost:8888 my_group; sleep 60}
 ```
 
 Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. 

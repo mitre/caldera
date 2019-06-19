@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import ssl
 import sys
 from importlib import import_module
 
@@ -17,11 +16,6 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.utility_svc import UtilityService
-
-SSL_CERT_FILE = 'conf/cert.pem'
-SSL_KEY_FILE = 'conf/key.pem'
-with open(SSL_CERT_FILE) as cert_file:
-    SSL_CERT = cert_file.read()
 
 
 async def background_tasks(app):
@@ -38,8 +32,6 @@ async def attach_plugins(app, services):
 
 @asyncio.coroutine
 async def init(address, port, services, users):
-    context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    context.load_cert_chain(SSL_CERT_FILE, SSL_KEY_FILE)
     app = web.Application()
     await auth_svc.apply(app, users)
     app.on_startup.append(background_tasks)
@@ -51,7 +43,7 @@ async def init(address, port, services, users):
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, address, port, ssl_context=context).start()
+    await web.TCPSite(runner, address, port).start()
 
 
 def main(services, host, port, users):
