@@ -43,7 +43,7 @@ class DataService:
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None, payload=None, parser=None):
-        await self.dao.delete('core_ability', dict(ability_id=ability_id, platform=platform))
+        await self.delete_ability(ability_id, platform)
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
@@ -141,6 +141,17 @@ class DataService:
               'ON a.ability=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+    """ DELETE """
+
+    async def delete_ability(self, ability_id, platform):
+        abilities = await self.dao.get('core_ability', dict(ability_id=ability_id, platform=platform))
+        await self.dao.delete('core_ability', dict(ability_id=ability_id, platform=platform))
+        for ability in abilities:
+            await self.dao.delete('core_payload', dict(ability=ability['id']))
+            await self.dao.delete('core_parser', dict(ability=ability['id']))
+
+    """ PRIVATE """
 
     def _make_uuid(self, _filename):
         _uuid = str(uuid4())
