@@ -106,7 +106,7 @@ while true; do curl -sk -X POST -H 'file:sandcat-linux' http://localhost:8888/fi
 while($true) {$url="http://localhost:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("file","sandcat.exe");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe http://localhost:8888 my_group; sleep 60}
 ```
 
-Move to a browser, at https://localhost:8888, logging in with the credentials admin:admin. 
+Move to a browser, at http://127.0.0.1:8888, logging in with the credentials admin:admin. 
 Click into the Chain plugin and use the "Manage Operations" section to fire off an operation using the "nosy neighbor" adversary. 
 
 Once the operation is complete, compare the execution time of the first and last commands. Was

@@ -22,6 +22,17 @@ async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
 
 
+def build_plugins(plugs):
+    modules = []
+    for plug in plugs if plugs else []:
+        if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
+            print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+            exit(0)
+        logging.debug('Loading plugin %s' % plug)
+        modules.append(import_module('plugins.%s.hook' % plug))
+    return modules
+
+
 async def attach_plugins(app, services):
     for pm in services.get('plugins'):
         plugin = getattr(pm, 'initialize')
@@ -55,17 +66,6 @@ def main(services, host, port, users):
         pass
 
 
-def build_plugins(plugs):
-    modules = []
-    for plug in plugs if plugs else []:
-        if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-            print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
-            exit(0)
-        logging.debug('Loading plugin %s' % plug)
-        modules.append(import_module('plugins.%s.hook' % plug))
-    return modules
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
@@ -74,6 +74,7 @@ if __name__ == '__main__':
         cfg = yaml.load(c)
         logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
         logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
+        logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
         logging.getLogger().setLevel('DEBUG')
         sys.path.append('')
@@ -88,5 +89,5 @@ if __name__ == '__main__':
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, plugins=plugin_modules
         )
-        logging.debug('Serving at %s:%s' % (cfg['host'], cfg['port']))
+        logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=services, host=cfg['host'], port=cfg['port'], users=cfg['users'])

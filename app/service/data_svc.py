@@ -35,23 +35,25 @@ class DataService:
                 for ab in yaml.load(ability):
                     for ex,el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
-                        await self.create_ability(id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
+                        await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
                                                   test=encoded_test.decode(), description=ab.get('description'), platform=ex,
                                                   cleanup=b64encode(el['cleanup'].strip().encode('utf-8')).decode() if el.get('cleanup') else None,
-                                                  parser=el.get('parser'))
+                                                  payload=el.get('payload'), parser=el.get('parser'))
 
     """ CREATE """
 
-    async def create_ability(self, id, tactic, technique, name, test, description, platform, cleanup=None, parser=None):
-        await self.dao.delete('core_ability', dict(id=id, platform=platform))
+    async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None, payload=None, parser=None):
+        await self.dao.delete('core_ability', dict(ability_id=ability_id, platform=platform))
         await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
-        await self.dao.create('core_ability', dict(id=id, name=name, test=test, technique=entry_id, platform=platform, description=description, cleanup=cleanup))
+        identifier = await self.dao.create('core_ability', dict(ability_id=ability_id, name=name, test=test, technique=entry_id, platform=platform, description=description, cleanup=cleanup))
+        if payload:
+            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
-            parser['ability_id'] = id
+            parser['ability'] = identifier
             await self.dao.create('core_parser', parser)
-        return 'Saved ability: %s' % id
+        return 'Saved ability: %s' % ability_id
 
     async def create_adversary(self, name, description, phases):
         identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
@@ -87,7 +89,7 @@ class DataService:
         abilities = await self.dao.get('core_ability', criteria=criteria)
         for ab in abilities:
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
-            ab['parser'] = await self.dao.get('core_parser', dict(ability_id=ab['id']))
+            ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['technique'] = (await self.dao.get('core_attack', dict(attack_id=ab['technique'])))[0]
         return abilities
 
@@ -96,7 +98,7 @@ class DataService:
         for adv in adversaries:
             phases = defaultdict(list)
             for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['id'])):
-                for ability in await self.explode_abilities(dict(id=t['ability_id'])):
+                for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
                     phases[t['phase']].append(ability)
             adv['phases'] = dict(phases)
         return adversaries
@@ -136,7 +138,7 @@ class DataService:
         sql = 'SELECT a.*, b.name as abilityName, b.description as abilityDescription ' \
               'FROM core_chain a '\
               'JOIN (SELECT id, name, description FROM core_ability GROUP BY id) b ' \
-              'ON a.ability_id=b.id ' \
+              'ON a.ability=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
 

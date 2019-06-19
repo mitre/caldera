@@ -46,6 +46,6 @@ class OperationService:
         self.log.debug('Cleanup started for operation: %s' % op_id)
         clean_commands = await self.data_svc.dao.get('core_cleanup', dict(op_id=op_id))
         for c in reversed(clean_commands):
-            link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability_id=c['ability_id'], decide=datetime.now(),
+            link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability=c['ability'], decide=datetime.now(),
                         command=c['command'], score=0, jitter=1)
             await self.data_svc.create_link(link)
