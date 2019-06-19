@@ -11,5 +11,6 @@ plugins:
   - sandcat
   - gui
   - chain
+  - ssl
 users:
   admin: admin
