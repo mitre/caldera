@@ -13,17 +13,13 @@ class Logger:
         self.logger.addHandler(handler)
 
     def debug(self, msg):
-        self.logger.setLevel(logging.DEBUG)
         self.logger.debug(msg)
 
     def info(self, msg):
-        self.logger.setLevel(logging.INFO)
         self.logger.info(msg)
 
     def warning(self, msg):
-        self.logger.setLevel(logging.WARNING)
         self.logger.warning(msg)
 
     def error(self, msg):
-        self.logger.setLevel(logging.ERROR)
         self.logger.error(msg)

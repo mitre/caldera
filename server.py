@@ -76,7 +76,7 @@ if __name__ == '__main__':
         logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
         logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
         logging.getLogger('asyncio').setLevel(logging.FATAL)
-        logging.getLogger().setLevel('DEBUG')
+        logging.getLogger().setLevel(logging.DEBUG)
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
