@@ -9,6 +9,6 @@
 *__pycache__*
 .history/*
 .idea/*
-.logs/*
-!.logs/.gitkeep
+logs/*
+!logs/.gitkeep
 core.db
