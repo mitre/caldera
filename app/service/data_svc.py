@@ -89,6 +89,7 @@ class DataService:
         for ab in abilities:
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
+            ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
             ab['technique'] = (await self.dao.get('core_attack', dict(attack_id=ab['technique'])))[0]
         return abilities
 
