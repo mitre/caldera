@@ -7,7 +7,6 @@ CREATE TABLE if not exists core_adversary (id integer primary key AUTOINCREMENT,
 CREATE TABLE if not exists core_adversary_map (phase integer, adversary_id integer, ability_id text, UNIQUE (adversary_id, phase, ability_id));
 CREATE TABLE if not exists core_operation (id integer primary key AUTOINCREMENT, name text, host_group integer, adversary integer, jitter text, start date, finish date, phase integer, cleanup integer, stealth integer);
 CREATE TABLE if not exists core_agent (id integer primary key AUTOINCREMENT, hostname text, paw text, checks integer, last_seen date, platform text, server text, files text);
-CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_id integer, host_id integer, ability integer, jitter integer, command text, score integer, status integer, decide date, collect date, finish date, UNIQUE(op_id, host_id, command));
+CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_id integer, host_id integer, ability integer, jitter integer, command text, cleanup text, score integer, status integer, decide date, collect date, finish date, UNIQUE(op_id, host_id, command));
 CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, name text, property text, script text, UNIQUE(ability, property) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_attack (attack_id text primary key, name text, tactic text, UNIQUE(attack_id));
-CREATE TABLE if not exists core_cleanup (op_id integer, link_id integer, command text, ability integer, agent_id integer, UNIQUE(link_id, command));
