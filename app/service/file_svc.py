@@ -7,9 +7,10 @@ from app.utility.logger import Logger
 
 class FileSvc:
 
-    def __init__(self, file_stores):
-        self.file_stores = file_stores
+    def __init__(self, payload_dirs, exfil_dir):
+        self.payload_dirs = payload_dirs
         self.log = Logger('file_svc')
+        self.exfil_dir = exfil_dir
 
     async def download(self, request):
         name = request.headers.get('file')
@@ -25,7 +26,7 @@ class FileSvc:
             field = await reader.next()
             filename = field.filename
             size = 0
-            with open(os.path.join('/tmp/', filename), 'wb') as f:
+            with open(os.path.join(self.exfil_dir, filename), 'wb') as f:
                 while True:
                     chunk = await field.read_chunk()
                     if not chunk:
@@ -37,7 +38,7 @@ class FileSvc:
             self.log.debug('Exception uploading file %s' % e)
 
     async def _download(self, name):
-        for store in self.file_stores:
+        for store in self.payload_dirs:
             for root, dirs, files in os.walk(store):
                 if name in files:
                     headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])

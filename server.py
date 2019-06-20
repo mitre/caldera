@@ -28,7 +28,7 @@ def build_plugins(plugs):
         if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
             print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
             exit(0)
-        logging.debug('Loading plugin %s' % plug)
+        logging.debug('Loading plugin: %s' % plug)
         modules.append(import_module('plugins.%s.hook' % plug))
     return modules
 
@@ -84,7 +84,9 @@ if __name__ == '__main__':
         data_svc = DataService(CoreDao('core.db'), utility_svc)
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planner=cfg['planner'])
         auth_svc = AuthService(utility_svc=utility_svc)
-        file_svc = FileSvc(cfg['stores'])
+        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
+        logging.debug('Downloaded payloads will come from %s' % cfg['payloads'])
+        file_svc = FileSvc(cfg['payloads'], cfg['exfil_dir'])
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
             file_svc=file_svc, plugins=plugin_modules
