@@ -75,13 +75,6 @@ class DataService:
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
         )
 
-    async def create_link(self, link, cleanup=None):
-        link_id = await self.dao.create('core_chain', link)
-        if cleanup and cleanup.get('command'):
-            cleanup['link_id'] = link_id
-            await self.dao.create('core_cleanup', cleanup)
-        return link_id
-
     """ VIEW """
 
     async def explode_abilities(self, criteria=None):

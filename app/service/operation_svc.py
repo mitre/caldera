@@ -36,16 +36,6 @@ class OperationService:
                 self.log.debug('Operation %s phase %s: completed' % (op_id, phase))
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
-            if operation[0]['cleanup']:
-                await self.cleanup(operation[0])
             await self.close_operation(op_id)
         except Exception:
             traceback.print_exc()
-
-    async def cleanup(self, operation):
-        self.log.debug('Cleanup started for operation: %s' % operation['id'])
-        clean_commands = await self.data_svc.dao.get('core_cleanup', dict(op_id=operation['id']))
-        for c in reversed(clean_commands):
-            link = dict(op_id=c['op_id'], host_id=c['agent_id'], ability=c['ability'], decide=datetime.now(),
-                        command=c['command'], score=0, jitter=0)
-            await self.data_svc.create_link(link)
