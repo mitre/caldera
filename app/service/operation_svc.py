@@ -36,11 +36,6 @@ class OperationService:
                 self.log.debug('Operation %s phase %s: completed' % (op_id, phase))
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
-            if operation[0]['cleanup']:
-                await self.cleanup(operation[0])
             await self.close_operation(op_id)
         except Exception:
             traceback.print_exc()
-
-    async def cleanup(self, operation):
-        self.log.debug('Cleanup started for operation: %s' % operation['id'])
