@@ -4,5 +4,4 @@ aiohttp_session==2.7.0
 aiohttp-security==0.4.0
 jinja2==2.10.1
 pyyaml==4.2b1
-PyJWT==1.7.1
 cryptography==2.3.1

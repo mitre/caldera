@@ -69,7 +69,7 @@ class DataService:
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return 'Saved %s host group' % name
 
-    async def create_operation(self, name, group, adversary, jitter='3/5', cleanup=True, stealth=False):
+    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False):
         return await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
