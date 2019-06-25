@@ -69,6 +69,13 @@ class DataService:
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return 'Saved %s host group' % name
 
+    async def delete_group(self, group_id):
+        group = await self.dao.get('core_group', dict(id=group_id))
+        await self.dao.delete('core_group', dict(id=group_id))
+        await self.dao.delete('core_group_map', dict(group_id=group_id))
+        await self.dao.delete('core_operation', dict(host_group=group_id))
+        return 'Removed %s host group' % group['name']
+
     async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False):
         return await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
