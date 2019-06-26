@@ -8,13 +8,13 @@ from app.utility.logger import Logger
 
 class OperationService:
 
-    def __init__(self, data_svc, utility_svc, planner):
+    def __init__(self, data_svc, utility_svc, planning_svc, planner):
         self.data_svc = data_svc
         self.utility_svc = utility_svc
         self.loop = asyncio.get_event_loop()
         self.log = Logger('operation_svc')
         planning_module = import_module(planner)
-        self.planner = getattr(planning_module, 'LogicalPlanner')(self.data_svc, self.utility_svc, self.log)
+        self.planner = getattr(planning_module, 'LogicalPlanner')(self.data_svc, planning_svc)
 
     async def resume(self):
         for op in await self.data_svc.dao.get('core_operation'):
