@@ -10,3 +10,4 @@ CREATE TABLE if not exists core_agent (id integer primary key AUTOINCREMENT, paw
 CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_id integer, host_id integer, ability integer, jitter integer, command text, cleanup text, score integer, status integer, decide date, collect date, finish date, UNIQUE(op_id, host_id, command));
 CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, name text, property text, script text, UNIQUE(ability, property) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_attack (attack_id text primary key, name text, tactic text, UNIQUE(attack_id));
+CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, op_id integer, link_id integer, fact text, value text, score integer, action integer, UNIQUE(op_id, fact, value) ON CONFLICT IGNORE);
