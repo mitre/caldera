@@ -107,6 +107,10 @@ class DataService:
         return operations
 
     async def explode_groups(self, criteria=None):
+        if criteria:
+            criteria['active'] = 1
+        else:
+            criteria = dict(active=1)
         groups = await self.dao.get('core_group', criteria=criteria)
         for g in groups:
             g['agents'] = await self.dao.get('core_group_map', dict(group_id=g['id']))
@@ -114,7 +118,7 @@ class DataService:
 
     async def explode_agents(self, criteria: object = None) -> object:
         agents = await self.dao.get('core_agent', criteria)
-        sql = 'SELECT g.id, g.name, m.agent_id FROM core_group g JOIN core_group_map m on g.id=m.group_id'
+        sql = 'SELECT g.id, g.name, m.agent_id FROM core_group g JOIN core_group_map m on g.id=m.group_id WHERE g.active = 1'
         groups = await self.dao.raw_select(sql)
         for a in agents:
             a['groups'] = [dict(id=g['id'], name=g['name']) for g in groups if g['agent_id'] == a['id']]
@@ -139,9 +143,9 @@ class DataService:
 
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
-        await self.dao.update(table='core_group', key='active', value=0, data=dict(id=group_id))
-        return 'Removed %s host group' % group['name']
-    
+        await self.dao.update(table='core_group', key='id', value=group_id, data=dict(active=0))
+        return 'Removed %s host group' % group[0]['name']
+
     """ PRIVATE """
 
     def _make_uuid(self, _filename):
