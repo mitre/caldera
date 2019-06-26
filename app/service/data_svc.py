@@ -135,6 +135,13 @@ class DataService:
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
 
+    """ DELETE / DEACTIVATE """
+
+    async def deactivate_group(self, group_id):
+        group = await self.dao.get('core_group', dict(id=group_id))
+        await self.dao.update(table='core_group', key='active', value=0, data=dict(id=group_id))
+        return 'Removed %s host group' % group['name']
+    
     """ PRIVATE """
 
     def _make_uuid(self, _filename):
