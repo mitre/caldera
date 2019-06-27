@@ -135,6 +135,7 @@ class DataService:
         results = await self.dao.get('core_result', criteria=criteria)
         for r in results:
             link = await self.dao.get('core_chain', dict(id=r['link_id']))
+            link[0]['facts'] = await self.dao.get('core_fact', dict(link_id=link[0]['id']))
             r['link'] = link[0]
         return results
 
