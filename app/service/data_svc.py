@@ -1,11 +1,7 @@
 import glob
-import os
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
-from uuid import UUID, uuid4
-
-import yaml
 
 
 class DataService:
@@ -30,8 +26,7 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            config = self._check_uuid(filename)
-            for entries in self.utility_svc.strip_yml(config):
+            for entries in self.utility_svc.strip_yml(filename):
                 for ab in entries:
                     for ex,el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
@@ -163,27 +158,3 @@ class DataService:
         group = await self.dao.get('core_group', dict(id=group_id))
         await self.dao.update(table='core_group', key='id', value=group_id, data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return 'Removed %s host group' % group[0]['name']
-
-    """ PRIVATE """
-
-    def _make_uuid(self, _filename):
-        _uuid = str(uuid4())
-        with open(_filename, 'r') as ability:
-            ability_yaml = yaml.load(ability)
-            ability_yaml[0]['id'] = _uuid
-        directory = os.path.dirname(_filename)
-        new_ability_file = os.path.join(directory, '{}.yml'.format(_uuid))
-        with open(new_ability_file, 'w') as new_ability:
-            yaml.dump(ability_yaml, new_ability)
-        self.log.info('Created new ability file with uuid: {}'.format(new_ability_file))
-        os.remove(_filename)
-        return new_ability_file
-
-    def _check_uuid(self, _filename):
-        uuid_string = os.path.basename(_filename).split('.')[0]
-        try:
-            UUID(uuid_string, version=4)
-            return _filename
-        except ValueError:
-            return self._make_uuid(_filename)
-
