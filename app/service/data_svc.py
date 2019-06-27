@@ -12,33 +12,41 @@ class DataService:
 
     def __init__(self, dao, utility_svc):
         self.dao = dao
+        self.utility_svc = utility_svc
         self.log = utility_svc.create_logger('data_svc')
 
-    async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None):
+    async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None, facts=None):
         with open(schema) as schema:
             await self.dao.build(schema.read())
         await self.load_abilities(directory=abilities)
         await self.load_adversaries(config=adversaries)
+        await self.load_facts(config=facts)
 
     async def load_adversaries(self, config):
-        if config:
-            with open(config) as seed:
-                for doc in yaml.load_all(seed):
-                    for adv in doc[0]['adversaries']:
-                        phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
-                        await self.create_adversary(adv['name'], adv['description'], phases)
+        for entries in self.utility_svc.strip_yml(config):
+            for adv in entries:
+                phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
+                await self.create_adversary(adv['name'], adv['description'], phases)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            f = self._check_uuid(filename)
-            with open(f) as ability:
-                for ab in yaml.load(ability):
+            config = self._check_uuid(filename)
+            for entries in self.utility_svc.strip_yml(config):
+                for ab in entries:
                     for ex,el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
                         await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
                                                   test=encoded_test.decode(), description=ab.get('description'), platform=ex,
                                                   cleanup=b64encode(el['cleanup'].strip().encode('utf-8')).decode() if el.get('cleanup') else None,
                                                   payload=el.get('payload'), parser=el.get('parser'))
+
+    async def load_facts(self, config):
+        for entries in self.utility_svc.strip_yml(config):
+            for facts in entries:
+                source_id = await self.dao.create('core_source', dict(name=facts['name'], type='seed'))
+                for fact in facts['facts']:
+                    fact['source_id'] = source_id
+                    await self.dao.create('core_fact', fact)
 
     """ CREATE """
 
@@ -69,11 +77,16 @@ class DataService:
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return 'Saved %s host group' % name
 
-    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False):
-        return await self.dao.create('core_operation', dict(
+    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False, sources=None):
+        op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
         )
+        source_id = await self.dao.create('core_source', dict(name=name, type='operation'))
+        await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
+        for s_id in [s for s in sources if s]:
+            await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
+        return op_id
 
     """ VIEW """
 
@@ -104,6 +117,8 @@ class DataService:
             op['host_group'] = groups[0]
             adversaries = await self.explode_adversaries(dict(id=op['adversary']))
             op['adversary'] = adversaries[0]
+            sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
+            op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
         return operations
 
     async def explode_groups(self, criteria=None):
@@ -134,6 +149,12 @@ class DataService:
               'ON a.ability=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+    async def explode_sources(self, criteria=None):
+        sources = await self.dao.get('core_source', criteria=criteria)
+        for s in sources:
+            s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
+        return [source for source in sources if source['facts']]
 
     """ PRIVATE """
 

@@ -65,6 +65,15 @@ class Sql:
                 cursor.execute(sql, (v,))
             conn.commit()
 
+    async def get_in(self, table, field, elements):
+        with sqlite3.connect(self.database) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            sql = 'SELECT * FROM %s WHERE %s IN (%s)' % (table, field, ','.join(map(str, elements)))
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            return [dict(ix) for ix in rows]
+
     async def delete(self, table, data):
         with sqlite3.connect(self.database) as conn:
             cursor = conn.cursor()
