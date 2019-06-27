@@ -108,13 +108,14 @@ class DataService:
 
     async def explode_groups(self, criteria=None):
         groups = await self.dao.get('core_group', criteria=criteria)
+        groups = [g for g in groups if not g['deactivated']]
         for g in groups:
             g['agents'] = await self.dao.get('core_group_map', dict(group_id=g['id']))
         return groups
 
     async def explode_agents(self, criteria: object = None) -> object:
         agents = await self.dao.get('core_agent', criteria)
-        sql = 'SELECT g.id, g.name, m.agent_id FROM core_group g JOIN core_group_map m on g.id=m.group_id'
+        sql = 'SELECT g.id, g.name, m.agent_id FROM core_group g JOIN core_group_map m on g.id=m.group_id WHERE g.deactivated is null '
         groups = await self.dao.raw_select(sql)
         for a in agents:
             a['groups'] = [dict(id=g['id'], name=g['name']) for g in groups if g['agent_id'] == a['id']]
@@ -134,6 +135,13 @@ class DataService:
               'ON a.ability=b.id ' \
               'WHERE a.op_id = %s;' % op_id
         return await self.dao.raw_select(sql)
+
+    """ DELETE / DEACTIVATE """
+
+    async def deactivate_group(self, group_id):
+        group = await self.dao.get('core_group', dict(id=group_id))
+        await self.dao.update(table='core_group', key='id', value=group_id, data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        return 'Removed %s host group' % group[0]['name']
 
     """ PRIVATE """
 
