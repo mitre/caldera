@@ -16,3 +16,6 @@
 [submodule "plugins/ssl"]
 	path = plugins/ssl
 	url = https://github.com/mitre/ssl.git
+[submodule "plugins/dark"]
+	path = plugins/dark
+	url = https://gitlab.mitre.org/caldera/dark.git
