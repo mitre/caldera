@@ -24,6 +24,9 @@ class CoreDao:
     async def update(self, table, key, value, data):
         await self.db.update(table, key, value, data)
 
+    async def get_in(self, table, field, elements):
+        return await self.db.get_in(table, field, elements)
+
     async def raw_select(self, sql):
         return await self.db.raw_select(sql)
 

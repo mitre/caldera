@@ -70,12 +70,13 @@ class PlanningService:
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
+        facts = [f for f in facts if not f['blacklist']]
         relevant_facts = []
         for v in variables:
             variable_facts = []
             for fact in facts:
-                if fact['fact'] == v:
-                    variable_facts.append((fact['fact'], fact['value'], fact['score'], fact['id']))
+                if fact['property'] == v:
+                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id']))
             relevant_facts.append(variable_facts)
         return relevant_facts
 
