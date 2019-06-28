@@ -1,7 +1,7 @@
 # CALDERA
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/), 
-that performs post-compromise adversarial behavior inside computer networks. It is intended for both red and blue teams.
+It gives a red-or-blue team operator the ability to easily emulate an adversary.
 
 Python 3.5.3+ is required to run this system.
 
@@ -22,60 +22,35 @@ Then start the server.
 python server.py
 ```
 
-## Versions
+## Plugins
 
-Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
-```
-git clone --branch 2.1.0 https://github.com/mitre/caldera.git --recursive
-```
+CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
+separate git repositories that plug new features into the core system. Each plugin resides in the plugins
+directory and contains a hook.py file, which the core system uses to "hook" the plugin. For more information 
+on each plugin, refer to their respective README files.
 
-Check the GitHub releases for the most stable release versions.
-
-> **IMPORTANT**: The core system relies on plugins (git submodules). If you are unfamiliar with this concept and want to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. You will also need to update the submodules to ensure all plugins are current. One way to do this is by using an alias, such as:
-```alias tig="git reset --hard origin/master && git checkout master && git reset --hard origin/master && git pull && git submodule foreach git checkout master && git submodule foreach git pull"```
-or for Windows:
-```set "tig=git reset --hard origin/master && git checkout master && git reset --hard origin/master && git pull && git submodule foreach git checkout master && git submodule foreach git pull"```
-
-
-> *NOTE*: The functionality and schema used by the first release of CALDERA is now stored within the *ADVERSARY* 
-plugin. This plugin is loaded automatically with the rest of the submodules, but will not be loaded in 
-CALDERA at runtime unless added to the list of submodules in *conf/local.yml*. More information about the *ADVERSARY*
- plugin can be found at the repository for the [Adversary plugin](https://github.com/mitre/adversary).
+Load plugins into the core system by listing them in the conf/local.yml file, then restart
+CALDERA for them to become available. If a plugin specifies any additional dependencies, they will need to 
+be installed before using it.
 
 ## Terminology
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
 
 * **Ability**: A specific task or set of commands mapped to ATT&CK Tactics and Techniques, written in any language
+* **Fact**: An indicator of compromise (IOC), found on a computer, which can be used inside an ability
 * **Adversary**: A threat profile that contains a set of abilities, making it easy to form repeatable operations 
 * **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
 * **Group**: A collection of agents
-* **Fact**: An indicator of compromise (IOC) found on a computer 
 * **Operation**: A start-to-finish execution of an adversary profile against a group
 
 CALDERA ships with a few pre-built abilities and adversaries with the [Stockpile plugin](https://github.com/mitre/stockpile), 
 but it's easy to add your own. 
 
-## Plugins
-
-CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
-software components that plug new features and behavior into the core system. Plugins reside
-in the plugins/ directory. For more information on each plugin, refer to their respective README files.
-
-Load plugins into the core system by listing them in the conf/local.yml file, then restart
-CALDERA for them to become available.
-
-## Planning
-
-When running an operation, CALDERA hooks in a planning module that determines in which order to run each ability. 
-An operation executes abilities within phases, but if there are multiple abilities in a phase, the planning module
-determines which to run first. The planning module can be changed in the configuration file, local.yml.
-
 ## Getting started
 
-To understand CALDERA, it helps to run an operation. Below are pre-built missions you can follow
-along with to understand the system. These missions will assume CALDERA is running locally on a laptop.
+To understand CALDERA, it helps to run an operation. Below is a pre-built mission you can execute to understand 
+the system. This mission assumes CALDERA is running locally.
 
 ### Mission #1: Nosy Neighbor
 
@@ -84,13 +59,9 @@ networks. Grab this list, collecting anything else along the way, then get out. 
 There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
-Start by booting up the core system.
-```
-python server.py
-```
-
-Then start a 54ndc47 agent on the same machine by opening a terminal and pasting in the delivery command for
-your operating system.
+Start a 54ndc47 agent on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
+delivery command your operating system. You should be welcomed by a log message indicating the agent has sent
+a "beacon" to CALDERA.
 
 **OSX**:
 ```
@@ -108,16 +79,26 @@ while($true) {$url="http://localhost:8888/file/download";$wc=New-Object System.N
 ```
 
 Move to a browser, at http://127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the Chain plugin and use the "Manage Operations" section to fire off an operation using the "nosy neighbor" adversary. 
+Click into the Chain plugin and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
 the mission a success? Did the adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
 
-## Developers
+## Versions
 
-Be a ninja committer: changes should aim for the smallest change set possible to achieve the goal. 
-Additionally, changes should be consistent with the general format and design of what already exists.
+Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
+by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
+```
+git clone --branch 2.1.0 https://github.com/mitre/caldera.git --recursive
+```
+
+Check the GitHub releases for the most stable release versions.
+
+> **IMPORTANT**: The core system relies on plugins (git submodules). If you are unfamiliar with this concept and want 
+to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. The easiest way to run bleeding-edge
+code is to recursively re-clone all of CALDERA when you want to update it.
 
 ### GIT flow
 
