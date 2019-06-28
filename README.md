@@ -51,6 +51,7 @@ CALDERA works by attaching abilities to an adversary and running the adversary i
 * **Adversary**: A threat profile that contains a set of abilities, making it easy to form repeatable operations 
 * **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
 * **Group**: A collection of agents
+* **Fact**: An indicator of compromise (IOC) found on a computer 
 * **Operation**: A start-to-finish execution of an adversary profile against a group
 
 CALDERA ships with a few pre-built abilities and adversaries with the [Stockpile plugin](https://github.com/mitre/stockpile), 

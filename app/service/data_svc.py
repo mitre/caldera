@@ -28,28 +28,36 @@ class DataService:
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.utility_svc.strip_yml(filename):
                 for ab in entries:
-                    for ex,el in ab['executors'].items():
+                    for ex, el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
-                        await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'], technique=ab['technique'], name=ab['name'],
-                                                  test=encoded_test.decode(), description=ab.get('description'), platform=ex,
-                                                  cleanup=b64encode(el['cleanup'].strip().encode('utf-8')).decode() if el.get('cleanup') else None,
+                        await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
+                                                  technique=ab['technique'], name=ab['name'],
+                                                  test=encoded_test.decode(), description=ab.get('description'),
+                                                  platform=ex,
+                                                  cleanup=b64encode(
+                                                      el['cleanup'].strip().encode('utf-8')).decode() if el.get(
+                                                      'cleanup') else None,
                                                   payload=el.get('payload'), parser=el.get('parser'))
 
     async def load_facts(self, config):
         for entries in self.utility_svc.strip_yml(config):
             for facts in entries:
-                source_id = await self.dao.create('core_source', dict(name=facts['name'], type='seed'))
+                source_id = await self.dao.create('core_source', dict(name=facts['name']))
                 for fact in facts['facts']:
                     fact['source_id'] = source_id
-                    await self.dao.create('core_fact', fact)
+                    await self.create_fact(**fact)
 
     """ CREATE """
 
-    async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None, payload=None, parser=None):
-        await self.dao.create('core_attack', dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
+    async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None,
+                             payload=None, parser=None):
+        await self.dao.create('core_attack',
+                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
-        identifier = await self.dao.create('core_ability', dict(ability_id=ability_id, name=name, test=test, technique=entry_id, platform=platform, description=description, cleanup=cleanup))
+        identifier = await self.dao.create('core_ability',
+                                           dict(ability_id=ability_id, name=name, test=test, technique=entry_id,
+                                                platform=platform, description=description, cleanup=cleanup))
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
@@ -76,12 +84,16 @@ class DataService:
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
-        )
-        source_id = await self.dao.create('core_source', dict(name=name, type='operation'))
+                                      )
+        source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
+
+    async def create_fact(self, property, value, source_id, score, blacklist, link_id=None):
+        await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
+                                                score=score, blacklist=blacklist, link_id=link_id))
 
     """ VIEW """
 
@@ -141,7 +153,7 @@ class DataService:
 
     async def explode_chain(self, op_id):
         sql = 'SELECT a.*, b.name as abilityName, b.description as abilityDescription ' \
-              'FROM core_chain a '\
+              'FROM core_chain a ' \
               'JOIN (SELECT id, name, description FROM core_ability GROUP BY id) b ' \
               'ON a.ability=b.id ' \
               'WHERE a.op_id = %s;' % op_id
@@ -155,7 +167,11 @@ class DataService:
 
     """ DELETE / DEACTIVATE """
 
+    async def delete(self, index, id):
+        await self.dao.delete(index, dict(id=id))
+
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
-        await self.dao.update(table='core_group', key='id', value=group_id, data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+        await self.dao.update(table='core_group', key='id', value=group_id,
+                              data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return 'Removed %s host group' % group[0]['name']
