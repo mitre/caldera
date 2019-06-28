@@ -159,3 +159,9 @@ class DataService:
         group = await self.dao.get('core_group', dict(id=group_id))
         await self.dao.update(table='core_group', key='id', value=group_id, data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return 'Removed %s host group' % group[0]['name']
+    
+    async def delete_agent(self, id):
+        agent = await self.dao.get('core_agent', dict(id=id))
+        await self.dao.delete('core_agent', data=dict(id=id))
+        await self.dao.delete('core_group_map', data=dict(agent_id=id))
+        return 'Removed %s agent' % agent
