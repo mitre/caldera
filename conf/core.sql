@@ -11,5 +11,5 @@ CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_
 CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, name text, property text, script text, UNIQUE(ability, property) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_attack (attack_id text primary key, name text, tactic text, UNIQUE(attack_id));
 CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, blacklist integer, source_id text, link_id integer, UNIQUE(source_id, property, value) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, type text, UNIQUE(name, type));
-CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id));
+CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, UNIQUE(name) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);
