@@ -168,7 +168,15 @@ class DataService:
     """ DELETE / DEACTIVATE """
 
     async def delete(self, index, id):
-        await self.dao.delete(index, dict(id=id))
+        delete_operation = dict(
+            core_agent=self._delete_agent
+        )
+        await delete_operation.get(index, self.dao.delete)(index=index, id=id)
+
+    async def _delete_agent(self, id, **kwargs):
+        await self.dao.delete('core_agent', data=dict(id=id))
+        await self.dao.delete('core_group_map', data=dict(agent_id=id))
+        return 'Removed agent id: %s' % id
 
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
