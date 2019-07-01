@@ -8,6 +8,8 @@ from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 
 class UtilityService:
+    def __init__(self, config=None):
+        self.config = config
 
     @staticmethod
     def apply_stealth(executor, code):
@@ -39,3 +41,7 @@ class UtilityService:
             with open(path) as seed:
                 return list(yaml.load_all(seed))
         return []
+
+    def get_config(self):
+        return self.config
+

@@ -13,3 +13,4 @@ plugins:
   - chain
 users:
   admin: admin
+attack_url: https://attack.mitre.org

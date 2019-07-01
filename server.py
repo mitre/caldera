@@ -72,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
-        cfg = yaml.load(c)
+        cfg = yaml.safe_load(c)
         logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
         logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
         logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
@@ -81,7 +81,7 @@ if __name__ == '__main__':
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
-        utility_svc = UtilityService()
+        utility_svc = UtilityService(config=cfg)
         data_svc = DataService(CoreDao('core.db'), utility_svc)
         planning_svc = PlanningService(data_svc, utility_svc)
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, planner=cfg['planner'])
