@@ -161,7 +161,6 @@ class DataService:
         return 'Removed %s host group' % group[0]['name']
     
     async def delete_agent(self, id):
-        agent = await self.dao.get('core_agent', dict(id=id))
         await self.dao.delete('core_agent', data=dict(id=id))
         await self.dao.delete('core_group_map', data=dict(agent_id=id))
-        return 'Removed %s agent' % agent
+        return 'Removed agent id: %s' % id
