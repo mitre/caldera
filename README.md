@@ -22,6 +22,9 @@ Then start the server.
 python server.py
 ```
 
+NOTE: For information about how to install CALDERA onto a server without Internet access
+see [here](#offline-installation).
+
 ## Plugins
 
 CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
@@ -105,6 +108,46 @@ code is to recursively re-clone all of CALDERA when you want to update it.
 We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge 
 request. Make branch names and commits descriptive. A merge request should solve one problem,
 not many. 
+
+## Offline installation
+
+To install CALDERA on a server without internet access, `pip` can be used to download the CALDERA dependencies
+from a machine with internet access.  Once the dependencies are downloaded, they can be copied to the
+offline machine and installed.
+
+The internet machine's platform and python version should match offline server.  For example, if the 
+the offline target machine runs Python 3.6 on CentOS 7, then Python3.6 and CentOS 7 should be used to perform 
+the packaging to minimize problems.
+
+```bash
+git clone --recursive https://github.com/mitre/caldera.git
+mkdir caldera/python_deps
+pip download -r caldera/requirements.txt --dest caldera/python_deps
+```
+
+If you want to use the adversary plugin, be sure to download those dependencies as well:
+
+```bash
+pip download -r caldera/plugins/adversary/requirements.txt --dest /caldera/python_deps
+```
+
+The `caldera` directory can now be copied to the offline server via whatever means are convenient (`scp` 
+if there's connectivity, sneakernet, etc)
+
+Once the `caldera` directory has been copied to the offline machine the dependencies can be installed with
+pip.
+
+```bash
+pip install -r caldera/requirements.txt --no-index --find-links caldera/python_deps
+```
+
+CALDERA can then be started as usual:
+
+```bash
+cd caldera
+python server.py -E ...
+```
+
 
 ## Licensing
 
