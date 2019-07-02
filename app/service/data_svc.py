@@ -108,7 +108,7 @@ class DataService:
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
             op['chain'] = sorted(await self.explode_chain(op['id']), key=lambda k: k['id'])
-            groups = await self.explode_groups(dict(id=op['host_group']), True)
+            groups = await self.explode_groups(dict(id=op['host_group'], deactivated=True))
             op['host_group'] = groups[0]
             adversaries = await self.explode_adversaries(dict(id=op['adversary']))
             op['adversary'] = adversaries[0]
@@ -116,7 +116,10 @@ class DataService:
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
         return operations
 
-    async def explode_groups(self, criteria=None, deactivated=False):
+    async def explode_groups(self, criteria=None):
+        deactivated = False
+        if criteria:
+            deactivated = criteria.pop('deactivated', False)
         groups = await self.dao.get('core_group', criteria=criteria)
         if not deactivated:
             groups = [g for g in groups if not g['deactivated']]
