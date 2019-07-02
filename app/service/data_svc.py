@@ -152,11 +152,15 @@ class DataService:
         return results
 
     async def explode_chain(self, op_id):
-        sql = 'SELECT a.*, b.name as abilityName, b.description as abilityDescription ' \
-              'FROM core_chain a ' \
-              'JOIN (SELECT id, name, description FROM core_ability GROUP BY id) b ' \
-              'ON a.ability=b.id ' \
-              'WHERE a.op_id = %s;' % op_id
+        sql = """
+        SELECT 
+            a.*, b.name as abilityName, b.description as abilityDescription 
+        FROM core_chain a 
+            JOIN (SELECT id, name, description FROM core_ability GROUP BY id) b 
+              ON a.ability=b.id 
+        WHERE 
+            a.op_id = %s;
+        """  % op_id
         return await self.dao.raw_select(sql)
 
     async def explode_sources(self, criteria=None):
