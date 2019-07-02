@@ -145,7 +145,7 @@ CALDERA can then be started as usual:
 
 ```bash
 cd caldera
-python server.py -E ...
+python server.py
 ```
 
 
