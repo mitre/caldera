@@ -91,7 +91,7 @@ class DataService:
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
 
-    async def create_fact(self, property, value, source_id, score, blacklist, set_id=0, link_id=None):
+    async def create_fact(self, property, value, source_id, score=1, blacklist=0, set_id=0, link_id=None):
         await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
                                                 score=score, blacklist=blacklist, set_id=set_id, link_id=link_id))
 
