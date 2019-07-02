@@ -16,3 +16,6 @@
 [submodule "plugins/ssl"]
 	path = plugins/ssl
 	url = https://github.com/mitre/ssl.git
+[submodule "plugins/caltack"]
+	path = plugins/caltack
+	url = https://github.com/mitre/caltack
