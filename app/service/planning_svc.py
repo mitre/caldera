@@ -56,8 +56,10 @@ class PlanningService:
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
-                    variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
+                    cleanup_cmd = self.utility_svc.decode_bytes(copy_link.get('cleanup'))
+                    variant, cleanup, score, rewards = await self._build_single_test_variant(copy_test, cleanup_cmd, combo)
                     copy_link['command'] = await self._apply_stealth(operation, agent, variant)
+                    copy_link['cleanup'] = self.utility_svc.encode_string(cleanup)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
                     links.append(copy_link)
@@ -81,7 +83,7 @@ class PlanningService:
         return relevant_facts
 
     @staticmethod
-    async def _build_single_test_variant(copy_test, combo):
+    async def _build_single_test_variant(copy_test, clean_test, combo):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
@@ -90,7 +92,8 @@ class PlanningService:
             score += (score + var[2])
             rewards.append(var[3])
             copy_test = copy_test.replace('#{%s}' % var[0], var[1])
-        return copy_test, score, rewards
+            clean_test = clean_test.replace('#{%s}' % var[0], var[1])
+        return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
