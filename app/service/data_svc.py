@@ -160,7 +160,7 @@ class DataService:
               ON a.ability=b.id 
         WHERE 
             a.op_id = %s;
-        """  % op_id
+        """ % op_id
         return await self.dao.raw_select(sql)
 
     async def explode_sources(self, criteria=None):
