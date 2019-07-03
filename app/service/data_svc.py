@@ -130,7 +130,6 @@ class DataService:
 
     async def explode_groups(self, criteria=None):
         groups = await self.dao.get('core_group', criteria=criteria)
-        groups = [g for g in groups if not g['deactivated']]
         for g in groups:
             g['agents'] = await self.dao.get('core_group_map', dict(group_id=g['id']))
         return groups
