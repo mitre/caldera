@@ -1,7 +1,8 @@
 # CALDERA
 
-CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/), 
-It gives a red-or-blue team operator the ability to easily emulate an adversary.
+CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/).
+
+CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in the [wiki](https://github.com/mitre/caldera/wiki).
 
 Python 3.5.3+ is required to run this system.
 
@@ -26,26 +27,7 @@ python server.py
 
 CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
 separate git repositories that plug new features into the core system. Each plugin resides in the plugins
-directory and contains a hook.py file, which the core system uses to "hook" the plugin. For more information 
-on each plugin, refer to their respective README files.
-
-Load plugins into the core system by listing them in the conf/local.yml file, then restart
-CALDERA for them to become available. If a plugin specifies any additional dependencies, they will need to 
-be installed before using it.
-
-## Terminology
-
-CALDERA works by attaching abilities to an adversary and running the adversary in an operation. 
-
-* **Ability**: A specific task or set of commands mapped to ATT&CK Tactics and Techniques, written in any language
-* **Fact**: An indicator of compromise (IOC), found on a computer, which can be used inside an ability
-* **Adversary**: A threat profile that contains a set of abilities, making it easy to form repeatable operations 
-* **Agent**: An individual computer running a CALDERA agent, such as the [54ndc47 plugin](https://github.com/mitre/sandcat)
-* **Group**: A collection of agents
-* **Operation**: A start-to-finish execution of an adversary profile against a group
-
-CALDERA ships with a few pre-built abilities and adversaries with the [Stockpile plugin](https://github.com/mitre/stockpile), 
-but it's easy to add your own. 
+directory. For more information on each plugin, refer to their respective README files.
 
 ## Getting started
 
@@ -100,13 +82,11 @@ Check the GitHub releases for the most stable release versions.
 to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. The easiest way to run bleeding-edge
 code is to recursively re-clone all of CALDERA when you want to update it.
 
-### GIT flow
+## Developers
 
 We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge 
 request. Make branch names and commits descriptive. A merge request should solve one problem,
 not many. 
-
-
 
 ## Licensing
 
