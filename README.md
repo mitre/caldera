@@ -28,7 +28,7 @@ python server.py
 To understand CALDERA, it helps to run an operation. Below is a pre-built mission you can execute to understand 
 the system. This mission assumes CALDERA is running locally.
 
-### Mission #1: Nosy Neighbor
+### The mission: Nosy Neighbor
 
 > Perform reconnaissance on a compromised laptop. Your employer needs a list of the laptop user’s preferred WIFI 
 networks. Grab this list, collecting anything else along the way, then get out. Quickly. Leave no trace. 
