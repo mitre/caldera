@@ -8,7 +8,7 @@ Python 3.5.3+ is required to run this system.
 
 ## Installation
 
-Start by cloning this repository recursively. This will pull all available plugins. 
+Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin%3F). 
 ```
 git clone https://github.com/mitre/caldera.git --recursive
 ```
@@ -22,12 +22,6 @@ Then start the server.
 ```
 python server.py
 ```
-
-## Plugins
-
-CALDERA is built using a plugin architecture on top of the core system (this repository). Plugins are 
-separate git repositories that plug new features into the core system. Each plugin resides in the plugins
-directory. For more information on each plugin, refer to their respective README files.
 
 ## Getting started
 
