@@ -8,10 +8,11 @@ from app.utility.logger import Logger
 
 class OperationService:
 
-    def __init__(self, data_svc, utility_svc, planning_svc, planner):
+    def __init__(self, data_svc, utility_svc, planning_svc, parsing_svc, planner):
         self.data_svc = data_svc
         self.utility_svc = utility_svc
         self.loop = asyncio.get_event_loop()
+        self.parsing_svc = parsing_svc
         self.log = Logger('operation_svc')
         planning_module = import_module(planner)
         self.planner = getattr(planning_module, 'LogicalPlanner')(self.data_svc, planning_svc)
@@ -32,10 +33,11 @@ class OperationService:
         try:
             for phase in operation[0]['adversary']['phases']:
                 self.log.debug('Operation %s phase %s: started' % (op_id, phase))
+                await self.parsing_svc.parse_facts(operation[0])
+                operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await self.planner.execute(operation[0], phase)
                 self.log.debug('Operation %s phase %s: completed' % (op_id, phase))
                 await self.data_svc.dao.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
-                operation = await self.data_svc.explode_operation(dict(id=op_id))
             await self.close_operation(op_id)
         except Exception:
             traceback.print_exc()

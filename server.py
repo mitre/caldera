@@ -15,6 +15,7 @@ from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
+from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
 from app.service.utility_svc import UtilityService
 
@@ -84,7 +85,8 @@ if __name__ == '__main__':
         utility_svc = UtilityService()
         data_svc = DataService(CoreDao('core.db'), utility_svc)
         planning_svc = PlanningService(data_svc, utility_svc)
-        operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, planner=cfg['planner'])
+        parsing_svc = ParsingService(data_svc)
+        operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, parsing_svc=parsing_svc, planner=cfg['planner'])
         auth_svc = AuthService(utility_svc=utility_svc)
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Downloaded payloads will come from %s' % cfg['payloads'])
