@@ -2,7 +2,6 @@
 
 host: 127.0.0.1
 port: 8888
-planner: plugins.stockpile.app.sequential
 payloads:
   - plugins/stockpile/payloads
 exfil_dir: /tmp
