@@ -86,7 +86,7 @@ if __name__ == '__main__':
         data_svc = DataService(CoreDao('core.db'), utility_svc)
         planning_svc = PlanningService(data_svc, utility_svc)
         parsing_svc = ParsingService(data_svc)
-        operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, parsing_svc=parsing_svc, planner=cfg['planner'])
+        operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, parsing_svc=parsing_svc)
         auth_svc = AuthService(utility_svc=utility_svc)
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Downloaded payloads will come from %s' % cfg['payloads'])

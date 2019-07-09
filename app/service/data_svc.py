@@ -11,12 +11,13 @@ class DataService:
         self.utility_svc = utility_svc
         self.log = utility_svc.create_logger('data_svc')
 
-    async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None, facts=None):
+    async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None, facts=None, planner=None):
         with open(schema) as schema:
             await self.dao.build(schema.read())
         await self.load_abilities(directory=abilities)
         await self.load_adversaries(config=adversaries)
         await self.load_facts(config=facts)
+        await self.load_planner(planner)
 
     async def load_adversaries(self, config):
         for entries in self.utility_svc.strip_yml(config):
@@ -46,6 +47,10 @@ class DataService:
                 for fact in facts['facts']:
                     fact['source_id'] = source_id
                     await self.create_fact(**fact)
+
+    async def load_planner(self, planner):
+        if planner:
+            await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
 
     """ CREATE """
 
@@ -80,10 +85,11 @@ class DataService:
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return 'Saved %s host group' % name
 
-    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False, sources=None):
+    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False,
+                               sources=None, planner=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
-            start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth)
+            start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth, planner=planner)
                                       )
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
