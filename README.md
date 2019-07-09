@@ -23,7 +23,7 @@ Then start the server.
 python server.py
 ```
 
-## Getting started
+## Quick start
 
 To understand CALDERA, it helps to run an operation. Below is a pre-built mission you can execute to understand 
 the system. This mission assumes CALDERA is running locally.
