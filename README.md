@@ -39,7 +39,7 @@ Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) o
 delivery command your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
-Move to a browser, at localhost:8888, logging in with the credentials admin:admin. 
+Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
 Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugin:-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
