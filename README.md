@@ -35,24 +35,9 @@ networks. Grab this list, collecting anything else along the way, then get out. 
 There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
-Start a 54ndc47 agent on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
+Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
 delivery command your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
-
-**OSX**:
-```
-while true; do curl -sk -X POST -H 'file:sandcat-darwin' http://localhost:8888/file/download > /tmp/sandcat-darwin && chmod +x /tmp/sandcat-darwin && /tmp/sandcat-darwin http://localhost:8888 my_group; sleep 60; done
-```
-
-**Linux**:
-```
-while true; do curl -sk -X POST -H 'file:sandcat-linux' http://localhost:8888/file/download > /tmp/sandcat-linux && chmod +x /tmp/sandcat-linux && /tmp/sandcat-linux http://localhost:8888 my_group; sleep 60; done
-```
-
-**Windows**:
-```
-while($true) {$url="http://localhost:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("file","sandcat.exe");$output="C:\Users\Public\sandcat.exe";$wc.DownloadFile($url,$output);C:\Users\Public\sandcat.exe http://localhost:8888 my_group; sleep 60}
-```
 
 Move to a browser, at http://127.0.0.1:8888, logging in with the credentials admin:admin. 
 Click into the Chain plugin and use the "Operations" section to fire off an operation using the "nosy neighbor" 
