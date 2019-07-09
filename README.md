@@ -2,7 +2,7 @@
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/).
 
-CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in the [wiki](https://github.com/mitre/caldera/wiki).
+CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki).
 
 Python 3.5.3+ is required to run this system.
 
@@ -36,7 +36,7 @@ There is one caveat: the laptop’s AV scans the machine in full every minute. Y
 less than 60 seconds. 
 
 Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
-delivery command your operating system. You should be welcomed by a log message indicating the agent has sent
+delivery command for your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
