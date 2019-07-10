@@ -78,7 +78,7 @@ class PlanningService:
             variable_facts = []
             for fact in facts:
                 if fact['property'] == v:
-                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id']))
+                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id'], fact['set_id'], fact['link_id']))
             relevant_facts.append(variable_facts)
         return relevant_facts
 
@@ -87,12 +87,16 @@ class PlanningService:
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards = 0, []
+        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
         for var in combo:
             score += (score + var[2])
+            combo_set_id.add(var[4])
+            combo_link_id.add(var[5])
             rewards.append(var[3])
             copy_test = copy_test.replace('#{%s}' % var[0], var[1])
             clean_test = clean_test.replace('#{%s}' % var[0], var[1])
+        if len(combo_set_id) == 1 and len(combo_link_id) == 1:
+            score*=2
         return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
