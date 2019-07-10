@@ -101,7 +101,7 @@ class PlanningService:
             rewards.append(var[3])
             copy_test = copy_test.replace('#{%s}' % var[0], var[1])
             clean_test = clean_test.replace('#{%s}' % var[0], var[1])
-        score = PlanningService.reward_fact_relationship(combo_set_id, combo_link_id, score)
+        score = PlanningService._reward_fact_relationship(combo_set_id, combo_link_id, score)
         return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
