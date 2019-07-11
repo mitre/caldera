@@ -46,9 +46,10 @@ class PlanningService:
         group = operation['host_group']['name']
         for link in links:
             decoded_test = b64decode(link['command']).decode('utf-8')
-            decoded_test = decoded_test.replace('#{server}', agent['server'])
-            decoded_test = decoded_test.replace('#{group}', group)
-            decoded_test = decoded_test.replace('#{files}', agent['files'])
+            decoded_test = self._replace_command_globals(decoded_test, agent, group)
+
+            cleanup_cmd = self.utility_svc.decode_bytes(link.get('cleanup'))
+            cleanup_cmd = self._replace_command_globals(cleanup_cmd, agent, group)
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
@@ -57,7 +58,6 @@ class PlanningService:
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
-                    cleanup_cmd = self.utility_svc.decode_bytes(copy_link.get('cleanup'))
                     variant, cleanup, score, rewards = await self._build_single_test_variant(copy_test, cleanup_cmd, combo)
                     copy_link['command'] = await self._apply_stealth(operation, agent, variant)
                     copy_link['cleanup'] = self.utility_svc.encode_string(cleanup)
@@ -66,7 +66,15 @@ class PlanningService:
                     links.append(copy_link)
             else:
                 link['command'] = await self._apply_stealth(operation, agent, decoded_test)
+                link['cleanup'] = await self._apply_stealth(operation, agent, cleanup_cmd)
         return links
+
+    @staticmethod
+    async def _replace_command_globals(cmd, agent, group):
+        cmd = cmd.replace('#{server}', agent['server'])
+        cmd = cmd.replace('#{group}', group)
+        cmd = cmd.replace('#{files}', agent['files'])
+        return cmd
 
     @staticmethod
     async def _build_relevant_facts(variables, facts):
