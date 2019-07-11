@@ -27,6 +27,7 @@ class PlanningService:
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
+        await self._remove_cleanup_cmds(operation, links)
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
@@ -78,7 +79,7 @@ class PlanningService:
             variable_facts = []
             for fact in facts:
                 if fact['property'] == v:
-                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id']))
+                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id'], fact['set_id'], fact['link_id']))
             relevant_facts.append(variable_facts)
         return relevant_facts
 
@@ -87,15 +88,25 @@ class PlanningService:
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards = 0, []
+        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
         for var in combo:
             score += (score + var[2])
+            combo_set_id.add(var[4])
+            combo_link_id.add(var[5])
             rewards.append(var[3])
             copy_test = copy_test.replace('#{%s}' % var[0], var[1])
             clean_test = clean_test.replace('#{%s}' % var[0], var[1])
+        if len(combo_set_id) == 1 and len(combo_link_id) == 1:
+            score *= 2
         return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
             decoded_test = self.utility_svc.apply_stealth(agent['platform'], decoded_test)
         return self.utility_svc.encode_string(decoded_test)
+
+    @staticmethod
+    async def _remove_cleanup_cmds(operation, links):
+        if not operation['cleanup']:
+            for link in links:
+                link['cleanup'] = None
