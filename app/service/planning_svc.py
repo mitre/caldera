@@ -27,6 +27,7 @@ class PlanningService:
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
+        await self._remove_cleanup_cmds(operation, links)
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
@@ -99,3 +100,9 @@ class PlanningService:
         if operation['stealth']:
             decoded_test = self.utility_svc.apply_stealth(agent['platform'], decoded_test)
         return self.utility_svc.encode_string(decoded_test)
+
+    @staticmethod
+    async def _remove_cleanup_cmds(operation, links):
+        if not operation['cleanup']:
+            for link in links:
+                link['cleanup'] = None
