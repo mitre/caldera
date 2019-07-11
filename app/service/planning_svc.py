@@ -46,10 +46,10 @@ class PlanningService:
         group = operation['host_group']['name']
         for link in links:
             decoded_test = b64decode(link['command']).decode('utf-8')
-            decoded_test = self._replace_command_globals(decoded_test, agent, group)
+            decoded_test = await self._replace_command_globals(decoded_test, agent, group)
 
             cleanup_cmd = self.utility_svc.decode_bytes(link.get('cleanup'))
-            cleanup_cmd = self._replace_command_globals(cleanup_cmd, agent, group)
+            cleanup_cmd = await self._replace_command_globals(cleanup_cmd, agent, group)
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
