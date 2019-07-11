@@ -25,13 +25,11 @@ class FileSvc:
             reader = await request.multipart()
             field = await reader.next()
             filename = field.filename
-            size = 0
             with open(os.path.join(self.exfil_dir, filename), 'wb') as f:
                 while True:
                     chunk = await field.read_chunk()
                     if not chunk:
                         break
-                    size += len(chunk)
                     f.write(chunk)
             self.log.debug('Uploaded file %s' % filename)
             return web.Response()
