@@ -34,6 +34,7 @@ class FileSvc:
                     size += len(chunk)
                     f.write(chunk)
             self.log.debug('Uploaded file %s' % filename)
+            return web.Response()
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
 
