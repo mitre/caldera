@@ -66,4 +66,4 @@ class ParsingService:
 
     @staticmethod
     def _line(parser, blob):
-        return [dict(fact=parser['property'], value=f, set_id=0) for f in blob.split('\n') if f]
+        return [dict(fact=parser['property'], value=f.strip(), set_id=0) for f in blob.split('\n') if f]
