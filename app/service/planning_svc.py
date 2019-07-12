@@ -67,6 +67,21 @@ class PlanningService:
                 link['command'] = await self._apply_stealth(operation, agent, decoded_test)
         return links
 
+    async def _build_single_test_variant(self, copy_test, clean_test, combo):
+        """
+        Replace all variables with facts from the combo to build a single test variant
+        """
+        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
+        for var in combo:
+            score += (score + var['score'])
+            combo_set_id.add(var['set_id'])
+            combo_link_id.add(var['link_id'])
+            rewards.append(var['id'])
+            copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
+            clean_test = clean_test.replace('#{%s}' % var['property'], var['value'])
+        score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
+        return copy_test, clean_test, score, rewards
+
     @staticmethod
     async def _build_relevant_facts(variables, facts):
         """
@@ -87,22 +102,6 @@ class PlanningService:
         if len(combo_set) == 1 and len(combo_link) == 1:
             score *= 2
         return score
-
-    @staticmethod
-    async def _build_single_test_variant(copy_test, clean_test, combo):
-        """
-        Replace all variables with facts from the combo to build a single test variant
-        """
-        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
-        for var in combo:
-            score += (score + var['score'])
-            combo_set_id.add(var['set_id'])
-            combo_link_id.add(var['link_id'])
-            rewards.append(var['id'])
-            copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            clean_test = clean_test.replace('#{%s}' % var['property'], var['value'])
-        score = PlanningService._reward_fact_relationship(combo_set_id, combo_link_id, score)
-        return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
