@@ -58,8 +58,10 @@ section and examine the available [fact sources](https://github.com/mitre/calder
 Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
 
 Click into the "operations" section and start a new operation. Choose the "file hunter" adversary
-and ensure that you select the fact source = extensions. By feeding these facts into the operation, 
+and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
 the adversary profile chosen (file hunter) will utilize them inside its abilities.
+
+Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
 
 ## Versions
 
