@@ -25,10 +25,10 @@ python server.py
 
 ## Quick start
 
-To understand CALDERA, it helps to run an operation. Below is a pre-built mission you can execute to understand 
-the system. This mission assumes CALDERA is running locally.
+To understand CALDERA, it helps to run an operation. Below are pre-built missions you can execute to understand 
+the system. The missions assume CALDERA is running locally.
 
-### The mission: Nosy Neighbor
+### Mission #1: Nosy Neighbor
 
 > Perform reconnaissance on a compromised laptop. Your employer needs a list of the laptop user’s preferred WIFI 
 networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
@@ -45,6 +45,21 @@ adversary and the my_group group. Fill in an operation name but leave all other 
 Once the operation is complete, compare the execution time of the first and last commands. Was
 the mission a success? Did the adversary run without a trace? Can you figure out why the 
 abilities are being run in the order they are?
+
+### Mission #2: File Hunter
+
+> A laptop containing secret, sensitive files has been compromised. Scan the computer for files which match
+the file extensions (.txt and .yml) the sensitive files are known to have. Then steal the files.
+
+Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
+
+Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
+section and examine the available []fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
+Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
+
+Click into the "operations" section and start a new operation. Choose the "file hunter" adversary
+and ensure that you select the fact source = extensions. By feeding these facts into the operation, 
+the adversary profile chosen (file hunter) will utilize them inside its abilities.
 
 ## Versions
 
