@@ -54,7 +54,7 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
 Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
-section and examine the available []fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
+section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
 Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
 
 Click into the "operations" section and start a new operation. Choose the "file hunter" adversary
