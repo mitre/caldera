@@ -31,8 +31,7 @@ the system. This mission assumes CALDERA is running locally.
 ### The mission: Nosy Neighbor
 
 > Perform reconnaissance on a compromised laptop. Your employer needs a list of the laptop user’s preferred WIFI 
-networks. Grab this list, collecting anything else along the way, then get out. Quickly. Leave no trace. 
-There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
+networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
 Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
