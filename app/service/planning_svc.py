@@ -37,6 +37,13 @@ class PlanningService:
             await asyncio.sleep(2)
             op = await self.data_svc.explode_operation(dict(id=op_id))
 
+    async def decode(self, encoded_cmd, agent, group):
+        decoded_cmd = self.utility_svc.decode_bytes(encoded_cmd)
+        decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
+        decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{files}', agent['files'])
+        return decoded_cmd
+
     """ PRIVATE """
 
     async def _add_test_variants(self, links, agent, operation):
@@ -45,11 +52,8 @@ class PlanningService:
         """
         group = operation['host_group']['name']
         for link in links:
-            decoded_test = b64decode(link['command']).decode('utf-8')
-            decoded_test = await self._replace_command_globals(decoded_test, agent, group)
-
-            cleanup_cmd = self.utility_svc.decode_bytes(link.get('cleanup'))
-            cleanup_cmd = await self._replace_command_globals(cleanup_cmd, agent, group)
+            decoded_test = await self.decode(link['command'], agent, group)
+            cleanup_cmd = await self.decode(link.get('cleanup'), agent, group)
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
@@ -68,13 +72,6 @@ class PlanningService:
                 link['command'] = await self._apply_stealth(operation, agent, decoded_test)
                 link['cleanup'] = await self._apply_stealth(operation, agent, cleanup_cmd)
         return links
-
-    @staticmethod
-    async def _replace_command_globals(cmd, agent, group):
-        cmd = cmd.replace('#{server}', agent['server'])
-        cmd = cmd.replace('#{group}', group)
-        cmd = cmd.replace('#{files}', agent['files'])
-        return cmd
 
     @staticmethod
     async def _build_relevant_facts(variables, facts):
