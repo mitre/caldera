@@ -31,15 +31,27 @@ class FileSvc:
     async def upload(self, request):
         try:
             reader = await request.multipart()
-            field = await reader.next()
-            filename = field.filename
-            with open(os.path.join(self.exfil_dir, filename), 'wb') as f:
-                while True:
-                    chunk = await field.read_chunk()
-                    if not chunk:
-                        break
-                    f.write(chunk)
-            self.log.debug('Uploaded file %s' % filename)
+            exfil_dir = await self._create_unique_exfil_sub_directory()
+            while True:
+                field = await reader.next()
+                if not field:
+                    break
+                filename = field.filename
+                with open(os.path.join(exfil_dir, filename), 'wb') as f:
+                    while True:
+                        chunk = await field.read_chunk()
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                self.log.debug('Uploaded file %s' % filename)
             return web.Response()
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
+
+    """ PRIVATE """
+            
+    async def _create_unique_exfil_sub_directory(self):
+        dir_name = str(uuid.uuid4())
+        path = os.path.join(self.exfil_dir, dir_name)
+        os.makedirs(path)
+        return path
