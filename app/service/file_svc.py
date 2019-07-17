@@ -31,7 +31,7 @@ class FileSvc:
     async def upload(self, request):
         try:
             reader = await request.multipart()
-            exfil_dir = await self.create_unique_exfil_sub_directory()
+            exfil_dir = await self._create_unique_exfil_sub_directory()
             while True:
                 field = await reader.next()
                 if not field:
@@ -48,7 +48,9 @@ class FileSvc:
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
 
-    async def create_unique_exfil_sub_directory(self):
+    """ PRIVATE """
+            
+    async def _create_unique_exfil_sub_directory(self):
         dir_name = str(uuid.uuid4())
         path = os.path.join(self.exfil_dir, dir_name)
         os.makedirs(path)
