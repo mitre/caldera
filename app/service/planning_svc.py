@@ -75,6 +75,11 @@ class PlanningService:
                 link['cleanup'] = await self._apply_stealth(operation, agent, cleanup_cmd)
         return links
 
+    def _reward_fact_relationship(self, combo_set, combo_link, score):
+        if len(combo_set) == 1 and len(combo_link) == 1:
+            score *= 2
+        return score
+
     @staticmethod
     async def _build_relevant_facts(variables, facts):
         """
@@ -90,17 +95,19 @@ class PlanningService:
             relevant_facts.append(variable_facts)
         return relevant_facts
 
-    @staticmethod
-    async def _build_single_test_variant(copy_test, clean_test, combo):
+    async def _build_single_test_variant(self, copy_test, clean_test, combo):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards = 0, []
+        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
         for var in combo:
             score += (score + var[2])
             rewards.append(var[3])
             copy_test = copy_test.replace('#{%s}' % var[0], var[1])
             clean_test = clean_test.replace('#{%s}' % var[0], var[1])
+            combo_set_id.add(var['set_id'])
+            combo_link_id.add(var['link_id'])
+        score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
         return copy_test, clean_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
