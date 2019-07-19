@@ -91,7 +91,7 @@ class PlanningService:
             variable_facts = []
             for fact in facts:
                 if fact['property'] == v:
-                    variable_facts.append((fact['property'], fact['value'], fact['score'], fact['id']))
+                    variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 
@@ -101,10 +101,10 @@ class PlanningService:
         """
         score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
         for var in combo:
-            score += (score + var[2])
-            rewards.append(var[3])
-            copy_test = copy_test.replace('#{%s}' % var[0], var[1])
-            clean_test = clean_test.replace('#{%s}' % var[0], var[1])
+            score += (score + var['score'])
+            rewards.append(var['id'])
+            copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
+            clean_test = clean_test.replace('#{%s}' % var['property'], var['value'])
             combo_set_id.add(var['set_id'])
             combo_link_id.add(var['link_id'])
         score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
