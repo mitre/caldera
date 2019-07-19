@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from aiohttp import web
 
