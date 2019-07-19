@@ -37,3 +37,4 @@ class ParsingService:
                 # mark result as parsed
                 update = dict(parsed=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 await self.data_svc.dao.update('core_result', key='link_id', value=x['link_id'], data=update)
+
