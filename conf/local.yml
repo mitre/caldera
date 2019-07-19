@@ -2,8 +2,6 @@
 
 host: 127.0.0.1
 port: 8888
-payloads:
-  - plugins/stockpile/payloads
 exfil_dir: /tmp
 plugins:
   - stockpile
