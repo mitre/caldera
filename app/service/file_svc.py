@@ -2,14 +2,13 @@ import os
 import uuid
 
 from aiohttp import web
-
 from app.utility.logger import Logger
 
 
 class FileSvc:
 
     def __init__(self, payload_dirs, exfil_dir):
-        self.payload_dirs = payload_dirs
+        self.payload_dirs = [p for p in payload_dirs if os.path.isdir(p)]
         self.log = Logger('file_svc')
         self.exfil_dir = exfil_dir
 
