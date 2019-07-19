@@ -17,13 +17,13 @@ class ParsingService:
             parser = await self.data_svc.dao.get('core_parser', dict(ability=x['ability']))
             if parser:
                 if parser[0]['name'] == 'json':
-                    matched_facts = parsers._json(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.json(parser[0], b64decode(x['output']).decode('utf-8'))
                 elif parser[0]['name'] == 'line':
-                    matched_facts = parsers._line(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.line(parser[0], b64decode(x['output']).decode('utf-8'))
                 elif parser[0]['name'] == 'parse_mimikatz':
-                    matched_facts = mimikatz_parser._parse_mimikatz(b64decode(x['output']).decode('utf-8'))
+                    matched_facts = mimikatz_parser.parse_mimikatz(b64decode(x['output']).decode('utf-8'))
                 else:
-                    matched_facts = parsers._regex(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.regex(parser[0], b64decode(x['output']).decode('utf-8'))
 
                 # save facts to DB
                 for match in matched_facts:

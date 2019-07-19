@@ -99,7 +99,7 @@ class PlanningService:
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards, combo_set_id, combo_link_id = 0, [], set(), set()
+        score, rewards, combo_set_id, combo_link_id = 0, list(), set(), set()
         for var in combo:
             score += (score + var['score'])
             rewards.append(var['id'])
