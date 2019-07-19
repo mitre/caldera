@@ -31,11 +31,13 @@ class PlanningService:
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
-    async def wait_for_phase(self, op_id, agent_id):
-        op = await self.data_svc.explode_operation(dict(id=op_id))
-        while next((lnk for lnk in op[0]['chain'] if lnk['host_id'] == agent_id and not lnk['finish']), False):
-            await asyncio.sleep(2)
-            op = await self.data_svc.explode_operation(dict(id=op_id))
+    async def wait_for_phase(self, operation):
+        for member in operation['host_group']['agents']:
+            op = await self.data_svc.explode_operation(dict(id=operation['id']))
+            while next((lnk for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
+                       False):
+                await asyncio.sleep(3)
+                op = await self.data_svc.explode_operation(dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.utility_svc.decode_bytes(encoded_cmd)
