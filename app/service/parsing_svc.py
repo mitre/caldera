@@ -1,5 +1,5 @@
-import plugins.stockpile.parsers.standard_parsers as parsers
-import plugins.stockpile.parsers.mimikatz_parser as mimikatz_parser
+import plugins.stockpile.parsers.standard as parsers
+import plugins.stockpile.parsers.mimikatz as mimikatz_parser
 from base64 import b64decode
 from datetime import datetime
 
@@ -21,7 +21,7 @@ class ParsingService:
                 elif parser[0]['name'] == 'line':
                     matched_facts = parsers.line(parser[0], b64decode(x['output']).decode('utf-8'))
                 elif parser[0]['name'] == 'parse_mimikatz':
-                    matched_facts = mimikatz_parser.parse_mimikatz(b64decode(x['output']).decode('utf-8'))
+                    matched_facts = mimikatz_parser.mimikatz(b64decode(x['output']).decode('utf-8'))
                 else:
                     matched_facts = parsers.regex(parser[0], b64decode(x['output']).decode('utf-8'))
 
