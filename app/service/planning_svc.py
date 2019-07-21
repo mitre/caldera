@@ -34,7 +34,7 @@ class PlanningService:
     async def wait_for_phase(self, operation):
         for member in operation['host_group']['agents']:
             op = await self.data_svc.explode_operation(dict(id=operation['id']))
-            while next((lnk for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
+            while next((True for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
                 op = await self.data_svc.explode_operation(dict(id=operation['id']))
