@@ -1,10 +1,13 @@
-from app.database.relational import Sql
+from app.database.memory import Memory
+from app.database.persist import Persist
 
 
 class CoreDao:
 
-    def __init__(self, database):
-        self.db = Sql(database)
+    def __init__(self, database, memory=False):
+        self.db = Persist(database)
+        if memory:
+            self.db = Memory()
 
     async def build(self, schema):
         await self.db.build(schema)
