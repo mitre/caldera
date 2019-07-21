@@ -1,5 +1,5 @@
-import json
-import re
+import plugins.stockpile.parsers.standard_parsers as parsers
+import plugins.stockpile.parsers.mimikatz_parser as mimikatz_parser
 from base64 import b64decode
 from datetime import datetime
 
@@ -17,11 +17,13 @@ class ParsingService:
             parser = await self.data_svc.dao.get('core_parser', dict(ability=x['ability']))
             if parser:
                 if parser[0]['name'] == 'json':
-                    matched_facts = self._json(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.json(parser[0], b64decode(x['output']).decode('utf-8'))
                 elif parser[0]['name'] == 'line':
-                    matched_facts = self._line(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.line(parser[0], b64decode(x['output']).decode('utf-8'))
+                elif parser[0]['name'] == 'parse_mimikatz':
+                    matched_facts = mimikatz_parser.parse_mimikatz(b64decode(x['output']).decode('utf-8'))
                 else:
-                    matched_facts = self._regex(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.regex(parser[0], b64decode(x['output']).decode('utf-8'))
 
                 # save facts to DB
                 for match in matched_facts:
@@ -36,34 +38,3 @@ class ParsingService:
                 update = dict(parsed=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
                 await self.data_svc.dao.update('core_result', key='link_id', value=x['link_id'], data=update)
 
-    """ PRIVATE """
-
-    @staticmethod
-    def _json(parser, blob):
-        matched_facts = []
-        if blob:
-            structured = json.loads(blob)
-            if isinstance(structured, (list,)):
-                for i, entry in enumerate(structured):
-                    matched_facts.append((dict(fact=parser['property'], value=entry.get(parser['script']), set_id=i)))
-            elif isinstance(structured, (dict,)):
-                dict_match = parser['script']
-                dict_match = dict_match.split(',')
-                match = structured
-                for d in dict_match:
-                    match = match[d]
-                matched_facts.append((dict(fact=parser['property'],value = match,set_id=0)))
-            else:
-                matched_facts.append((dict(fact=parser['property'], value =structured[parser['script']],set_id=0)))
-        return matched_facts
-
-    @staticmethod
-    def _regex(parser, blob):
-        matched_facts = []
-        for i, v in enumerate([m for m in re.findall(parser['script'], blob)]):
-            matched_facts.append(dict(fact=parser['property'], value=v, set_id=i))
-        return matched_facts
-
-    @staticmethod
-    def _line(parser, blob):
-        return [dict(fact=parser['property'], value=f.strip(), set_id=0) for f in blob.split('\n') if f]
