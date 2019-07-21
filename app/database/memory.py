@@ -6,7 +6,7 @@ from app.database.database import Database
 class Memory(Database):
 
     def __init__(self):
-        self.connection = sqlite3.connect(':memory')
+        self.connection = sqlite3.connect(':memory:')
         super().__init__()
 
     async def build(self, schema):
