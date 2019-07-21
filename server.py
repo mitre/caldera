@@ -84,7 +84,7 @@ if __name__ == '__main__':
         plugin_modules = build_plugins(cfg['plugins'])
         utility_svc = UtilityService()
         data_svc = DataService(CoreDao('core.db', memory=cfg['memory']), utility_svc)
-        logging.debug('Using a persistent database: %s' % cfg['memory'])
+        logging.debug('Using an in-memory database: %s' % cfg['memory'])
         planning_svc = PlanningService(data_svc, utility_svc)
         parsing_svc = ParsingService(data_svc)
         operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, parsing_svc=parsing_svc)
