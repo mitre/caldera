@@ -6,7 +6,8 @@ CALDERA works by attaching abilities to an adversary and running the adversary i
 
 ## Requirements
 
-Python 3.5.3+
+* Python 3.5.3+
+* Google Chrome is our only supported/tested browser
 
 ## Installation
 
