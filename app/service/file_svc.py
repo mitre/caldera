@@ -11,6 +11,7 @@ class FileSvc:
         self.payload_dirs = [p for p in payload_dirs if os.path.isdir(p)]
         self.log = Logger('file_svc')
         self.exfil_dir = exfil_dir
+        self.log.debug('Downloaded files will come from %s' % self.payload_dirs)
 
     async def download(self, request):
         name = request.headers.get('file')
