@@ -9,6 +9,9 @@ CALDERA works by attaching abilities to an adversary and running the adversary i
 * Python 3.5.3+
 * Google Chrome is our only supported/tested browser
 
+Additionally, this code (the C2 server) is intended to be run on Linux or MacOS. 
+The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
+
 ## Installation
 
 Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin%3F). 

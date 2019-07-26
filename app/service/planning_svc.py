@@ -75,7 +75,10 @@ class PlanningService:
                 link['cleanup'] = await self._apply_stealth(operation, agent, cleanup_cmd)
         return links
 
-    def _reward_fact_relationship(self, combo_set, combo_link, score):
+    """ PRIVATE """
+
+    @staticmethod
+    def _reward_fact_relationship(combo_set, combo_link, score):
         if len(combo_set) == 1 and len(combo_link) == 1:
             score *= 2
         return score

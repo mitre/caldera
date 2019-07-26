@@ -17,7 +17,6 @@ class FileSvc:
         name = request.headers.get('file')
         file_path, headers = await self.find_file(name)
         if file_path:
-            self.log.debug('downloading %s...' % name)
             return web.FileResponse(path=file_path, headers=headers)
         return web.HTTPNotFound(body='File not found')
 
@@ -26,6 +25,7 @@ class FileSvc:
             for root, dirs, files in os.walk(store):
                 if name in files:
                     headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
+                    self.log.debug('downloading %s...' % name)
                     return os.path.join(root, name), headers
         return None, None
 
