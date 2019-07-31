@@ -1,8 +1,8 @@
-import csv
 import os
 import uuid
 
 from aiohttp import web
+
 from app.utility.logger import Logger
 
 
@@ -49,14 +49,6 @@ class FileSvc:
             return web.Response()
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
-
-    @staticmethod
-    async def write_csv(dictionary, location):
-        with open(location, 'w') as csv_file:
-            fieldnames = dictionary[0].keys()
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-            for element in dictionary:
-                writer.writerow(element)
 
     """ PRIVATE """
             
