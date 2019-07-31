@@ -15,15 +15,16 @@ class DataService:
         with open(schema) as schema:
             await self.dao.build(schema.read())
         await self.load_abilities(directory=abilities)
-        await self.load_adversaries(config=adversaries)
+        await self.load_adversaries(directory=adversaries)
         await self.load_facts(config=facts)
         await self.load_planner(planner)
 
-    async def load_adversaries(self, config):
-        for entries in self.utility_svc.strip_yml(config):
-            for adv in entries:
-                phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
-                await self.create_adversary(adv['name'], adv['description'], phases)
+    async def load_adversaries(self, directory):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+            for entries in self.utility_svc.strip_yml(filename):
+                for adv in entries:
+                    phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
+                    await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
@@ -68,27 +69,27 @@ class DataService:
         if parser:
             parser['ability'] = identifier
             await self.dao.create('core_parser', parser)
-        return 'Saved ability: %s' % ability_id
+        return identifier
 
-    async def create_adversary(self, name, description, phases):
-        identifier = await self.dao.create('core_adversary', dict(name=name.lower(), description=description))
+    async def create_adversary(self, i, name, description, phases):
+        identifier = await self.dao.create('core_adversary', dict(adversary_id=i, name=name.lower(), description=description))
         await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
         for ability in phases:
             a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
             await self.dao.create('core_adversary_map', a)
-        return 'Saved adversary: %s' % name
+        return identifier
 
     async def create_group(self, name, paws):
         identifier = await self.dao.create('core_group', dict(name=name))
         for paw in paws:
             agent = await self.dao.get('core_agent', dict(paw=paw))
             await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
-        return 'Saved %s host group' % name
+        return identifier
 
-    async def create_operation(self, name, group, adversary, jitter='2/8', cleanup=True, stealth=False,
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', cleanup=True, stealth=False,
                                sources=None, planner=None):
         op_id = await self.dao.create('core_operation', dict(
-            name=name, host_group=group, adversary=adversary, finish=None, phase=0, jitter=jitter,
+            name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
             start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth, planner=planner)
                                       )
         source_id = await self.dao.create('core_source', dict(name=name))
@@ -128,7 +129,7 @@ class DataService:
             op['chain'] = sorted(await self.explode_chain(op['id']), key=lambda k: k['id'])
             groups = await self.explode_groups(dict(id=op['host_group']))
             op['host_group'] = groups[0]
-            adversaries = await self.explode_adversaries(dict(id=op['adversary']))
+            adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
             op['adversary'] = adversaries[0]
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
