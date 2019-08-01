@@ -102,6 +102,15 @@ class DataService:
         await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
                                                 score=score, blacklist=blacklist, set_id=set_id, link_id=link_id))
 
+    async def create_link(self, link):
+        await self.dao.create('core_chain', link)
+
+    async def create_result(self, result):
+        await self.dao.create('core_result', result)
+
+    async def create_agent(self, agent):
+        await self.dao.create('core_agent', agent)
+
     """ VIEW """
 
     async def explode_abilities(self, criteria=None):
@@ -126,7 +135,7 @@ class DataService:
     async def explode_operation(self, criteria=None):
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
-            op['chain'] = sorted(await self.explode_chain(op['id']), key=lambda k: k['id'])
+            op['chain'] = sorted(await self.explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
             groups = await self.explode_groups(dict(id=op['host_group']))
             op['host_group'] = groups[0]
             adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
@@ -143,17 +152,11 @@ class DataService:
 
     async def explode_agents(self, criteria: object = None) -> object:
         agents = await self.dao.get('core_agent', criteria)
-        sql = """
-        SELECT 
-            g.id, g.name, m.agent_id, m.id as map_id 
-        FROM 
-            core_group g 
-            JOIN core_group_map m 
-            ON g.id=m.group_id 
-        WHERE 
-            g.deactivated = 0
-        """
-        groups = await self.dao.raw_select(sql)
+        groups = await self.dao.get('core_group', criteria=dict(deactivated=0))
+        for g in groups:
+            for gm in await self.dao.get('core_group_map', criteria=dict(group_id=g['id'])):
+                g['agent_id'] = gm['agent_id']
+                g['map_id'] = gm['id']
         for a in agents:
             a['groups'] = [dict(id=g['id'], name=g['name'], map_id=g['map_id']) for g in groups if g['agent_id'] == a['id']]
         return agents
@@ -166,23 +169,27 @@ class DataService:
             r['link'] = link[0]
         return results
 
-    async def explode_chain(self, op_id):
-        sql = """
-        SELECT 
-            a.*, b.name as abilityName, b.description as abilityDescription 
-        FROM core_chain a 
-            JOIN (SELECT id, name, description FROM core_ability GROUP BY id) b 
-              ON a.ability=b.id 
-        WHERE 
-            a.op_id = %s;
-        """ % op_id
-        return await self.dao.raw_select(sql)
+    async def explode_chain(self, criteria=None):
+        chain = []
+        for link in await self.dao.get('core_chain', criteria=criteria):
+            a = await self.dao.get('core_ability', criteria=dict(id=link['ability']))
+            chain.append(dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link))
+        return chain
 
     async def explode_sources(self, criteria=None):
         sources = await self.dao.get('core_source', criteria=criteria)
         for s in sources:
             s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
-        return [source for source in sources if source['facts']]
+        return sources
+
+    async def explode_planners(self, criteria=None):
+        return await self.dao.get('core_planner', criteria=criteria)
+
+    async def explode_payloads(self, criteria=None):
+        return await self.dao.get('core_payload', criteria=criteria)
+
+    async def explode_parsers(self, criteria=None):
+        return await self.dao.get('core_parser', criteria=criteria)
 
     """ DELETE / DEACTIVATE """
 
@@ -199,3 +206,9 @@ class DataService:
         await self.dao.update(table='core_group', key='id', value=group_id,
                               data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         return 'Removed %s host group' % group[0]['name']
+
+    """ UPDATE """
+
+    async def update(self, table, key, value, data):
+        await self.dao.update(table, key, value, data)
+

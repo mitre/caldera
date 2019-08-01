@@ -17,10 +17,6 @@ class Persist(Database):
         with sqlite3.connect(self.database) as conn:
             return await self.read(conn, table, criteria)
 
-    async def unique(self, column, table):
-        with sqlite3.connect(self.database) as conn:
-            return await self.read_unique(conn, column, table)
-
     async def create(self, table, data):
         with sqlite3.connect(self.database) as conn:
             return await self.add(conn, table, data)
@@ -36,11 +32,3 @@ class Persist(Database):
     async def delete(self, table, data):
         with sqlite3.connect(self.database) as conn:
             return await self.remove(conn, table, data)
-
-    async def raw_select(self, sql):
-        with sqlite3.connect(self.database) as conn:
-            return await self.raw_read(conn, sql)
-
-    async def raw_update(self, sql):
-        with sqlite3.connect(self.database) as conn:
-            return await self.raw_upsert(conn, sql)

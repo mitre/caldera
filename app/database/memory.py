@@ -15,9 +15,6 @@ class Memory(Database):
     async def get(self, table, criteria=None):
         return await self.read(self.connection, table, criteria)
 
-    async def unique(self, column, table):
-        return await self.read_unique(self.connection, column, table)
-
     async def create(self, table, data):
         return await self.add(self.connection, table, data)
 
@@ -29,9 +26,3 @@ class Memory(Database):
 
     async def delete(self, table, data):
         return await self.remove(self.connection, table, data)
-
-    async def raw_select(self, sql):
-        return await self.raw_read(self.connection, sql)
-
-    async def raw_update(self, sql):
-        return await self.raw_upsert(self.connection, sql)
