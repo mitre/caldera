@@ -28,14 +28,6 @@ class Database:
         rows = cursor.fetchall()
         return [dict(ix) for ix in rows]
 
-    @staticmethod
-    async def read_unique(connection, column, table):
-        connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute('SELECT distinct %s FROM %s' % (column, table))
-        rows = cursor.fetchall()
-        return [dict(ix) for ix in rows]
-
     async def add(self, connection, table, data):
         try:
             cursor = connection.cursor()
@@ -79,19 +71,5 @@ class Database:
         sql += (' WHERE %s = "%s"' % (where, value))
         for k, v in data.items():
             sql += (' AND %s = "%s"' % (k, v))
-        cursor.execute(sql)
-        connection.commit()
-
-    @staticmethod
-    async def raw_read(connection, sql):
-        connection.row_factory = sqlite3.Row
-        cursor = connection.cursor()
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        return [dict(ix) for ix in rows]
-
-    @staticmethod
-    async def raw_upsert(connection, sql):
-        cursor = connection.cursor()
         cursor.execute(sql)
         connection.commit()
