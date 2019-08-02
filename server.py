@@ -22,6 +22,7 @@ from app.service.utility_svc import UtilityService
 
 async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
+    app.loop.create_task(data_svc.load_data(directory='data'))
 
 
 def build_plugins(plugs):
@@ -52,7 +53,7 @@ async def init(address, port, services, users):
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
 
-    await services.get('data_svc').reload_database()
+    await services.get('data_svc').load_data()
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
     await runner.setup()
