@@ -32,7 +32,7 @@ class PlanningService:
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def wait_for_phase(self, operation):
-        for member in operation['host_group']['agents']:
+        for member in operation['host_group']:
             op = await self.data_svc.explode_operation(dict(id=operation['id']))
             while next((True for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
                        False):
@@ -52,7 +52,7 @@ class PlanningService:
         """
         Create a list of all possible links for a given phase
         """
-        group = operation['host_group']['name']
+        group = agent['host_group']
         for link in links:
             decoded_test = await self.decode(link['command'], agent, group)
             cleanup_cmd = await self.decode(link.get('cleanup'), agent, group)

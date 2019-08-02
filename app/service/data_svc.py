@@ -11,20 +11,15 @@ class DataService:
         self.utility_svc = utility_svc
         self.log = utility_svc.create_logger('data_svc')
 
-    async def reload_database(self, schema='conf/core.sql', adversaries=None, abilities=None, facts=None, planner=None):
+    async def load_data(self, directory=None, schema='conf/core.sql'):
         with open(schema) as schema:
             await self.dao.build(schema.read())
-        await self.load_abilities(directory=abilities)
-        await self.load_adversaries(directory=adversaries)
-        await self.load_facts(config=facts)
-        await self.load_planner(planner)
-
-    async def load_adversaries(self, directory):
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            for entries in self.utility_svc.strip_yml(filename):
-                for adv in entries:
-                    phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
-                    await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
+        if directory:
+            self.log.debug('Loading data from %s' % directory)
+            await self.load_abilities(directory='%s/abilities' % directory)
+            await self.load_adversaries(directory='%s/adversaries' % directory)
+            await self.load_facts(directory='%s/facts' % directory)
+            await self.load_planner(directory='%s/planners' % directory)
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
@@ -41,17 +36,34 @@ class DataService:
                                                       'cleanup') else None,
                                                   payload=el.get('payload'), parser=el.get('parser'))
 
-    async def load_facts(self, config):
-        for entries in self.utility_svc.strip_yml(config):
-            for facts in entries:
-                source_id = await self.dao.create('core_source', dict(name=facts['name']))
-                for fact in facts['facts']:
+    async def load_adversaries(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+            for adv in self.utility_svc.strip_yml(filename):
+                phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
+                await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
+
+    async def load_facts(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for source in self.utility_svc.strip_yml(filename):
+                source_id = await self.dao.create('core_source', dict(name=source['name']))
+                for fact in source['facts']:
                     fact['source_id'] = source_id
                     await self.create_fact(**fact)
 
-    async def load_planner(self, planner):
-        if planner:
-            await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
+    async def load_planner(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for planner in self.utility_svc.strip_yml(filename):
+                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
+
+    """ PERSIST """
+
+    async def persist_adversary(self, i, name, description, phases):
+        p = defaultdict(list)
+        for ability in phases:
+            p[ability['phase']].append(ability['id'])
+        self.utility_svc.write_yaml('data/adversaries/%s.yml' % i,
+                                    dict(id=i, name=name, description=description, phases=dict(p)))
+        return await self.create_adversary(i, name, description, phases)
 
     """ CREATE """
 
@@ -73,17 +85,9 @@ class DataService:
 
     async def create_adversary(self, i, name, description, phases):
         identifier = await self.dao.create('core_adversary', dict(adversary_id=i, name=name.lower(), description=description))
-        await self.dao.delete('core_adversary_map', dict(adversary_id=identifier))
         for ability in phases:
             a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
             await self.dao.create('core_adversary_map', a)
-        return identifier
-
-    async def create_group(self, name, paws):
-        identifier = await self.dao.create('core_group', dict(name=name))
-        for paw in paws:
-            agent = await self.dao.get('core_agent', dict(paw=paw))
-            await self.dao.create('core_group_map', dict(group_id=identifier, agent_id=agent[0]['id']))
         return identifier
 
     async def create_operation(self, name, group, adversary_id, jitter='2/8', cleanup=True, stealth=False,
@@ -136,30 +140,15 @@ class DataService:
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
             op['chain'] = sorted(await self.explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
-            groups = await self.explode_groups(dict(id=op['host_group']))
-            op['host_group'] = groups[0]
             adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
             op['adversary'] = adversaries[0]
+            op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
         return operations
 
-    async def explode_groups(self, criteria=None):
-        groups = await self.dao.get('core_group', criteria=criteria)
-        for g in groups:
-            g['agents'] = await self.dao.get('core_group_map', dict(group_id=g['id']))
-        return groups
-
     async def explode_agents(self, criteria: object = None) -> object:
-        agents = await self.dao.get('core_agent', criteria)
-        groups = await self.dao.get('core_group', criteria=dict(deactivated=0))
-        for g in groups:
-            for gm in await self.dao.get('core_group_map', criteria=dict(group_id=g['id'])):
-                g['agent_id'] = gm['agent_id']
-                g['map_id'] = gm['id']
-        for a in agents:
-            a['groups'] = [dict(id=g['id'], name=g['name'], map_id=g['map_id']) for g in groups if g['agent_id'] == a['id']]
-        return agents
+        return await self.dao.get('core_agent', criteria)
 
     async def explode_results(self, criteria=None):
         results = await self.dao.get('core_result', criteria=criteria)

@@ -39,3 +39,8 @@ class UtilityService:
             with open(path) as seed:
                 return list(yaml.load_all(seed))
         return []
+
+    @staticmethod
+    def write_yaml(path, data):
+        with open(path, 'w+') as yaml_file:
+            yaml.dump(data, yaml_file, default_flow_style=False)
