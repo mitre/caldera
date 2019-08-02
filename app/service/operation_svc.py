@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime
 from importlib import import_module
 
+from app.core.operation import Operation
 from app.utility.logger import Logger
 
 
@@ -28,11 +29,11 @@ class OperationService:
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
-        operation = await self.data_svc.explode_operation(dict(id=op_id))
-        planner = await self._get_planning_module(operation[0]['planner'])
+        operation_class = Operation.from_data_svc(await self.data_svc.explode_operation(dict(id=op_id)))
+        planner = await self._get_planning_module(operation_class.planner)
 
         try:
-            for phase in operation[0]['adversary']['phases']:
+            for phase in operation_class.adversary.phases:
                 self.log.debug('Operation %s phase %s: started' % (op_id, phase))
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
