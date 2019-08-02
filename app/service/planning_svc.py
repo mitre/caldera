@@ -95,7 +95,7 @@ class PlanningService:
             variable_facts = []
             for fact in facts:
                 if fact['property'] == v:
-                    if "private" in fact['property']:
+                    if 'private' in fact['property']:
                         if fact['id'] in private_facts:
                             variable_facts.append(fact)
                     else:
