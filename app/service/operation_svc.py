@@ -29,14 +29,14 @@ class OperationService:
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
-        operation_class = Operation.from_data_svc(await self.data_svc.explode_operation(dict(id=op_id)))
-        planner = await self._get_planning_module(operation_class.planner)
+        operation = Operation.from_data_svc(await self.data_svc.explode_operation(dict(id=op_id)))
+        planner = await self._get_planning_module(operation.planner)
 
         try:
-            for phase in operation_class.adversary.phases:
+            for phase in operation.adversary.phases:
+                operation = await self.data_svc.explode_operation(dict(id=op_id))
                 operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
                 self.log.debug('%s: started' % operation_phase_name)
-                operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
                 self.log.debug('%s: completed' % operation_phase_name)
                 await self.data_svc.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
