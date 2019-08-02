@@ -34,10 +34,11 @@ class OperationService:
 
         try:
             for phase in operation_class.adversary.phases:
-                self.log.debug('Operation %s phase %s: started' % (op_id, phase))
+                operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
+                self.log.debug('%s: started' % operation_phase_name)
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
-                self.log.debug('Operation %s phase %s: completed' % (op_id, phase))
+                self.log.debug('%s: completed' % operation_phase_name)
                 await self.data_svc.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
                 await self.parsing_svc.parse_facts(operation[0])
             await self.close_operation(op_id)
