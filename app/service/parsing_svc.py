@@ -26,11 +26,11 @@ class ParsingService:
 
                 # save facts to DB
                 for match in matched_facts:
-                    if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['blacklist'] for f in
+                    if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] <= 0 for f in
                                operation['facts']):
                         await self.data_svc.create_fact(
                             source_id=op_source[0]['id'], link_id=x['link_id'], property=match['fact'],
-                            value=match['value'], set_id=match['set_id'], score=1, blacklist=0
+                            value=match['value'], set_id=match['set_id'], score=1
                         )
 
                 # mark result as parsed

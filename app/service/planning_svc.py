@@ -88,7 +88,7 @@ class PlanningService:
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
-        facts = [f for f in facts if not f['blacklist']]
+        facts = [f for f in facts if f['score'] > 0]
         relevant_facts = []
         for v in variables:
             variable_facts = []
