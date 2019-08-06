@@ -3,7 +3,7 @@ import logging
 
 class Logger:
     """
-    Custom logger: all logs will be sent to the .logs directory
+    Custom logger: all logs will be sent to the logs directory
     """
     def __init__(self, name):
         self.name = name
