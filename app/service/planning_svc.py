@@ -59,8 +59,8 @@ class PlanningService:
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                private_facts = await self._explode_private_facts(operation['id'], agent['id'])
-                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), private_facts)
+                agent_facts = await self._get_agent_facts(operation['id'], agent['id'])
+                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
@@ -85,7 +85,7 @@ class PlanningService:
         return score
 
     @staticmethod
-    async def _build_relevant_facts(variables, facts, private_facts):
+    async def _build_relevant_facts(variables, facts, agent_facts):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -96,7 +96,7 @@ class PlanningService:
             for fact in facts:
                 if fact['property'] == v:
                     if 'private' in fact['property']:
-                        if fact['id'] in private_facts:
+                        if fact['id'] in agent_facts:
                             variable_facts.append(fact)
                     else:
                         variable_facts.append(fact)
@@ -129,13 +129,10 @@ class PlanningService:
             for link in links:
                 link['cleanup'] = None
 
-    async def _explode_private_facts(self, op_id, agent_id):
+    async def _get_agent_facts(self, op_id, agent_id):
         """
-        Only select the id of the agent's collected facts during the operation
+        Collect a list of this agent's facts
         """
-        pf_list = []
         for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, host_id=agent_id)):
             facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
-            for f in facts:
-                pf_list.append(f['id'])
-        return pf_list
+            return [f['id'] for f in facts]
