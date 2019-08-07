@@ -4,6 +4,9 @@ CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CKâ„
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki).
 
+## Pardon our dust!
+CALDERA is an actively developed project, and many features are subject to change. In April 2019 we released a new version of CALDERA that made much of our old documentation obsolete, leading to some confusion over CALDERA's current capabilities. For more information on this change, please read our [CALDERA 2.0](https://github.com/mitre/caldera/wiki/CALDERA-2.0) page on the wiki.
+
 ## Requirements
 
 * Python 3.5.3+
