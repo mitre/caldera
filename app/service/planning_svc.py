@@ -59,7 +59,8 @@ class PlanningService:
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []))
+                agent_facts = await self._get_agent_facts(operation['id'], agent['id'])
+                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
@@ -84,7 +85,7 @@ class PlanningService:
         return score
 
     @staticmethod
-    async def _build_relevant_facts(variables, facts):
+    async def _build_relevant_facts(variables, facts, agent_facts):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -94,7 +95,11 @@ class PlanningService:
             variable_facts = []
             for fact in facts:
                 if fact['property'] == v:
-                    variable_facts.append(fact)
+                    if 'private' in fact['property']:
+                        if fact['id'] in agent_facts:
+                            variable_facts.append(fact)
+                    else:
+                        variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 
@@ -123,3 +128,14 @@ class PlanningService:
         if not operation['cleanup']:
             for link in links:
                 link['cleanup'] = None
+
+    async def _get_agent_facts(self, op_id, agent_id):
+        """
+        Collect a list of this agent's facts
+        """
+        agent_facts = []
+        for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, host_id=agent_id)):
+            facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
+            for f in facts:
+                agent_facts.append(f['id'])
+        return agent_facts
