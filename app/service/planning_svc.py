@@ -133,6 +133,9 @@ class PlanningService:
         """
         Collect a list of this agent's facts
         """
+        agent_facts = []
         for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, host_id=agent_id)):
             facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
-            return [f['id'] for f in facts]
+            for f in facts:
+                agent_facts.append(f['id'])
+        return agent_facts
