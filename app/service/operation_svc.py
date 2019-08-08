@@ -29,9 +29,9 @@ class OperationService:
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
-        planner = await self._get_planning_module(operation[0]['planner'])
 
         try:
+            planner = await self._get_planning_module(operation[0]['planner'])
             for phase in operation[0]['adversary']['phases']:
                 operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
                 self.log.debug('%s: started' % operation_phase_name)
@@ -49,4 +49,5 @@ class OperationService:
     async def _get_planning_module(self, planner_id):
         chosen_planner = await self.data_svc.explode_planners(dict(id=planner_id))
         planning_module = import_module(chosen_planner[0]['module'])
-        return getattr(planning_module, 'LogicalPlanner')(self.data_svc, self.planning_svc)
+        return getattr(planning_module, 'LogicalPlanner')(self.data_svc, self.planning_svc,
+                                                          **chosen_planner[0]['params'])

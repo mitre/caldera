@@ -1,4 +1,5 @@
 import glob
+import json
 from base64 import b64encode
 from collections import defaultdict
 from datetime import datetime
@@ -53,7 +54,8 @@ class DataService:
     async def load_planner(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.utility_svc.strip_yml(filename):
-                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
+                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
+                                                           params=json.dumps(planner.get('params'))))
 
     """ PERSIST """
 
@@ -172,7 +174,14 @@ class DataService:
         return sources
 
     async def explode_planners(self, criteria=None):
-        return await self.dao.get('core_planner', criteria=criteria)
+        planners = await self.dao.get('core_planner', criteria=criteria)
+        # De-serialize json params into a Dict if params are present
+        for p in planners:
+            if p['params'] == 'null':
+                p['params'] = dict()
+            else:
+                p['params'] = json.loads(p['params'])
+        return planners
 
     async def explode_payloads(self, criteria=None):
         return await self.dao.get('core_payload', criteria=criteria)

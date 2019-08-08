@@ -11,4 +11,4 @@ CREATE TABLE if not exists core_attack (attack_id text primary key, name text, t
 CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, set_id integer, source_id text, link_id integer, UNIQUE(source_id, property, value) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, UNIQUE(name) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, UNIQUE(name) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, params json, UNIQUE(name) ON CONFLICT IGNORE);
