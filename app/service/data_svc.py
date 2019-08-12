@@ -84,7 +84,8 @@ class DataService:
         return identifier
 
     async def create_adversary(self, i, name, description, phases):
-        identifier = await self.dao.create('core_adversary', dict(adversary_id=i, name=name.lower(), description=description))
+        identifier = await self.dao.create('core_adversary',
+                                           dict(adversary_id=i, name=name.lower(), description=description))
         for ability in phases:
             a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
             await self.dao.create('core_adversary_map', a)
@@ -103,17 +104,17 @@ class DataService:
         return op_id
 
     async def create_fact(self, property, value, source_id, score=1, set_id=0, link_id=None):
-        await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
-                                                score=score, set_id=set_id, link_id=link_id))
+        return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
+                                                       score=score, set_id=set_id, link_id=link_id))
 
     async def create_link(self, link):
-        await self.dao.create('core_chain', link)
+        return await self.dao.create('core_chain', link)
 
     async def create_result(self, result):
-        await self.dao.create('core_result', result)
+        return await self.dao.create('core_result', result)
 
     async def create_agent(self, agent):
-        await self.dao.create('core_agent', agent)
+        return await self.dao.create('core_agent', agent)
 
     """ VIEW """
 
@@ -186,10 +187,10 @@ class DataService:
         if index == 'core_group':
             return await self.deactivate_group(id)
         if index == 'core_agent':
-            await self.dao.delete('core_group_map', data=dict(agent_id=id))    
+            await self.dao.delete('core_group_map', data=dict(agent_id=id))
         await self.dao.delete(index, data=dict(id=id))
         return 'Removed %s from %s' % (id, index)
-        
+
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
         await self.dao.update(table='core_group', key='id', value=group_id,
@@ -200,4 +201,3 @@ class DataService:
 
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
-
