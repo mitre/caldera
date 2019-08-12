@@ -9,6 +9,7 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 from aiohttp import web
+from subprocess import Popen, DEVNULL
 
 from app.database.core_dao import CoreDao
 from app.service.auth_svc import AuthService
@@ -32,6 +33,8 @@ def build_plugins(plugs):
             print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
             exit(0)
         logging.debug('Loading plugin: %s' % plug)
+        if os.path.isfile('plugins/%s/requirements.txt' % plug):
+            Popen(['pip', 'install', '-r', 'plugins/%s/requirements.txt' % plug], stdout=DEVNULL)
         modules.append(import_module('plugins.%s.hook' % plug))
     return modules
 
