@@ -1,4 +1,6 @@
 import asyncio
+import json
+import os
 import traceback
 from datetime import datetime
 from importlib import import_module
@@ -25,6 +27,7 @@ class OperationService:
         self.log.debug('Operation complete: %s' % op_id)
         update = dict(finish=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         await self.data_svc.update('core_operation', key='id', value=op_id, data=update)
+        await self._generate_operation_report(op_id)
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
@@ -45,6 +48,12 @@ class OperationService:
             traceback.print_exc()
 
     """ PRIVATE """
+
+    async def _generate_operation_report(self, op_id):
+        operation = await self.data_svc.explode_operation(dict(id=op_id))
+        operation_data = json.dumps(operation[0], sort_keys=True, indent=4, separators=(',', ': '))
+        with open(os.path.join('logs', 'operation_report_' + operation[0]['name'] + '.json'), 'w') as f:
+            f.write(operation_data)
 
     async def _get_planning_module(self, planner_id):
         chosen_planner = await self.data_svc.explode_planners(dict(id=planner_id))
