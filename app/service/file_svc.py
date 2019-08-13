@@ -5,6 +5,7 @@ import string
 
 from aiohttp import web
 from shutil import which
+from hashlib import md5
 
 from app.utility.logger import Logger
 
@@ -56,15 +57,16 @@ class FileSvc:
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self._find_file_path(name)
-                key = await self._insert_unique_deployment_key(file_path)
-                self.log.debug('%s compiled for %s with key = %s' % (name, platform, key))
+                await self._change_file_hash(file_path)
                 output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
+                self.log.debug('%s compiled for %s with MD5=%s' %
+                               (name, platform, md5(open(output, 'rb').read()).hexdigest()))
                 os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
             return '%s-%s' % (name, platform)
         return name
 
     @staticmethod
-    async def _insert_unique_deployment_key(file_path, size=30):
+    async def _change_file_hash(file_path, size=30):
         key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
         lines = open(file_path, 'r').readlines()
         lines[-1] = 'var key = "%s"' % key
