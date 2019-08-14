@@ -15,3 +15,6 @@ class TestUtilityService(unittest.TestCase):
         mystring = 'Speedily say has suitable disposal add boy. On forth doubt miles of child. Exercise joy man.'
         self.assertEqual(UtilityService.decode_bytes(UtilityService.encode_string(mystring)),mystring)
 
+    def test_should_return_true(self):
+        self.assertEqual(False, UtilityService.should_return_true())
+

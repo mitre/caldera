@@ -44,3 +44,7 @@ class UtilityService:
     def write_yaml(path, data):
         with open(path, 'w+') as yaml_file:
             yaml.dump(data, yaml_file, default_flow_style=False)
+
+    @staticmethod
+    def should_return_true():
+        return True
