@@ -4,7 +4,6 @@ from base64 import b64decode
 
 from app.service.base_service import BaseService
 
-
 class ParsingService(BaseService):
 
     def __init__(self):
@@ -18,13 +17,13 @@ class ParsingService(BaseService):
             parser = await data_svc.explode_parsers(dict(ability=x['link']['ability']))
             if parser:
                 if parser[0]['name'] == 'json':
-                    matched_facts = parsers.json(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.json(parser[0], b64decode(x['output']).decode('utf-8'), self.log)
                 elif parser[0]['name'] == 'line':
-                    matched_facts = parsers.line(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.line(parser[0], b64decode(x['output']).decode('utf-8'), self.log)
                 elif parser[0]['name'] == 'mimikatz':
-                    matched_facts = mimikatz_parser.mimikatz(b64decode(x['output']).decode('utf-8'))
+                    matched_facts = mimikatz_parser.mimikatz(b64decode(x['output']).decode('utf-8'), self.log)
                 else:
-                    matched_facts = parsers.regex(parser[0], b64decode(x['output']).decode('utf-8'))
+                    matched_facts = parsers.regex(parser[0], b64decode(x['output']).decode('utf-8'), self.log)
 
                 # save facts to DB
                 for match in matched_facts:
