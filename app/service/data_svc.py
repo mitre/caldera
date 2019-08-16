@@ -175,7 +175,6 @@ class DataService:
 
     async def explode_planners(self, criteria=None):
         planners = await self.dao.get('core_planner', criteria=criteria)
-        # De-serialize json params into a Dict if params are present
         for p in planners:
             if p['params'] == 'null':
                 p['params'] = dict()
