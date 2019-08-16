@@ -19,7 +19,7 @@ class FileSvc:
 
     async def download(self, request):
         name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
-        _, file_path = await self._find_file_path(name, 'payloads')
+        _, file_path = await self.find_file_path(name, 'payloads')
         if file_path:
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
             return web.FileResponse(path=file_path, headers=headers)
@@ -45,6 +45,13 @@ class FileSvc:
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
 
+    async def find_file_path(self, name, location=''):
+        for plugin in self.plugins:
+            for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
+                if name in files:
+                    self.log.debug('Located %s' % name)
+                    return plugin, os.path.join(root, name)
+
     """ PRIVATE """
 
     async def _create_unique_exfil_sub_directory(self):
@@ -56,7 +63,7 @@ class FileSvc:
     async def _compile(self, name, platform):
         if name.endswith('.go'):
             if which('go') is not None:
-                plugin, file_path = await self._find_file_path(name)
+                plugin, file_path = await self.find_file_path(name)
                 await self._change_file_hash(file_path)
                 output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
                 self.log.debug('%s compiled for %s with MD5=%s' %
@@ -74,10 +81,3 @@ class FileSvc:
         out.writelines(lines)
         out.close()
         return key
-
-    async def _find_file_path(self, name, location=''):
-        for plugin in self.plugins:
-            for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
-                if name in files:
-                    self.log.debug('Located %s' % name)
-                    return plugin, os.path.join(root, name)
