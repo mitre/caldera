@@ -12,6 +12,7 @@ from aiohttp import web
 from subprocess import Popen, DEVNULL
 
 from app.database.core_dao import CoreDao
+from app.service.agent_svc import AgentService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
@@ -95,9 +96,10 @@ if __name__ == '__main__':
         auth_svc = AuthService(utility_svc=utility_svc)
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
+        agent_svc = AgentService(data_svc, utility_svc)
         services = dict(
             data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
-            file_svc=file_svc, planning_svc=planning_svc, plugins=plugin_modules
+            file_svc=file_svc, planning_svc=planning_svc, agent_svc=agent_svc, plugins=plugin_modules
         )
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=services, host=cfg['host'], port=cfg['port'], users=cfg['users'])

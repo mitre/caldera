@@ -91,12 +91,10 @@ class DataService:
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', cleanup=True, stealth=False,
-                               sources=None, planner=None):
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None, planner=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth, planner=planner)
-                                      )
+            start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), stealth=stealth, planner=planner))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
@@ -184,10 +182,6 @@ class DataService:
     """ DELETE / DEACTIVATE """
 
     async def delete(self, index, id):
-        if index == 'core_group':
-            return await self.deactivate_group(id)
-        if index == 'core_agent':
-            await self.dao.delete('core_group_map', data=dict(agent_id=id))
         await self.dao.delete(index, data=dict(id=id))
         return 'Removed %s from %s' % (id, index)
 

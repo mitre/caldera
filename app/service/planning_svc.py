@@ -15,26 +15,25 @@ class PlanningService:
         self.log = utility_svc.create_logger('planning_svc')
 
     async def select_links(self, operation, agent, phase):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['host_id'] == agent['id'] and l['collect']]
+        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform']]
         links = []
         for a in phase_abilities:
             links.append(
-                dict(op_id=operation['id'], host_id=agent['id'], ability=a['id'], command=a['test'], score=0,
+                dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      decide=datetime.now(), jitter=self.utility_svc.jitter(operation['jitter']), cleanup=a.get('cleanup')))
         links[:] = await self._add_test_variants(links, agent, operation)
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        await self._remove_cleanup_cmds(operation, links)
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
             op = await self.data_svc.explode_operation(dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
+            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
                 op = await self.data_svc.explode_operation(dict(id=operation['id']))
@@ -43,7 +42,6 @@ class PlanningService:
         decoded_cmd = self.utility_svc.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
-        decoded_cmd = decoded_cmd.replace('#{files}', agent['files'])
         return decoded_cmd
 
     """ PRIVATE """
@@ -59,7 +57,7 @@ class PlanningService:
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['id'])
+                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     copy_test = copy.deepcopy(decoded_test)
@@ -123,18 +121,12 @@ class PlanningService:
             decoded_test = self.utility_svc.apply_stealth(agent['platform'], decoded_test)
         return self.utility_svc.encode_string(decoded_test)
 
-    @staticmethod
-    async def _remove_cleanup_cmds(operation, links):
-        if not operation['cleanup']:
-            for link in links:
-                link['cleanup'] = None
-
-    async def _get_agent_facts(self, op_id, agent_id):
+    async def _get_agent_facts(self, op_id, paw):
         """
         Collect a list of this agent's facts
         """
         agent_facts = []
-        for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, host_id=agent_id)):
+        for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
             facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
             for f in facts:
                 agent_facts.append(f['id'])
