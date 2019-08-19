@@ -47,5 +47,13 @@ class UtilityService:
             yaml.dump(data, yaml_file, default_flow_style=False)
 
     @staticmethod
+    def prepend_to_file(filename, line):
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(line.rstrip('\r\n') + '\n' + content)
+
+    @staticmethod
     def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
         return datetime.now().strftime(date_format)
+
