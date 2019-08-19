@@ -49,9 +49,7 @@ class AuthService:
     async def check_permissions(request):
         try:
             await check_permission(request, 'admin')
-        except HTTPUnauthorized:
-            raise web.HTTPFound('/login')
-        except HTTPForbidden:
+        except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
 
     async def _check_credentials(self, user_map, username, password):
