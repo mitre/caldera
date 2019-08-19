@@ -1,8 +1,8 @@
 import plugins.stockpile.parsers.standard as parsers
 import plugins.stockpile.parsers.mimikatz as mimikatz_parser
 from base64 import b64decode
-from datetime import datetime
 
+from app.service.utility_svc import UtilityService
 
 class ParsingService:
 
@@ -34,6 +34,6 @@ class ParsingService:
                         )
 
                 # mark result as parsed
-                update = dict(parsed=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                update = dict(parsed=UtilityService.get_current_timestamp())
                 await self.data_svc.update('core_result', key='link_id', value=x['link_id'], data=update)
 

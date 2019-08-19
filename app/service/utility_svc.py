@@ -1,5 +1,6 @@
 from base64 import b64encode, b64decode
 from random import randint
+from datetime import datetime
 
 import yaml
 
@@ -44,3 +45,7 @@ class UtilityService:
     def write_yaml(path, data):
         with open(path, 'w+') as yaml_file:
             yaml.dump(data, yaml_file, default_flow_style=False)
+
+    @staticmethod
+    def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
+        return datetime.now().strftime(date_format)
