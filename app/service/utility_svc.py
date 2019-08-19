@@ -1,5 +1,6 @@
 from base64 import b64encode, b64decode
 from random import randint
+from datetime import datetime
 
 import yaml
 
@@ -51,3 +52,8 @@ class UtilityService:
             content = f.read()
             f.seek(0, 0)
             f.write(line.rstrip('\r\n') + '\n' + content)
+
+    @staticmethod
+    def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
+        return datetime.now().strftime(date_format)
+

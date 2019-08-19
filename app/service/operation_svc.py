@@ -2,10 +2,10 @@ import asyncio
 import json
 import os
 import traceback
-from datetime import datetime
 from importlib import import_module
 
 from app.utility.logger import Logger
+from app.service.utility_svc import UtilityService
 
 
 class OperationService:
@@ -25,7 +25,7 @@ class OperationService:
 
     async def close_operation(self, op_id):
         self.log.debug('Operation complete: %s' % op_id)
-        update = dict(finish=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        update = dict(finish=UtilityService.get_current_timestamp())
         await self.data_svc.update('core_operation', key='id', value=op_id, data=update)
         await self._generate_operation_report(op_id)
 

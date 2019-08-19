@@ -1,5 +1,6 @@
 import json
-from datetime import datetime
+
+from app.service.utility_svc import UtilityService
 
 
 class AgentService:
@@ -12,7 +13,7 @@ class AgentService:
     async def handle_heartbeat(self, paw, platform, server, group):
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.data_svc.explode_agents(criteria=dict(paw=paw))
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        now = UtilityService.get_current_timestamp()
         if agent:
             await self.data_svc.update('core_agent', 'paw', paw, data=dict(last_seen=now))
             return agent[0]
@@ -35,10 +36,9 @@ class AgentService:
         return json.dumps(instructions)
 
     async def save_results(self, link_id, output, status):
-        finished = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await self.data_svc.create_result(result=dict(link_id=link_id, output=output))
         await self.data_svc.update('core_chain', key='id', value=link_id,
-                                   data=dict(status=int(status), finish=finished))
+                                   data=dict(status=int(status), finish=UtilityService.get_current_timestamp()))
         return json.dumps(dict(status=True))
 
     """ PRIVATE """
