@@ -1,17 +1,16 @@
 import unittest
 
-from app.service.utility_svc import UtilityService
+from app.service.base_service import BaseService
 
 
 class TestUtilityService(unittest.TestCase):
     def test_encode_string(self):
-        self.assertEqual(UtilityService.encode_string('this is a super string!'),'dGhpcyBpcyBhIHN1cGVyIHN0cmluZyE=')
+        self.assertEqual(BaseService.encode_string('this is a super string!'), 'dGhpcyBpcyBhIHN1cGVyIHN0cmluZyE=')
 
     def test_decode_string(self):
-        self.assertEqual(UtilityService.decode_bytes('Ynl0ZXMgdGhhdCBJIG5lZWQgZGVjb2RlZCEgSGVyZSBhcmUgdGhlIGJ5dGVzLiA='),
-                                                     'bytes that I need decoded! Here are the bytes. ')
+        self.assertEqual(BaseService.decode_bytes('Ynl0ZXMgdGhhdCBJIG5lZWQgZGVjb2RlZCEgSGVyZSBhcmUgdGhlIGJ5dGVzLiA='),
+                         'bytes that I need decoded! Here are the bytes. ')
 
     def test_decode_encode_string_functional(self):
-        mystring = 'Speedily say has suitable disposal add boy. On forth doubt miles of child. Exercise joy man.'
-        self.assertEqual(UtilityService.decode_bytes(UtilityService.encode_string(mystring)),mystring)
-
+        my_string = 'Speedily say has suitable disposal add boy. On forth doubt miles of child. Exercise joy man.'
+        self.assertEqual(BaseService.decode_bytes(BaseService.encode_string(my_string)), my_string)
