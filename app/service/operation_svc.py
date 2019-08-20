@@ -53,4 +53,5 @@ class OperationService(BaseService):
     async def _get_planning_module(self, planner_id):
         chosen_planner = await self.get_service('data_svc').explode_planners(dict(id=planner_id))
         planning_module = import_module(chosen_planner[0]['module'])
-        return getattr(planning_module, 'LogicalPlanner')(self.get_service('planning_svc'))
+        return getattr(planning_module, 'LogicalPlanner')(self.get_service('planning_svc'),
+                                                          **chosen_planner[0]['params'])
