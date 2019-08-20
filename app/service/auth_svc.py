@@ -10,14 +10,16 @@ from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
 
+from app.service.base_service import BaseService
 
-class AuthService:
+
+class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
-    def __init__(self, utility_svc):
-        self.log = utility_svc.create_logger('auth_svc')
+    def __init__(self):
         self.user_map = dict()
+        self.log = self.add_service('auth_svc', self)
 
     async def apply(self, app, users):
         for k, v in users.items():

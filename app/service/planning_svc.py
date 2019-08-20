@@ -6,13 +6,13 @@ import itertools
 from datetime import datetime
 from base64 import b64decode
 
+from app.service.base_service import BaseService
 
-class PlanningService:
 
-    def __init__(self, data_svc, utility_svc):
-        self.data_svc = data_svc
-        self.utility_svc = utility_svc
-        self.log = utility_svc.create_logger('planning_svc')
+class PlanningService(BaseService):
+
+    def __init__(self):
+        self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
         host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
@@ -22,7 +22,7 @@ class PlanningService:
         for a in phase_abilities:
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.utility_svc.jitter(operation['jitter']), cleanup=a.get('cleanup')))
+                     decide=datetime.now(), jitter=self.jitter(operation['jitter']), cleanup=a.get('cleanup')))
         links[:] = await self._add_test_variants(links, agent, operation)
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
@@ -32,14 +32,14 @@ class PlanningService:
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
-            op = await self.data_svc.explode_operation(dict(id=operation['id']))
+            op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
             while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
-                op = await self.data_svc.explode_operation(dict(id=operation['id']))
+                op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
-        decoded_cmd = self.utility_svc.decode_bytes(encoded_cmd)
+        decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
         return decoded_cmd
@@ -65,7 +65,7 @@ class PlanningService:
 
                     variant, cleanup, score, rewards = await self._build_single_test_variant(copy_test, cleanup_cmd, combo)
                     copy_link['command'] = await self._apply_stealth(operation, agent, variant)
-                    copy_link['cleanup'] = self.utility_svc.encode_string(cleanup)
+                    copy_link['cleanup'] = self.encode_string(cleanup)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
                     links.append(copy_link)
@@ -118,16 +118,16 @@ class PlanningService:
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
-            decoded_test = self.utility_svc.apply_stealth(agent['platform'], decoded_test)
-        return self.utility_svc.encode_string(decoded_test)
+            decoded_test = self.apply_stealth(agent['platform'], decoded_test)
+        return self.encode_string(decoded_test)
 
     async def _get_agent_facts(self, op_id, paw):
         """
         Collect a list of this agent's facts
         """
         agent_facts = []
-        for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
-            facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
+        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
+            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts

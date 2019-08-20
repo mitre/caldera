@@ -7,15 +7,15 @@ from aiohttp import web
 from shutil import which
 from hashlib import md5
 
-from app.utility.logger import Logger
+from app.service.base_service import BaseService
 
 
-class FileSvc:
+class FileSvc(BaseService):
 
     def __init__(self, plugins, exfil_dir):
         self.plugins = plugins
-        self.log = Logger('file_svc')
         self.exfil_dir = exfil_dir
+        self.log = self.add_service('file_svc', self)
 
     async def download(self, request):
         name = await self._compile(request.headers.get('file'), request.headers.get('platform'))

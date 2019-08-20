@@ -2,15 +2,14 @@ import glob
 from base64 import b64encode
 from collections import defaultdict
 
-from app.service.utility_svc import UtilityService
+from app.service.base_service import BaseService
 
 
-class DataService:
+class DataService(BaseService):
 
-    def __init__(self, dao, utility_svc):
+    def __init__(self, dao):
         self.dao = dao
-        self.utility_svc = utility_svc
-        self.log = utility_svc.create_logger('data_svc')
+        self.log = self.add_service('data_svc', self)
 
     async def load_data(self, directory=None, schema='conf/core.sql'):
         with open(schema) as schema:
@@ -24,7 +23,7 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            for entries in self.utility_svc.strip_yml(filename):
+            for entries in self.strip_yml(filename):
                 for ab in entries:
                     for ex, el in ab['executors'].items():
                         encoded_test = b64encode(el['command'].strip().encode('utf-8'))
@@ -39,13 +38,13 @@ class DataService:
 
     async def load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-            for adv in self.utility_svc.strip_yml(filename):
+            for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
                 await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for source in self.utility_svc.strip_yml(filename):
+            for source in self.strip_yml(filename):
                 source_id = await self.dao.create('core_source', dict(name=source['name']))
                 for fact in source['facts']:
                     fact['source_id'] = source_id
@@ -53,7 +52,7 @@ class DataService:
 
     async def load_planner(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for planner in self.utility_svc.strip_yml(filename):
+            for planner in self.strip_yml(filename):
                 await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
 
     """ PERSIST """
@@ -62,8 +61,8 @@ class DataService:
         p = defaultdict(list)
         for ability in phases:
             p[ability['phase']].append(ability['id'])
-        self.utility_svc.write_yaml('data/adversaries/%s.yml' % i,
-                                    dict(id=i, name=name, description=description, phases=dict(p)))
+        self.write_yaml('data/adversaries/%s.yml' % i,
+                        dict(id=i, name=name, description=description, phases=dict(p)))
         return await self.create_adversary(i, name, description, phases)
 
     """ CREATE """
@@ -92,10 +91,11 @@ class DataService:
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None, planner=None):
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
+                               planner=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=UtilityService.get_current_timestamp(), stealth=stealth, planner=planner))
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
@@ -189,11 +189,10 @@ class DataService:
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
         await self.dao.update(table='core_group', key='id', value=group_id,
-                              data=dict(deactivated=UtilityService.get_current_timestamp()))
+                              data=dict(deactivated=self.get_current_timestamp()))
         return 'Removed %s host group' % group[0]['name']
 
     """ UPDATE """
 
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
-

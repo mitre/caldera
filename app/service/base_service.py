@@ -8,7 +8,21 @@ from app.utility.logger import Logger
 from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 
-class UtilityService:
+class BaseService:
+
+    _services = dict()
+
+    def add_service(self, name: str, svc: 'BaseService') -> Logger:
+        self.__class__._services[name] = svc
+        return Logger(name)
+
+    @classmethod
+    def get_service(cls, name):
+        return cls._services.get(name)
+
+    @classmethod
+    def get_services(cls):
+        return cls._services
 
     @staticmethod
     def apply_stealth(executor, code):
@@ -19,7 +33,7 @@ class UtilityService:
 
     @staticmethod
     def decode_bytes(s):
-        return b64decode(s).decode('utf-8').replace('\n','')
+        return b64decode(s).decode('utf-8').replace('\n', '')
 
     @staticmethod
     def encode_string(s):
@@ -56,4 +70,3 @@ class UtilityService:
     @staticmethod
     def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
         return datetime.now().strftime(date_format)
-
