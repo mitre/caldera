@@ -17,7 +17,7 @@ class PlanningService(BaseService):
     async def select_links(self, operation, agent, phase):
         host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform']]
+        phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
         links = []
         for a in phase_abilities:
             links.append(

@@ -26,16 +26,18 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
-                    for ex, el in ab['executors'].items():
-                        encoded_test = b64encode(el['command'].strip().encode('utf-8'))
-                        await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
-                                                  technique=ab['technique'], name=ab['name'],
-                                                  test=encoded_test.decode(), description=ab.get('description'),
-                                                  platform=ex,
-                                                  cleanup=b64encode(
-                                                      el['cleanup'].strip().encode('utf-8')).decode() if el.get(
-                                                      'cleanup') else None,
-                                                  payload=el.get('payload'), parser=el.get('parser'))
+                    for pl, executors in ab['platforms'].items():
+                        for name, info in executors.items():
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                            await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
+                                                      technique=ab['technique'], name=ab['name'],
+                                                      test=encoded_test.decode(), description=ab.get('description'),
+                                                      executor=name,
+                                                      platform=pl,
+                                                      cleanup=b64encode(
+                                                          info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                                          'cleanup') else None,
+                                                      payload=info.get('payload'), parser=info.get('parser'))
 
     async def load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
@@ -69,15 +71,16 @@ class DataService(BaseService):
 
     """ CREATE """
 
-    async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None,
-                             payload=None, parser=None):
+    async def create_ability(self, ability_id, tactic, technique, name, test, description, executor, platform,
+                             cleanup=None, payload=None, parser=None):
         await self.dao.create('core_attack',
                               dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         entry_id = entry[0]['attack_id']
         identifier = await self.dao.create('core_ability',
                                            dict(ability_id=ability_id, name=name, test=test, technique=entry_id,
-                                                platform=platform, description=description, cleanup=cleanup))
+                                                executor=executor, platform=platform, description=description,
+                                                cleanup=cleanup))
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
