@@ -14,7 +14,7 @@ class AgentService(BaseService):
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
-            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=dict(last_seen=now))
+            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=dict(last_seen=now, executor=executor))
             return agent[0]
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor)
