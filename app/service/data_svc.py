@@ -207,14 +207,17 @@ class DataService(BaseService):
     """ SUPPORT """
     async def _create_attack(self, technique, tactic):
         entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
-        if len(entry) == 0:
+        if entry == []:
             await self.dao.create('core_attack',
-                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=str("['"+tactic+"']")))
+                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=json.dumps([tactic])))
             entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
         else:
-            s_tactics = eval(entry[0]['tactic'])
+            if entry[0]['tactic'] == 'null':
+                s_tactics = list()
+            else:
+                s_tactics = json.loads(entry[0]['tactic'])
             if tactic not in s_tactics:
                 s_tactics.append(tactic)
                 await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
-                                      data=dict(tactic=str(s_tactics)))
+                                      data=dict(tactic=json.dumps(s_tactics)))
         return entry[0]['attack_id']
