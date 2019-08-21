@@ -12,3 +12,6 @@
 logs/*
 !logs/.gitkeep
 core.db
+.venv/
+venv/
+.env
