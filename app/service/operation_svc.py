@@ -22,7 +22,7 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % op_id)
         update = dict(finish=self.get_current_timestamp())
         await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=update)
-        await self._generate_operation_report(op_id)
+        await self.generate_operation_report(op_id, save=True)
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
@@ -42,13 +42,22 @@ class OperationService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    """ PRIVATE """
+    async def generate_operation_report(self, op_id, save=False):
+        operations = await self.get_service('data_svc').explode_operation(dict(id=op_id))
+        operation = operations[0]
+        operation['result'] = []
+        for link in operation['chain']:
+            results = await self.get_service('data_svc').explode_results(criteria=dict(link_id=link['id']))
+            for result in results:
+                result.pop('link')
+                operation['result'].append(result)
+        operation_data = json.dumps(operation, sort_keys=True, indent=4, separators=(',', ': '))
+        if save:
+            with open(os.path.join('logs', 'operation_report_' + operation['name'] + '.json'), 'w') as f:
+                f.write(operation_data)
+        return operation_data
 
-    async def _generate_operation_report(self, op_id):
-        operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
-        operation_data = json.dumps(operation[0], sort_keys=True, indent=4, separators=(',', ': '))
-        with open(os.path.join('logs', 'operation_report_' + operation[0]['name'] + '.json'), 'w') as f:
-            f.write(operation_data)
+    """ PRIVATE """
 
     async def _get_planning_module(self, planner_id):
         chosen_planner = await self.get_service('data_svc').explode_planners(dict(id=planner_id))
