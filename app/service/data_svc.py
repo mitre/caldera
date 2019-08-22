@@ -203,7 +203,6 @@ class DataService(BaseService):
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
 
-
     """ PRIVATE """
 
     async def _create_attack(self, technique, tactic):
