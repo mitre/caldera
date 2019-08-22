@@ -9,7 +9,7 @@ class AgentService(BaseService):
     def __init__(self):
         self.log = self.add_service('agent_svc', self)
 
-    async def handle_heartbeat(self, paw, platform, server, group, executor):
+    async def handle_heartbeat(self, paw, platform, server, group, executor, location):
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
@@ -17,7 +17,7 @@ class AgentService(BaseService):
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=dict(last_seen=now, executor=executor))
             return agent[0]
         else:
-            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor)
+            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor, location=location)
             await self.get_service('data_svc').create_agent(agent=queued)
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
