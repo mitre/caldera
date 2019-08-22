@@ -204,20 +204,15 @@ class DataService(BaseService):
         await self.dao.update(table, key, value, data)
 
 
-    """ SUPPORT """
+    """ PRIVATE """
+
     async def _create_attack(self, technique, tactic):
-        entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
-        if entry == []:
-            await self.dao.create('core_attack',
+        await self.dao.create('core_attack',
                               dict(attack_id=technique['attack_id'], name=technique['name'], tactic=json.dumps([tactic])))
-            entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
-        else:
-            if entry[0]['tactic'] == 'null':
-                s_tactics = list()
-            else:
-                s_tactics = json.loads(entry[0]['tactic'])
-            if tactic not in s_tactics:
-                s_tactics.append(tactic)
-                await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
-                                      data=dict(tactic=json.dumps(s_tactics)))
+        entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
+        s_tactics = json.loads(entry[0]['tactic'])
+        if tactic not in s_tactics:
+            s_tactics.append(tactic)
+            await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
+                                  data=dict(tactic=json.dumps(s_tactics)))
         return entry[0]['attack_id']
