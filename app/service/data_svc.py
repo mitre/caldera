@@ -28,16 +28,17 @@ class DataService(BaseService):
                 for ab in entries:
                     for pl, executors in ab['platforms'].items():
                         for name, info in executors.items():
-                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
-                                                      technique=ab['technique'], name=ab['name'],
-                                                      test=encoded_test.decode(), description=ab.get('description'),
-                                                      executor=name,
-                                                      platform=pl,
-                                                      cleanup=b64encode(
-                                                          info['cleanup'].strip().encode('utf-8')).decode() if info.get(
-                                                          'cleanup') else None,
-                                                      payload=info.get('payload'), parser=info.get('parser'))
+                            for e in name.split(','):
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
+                                                          technique=ab['technique'], name=ab['name'],
+                                                          test=encoded_test.decode(), description=ab.get('description'),
+                                                          executor=e,
+                                                          platform=pl,
+                                                          cleanup=b64encode(
+                                                              info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                                              'cleanup') else None,
+                                                          payload=info.get('payload'), parser=info.get('parser'))
 
     async def load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
