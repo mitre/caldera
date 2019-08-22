@@ -1,4 +1,6 @@
+import asyncio
 import json
+import typing
 from datetime import datetime
 
 from app.service.base_service import BaseService
@@ -47,3 +49,27 @@ class AgentService(BaseService):
     async def _gather_payload(self, ability_id):
         payload = await self.get_service('data_svc').explode_payloads(criteria=dict(ability=ability_id))
         return payload[0]['payload'] if payload else ''
+
+    async def perform_action(self, link: typing.Dict) -> int:
+        """
+        Perform a link in the context of an operation, respecting the 'run', 'paused' and 'run_one_step' operation
+        states. Calling data_svc.create_link() directly will schedule the link for execution,
+        ignoring the state of the operation.
+        :param link: A link dictionary that has not yet been scheduled for execution using data_svc.create_link().
+        :return: The id of the created link.
+        """
+        data_svc = self.get_service('data_svc')
+        op_id = link['op_id']
+
+        operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+        while operation['state'] != 'running':
+            if operation['state'] == 'run_one_link':
+                link_id = await data_svc.create_link(link)
+                await data_svc.dao.update('core_operation', 'id', op_id, dict(state='paused'))
+                return link_id
+            else:
+                await asyncio.sleep(1)
+                operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+
+        return await data_svc.create_link(link)
+

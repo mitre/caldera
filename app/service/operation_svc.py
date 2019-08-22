@@ -20,7 +20,7 @@ class OperationService(BaseService):
 
     async def close_operation(self, op_id):
         self.log.debug('Operation complete: %s' % op_id)
-        update = dict(finish=self.get_current_timestamp())
+        update = dict(finish=self.get_current_timestamp(), state='finished')
         await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=update)
         await self._generate_operation_report(op_id)
 
