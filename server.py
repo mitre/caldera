@@ -79,10 +79,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         cfg = yaml.load(c)
-        logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
-        logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-        logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
-        logging.getLogger('asyncio').setLevel(logging.FATAL)
+        state = logging.FATAL
+        if cfg['debug']:
+            state = logging.ERROR
+        logging.getLogger('aiohttp.access').setLevel(state)
+        logging.getLogger('aiohttp_session').setLevel(state)
+        logging.getLogger('aiohttp.server').setLevel(state)
+        logging.getLogger('asyncio').setLevel(state)
         logging.getLogger().setLevel(logging.DEBUG)
         sys.path.append('')
 
