@@ -215,3 +215,4 @@ class DataService(BaseService):
             await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
                                   data=dict(tactic=json.dumps(s_tactics)))
         return entry[0]['attack_id']
+
