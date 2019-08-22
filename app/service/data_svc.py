@@ -151,6 +151,7 @@ class DataService(BaseService):
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+            op['result'] = await self.dao.get_in('core_result', 'link_id', [c['id'] for c in op['chain']])
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
