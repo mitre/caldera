@@ -3,7 +3,7 @@ import re
 import copy
 import itertools
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from base64 import b64decode
 
 from app.service.base_service import BaseService
@@ -32,16 +32,21 @@ class PlanningService(BaseService):
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
-            op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
-                       False):
+            op = (await self.get_service('data_svc').explode_operation(dict(id=operation['id'])))[0]
+            agent_links = [lnk for lnk in sorted(op['chain'], key=lambda i: i['id']) if lnk['paw'] == member['paw']]
+            while next((True for lnk in op['chain'] if lnk['id'] == agent_links[-1]['id'] and not lnk['finish']), False):
                 await asyncio.sleep(3)
-                op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+                last_seen = datetime.strptime(member['last_seen'], '%Y-%m-%d %H:%M:%S')
+                if last_seen + timedelta(seconds=60) < datetime.now():
+                    self.log.debug('Have not seen %s in > 60 seconds' % member['paw'])
+                    break
+                op = (await self.get_service('data_svc').explode_operation(dict(id=operation['id'])))[0]
 
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
     """ PRIVATE """
