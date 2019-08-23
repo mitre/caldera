@@ -95,10 +95,10 @@ class DataService(BaseService):
         return identifier
 
     async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
-                               planner=None):
+                               planner=None, state=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=self.get_current_timestamp(), stealth=stealth, planner=planner))
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
@@ -203,7 +203,6 @@ class DataService(BaseService):
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
 
-
     """ PRIVATE """
 
     async def _create_attack(self, technique, tactic):
@@ -216,3 +215,4 @@ class DataService(BaseService):
             await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
                                   data=dict(tactic=json.dumps(s_tactics)))
         return entry[0]['attack_id']
+

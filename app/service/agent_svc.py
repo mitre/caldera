@@ -1,4 +1,6 @@
+import asyncio
 import json
+import typing
 from datetime import datetime
 
 from app.service.base_service import BaseService
@@ -9,15 +11,16 @@ class AgentService(BaseService):
     def __init__(self):
         self.log = self.add_service('agent_svc', self)
 
-    async def handle_heartbeat(self, paw, platform, server, group, executor):
+    async def handle_heartbeat(self, paw, platform, server, group, executor, location):
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
-            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=dict(last_seen=now, executor=executor))
+            await self.get_service('data_svc').update('core_agent', 'paw', paw,
+                                                      data=dict(last_seen=now, executor=executor))
             return agent[0]
         else:
-            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor)
+            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor, location=location)
             await self.get_service('data_svc').create_agent(agent=queued)
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
@@ -31,7 +34,6 @@ class AgentService(BaseService):
             instructions.append(json.dumps(dict(id=link['id'],
                                                 sleep=link['jitter'],
                                                 command=link['command'],
-                                                cleanup=link['cleanup'],
                                                 payload=payload)))
         return json.dumps(instructions)
 
@@ -47,3 +49,26 @@ class AgentService(BaseService):
     async def _gather_payload(self, ability_id):
         payload = await self.get_service('data_svc').explode_payloads(criteria=dict(ability=ability_id))
         return payload[0]['payload'] if payload else ''
+
+    async def perform_action(self, link: typing.Dict) -> int:
+        """
+        Perform a link in the context of an operation, respecting the 'run', 'paused' and 'run_one_step' operation
+        states. Calling data_svc.create_link() directly will schedule the link for execution,
+        ignoring the state of the operation.
+        :param link: A link dictionary that has not yet been scheduled for execution using data_svc.create_link().
+        :return: The id of the created link.
+        """
+        data_svc = self.get_service('data_svc')
+        operation_svc = self.get_service('operation_svc')
+        op_id = link['op_id']
+
+        operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+        while operation['state'] != operation_svc.op_states['RUNNING']:
+            if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
+                link_id = await data_svc.create_link(link)
+                await data_svc.dao.update('core_operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
+                return link_id
+            else:
+                await asyncio.sleep(30)
+                operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+        return await data_svc.create_link(link)

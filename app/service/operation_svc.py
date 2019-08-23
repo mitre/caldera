@@ -12,22 +12,26 @@ class OperationService(BaseService):
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.log = self.add_service('operation_svc', self)
+        self.op_states = dict(RUNNING='running',
+                              RUN_ONE_LINK='run_one_link',
+                              PAUSED='paused',
+                              FINISHED='finished')
 
     async def resume(self):
         for op in await self.get_service('data_svc').explode_operation():
             if not op['finish']:
                 self.loop.create_task(self.run(op['id']))
 
-    async def close_operation(self, op_id):
-        self.log.debug('Operation complete: %s' % op_id)
-        update = dict(finish=self.get_current_timestamp())
-        await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=update)
-        await self.generate_operation_report(op_id, save=True)
+    async def close_operation(self, operation):
+        await self.get_service('planning_svc').create_cleanup_links(operation)
+        self.log.debug('Operation complete: %s' % operation['id'])
+        update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
+        await self.get_service('data_svc').update('core_operation', key='id', value=operation['id'], data=update)
+        await self.generate_operation_report(operation['id'], save=True)
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
         operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
-
         try:
             planner = await self._get_planning_module(operation[0]['planner'])
             for phase in operation[0]['adversary']['phases']:
@@ -36,9 +40,10 @@ class OperationService(BaseService):
                 operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
                 self.log.debug('%s: completed' % operation_phase_name)
-                await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=dict(phase=phase))
+                await self.get_service('data_svc').update('core_operation', key='id', value=op_id,
+                                                          data=dict(phase=phase))
                 await self.get_service('parsing_svc').parse_facts(operation[0])
-            await self.close_operation(op_id)
+            await self.close_operation(operation[0])
         except Exception:
             traceback.print_exc()
 

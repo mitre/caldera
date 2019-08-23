@@ -1,10 +1,9 @@
 import asyncio
-import re
 import copy
 import itertools
-
-from datetime import datetime
+import re
 from base64 import b64decode
+from datetime import datetime
 
 from app.service.base_service import BaseService
 
@@ -15,20 +14,29 @@ class PlanningService(BaseService):
         self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
+        phase_abilities[:] = [p for p in phase_abilities if
+                              agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
         links = []
         for a in phase_abilities:
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.jitter(operation['jitter']), cleanup=a.get('cleanup')))
-        links[:] = await self._add_test_variants(links, agent, operation)
-        links[:] = [l for l in links if l['command'] not in host_already_ran]
-        links[:] = [l for l in links if
-                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
+                     decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
+        links[:] = await self._trim_links(operation, links, agent)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
+
+    async def create_cleanup_links(self, operation):
+        for member in operation['host_group']:
+            links = []
+            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'])):
+                ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
+                if ability['cleanup']:
+                    links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
+                                      command=ability['cleanup'], score=0, decide=datetime.now(), jitter=0))
+            links[:] = await self._trim_links(operation, links, member)
+            for link in reversed(links):
+                link.pop('rewards', [])
+                await self.get_service('data_svc').create_link(link)
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
@@ -42,9 +50,19 @@ class PlanningService(BaseService):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
     """ PRIVATE """
+
+    async def _trim_links(self, operation, links, agent):
+        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
+        links[:] = await self._add_test_variants(links, agent, operation)
+        links[:] = [l for l in links if l['command'] not in host_already_ran]
+        links[:] = [l for l in links if
+                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
+        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
+        return links
 
     async def _add_test_variants(self, links, agent, operation):
         """
@@ -53,8 +71,6 @@ class PlanningService(BaseService):
         group = agent['host_group']
         for link in links:
             decoded_test = await self.decode(link['command'], agent, group)
-            cleanup_cmd = await self.decode(link.get('cleanup'), agent, group)
-
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
@@ -63,15 +79,13 @@ class PlanningService(BaseService):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
-                    variant, cleanup, score, rewards = await self._build_single_test_variant(copy_test, cleanup_cmd, combo)
+                    variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
                     copy_link['command'] = await self._apply_stealth(operation, agent, variant)
-                    copy_link['cleanup'] = self.encode_string(cleanup)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
                     links.append(copy_link)
             else:
                 link['command'] = await self._apply_stealth(operation, agent, decoded_test)
-                link['cleanup'] = await self._apply_stealth(operation, agent, cleanup_cmd)
         return links
 
     """ PRIVATE """
@@ -101,7 +115,7 @@ class PlanningService(BaseService):
             relevant_facts.append(variable_facts)
         return relevant_facts
 
-    async def _build_single_test_variant(self, copy_test, clean_test, combo):
+    async def _build_single_test_variant(self, copy_test, combo):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
@@ -110,11 +124,10 @@ class PlanningService(BaseService):
             score += (score + var['score'])
             rewards.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            clean_test = clean_test.replace('#{%s}' % var['property'], var['value'])
             combo_set_id.add(var['set_id'])
             combo_link_id.add(var['link_id'])
         score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
-        return copy_test, clean_test, score, rewards
+        return copy_test, score, rewards
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
