@@ -34,7 +34,6 @@ class AgentService(BaseService):
             instructions.append(json.dumps(dict(id=link['id'],
                                                 sleep=link['jitter'],
                                                 command=link['command'],
-                                                cleanup=link['cleanup'],
                                                 payload=payload)))
         return json.dumps(instructions)
 
