@@ -31,12 +31,12 @@ class PlanningService(BaseService):
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
-            op = await self.data_svc.explode_operation(dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['host_id'] == member['id'] and not lnk['finish']),
+            op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
-                op = await self.data_svc.explode_operation(dict(id=operation['id']))
-
+                op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+                
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
