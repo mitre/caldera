@@ -95,7 +95,7 @@ class DataService(BaseService):
         return identifier
 
     async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
-                               planner=None, state='running'):
+                               planner=None, state=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
             start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
