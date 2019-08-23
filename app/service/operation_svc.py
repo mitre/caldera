@@ -43,8 +43,7 @@ class OperationService(BaseService):
             traceback.print_exc()
 
     async def generate_operation_report(self, op_id, save=False):
-        operations = await self.get_service('data_svc').explode_operation(dict(id=op_id))
-        operation = operations[0]
+        operation = (await self.get_service('data_svc').explode_operation(dict(id=op_id)))[0]
         operation['result'] = []
         for link in operation['chain']:
             results = await self.get_service('data_svc').explode_results(criteria=dict(link_id=link['id']))
