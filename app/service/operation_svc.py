@@ -12,6 +12,10 @@ class OperationService(BaseService):
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.log = self.add_service('operation_svc', self)
+        self.op_states = dict(RUNNING='running',
+                              RUN_ONE_LINK='run_one_link',
+                              PAUSED='paused',
+                              FINISHED='finished')
 
     async def resume(self):
         for op in await self.get_service('data_svc').explode_operation():
@@ -20,7 +24,7 @@ class OperationService(BaseService):
 
     async def close_operation(self, op_id):
         self.log.debug('Operation complete: %s' % op_id)
-        update = dict(finish=self.get_current_timestamp())
+        update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
         await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=update)
         await self._generate_operation_report(op_id)
 
@@ -36,7 +40,8 @@ class OperationService(BaseService):
                 operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
                 self.log.debug('%s: completed' % operation_phase_name)
-                await self.get_service('data_svc').update('core_operation', key='id', value=op_id, data=dict(phase=phase))
+                await self.get_service('data_svc').update('core_operation', key='id', value=op_id,
+                                                          data=dict(phase=phase))
                 await self.get_service('parsing_svc').parse_facts(operation[0])
             await self.close_operation(op_id)
         except Exception:
