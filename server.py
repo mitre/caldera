@@ -9,15 +9,17 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 from aiohttp import web
+from subprocess import Popen, DEVNULL
 
 from app.database.core_dao import CoreDao
+from app.service.agent_svc import AgentService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
 from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
-from app.service.utility_svc import UtilityService
+from app.service.plugin_svc import PluginService
 
 
 async def background_tasks(app):
@@ -32,15 +34,17 @@ def build_plugins(plugs):
             print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
             exit(0)
         logging.debug('Loading plugin: %s' % plug)
+        if os.path.isfile('plugins/%s/requirements.txt' % plug):
+            Popen(['pip', 'install', '-r', 'plugins/%s/requirements.txt' % plug], stdout=DEVNULL)
         modules.append(import_module('plugins.%s.hook' % plug))
     return modules
 
 
 async def attach_plugins(app, services):
-    for pm in services.get('plugins'):
+    for pm in services.get('plugin_svc').get_plugins():
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
-    templates = ['plugins/%s/templates' % p.name.lower() for p in services['plugins']]
+    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('plugin_svc').get_plugins()]
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
@@ -75,26 +79,26 @@ if __name__ == '__main__':
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
         cfg = yaml.load(c)
-        logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
-        logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-        logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
-        logging.getLogger('asyncio').setLevel(logging.FATAL)
+        state = logging.FATAL
+        if cfg['debug']:
+            state = logging.ERROR
+        logging.getLogger('aiohttp.access').setLevel(state)
+        logging.getLogger('aiohttp_session').setLevel(state)
+        logging.getLogger('aiohttp.server').setLevel(state)
+        logging.getLogger('asyncio').setLevel(state)
         logging.getLogger().setLevel(logging.DEBUG)
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
-        utility_svc = UtilityService()
-        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']), utility_svc)
+        plugin_svc = PluginService(plugin_modules)
+        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
         logging.debug('Using an in-memory database: %s' % cfg['memory'])
-        planning_svc = PlanningService(data_svc, utility_svc)
-        parsing_svc = ParsingService(data_svc)
-        operation_svc = OperationService(data_svc=data_svc, utility_svc=utility_svc, planning_svc=planning_svc, parsing_svc=parsing_svc)
-        auth_svc = AuthService(utility_svc=utility_svc)
+        planning_svc = PlanningService()
+        parsing_svc = ParsingService()
+        operation_svc = OperationService()
+        auth_svc = AuthService()
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
-        file_svc = FileSvc(['plugins/%s/payloads' % p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        services = dict(
-            data_svc=data_svc, auth_svc=auth_svc, utility_svc=utility_svc, operation_svc=operation_svc,
-            file_svc=file_svc, planning_svc=planning_svc, plugins=plugin_modules
-        )
+        file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
+        agent_svc = AgentService()
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
-        main(services=services, host=cfg['host'], port=cfg['port'], users=cfg['users'])
+        main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])

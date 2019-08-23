@@ -1,33 +1,31 @@
 import asyncio
-import re
 import copy
 import itertools
-
-from datetime import datetime
+import re
 from base64 import b64decode
+from datetime import datetime
+
+from app.service.base_service import BaseService
 
 
-class PlanningService:
+class PlanningService(BaseService):
 
-    def __init__(self, data_svc, utility_svc):
-        self.data_svc = data_svc
-        self.utility_svc = utility_svc
-        self.log = utility_svc.create_logger('planning_svc')
+    def __init__(self):
+        self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['host_id'] == agent['id'] and l['collect']]
+        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform']]
+        phase_abilities[:] = [p for p in phase_abilities if agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
         links = []
         for a in phase_abilities:
             links.append(
-                dict(op_id=operation['id'], host_id=agent['id'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.utility_svc.jitter(operation['jitter']), cleanup=a.get('cleanup')))
+                dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
+                     decide=datetime.now(), jitter=self.jitter(operation['jitter']), cleanup=a.get('cleanup')))
         links[:] = await self._add_test_variants(links, agent, operation)
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        await self._remove_cleanup_cmds(operation, links)
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
@@ -40,10 +38,10 @@ class PlanningService:
                 op = await self.data_svc.explode_operation(dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
-        decoded_cmd = self.utility_svc.decode_bytes(encoded_cmd)
+        decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
-        decoded_cmd = decoded_cmd.replace('#{files}', agent['files'])
+        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
     """ PRIVATE """
@@ -59,7 +57,7 @@ class PlanningService:
 
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['id'])
+                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     copy_test = copy.deepcopy(decoded_test)
@@ -67,7 +65,7 @@ class PlanningService:
 
                     variant, cleanup, score, rewards = await self._build_single_test_variant(copy_test, cleanup_cmd, combo)
                     copy_link['command'] = await self._apply_stealth(operation, agent, variant)
-                    copy_link['cleanup'] = self.utility_svc.encode_string(cleanup)
+                    copy_link['cleanup'] = self.encode_string(cleanup)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
                     links.append(copy_link)
@@ -89,7 +87,7 @@ class PlanningService:
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
-        facts = [f for f in facts if not f['blacklist']]
+        facts = [f for f in facts if f['score'] > 0]
         relevant_facts = []
         for v in variables:
             variable_facts = []
@@ -120,22 +118,16 @@ class PlanningService:
 
     async def _apply_stealth(self, operation, agent, decoded_test):
         if operation['stealth']:
-            decoded_test = self.utility_svc.apply_stealth(agent['platform'], decoded_test)
-        return self.utility_svc.encode_string(decoded_test)
+            decoded_test = self.apply_stealth(agent['platform'], decoded_test)
+        return self.encode_string(decoded_test)
 
-    @staticmethod
-    async def _remove_cleanup_cmds(operation, links):
-        if not operation['cleanup']:
-            for link in links:
-                link['cleanup'] = None
-
-    async def _get_agent_facts(self, op_id, agent_id):
+    async def _get_agent_facts(self, op_id, paw):
         """
         Collect a list of this agent's facts
         """
         agent_facts = []
-        for link in await self.data_svc.dao.get('core_chain', criteria=dict(op_id=op_id, host_id=agent_id)):
-            facts = await self.data_svc.dao.get('core_fact', criteria=dict(link_id=link['id']))
+        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
+            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts

@@ -1,15 +1,16 @@
 import glob
+import json
 from base64 import b64encode
 from collections import defaultdict
-from datetime import datetime
+
+from app.service.base_service import BaseService
 
 
-class DataService:
+class DataService(BaseService):
 
-    def __init__(self, dao, utility_svc):
+    def __init__(self, dao):
         self.dao = dao
-        self.utility_svc = utility_svc
-        self.log = utility_svc.create_logger('data_svc')
+        self.log = self.add_service('data_svc', self)
 
     async def load_data(self, directory=None, schema='conf/core.sql'):
         with open(schema) as schema:
@@ -23,28 +24,31 @@ class DataService:
 
     async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            for entries in self.utility_svc.strip_yml(filename):
+            for entries in self.strip_yml(filename):
                 for ab in entries:
-                    for ex, el in ab['executors'].items():
-                        encoded_test = b64encode(el['command'].strip().encode('utf-8'))
-                        await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
-                                                  technique=ab['technique'], name=ab['name'],
-                                                  test=encoded_test.decode(), description=ab.get('description'),
-                                                  platform=ex,
-                                                  cleanup=b64encode(
-                                                      el['cleanup'].strip().encode('utf-8')).decode() if el.get(
-                                                      'cleanup') else None,
-                                                  payload=el.get('payload'), parser=el.get('parser'))
+                    for pl, executors in ab['platforms'].items():
+                        for name, info in executors.items():
+                            for e in name.split(','):
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
+                                                          technique=ab['technique'], name=ab['name'],
+                                                          test=encoded_test.decode(), description=ab.get('description'),
+                                                          executor=e,
+                                                          platform=pl,
+                                                          cleanup=b64encode(
+                                                              info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                                              'cleanup') else None,
+                                                          payload=info.get('payload'), parser=info.get('parser'))
 
     async def load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-            for adv in self.utility_svc.strip_yml(filename):
+            for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
                 await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for source in self.utility_svc.strip_yml(filename):
+            for source in self.strip_yml(filename):
                 source_id = await self.dao.create('core_source', dict(name=source['name']))
                 for fact in source['facts']:
                     fact['source_id'] = source_id
@@ -52,8 +56,9 @@ class DataService:
 
     async def load_planner(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for planner in self.utility_svc.strip_yml(filename):
-                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module')))
+            for planner in self.strip_yml(filename):
+                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
+                                                           params=json.dumps(planner.get('params'))))
 
     """ PERSIST """
 
@@ -61,21 +66,19 @@ class DataService:
         p = defaultdict(list)
         for ability in phases:
             p[ability['phase']].append(ability['id'])
-        self.utility_svc.write_yaml('data/adversaries/%s.yml' % i,
-                                    dict(id=i, name=name, description=description, phases=dict(p)))
+        self.write_yaml('data/adversaries/%s.yml' % i,
+                        dict(id=i, name=name, description=description, phases=dict(p)))
         return await self.create_adversary(i, name, description, phases)
 
     """ CREATE """
 
-    async def create_ability(self, ability_id, tactic, technique, name, test, description, platform, cleanup=None,
-                             payload=None, parser=None):
-        await self.dao.create('core_attack',
-                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=tactic))
-        entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
-        entry_id = entry[0]['attack_id']
+    async def create_ability(self, ability_id, tactic, technique, name, test, description, executor, platform,
+                             cleanup=None, payload=None, parser=None):
+        entry_id = await self._create_attack(technique, tactic)
         identifier = await self.dao.create('core_ability',
                                            dict(ability_id=ability_id, name=name, test=test, technique=entry_id,
-                                                platform=platform, description=description, cleanup=cleanup))
+                                                executor=executor, platform=platform, description=description,
+                                                cleanup=cleanup))
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
@@ -84,36 +87,36 @@ class DataService:
         return identifier
 
     async def create_adversary(self, i, name, description, phases):
-        identifier = await self.dao.create('core_adversary', dict(adversary_id=i, name=name.lower(), description=description))
+        identifier = await self.dao.create('core_adversary',
+                                           dict(adversary_id=i, name=name.lower(), description=description))
         for ability in phases:
             a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', cleanup=True, stealth=False,
-                               sources=None, planner=None):
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
+                               planner=None, state=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cleanup=cleanup, stealth=stealth, planner=planner)
-                                      )
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
 
-    async def create_fact(self, property, value, source_id, score=1, blacklist=0, set_id=0, link_id=None):
-        await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
-                                                score=score, blacklist=blacklist, set_id=set_id, link_id=link_id))
+    async def create_fact(self, property, value, source_id, score=1, set_id=0, link_id=None):
+        return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
+                                                       score=score, set_id=set_id, link_id=link_id))
 
     async def create_link(self, link):
-        await self.dao.create('core_chain', link)
+        return await self.dao.create('core_chain', link)
 
     async def create_result(self, result):
-        await self.dao.create('core_result', result)
+        return await self.dao.create('core_result', result)
 
     async def create_agent(self, agent):
-        await self.dao.create('core_agent', agent)
+        return await self.dao.create('core_agent', agent)
 
     """ VIEW """
 
@@ -172,7 +175,10 @@ class DataService:
         return sources
 
     async def explode_planners(self, criteria=None):
-        return await self.dao.get('core_planner', criteria=criteria)
+        planners = await self.dao.get('core_planner', criteria=criteria)
+        for p in planners:
+            p['params'] = json.loads(p['params'])
+        return planners
 
     async def explode_payloads(self, criteria=None):
         return await self.dao.get('core_payload', criteria=criteria)
@@ -183,21 +189,30 @@ class DataService:
     """ DELETE / DEACTIVATE """
 
     async def delete(self, index, id):
-        if index == 'core_group':
-            return await self.deactivate_group(id)
-        if index == 'core_agent':
-            await self.dao.delete('core_group_map', data=dict(agent_id=id))    
         await self.dao.delete(index, data=dict(id=id))
         return 'Removed %s from %s' % (id, index)
-        
+
     async def deactivate_group(self, group_id):
         group = await self.dao.get('core_group', dict(id=group_id))
         await self.dao.update(table='core_group', key='id', value=group_id,
-                              data=dict(deactivated=datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+                              data=dict(deactivated=self.get_current_timestamp()))
         return 'Removed %s host group' % group[0]['name']
 
     """ UPDATE """
 
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
+
+    """ PRIVATE """
+
+    async def _create_attack(self, technique, tactic):
+        await self.dao.create('core_attack',
+                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=json.dumps([tactic])))
+        entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
+        s_tactics = json.loads(entry[0]['tactic'])
+        if tactic not in s_tactics:
+            s_tactics.append(tactic)
+            await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
+                                  data=dict(tactic=json.dumps(s_tactics)))
+        return entry[0]['attack_id']
 

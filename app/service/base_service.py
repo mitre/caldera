@@ -1,5 +1,6 @@
 from base64 import b64encode, b64decode
 from random import randint
+from datetime import datetime
 
 import yaml
 
@@ -7,7 +8,21 @@ from app.utility.logger import Logger
 from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 
-class UtilityService:
+class BaseService:
+
+    _services = dict()
+
+    def add_service(self, name: str, svc: 'BaseService') -> Logger:
+        self.__class__._services[name] = svc
+        return Logger(name)
+
+    @classmethod
+    def get_service(cls, name):
+        return cls._services.get(name)
+
+    @classmethod
+    def get_services(cls):
+        return cls._services
 
     @staticmethod
     def apply_stealth(executor, code):
@@ -18,7 +33,7 @@ class UtilityService:
 
     @staticmethod
     def decode_bytes(s):
-        return b64decode(s).decode('utf-8').replace('\n','')
+        return b64decode(s).decode('utf-8').replace('\n', '')
 
     @staticmethod
     def encode_string(s):
@@ -44,3 +59,14 @@ class UtilityService:
     def write_yaml(path, data):
         with open(path, 'w+') as yaml_file:
             yaml.dump(data, yaml_file, default_flow_style=False)
+
+    @staticmethod
+    def prepend_to_file(filename, line):
+        with open(filename, 'r+') as f:
+            content = f.read()
+            f.seek(0, 0)
+            f.write(line.rstrip('\r\n') + '\n' + content)
+
+    @staticmethod
+    def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
+        return datetime.now().strftime(date_format)
