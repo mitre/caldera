@@ -16,7 +16,8 @@ class AgentService(BaseService):
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
-            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=dict(last_seen=now, executor=executor))
+            await self.get_service('data_svc').update('core_agent', 'paw', paw,
+                                                      data=dict(last_seen=now, executor=executor))
             return agent[0]
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor, location=location)
@@ -59,17 +60,16 @@ class AgentService(BaseService):
         :return: The id of the created link.
         """
         data_svc = self.get_service('data_svc')
+        operation_svc = self.get_service('operation_svc')
         op_id = link['op_id']
 
         operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
-        while operation['state'] != 'running':
-            if operation['state'] == 'run_one_link':
+        while operation['state'] != operation_svc.op_states['RUNNING']:
+            if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
                 link_id = await data_svc.create_link(link)
-                await data_svc.dao.update('core_operation', 'id', op_id, dict(state='paused'))
+                await data_svc.dao.update('core_operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
                 return link_id
             else:
-                await asyncio.sleep(1)
+                await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
-
         return await data_svc.create_link(link)
-
