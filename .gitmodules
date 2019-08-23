@@ -19,3 +19,6 @@
 [submodule "plugins/caltack"]
 	path = plugins/caltack
 	url = https://github.com/mitre/caltack.git
+[submodule "plugins/terminal"]
+	path = plugins/terminal
+	url = https://github.com/mitre/terminal.git

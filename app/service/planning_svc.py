@@ -1,10 +1,9 @@
 import asyncio
-import re
 import copy
 import itertools
-
-from datetime import datetime
+import re
 from base64 import b64decode
+from datetime import datetime
 
 from app.service.base_service import BaseService
 
@@ -37,12 +36,13 @@ class PlanningService(BaseService):
                        False):
                 await asyncio.sleep(3)
                 op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
-
+                
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
         decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
+        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
     """ PRIVATE """

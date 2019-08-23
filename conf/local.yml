@@ -9,5 +9,6 @@ plugins:
   - sandcat
   - gui
   - chain
+debug: False
 users:
   admin: admin
