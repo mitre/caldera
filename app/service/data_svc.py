@@ -95,10 +95,11 @@ class DataService(BaseService):
         return identifier
 
     async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
-                               planner=None, state=None):
+                               planner=None, state=None, max_waiting=None):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner, 
+            state=state, max_waiting=max_waiting))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
@@ -117,6 +118,9 @@ class DataService(BaseService):
 
     async def create_agent(self, agent):
         return await self.dao.create('core_agent', agent)
+    
+    async def create_compromised_agents_map(self, op_id, agent_id):
+        return await self.dao.create('core_compromised_agents_map', dict(op_id=op_id, agent_id=agent_id))
 
     """ VIEW """
 
@@ -148,6 +152,8 @@ class DataService(BaseService):
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+            compromised_agents = await self.dao.get('core_compromised_agents_map', dict(op_id=op['id']))
+            op['compromised_agents'] = [c['agent_id'] for c in compromised_agents]
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
