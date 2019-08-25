@@ -15,7 +15,7 @@ class ParsingService(BaseService):
         op_source = await data_svc.explode_sources(dict(name=operation['name']))
         for x in [r for r in results if not r['parsed']]:
             parser = await data_svc.explode_parsers(dict(ability=x['link']['ability']))
-            if parser:
+            if parser and x['link']['status']==0:
                 if parser[0]['name'] == 'json':
                     matched_facts = parsers.json(parser[0], b64decode(x['output']).decode('utf-8'), self.log)
                 elif parser[0]['name'] == 'line':
