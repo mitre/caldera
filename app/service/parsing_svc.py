@@ -27,12 +27,26 @@ class ParsingService(BaseService):
 
                 # save facts to DB
                 for match in matched_facts:
-                    if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] <= 0 for f in
-                               operation['facts']):
-                        await data_svc.create_fact(
-                            source_id=op_source[0]['id'], link_id=x['link_id'], property=match['fact'],
-                            value=match['value'], set_id=match['set_id'], score=1
-                        )
+                    update_op = await data_svc.explode_operation(dict(id=operation['id']))
+                    if 'private' in match['fact']:
+                        facts_to_check = [f for f in update_op[0]['facts'] if f['property'] == match['fact'] 
+                                        and f['value'] == match['value'] and f['score'] > 0]
+                        agents_to_check = []
+                        for f in facts_to_check:
+                            link = await data_svc.explode_chain(criteria=dict(id=f['link_id']))
+                            agents_to_check.append(link[0]['paw'])
+                        if x['link']['paw'] not in agents_to_check:
+                            await data_svc.create_fact(
+                                source_id=op_source[0]['id'], link_id=x['link_id'], property=match['fact'],
+                                value=match['value'], set_id=match['set_id'], score=1
+                            )
+                    else:
+                        if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] <= 0 for f in
+                                update_op[0]['facts']):
+                            await data_svc.create_fact(
+                                source_id=op_source[0]['id'], link_id=x['link_id'], property=match['fact'],
+                                value=match['value'], set_id=match['set_id'], score=1
+                            )
 
                 # mark result as parsed
                 update = dict(parsed=self.get_current_timestamp())
