@@ -38,10 +38,16 @@ class AgentService(BaseService):
         return json.dumps(instructions)
 
     async def save_results(self, link_id, output, status):
-        await self.get_service('data_svc').create_result(result=dict(link_id=link_id, output=output))
-        await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
-                                                  data=dict(status=int(status),
-                                                            finish=self.get_current_timestamp()))
+        link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
+        #Note: finish is not None when the agent is considered compromised for that operation
+        if link[0]['finish'] is None: 
+            now = self.get_current_timestamp()
+            await self.get_service('data_svc').create_result(result=dict(link_id=link_id, output=output))
+            await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
+                                                    data=dict(status=int(status), finish=now))
+            #last seen more accurate
+            await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'],
+                                                    data=dict(last_seen=now))
         return json.dumps(dict(status=True))
 
     """ PRIVATE """
