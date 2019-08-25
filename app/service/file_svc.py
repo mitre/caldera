@@ -28,7 +28,7 @@ class FileSvc(BaseService):
     async def upload(self, request):
         try:
             reader = await request.multipart()
-            exfil_dir = await self._create_unique_exfil_sub_directory()
+            exfil_dir = await self._create_exfil_sub_directory(request.headers)
             while True:
                 field = await reader.next()
                 if not field:
@@ -54,10 +54,11 @@ class FileSvc(BaseService):
 
     """ PRIVATE """
 
-    async def _create_unique_exfil_sub_directory(self):
-        dir_name = str(uuid.uuid4())
+    async def _create_exfil_sub_directory(self, headers):
+        dir_name = headers.get('X-Request-ID', str(uuid.uuid4()))
         path = os.path.join(self.exfil_dir, dir_name)
-        os.makedirs(path)
+        if not os.path.exists(path):
+            os.makedirs(path)
         return path
 
     async def _compile(self, name, platform):

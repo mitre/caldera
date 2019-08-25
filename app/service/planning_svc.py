@@ -51,6 +51,7 @@ class PlanningService(BaseService):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
         decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
