@@ -26,10 +26,12 @@ class BaseService:
 
     @staticmethod
     def apply_stealth(executor, code):
-        options = dict(windows=lambda c: obfuscate_ps1(c),
-                       darwin=lambda c: obfuscate_bash(c),
-                       linux=lambda c: obfuscate_bash(c))
-        return options[executor](code)
+        if executor not in ['shellcode_amd64', 'shellcode_386']:
+            options = dict(windows=lambda c: obfuscate_ps1(c),
+                           darwin=lambda c: obfuscate_bash(c),
+                           linux=lambda c: obfuscate_bash(c))
+            return options[executor](code)
+        return code
 
     @staticmethod
     def decode_bytes(s):
