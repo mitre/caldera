@@ -71,35 +71,6 @@ class OperationService(BaseService):
                      description=ability['description'], name=ability['name'], tactic=technique_tactic,
                      technique_name=technique_name, technique_id=technique_id)
             report['steps'].append(s)
-
-
-        '''
-        {name: string, 
-        id: string, 
-        host_group: [array of hosts part of operation], 
-        start: time, 
-        finish: time,
-        planner: string, 
-        adversary: string, steps: [
-            {id: string(ability_id uuid),
-            tactic: string,
-            technique_name: string,
-            technique_id: string,
-            name: string,
-            paw: string,
-            delegated: string,
-            cleanup: string,
-            run: string,
-            description: string,
-            status: id,
-            events[
-            command: string,
-            parent_pid: string,
-            pid: string,
-            object:
-            ]}
-        ]}
-        '''
         operation_data = json.dumps(report, sort_keys=True, indent=4, separators=(',', ': '))
         with open(os.path.join('logs', 'operation_report_' + op['name'] + '.json'), 'w') as f:
             f.write(operation_data)
