@@ -43,7 +43,7 @@ the system. The missions assume CALDERA is running locally.
 networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
-Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
+Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugins-Sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
 delivery command for your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
