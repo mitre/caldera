@@ -16,9 +16,10 @@ class OperationService(BaseService):
                               RUN_ONE_LINK='run_one_link',
                               PAUSED='paused',
                               FINISHED='finished')
+        self.data_svc = self.get_service('data_svc')
 
     async def resume(self):
-        for op in await self.get_service('data_svc').explode_operation():
+        for op in await self.data_svc.explode_operation():
             if not op['finish']:
                 self.loop.create_task(self.run(op['id']))
 
@@ -26,22 +27,22 @@ class OperationService(BaseService):
         await self.get_service('planning_svc').create_cleanup_links(operation)
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
-        await self.get_service('data_svc').update('core_operation', key='id', value=operation['id'], data=update)
+        await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
         await self._generate_operation_report(operation['id'])
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
-        operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
+        operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
             planner = await self._get_planning_module(operation[0]['planner'])
             for phase in operation[0]['adversary']['phases']:
                 operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
                 self.log.debug('%s: started' % operation_phase_name)
-                operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
+                operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await planner.execute(operation[0], phase)
                 self.log.debug('%s: completed' % operation_phase_name)
-                await self.get_service('data_svc').update('core_operation', key='id', value=op_id,
-                                                          data=dict(phase=phase))
+                await self.data_svc.update('core_operation', key='id', value=op_id,
+                                           data=dict(phase=phase))
                 await self.get_service('parsing_svc').parse_facts(operation[0])
             await self.close_operation(operation[0])
         except Exception:
@@ -50,13 +51,26 @@ class OperationService(BaseService):
     """ PRIVATE """
 
     async def _generate_operation_report(self, op_id):
-        operation = await self.get_service('data_svc').explode_operation(dict(id=op_id))
-        operation_data = json.dumps(operation[0], sort_keys=True, indent=4, separators=(',', ': '))
-        with open(os.path.join('logs', 'operation_report_' + operation[0]['name'] + '.json'), 'w') as f:
-            f.write(operation_data)
+        op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
+        planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
+        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'],
+                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
+
+        for step in op['chain']:
+            ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
+            command = self.decode_bytes(step['command'])
+            report['steps'].append(dict(ability_id=ability['ability_id'], paw=step['paw'],
+                                        command=command, delegated=step['collect'],
+                                        run=step['finish'], status=step['status'],
+                                        description=ability['description'], name=ability['name'],
+                                        attack=dict(tactic=ability['tactic'],
+                                                    technique_name=ability['technique_name'],
+                                                    technique_id=ability['technique_id'])))
+        with open(os.path.join('logs', 'operation_report_' + op['name'] + '.json'), 'w') as f:
+            f.write(json.dumps(report, indent=4))
 
     async def _get_planning_module(self, planner_id):
-        chosen_planner = await self.get_service('data_svc').explode_planners(dict(id=planner_id))
+        chosen_planner = await self.data_svc.explode_planners(dict(id=planner_id))
         planning_module = import_module(chosen_planner[0]['module'])
         return getattr(planning_module, 'LogicalPlanner')(self.get_service('planning_svc'),
                                                           **chosen_planner[0]['params'])
