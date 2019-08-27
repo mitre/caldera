@@ -118,6 +118,9 @@ class DataService(BaseService):
     async def create_agent(self, agent):
         return await self.dao.create('core_agent', agent)
 
+    async def create(self, table, data):
+        return await self.dao.create(table, data)
+
     async def get(self, table, criteria):
         return await self.dao.get(table, criteria)
 
