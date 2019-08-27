@@ -28,7 +28,8 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
         await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
-        await self._generate_operation_report(operation['id'])
+        report = await self.generate_operation_report(operation['id'])
+        await self._write_report(report)
 
     async def run(self, op_id):
         self.log.debug('Starting operation: %s' % op_id)
@@ -48,9 +49,7 @@ class OperationService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    """ PRIVATE """
-
-    async def _generate_operation_report(self, op_id):
+    async def generate_operation_report(self, op_id):
         op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
         planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'],
@@ -66,7 +65,13 @@ class OperationService(BaseService):
                                         attack=dict(tactic=ability['tactic'],
                                                     technique_name=ability['technique_name'],
                                                     technique_id=ability['technique_id'])))
-        with open(os.path.join('logs', 'operation_report_' + op['name'] + '.json'), 'w') as f:
+        return report
+
+    """ PRIVATE """
+
+    @staticmethod
+    async def _write_report(report):
+        with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
             f.write(json.dumps(report, indent=4))
 
     async def _get_planning_module(self, planner_id):
