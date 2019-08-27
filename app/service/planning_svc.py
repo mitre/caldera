@@ -107,13 +107,12 @@ class PlanningService(BaseService):
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            for fact in facts:
-                if fact['property'] == v:
-                    if 'private' in fact['property']:
-                        if fact['id'] in agent_facts:
-                            variable_facts.append(fact)
-                    else:
+            for fact in [f for f in facts if f['property'] == v]:
+                if fact['property'].startswith('host'):
+                    if fact['id'] in agent_facts:
                         variable_facts.append(fact)
+                else:
+                    variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 

@@ -67,9 +67,9 @@ class FileSvc(BaseService):
                 plugin, file_path = await self.find_file_path(name)
                 await self._change_file_hash(file_path)
                 output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
+                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
                 self.log.debug('%s compiled for %s with MD5=%s' %
                                (name, platform, md5(open(output, 'rb').read()).hexdigest()))
-                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
             return '%s-%s' % (name, platform)
         return name
 
