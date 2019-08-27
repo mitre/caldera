@@ -16,12 +16,12 @@ class PlanningService(BaseService):
     async def select_links(self, operation, agent, phase):
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         phase_abilities[:] = [p for p in phase_abilities if
-                              agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
+                              agent['platform'] == p['platform'] and p['executor'] in agent['executors']]
         links = []
         for a in phase_abilities:
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
+                     decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
         links[:] = await self._trim_links(operation, links, agent)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
@@ -29,11 +29,12 @@ class PlanningService(BaseService):
         for member in operation['host_group']:
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                     op_id=operation['id'])):
+                                                                         op_id=operation['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
                     links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], score=0, decide=datetime.now(), jitter=0))
+                                      command=ability['cleanup'], executor=a['executor'], score=0,
+                                      decide=datetime.now(), jitter=0))
             links[:] = await self._trim_links(operation, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
