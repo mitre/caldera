@@ -31,7 +31,8 @@ class PlanningService(BaseService):
     async def create_cleanup_links(self, operation):
         for member in operation['host_group']:
             links = []
-            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'])):
+            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
+                                                                     op_id=operation['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
                     links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
@@ -71,6 +72,7 @@ class PlanningService(BaseService):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
         decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 

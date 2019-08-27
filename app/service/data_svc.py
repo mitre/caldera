@@ -31,10 +31,10 @@ class DataService(BaseService):
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
                                 await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
-                                                          technique=ab['technique'], name=ab['name'],
+                                                          technique_name=ab['technique']['name'],
+                                                          technique_id=ab['technique']['attack_id'],
                                                           test=encoded_test.decode(), description=ab.get('description'),
-                                                          executor=e,
-                                                          platform=pl,
+                                                          executor=e, name=ab['name'], platform=pl,
                                                           cleanup=b64encode(
                                                               info['cleanup'].strip().encode('utf-8')).decode() if info.get(
                                                               'cleanup') else None,
@@ -72,11 +72,11 @@ class DataService(BaseService):
 
     """ CREATE """
 
-    async def create_ability(self, ability_id, tactic, technique, name, test, description, executor, platform,
-                             cleanup=None, payload=None, parser=None):
-        entry_id = await self._create_attack(technique, tactic)
+    async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
+                             platform, cleanup=None, payload=None, parser=None):
         identifier = await self.dao.create('core_ability',
-                                           dict(ability_id=ability_id, name=name, test=test, technique=entry_id,
+                                           dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                                                technique_id=technique_id, technique_name=technique_name,
                                                 executor=executor, platform=platform, description=description,
                                                 cleanup=cleanup))
         if payload:
@@ -130,7 +130,6 @@ class DataService(BaseService):
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
-            ab['technique'] = (await self.dao.get('core_attack', dict(attack_id=ab['technique'])))[0]
         return abilities
 
     async def explode_adversaries(self, criteria=None):
@@ -208,17 +207,3 @@ class DataService(BaseService):
 
     async def update(self, table, key, value, data):
         await self.dao.update(table, key, value, data)
-
-    """ PRIVATE """
-
-    async def _create_attack(self, technique, tactic):
-        await self.dao.create('core_attack',
-                              dict(attack_id=technique['attack_id'], name=technique['name'], tactic=json.dumps([tactic])))
-        entry = await self.dao.get('core_attack', dict(attack_id=technique['attack_id']))
-        s_tactics = json.loads(entry[0]['tactic'])
-        if tactic not in s_tactics:
-            s_tactics.append(tactic)
-            await self.dao.update(table='core_attack', key='attack_id', value=technique['attack_id'],
-                                  data=dict(tactic=json.dumps(s_tactics)))
-        return entry[0]['attack_id']
-
