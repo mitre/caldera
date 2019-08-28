@@ -38,6 +38,7 @@ class PlanningService(BaseService):
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create_link(link)
+            await self.wait_for_phase(operation)
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
