@@ -15,13 +15,11 @@ class PlanningService(BaseService):
 
     async def select_links(self, operation, agent, phase):
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if
-                              agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
         links = []
-        for a in phase_abilities:
+        for a in await self._capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
+                     decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
         links[:] = await self._trim_links(operation, links, agent)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
@@ -29,11 +27,12 @@ class PlanningService(BaseService):
         for member in operation['host_group']:
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                     op_id=operation['id'])):
+                                                                                       op_id=operation['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
                     links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], score=0, decide=datetime.now(), jitter=0))
+                                      command=ability['cleanup'], executor=ability['executor'], score=0,
+                                      decide=datetime.now(), jitter=0))
             links[:] = await self._trim_links(operation, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
@@ -146,3 +145,15 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
+
+    @staticmethod
+    async def _capable_agent_abilities(phase_abilities, agent):
+        abilities = []
+        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']), False)
+        for ai in set([pa['ability_id'] for pa in phase_abilities]):
+            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
+            if len(total_ability) > 1:
+                abilities.append(next((ta for ta in total_ability if ta['executor'] == preferred), False))
+            else:
+                abilities.append(total_ability[0])
+        return abilities
