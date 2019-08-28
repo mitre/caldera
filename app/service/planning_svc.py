@@ -149,11 +149,13 @@ class PlanningService(BaseService):
     @staticmethod
     async def _capable_agent_abilities(phase_abilities, agent):
         abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']), False)
+        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
         for ai in set([pa['ability_id'] for pa in phase_abilities]):
             total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
             if len(total_ability) > 1:
-                abilities.append(next((ta for ta in total_ability if ta['executor'] == preferred), False))
-            else:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
+                if val:
+                    abilities.append(val)
+            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
                 abilities.append(total_ability[0])
         return abilities
