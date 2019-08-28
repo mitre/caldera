@@ -149,8 +149,9 @@ class PlanningService(BaseService):
     async def _capable_agent_abilities(phase_abilities, agent):
         abilities = []
         for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            abilities.append(next((a for a in phase_abilities
-                                   if a['ability_id'] == ai
-                                   and a['executor'] in agent['executors']
-                                   and a['platform'] == agent['platform']), False))
+            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
+            if len(total_ability) > 1:
+                abilities.append(next((ta for ta in total_ability if ta['executor'] == agent['executors'][0]), False))
+            else:
+                abilities.append(total_ability[0])
         return abilities
