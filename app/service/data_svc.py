@@ -30,7 +30,7 @@ class DataService(BaseService):
                         for name, info in executors.items():
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'],
+                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                           technique_name=ab['technique']['name'],
                                                           technique_id=ab['technique']['attack_id'],
                                                           test=encoded_test.decode(), description=ab.get('description'),
