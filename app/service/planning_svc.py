@@ -15,11 +15,8 @@ class PlanningService(BaseService):
 
     async def select_links(self, operation, agent, phase):
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if
-                              agent['platform'] == p['platform'] and p['executor'] in agent['executors']]
-        final_phase_abilities = await self._trim_multiple_agent_abilities(phase_abilities, agent)
         links = []
-        for a in final_phase_abilities:
+        for a in await self._capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
@@ -30,11 +27,12 @@ class PlanningService(BaseService):
         for member in operation['host_group']:
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                     op_id=operation['id'])):
+                                                                                       op_id=operation['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
                     links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], score=0, decide=datetime.now(), jitter=0))
+                                      command=ability['cleanup'], executor=ability['executor'], score=0,
+                                      decide=datetime.now(), jitter=0))
             links[:] = await self._trim_links(operation, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
@@ -148,28 +146,12 @@ class PlanningService(BaseService):
                 agent_facts.append(f['id'])
         return agent_facts
 
-    async def _trim_multiple_agent_abilities(self, phase_abilities, agent):
-        """
-        Trim the phase abilities for this specific agent to only include a single ability variant if multiple executors
-        exist for that ability.  By default, the agent will select use the first entry in core_executors as its primary
-        executor.
-        :param phase_abilities: available abilities for current operation phase
-        :param agent: the current agent that is being tasked
-        :return: list of trimmed phase abilities where the ability use the agent's primary executor (if multiple options)
-        """
-        final_phase_abilities = []
-        exists = set()
-        for p in phase_abilities:
-            if p['ability_id'] not in exists:
-                ability = await self.get_service('data_svc').get('core_ability',
-                                                                 criteria=dict(ability_id=p['ability_id']))
-                if len(ability) > 1:
-                    for ab in ability:
-                        if ab['executor'] == agent['executors'][0]:
-                            ability = ab
-                            break
-                else:
-                    ability = ability[0]
-                exists.add(p['ability_id'])
-                final_phase_abilities.append(ability)
-        return final_phase_abilities
+    @staticmethod
+    async def _capable_agent_abilities(phase_abilities, agent):
+        abilities = []
+        for ai in set([pa['ability_id'] for pa in phase_abilities]):
+            abilities.append(next((a for a in phase_abilities
+                                   if a['ability_id'] == ai
+                                   and a['executor'] in agent['executors']
+                                   and a['platform'] == agent['platform']), False))
+        return abilities
