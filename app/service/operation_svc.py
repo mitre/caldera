@@ -52,7 +52,7 @@ class OperationService(BaseService):
     async def generate_operation_report(self, op_id):
         op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
         planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
-        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'],
+        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
                       finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
 
         for step in op['chain']:
