@@ -115,8 +115,11 @@ class DataService(BaseService):
     async def create_result(self, result):
         return await self.dao.create('core_result', result)
 
-    async def create_agent(self, agent):
-        return await self.dao.create('core_agent', agent)
+    async def create_agent(self, agent, executors):
+        agent_id = await self.dao.create('core_agent', agent)
+        for i, e in enumerate(executors):
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
+        return agent_id
 
     async def create(self, table, data):
         return await self.dao.create(table, data)
@@ -156,7 +159,11 @@ class DataService(BaseService):
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
-        return await self.dao.get('core_agent', criteria)
+        agents = await self.dao.get('core_agent', criteria)
+        for a in agents:
+            executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
+            a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
+        return agents
 
     async def explode_results(self, criteria=None):
         results = await self.dao.get('core_result', criteria=criteria)
