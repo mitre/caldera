@@ -19,7 +19,7 @@ class PlanningService(BaseService):
         for a in await self._capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
+                     decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
         links[:] = await self._trim_links(operation, links, agent)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
