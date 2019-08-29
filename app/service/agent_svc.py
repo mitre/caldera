@@ -14,7 +14,7 @@ class AgentService(BaseService):
         self.untrusted_timer = untrusted_timer
 
     async def start_sniffer_untrusted_agents(self):
-        if self.untrusted_timer > 0:
+        if self.untrusted_timer:
             self.loop.create_task(self._sniffer_untrusted_agents())
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
