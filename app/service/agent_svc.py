@@ -102,7 +102,7 @@ class AgentService(BaseService):
         next_check = self.untrusted_timer
         try:
             while True:
-                await asyncio.sleep(next_check+1)
+                await asyncio.sleep(next_check)
                 trusted_agents = await data_svc.explode_agents(criteria=dict(trusted=1))
                 now = datetime.now()
                 next_check = self.untrusted_timer
