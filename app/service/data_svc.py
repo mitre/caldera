@@ -1,174 +1,216 @@
-import asyncio
-import copy
-import itertools
-import re
-from base64 import b64decode
-from datetime import datetime
+import glob
+import json
+from base64 import b64encode
+from collections import defaultdict
 
 from app.service.base_service import BaseService
 
 
-class PlanningService(BaseService):
+class DataService(BaseService):
 
-    def __init__(self):
-        self.log = self.add_service('planning_svc', self)
+    def __init__(self, dao):
+        self.dao = dao
+        self.log = self.add_service('data_svc', self)
 
-    async def select_links(self, operation, agent, phase):
-        if (not agent['trusted']) and (not operation['allow_untrusted']):
-            self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
-            return []
-        phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        links = []
-        for a in await self._capable_agent_abilities(phase_abilities, agent):
-            links.append(
-                dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
-        links[:] = await self._trim_links(operation, links, agent)
-        return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
+    async def load_data(self, directory=None, schema='conf/core.sql'):
+        with open(schema) as schema:
+            await self.dao.build(schema.read())
+        if directory:
+            self.log.debug('Loading data from %s' % directory)
+            await self.load_abilities(directory='%s/abilities' % directory)
+            await self.load_adversaries(directory='%s/adversaries' % directory)
+            await self.load_facts(directory='%s/facts' % directory)
+            await self.load_planner(directory='%s/planners' % directory)
 
-    async def create_cleanup_links(self, operation):
-        op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-        for member in op[0]['host_group']:
-            if (not member['trusted']) and (not op[0]['allow_untrusted']):
-                self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
-                continue
-            links = []
-            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=op[0]['id'])):
-                ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
-                if ability['cleanup']:
-                    links.append(dict(op_id=op[0]['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], executor=ability['executor'], score=0,
-                                      decide=datetime.now(), jitter=0))
-            links[:] = await self._trim_links(op[0], links, member)
-            for link in reversed(links):
-                link.pop('rewards', [])
-                await self.get_service('data_svc').create_link(link)
-        await self.wait_for_phase(op[0])
+    async def load_abilities(self, directory):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+            for entries in self.strip_yml(filename):
+                for ab in entries:
+                    for pl, executors in ab['platforms'].items():
+                        for name, info in executors.items():
+                            for e in name.split(','):
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                          technique_name=ab['technique']['name'],
+                                                          technique_id=ab['technique']['attack_id'],
+                                                          test=encoded_test.decode(), description=ab.get('description'),
+                                                          executor=e, name=ab['name'], platform=pl,
+                                                          cleanup=b64encode(
+                                                              info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                                              'cleanup') else None,
+                                                          payload=info.get('payload'), parser=info.get('parser'))
 
-    async def wait_for_phase(self, operation):
-        for member in operation['host_group']:
-            if (not member['trusted']) and (not operation['allow_untrusted']):
-                continue
-            op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
-                       False):
-                await asyncio.sleep(3)
-                if not operation['allow_untrusted']:
-                    agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=member['paw']))
-                    if not agent[0]['trusted']:
-                        break
-                op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
+    async def load_adversaries(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+            for adv in self.strip_yml(filename):
+                phases = [dict(phase=k, id=i) for k, v in adv['phases'].items() for i in v]
+                await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
-    async def decode(self, encoded_cmd, agent, group):
-        decoded_cmd = self.decode_bytes(encoded_cmd)
-        decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
-        decoded_cmd = decoded_cmd.replace('#{group}', group)
-        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
-        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
-        return decoded_cmd
+    async def load_facts(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for source in self.strip_yml(filename):
+                source_id = await self.dao.create('core_source', dict(name=source['name']))
+                for fact in source['facts']:
+                    fact['source_id'] = source_id
+                    await self.create_fact(**fact)
 
-    """ PRIVATE """
+    async def load_planner(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for planner in self.strip_yml(filename):
+                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
+                                                           params=json.dumps(planner.get('params'))))
 
-    async def _trim_links(self, operation, links, agent):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and l['collect']]
-        links[:] = await self._add_test_variants(links, agent, operation)
-        links[:] = [l for l in links if l['command'] not in host_already_ran]
-        links[:] = [l for l in links if
-                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
-        return links
+    """ PERSIST """
 
-    async def _add_test_variants(self, links, agent, operation):
-        """
-        Create a list of all possible links for a given phase
-        """
-        group = agent['host_group']
-        for link in links:
-            decoded_test = await self.decode(link['command'], agent, group)
-            variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
-            if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
-                for combo in list(itertools.product(*relevant_facts)):
-                    copy_test = copy.deepcopy(decoded_test)
-                    copy_link = copy.deepcopy(link)
+    async def persist_adversary(self, i, name, description, phases):
+        p = defaultdict(list)
+        for ability in phases:
+            p[ability['phase']].append(ability['id'])
+        self.write_yaml('data/adversaries/%s.yml' % i,
+                        dict(id=i, name=name, description=description, phases=dict(p)))
+        return await self.create_adversary(i, name, description, phases)
 
-                    variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
-                    copy_link['command'] = await self._apply_stealth(operation, agent, variant)
-                    copy_link['score'] = score
-                    copy_link['rewards'] = rewards
-                    links.append(copy_link)
-            else:
-                link['command'] = await self._apply_stealth(operation, agent, decoded_test)
-        return links
+    """ CREATE """
 
-    """ PRIVATE """
+    async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
+                             platform, cleanup=None, payload=None, parser=None):
+        identifier = await self.dao.create('core_ability',
+                                           dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                                                technique_id=technique_id, technique_name=technique_name,
+                                                executor=executor, platform=platform, description=description,
+                                                cleanup=cleanup))
+        if payload:
+            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
+        if parser:
+            parser['ability'] = identifier
+            await self.dao.create('core_parser', parser)
+        return identifier
 
-    @staticmethod
-    def _reward_fact_relationship(combo_set, combo_link, score):
-        if len(combo_set) == 1 and len(combo_link) == 1:
-            score *= 2
-        return score
+    async def create_adversary(self, i, name, description, phases):
+        identifier = await self.dao.create('core_adversary',
+                                           dict(adversary_id=i, name=name.lower(), description=description))
+        for ability in phases:
+            a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
+            await self.dao.create('core_adversary_map', a)
+        return identifier
 
-    @staticmethod
-    async def _build_relevant_facts(variables, facts, agent_facts):
-        """
-        Create a list of ([fact, value, score]) tuples for each variable/fact
-        """
-        facts = [f for f in facts if f['score'] > 0]
-        relevant_facts = []
-        for v in variables:
-            variable_facts = []
-            for fact in [f for f in facts if f['property'] == v]:
-                if fact['property'].startswith('host'):
-                    if fact['id'] in agent_facts:
-                        variable_facts.append(fact)
-                else:
-                    variable_facts.append(fact)
-            relevant_facts.append(variable_facts)
-        return relevant_facts
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
+                               planner=None, state=None):
+        op_id = await self.dao.create('core_operation', dict(
+            name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
+        source_id = await self.dao.create('core_source', dict(name=name))
+        await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
+        for s_id in [s for s in sources if s]:
+            await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
+        return op_id
 
-    async def _build_single_test_variant(self, copy_test, combo):
-        """
-        Replace all variables with facts from the combo to build a single test variant
-        """
-        score, rewards, combo_set_id, combo_link_id = 0, list(), set(), set()
-        for var in combo:
-            score += (score + var['score'])
-            rewards.append(var['id'])
-            copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            combo_set_id.add(var['set_id'])
-            combo_link_id.add(var['link_id'])
-        score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
-        return copy_test, score, rewards
+    async def create_fact(self, property, value, source_id, score=1, set_id=0, link_id=None):
+        return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
+                                                       score=score, set_id=set_id, link_id=link_id))
 
-    async def _apply_stealth(self, operation, agent, decoded_test):
-        if operation['stealth']:
-            decoded_test = self.apply_stealth(agent['platform'], decoded_test)
-        return self.encode_string(decoded_test)
+    async def create_link(self, link):
+        return await self.dao.create('core_chain', link)
 
-    async def _get_agent_facts(self, op_id, paw):
-        """
-        Collect a list of this agent's facts
-        """
-        agent_facts = []
-        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
-            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
-            for f in facts:
-                agent_facts.append(f['id'])
-        return agent_facts
+    async def create_result(self, result):
+        return await self.dao.create('core_result', result)
 
-    @staticmethod
-    async def _capable_agent_abilities(phase_abilities, agent):
-        abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
-        for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
-            if len(total_ability) > 1:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
-                if val:
-                    abilities.append(val)
-            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
-                abilities.append(total_ability[0])
+    async def create_agent(self, agent, executors):
+        agent_id = await self.dao.create('core_agent', agent)
+        for i, e in enumerate(executors):
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
+        return agent_id
+
+    async def create(self, table, data):
+        return await self.dao.create(table, data)
+
+    async def get(self, table, criteria):
+        return await self.dao.get(table, criteria)
+
+    """ VIEW """
+
+    async def explode_abilities(self, criteria=None):
+        abilities = await self.dao.get('core_ability', criteria=criteria)
+        for ab in abilities:
+            ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
+            ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
+            ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
         return abilities
+
+    async def explode_adversaries(self, criteria=None):
+        adversaries = await self.dao.get('core_adversary', criteria)
+        for adv in adversaries:
+            phases = defaultdict(list)
+            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['id'])):
+                for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
+                    phases[t['phase']].append(ability)
+            adv['phases'] = dict(phases)
+        return adversaries
+
+    async def explode_operation(self, criteria=None):
+        operations = await self.dao.get('core_operation', criteria)
+        for op in operations:
+            op['chain'] = sorted(await self.explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
+            adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
+            op['adversary'] = adversaries[0]
+            op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
+            sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
+            op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+        return operations
+
+    async def explode_agents(self, criteria: object = None) -> object:
+        agents = await self.dao.get('core_agent', criteria)
+        for a in agents:
+            executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
+            a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
+        return agents
+
+    async def explode_results(self, criteria=None):
+        results = await self.dao.get('core_result', criteria=criteria)
+        for r in results:
+            link = await self.dao.get('core_chain', dict(id=r['link_id']))
+            link[0]['facts'] = await self.dao.get('core_fact', dict(link_id=link[0]['id']))
+            r['link'] = link[0]
+        return results
+
+    async def explode_chain(self, criteria=None):
+        chain = []
+        for link in await self.dao.get('core_chain', criteria=criteria):
+            a = await self.dao.get('core_ability', criteria=dict(id=link['ability']))
+            chain.append(dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link))
+        return chain
+
+    async def explode_sources(self, criteria=None):
+        sources = await self.dao.get('core_source', criteria=criteria)
+        for s in sources:
+            s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
+        return sources
+
+    async def explode_planners(self, criteria=None):
+        planners = await self.dao.get('core_planner', criteria=criteria)
+        for p in planners:
+            p['params'] = json.loads(p['params'])
+        return planners
+
+    async def explode_payloads(self, criteria=None):
+        return await self.dao.get('core_payload', criteria=criteria)
+
+    async def explode_parsers(self, criteria=None):
+        return await self.dao.get('core_parser', criteria=criteria)
+
+    """ DELETE / DEACTIVATE """
+
+    async def delete(self, index, id):
+        await self.dao.delete(index, data=dict(id=id))
+        return 'Removed %s from %s' % (id, index)
+
+    async def deactivate_group(self, group_id):
+        group = await self.dao.get('core_group', dict(id=group_id))
+        await self.dao.update(table='core_group', key='id', value=group_id,
+                              data=dict(deactivated=self.get_current_timestamp()))
+        return 'Removed %s host group' % group[0]['name']
+
+    """ UPDATE """
+
+    async def update(self, table, key, value, data):
+        await self.dao.update(table, key, value, data)
