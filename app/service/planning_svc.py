@@ -16,7 +16,7 @@ class PlanningService(BaseService):
     async def select_links(self, operation, agent, phase):
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         links = []
-        for a in await self._capable_agent_abilities(phase_abilities, agent):
+        for a in await self.capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
@@ -90,6 +90,20 @@ class PlanningService(BaseService):
                 link['command'] = await self._apply_stealth(operation, agent, decoded_test)
         return links
 
+    @staticmethod
+    async def capable_agent_abilities(phase_abilities, agent):
+        abilities = []
+        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
+        for ai in set([pa['ability_id'] for pa in phase_abilities]):
+            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
+            if len(total_ability) > 1:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
+                if val:
+                    abilities.append(val)
+            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
+                abilities.append(total_ability[0])
+        return abilities
+
     """ PRIVATE """
 
     @staticmethod
@@ -145,17 +159,3 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
-
-    @staticmethod
-    async def _capable_agent_abilities(phase_abilities, agent):
-        abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
-        for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
-            if len(total_ability) > 1:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
-                if val:
-                    abilities.append(val)
-            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
-                abilities.append(total_ability[0])
-        return abilities
