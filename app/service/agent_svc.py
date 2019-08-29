@@ -11,17 +11,18 @@ class AgentService(BaseService):
     def __init__(self):
         self.log = self.add_service('agent_svc', self)
 
-    async def handle_heartbeat(self, paw, platform, server, group, executor, location):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
             await self.get_service('data_svc').update('core_agent', 'paw', paw,
-                                                      data=dict(last_seen=now, executor=executor))
+                                                      data=dict(last_seen=now, pid=pid, ppid=ppid))
             return agent[0]
         else:
-            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group, executor=executor, location=location)
-            await self.get_service('data_svc').create_agent(agent=queued)
+            queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
+                          location=location, architecture=architecture, pid=pid, ppid=ppid)
+            await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
     async def get_instructions(self, paw):
@@ -34,6 +35,7 @@ class AgentService(BaseService):
             instructions.append(json.dumps(dict(id=link['id'],
                                                 sleep=link['jitter'],
                                                 command=link['command'],
+                                                executor=link['executor'],
                                                 payload=payload)))
         return json.dumps(instructions)
 

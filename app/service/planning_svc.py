@@ -15,28 +15,29 @@ class PlanningService(BaseService):
 
     async def select_links(self, operation, agent, phase):
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities[:] = [p for p in phase_abilities if
-                              agent['platform'] == p['platform'] and agent['executor'] == p['executor']]
         links = []
-        for a in phase_abilities:
+        for a in await self._capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     decide=datetime.now(), jitter=self.jitter(operation['jitter'])))
+                     decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
         links[:] = await self._trim_links(operation, links, agent)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def create_cleanup_links(self, operation):
         for member in operation['host_group']:
             links = []
-            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'])):
+            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
+                                                                                       op_id=operation['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
                     links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], score=0, decide=datetime.now(), jitter=0))
+                                      command=ability['cleanup'], executor=ability['executor'], score=0,
+                                      decide=datetime.now(), jitter=0))
             links[:] = await self._trim_links(operation, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create_link(link)
+            await self.wait_for_phase(operation)
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
@@ -45,12 +46,12 @@ class PlanningService(BaseService):
                        False):
                 await asyncio.sleep(3)
                 op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
-                
 
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
         decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
 
@@ -106,13 +107,12 @@ class PlanningService(BaseService):
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            for fact in facts:
-                if fact['property'] == v:
-                    if 'private' in fact['property']:
-                        if fact['id'] in agent_facts:
-                            variable_facts.append(fact)
-                    else:
+            for fact in [f for f in facts if f['property'] == v]:
+                if fact['property'].startswith('host'):
+                    if fact['id'] in agent_facts:
                         variable_facts.append(fact)
+                else:
+                    variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 
@@ -145,3 +145,17 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
+
+    @staticmethod
+    async def _capable_agent_abilities(phase_abilities, agent):
+        abilities = []
+        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
+        for ai in set([pa['ability_id'] for pa in phase_abilities]):
+            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
+            if len(total_ability) > 1:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
+                if val:
+                    abilities.append(val)
+            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
+                abilities.append(total_ability[0])
+        return abilities

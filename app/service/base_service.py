@@ -51,7 +51,7 @@ class BaseService:
     @staticmethod
     def strip_yml(path):
         if path:
-            with open(path) as seed:
+            with open(path, encoding='utf-8') as seed:
                 return list(yaml.load_all(seed))
         return []
 

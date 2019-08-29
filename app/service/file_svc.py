@@ -28,7 +28,7 @@ class FileSvc(BaseService):
     async def upload(self, request):
         try:
             reader = await request.multipart()
-            exfil_dir = await self._create_unique_exfil_sub_directory()
+            exfil_dir = await self._create_exfil_sub_directory(request.headers)
             while True:
                 field = await reader.next()
                 if not field:
@@ -54,10 +54,11 @@ class FileSvc(BaseService):
 
     """ PRIVATE """
 
-    async def _create_unique_exfil_sub_directory(self):
-        dir_name = str(uuid.uuid4())
+    async def _create_exfil_sub_directory(self, headers):
+        dir_name = headers.get('X-Request-ID', str(uuid.uuid4()))
         path = os.path.join(self.exfil_dir, dir_name)
-        os.makedirs(path)
+        if not os.path.exists(path):
+            os.makedirs(path)
         return path
 
     async def _compile(self, name, platform):
@@ -66,9 +67,9 @@ class FileSvc(BaseService):
                 plugin, file_path = await self.find_file_path(name)
                 await self._change_file_hash(file_path)
                 output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
+                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
                 self.log.debug('%s compiled for %s with MD5=%s' %
                                (name, platform, md5(open(output, 'rb').read()).hexdigest()))
-                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
             return '%s-%s' % (name, platform)
         return name
 
