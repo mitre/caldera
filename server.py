@@ -25,6 +25,7 @@ from app.service.plugin_svc import PluginService
 async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
     app.loop.create_task(data_svc.load_data(directory='data'))
+    app.loop.create_task(agent_svc.start_sniffer_untrusted_agents())
 
 
 def build_plugins(plugs):
@@ -99,6 +100,12 @@ if __name__ == '__main__':
         auth_svc = AuthService()
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService()
+        agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
+        if cfg['untrusted_timer'] > 0:
+            logging.debug('Untrusted_timer set: agents will be considered untrusted after %s seconds of silence'
+                 % cfg['untrusted_timer'])
+        else:
+            logging.debug('Untrusted_timer not set: agents will always be considered trusted' 
+                 % cfg['untrusted_timer'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])
