@@ -18,6 +18,11 @@ class FileSvc(BaseService):
         self.log = self.add_service('file_svc', self)
 
     async def download(self, request):
+        """
+        Accept a request with a required header, file, and an optional header, platform, and download the file
+        :param request:
+        :return: a multipart file via HTTP
+        """
         name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
         _, file_path = await self.find_file_path(name, 'payloads')
         if file_path:
@@ -26,6 +31,11 @@ class FileSvc(BaseService):
         return web.HTTPNotFound(body='File not found')
 
     async def upload(self, request):
+        """
+        Accept a multipart file via HTTP and save it to the server
+        :param request:
+        :return: None
+        """
         try:
             reader = await request.multipart()
             exfil_dir = await self._create_exfil_sub_directory(request.headers)
@@ -46,6 +56,12 @@ class FileSvc(BaseService):
             self.log.debug('Exception uploading file %s' % e)
 
     async def find_file_path(self, name, location=''):
+        """
+        Find the location on disk of a file by name
+        :param name:
+        :param location:
+        :return: a tuple: the plugin the file is found in & the relative file path
+        """
         for plugin in self.plugins:
             for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
                 if name in files:
