@@ -3,7 +3,7 @@ import copy
 import itertools
 import re
 from base64 import b64decode
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from app.service.base_service import BaseService
 
@@ -14,8 +14,8 @@ class PlanningService(BaseService):
         self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
-        if agent['id'] in operation['compromised_agents']:
-            self.log.debug('Agent %s compromised: no link created' % agent['paw'])
+        if (not agent['trusted']) and (not operation['allow_untrusted']):
+            self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
             return []
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         links = []
@@ -27,46 +27,38 @@ class PlanningService(BaseService):
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def create_cleanup_links(self, operation):
-        for member in operation['host_group']:
+        op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
+        for member in op[0]['host_group']:
+            if (not member['trusted']) and (not op[0]['allow_untrusted']):
+                self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
+                continue
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=operation['id'])):
+                                                                                       op_id=op[0]['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
-                    links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
+                    links.append(dict(op_id=op[0]['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
                                       command=ability['cleanup'], executor=ability['executor'], score=0,
                                       decide=datetime.now(), jitter=0))
-            links[:] = await self._trim_links(operation, links, member)
+            links[:] = await self._trim_links(op[0], links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create_link(link)
-            await self.wait_for_phase(operation)
+        await self.wait_for_phase(op[0])
 
     async def wait_for_phase(self, operation):
         for member in operation['host_group']:
-            op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
-            if member['id'] in op[0]['compromised_agents']:
+            if (not member['trusted']) and (not operation['allow_untrusted']):
                 continue
+            op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
             while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
-                    False):
+                       False):
                 await asyncio.sleep(3)
-                if op[0]['max_waiting'] is not None:
-                    last_seen = datetime.strptime(member['last_seen'], '%Y-%m-%d %H:%M:%S')
-                    if last_seen + timedelta(seconds=op[0]['max_waiting']) < datetime.now():
-                        self.log.debug('Agent %s compromised in operation %s (%s)' 
-                            % (member['paw'], op[0]['id'], op[0]['name']))
-                        await self.get_service('data_svc').create_compromised_agents_map(op[0]['id'],member['id'])
-                        #consider the compromised agent's links finished to avoid possible inconsistencies
-                        time_now = self.get_current_timestamp()
-                        links = [lnk for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']]
-                        for lnk in links:
-                            if lnk['collect'] is not None:
-                                update_data = dict(finish=time_now)
-                            else:
-                                update_data = dict(finish=time_now, collect=time_now)
-                            await self.get_service('data_svc').update('core_chain', key='id', 
-                                        value=lnk['id'],data=update_data)
-                op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+                if not operation['allow_untrusted']:
+                    agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=member['paw']))
+                    if not agent[0]['trusted']:
+                        break
+                op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
         decoded_cmd = self.decode_bytes(encoded_cmd)
