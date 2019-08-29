@@ -22,6 +22,12 @@ class AuthService(BaseService):
         self.log = self.add_service('auth_svc', self)
 
     async def apply(self, app, users):
+        """
+        Set up security on server boot
+        :param app:
+        :param users:
+        :return: None
+        """
         for k, v in users.items():
             self.user_map[k] = self.User(k, v, ('admin', 'user'),)
         app.user_map = self.user_map
@@ -34,10 +40,20 @@ class AuthService(BaseService):
 
     @staticmethod
     async def logout_user(request):
+        """
+        Log the user out
+        :param request:
+        :return: None
+        """
         await forget(request, web.Response())
         raise web.HTTPFound('/login')
 
     async def login_user(self, request):
+        """
+        Log a user in and save the session
+        :param request:
+        :return: the response/location of where the user is trying to navigate
+        """
         data = await request.post()
         response = web.HTTPFound('/')
         verified = await self._check_credentials(
@@ -49,10 +65,17 @@ class AuthService(BaseService):
 
     @staticmethod
     async def check_permissions(request):
+        """
+        Check if a request is allowed based on the user permissions
+        :param request:
+        :return: None
+        """
         try:
             await check_permission(request, 'admin')
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
+
+    """ PRIVATE """
 
     async def _check_credentials(self, user_map, username, password):
         self.log.debug('%s logging in' % username)

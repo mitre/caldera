@@ -8,4 +8,8 @@ class PluginService(BaseService):
         self.log = self.add_service('plugin_svc', self)
 
     def get_plugins(self):
+        """
+        Get a list of all plugins
+        :return: a list of plugins
+        """
         return self.plugins
