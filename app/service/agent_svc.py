@@ -65,7 +65,7 @@ class AgentService(BaseService):
         :param status:
         :return: a JSON status message
         """
-        await self.get_service('data_svc').create('core_result', result=dict(link_id=link_id, output=output))
+        await self.get_service('data_svc').create('core_result', dict(link_id=link_id, output=output))
         await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
                                                   data=dict(status=int(status),
                                                             finish=self.get_current_timestamp()))
