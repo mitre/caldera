@@ -156,6 +156,11 @@ class PlanningService(BaseService):
                 val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
                 if val:
                     abilities.append(val)
+                else:
+                    val = next((ta for ta in total_ability if ta['executor'] in [ae['executor']
+                                                                                 for ae in agent['executors']]), False)
+                    if val:
+                        abilities.append(val)
             elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
                 abilities.append(total_ability[0])
         return abilities
