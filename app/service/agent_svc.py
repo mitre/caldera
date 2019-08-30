@@ -49,7 +49,7 @@ class AgentService(BaseService):
         if trusted:
             data['last_trusted_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
-        self.log.debug('Agent %s is now trusted: %s' % (paw, trusted))
+        self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
         """
