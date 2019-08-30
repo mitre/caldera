@@ -18,6 +18,19 @@ class AgentService(BaseService):
             self.loop.create_task(self._sniffer_untrusted_agents())
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
+        """
+        Accept all components of an agent profile and save a new agent or register an updated heartbeat.
+        :param paw:
+        :param platform:
+        :param server:
+        :param group:
+        :param executors:
+        :param architecture:
+        :param location:
+        :param pid:
+        :param ppid:
+        :return: the agent object from explode_agents
+        """
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
@@ -36,6 +49,11 @@ class AgentService(BaseService):
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
     async def get_instructions(self, paw):
+        """
+        Get next set of instructions to execute
+        :param paw:
+        :return: a list of links in JSON format
+        """
         commands = await self.get_service('data_svc').explode_chain(criteria=dict(paw=paw))
         instructions = []
         for link in [c for c in commands if not c['collect']]:
@@ -50,6 +68,13 @@ class AgentService(BaseService):
         return json.dumps(instructions)
 
     async def save_results(self, link_id, output, status):
+        """
+        Save the results from a single executed link
+        :param link_id:
+        :param output:
+        :param status:
+        :return: a JSON status message
+        """
         link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
         op = (await self.get_service('data_svc').dao.get('core_operation', dict(id=link[0]['op_id'])))[0]
         agent = (await self.get_service('data_svc').dao.get('core_agent', dict(paw=link[0]['paw'])))[0]
@@ -63,24 +88,19 @@ class AgentService(BaseService):
                                                     data=dict(last_seen=now))
         #save result
         if (agent['trusted']) or (op['allow_untrusted']):
-            await self.get_service('data_svc').create_result(result=dict(link_id=link_id, output=output))
+            await self.get_service('data_svc').create('core_result', dict(link_id=link_id, output=output))
             await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
-                                                    data=dict(status=int(status), finish=now))
+                                                  data=dict(status=int(status),
+                                                            finish=self.get_current_timestamp()))
         return json.dumps(dict(status=True))
-
-    """ PRIVATE """
-
-    async def _gather_payload(self, ability_id):
-        payload = await self.get_service('data_svc').explode_payloads(criteria=dict(ability=ability_id))
-        return payload[0]['payload'] if payload else ''
 
     async def perform_action(self, link: typing.Dict) -> int:
         """
         Perform a link in the context of an operation, respecting the 'run', 'paused' and 'run_one_step' operation
-        states. Calling data_svc.create_link() directly will schedule the link for execution,
+        states. Calling data_svc.create('core_chain', link) directly will schedule the link for execution,
         ignoring the state of the operation.
-        :param link: A link dictionary that has not yet been scheduled for execution using data_svc.create_link().
-        :return: The id of the created link.
+        :param link:
+        :return: the id of the created link
         """
         data_svc = self.get_service('data_svc')
         operation_svc = self.get_service('operation_svc')
@@ -95,8 +115,11 @@ class AgentService(BaseService):
             else:
                 await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
-        return await data_svc.create_link(link)
+        return await data_svc.create('core_chain', link)
 
+
+    """ PRIVATE """
+  
     async def _sniffer_untrusted_agents(self):
         data_svc = self.get_service('data_svc')
         next_check = self.untrusted_timer
@@ -118,3 +141,7 @@ class AgentService(BaseService):
                             next_check = trust_time_left
         except Exception:
             traceback.print_exc()
+
+    async def _gather_payload(self, ability_id):
+        payload = await self.get_service('data_svc').get('core_payload', criteria=dict(ability=ability_id))
+        return payload[0]['payload'] if payload else ''

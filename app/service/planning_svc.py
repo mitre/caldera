@@ -14,6 +14,13 @@ class PlanningService(BaseService):
         self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
+      """
+        For an operation, phase and agent combination, determine which potential links can be executed
+        :param operation:
+        :param agent:
+        :param phase:
+        :return: a list of links
+        """
         if (not agent['trusted']) and (not operation['allow_untrusted']):
             self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
             return []
@@ -27,6 +34,11 @@ class PlanningService(BaseService):
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def create_cleanup_links(self, operation):
+        """
+        For a given operation, create a link for every cleanup action on every executed ability
+        :param operation:
+        :return: None
+        """
         op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
         for member in op[0]['host_group']:
             if (not member['trusted']) and (not op[0]['allow_untrusted']):
@@ -43,10 +55,15 @@ class PlanningService(BaseService):
             links[:] = await self._trim_links(op[0], links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
-                await self.get_service('data_svc').create_link(link)
+                await self.get_service('data_svc').create('core_chain', link)
         await self.wait_for_phase(op[0])
 
     async def wait_for_phase(self, operation):
+        """
+        Wait for all started links to be completed
+        :param operation:
+        :return: None
+        """
         for member in operation['host_group']:
             if (not member['trusted']) and (not operation['allow_untrusted']):
                 continue
@@ -61,6 +78,13 @@ class PlanningService(BaseService):
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
+        """
+        Replace all global variables in a command with the values associated to a specific agent
+        :param encoded_cmd:
+        :param agent:
+        :param group:
+        :return: the updated command string
+        """
         decoded_cmd = self.decode_bytes(encoded_cmd)
         decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
         decoded_cmd = decoded_cmd.replace('#{group}', group)
