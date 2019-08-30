@@ -95,23 +95,18 @@ class AgentService(BaseService):
         :param status:
         :return: a JSON status message
         """
-        link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
-        op = (await self.get_service('data_svc').dao.get('core_operation', dict(id=link[0]['op_id'])))[0]
-        agent = (await self.get_service('data_svc').dao.get('core_agent', dict(paw=link[0]['paw'])))[0]
-        #last seen more accurate
-        now = self.get_current_timestamp()
-        if agent['trusted']:
-            await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'],
-                                                    data=dict(last_seen=now, last_trusted_seen=now))
-        else:
-            await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'],
-                                                    data=dict(last_seen=now))
-        #save result
-        if (agent['trusted']) or (op['allow_untrusted']):
-            await self.get_service('data_svc').create('core_result', dict(link_id=link_id, output=output))
-            await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
+        await self.get_service('data_svc').create('core_result', dict(link_id=link_id, output=output))
+        await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
                                                   data=dict(status=int(status),
                                                             finish=self.get_current_timestamp()))
+        #last seen more accurate
+        link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
+        agent = (await self.get_service('data_svc').get('core_agent', dict(paw=link[0]['paw'])))[0]
+        now = self.get_current_timestamp()
+        update_data = dict(last_seen=now)
+        if agent['trusted']:
+            update_data['last_trusted_seen'] = now
+        await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'], data=update_data)
         return json.dumps(dict(status=True))
 
     async def perform_action(self, link: typing.Dict) -> int:
