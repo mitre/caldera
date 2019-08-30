@@ -71,10 +71,8 @@ class PlanningService(BaseService):
             while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
-                if not operation['allow_untrusted']:
-                    agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=member['paw']))
-                    if not agent[0]['trusted']:
-                        break
+                if await self._trust_issues(operation, member['paw']):
+                    break
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
@@ -196,3 +194,9 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
+
+    async def _trust_issues(self, operation, paw):
+        if not operation['allow_untrusted']:
+            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+            return not agent[0]['trusted']
+        return False
