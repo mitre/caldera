@@ -15,6 +15,9 @@ class AgentService(BaseService):
         self.untrusted_timer = untrusted_timer
 
     async def start_sniffer_untrusted_agents(self):
+        """
+        Cyclic function that repeatedly checks if there are agents to be marked as untrusted.
+        """
         data_svc = self.get_service('data_svc')
         next_check = self.untrusted_timer
         try:
