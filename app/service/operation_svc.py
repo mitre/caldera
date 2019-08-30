@@ -84,14 +84,14 @@ class OperationService(BaseService):
                                         attack=dict(tactic=ability['tactic'],
                                                     technique_name=ability['technique_name'],
                                                     technique_id=ability['technique_id'])))
-        return report
+        return json.dumps(report, indent=4)
 
     """ PRIVATE """
 
     @staticmethod
     async def _write_report(report):
         with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
-            f.write(json.dumps(report, indent=4))
+            f.write(report)
 
     async def _get_planning_module(self, planner_id):
         chosen_planner = await self.data_svc.explode_planners(dict(id=planner_id))
