@@ -19,11 +19,20 @@ class OperationService(BaseService):
         self.data_svc = self.get_service('data_svc')
 
     async def resume(self):
+        """
+        Resume an operation that was stopped
+        :return: None
+        """
         for op in await self.data_svc.explode_operation():
             if not op['finish']:
                 self.loop.create_task(self.run(op['id']))
 
     async def close_operation(self, operation):
+        """
+        Perform all close actions for an operation
+        :param operation:
+        :return: None
+        """
         await self.get_service('planning_svc').create_cleanup_links(operation)
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
@@ -32,6 +41,11 @@ class OperationService(BaseService):
         await self._write_report(report)
 
     async def run(self, op_id):
+        """
+        Run a new operation
+        :param op_id:
+        :return: None
+        """
         self.log.debug('Starting operation: %s' % op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
@@ -50,6 +64,11 @@ class OperationService(BaseService):
             traceback.print_exc()
 
     async def generate_operation_report(self, op_id):
+        """
+        Create a new operation report and write it to the logs directory
+        :param op_id:
+        :return: a JSON report
+        """
         op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
         planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
