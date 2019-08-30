@@ -72,7 +72,13 @@ class OperationService(BaseService):
         op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
         planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
+                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[],
+                      skipped=[])
+
+        potential_abilities = set()
+        for phase_list in report['adversary']['phases'].values():
+            for x in phase_list:
+                potential_abilities.add(x['ability_id'])
 
         for step in op['chain']:
             ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
@@ -84,6 +90,9 @@ class OperationService(BaseService):
                                         attack=dict(tactic=ability['tactic'],
                                                     technique_name=ability['technique_name'],
                                                     technique_id=ability['technique_id'])))
+            if not step['cleanup']:
+                potential_abilities.remove(ability['ability_id'])
+        report['skipped'] = list(potential_abilities)
         return report
 
     """ PRIVATE """
