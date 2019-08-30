@@ -30,14 +30,26 @@ class AgentService(BaseService):
                     last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
                     if silence_time > self.untrusted_timer:
-                        await data_svc.update('core_agent', 'paw', a['paw'], data=dict(trusted=0))
-                        self.log.debug('Agent %s is now untrusted' % a['paw'])
+                        await self.update_trust(a['paw'], 0)
                     else:
                         trust_time_left = self.untrusted_timer - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
         except Exception:
             traceback.print_exc()
+
+    async def update_trust(self, paw, trusted):
+        """
+        Set whether an agent should be trusted or not trusted
+        :param paw:
+        :param trusted:
+        :return: None
+        """
+        data = dict(trusted=trusted)
+        if trusted:
+            data['last_trusted_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
+        self.log.debug('Agent %s is now trusted: %s' % (paw, trusted))
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
         """
