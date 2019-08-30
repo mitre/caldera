@@ -19,7 +19,7 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin%3F). 
 ```
-git clone https://github.com/mitre/caldera.git --recursive
+git clone --depth 1 https://github.com/mitre/caldera.git --recursive
 ```
 
 From the root of this project, install the PIP requirements.
