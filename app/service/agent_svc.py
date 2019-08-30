@@ -1,8 +1,8 @@
 import asyncio
 import json
-import typing
 import traceback
-from datetime import datetime, timedelta
+import typing
+from datetime import datetime
 
 from app.service.base_service import BaseService
 
@@ -16,7 +16,8 @@ class AgentService(BaseService):
 
     async def start_sniffer_untrusted_agents(self):
         """
-        Cyclic function that repeatedly checks if there are agents to be marked as untrusted.
+        Cyclic function that repeatedly checks if there are agents to be marked as untrusted
+        :return: None
         """
         data_svc = self.get_service('data_svc')
         next_check = self.untrusted_timer
@@ -99,7 +100,6 @@ class AgentService(BaseService):
         await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
                                                   data=dict(status=int(status),
                                                             finish=self.get_current_timestamp()))
-        #last seen more accurate
         link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
         agent = (await self.get_service('data_svc').get('core_agent', dict(paw=link[0]['paw'])))[0]
         now = self.get_current_timestamp()
@@ -131,7 +131,6 @@ class AgentService(BaseService):
                 await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         return await data_svc.create('core_chain', link)
-
 
     """ PRIVATE """
 

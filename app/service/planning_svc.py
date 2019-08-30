@@ -14,7 +14,7 @@ class PlanningService(BaseService):
         self.log = self.add_service('planning_svc', self)
 
     async def select_links(self, operation, agent, phase):
-      """
+        """
         For an operation, phase and agent combination, determine which potential links can be executed
         :param operation:
         :param agent:
