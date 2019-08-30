@@ -1,6 +1,7 @@
 import asyncio
 import json
 import typing
+import traceback
 from datetime import datetime, timedelta
 
 from app.service.base_service import BaseService
@@ -14,8 +15,25 @@ class AgentService(BaseService):
         self.untrusted_timer = untrusted_timer
 
     async def start_sniffer_untrusted_agents(self):
-        if self.untrusted_timer:
-            self.loop.create_task(self._sniffer_untrusted_agents())
+        data_svc = self.get_service('data_svc')
+        next_check = self.untrusted_timer
+        try:
+            while True:
+                await asyncio.sleep(next_check+1)
+                trusted_agents = await data_svc.explode_agents(criteria=dict(trusted=1))
+                next_check = self.untrusted_timer
+                for a in trusted_agents:
+                    last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
+                    silence_time = (datetime.now() - last_trusted_seen).total_seconds()
+                    if silence_time > self.untrusted_timer:
+                        await data_svc.update('core_agent', 'paw', a['paw'], data=dict(trusted=0))
+                        self.log.debug('Agent %s is now untrusted' % a['paw'])
+                    else:
+                        trust_time_left = self.untrusted_timer - silence_time
+                        if trust_time_left < next_check:
+                            next_check = trust_time_left
+        except Exception:
+            traceback.print_exc()
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
         """
@@ -35,10 +53,9 @@ class AgentService(BaseService):
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
+            update_data = dict(last_seen=now, pid=pid, ppid=ppid)
             if agent[0]['trusted']:
-                update_data = dict(last_seen=now, pid=pid, ppid=ppid, last_trusted_seen=now)
-            else:
-                update_data = dict(last_seen=now, pid=pid, ppid=ppid)
+                update_data['last_trusted_seen'] = now
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
             return agent[0]
         else:
@@ -119,28 +136,6 @@ class AgentService(BaseService):
 
 
     """ PRIVATE """
-  
-    async def _sniffer_untrusted_agents(self):
-        data_svc = self.get_service('data_svc')
-        next_check = self.untrusted_timer
-        try:
-            while True:
-                await asyncio.sleep(next_check)
-                trusted_agents = await data_svc.explode_agents(criteria=dict(trusted=1))
-                now = datetime.now()
-                next_check = self.untrusted_timer
-                for a in trusted_agents:
-                    last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
-                    silence_time = (now-last_trusted_seen).total_seconds()
-                    if silence_time > self.untrusted_timer:
-                        await data_svc.update('core_agent', 'paw', a['paw'], data=dict(trusted=0))
-                        self.log.debug('Agent %s is now untrusted' % a['paw'])
-                    else:
-                        trust_time_left = self.untrusted_timer - silence_time
-                        if trust_time_left < next_check:
-                            next_check = trust_time_left
-        except Exception:
-            traceback.print_exc()
 
     async def _gather_payload(self, ability_id):
         payload = await self.get_service('data_svc').get('core_payload', criteria=dict(ability=ability_id))
