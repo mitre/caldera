@@ -26,11 +26,14 @@ class PlanningService(BaseService):
             return []
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         links = []
-        for a in await self.capable_agent_abilities(phase_abilities, agent):
+        capable_agent_abs = await self.capable_agent_abilities(phase_abilities, agent)
+        for a in capable_agent_abs:
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      decide=datetime.now(), executor=a['executor'], jitter=self.jitter(operation['jitter'])))
         links[:] = await self._trim_links(operation, links, agent)
+        await self._skipped_abilities(phase_abilities, capable_agent_abs, links, 
+                                        agent, operation, phase)
         return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
 
     async def create_cleanup_links(self, operation):
@@ -200,3 +203,32 @@ class PlanningService(BaseService):
             agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
             return not agent[0]['trusted']
         return False
+
+    async def _skipped_abilities(self, phase_abilities, capable_agent_abs, links,
+                                    agent, operation, phase):
+        '''
+        Save skipped abilities by the agent
+        '''
+        data_svc = self.get_service('data_svc')
+        already_skipped = await data_svc.get('core_skipped_abilities', 
+                                    dict(paw=agent['paw'], op_id=operation['id']))
+        already_skipped_id = set([a['ability_id'] for a in already_skipped])
+        already_ran = set([l['ability'] for l in operation['chain'] if l['paw'] == agent['paw']])
+        already_ran_id = set([p['ability_id'] for p in phase_abilities if p['id'] in already_ran])
+        already_checked = already_skipped_id.union(already_ran_id)
+        phase_abilities_tuples = set([(p['id'],p['ability_id']) for p in phase_abilities 
+                                    if p['ability_id'] not in already_checked])
+        phase_abilities_id = set([ab_id for (i, ab_id) in phase_abilities_tuples])
+        capable_abs_tuples = set([(c['id'],c['ability_id']) for c in capable_agent_abs 
+                                    if c['ability_id'] not in already_checked])
+        capable_abs_id = set([ab_id for (i, ab_id) in capable_abs_tuples])
+        links_abs = set([l['ability'] for l in links])
+        links_abs_tuples = set([(i, ab_id) for (i, ab_id) in capable_abs_tuples if i in links_abs])
+        links_abs_id = set([ab_id for (i, ab_id) in links_abs_tuples])
+        for ab_id in (phase_abilities_id - capable_abs_id):
+            await data_svc.create('core_skipped_abilities', dict(ability_id=ab_id, paw=agent['paw'], 
+                    op_id=operation['id'], phase=phase, reason='incompatible executors'))
+        for ab_id in (capable_abs_id - links_abs_id):
+            await data_svc.create('core_skipped_abilities', dict(ability_id=ab_id, paw=agent['paw'], 
+                    op_id=operation['id'], phase=phase, reason='variables not replaced'))
+            
