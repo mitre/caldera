@@ -153,7 +153,7 @@ class DataService(BaseService):
         return identifier
 
     async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
-                               planner=None, state=None):
+                               planner=None, state=None, allow_untrusted=False):
         """
         Save a new operation to the database
         :param name:
@@ -164,11 +164,13 @@ class DataService(BaseService):
         :param sources:
         :param planner:
         :param state:
+        :param allow_untrusted:
         :return: the database id
         """
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state))
+            start=self.get_current_timestamp(), stealth=stealth, planner=planner, state=state,
+            allow_untrusted=allow_untrusted))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
         for s_id in [s for s in sources if s]:
