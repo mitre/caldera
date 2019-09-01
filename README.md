@@ -72,6 +72,10 @@ the adversary profile chosen (file hunter) will utilize them inside its abilitie
 
 Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
 
+## Command-and-control
+
+Want to unlock reverse-shells and classic command-and-control behaviors over the terminal? Load the [terminal plugin](https://github.com/mitre/caldera/wiki/Plugins-terminal) before starting CALDERA.
+
 ## Versions
 
 Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
