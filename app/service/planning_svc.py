@@ -129,14 +129,13 @@ class PlanningService(BaseService):
     async def capable_agent_abilities(phase_abilities, agent):
         abilities = []
         preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
+        executors = [e['executor'] for e in agent['executors']]
         for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
-            if len(total_ability) > 1:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
-                if val:
-                    abilities.append(val)
-            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
-                abilities.append(total_ability[0])
+            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
+                                                and (ab['executor'] in executors)]
+            if len(total_ability) > 0:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
+                abilities.append(val)
         return abilities
 
     """ PRIVATE """
