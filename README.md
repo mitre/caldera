@@ -43,12 +43,12 @@ the system. The missions assume CALDERA is running locally.
 networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
-Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
+Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugins-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
 delivery command for your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugin-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugins-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
