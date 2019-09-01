@@ -17,7 +17,7 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 ## Installation
 
-Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin%3F). 
+Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
 git clone --depth 1 https://github.com/mitre/caldera.git --recursive
 ```
@@ -48,7 +48,7 @@ delivery command for your operating system. You should be welcomed by a log mess
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugin:-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugin-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
@@ -63,7 +63,7 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
 Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
-section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
+section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
 Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
 
 Click into the "operations" section and start a new operation. Choose the "hunter" adversary
