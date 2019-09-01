@@ -66,7 +66,7 @@ Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click 
 section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
 Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
 
-Click into the "operations" section and start a new operation. Choose the "file hunter" adversary
+Click into the "operations" section and start a new operation. Choose the "hunter" adversary
 and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
 the adversary profile chosen (file hunter) will utilize them inside its abilities.
 
