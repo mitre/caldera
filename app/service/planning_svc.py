@@ -216,9 +216,8 @@ class PlanningService(BaseService):
         already_ran = set([l['ability'] for l in operation['chain'] if l['paw'] == agent['paw']])
         already_ran_id = set([p['ability_id'] for p in phase_abilities if p['id'] in already_ran])
         already_checked = already_skipped_id.union(already_ran_id)
-        phase_abilities_tuples = set([(p['id'],p['ability_id']) for p in phase_abilities 
+        phase_abilities_id = set([p['ability_id'] for p in phase_abilities 
                                     if p['ability_id'] not in already_checked])
-        phase_abilities_id = set([ab_id for (i, ab_id) in phase_abilities_tuples])
         capable_abs_tuples = set([(c['id'],c['ability_id']) for c in capable_agent_abs 
                                     if c['ability_id'] not in already_checked])
         capable_abs_id = set([ab_id for (i, ab_id) in capable_abs_tuples])
