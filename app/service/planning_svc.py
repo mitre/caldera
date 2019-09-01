@@ -222,8 +222,7 @@ class PlanningService(BaseService):
                                     if c['ability_id'] not in already_checked])
         capable_abs_id = set([ab_id for (i, ab_id) in capable_abs_tuples])
         links_abs = set([l['ability'] for l in links])
-        links_abs_tuples = set([(i, ab_id) for (i, ab_id) in capable_abs_tuples if i in links_abs])
-        links_abs_id = set([ab_id for (i, ab_id) in links_abs_tuples])
+        links_abs_id = set([ab_id for (i, ab_id) in capable_abs_tuples if i in links_abs])
         for ab_id in (phase_abilities_id - capable_abs_id):
             await data_svc.create('core_skipped_abilities', dict(ability_id=ab_id, paw=agent['paw'], 
                     op_id=operation['id'], phase=phase, reason='incompatible executors'))
