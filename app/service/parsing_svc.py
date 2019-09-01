@@ -51,7 +51,8 @@ class ParsingService(BaseService):
         agents_to_check = []
         for fact in already_stashed:
             link = next((lnk for lnk in operation['chain'] if lnk['id'] == fact['link_id']), False)
-            agents_to_check.append(link['paw'])
+            if link:
+                agents_to_check.append(link['paw'])
         if result['link']['paw'] not in agents_to_check:
             return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'], value=match['value'],
                         set_id=match['set_id'], score=1)
