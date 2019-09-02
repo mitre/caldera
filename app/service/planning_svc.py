@@ -21,6 +21,9 @@ class PlanningService(BaseService):
         :param phase:
         :return: a list of links
         """
+        if (not agent['trusted']) and (not operation['allow_untrusted']):
+            self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
+            return []
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         links = []
         for a in await self.capable_agent_abilities(phase_abilities, agent):
@@ -36,20 +39,24 @@ class PlanningService(BaseService):
         :param operation:
         :return: None
         """
-        for member in operation['host_group']:
+        op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
+        for member in op[0]['host_group']:
+            if (not member['trusted']) and (not op[0]['allow_untrusted']):
+                self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
+                continue
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=operation['id'])):
+                                                                                       op_id=op[0]['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup']:
-                    links.append(dict(op_id=operation['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
+                    links.append(dict(op_id=op[0]['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
                                       command=ability['cleanup'], executor=ability['executor'], score=0,
                                       decide=datetime.now(), jitter=0))
-            links[:] = await self._trim_links(operation, links, member)
+            links[:] = await self._trim_links(op[0], links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create('core_chain', link)
-            await self.wait_for_phase(operation)
+        await self.wait_for_phase(op[0])
 
     async def wait_for_phase(self, operation):
         """
@@ -58,11 +65,15 @@ class PlanningService(BaseService):
         :return: None
         """
         for member in operation['host_group']:
-            op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+            if (not member['trusted']) and (not operation['allow_untrusted']):
+                continue
+            op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
             while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish']),
                        False):
                 await asyncio.sleep(3)
-                op = await self.get_service('data_svc').explode_operation(dict(id=operation['id']))
+                if await self._trust_issues(operation, member['paw']):
+                    break
+                op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
 
     async def decode(self, encoded_cmd, agent, group):
         """
@@ -118,14 +129,13 @@ class PlanningService(BaseService):
     async def capable_agent_abilities(phase_abilities, agent):
         abilities = []
         preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
+        executors = [e['executor'] for e in agent['executors']]
         for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if ab['ability_id'] == ai]
-            if len(total_ability) > 1:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), False)
-                if val:
-                    abilities.append(val)
-            elif total_ability[0]['executor'] in [e['executor'] for e in agent['executors']]:
-                abilities.append(total_ability[0])
+            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
+                                                and (ab['executor'] in executors)]
+            if len(total_ability) > 0:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
+                abilities.append(val)
         return abilities
 
     """ PRIVATE """
@@ -183,3 +193,9 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
+
+    async def _trust_issues(self, operation, paw):
+        if not operation['allow_untrusted']:
+            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+            return not agent[0]['trusted']
+        return False

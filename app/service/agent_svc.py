@@ -1,5 +1,6 @@
 import asyncio
 import json
+import traceback
 import typing
 from datetime import datetime
 
@@ -8,8 +9,47 @@ from app.service.base_service import BaseService
 
 class AgentService(BaseService):
 
-    def __init__(self):
+    def __init__(self, untrusted_timer):
         self.log = self.add_service('agent_svc', self)
+        self.loop = asyncio.get_event_loop()
+        self.untrusted_timer = untrusted_timer
+
+    async def start_sniffer_untrusted_agents(self):
+        """
+        Cyclic function that repeatedly checks if there are agents to be marked as untrusted
+        :return: None
+        """
+        data_svc = self.get_service('data_svc')
+        next_check = self.untrusted_timer
+        try:
+            while True:
+                await asyncio.sleep(next_check+1)
+                trusted_agents = await data_svc.explode_agents(criteria=dict(trusted=1))
+                next_check = self.untrusted_timer
+                for a in trusted_agents:
+                    last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
+                    silence_time = (datetime.now() - last_trusted_seen).total_seconds()
+                    if silence_time > self.untrusted_timer:
+                        await self.update_trust(a['paw'], 0)
+                    else:
+                        trust_time_left = self.untrusted_timer - silence_time
+                        if trust_time_left < next_check:
+                            next_check = trust_time_left
+        except Exception:
+            traceback.print_exc()
+
+    async def update_trust(self, paw, trusted):
+        """
+        Set whether an agent should be trusted or not trusted
+        :param paw:
+        :param trusted:
+        :return: None
+        """
+        data = dict(trusted=trusted)
+        if trusted:
+            data['last_trusted_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
+        self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
         """
@@ -29,12 +69,15 @@ class AgentService(BaseService):
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
-            await self.get_service('data_svc').update('core_agent', 'paw', paw,
-                                                      data=dict(last_seen=now, pid=pid, ppid=ppid))
+            update_data = dict(last_seen=now, pid=pid, ppid=ppid)
+            if agent[0]['trusted']:
+                update_data['last_trusted_seen'] = now
+            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
             return agent[0]
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
-                          location=location, architecture=architecture, pid=pid, ppid=ppid)
+                          location=location, architecture=architecture, pid=pid, ppid=ppid,
+                          trusted=True, last_trusted_seen=now)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
@@ -69,6 +112,13 @@ class AgentService(BaseService):
         await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
                                                   data=dict(status=int(status),
                                                             finish=self.get_current_timestamp()))
+        link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
+        agent = (await self.get_service('data_svc').get('core_agent', dict(paw=link[0]['paw'])))[0]
+        now = self.get_current_timestamp()
+        update_data = dict(last_seen=now)
+        if agent['trusted']:
+            update_data['last_trusted_seen'] = now
+        await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'], data=update_data)
         return json.dumps(dict(status=True))
 
     async def perform_action(self, link: typing.Dict) -> int:
