@@ -263,6 +263,16 @@ class DataService(BaseService):
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+
+            # Add for dashboard
+            op['summary'] = {}
+            op['summary']['success'] = 0
+            if op['chain']:
+                for c in op['chain']:
+                    if c['status'] == 0:
+                        op['summary']['success'] += 1
+                op['summary']['rate'] = round((float(op['summary']['success']) / float(len(op['chain'])) * 100), 2)
+
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
