@@ -49,12 +49,12 @@ class OperationService(BaseService):
         self.log.debug('Starting operation: %s' % op_id)
         operation = await self.data_svc.explode_operation(dict(id=op_id))
         try:
-            planner = await self._get_planning_module(operation[0]['planner'])
+            planner = await self._get_planning_module(operation[0])
             for phase in operation[0]['adversary']['phases']:
                 operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
                 self.log.debug('%s: started' % operation_phase_name)
                 operation = await self.data_svc.explode_operation(dict(id=op_id))
-                await planner.execute(operation[0], phase)
+                await planner.execute(phase)
                 self.log.debug('%s: completed' % operation_phase_name)
                 await self.data_svc.update('core_operation', key='id', value=op_id,
                                            data=dict(phase=phase))
@@ -93,8 +93,8 @@ class OperationService(BaseService):
         with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
             f.write(json.dumps(report, indent=4))
 
-    async def _get_planning_module(self, planner_id):
-        chosen_planner = await self.data_svc.explode_planners(dict(id=planner_id))
+    async def _get_planning_module(self, operation):
+        chosen_planner = await self.data_svc.explode_planners(dict(id=operation['planner']))
         planning_module = import_module(chosen_planner[0]['module'])
-        return getattr(planning_module, 'LogicalPlanner')(self.get_service('planning_svc'),
+        return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'),
                                                           **chosen_planner[0]['params'])

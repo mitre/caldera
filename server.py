@@ -35,8 +35,11 @@ def build_plugins(plugs):
             print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
             exit(0)
         logging.debug('Loading plugin: %s' % plug)
-        if os.path.isfile('plugins/%s/requirements.txt' % plug):
-            Popen(['pip', 'install', '-r', 'plugins/%s/requirements.txt' % plug], stdout=DEVNULL)
+        try:
+            if os.path.isfile('plugins/%s/requirements.txt' % plug):
+                Popen(['pip', 'install', '-r', 'plugins/%s/requirements.txt' % plug], stdout=DEVNULL)
+        except Exception:
+            print('Problem installing PIP requirements automatically. Try doing this manually.')
         modules.append(import_module('plugins.%s.hook' % plug))
     return modules
 
