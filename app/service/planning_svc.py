@@ -132,7 +132,7 @@ class PlanningService(BaseService):
         executors = [e['executor'] for e in agent['executors']]
         for ai in set([pa['ability_id'] for pa in phase_abilities]):
             total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
-                                                and (ab['executor'] in executors)]
+                             and (ab['platform'] == agent['platform']) and (ab['executor'] in executors)]
             if len(total_ability) > 0:
                 val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
                 abilities.append(val)
