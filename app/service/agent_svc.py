@@ -29,7 +29,7 @@ class AgentService(BaseService):
                 for a in trusted_agents:
                     last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
-                    if silence_time > self.untrusted_timer:
+                    if silence_time > (self.untrusted_timer + a['sleep']):
                         await self.update_trust(a['paw'], 0)
                     else:
                         trust_time_left = self.untrusted_timer - silence_time
