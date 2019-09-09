@@ -16,6 +16,7 @@ class FileSvc(BaseService):
         self.plugins = plugins
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
+        self.data_svc = self.get_service('data_svc')
 
     async def download(self, request):
         """
@@ -24,10 +25,11 @@ class FileSvc(BaseService):
         :return: a multipart file via HTTP
         """
         name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
-        _, file_path = await self.find_file_path(name, 'payloads')
-        if file_path:
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
-            return web.FileResponse(path=file_path, headers=headers)
+        if name:
+            _, file_path = await self.find_file_path(name, 'payloads')
+            if file_path:
+                headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
+                return web.FileResponse(path=file_path, headers=headers)
         return web.HTTPNotFound(body='File not found')
 
     async def upload(self, request):
@@ -62,11 +64,12 @@ class FileSvc(BaseService):
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        for plugin in self.plugins:
-            for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
-                if name in files:
-                    self.log.debug('Located %s' % name)
-                    return plugin, os.path.join(root, name)
+        if name:
+            for plugin in self.plugins:
+                for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
+                    if name in files:
+                        self.log.debug('Located %s' % name)
+                        return plugin, os.path.join(root, name)
 
     """ PRIVATE """
 
@@ -78,12 +81,16 @@ class FileSvc(BaseService):
         return path
 
     async def _compile(self, name, platform):
+        abilities = await self.data_svc.explode_abilities()
+        platforms = {ab['platform'].lower() for ab in abilities}
+        if platform.lower() not in platforms:
+            return
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self.find_file_path(name)
                 await self._change_file_hash(file_path)
                 output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
-                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
+                os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform.lower(), output, file_path))
                 self.log.debug('%s compiled for %s with MD5=%s' %
                                (name, platform, md5(open(output, 'rb').read()).hexdigest()))
             return '%s-%s' % (name, platform)
