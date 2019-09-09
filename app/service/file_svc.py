@@ -16,6 +16,7 @@ class FileSvc(BaseService):
         self.plugins = plugins
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
+        self.data_svc = self.get_service('data_svc')
 
     async def download(self, request):
         """
@@ -80,7 +81,9 @@ class FileSvc(BaseService):
         return path
 
     async def _compile(self, name, platform):
-        if platform.lower() not in ["windows", "linux", "darwin"]:
+        abilities = await self.data_svc.explode_abilities()
+        platforms = {ab['platform'].lower() for ab in abilities}
+        if platform.lower() not in platforms:
             return
         if name.endswith('.go'):
             if which('go') is not None:
