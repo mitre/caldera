@@ -64,8 +64,8 @@ class FileSvc(BaseService):
     async def find_file_path(self, name, location=''):
         """
         Find the location on disk of a file by name. Will also return the path
-        to an encoded version of the file (e.g. if there is a file of the same name
-        that ends in a '.xored' extension.
+        to an encoded version of the file (encoded files share the same name
+        but end with the '.xored' extension).
         :param name:
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
