@@ -63,6 +63,7 @@ async def init(address, port, services, users):
 
     await services.get('data_svc').load_data()
     await attach_plugins(app, services)
+    await services.get('file_svc').init()
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, address, port).start()

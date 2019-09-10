@@ -18,6 +18,10 @@ class FileSvc(BaseService):
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
 
+    async def init(self):
+        self.log.debug("Loading valid platforms from abilities")
+        self.valid_platforms = {ab['platform'].lower() for ab in await self.data_svc.explode_abilities()}
+
     async def download(self, request):
         """
         Accept a request with a required header, file, and an optional header, platform, and download the file
@@ -81,9 +85,7 @@ class FileSvc(BaseService):
         return path
 
     async def _compile(self, name, platform):
-        abilities = await self.data_svc.explode_abilities()
-        platforms = {ab['platform'].lower() for ab in abilities}
-        if platform.lower() not in platforms:
+        if platform.lower() not in self.valid_platforms:
             return
         if name.endswith('.go'):
             if which('go') is not None:
