@@ -57,9 +57,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.input == args.output:
-        raise RuntimeError('Input file path and output file path should be different.')
-    elif pathlib.Path(args.output).exists():
-        raise RuntimeError('Output file {} already exists.'.format(args.output))
-
     xor_file(args.input, output_file=args.output, key=args.key)
