@@ -1,25 +1,24 @@
 """
 This module contains helper functions for encoding and decoding payload files.
 
-If AV is running on the CALDERA server host, then it may sometimes flag, quarantine, or delete
+If AV is running on the server host, then it may sometimes flag, quarantine, or delete
 CALDERA payloads. To help prevent this, encoded payloads can be used to prevent AV
-from breaking CALDERA server-side. The convention expected by the CALDERA server is that
+from breaking the server. The convention expected by the server is that
 encoded payloads will be XOR'ed with the DEFAULT_KEY contained in the payload_encoder.py
 module.
 
 Additionally, payload_encoder.py can be used from the command-line to add a new encoded payload.
 
 ```
-python /path/to/payload_encoder.py /path/to/plain-text-file /path/to/encoded-file.xored
+python /path/to/payload_encoder.py input_file output_file
 ```
 
-NOTE: In order for CALDERA to detect the availability of an encoded payload, the payload file's
+NOTE: In order for the server to detect the availability of an encoded payload, the payload file's
 name must end in the `.xored` extension.
 """
 
 import array
 import argparse
-import pathlib
 
 DEFAULT_KEY = [0x32, 0x45, 0x32, 0xca]
 
