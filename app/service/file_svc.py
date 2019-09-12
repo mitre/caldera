@@ -18,17 +18,13 @@ class FileSvc(BaseService):
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
 
-    async def init(self):
-        self.log.debug("Loading valid platforms from abilities")
-        self.valid_platforms = {ab['platform'].lower() for ab in await self.data_svc.explode_abilities()}
-
     async def download(self, request):
         """
         Accept a request with a required header, file, and an optional header, platform, and download the file
         :param request:
         :return: a multipart file via HTTP
         """
-        name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
+        name = await self._verify_file(request.headers.get('file'), request.headers.get('platform'))
         if name:
             _, file_path = await self.find_file_path(name, 'payloads')
             if file_path:
@@ -68,12 +64,11 @@ class FileSvc(BaseService):
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        if name:
-            for plugin in self.plugins:
-                for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
-                    if name in files:
-                        self.log.debug('Located %s' % name)
-                        return plugin, os.path.join(root, name)
+        for plugin in self.plugins:
+            for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
+                if name in files:
+                    self.log.debug('Located %s' % name)
+                    return plugin, os.path.join(root, name)
 
     """ PRIVATE """
 
@@ -85,8 +80,7 @@ class FileSvc(BaseService):
         return path
 
     async def _compile(self, name, platform):
-        if platform.lower() not in self.valid_platforms:
-            return
+
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self.find_file_path(name)
@@ -107,3 +101,11 @@ class FileSvc(BaseService):
         out.writelines(lines)
         out.close()
         return key
+
+    async def _verify_file(self, name, platform):
+        if not platform or not name:
+            return
+        valid_platforms = {ab['platform'].lower() for ab in await self.data_svc.explode_abilities()}
+        if platform.lower() not in self.valid_platforms:
+            return
+        return await self._compile(name, platform.lower())
