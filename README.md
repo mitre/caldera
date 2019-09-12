@@ -64,7 +64,7 @@ Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CA
 
 Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
 section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
-Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
+Note that the _built-in_ fact source contains the file extensions that you will be hunting for.
 
 Click into the "operations" section and start a new operation. Choose the "hunter" adversary
 and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
