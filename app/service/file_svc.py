@@ -8,6 +8,7 @@ from shutil import which
 from hashlib import md5
 
 from app.service.base_service import BaseService
+from app.utility.payload_encoder import xor_file
 
 
 class FileSvc(BaseService):
@@ -19,15 +20,14 @@ class FileSvc(BaseService):
 
     async def download(self, request):
         """
-        Accept a request with a required header, file, and an optional header, platform, and download the file
+        Accept a request with a required header, file, and an optional header, platform, and download the file.
         :param request:
         :return: a multipart file via HTTP
         """
-        name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
-        _, file_path = await self.find_file_path(name, 'payloads')
-        if file_path:
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
-            return web.FileResponse(path=file_path, headers=headers)
+        name, content = await self._get_file(request.headers.get('file'), request.headers.get('platform'))
+        headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
+        if content:
+            return web.Response(body=content, headers=headers)
         return web.HTTPNotFound(body='File not found')
 
     async def upload(self, request):
@@ -57,7 +57,7 @@ class FileSvc(BaseService):
 
     async def find_file_path(self, name, location=''):
         """
-        Find the location on disk of a file by name
+        Find the location on disk of a file by name.
         :param name:
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
@@ -77,7 +77,25 @@ class FileSvc(BaseService):
             os.makedirs(path)
         return path
 
-    async def _compile(self, name, platform):
+    async def _get_file(self, name, platform):
+        if name.endswith('.go'):
+            name = await self._go_compile(name, platform)
+            _, file_path = await self.find_file_path(name, location='payloads')
+            with open(file_path, 'rb') as file_stream:
+                return name, file_stream.read()
+
+        file_info = await self.find_file_path(name, location='payloads')
+        if file_info:
+            with open(file_info[1], 'rb') as file_stream:
+                return name, file_stream.read()
+
+        file_info = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        if file_info:
+            return name, xor_file(file_info[1])
+
+        raise FileNotFoundError
+
+    async def _go_compile(self, name, platform):
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self.find_file_path(name)
