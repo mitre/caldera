@@ -21,6 +21,9 @@ class PlanningService(BaseService):
         :param phase:
         :return: a list of links
         """
+        await self.get_service('parsing_svc').parse_facts(operation)
+        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id'])))[0]
+
         if (not agent['trusted']) and (not operation['allow_untrusted']):
             self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
             return []

@@ -53,12 +53,10 @@ class OperationService(BaseService):
             for phase in operation[0]['adversary']['phases']:
                 operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
                 self.log.debug('%s: started' % operation_phase_name)
-                operation = await self.data_svc.explode_operation(dict(id=op_id))
                 await planner.execute(phase)
                 self.log.debug('%s: completed' % operation_phase_name)
                 await self.data_svc.update('core_operation', key='id', value=op_id,
                                            data=dict(phase=phase))
-                await self.get_service('parsing_svc').parse_facts(operation[0])
             await self.close_operation(operation[0])
         except Exception:
             traceback.print_exc()
