@@ -21,19 +21,13 @@ class FileSvc(BaseService):
     async def download(self, request):
         """
         Accept a request with a required header, file, and an optional header, platform, and download the file.
-        If there is not a plaintext version of the file, and there is an encoded version available, then this
-        file will be decoded and returned to the requester.
         :param request:
         :return: a multipart file via HTTP
         """
-        name = await self._compile(request.headers.get('file'), request.headers.get('platform'))
+        name, content = await self._get_file(request.headers.get('file'), request.headers.get('platform'))
         headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
-        _, file_path = await self.find_file_path(name, 'payloads')
-
-        if file_path and file_path.endswith('.xored'):
-            return web.Response(body=xor_file(file_path), headers=headers)
-        elif file_path:
-            return web.FileResponse(path=file_path, headers=headers)
+        if content:
+            return web.Response(body=content, headers=headers)
         return web.HTTPNotFound(body='File not found')
 
     async def upload(self, request):
@@ -63,23 +57,16 @@ class FileSvc(BaseService):
 
     async def find_file_path(self, name, location=''):
         """
-        Find the location on disk of a file by name. Will also return the path
-        to an encoded version of the file (encoded files share the same name
-        but end with the '.xored' extension).
+        Find the location on disk of a file by name.
         :param name:
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        encoded_name = '%s.xored' % (name,)
         for plugin in self.plugins:
             for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
                 if name in files:
                     self.log.debug('Located %s' % name)
                     return plugin, os.path.join(root, name)
-                elif encoded_name in files:
-                    self.log.debug('Located %s' % encoded_name)
-                    return plugin, os.path.join(root, encoded_name)
-
 
     """ PRIVATE """
 
@@ -90,7 +77,25 @@ class FileSvc(BaseService):
             os.makedirs(path)
         return path
 
-    async def _compile(self, name, platform):
+    async def _get_file(self, name, platform):
+        if name.endswith('.go'):
+            name = await self._go_compile(name, platform)
+            _, file_path = await self.find_file_path(name, location='payloads')
+            with open(file_path, 'rb') as file_stream:
+                return name, file_stream.read()
+
+        file_info = await self.find_file_path(name, location='payloads')
+        if file_info:
+            with open(file_info[1], 'rb') as file_stream:
+                return name, file_stream.read()
+
+        file_info = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        if file_info:
+            return name, xor_file(file_info[1])
+
+        raise FileNotFoundError
+
+    async def _go_compile(self, name, platform):
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self.find_file_path(name)
