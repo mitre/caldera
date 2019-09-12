@@ -80,7 +80,6 @@ class FileSvc(BaseService):
         return path
 
     async def _compile(self, name, platform):
-
         if name.endswith('.go'):
             if which('go') is not None:
                 plugin, file_path = await self.find_file_path(name)
