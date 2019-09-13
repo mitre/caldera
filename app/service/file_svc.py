@@ -63,12 +63,19 @@ class FileSvc(BaseService):
         :return: a tuple: the plugin the file is found in & the relative file path
         """
         for plugin in self.plugins:
-            for root, dirs, files in os.walk('plugins/%s/%s' % (plugin, location)):
-                if name in files:
-                    self.log.debug('Located %s' % name)
-                    return plugin, os.path.join(root, name)
+            file_path = await self._walk_file_path('plugins/%s/%s' % (plugin, location), name)
+            if file_path:
+                return plugin, file_path
+        return None, await self._walk_file_path('%s' % location, name)
 
     """ PRIVATE """
+
+    async def _walk_file_path(self, path, target):
+        for root, dirs, files in os.walk(path):
+            if target in files:
+                self.log.debug('Located %s' % target)
+                return os.path.join(root, target)
+        return None
 
     async def _create_exfil_sub_directory(self, headers):
         dir_name = headers.get('X-Request-ID', str(uuid.uuid4()))
