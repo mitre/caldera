@@ -199,8 +199,6 @@ class DataService(BaseService):
             allow_untrusted=allow_untrusted))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
-        if source_id:
-            sources.append(source_id)
         for s_id in [s for s in sources if s]:
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
