@@ -168,7 +168,7 @@ class DataService(BaseService):
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=[],
                                planner=None, state=None, allow_untrusted=False):
         """
         Save a new operation to the database
