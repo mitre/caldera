@@ -37,22 +37,7 @@ class DataService(BaseService):
         :return: None
         """
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            for entries in self.strip_yml(filename):
-                for ab in entries:
-                    for pl, executors in ab['platforms'].items():
-                        for name, info in executors.items():
-                            for e in name.split(','):
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                          technique_name=ab['technique']['name'],
-                                                          technique_id=ab['technique']['attack_id'],
-                                                          test=encoded_test.decode(), description=ab.get('description'),
-                                                          executor=e, name=ab['name'], platform=pl,
-                                                          cleanup=b64encode(
-                                                              info['cleanup'].strip().encode(
-                                                                  'utf-8')).decode() if info.get(
-                                                              'cleanup') else None,
-                                                          payload=info.get('payload'), parser=info.get('parser'))
+            await self._save_ability_to_database(filename)
 
     async def load_adversaries(self, directory):
         """
@@ -106,6 +91,7 @@ class DataService(BaseService):
             f.seek(0)
             f.write(file_contents)
             f.truncate()
+        await self._save_ability_to_database(file_path)
 
     async def persist_adversary(self, i, name, description, phases):
         """
@@ -152,13 +138,17 @@ class DataService(BaseService):
                        technique_id=technique_id, technique_name=technique_name,
                        executor=executor, platform=platform, description=description,
                        cleanup=cleanup)
+        # update
+        unique_criteria = dict(ability_id=ability_id, platform=platform, executor=executor)
+        for entry in await self.dao.get('core_ability', unique_criteria):
+            await self.update('core_ability', 'id', entry['id'], ability)
+            await self.dao.delete('core_parser', dict(ability=entry['id']))
+            await self.dao.delete('core_payload', dict(ability=entry['id']))
+            return await self._save_ability_extras(entry['id'], payload, parser)
+
+        # new
         identifier = await self.dao.create('core_ability', ability)
-        if payload:
-            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
-        if parser:
-            parser['ability'] = identifier
-            await self.dao.create('core_parser', parser)
-        return identifier
+        return await self._save_ability_extras(identifier, payload, parser)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -375,3 +365,40 @@ class DataService(BaseService):
         :return: None
         """
         await self.dao.update(table, key, value, data)
+
+    """ PRIVATE """
+
+    async def _save_ability_to_database(self, filename):
+        for entries in self.strip_yml(filename):
+            for ab in entries:
+                for pl, executors in ab['platforms'].items():
+                    for name, info in executors.items():
+                        for e in name.split(','):
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                            await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                      technique_name=ab['technique']['name'],
+                                                      technique_id=ab['technique']['attack_id'],
+                                                      test=encoded_test.decode(), description=ab.get('description'),
+                                                      executor=e, name=ab['name'], platform=pl,
+                                                      cleanup=b64encode(
+                                                          info['cleanup'].strip().encode(
+                                                              'utf-8')).decode() if info.get(
+                                                          'cleanup') else None,
+                                                      payload=info.get('payload'), parser=info.get('parser'))
+                await self._delete_stale_abilities(ab)
+
+    async def _save_ability_extras(self, identifier, payload, parser):
+        if payload:
+            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
+        if parser:
+            parser['ability'] = identifier
+            await self.dao.create('core_parser', parser)
+        return identifier
+
+    async def _delete_stale_abilities(self, ability):
+        for saved in await self.dao.get('core_ability', dict(ability_id=ability.get('id'))):
+            for platform, executors in ability['platforms'].items():
+                if platform == saved['platform'] and not saved['executor'] in str(executors.keys()):
+                    await self.dao.delete('core_ability', dict(id=saved['id']))
+            if saved['platform'] not in ability['platforms']:
+                await self.dao.delete('core_ability', dict(id=saved['id']))
