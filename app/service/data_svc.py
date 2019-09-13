@@ -3,6 +3,8 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
+import yaml
+
 from app.service.base_service import BaseService
 
 
@@ -47,7 +49,8 @@ class DataService(BaseService):
                                                           test=encoded_test.decode(), description=ab.get('description'),
                                                           executor=e, name=ab['name'], platform=pl,
                                                           cleanup=b64encode(
-                                                              info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                                              info['cleanup'].strip().encode(
+                                                                  'utf-8')).decode() if info.get(
                                                               'cleanup') else None,
                                                           payload=info.get('payload'), parser=info.get('parser'))
 
@@ -113,11 +116,16 @@ class DataService(BaseService):
         :param phases:
         :return: the ID of the created adversary
         """
-        p = defaultdict(list)
-        for ability in phases:
-            p[ability['phase']].append(ability['id'])
-        self.write_yaml('data/adversaries/%s.yml' % i,
-                        dict(id=i, name=name, description=description, phases=dict(p)))
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
+        if not file_path:
+            file_path = 'data/adversaries/%s.yml' % i
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            p = defaultdict(list)
+            for ability in phases:
+                p[ability['phase']].append(ability['id'])
+            f.write(yaml.dump(dict(id=i, name=name, description=description, phases=dict(p))))
+            f.truncate()
         return await self.create_adversary(i, name, description, phases)
 
     """ CREATE """
@@ -140,11 +148,11 @@ class DataService(BaseService):
         :param parser:
         :return: the database id
         """
-        identifier = await self.dao.create('core_ability',
-                                           dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                                                technique_id=technique_id, technique_name=technique_name,
-                                                executor=executor, platform=platform, description=description,
-                                                cleanup=cleanup))
+        ability = dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                       technique_id=technique_id, technique_name=technique_name,
+                       executor=executor, platform=platform, description=description,
+                       cleanup=cleanup)
+        identifier = await self.dao.create('core_ability', ability)
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
@@ -163,8 +171,10 @@ class DataService(BaseService):
         """
         identifier = await self.dao.create('core_adversary',
                                            dict(adversary_id=i, name=name.lower(), description=description))
+
+        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
         for ability in phases:
-            a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
+            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
             await self.dao.create('core_adversary_map', a)
         return identifier
 
@@ -261,7 +271,7 @@ class DataService(BaseService):
         adversaries = await self.dao.get('core_adversary', criteria)
         for adv in adversaries:
             phases = defaultdict(list)
-            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['id'])):
+            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['adversary_id'])):
                 for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
                     phases[t['phase']].append(ability)
             adv['phases'] = dict(phases)
@@ -342,17 +352,16 @@ class DataService(BaseService):
             p['params'] = json.loads(p['params'])
         return planners
 
-    """ DELETE / DEACTIVATE """
+    """ DELETE """
 
-    async def delete(self, index, id):
+    async def delete(self, index, criteria):
         """
         Delete any object in the database by table name and ID
         :param index: the name of the table
-        :param id: the relational ID of the field to delete
-        :return: confirmation message
+        :param criteria: a dict of key/value pairs to match on
         """
-        await self.dao.delete(index, data=dict(id=id))
-        return 'Removed %s from %s' % (id, index)
+        self.log.debug('Deleting %s from %s' % (criteria, index))
+        await self.dao.delete(index, data=criteria)
 
     """ UPDATE """
 
