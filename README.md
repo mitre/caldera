@@ -17,9 +17,9 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 ## Installation
 
-Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
-git clone --depth 1 https://github.com/mitre/caldera.git --recursive
+git clone --branch x.x.x https://github.com/mitre/caldera.git --depth 1 --recursive
 ```
 
 From the root of this project, install the PIP requirements.
@@ -71,24 +71,6 @@ and ensure that you select the fact source of extensions. By feeding these facts
 the adversary profile chosen (file hunter) will utilize them inside its abilities.
 
 Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
-
-## Command-and-control
-
-Want to unlock reverse-shells and classic command-and-control behaviors over the terminal? Load the [terminal plugin](https://github.com/mitre/caldera/wiki/Plugins-terminal) before starting CALDERA.
-
-## Versions
-
-Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
-```
-git clone --branch 2.2.0 https://github.com/mitre/caldera.git --recursive
-```
-
-Check the GitHub releases for the most stable release versions.
-
-> **IMPORTANT**: The core system relies on plugins (git submodules). If you are unfamiliar with this concept and want 
-to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. The easiest way to run bleeding-edge
-code is to recursively re-clone all of CALDERA when you want to update it.
 
 ## Developers
 
