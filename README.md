@@ -21,7 +21,7 @@ Start by cloning this repository recursively, passing the desired version/releas
 ```
 git clone --branch x.x.x https://github.com/mitre/caldera.git --depth 1 --recursive
 ```
-> Note: you can clone the master branch if you'd like to use the bleeding-edge code.
+> Use 'git clone https://github.com/mitre/caldera.git --depth 1 --recursive' if you want to use bleeding-edge code
 
 From the root of this project, install the PIP requirements.
 ```
