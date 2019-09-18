@@ -29,7 +29,7 @@ class AgentService(BaseService):
                 for a in trusted_agents:
                     last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
-                    if silence_time > (self.untrusted_timer + a['sleep']):
+                    if silence_time > (self.untrusted_timer + a['sleep_max']):
                         await self.update_trust(a['paw'], 0)
                     else:
                         trust_time_left = self.untrusted_timer - silence_time
@@ -51,7 +51,8 @@ class AgentService(BaseService):
         await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
         self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid,
+                               sleep_min, sleep_max):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -77,7 +78,7 @@ class AgentService(BaseService):
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
-                          trusted=True, last_trusted_seen=now, sleep=sleep)
+                          trusted=True, last_trusted_seen=now, sleep_min=sleep_min, sleep_max=sleep_max)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
             return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
