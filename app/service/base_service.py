@@ -45,10 +45,6 @@ class BaseService:
         return randint(int(i[0]), int(i[1]))
 
     @staticmethod
-    def jitter_range(min, max):
-        return randint(int(min), int(max))
-
-    @staticmethod
     def create_logger(name):
         return Logger(name)
 

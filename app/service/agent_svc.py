@@ -73,14 +73,13 @@ class AgentService(BaseService):
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
+            return agent[0]
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
                           trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
-            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
-        agent[0]['sleep'] = self.jitter_range(agent[0]['sleep_min'], agent[0]['sleep_max'])
-        return agent[0]
+            return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
 
     async def get_instructions(self, paw):
         """
