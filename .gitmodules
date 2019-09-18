@@ -22,3 +22,6 @@
 [submodule "plugins/terminal"]
 	path = plugins/terminal
 	url = https://github.com/mitre/terminal.git
+[submodule "plugins/mock"]
+	path = plugins/mock
+	url = https://github.com/mitre/mock.git
