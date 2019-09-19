@@ -94,14 +94,14 @@ class FileSvc(BaseService):
             with open(file_path, 'rb') as file_stream:
                 return name, file_stream.read()
 
-        file_info = await self.find_file_path(name, location='payloads')
-        if file_info:
-            with open(file_info[1], 'rb') as file_stream:
+        _, file_name = await self.find_file_path(name, location='payloads')
+        if file_name:
+            with open(file_name, 'rb') as file_stream:
                 return name, file_stream.read()
 
-        file_info = await self.find_file_path('%s.xored' % (name,), location='payloads')
-        if file_info:
-            return name, xor_file(file_info[1])
+        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        if file_name:
+            return name, xor_file(file_name)
 
         raise FileNotFoundError
 
