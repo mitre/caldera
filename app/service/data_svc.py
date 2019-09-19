@@ -293,7 +293,6 @@ class DataService(BaseService):
         for a in agents:
             executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
             a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
-            a['sleep'] = self.jitter('{}/{}'.format(a['sleep_min'], a['sleep_max']))
         return agents
 
     async def explode_results(self, criteria=None):
