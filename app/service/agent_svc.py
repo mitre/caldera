@@ -78,7 +78,7 @@ class AgentService(BaseService):
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
                           trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
-            await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         agent[0]['sleep'] = self.jitter('{}/{}'.format(agent[0]['sleep_min'], agent[0]['sleep_max']))
         return agent[0]
 
