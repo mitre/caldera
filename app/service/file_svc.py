@@ -88,7 +88,6 @@ class FileSvc(BaseService):
     async def _get_file(self, name, platform):
         if name.endswith('.go'):
             if not platform or platform.lower() not in {ab['platform'].lower() for ab in await self.data_svc.explode_abilities()}:
-                # platform not found
                 raise FileNotFoundError
             name = await self._go_compile(name, platform.lower())
             _, file_path = await self.find_file_path(name, location='payloads')
