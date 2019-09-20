@@ -137,12 +137,12 @@ class PlanningService(BaseService):
                     copy_link = copy.deepcopy(link)
 
                     variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
-                    copy_link['command'] = await self._apply_stealth(operation, agent, variant)
+                    copy_link['command'] = self.encode_string(variant)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
                     links.append(copy_link)
             else:
-                link['command'] = await self._apply_stealth(operation, agent, decoded_test)
+                link['command'] = self.encode_string(decoded_test)
         return links
 
     @staticmethod
@@ -182,11 +182,6 @@ class PlanningService(BaseService):
             combo_link_id.add(var['link_id'])
         score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
         return copy_test, score, rewards
-
-    async def _apply_stealth(self, operation, agent, decoded_test):
-        if operation['stealth']:
-            decoded_test = self.apply_stealth(agent['platform'], decoded_test)
-        return self.encode_string(decoded_test)
 
     async def _get_agent_facts(self, op_id, paw):
         """
