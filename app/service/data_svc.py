@@ -3,6 +3,8 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
+import yaml
+
 from app.service.base_service import BaseService
 
 
@@ -35,21 +37,7 @@ class DataService(BaseService):
         :return: None
         """
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            for entries in self.strip_yml(filename):
-                for ab in entries:
-                    for pl, executors in ab['platforms'].items():
-                        for name, info in executors.items():
-                            for e in name.split(','):
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                          technique_name=ab['technique']['name'],
-                                                          technique_id=ab['technique']['attack_id'],
-                                                          test=encoded_test.decode(), description=ab.get('description'),
-                                                          executor=e, name=ab['name'], platform=pl,
-                                                          cleanup=b64encode(
-                                                              info['cleanup'].strip().encode('utf-8')).decode() if info.get(
-                                                              'cleanup') else None,
-                                                          payload=info.get('payload'), parser=info.get('parser'))
+            await self._save_ability_to_database(filename)
 
     async def load_adversaries(self, directory):
         """
@@ -88,6 +76,23 @@ class DataService(BaseService):
 
     """ PERSIST """
 
+    async def persist_ability(self, ability_id, file_contents):
+        """
+        Save a new ability from either the GUI or REST API. This updates an existing ability, if found, or writes
+        a new YML file into the core data/ directory.
+        :param ability_id:
+        :param file_contents:
+        :return:
+        """
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % ability_id, location='data')
+        if not file_path:
+            file_path = 'data/abilities/all/%s.yml' % ability_id
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(file_contents)
+            f.truncate()
+        await self._save_ability_to_database(file_path)
+
     async def persist_adversary(self, i, name, description, phases):
         """
         Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
@@ -97,11 +102,16 @@ class DataService(BaseService):
         :param phases:
         :return: the ID of the created adversary
         """
-        p = defaultdict(list)
-        for ability in phases:
-            p[ability['phase']].append(ability['id'])
-        self.write_yaml('data/adversaries/%s.yml' % i,
-                        dict(id=i, name=name, description=description, phases=dict(p)))
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
+        if not file_path:
+            file_path = 'data/adversaries/%s.yml' % i
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            p = defaultdict(list)
+            for ability in phases:
+                p[ability['phase']].append(ability['id'])
+            f.write(yaml.dump(dict(id=i, name=name, description=description, phases=dict(p))))
+            f.truncate()
         return await self.create_adversary(i, name, description, phases)
 
     """ CREATE """
@@ -124,17 +134,21 @@ class DataService(BaseService):
         :param parser:
         :return: the database id
         """
-        identifier = await self.dao.create('core_ability',
-                                           dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                                                technique_id=technique_id, technique_name=technique_name,
-                                                executor=executor, platform=platform, description=description,
-                                                cleanup=cleanup))
-        if payload:
-            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
-        if parser:
-            parser['ability'] = identifier
-            await self.dao.create('core_parser', parser)
-        return identifier
+        ability = dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                       technique_id=technique_id, technique_name=technique_name,
+                       executor=executor, platform=platform, description=description,
+                       cleanup=cleanup)
+        # update
+        unique_criteria = dict(ability_id=ability_id, platform=platform, executor=executor)
+        for entry in await self.dao.get('core_ability', unique_criteria):
+            await self.update('core_ability', 'id', entry['id'], ability)
+            await self.dao.delete('core_parser', dict(ability=entry['id']))
+            await self.dao.delete('core_payload', dict(ability=entry['id']))
+            return await self._save_ability_extras(entry['id'], payload, parser)
+
+        # new
+        identifier = await self.dao.create('core_ability', ability)
+        return await self._save_ability_extras(identifier, payload, parser)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -147,12 +161,14 @@ class DataService(BaseService):
         """
         identifier = await self.dao.create('core_adversary',
                                            dict(adversary_id=i, name=name.lower(), description=description))
+
+        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
         for ability in phases:
-            a = (dict(adversary_id=identifier, phase=ability['phase'], ability_id=ability['id']))
+            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=None,
+    async def create_operation(self, name, group, adversary_id, jitter='2/8', stealth=False, sources=[],
                                planner=None, state=None, allow_untrusted=False):
         """
         Save a new operation to the database
@@ -245,7 +261,7 @@ class DataService(BaseService):
         adversaries = await self.dao.get('core_adversary', criteria)
         for adv in adversaries:
             phases = defaultdict(list)
-            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['id'])):
+            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['adversary_id'])):
                 for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
                     phases[t['phase']].append(ability)
             adv['phases'] = dict(phases)
@@ -326,17 +342,16 @@ class DataService(BaseService):
             p['params'] = json.loads(p['params'])
         return planners
 
-    """ DELETE / DEACTIVATE """
+    """ DELETE """
 
-    async def delete(self, index, id):
+    async def delete(self, index, criteria):
         """
         Delete any object in the database by table name and ID
         :param index: the name of the table
-        :param id: the relational ID of the field to delete
-        :return: confirmation message
+        :param criteria: a dict of key/value pairs to match on
         """
-        await self.dao.delete(index, data=dict(id=id))
-        return 'Removed %s from %s' % (id, index)
+        self.log.debug('Deleting %s from %s' % (criteria, index))
+        await self.dao.delete(index, data=criteria)
 
     """ UPDATE """
 
@@ -350,3 +365,40 @@ class DataService(BaseService):
         :return: None
         """
         await self.dao.update(table, key, value, data)
+
+    """ PRIVATE """
+
+    async def _save_ability_to_database(self, filename):
+        for entries in self.strip_yml(filename):
+            for ab in entries:
+                for pl, executors in ab['platforms'].items():
+                    for name, info in executors.items():
+                        for e in name.split(','):
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                            await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                      technique_name=ab['technique']['name'],
+                                                      technique_id=ab['technique']['attack_id'],
+                                                      test=encoded_test.decode(), description=ab.get('description'),
+                                                      executor=e, name=ab['name'], platform=pl,
+                                                      cleanup=b64encode(
+                                                          info['cleanup'].strip().encode(
+                                                              'utf-8')).decode() if info.get(
+                                                          'cleanup') else None,
+                                                      payload=info.get('payload'), parser=info.get('parser'))
+                await self._delete_stale_abilities(ab)
+
+    async def _save_ability_extras(self, identifier, payload, parser):
+        if payload:
+            await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
+        if parser:
+            parser['ability'] = identifier
+            await self.dao.create('core_parser', parser)
+        return identifier
+
+    async def _delete_stale_abilities(self, ability):
+        for saved in await self.dao.get('core_ability', dict(ability_id=ability.get('id'))):
+            for platform, executors in ability['platforms'].items():
+                if platform == saved['platform'] and not saved['executor'] in str(executors.keys()):
+                    await self.dao.delete('core_ability', dict(id=saved['id']))
+            if saved['platform'] not in ability['platforms']:
+                await self.dao.delete('core_ability', dict(id=saved['id']))

@@ -29,7 +29,7 @@ class AgentService(BaseService):
                 for a in trusted_agents:
                     last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
-                    if silence_time > self.untrusted_timer:
+                    if silence_time > (self.untrusted_timer + a['sleep_max']):
                         await self.update_trust(a['paw'], 0)
                     else:
                         trust_time_left = self.untrusted_timer - silence_time
@@ -51,7 +51,7 @@ class AgentService(BaseService):
         await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
         self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -73,13 +73,14 @@ class AgentService(BaseService):
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
-            return agent[0]
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
-                          trusted=True, last_trusted_seen=now)
+                          trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
-            return (await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw)))[0]
+            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+        agent[0]['sleep'] = self.jitter('{}/{}'.format(agent[0]['sleep_min'], agent[0]['sleep_max']))
+        return agent[0]
 
     async def get_instructions(self, paw):
         """
@@ -136,7 +137,7 @@ class AgentService(BaseService):
         operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         while operation['state'] != operation_svc.op_states['RUNNING']:
             if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                link_id = await data_svc.create_link(link)
+                link_id = await data_svc.create('core_chain', link)
                 await data_svc.dao.update('core_operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
                 return link_id
             else:

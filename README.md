@@ -17,10 +17,11 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 ## Installation
 
-Start by cloning this repository recursively. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin%3F). 
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
-git clone --depth 1 https://github.com/mitre/caldera.git --recursive
+git clone --branch x.x.x https://github.com/mitre/caldera.git --depth 1 --recursive
 ```
+> Clone the master branch - recursively - if you want to use bleeding-edge code
 
 From the root of this project, install the PIP requirements.
 ```
@@ -43,12 +44,12 @@ the system. The missions assume CALDERA is running locally.
 networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
 less than 60 seconds. 
 
-Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugin:-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
+Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugins-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
 delivery command for your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugin:-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugins-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
@@ -63,28 +64,14 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
 Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
-section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact%3F).
-Note that the _extensions_ fact source contains the file extensions that you will be hunting for.
+section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
+Note that the _built-in_ fact source contains the file extensions that you will be hunting for.
 
-Click into the "operations" section and start a new operation. Choose the "file hunter" adversary
+Click into the "operations" section and start a new operation. Choose the "hunter" adversary
 and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
 the adversary profile chosen (file hunter) will utilize them inside its abilities.
 
 Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
-
-## Versions
-
-Bleeding-edge code can be run by using the latest master branch source code. Stable versions are tagged
-by major.minor.bugfix numbers and can be used by cloning the appropriate tagged version:
-```
-git clone --branch 2.2.0 https://github.com/mitre/caldera.git --recursive
-```
-
-Check the GitHub releases for the most stable release versions.
-
-> **IMPORTANT**: The core system relies on plugins (git submodules). If you are unfamiliar with this concept and want 
-to run the bleeding-edge code, a "git pull" on this code will likely not be sufficient. The easiest way to run bleeding-edge
-code is to recursively re-clone all of CALDERA when you want to update it.
 
 ## Developers
 
