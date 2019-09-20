@@ -6,7 +6,6 @@ from datetime import datetime
 import yaml
 
 from app.utility.logger import Logger
-from app.utility.stealth import obfuscate_ps1, obfuscate_bash
 
 
 class BaseService:
@@ -24,13 +23,6 @@ class BaseService:
     @classmethod
     def get_services(cls):
         return cls._services
-
-    @staticmethod
-    def apply_stealth(executor, code):
-        options = dict(windows=lambda c: obfuscate_ps1(c),
-                       darwin=lambda c: obfuscate_bash(c),
-                       linux=lambda c: obfuscate_bash(c))
-        return options[executor](code)
 
     @staticmethod
     def decode_bytes(s):
