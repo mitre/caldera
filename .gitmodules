@@ -25,6 +25,3 @@
 [submodule "plugins/mock"]
 	path = plugins/mock
 	url = https://github.com/mitre/mock.git
-[submodule "plugins/cloud"]
-	path = plugins/cloud
-	url = https://gitlab.mitre.org/caldera/cloud.git
