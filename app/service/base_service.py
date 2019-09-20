@@ -1,4 +1,5 @@
 from base64 import b64encode, b64decode
+from enum import Enum
 from random import randint
 from datetime import datetime
 
@@ -65,3 +66,8 @@ class BaseService:
     @staticmethod
     def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
         return datetime.now().strftime(date_format)
+
+    class LinkState(Enum):
+        EXECUTE = -3
+        DISCARD = -2
+        PAUSE = -1
