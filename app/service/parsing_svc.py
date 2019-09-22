@@ -1,5 +1,5 @@
-import plugins.stockpile.parsers.standard as parsers
-import plugins.stockpile.parsers.mimikatz as mimikatz_parser
+import app.parsers.standard as parsers
+import app.parsers.mimikatz as mimikatz_parser
 from base64 import b64decode
 
 from app.service.base_service import BaseService
