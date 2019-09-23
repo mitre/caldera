@@ -33,3 +33,28 @@ class TestJSONParser(unittest.TestCase):
         self.assertEqual(matched_facts[0]['fact'], parser_info['property'])
         self.assertEqual(matched_facts[0]['value'], ['jun', 'jul', 'aug'])
 
+
+class TestLineParser(unittest.TestCase):
+    def test_line(self):
+        test_blob = "/path/to/dir"
+        parser_info = {'ability': 1, 'name': 'line', 'property': 'host.dir.staged', 'script': ''}
+
+        matched_facts = parsers.line(parser=parser_info, blob=test_blob, log=None)
+        self.assertEqual(matched_facts[0]['fact'], parser_info['property'])
+        self.assertEqual(matched_facts[0]['value'], test_blob)
+
+    def test_multi_line(self):
+        test_blob = """
+        /path/to/dir
+
+        /path/to/dir2
+        /path/to/dir3
+        """
+        parser_info = {'ability': 1, 'name': 'line', 'property': 'host.dir.staged', 'script': ''}
+
+        matched_facts = parsers.line(parser=parser_info, blob=test_blob, log=None)
+        self.assertEquals(len(matched_facts), 3)
+        self.assertEqual(matched_facts[0]['fact'], parser_info['property'])
+
+        fact_values = [fact['value'] for fact in matched_facts]
+        self.assertEqual(fact_values, ['/path/to/dir', '/path/to/dir2', '/path/to/dir3'])
