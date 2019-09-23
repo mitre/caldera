@@ -1,5 +1,5 @@
 
-def mimikatz(blob, log):
+def mimikatz(blob, **kwargs):
     set_id = 0
     matched_facts = []
     list_lines = blob.split('\n')
