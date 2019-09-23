@@ -13,3 +13,4 @@ CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, na
 CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, params json, UNIQUE(name) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_ability_relationships (id integer primary key AUTOINCREMENT, ability_id integer, fact1 text, relationship text, fact2 text, relationship_type text, UNIQUE(ability_id, relationship, relationship_type) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_fact_relationships (id integer primary key AUTOINCREMENT, value1 text, relationship text, value2 text, UNIQUE(value1, value2) ON CONFLICT IGNORE);
