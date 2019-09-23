@@ -25,13 +25,13 @@ def json(parser, blob, log):
     return matched_facts
 
 
-def regex(parser, blob, log):
+def regex(parser, blob, **kwargs):
     matched_facts = []
     for i, v in enumerate([m for m in re.findall(parser['script'], blob.strip())]):
         matched_facts.append(dict(fact=parser['property'], value=v, set_id=i))
     return matched_facts
 
 
-def line(parser, blob, log):
+def line(parser, blob, **kwargs):
     return [dict(fact=parser['property'], value=f.strip(), set_id=0) for f in blob.split('\n') if f]
 
