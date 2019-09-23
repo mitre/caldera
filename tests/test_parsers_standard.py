@@ -8,10 +8,7 @@ class TestJSONParser(unittest.TestCase):
         test_blob = """    
         {
             "debug": "on",
-            "window": {
-                "title": "Hello",
-                "name": "main_window",
-            }
+            "test": "test"
         }
         """
         parser_info = {'ability': 82, 'name': 'json', 'property': 'host.user.name', 'script': 'debug'}
