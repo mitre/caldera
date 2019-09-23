@@ -1,5 +1,7 @@
 import app.parsers.standard as parsers
 import app.parsers.mimikatz as mimikatz_parser
+import glob
+from pydoc import locate
 from base64 import b64decode
 
 from app.service.base_service import BaseService
@@ -14,6 +16,21 @@ class ParsingService(BaseService):
             'line': parsers.line,
             'mimikatz': mimikatz_parser.mimikatz
         }
+        
+        
+    async def load_parsers(self, directory):
+        """
+        Load all parser plugins
+        :param directory:
+        :return: None
+        """        
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+            for entries in self.strip_yml(filename):
+                parser = locate(entries['parser'])
+                if not parser:
+                    self.log.warning('Unable to load parser function %s' % entries['parser'])
+                    next
+                await self._add_parser(entries['id'], entries['name'], parser)                   
 
     async def parse_facts(self, operation):
         """
@@ -35,6 +52,19 @@ class ParsingService(BaseService):
                 await data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
+    
+    async def _add_parser(self, p_id, name, parser):
+        """
+        Load the specified parser plugin
+        :param p_id:  the id of the yaml file that defines the parser
+        :param name:  the unique name of the parser
+        :param parser:  an instance of the parser class 
+        :return: None
+        """        
+        if name in self.parsers:
+            self.log.warning('Duplicate parser name detected:  %s:%s' % (p_id, name))
+        else:
+            self.parsers[name] = parser           
 
     async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
