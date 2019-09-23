@@ -117,7 +117,7 @@ class DataService(BaseService):
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                             platform, cleanup=None, payload=None, parser=None):
+                             platform, cleanup=None, payload=None, parser=None, fact_relationship=None):
         """
         Save a new ability to the database
         :param ability_id:
@@ -144,11 +144,11 @@ class DataService(BaseService):
             await self.update('core_ability', 'id', entry['id'], ability)
             await self.dao.delete('core_parser', dict(ability=entry['id']))
             await self.dao.delete('core_payload', dict(ability=entry['id']))
-            return await self._save_ability_extras(entry['id'], payload, parser)
+            return await self._save_ability_extras(entry['id'], payload, parser, fact_relationship=fact_relationship)
 
         # new
         identifier = await self.dao.create('core_ability', ability)
-        return await self._save_ability_extras(identifier, payload, parser)
+        return await self._save_ability_extras(identifier, payload, parser, fact_relationship=fact_relationship)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -384,15 +384,21 @@ class DataService(BaseService):
                                                           info['cleanup'].strip().encode(
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
-                                                      payload=info.get('payload'), parser=info.get('parser'))
+                                                      payload=info.get('payload'), parser=info.get('parser'),
+                                                      fact_relationship=dict(fact1=ab['requires'].split(',')[0],
+                                                                             relationship=ab['requires'].split(',')[1]
+                                                                             , fact2=ab['requires'].split(',')[2])
+                                                                            if ab.get('requires') else None)
                 await self._delete_stale_abilities(ab)
 
-    async def _save_ability_extras(self, identifier, payload, parser):
+    async def _save_ability_extras(self, identifier, payload, parser, fact_relationship=None):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
             parser['ability'] = identifier
             await self.dao.create('core_parser', parser)
+        if fact_relationship:
+            await self.dao.create('core_fact_relationship_template', fact_relationship)
         return identifier
 
     async def _delete_stale_abilities(self, ability):
