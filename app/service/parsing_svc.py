@@ -1,6 +1,6 @@
 import app.parsers.standard as parsers
 import app.parsers.mimikatz as mimikatz_parser
-import glob
+import glob, os
 from pydoc import locate
 from base64 import b64decode
 
@@ -24,13 +24,16 @@ class ParsingService(BaseService):
         :param directory:
         :return: None
         """        
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-            for entries in self.strip_yml(filename):
-                parser = locate(entries['parser'])
-                if not parser:
-                    self.log.warning('Unable to load parser function %s' % entries['parser'])
-                    next
-                await self._add_parser(entries['id'], entries['name'], parser)                   
+        if not os.path.exists(directory):        
+            raise ValueError('Unable to find plugin parser directory:  %s' % directory)
+        else:
+            for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+                for entries in self.strip_yml(filename):
+                    parser = locate(entries['parser'])
+                    if not parser:
+                        raise ValueError('Unable to load the function %s for parser %s declared in %s'
+                                         % (entries['parser'], entries['name'], filename))
+                    await self._add_parser(entries['id'], entries['name'], parser)
 
     async def parse_facts(self, operation):
         """
