@@ -217,7 +217,8 @@ class PlanningService(BaseService):
                     and relationship.get('property2') == fact_combo[i + 1]['property']:
                 relationship_found = await self.get_service('data_svc').dao.get('core_fact_relationships',
                                             criteria=dict(value1=fact_combo[i]['value'],
-                                            value2=fact_combo[i + 1]['value']))
+                                                          relationship=relationship['relationship'],
+                                                          value2=fact_combo[i + 1]['value']))
                 if relationship_found:
                     return True
         return False
