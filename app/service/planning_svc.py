@@ -131,8 +131,16 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
+                requires_relationship = (await self.get_service('data_svc').dao.get('core_ability_relationships',
+                                                                    criteria=dict(ability_id=link['ability'],
+                                                                    relationship_type='requires')))[0]
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
+                    if requires_relationship:
+                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship)
+                        if not relationship_satisfied:
+                            continue
+
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
@@ -202,3 +210,14 @@ class PlanningService(BaseService):
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
+
+    async def _enforce_relationship(self, fact_combo, relationship):
+        for i in range(len(fact_combo) - 1):
+            if relationship.get('fact1') == fact_combo[i]['property'] \
+                    and relationship.get('fact2') == fact_combo[i + 1]['property']:
+                relationship_found = await self.get_service('data_svc').dao.get('core_fact_relationships',
+                                            criteria=dict(value1=fact_combo[i]['value'],
+                                            value2=fact_combo[i + 1]['value']))
+                if relationship_found:
+                    return True
+        return False
