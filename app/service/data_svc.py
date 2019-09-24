@@ -390,14 +390,14 @@ class DataService(BaseService):
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
                                                       payload=info.get('payload'), parser=info.get('parser'),
-                                                      requires_fact_relationship=dict(fact1=ab['requires'].split(',')[0],
-                                                                                      relationship=ab['requires'].split(',')[1]
-                                                                                      , fact2=ab['requires'].split(',')[2],
+                                                      requires_fact_relationship=dict(property1=ab['requires'].split(',')[0].strip(),
+                                                                                      relationship=ab['requires'].split(',')[1].strip(),
+                                                                                      property2=ab['requires'].split(',')[2].strip(),
                                                                                       relationship_type='requires')
                                                                             if ab.get('requires') else None,
-                                                      creates_fact_relationship=dict(fact1=ab['creates'].split(',')[0],
-                                                                                      relationship=ab['creates'].split(',')[1]
-                                                                                      , fact2=ab['creates'].split(',')[2],
+                                                      creates_fact_relationship=dict(property1=ab['creates'].split(',')[0].strip(),
+                                                                                      relationship=ab['creates'].split(',')[1].strip(),
+                                                                                      property2=ab['creates'].split(',')[2].strip(),
                                                                                       relationship_type='creates')
                                                                             if ab.get('creates') else None)
                 await self._delete_stale_abilities(ab)

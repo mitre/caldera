@@ -213,8 +213,8 @@ class PlanningService(BaseService):
 
     async def _enforce_relationship(self, fact_combo, relationship):
         for i in range(len(fact_combo) - 1):
-            if relationship.get('fact1') == fact_combo[i]['property'] \
-                    and relationship.get('fact2') == fact_combo[i + 1]['property']:
+            if relationship.get('property1') == fact_combo[i]['property'] \
+                    and relationship.get('property2') == fact_combo[i + 1]['property']:
                 relationship_found = await self.get_service('data_svc').dao.get('core_fact_relationships',
                                             criteria=dict(value1=fact_combo[i]['value'],
                                             value2=fact_combo[i + 1]['value']))
