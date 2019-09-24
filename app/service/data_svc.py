@@ -62,6 +62,16 @@ class DataService(BaseService):
                 for fact in source['facts']:
                     fact['source_id'] = source_id
                     await self.create_fact(**fact)
+                relationships = source.get('relationships')
+                if relationships:
+                    for _, relationship in relationships.items():
+                        await self.create_relationship(relationship)
+
+
+    async def create_relationship(self, values):
+        return await self.dao.create('core_fact_relationships', dict(value1=values['value1'],
+                                                                     relationship=values['relationship'],
+                                                                     value2=values['value2']))
 
     async def load_planner(self, directory):
         """
