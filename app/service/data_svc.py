@@ -380,6 +380,14 @@ class DataService(BaseService):
                     for name, info in executors.items():
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                            creates_fact_relationship = dict(property1=ab['creates'].split(',')[0].strip(),
+                                                             relationship=ab['creates'].split(',')[1].strip(),
+                                                             property2=ab['creates'].split(',')[2].strip(),
+                                                             relationship_type='creates') if ab.get('creates') else None
+                            requires_fact_relationship = dict(property1=ab['requires'].split(',')[0].strip(),
+                                                              relationship=ab['requires'].split(',')[1].strip(),
+                                                              property2=ab['requires'].split(',')[2].strip(),
+                                                              relationship_type='requires') if ab.get('requires') else None
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                       technique_name=ab['technique']['name'],
                                                       technique_id=ab['technique']['attack_id'],
@@ -390,16 +398,8 @@ class DataService(BaseService):
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
                                                       payload=info.get('payload'), parser=info.get('parser'),
-                                                      requires_fact_relationship=dict(property1=ab['requires'].split(',')[0].strip(),
-                                                                                      relationship=ab['requires'].split(',')[1].strip(),
-                                                                                      property2=ab['requires'].split(',')[2].strip(),
-                                                                                      relationship_type='requires')
-                                                                            if ab.get('requires') else None,
-                                                      creates_fact_relationship=dict(property1=ab['creates'].split(',')[0].strip(),
-                                                                                      relationship=ab['creates'].split(',')[1].strip(),
-                                                                                      property2=ab['creates'].split(',')[2].strip(),
-                                                                                      relationship_type='creates')
-                                                                            if ab.get('creates') else None)
+                                                      requires_fact_relationship=requires_fact_relationship,
+                                                      creates_fact_relationship=creates_fact_relationship)
                 await self._delete_stale_abilities(ab)
 
     async def _save_ability_extras(self, identifier, payload, parser, requires_fact_relationship, creates_fact_relationship):
