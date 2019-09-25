@@ -33,5 +33,6 @@ def regex(parser, blob, **kwargs):
 
 
 def line(parser, blob, **kwargs):
-    return [dict(fact=parser['property'], value=f.strip(), set_id=0) for f in blob.split('\n') if f.strip()]
+    property_name = parser['property'][0]['property']
+    return [dict(fact=property_name, value=f.strip(), set_id=0) for f in blob.split('\n') if f.strip()]
 
