@@ -2,7 +2,6 @@ import glob
 import json
 from base64 import b64encode
 from collections import defaultdict
-
 import yaml
 
 from app.service.base_service import BaseService
@@ -357,6 +356,18 @@ class DataService(BaseService):
             p['params'] = json.loads(p['params'])
         return planners
 
+    async def explode_parsers(self, criteria=None):
+        """
+        Get all - or a filtered list of - parsers, built out with all sub-objects
+        :param criteria:
+        :return: a list of dictionary results
+        """
+        parsers = await self.dao.get('core_parser', criteria=criteria)
+        for parser in parsers:
+            parsers['property'] = json.laods(await self.dao.get('core_parser_property',
+                                                                criteria=dict(parser_id=parser['id'])))
+        return parsers
+
     """ DELETE """
 
     async def delete(self, index, criteria):
@@ -412,18 +423,13 @@ class DataService(BaseService):
                                                       creates_fact_relationship=creates_fact_relationship)
                 await self._delete_stale_abilities(ab)
 
-    async def _save_ability_extras(self, identifier, payload, parser, requires_fact_relationship, creates_fact_relationship):
+    async def _save_ability_extras(self, identifier, payload, parser, requires_fact_relationship,
+                                   creates_fact_relationship):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
             parser['ability'] = identifier
-            # Backwards compatibility code
-            if isinstance(parser['property'], str):
-                await self.dao.create('core_parser', parser)
-            else:
-                for prop in parser['property']:
-                    await self.dao.create('core_parser', dict(name=parser['name'], property=prop,
-                                                              script=parser['script'], ability=identifier))
+            await self._create_parser(parser)
         if requires_fact_relationship:
             requires_fact_relationship['ability_id'] = identifier
             await self.dao.create('core_ability_relationships', requires_fact_relationship)
@@ -439,3 +445,14 @@ class DataService(BaseService):
                     await self.dao.delete('core_ability', dict(id=saved['id']))
             if saved['platform'] not in ability['platforms']:
                 await self.dao.delete('core_ability', dict(id=saved['id']))
+
+    async def _create_parser(self, parser):
+        parser_copy = parser.copy()
+        properties = parser_copy.pop('property', None)
+        # Backwards compatability code
+        if isinstance(parser['property'], str):
+            properties = [properties]
+        # End Backwards compatability code
+        parser_id = await self.dao.create('core_parser', parser_copy)
+        for prop in properties:
+            await self.dao.create('core_parser_property', dict(parser_id=parser_id, property=prop))
