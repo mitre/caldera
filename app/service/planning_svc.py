@@ -140,7 +140,6 @@ class PlanningService(BaseService):
                         relationship_satisfied = await self._enforce_relationship(combo, requires_relationship[0])
                         if not relationship_satisfied:
                             continue
-
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 

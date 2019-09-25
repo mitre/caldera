@@ -2,6 +2,7 @@ import glob
 import json
 from base64 import b64encode
 from collections import defaultdict
+
 import yaml
 
 from app.service.base_service import BaseService
