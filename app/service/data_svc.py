@@ -417,7 +417,13 @@ class DataService(BaseService):
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
             parser['ability'] = identifier
-            await self.dao.create('core_parser', parser)
+            # Backwards compatibility code
+            if isinstance(parser['property'], str):
+                await self.dao.create('core_parser', parser)
+            else:
+                for prop in parser['property']:
+                    await self.dao.create('core_parser', dict(name=parser['name'], property=prop,
+                                                              script=parser['script'], ability=identifier))
         if requires_fact_relationship:
             requires_fact_relationship['ability_id'] = identifier
             await self.dao.create('core_ability_relationships', requires_fact_relationship)
