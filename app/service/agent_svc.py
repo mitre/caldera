@@ -90,7 +90,7 @@ class AgentService(BaseService):
         """
         commands = await self.get_service('data_svc').explode_chain(criteria=dict(paw=paw))
         instructions = []
-        for link in [c for c in commands if not c['collect']]:
+        for link in [c for c in commands if not c['collect'] and c['status'] == self.LinkState.EXECUTE.value]:
             await self.get_service('data_svc').update('core_chain', key='id', value=link['id'],
                                                       data=dict(collect=datetime.now()))
             payload = await self._gather_payload(link['ability'])
