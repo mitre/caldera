@@ -24,7 +24,7 @@ class ParsingService(BaseService):
         data_svc = self.get_service('data_svc')
         results = await data_svc.explode_results()
         for result in [r for r in results if not r['parsed']]:
-            parse_info = await data_svc.get('core_parser', dict(ability=result['link']['ability']))
+            parse_info = await data_svc.explode_parsers(criteria=dict(ability=result['link']['ability']))
             if parse_info and result['link']['status'] == 0:
                 blob = b64decode(result['output']).decode('utf-8')
                 parser = self.parsers.get(parse_info[0]['name'], parsers.regex)

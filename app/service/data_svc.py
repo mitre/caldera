@@ -367,8 +367,7 @@ class DataService(BaseService):
         """
         parsers = await self.dao.get('core_parser', criteria=criteria)
         for parser in parsers:
-            parsers['property'] = json.laods(await self.dao.get('core_parser_property',
-                                                                criteria=dict(parser_id=parser['id'])))
+            parser['property'] = await self.dao.get('core_parser_property', criteria=dict(parser_id=parser['id']))
         return parsers
 
     """ DELETE """
