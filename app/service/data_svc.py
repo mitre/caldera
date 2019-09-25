@@ -446,6 +446,11 @@ class DataService(BaseService):
             if saved['platform'] not in ability['platforms']:
                 await self.dao.delete('core_ability', dict(id=saved['id']))
 
+    async def _add_adversary_packs(self, pack):
+        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
+        for adv in self.strip_yml(filename):
+            return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
+
     async def _create_parser(self, parser):
         parser_copy = parser.copy()
         properties = parser_copy.pop('property', None)
