@@ -12,7 +12,8 @@ class ParsingService(BaseService):
         self.parsers = {
             'json': parsers.json,
             'line': parsers.line,
-            'mimikatz': mimikatz_parser.mimikatz
+            'mimikatz': mimikatz_parser.mimikatz,
+            'testing': parsers.testing
         }
 
     async def parse_facts(self, operation):
@@ -38,7 +39,10 @@ class ParsingService(BaseService):
 
     async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
-        for match in matched_facts:
+        fact_relationship = await data_svc.dao.get('core_ability_relationships',
+                                                            criteria=dict(ability_id=result['link']['ability'],
+                                                            relationship_type='creates'))
+        for i, match in enumerate(matched_facts):
             operation = (await data_svc.explode_operation(dict(id=operation['id'])))[0]
             if match['fact'].startswith('host'):
                 fact = await self._create_host_fact(operation, match, source, result)
@@ -46,6 +50,10 @@ class ParsingService(BaseService):
                 fact = await self._create_global_fact(operation, match, source, result)
             if fact:
                 await data_svc.create_fact(**fact)
+            if fact_relationship and i < len(matched_facts)-1:
+                fact_pair = await self._create_fact_relationship(match, matched_facts[i+1:], fact_relationship[0])
+                if fact_pair:
+                    await data_svc.create('core_fact_relationships', fact_pair)
 
     @staticmethod
     async def _create_host_fact(operation, match, source, result):
@@ -65,3 +73,10 @@ class ParsingService(BaseService):
                    operation['facts']):
             return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'],
                         value=match['value'], set_id=match['set_id'], score=1)
+
+    @staticmethod
+    async def _create_fact_relationship(fact1, sliced_facts, fact_relationship):
+        for fact2 in sliced_facts:
+            if fact1['set_id'] == fact2['set_id']:
+                return(dict(value1=fact1['value'], relationship=fact_relationship['relationship'],
+                            value2=fact2['value']))

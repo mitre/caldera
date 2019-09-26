@@ -36,3 +36,12 @@ def line(parser, blob, **kwargs):
     property_name = parser['property'][0]['property']
     return [dict(fact=property_name, value=f.strip(), set_id=0) for f in blob.split('\n') if f.strip()]
 
+
+def testing(parser, blob, **kwargs):
+    matched_facts=[]
+    properties = parser['property']
+    for j, line in enumerate(blob.split('\n')):
+        for i, v in enumerate(line.split(',')):
+            if v is not None and v is not '':
+                matched_facts.append(dict(fact=properties[i]['property'], value=v, set_id=j))
+    return matched_facts
