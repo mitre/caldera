@@ -266,6 +266,7 @@ class DataService(BaseService):
             phases = defaultdict(list)
             for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['adversary_id'])):
                 for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
+                    ability['adversary_map_id'] = t['id']
                     phases[t['phase']].append(ability)
             adv['phases'] = dict(phases)
         return adversaries

@@ -28,6 +28,7 @@ class PlanningService(BaseService):
             self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
             return []
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
+        phase_abilities = sorted(phase_abilities, key=lambda i: i['id'])
         link_status = await self._default_link_status(operation)
 
         links = []
@@ -35,9 +36,9 @@ class PlanningService(BaseService):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
-                     jitter=self.jitter(operation['jitter'])))
+                     jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
         links[:] = await self._trim_links(operation, links, agent)
-        return [link for link in list(reversed(sorted(links, key=lambda k: k['score'])))]
+        return [link for link in list(sorted(links, key=lambda k: (-k['score'], k['adversary_map_id'])))]
 
     async def create_cleanup_links(self, operation):
         """
