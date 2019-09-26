@@ -131,13 +131,13 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                requires_relationship = (await self.get_service('data_svc').dao.get('core_ability_relationships',
+                requires_relationship = await self.get_service('data_svc').dao.get('core_ability_relationships',
                                                                     criteria=dict(ability_id=link['ability'],
-                                                                    relationship_type='requires')))[0]
+                                                                    relationship_type='requires'))
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     if requires_relationship:
-                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship)
+                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship[0])
                         if not relationship_satisfied:
                             continue
 
