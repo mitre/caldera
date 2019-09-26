@@ -38,7 +38,7 @@ class PlanningService(BaseService):
                      status=link_status, decide=datetime.now(), executor=a['executor'],
                      jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
         links[:] = await self._trim_links(operation, links, agent)
-        return [link for link in list(sorted(links, key=lambda k: (-k['score'], k['adversary_map_id'])))]
+        return await self._sort_links(links)
 
     async def create_cleanup_links(self, operation):
         """
@@ -112,6 +112,13 @@ class PlanningService(BaseService):
         return abilities
 
     """ PRIVATE """
+
+    @staticmethod
+    async def _sort_links(links):
+        """
+        sort links by their score then by the order they are defined in an adversary profile
+        """
+        return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
 
     async def _trim_links(self, operation, links, agent):
         host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw']]
