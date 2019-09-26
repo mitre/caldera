@@ -143,6 +143,7 @@ class AgentService(BaseService):
             else:
                 await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+        link.pop('adversary_map_id')
         return await data_svc.create('core_chain', link)
 
     """ PRIVATE """
