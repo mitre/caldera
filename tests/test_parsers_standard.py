@@ -3,6 +3,26 @@ import unittest
 import app.parsers.standard as parsers
 
 
+class TestRegexParser(unittest.TestCase):
+    def test_regex(self):
+        test_blob = """
+        127.0.0.1 text
+        other text 0.0.0.0
+        """
+        parser_info = {
+            'ability': 82,
+            'name': 'regex',
+            'property': 'test.sample.ip',
+            'script': '[0-9]+(?:\.[0-9]+){3}'
+        }
+
+        matched_facts = parsers.regex(parser=parser_info, blob=test_blob, log=None)
+        self.assertEqual(matched_facts[0]['fact'], parser_info['property'])
+
+        fact_values = [fact['value'] for fact in matched_facts]
+        self.assertEqual(fact_values, ['127.0.0.1', '0.0.0.0'])
+
+
 class TestJSONParser(unittest.TestCase):
     def test_json_value(self):
         test_blob = """    
