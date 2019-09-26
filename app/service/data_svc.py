@@ -382,7 +382,8 @@ class DataService(BaseService):
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                       technique_name=ab['technique']['name'],
                                                       technique_id=ab['technique']['attack_id'],
-                                                      test=encoded_test.decode(), description=ab.get('description'),
+                                                      test=encoded_test.decode(),
+                                                      description=ab.get('description') or '',
                                                       executor=e, name=ab['name'], platform=pl,
                                                       cleanup=b64encode(
                                                           info['cleanup'].strip().encode(
