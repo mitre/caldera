@@ -25,11 +25,12 @@ class FileSvc(BaseService):
         :param request:
         :return: a multipart file via HTTP
         """
-        name, content = await self._get_file(request.headers.get('file'), request.headers.get('platform'))
-        headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
-        if content:
+        try:
+            name, content = await self._get_file(request.headers.get('file'), request.headers.get('platform'))
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
             return web.Response(body=content, headers=headers)
-        return web.HTTPNotFound(body='File not found')
+        except FileNotFoundError:
+            return web.HTTPNotFound(body='File not found')
 
     async def upload(self, request):
         """
