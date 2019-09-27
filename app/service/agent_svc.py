@@ -147,6 +147,7 @@ class AgentService(BaseService):
                 await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         facts = link.pop('facts', None)
+        link.pop('adversary_map_id')
         link_id = await data_svc.create('core_chain', link)
         if facts:
             await self._create_fact_link(facts, link_id, data_svc)
