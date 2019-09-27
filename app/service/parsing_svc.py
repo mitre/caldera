@@ -24,6 +24,7 @@ class ParsingService(BaseService):
         data_svc = self.get_service('data_svc')
         results = await data_svc.explode_results()
         for result in [r for r in results if not r['parsed']]:
+
             parse_info = await data_svc.get('core_parser', dict(ability=result['link']['ability']))
             if parse_info and result['link']['status'] == 0:
                 blob = b64decode(result['output']).decode('utf-8')
@@ -34,9 +35,14 @@ class ParsingService(BaseService):
                 update = dict(parsed=self.get_current_timestamp())
                 await data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
+
+
     """ PRIVATE """
 
     async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
+        create_fact_relationship = await data_svc.dao.get('core_ability_relationships',
+                                                          criteria=dict(ability_id=result['link']['ability'],
+                                                                        relationship_type='creates'))
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
         for match in matched_facts:
             operation = (await data_svc.explode_operation(dict(id=operation['id'])))[0]
@@ -46,6 +52,14 @@ class ParsingService(BaseService):
                 fact = await self._create_global_fact(operation, match, source, result)
             if fact:
                 await data_svc.create_fact(**fact)
+                if create_fact_relationship:
+                    used_fact_ids = await data_svc.dao.get('core_link_fact', criteria=dict(link_id=result['link']['id']))
+                    for id in used_fact_ids:
+                        relationship_fact = (await data_svc.dao.get('core_fact', criteria=dict(id=id['fact_id'])))[0]
+                        if relationship_fact['property'] == create_fact_relationship[0]['property1']:
+                            await data_svc.dao.create('core_fact_relationships', dict(value1=relationship_fact['value'],
+                                                                relationship=create_fact_relationship[0]['relationship'],
+                                                                value2=fact['value']))
 
     @staticmethod
     async def _create_host_fact(operation, match, source, result):
