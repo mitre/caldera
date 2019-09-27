@@ -100,7 +100,7 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
         operation_svc = OperationService()
-        auth_svc = AuthService()
+        auth_svc = AuthService(cfg['api_key'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
