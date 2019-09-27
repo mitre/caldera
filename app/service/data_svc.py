@@ -393,10 +393,10 @@ class DataService(BaseService):
                     for name, info in executors.items():
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            creates_fact_relationship = dict(property1=ab['creates'].split(',')[0].strip(),
-                                                             relationship=ab['creates'].split(',')[1].strip(),
-                                                             property2=ab['creates'].split(',')[2].strip(),
-                                                             relationship_type='creates') if ab.get('creates') else None
+                            creates_fact_relationship = dict(property1=ab['relationship'].split(',')[0].strip(),
+                                                             relationship=ab['relationship'].split(',')[1].strip(),
+                                                             property2=ab['relationship'].split(',')[2].strip(),
+                                                             relationship_type='creates') if ab.get('relationship') else None
                             requires_fact_relationship = dict(property1=ab['requires'].split(',')[0].strip(),
                                                               relationship=ab['requires'].split(',')[1].strip(),
                                                               property2=ab['requires'].split(',')[2].strip(),
