@@ -51,13 +51,14 @@ class AgentService(BaseService):
         await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
         self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
+    async def handle_heartbeat(self, paw, platform, server, group, father, executors, architecture, location, pid, ppid, sleep):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
         :param platform:
         :param server:
         :param group:
+        :param father:
         :param executors:
         :param architecture:
         :param location:
@@ -69,14 +70,14 @@ class AgentService(BaseService):
         agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
-            update_data = dict(last_seen=now, pid=pid, ppid=ppid)
+            update_data = dict(last_seen=now, pid=pid, ppid=ppid, host_group=group, father=father)
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
-                          trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep)
+                          trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, father=father)
             await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
             agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
         agent[0]['sleep'] = self.jitter('{}/{}'.format(agent[0]['sleep_min'], agent[0]['sleep_max']))
