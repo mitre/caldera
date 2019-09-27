@@ -24,7 +24,6 @@ class ParsingService(BaseService):
         data_svc = self.get_service('data_svc')
         results = await data_svc.explode_results()
         for result in [r for r in results if not r['parsed']]:
-
             parse_info = await data_svc.get('core_parser', dict(ability=result['link']['ability']))
             if parse_info and result['link']['status'] == 0:
                 blob = b64decode(result['output']).decode('utf-8')
@@ -34,8 +33,6 @@ class ParsingService(BaseService):
                 await self._matched_fact_creation(matched_facts, operation, data_svc, result)
                 update = dict(parsed=self.get_current_timestamp())
                 await data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
-
-
 
     """ PRIVATE """
 

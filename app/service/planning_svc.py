@@ -158,7 +158,6 @@ class PlanningService(BaseService):
                     copy_link['rewards'] = rewards
                     copy_link['facts'] = combo
                     links.append(copy_link)
-
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
