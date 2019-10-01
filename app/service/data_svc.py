@@ -130,8 +130,7 @@ class DataService(BaseService):
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                             platform, cleanup=None, payload=None, parser=None, requires_fact_relationship=None,
-                             creates_fact_relationship=None):
+                             platform, cleanup=None, payload=None, parser=None, relationships=None):
         """
         Save a new ability to the database
         :param ability_id:
@@ -158,15 +157,12 @@ class DataService(BaseService):
             await self.update('core_ability', 'id', entry['id'], ability)
             await self.dao.delete('core_parser', dict(ability=entry['id']))
             await self.dao.delete('core_payload', dict(ability=entry['id']))
-            return await self._save_ability_extras(entry['id'], payload, parser,
-                                                   requires_fact_relationship=requires_fact_relationship,
-                                                   creates_fact_relationship=creates_fact_relationship)
+            await self.dao.delete('core_ability_relationships', dict(ability_id=entry['id']))
+            return await self._save_ability_extras(entry['id'], payload, parser, relationships=relationships)
 
         # new
         identifier = await self.dao.create('core_ability', ability)
-        return await self._save_ability_extras(identifier, payload, parser,
-                                               requires_fact_relationship=requires_fact_relationship,
-                                               creates_fact_relationship=creates_fact_relationship)
+        return await self._save_ability_extras(identifier, payload, parser, relationships=relationships)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -394,14 +390,7 @@ class DataService(BaseService):
                     for name, info in executors.items():
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            creates_fact_relationship = dict(property1=ab['relationships'].split(',')[0].strip(),
-                                                             relationship=ab['relationships'].split(',')[1].strip(),
-                                                             property2=ab['relationships'].split(',')[2].strip(),
-                                                             relationship_type='creates') if ab.get('relationships') else None
-                            requires_fact_relationship = dict(property1=ab['requires'].split(',')[0].strip(),
-                                                              relationship=ab['requires'].split(',')[1].strip(),
-                                                              property2=ab['requires'].split(',')[2].strip(),
-                                                              relationship_type='requires') if ab.get('requires') else None
+                            fact_relationships = await self._get_fact_relationships(ab)
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                       technique_name=ab['technique']['name'],
                                                       technique_id=ab['technique']['attack_id'],
@@ -413,22 +402,33 @@ class DataService(BaseService):
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
                                                       payload=info.get('payload'), parser=info.get('parser'),
-                                                      requires_fact_relationship=requires_fact_relationship,
-                                                      creates_fact_relationship=creates_fact_relationship)
+                                                      relationships=fact_relationships)
                 await self._delete_stale_abilities(ab)
 
-    async def _save_ability_extras(self, identifier, payload, parser, requires_fact_relationship, creates_fact_relationship):
+    async def _get_fact_relationships(self, ability):
+        relationships = []
+        if ability.get('requires'):
+            relationships.append(dict(property1=ability['requires'].split(',')[0].strip(),
+                                      relationship=ability['requires'].split(',')[1].strip(),
+                                      property2=ability['requires'].split(',')[2].strip(),
+                                      relationship_type='requires'))
+        if ability.get('relationships'):
+            relationships.append(dict(property1=ability['relationships'].split(',')[0].strip(),
+                 relationship=ability['relationships'].split(',')[1].strip(),
+                 property2=ability['relationships'].split(',')[2].strip(),
+                 relationship_type='creates'))
+        return relationships
+
+    async def _save_ability_extras(self, identifier, payload, parser, relationships):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
             parser['ability'] = identifier
             await self.dao.create('core_parser', parser)
-        if requires_fact_relationship:
-            requires_fact_relationship['ability_id'] = identifier
-            await self.dao.create('core_ability_relationships', requires_fact_relationship)
-        if creates_fact_relationship:
-            creates_fact_relationship['ability_id'] = identifier
-            await self.dao.create('core_ability_relationships', creates_fact_relationship)
+        if relationships:
+            for r in relationships:
+                r['ability_id'] = identifier
+                await self.dao.create('core_ability_relationships', r)
         return identifier
 
     async def _delete_stale_abilities(self, ability):
