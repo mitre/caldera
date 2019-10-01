@@ -408,16 +408,21 @@ class DataService(BaseService):
     async def _get_fact_relationships(self, ability):
         relationships = []
         if ability.get('requires'):
-            relationships.append(dict(property1=ability['requires'].split(',')[0].strip(),
-                                      relationship=ability['requires'].split(',')[1].strip(),
-                                      property2=ability['requires'].split(',')[2].strip(),
-                                      relationship_type='requires'))
-        if ability.get('relationships'):
-            relationships.append(dict(property1=ability['relationships'].split(',')[0].strip(),
-                 relationship=ability['relationships'].split(',')[1].strip(),
-                 property2=ability['relationships'].split(',')[2].strip(),
-                 relationship_type='creates'))
+            for r in ability.get('requires'):
+                line = await self._cleanse_facts(r)
+                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2],
+                                          relationship_type='requires'))
+        if ability.get('consequence'):
+            for r in ability.get('consequence'):
+                line = await self._cleanse_facts(r)
+                relationships.append(dict(property1=line[0], relationship=line[1],property2=line[2],
+                                          relationship_type='creates'))
         return relationships
+
+    @staticmethod
+    async def _cleanse_facts(fact):
+        f = fact.translate({ord(i): None for i in '{}#'})
+        return [i.strip() for i in f.split(',')]
 
     async def _save_ability_extras(self, identifier, payload, parser, relationships):
         if payload:
