@@ -139,7 +139,9 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                requires_relationship = self._get_ability_relationship(operation, link['ability'], relationship_type='requires')
+                requires_relationship = self.get_service('data_svc').get_ability_relationship(operation,
+                                                                                              link['ability'],
+                                                                                              relationship_type='requires')
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     if requires_relationship:
@@ -159,16 +161,6 @@ class PlanningService(BaseService):
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
-
-    def _get_ability_relationship(self, operation, ability_id, relationship_type):
-        for phase in operation['adversary']['phases'].values():
-            for ability in phase:
-                if ability_id == ability['id']:
-                    requirements = ability.get('relationships', [])
-                    for r in requirements:
-                        if r['relationship_type'] == relationship_type:
-                            return r
-
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):

@@ -75,6 +75,16 @@ class DataService(BaseService):
                                                                      relationship=values['relationship'],
                                                                      value2=values['value2']))
 
+    @staticmethod
+    def get_ability_relationship(operation, ability_id, relationship_type):
+        for phase in operation['adversary']['phases'].values():
+            for ability in phase:
+                if ability_id == ability['id']:
+                    requirements = ability.get('relationships', [])
+                    for r in requirements:
+                        if r['relationship_type'] == relationship_type:
+                            return r
+
     async def load_planner(self, directory):
         """
         Load all planner YML files into the database
