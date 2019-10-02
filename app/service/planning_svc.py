@@ -148,7 +148,7 @@ class PlanningService(BaseService):
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     if requires_relationship:
-                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship)
+                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship, operation)
                         if not relationship_satisfied:
                             continue
 
@@ -233,14 +233,13 @@ class PlanningService(BaseService):
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
 
-    async def _enforce_relationship(self, fact_combo, relationship):
+    async def _enforce_relationship(self, fact_combo, relationship, operation):
         for i in range(len(fact_combo) - 1):
             if relationship.get('property1') == fact_combo[i]['property'] \
                     and relationship.get('property2') == fact_combo[i + 1]['property']:
-                relationship_found = await self.get_service('data_svc').dao.get('core_fact_relationships',
-                                            criteria=dict(value1=fact_combo[i]['value'],
-                                                          relationship=relationship['relationship'],
-                                                          value2=fact_combo[i + 1]['value']))
-                if relationship_found:
-                    return True
+                for r in operation['fact_relationships']:
+                    if fact_combo[i]['value'] == r['value1'] and fact_combo[i + 1]['value'] == r['value2'] \
+                            and relationship['relationship'] == r['relationship']:
+                        return True
         return False
+
