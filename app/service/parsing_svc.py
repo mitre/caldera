@@ -50,7 +50,7 @@ class ParsingService(BaseService):
             if fact:
                 await data_svc.create_fact(**fact)
                 if create_fact_relationship:
-                    used_fact_ids = await data_svc.dao.get('core_link_fact', criteria=dict(link_id=result['link']['id']))
+                    used_fact_ids = await data_svc.dao.get('core_fact_usage', criteria=dict(link_id=result['link']['id']))
                     for id in used_fact_ids:
                         relationship_fact = (await data_svc.dao.get('core_fact', criteria=dict(id=id['fact_id'])))[0]
                         if relationship_fact['property'] == create_fact_relationship[0]['property1']:

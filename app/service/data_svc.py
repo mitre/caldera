@@ -67,9 +67,8 @@ class DataService(BaseService):
                     await self.create_fact(**fact)
                 relationships = source.get('relationships')
                 if relationships:
-                    for _, relationship in relationships.items():
+                    for relationship in relationships.values():
                         await self.create_relationship(relationship)
-
 
     async def create_relationship(self, values):
         return await self.dao.create('core_fact_relationships', dict(value1=values['value1'],

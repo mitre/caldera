@@ -153,7 +153,7 @@ class AgentService(BaseService):
         facts = link.pop('facts', [])
         link_id = await data_svc.create('core_chain', link)
         for fact in facts:
-            await data_svc.create('core_link_fact', dict(link_id=link_id, fact_id=fact['id']))
+            await data_svc.create('core_fact_usage', dict(link_id=link_id, fact_id=fact['id']))
         return link_id
 
     async def _gather_payload(self, ability_id):

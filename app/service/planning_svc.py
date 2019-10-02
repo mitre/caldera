@@ -161,10 +161,10 @@ class PlanningService(BaseService):
         return links
 
     def _get_ability_relationship(self, operation, ability_id, relationship_type):
-        for i, phase in operation['adversary']['phases'].items():
+        for phase in operation['adversary']['phases'].values():
             for ability in phase:
                 if ability_id == ability['id']:
-                    requirements = ability.get('requires', None)
+                    requirements = ability.get('relationships', [])
                     for r in requirements:
                         if r['relationship_type'] == relationship_type:
                             return r
