@@ -139,13 +139,16 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
+                # TODO want to make all database calls into the explode operation and explode abilities functions
+                # so it gives any necessary information that this function needs in memory
                 requires_relationship = await self.get_service('data_svc').dao.get('core_ability_relationships',
-                                                                    criteria=dict(ability_id=link['ability'],
-                                                                    relationship_type='requires'))
+                                                                   criteria=dict(ability_id=link['ability'],
+                                                                   relationship_type='requires'))
+                requires_relationship = self._get_ability_relationship(operation, link['ability'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     if requires_relationship:
-                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship[0])
+                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship)
                         if not relationship_satisfied:
                             continue
 
@@ -161,6 +164,16 @@ class PlanningService(BaseService):
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
+
+    def _get_ability_relationship(self, operation, ability_id):
+        for i, phase in operation['adversary']['phases'].items():
+            for ability in phase:
+                if ability_id == ability['id']:
+                    requirements = ability.get('requires', None)
+                    for r in requirements:
+                        if r['relationship_type'] == 'requires':
+                            return r
+
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):

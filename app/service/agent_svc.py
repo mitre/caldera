@@ -137,27 +137,24 @@ class AgentService(BaseService):
         operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         while operation['state'] != operation_svc.op_states['RUNNING']:
             if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                facts = link.pop('facts', None)
-                link_id = await data_svc.create('core_chain', link)
-                if facts:
-                    await self._create_fact_link(facts, link_id, data_svc)
+                link_id = await self._create_link(link, data_svc)
                 await data_svc.dao.update('core_operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
                 return link_id
             else:
                 await asyncio.sleep(30)
                 operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
-        facts = link.pop('facts', None)
         link.pop('adversary_map_id')
-        link_id = await data_svc.create('core_chain', link)
-        if facts:
-            await self._create_fact_link(facts, link_id, data_svc)
-        return link_id
+        return await self._create_link(link, data_svc)
 
     """ PRIVATE """
 
-    async def _create_fact_link(self, facts, link_id, data_svc):
+    @staticmethod
+    async def _create_link(link, data_svc):
+        facts = link.pop('facts', [])
+        link_id = await data_svc.create('core_chain', link)
         for fact in facts:
             await data_svc.create('core_link_fact', dict(link_id=link_id, fact_id=fact['id']))
+        return link_id
 
     async def _gather_payload(self, ability_id):
         payload = await self.get_service('data_svc').get('core_payload', criteria=dict(ability=ability_id))
