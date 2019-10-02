@@ -139,12 +139,7 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                # TODO want to make all database calls into the explode operation and explode abilities functions
-                # so it gives any necessary information that this function needs in memory
-                requires_relationship = await self.get_service('data_svc').dao.get('core_ability_relationships',
-                                                                   criteria=dict(ability_id=link['ability'],
-                                                                   relationship_type='requires'))
-                requires_relationship = self._get_ability_relationship(operation, link['ability'])
+                requires_relationship = self._get_ability_relationship(operation, link['ability'], relationship_type='requires')
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
                     if requires_relationship:
@@ -165,13 +160,13 @@ class PlanningService(BaseService):
                 link['command'] = self.encode_string(decoded_test)
         return links
 
-    def _get_ability_relationship(self, operation, ability_id):
+    def _get_ability_relationship(self, operation, ability_id, relationship_type):
         for i, phase in operation['adversary']['phases'].items():
             for ability in phase:
                 if ability_id == ability['id']:
                     requirements = ability.get('requires', None)
                     for r in requirements:
-                        if r['relationship_type'] == 'requires':
+                        if r['relationship_type'] == relationship_type:
                             return r
 
 

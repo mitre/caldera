@@ -264,7 +264,7 @@ class DataService(BaseService):
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
-            ab['requires'] = await self.dao.get('core_ability_relationships', dict(ability_id=ab['id']))
+            ab['relationships'] = await self.dao.get('core_ability_relationships', dict(ability_id=ab['id']))
         return abilities
 
     async def explode_adversaries(self, criteria=None):
@@ -399,7 +399,7 @@ class DataService(BaseService):
                     for name, info in executors.items():
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            fact_relationships = await self._get_fact_relationships(ab)
+                            fact_relationships = await self._relationships_from_yaml(ab)
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                       technique_name=ab['technique']['name'],
                                                       technique_id=ab['technique']['attack_id'],
@@ -414,7 +414,7 @@ class DataService(BaseService):
                                                       relationships=fact_relationships)
                 await self._delete_stale_abilities(ab)
 
-    async def _get_fact_relationships(self, ability):
+    async def _relationships_from_yaml(self, ability):
         relationships = []
         if ability.get('requires'):
             for r in ability.get('requires'):
