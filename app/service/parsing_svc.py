@@ -1,7 +1,7 @@
-import app.parsers.standard as parsers
-import app.parsers.mimikatz as mimikatz_parser
 from base64 import b64decode
 
+import app.parsers.mimikatz as mimikatz_parser
+import app.parsers.standard as parsers
 from app.service.base_service import BaseService
 
 
@@ -35,6 +35,19 @@ class ParsingService(BaseService):
                 await data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
+    
+    async def _add_parser(self, p_id, name, parser):
+        """
+        Load the specified parser plugin
+        :param p_id:  the id of the yaml file that defines the parser
+        :param name:  the unique name of the parser
+        :param parser:  an instance of the parser class 
+        :return: None
+        """        
+        if name in self.parsers:
+            self.log.warning('Duplicate parser name detected:  %s:%s' % (p_id, name))
+        else:
+            self.parsers[name] = parser           
 
     async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
         fact_relationship = data_svc.get_ability_relationship(operation, ability_id=result['link']['ability'],
