@@ -264,6 +264,7 @@ class DataService(BaseService):
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
+            ab['requires'] = await self.dao.get('core_ability_relationships', dict(ability_id=ab['id']))
         return abilities
 
     async def explode_adversaries(self, criteria=None):
@@ -296,7 +297,15 @@ class DataService(BaseService):
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+            op['fact_relationships'] = await self._get_fact_relationships(op['facts'])
         return operations
+
+    async def _get_fact_relationships(self, facts):
+        if facts:
+            fact_relationships = await self.dao.get_in('core_fact_relationships', 'value1', [f['value'] for f in facts])
+            fact_relationships.extend(await self.dao.get_in('core_fact_relationships', 'value2', [f['value'] for f in facts]))
+            return fact_relationships
+        return None
 
     async def explode_agents(self, criteria: object = None) -> object:
         """
