@@ -139,13 +139,17 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                requires_relationship = self.get_service('data_svc').get_ability_relationship(operation,
+                relationships = self.get_service('data_svc').get_ability_relationship(operation,
                                                                                               link['ability'],
                                                                                               relationship_type='requires')
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
-                    if requires_relationship:
-                        relationship_satisfied = await self._enforce_relationship(combo, requires_relationship, operation)
+                    if relationships:
+                        for relationship in relationships:
+                            #if it fails one of the relationships -> break
+                            relationship_satisfied = await self._enforce_relationship(combo, relationship, operation)
+                            if not relationship_satisfied:
+                                break
                         if not relationship_satisfied:
                             continue
 

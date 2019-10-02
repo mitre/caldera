@@ -77,13 +77,15 @@ class DataService(BaseService):
 
     @staticmethod
     def get_ability_relationship(operation, ability_id, relationship_type):
+        relationships = []
         for phase in operation['adversary']['phases'].values():
             for ability in phase:
                 if ability_id == ability['id']:
                     requirements = ability.get('relationships', [])
                     for r in requirements:
                         if r['relationship_type'] == relationship_type:
-                            return r
+                            relationships.append(r)
+        return relationships
 
     async def load_planner(self, directory):
         """
@@ -350,7 +352,9 @@ class DataService(BaseService):
         chain = []
         for link in await self.dao.get('core_chain', criteria=criteria):
             a = await self.dao.get('core_ability', criteria=dict(id=link['ability']))
-            chain.append(dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link))
+            l = dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link)
+            l['facts_used'] = await self.dao.get('core_fact_usage', criteria=dict(link_id=link['id']))
+            chain.append(l)
         return chain
 
     async def explode_sources(self, criteria=None):

@@ -37,11 +37,8 @@ class ParsingService(BaseService):
     """ PRIVATE """
 
     async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
-        #fact_relationship = await data_svc.dao.get('core_ability_relationships',
-        #                                                  criteria=dict(ability_id=result['link']['ability'],
-        #                                                                relationship_type='creates'))
         fact_relationship = data_svc.get_ability_relationship(operation, ability_id=result['link']['ability'],
-                                                                    relationship_type='creates')
+                                                              relationship_type='creates')
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
         for match in matched_facts:
             operation = (await data_svc.explode_operation(dict(id=operation['id'])))[0]
@@ -52,17 +49,18 @@ class ParsingService(BaseService):
             if fact:
                 await data_svc.create_fact(**fact)
                 if fact_relationship:
-                    await self._create_fact_relationship(data_svc, fact_relationship, fact, result['link']['id'])
+                    await self._create_fact_relationship(data_svc, fact_relationship, fact, result['link']['id'], operation)
 
     @staticmethod
-    async def _create_fact_relationship(data_svc, relationship, fact, link_id):
-        used_fact_ids = await data_svc.dao.get('core_fact_usage', criteria=dict(link_id=link_id))
-        for id in used_fact_ids:
-            relationship_fact = (await data_svc.dao.get('core_fact', criteria=dict(id=id['fact_id'])))[0]
-            if relationship_fact['property'] == relationship['property1']:
-                await data_svc.dao.create('core_fact_relationships', dict(value1=relationship_fact['value'],
-                                                                          relationship=relationship['relationship'],
-                                                                          value2=fact['value']))
+    async def _create_fact_relationship(data_svc, relationship, fact, link_id, operation):
+        for r in relationship:
+            used_facts = ([c['facts_used'] for c in operation['chain'] if c['id'] == link_id])[0]
+            for f in used_facts:
+                r_fact = ([j for j in operation['facts'] if j['id'] == f['fact_id']])[0]
+                if r_fact['property'] == r['property1']:
+                    await data_svc.dao.create('core_fact_relationships', dict(value1=r_fact['value'],
+                                                                              relationship=r['relationship'],
+                                                                              value2=fact['value']))
 
     @staticmethod
     async def _create_host_fact(operation, match, source, result):
