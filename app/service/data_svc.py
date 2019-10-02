@@ -413,6 +413,9 @@ class DataService(BaseService):
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
                             fact_relationships = await self._relationships_from_yaml(ab)
+                            if (ab['platforms'][pl][name]).get('requires', None):
+                                # allows you to override the fact relationships at the executor level
+                                fact_relationships = await self._relationships_from_yaml(ab['platforms'][pl][name])
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                       technique_name=ab['technique']['name'],
                                                       technique_id=ab['technique']['attack_id'],
@@ -437,7 +440,7 @@ class DataService(BaseService):
         if ability.get('consequence'):
             for r in ability.get('consequence'):
                 line = await self._cleanse_facts(r)
-                relationships.append(dict(property1=line[0], relationship=line[1],property2=line[2],
+                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2],
                                           relationship_type='creates'))
         return relationships
 

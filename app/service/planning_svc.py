@@ -146,7 +146,6 @@ class PlanningService(BaseService):
                 for combo in list(itertools.product(*relevant_facts)):
                     if relationships:
                         for relationship in relationships:
-                            #if it fails one of the relationships -> break
                             relationship_satisfied = await self._enforce_relationship(combo, relationship, operation)
                             if not relationship_satisfied:
                                 break
