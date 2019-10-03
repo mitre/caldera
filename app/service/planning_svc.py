@@ -111,6 +111,25 @@ class PlanningService(BaseService):
                 abilities.append(val)
         return abilities
 
+    @staticmethod
+    def get_operation_relationships(operation, ability_id, relationship_type):
+        """
+        Given an ability_id, get its fact relationship consequences or requirements
+        :param operation:
+        :param ability_id:
+        :param relationship_type: creates or requires
+        :return: A list fact relationships
+        """
+        relationships = []
+        for phase in operation['adversary']['phases'].values():
+            for ability in phase:
+                if ability_id == ability['id']:
+                    requirements = ability.get('relationships', [])
+                    for r in requirements:
+                        if r['relationship_type'] == relationship_type:
+                            relationships.append(r)
+        return relationships
+
     """ PRIVATE """
 
     @staticmethod
@@ -139,18 +158,11 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                relationships = self.get_service('data_svc').get_ability_relationship(operation,
-                                                                                              link['ability'],
-                                                                                              relationship_type='requires')
+                relationships = self.get_operation_relationships(operation, link['ability'], relationship_type='requires')
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 for combo in list(itertools.product(*relevant_facts)):
-                    if relationships:
-                        for relationship in relationships:
-                            relationship_satisfied = await self._enforce_relationship(combo, relationship, operation)
-                            if not relationship_satisfied:
-                                break
-                        if not relationship_satisfied:
-                            continue
+                    if not await self._relationship_satisfied(combo, relationships, operation):
+                        continue
 
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
@@ -164,6 +176,12 @@ class PlanningService(BaseService):
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
+
+    async def _relationship_satisfied(self, combo, relationships, operation):
+        for relationship in relationships:
+            if not await self._enforce_relationship(combo, relationship, operation):
+                return False
+        return True
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):
@@ -223,7 +241,8 @@ class PlanningService(BaseService):
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
 
-    async def _enforce_relationship(self, fact_combo, relationship, operation):
+    @staticmethod
+    async def _enforce_relationship(fact_combo, relationship, operation):
         for i in range(len(fact_combo) - 1):
             if relationship.get('property1') == fact_combo[i]['property'] \
                     and relationship.get('property2') == fact_combo[i + 1]['property']:

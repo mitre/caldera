@@ -65,27 +65,9 @@ class DataService(BaseService):
                 for fact in source['facts']:
                     fact['source_id'] = source_id
                     await self.create_fact(**fact)
-                relationships = source.get('relationships')
-                if relationships:
-                    for relationship in relationships.values():
-                        await self.create_relationship(relationship)
-
-    async def create_relationship(self, values):
-        return await self.dao.create('core_fact_relationships', dict(value1=values['value1'],
-                                                                     relationship=values['relationship'],
-                                                                     value2=values['value2']))
-
-    @staticmethod
-    def get_ability_relationship(operation, ability_id, relationship_type):
-        relationships = []
-        for phase in operation['adversary']['phases'].values():
-            for ability in phase:
-                if ability_id == ability['id']:
-                    requirements = ability.get('relationships', [])
-                    for r in requirements:
-                        if r['relationship_type'] == relationship_type:
-                            relationships.append(r)
-        return relationships
+                for relationship in source.get('relationships', dict()).values():
+                    await self.create_relationship(source=relationship['value1'], relationship=relationship['relationship'],
+                                                   target=relationship['value2'])
 
     async def load_planner(self, directory):
         """
@@ -141,7 +123,7 @@ class DataService(BaseService):
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                             platform, cleanup=None, payload=None, parser=None, relationships=None):
+                             platform, cleanup=None, payload=None, parser=None, relationships=[]):
         """
         Save a new ability to the database
         :param ability_id:
@@ -174,6 +156,16 @@ class DataService(BaseService):
         # new
         identifier = await self.dao.create('core_ability', ability)
         return await self._save_ability_extras(identifier, payload, parser, relationships=relationships)
+
+    async def create_relationship(self, source, relationship, target):
+        """
+        Creates a fact relationship value in the data store
+        :param source:
+        :param relationship:
+        :param target:
+        :return: the fact relationship id
+        """
+        return await self.dao.create('core_fact_relationships', dict(value1=source, relationship=relationship, value2=target))
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -311,13 +303,6 @@ class DataService(BaseService):
             op['fact_relationships'] = await self._get_fact_relationships(op['facts'])
         return operations
 
-    async def _get_fact_relationships(self, facts):
-        if facts:
-            fact_relationships = await self.dao.get_in('core_fact_relationships', 'value1', [f['value'] for f in facts])
-            fact_relationships.extend(await self.dao.get_in('core_fact_relationships', 'value2', [f['value'] for f in facts]))
-            return fact_relationships
-        return None
-
     async def explode_agents(self, criteria: object = None) -> object:
         """
         Get all - or a filtered list of - agents, built out with all sub-objects
@@ -413,7 +398,8 @@ class DataService(BaseService):
                         for e in name.split(','):
                             encoded_test = b64encode(info['command'].strip().encode('utf-8'))
                             fact_relationships = await self._relationships_from_yaml(ab)
-                            if (ab['platforms'][pl][name]).get('requires', None):
+                            if (ab['platforms'][pl][name]).get('requires', None) or \
+                                    (ab['platforms'][pl][name]).get('consequence', None):
                                 # allows you to override the fact relationships at the executor level
                                 fact_relationships = await self._relationships_from_yaml(ab['platforms'][pl][name])
                             await self.create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
@@ -430,18 +416,12 @@ class DataService(BaseService):
                                                       relationships=fact_relationships)
                 await self._delete_stale_abilities(ab)
 
-    async def _relationships_from_yaml(self, ability):
+    async def _relationships_from_yaml(self, ability, relationship_types=['requires', 'consequence']):
         relationships = []
-        if ability.get('requires'):
-            for r in ability.get('requires'):
+        for type in relationship_types:
+            for r in ability.get(type, []):
                 line = await self._cleanse_facts(r)
-                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2],
-                                          relationship_type='requires'))
-        if ability.get('consequence'):
-            for r in ability.get('consequence'):
-                line = await self._cleanse_facts(r)
-                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2],
-                                          relationship_type='creates'))
+                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2], relationship_type=type))
         return relationships
 
     @staticmethod
@@ -449,16 +429,15 @@ class DataService(BaseService):
         f = fact.translate({ord(i): None for i in '{}#'})
         return [i.strip() for i in f.split(',')]
 
-    async def _save_ability_extras(self, identifier, payload, parser, relationships):
+    async def _save_ability_extras(self, identifier, payload, parser, relationships=[]):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
         if parser:
             parser['ability'] = identifier
             await self.dao.create('core_parser', parser)
-        if relationships:
-            for r in relationships:
-                r['ability_id'] = identifier
-                await self.dao.create('core_ability_relationships', r)
+        for r in relationships:
+            r['ability_id'] = identifier
+            await self.dao.create('core_ability_relationships', r)
         return identifier
 
     async def _delete_stale_abilities(self, ability):
@@ -473,3 +452,11 @@ class DataService(BaseService):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
         for adv in self.strip_yml(filename):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
+
+    async def _get_fact_relationships(self, facts):
+        if facts:
+            fact_relationships = await self.dao.get_in('core_fact_relationships', 'value1', [f['value'] for f in facts])
+            fact_relationships.extend(
+                await self.dao.get_in('core_fact_relationships', 'value2', [f['value'] for f in facts]))
+            return fact_relationships
+        return None
