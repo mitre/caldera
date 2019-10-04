@@ -52,7 +52,7 @@ class ParsingService(BaseService):
     async def _matched_fact_creation(self, matched_facts, operation, result):
         fact_relationship = self.get_service('planning_svc').get_operation_relationships(operation,
                                                                 ability_id=result['link']['ability'],
-                                                                relationship_type='creates')
+                                                                relationship_type='consequence')
         source = (await self.data_svc.explode_sources(dict(name=operation['name'])))[0]
         for match in matched_facts:
             operation = (await self.data_svc.explode_operation(dict(id=operation['id'])))[0]
