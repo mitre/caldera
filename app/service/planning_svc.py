@@ -63,6 +63,7 @@ class PlanningService(BaseService):
             links[:] = await self._trim_links(op[0], links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
+                link.pop('facts', [])
                 await self.get_service('data_svc').create('core_chain', link)
         await self.wait_for_phase(op[0])
 
