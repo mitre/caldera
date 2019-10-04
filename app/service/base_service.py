@@ -8,6 +8,7 @@ import yaml
 from app.utility.logger import Logger
 
 
+
 class BaseService:
 
     _services = dict()
