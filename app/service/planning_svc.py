@@ -118,7 +118,7 @@ class PlanningService(BaseService):
         Given an ability_id, get its fact relationship consequences or requirements
         :param operation:
         :param ability_id:
-        :param relationship_type: creates or requires
+        :param relationship_type: consequence or requires
         :return: A list fact relationships
         """
         relationships = []
