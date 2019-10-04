@@ -28,7 +28,7 @@ class ParsingService(BaseService):
             if parse_info and result['link']['status'] == 0:
                 blob = b64decode(result['output']).decode('utf-8')
                 parser = self.parsers.get(parse_info[0]['name'], parsers.regex)
-                matched_facts = parser(parser=parse_info[0], blob=blob, log=self.log)
+                matched_facts = await parser(parser=parse_info[0], blob=blob, log=self.log)
 
                 await self._matched_fact_creation(matched_facts, operation, result)
                 update = dict(parsed=self.get_current_timestamp())

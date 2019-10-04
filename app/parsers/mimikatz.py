@@ -1,5 +1,7 @@
+from app.service.base_service import BaseService
 
-def mimikatz(blob, **kwargs):
+
+async def mimikatz(blob, **kwargs):
     set_id = 0
     matched_facts = []
     list_lines = blob.split('\n')
@@ -13,5 +15,9 @@ def mimikatz(blob, **kwargs):
                                          set_id=set_id)
                     matched_facts.append(password_fact)
                     matched_facts.append(username_fact)
+                    await BaseService.get_service('data_svc').dao.create('core_fact_relationships',
+                                                                   dict(value1=username_fact['value'],
+                                                                        relationship='has_password',
+                                                                        value2=password_fact['value']))
                     set_id += 1
     return matched_facts
