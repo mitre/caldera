@@ -159,16 +159,26 @@ class PlanningService(BaseService):
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                relationships = self.get_operation_relationships(operation, link['ability'], relationship_type='requires')
+                requires_relationships = self.get_operation_relationships(operation, link['ability'],
+                                                                          relationship_type='requires')
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
+                # gets a unique list of consequence relationships for the current operation
+                set_relationships = set(tuple(relationship.items()) for phase in operation['adversary']['phases'].values()
+                                        for ability in phase for relationship in ability['relationships']
+                                        if relationship['relationship_type'] == 'consequence')
+                consequence_relationships = [dict(c) for c in set_relationships]
+                # check if any consequence relationship fact pairs are missing from the operation dict
+                for r in consequence_relationships:
+                    operation = self._add_missing_relationships(list(itertools.chain(*relevant_facts)), r, operation)
+
                 for combo in list(itertools.product(*relevant_facts)):
-                    if not await self._relationship_satisfied(combo, relationships, operation):
+                    if not await self._relationship_satisfied(combo, requires_relationships, operation):
                         continue
 
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
-
                     variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
+
                     copy_link['command'] = self.encode_string(variant)
                     copy_link['score'] = score
                     copy_link['rewards'] = rewards
@@ -183,6 +193,30 @@ class PlanningService(BaseService):
             if not await self._enforce_relationship(combo, relationship, operation):
                 return False
         return True
+
+    @staticmethod
+    def _add_missing_relationships(combo, relationship, operation):
+        """
+        Adds fact relationships to the operation dictionary for facts that were collected by custom parsers with
+        ability consequence relationships defined. Looks for two facts within a combo of facts
+        that have the same set_id and the same link_id, meaning that the facts were collected together.
+        :param combo:
+        :param relationship:
+        :param operation:
+        :return:
+        """
+        for i in range(len(combo) - 1):
+            if relationship.get('property1') == combo[i]['property'] \
+                    and relationship.get('property2') == combo[i + 1]['property'] and combo[i]['set_id'] == \
+                    combo[i+1]['set_id'] and combo[i]['link_id'] == combo[i+1]['link_id']:
+                # make sure that we aren't adding duplicate fact relationships
+                fact_rel = dict(value1=combo[i]['value'], relationship=relationship['relationship'],
+                                value2=combo[i + 1]['value'])
+                temp = set(tuple(r.items()) for r in operation['fact_relationships'])
+                temp.add(tuple(fact_rel.items()))
+                operation['fact_relationships'] = [dict(r) for r in temp]
+        return operation
+
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):
