@@ -217,7 +217,6 @@ class PlanningService(BaseService):
                 operation['fact_relationships'] = [dict(r) for r in temp]
         return operation
 
-
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):
         if len(combo_set) == 1 and len(combo_link) == 1:
