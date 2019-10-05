@@ -46,25 +46,25 @@ class PlanningService(BaseService):
         :param operation:
         :return: None
         """
-        op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-        link_status = await self._default_link_status(operation)
-        for member in op[0]['host_group']:
-            if (not member['trusted']) and (not op[0]['allow_untrusted']):
+        op = (await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id'])))[0]
+        link_status = await self._default_link_status(op)
+        for member in op['host_group']:
+            if (not member['trusted']) and (not op['allow_untrusted']):
                 self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
                 continue
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=op[0]['id'])):
+                                                                                       op_id=op['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup'] and link['status'] >= 0:
-                    links.append(dict(op_id=op[0]['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
+                    links.append(dict(op_id=op['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
                                       command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
                                       decide=datetime.now(), status=link_status))
-            links[:] = await self._trim_links(op[0], links, member)
+            links[:] = await self._trim_links(op, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create('core_chain', link)
-        await self.wait_for_phase(op[0])
+        await self.wait_for_phase(op)
 
     async def wait_for_phase(self, operation):
         """
