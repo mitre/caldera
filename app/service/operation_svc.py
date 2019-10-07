@@ -37,7 +37,7 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
         await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
-        report = await self.generate_operation_report(operation['id'])
+        report = await self.generate_operation_report(operation['id'], agent_output=True)
         await self._write_report(report)
 
     async def run(self, op_id):
@@ -61,10 +61,11 @@ class OperationService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    async def generate_operation_report(self, op_id):
+    async def generate_operation_report(self, op_id, agent_output=False):
         """
         Create a new operation report and write it to the logs directory
-        :param op_id:
+        :param op_id: operation id
+        :param agent_output: bool to include agent_output with report
         :return: a JSON report
         """
         op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
@@ -75,13 +76,22 @@ class OperationService(BaseService):
         for step in op['chain']:
             ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
             command = self.decode_bytes(step['command'])
-            report['steps'].append(dict(ability_id=ability['ability_id'], paw=step['paw'],
-                                        command=command, delegated=step['collect'],
-                                        run=step['finish'], status=step['status'],
-                                        description=ability['description'], name=ability['name'],
-                                        attack=dict(tactic=ability['tactic'],
-                                                    technique_name=ability['technique_name'],
-                                                    technique_id=ability['technique_id'])))
+            step_report = dict(ability_id=ability['ability_id'],
+                               paw=step['paw'],
+                               command=command,
+                               delegated=step['collect'],
+                               run=step['finish'],
+                               status=step['status'],
+                               description=ability['description'],
+                               name=ability['name'],
+                               attack=dict(tactic=ability['tactic'],
+                                           technique_name=ability['technique_name'],
+                                           technique_id=ability['technique_id'])
+                               )
+            if agent_output:
+                result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
+                step_report['output'] = self.decode_bytes(result['output'])
+            report['steps'].append(step_report)
         return report
 
     """ PRIVATE """
@@ -89,7 +99,7 @@ class OperationService(BaseService):
     @staticmethod
     async def _write_report(report):
         with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
-            f.write(json.dumps(report, indent=4))
+            f.write(json.dumps(report, indent=4, sort_keys=True))
 
     async def _get_planning_module(self, operation):
         chosen_planner = await self.data_svc.explode_planners(dict(id=operation['planner']))
