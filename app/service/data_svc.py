@@ -163,7 +163,7 @@ class DataService(BaseService):
         :return: the database id
         """
         identifier = await self.dao.create('core_adversary',
-                                           dict(adversary_id=i, name=name.lower(), description=description))
+                                           dict(adversary_id=i, name=name, description=description))
 
         await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
         for ability in phases:
