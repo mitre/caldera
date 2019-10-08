@@ -82,7 +82,7 @@ if __name__ == '__main__':
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
-        cfg = yaml.load(c)
+        cfg = yaml.load(c, Loader=yaml.FullLoader)
         state = logging.FATAL
         if cfg['debug']:
             state = logging.ERROR
