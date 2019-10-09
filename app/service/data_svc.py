@@ -419,15 +419,17 @@ class DataService(BaseService):
     async def _relationships_from_yaml(self, ability, relationship_types=['requires', 'consequence']):
         relationships = []
         for type in relationship_types:
-            for r in ability.get(type, []):
-                line = await self._cleanse_facts(r)
-                relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2], relationship_type=type))
+            for entry in ability.get(type, '').split('\n'):
+                line = await self._cleanse_facts(entry.strip())
+                if line:
+                    relationships.append(dict(property1=line[0], relationship=line[1], property2=line[2],
+                                              relationship_type=type))
         return relationships
 
     @staticmethod
     async def _cleanse_facts(fact):
-        f = fact.translate({ord(i): None for i in '{}#'})
-        return [i.strip() for i in f.split(',')]
+        f = fact.translate({ord(i): None for i in '-{}#'})
+        return [i.strip() for i in f.split(',') if i]
 
     async def _save_ability_extras(self, identifier, payload, parser, relationships=[]):
         if payload:
