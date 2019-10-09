@@ -1,9 +1,10 @@
-import app.parsers.standard as parsers
-import app.parsers.mimikatz as mimikatz_parser
-import glob, os
+import os
+import glob
 from pydoc import locate
 from base64 import b64decode
 
+import app.parsers.standard as parsers
+import app.parsers.mimikatz as mimikatz_parser
 from app.service.base_service import BaseService
 
 
