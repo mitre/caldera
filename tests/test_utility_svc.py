@@ -12,5 +12,5 @@ class TestUtilityService(unittest.TestCase):
                          'bytes that I need decoded! Here are the bytes. ')
 
     def test_decode_encode_string_functional(self):
-        my_string = 'Speedily say has suitable disposal add boy. On forth doubt miles of child. Exercise joy man.'
+        my_string = '"Enough! Breach this firewall with your viral energies or suffer! Your choice." - Megabyte'
         self.assertEqual(BaseService.decode_bytes(BaseService.encode_string(my_string)), my_string)
