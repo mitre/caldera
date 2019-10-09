@@ -16,15 +16,14 @@ class ParsingService(BaseService):
             'line': parsers.line,
             'mimikatz': mimikatz_parser.mimikatz
         }
-        
-        
+
     async def load_parsers(self, directory):
         """
         Load all parser plugins
         :param directory:
         :return: None
-        """        
-        if not os.path.exists(directory):        
+        """
+        if not os.path.exists(directory):
             raise ValueError('Unable to find plugin parser directory:  %s' % directory)
         else:
             for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
