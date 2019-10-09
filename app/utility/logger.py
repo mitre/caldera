@@ -8,7 +8,9 @@ class Logger:
     def __init__(self, name):
         self.name = name
         self.logger = logging.getLogger(name)
-        handler = logging.FileHandler('%s/%s.log' % ('logs', name))
+
+        project_root = Path(__file__).parents[2]
+        handler = logging.FileHandler(Path().joinpath(project_root, 'logs/%s.log' % name))
         handler.setFormatter(logging.Formatter('%(asctime)s: %(message)s', '%Y-%m-%d %H:%M:%S'))
         self.logger.addHandler(handler)
 
