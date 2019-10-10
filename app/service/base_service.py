@@ -63,3 +63,11 @@ class BaseService:
         EXECUTE = -3
         DISCARD = -2
         PAUSE = -1
+
+    class Reason(Enum):
+        PLATFORM = 0
+        EXECUTOR = 1
+        FACT_DEPENDENCY = 2
+        OP_RUNNING = 3
+        UNTRUSTED = 4
+
