@@ -89,8 +89,9 @@ class OperationService(BaseService):
                                            technique_id=ability['technique_id'])
                                )
             if agent_output:
-                result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
-                step_report['output'] = self.decode_bytes(result['output'])
+                result = await self.data_svc.explode_results(criteria=dict(link_id=step['id']))
+                if result:
+                    step_report['output'] = self.decode_bytes(result[0]['output'])
             report['steps'].append(step_report)
         return report
 
