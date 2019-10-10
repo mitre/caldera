@@ -104,21 +104,15 @@ class OperationService(BaseService):
         :param op_id: operation id
         :return: a JSON skipped abilities list by agent
         """
-        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
-        abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=operation['host_group'],
-                                                                             adversary=operation['adversary'])
+        op_facts, op_results, op_state, op_group, op_adversary = await self._get_operation_skipped_ability_data(op_id)
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=op_group, adversary=op_adversary)
         skipped_abilities = []
-        operation_facts = set([f['property'] for f in operation['facts']])
-        operation_results = set([s['ability'] for s in operation['chain']])
-        for agent in operation['host_group']:
+        for agent in op_group:
             agent_skipped = []
             agent_executors = [a['executor'] for a in agent['executors']]
             for ab in abilities_by_agent[agent['paw']]['all_abilities']:
-                skipped = await self._check_reason_skipped(agent=agent,
-                                                           ability=ab,
-                                                           op_facts=operation_facts,
-                                                           op_results=operation_results,
-                                                           state=operation['state'],
+                skipped = await self._check_reason_skipped(agent=agent, ability=ab, op_facts=op_facts,
+                                                           op_results=op_results, state=op_state,
                                                            agent_executors=agent_executors)
                 if skipped:
                     agent_skipped.append(skipped)
@@ -142,6 +136,11 @@ class OperationService(BaseService):
     async def _get_all_possible_abilities_by_agent(hosts, adversary):
         return {a['paw']: {'agent_id': a['id'], 'all_abilities': [ab for p in adversary['phases']
                                                                   for ab in adversary['phases'][p]]} for a in hosts}
+
+    async def _get_operation_skipped_ability_data(self, op_id):
+        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
+        return set([f['property'] for f in operation['facts']]), set([s['ability'] for s in operation['chain']]), \
+               operation['state'], operation['host_group'], operation['adversary']
 
     async def _check_reason_skipped(self, agent, ability, op_facts, op_results, state, agent_executors):
         variables = re.findall(r'#{(.*?)}',
