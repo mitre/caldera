@@ -99,22 +99,30 @@ class OperationService(BaseService):
         return report
 
     async def get_skipped_abilities_by_agent(self, op_id):
+        """
+        Generate a list of skipped abilities for agents in an operation
+        :param op_id: operation id
+        :return: a JSON skipped abilities list by agent
+        """
         operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
-        abilities_by_agent = await self._get_all_possible_abilities_by_agent(operation['host_group'],
-                                                                             operation['adversary'])
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=operation['host_group'],
+                                                                             adversary=operation['adversary'])
         skipped_abilities = []
-        op_results = set([s['ability'] for s in operation['chain']])
-        op_facts = set([f['property'] for f in operation['facts']])
-        # trim to only commands not executed
-        for agent in [a for a in operation['host_group']]:
-            agent_skipped = {agent['paw']: []}
+        operation_facts = set([f['property'] for f in operation['facts']])
+        operation_results = set([s['ability'] for s in operation['chain']])
+        for agent in operation['host_group']:
+            agent_skipped = []
             agent_executors = [a['executor'] for a in agent['executors']]
             for ab in abilities_by_agent[agent['paw']]['all_abilities']:
-                skipped = await self._check_reason_skipped(agent, ab, op_facts, op_results, operation['state'],
-                                                           agent_executors)
+                skipped = await self._check_reason_skipped(agent=agent,
+                                                           ability=ab,
+                                                           op_facts=operation_facts,
+                                                           op_results=operation_results,
+                                                           state=operation['state'],
+                                                           agent_executors=agent_executors)
                 if skipped:
-                    agent_skipped[agent['paw']].append(skipped)
-            skipped_abilities.append(agent_skipped)
+                    agent_skipped.append(skipped)
+            skipped_abilities.append({agent['paw']: agent_skipped})
         return skipped_abilities
 
     """ PRIVATE """
@@ -141,15 +149,15 @@ class OperationService(BaseService):
                                                                              agent['host_group']),
                                flags=re.DOTALL)
         if ability['platform'] != agent['platform']:
-            return dict(reason="Wrong platform", reason_id=0, ability=ability)
+            return dict(reason="Wrong platform", reason_id=self.Reason.PLATFORM.value, ability=ability)
         elif ability['executor'] not in agent_executors:
-            return dict(reason="Executor not available", reason_id=1, ability=ability)
-        elif len(variables) != 0 and not all(op_fact in op_facts for op_fact in variables):
-            return dict(reason="Fact dependency not fulfilled", reason_id=2, ability=ability)
+            return dict(reason="Executor not available", reason_id=self.Reason.EXECUTOR.value, ability=ability)
+        elif variables and not all(op_fact in op_facts for op_fact in variables):
+            return dict(reason="Fact dependency not fulfilled", reason_id=self.Reason.FACT_DEPENDENCY.value, ability=ability)
         else:
             if (ability['platform'] == agent['platform'] and ability['executor'] in agent_executors
                     and ability['id'] not in op_results):
                 if state != 'finished':
-                    return dict(reason="Operation not completed", reason_id=3, ability=ability)
+                    return dict(reason="Operation not completed", reason_id=self.Reason.OP_RUNNING.value, ability=ability)
                 else:
-                    return dict(reason="Agent untrusted", reason_id=4, ability=ability)
+                    return dict(reason="Agent untrusted", reason_id=self.Reason.UNTRUSTED.value, ability=ability)
