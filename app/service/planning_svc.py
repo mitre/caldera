@@ -160,7 +160,10 @@ class PlanningService(BaseService):
         return score
 
     @staticmethod
-    async def _build_relevant_facts(variables, facts, agent_facts):
+    def _is_fact_bound(fact):
+        return not fact['link_id']
+
+    async def _build_relevant_facts(self, variables, facts, agent_facts):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -170,7 +173,7 @@ class PlanningService(BaseService):
             variable_facts = []
             for fact in [f for f in facts if f['property'] == v]:
                 if fact['property'].startswith('host'):
-                    if fact['id'] in agent_facts or not fact['link_id']:
+                    if fact['id'] in agent_facts or self._is_fact_bound(fact):
                         variable_facts.append(fact)
                 else:
                     variable_facts.append(fact)
