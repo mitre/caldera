@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import re
 import traceback
 from importlib import import_module
 
@@ -72,16 +73,17 @@ class OperationService(BaseService):
         planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
                       finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
-
+        agents_steps = {a['paw']: {'agent_id': a['id'], 'steps': []} for a in op['host_group']}
         for step in op['chain']:
             ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
             command = self.decode_bytes(step['command'])
             step_report = dict(ability_id=ability['ability_id'],
-                               paw=step['paw'],
                                command=command,
                                delegated=step['collect'],
                                run=step['finish'],
                                status=step['status'],
+                               platform=ability['platform'],
+                               executor=step['executor'],
                                description=ability['description'],
                                name=ability['name'],
                                attack=dict(tactic=ability['tactic'],
@@ -89,11 +91,39 @@ class OperationService(BaseService):
                                            technique_id=ability['technique_id'])
                                )
             if agent_output:
-                result = await self.data_svc.explode_results(criteria=dict(link_id=step['id']))
-                if result:
-                    step_report['output'] = self.decode_bytes(result[0]['output'])
-            report['steps'].append(step_report)
+                result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
+                step_report['output'] = self.decode_bytes(result['output'])
+            agents_steps[step['paw']]['steps'].append(step_report)
+        report['steps'] = agents_steps
+        report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(op_id=op['id'])
         return report
+
+    async def get_skipped_abilities_by_agent(self, op_id):
+        """
+        Generate a list of skipped abilities for agents in an operation
+        :param op_id: operation id
+        :return: a JSON skipped abilities list by agent
+        """
+        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=operation['host_group'],
+                                                                             adversary=operation['adversary'])
+        skipped_abilities = []
+        operation_facts = set([f['property'] for f in operation['facts']])
+        operation_results = set([s['ability'] for s in operation['chain']])
+        for agent in operation['host_group']:
+            agent_skipped = []
+            agent_executors = [a['executor'] for a in agent['executors']]
+            for ab in abilities_by_agent[agent['paw']]['all_abilities']:
+                skipped = await self._check_reason_skipped(agent=agent,
+                                                           ability=ab,
+                                                           op_facts=operation_facts,
+                                                           op_results=operation_results,
+                                                           state=operation['state'],
+                                                           agent_executors=agent_executors)
+                if skipped:
+                    agent_skipped.append(skipped)
+            skipped_abilities.append({agent['paw']: agent_skipped})
+        return skipped_abilities
 
     """ PRIVATE """
 
@@ -107,3 +137,27 @@ class OperationService(BaseService):
         planning_module = import_module(chosen_planner[0]['module'])
         return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'),
                                                           **chosen_planner[0]['params'])
+
+    @staticmethod
+    async def _get_all_possible_abilities_by_agent(hosts, adversary):
+        return {a['paw']: {'agent_id': a['id'], 'all_abilities': [ab for p in adversary['phases']
+                                                                  for ab in adversary['phases'][p]]} for a in hosts}
+
+    async def _check_reason_skipped(self, agent, ability, op_facts, op_results, state, agent_executors):
+        variables = re.findall(r'#{(.*?)}',
+                               await self.get_service('planning_svc').decode(ability['test'], agent,
+                                                                             agent['host_group']),
+                               flags=re.DOTALL)
+        if ability['platform'] != agent['platform']:
+            return dict(reason="Wrong platform", reason_id=self.Reason.PLATFORM.value, ability=ability)
+        elif ability['executor'] not in agent_executors:
+            return dict(reason="Executor not available", reason_id=self.Reason.EXECUTOR.value, ability=ability)
+        elif variables and not all(op_fact in op_facts for op_fact in variables):
+            return dict(reason="Fact dependency not fulfilled", reason_id=self.Reason.FACT_DEPENDENCY.value, ability=ability)
+        else:
+            if (ability['platform'] == agent['platform'] and ability['executor'] in agent_executors
+                    and ability['id'] not in op_results):
+                if state != 'finished':
+                    return dict(reason="Operation not completed", reason_id=self.Reason.OP_RUNNING.value, ability=ability)
+                else:
+                    return dict(reason="Agent untrusted", reason_id=self.Reason.UNTRUSTED.value, ability=ability)
