@@ -13,12 +13,14 @@ class PlanningService(BaseService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
-    async def select_links(self, operation, agent, phase):
+    async def select_links(self, operation, agent, phase, trim=False):
+        #TODO:I think this method should be called "craft_links". Will cause breaking changes
         """
         For an operation, phase and agent combination, determine which potential links can be executed
         :param operation:
         :param agent:
         :param phase:
+        :param trim: call trim_links() call on list of links before returning
         :return: a list of links
         """
         await self.get_service('parsing_svc').parse_facts(operation)
@@ -37,10 +39,13 @@ class PlanningService(BaseService):
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
                      jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
-        links[:] = await self._trim_links(operation, links, agent)
+        if trim:
+            links[:] = await self.trim_links(operation, links, agent)
         return await self._sort_links(links)
 
     async def create_cleanup_links(self, operation):
+        #TODO: I think this method's name should more imply that it is crafting linnks
+        # and pushing them to agents queue. Will cause breaking changes.
         """
         For a given operation, create a link for every cleanup action on every executed ability
         :param operation:
@@ -60,7 +65,7 @@ class PlanningService(BaseService):
                     links.append(dict(op_id=op['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
                                       command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
                                       decide=datetime.now(), status=link_status))
-            links[:] = await self._trim_links(op, links, member)
+            links[:] = await self.trim_links(op, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create('core_chain', link)
@@ -82,6 +87,18 @@ class PlanningService(BaseService):
                 if await self._trust_issues(operation, member['paw']):
                     break
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
+    
+    async def wait_for_link(self, link_id):
+        """
+        Wait for started link to be completed
+        :param
+        :return: None
+        """
+        link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
+        while ((link["finish"] is not None) and (link["status"] != self.LinkState.DISCARD.value)):
+            await asyncio.sleep(1)  #TODO: how long should wait for single link to complete?
+            #TODO: Do I need to check for trust issue hold up here too?
+            link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
 
     async def decode(self, encoded_cmd, agent, group):
         """
@@ -97,39 +114,26 @@ class PlanningService(BaseService):
         decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
         decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
         return decoded_cmd
-
-    @staticmethod
-    async def capable_agent_abilities(phase_abilities, agent):
-        abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
-        executors = [e['executor'] for e in agent['executors']]
-        for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
-                             and (ab['platform'] == agent['platform']) and (ab['executor'] in executors)]
-            if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
-                abilities.append(val)
-        return abilities
-
-    """ PRIVATE """
-
-    @staticmethod
-    async def _sort_links(links):
+    
+    async def trim_links(self, operation, links, agent):
         """
-        sort links by their score then by the order they are defined in an adversary profile
+        Trim links in supplied list. Where 'trim' entails:
+            - adding all possible test variants
+            - removing completed links (i.e. agent has already completed)
+            - removing links that did not have template fact variables replaced by fact values
+        
+        :param operation:
+        :param links:
+        :param agent:
+        :return: trimmed list of links
         """
-        return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
-
-    async def _trim_links(self, operation, links, agent):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw']]
-        links[:] = await self._add_test_variants(links, agent, operation)
-        links[:] = [l for l in links if l['command'] not in host_already_ran]
-        links[:] = [l for l in links if
-                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
+        links[:] = await self.add_test_variants(links, agent, operation)
+        links = await self.remove_completed_links(operation, links, agent)
+        links = await self.remove_links_missing_facts(links)
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return links
 
-    async def _add_test_variants(self, links, agent, operation):
+    async def add_test_variants(self, links, agent, operation):
         """
         Create a list of all possible links for a given phase
         """
@@ -152,6 +156,50 @@ class PlanningService(BaseService):
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
+
+    async def remove_completed_links(self, operation, links, agent):
+        """
+        Remove any links that have already been completed by the operation for the agent
+        :param operation:
+        :param links:
+        :param agent:
+        :return: updated list of links
+        """
+        completed_links = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and (l["finish"] or l["status"] == self.LinkState.DISCARD.value)]
+        links[:] = [l for l in links if l["command"] not in completed_links]
+        return links
+
+    async def remove_links_missing_facts(self, links):
+        """
+        Remove any links that did not have facts encoded into command
+        :param links:
+        :return: updated list of links
+        """
+        links[:] = [l for l in links if
+                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
+        return links
+
+    @staticmethod
+    async def capable_agent_abilities(phase_abilities, agent):
+        abilities = []
+        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
+        executors = [e['executor'] for e in agent['executors']]
+        for ai in set([pa['ability_id'] for pa in phase_abilities]):
+            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
+                             and (ab['platform'] == agent['platform']) and (ab['executor'] in executors)]
+            if len(total_ability) > 0:
+                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
+                abilities.append(val)
+        return abilities
+
+    """ PRIVATE """
+
+    @staticmethod
+    async def _sort_links(links):
+        """
+        Sort links by their score then by the order they are defined in an adversary profile
+        """
+        return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):
