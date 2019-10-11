@@ -26,7 +26,7 @@ class BaseService:
 
     @staticmethod
     def decode_bytes(s):
-        return b64decode(s).decode('utf-8').replace('\n', '')
+        return b64decode(s).decode('utf-8', errors='ignore').replace('\n', '')
 
     @staticmethod
     def encode_string(s):
