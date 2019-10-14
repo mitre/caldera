@@ -87,6 +87,23 @@ class FileSvc(BaseService):
             return name, xor_file(file_name)
         raise FileNotFoundError
 
+    async def save_file(self, name, content, xored=False):
+        """
+        Save a (payload) file to the stockpile
+        :param name: filename
+        :param content: content to save
+        :param xored: whether or not to xor the contents when saving
+        :return: full path of the saved file
+        """
+        filename='plugins/stockpile/payloads/%s' % name
+        f_content = content
+        if xored:
+            filename = filename + 'xored'
+            f_content = xor_file(content)
+        with open(filename, 'wb') as file:
+            file.write(f_content)
+        return filename
+
     async def add_special_payload(self, name, func):
         """
         Call a special function when specific payloads are downloaded
@@ -95,6 +112,18 @@ class FileSvc(BaseService):
         :return:
         """
         self.special_payloads[name] = func
+
+    async def find_payloads(self):
+        """
+        Identify the full gambit of available payloads (filtering out adversary mode)
+        :return: list of available payloads
+        """
+        listing = []
+        for plugin in self.plugins:
+            for root, _, files in os.walk('plugins/%s' % plugin):
+                if root.endswith('payloads') and 'adversary' not in root:
+                    listing.extend(files)
+        return listing
 
     @staticmethod
     async def compile_go(platform, output, src_fle, ldflags='-s -w'):
