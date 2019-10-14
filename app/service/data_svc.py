@@ -2,6 +2,7 @@ import glob
 import json
 from base64 import b64encode
 from collections import defaultdict
+from enum import Enum
 
 import yaml
 
@@ -29,6 +30,7 @@ class DataService(BaseService):
             await self.load_adversaries(directory='%s/adversaries' % directory)
             await self.load_facts(directory='%s/facts' % directory)
             await self.load_planner(directory='%s/planners' % directory)
+            await self.load_rules(directory='%s/rules' % directory)
 
     async def load_abilities(self, directory):
         """
@@ -76,6 +78,19 @@ class DataService(BaseService):
             for planner in self.strip_yml(filename):
                 await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
                                                            params=json.dumps(planner.get('params'))))
+
+    async def load_rules(self, directory):
+        class Action(Enum):
+            ALLOW = 1
+            DENY = 0
+
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for rules in self.strip_yml(filename):
+                self.log.debug(rules)
+                for rule in rules['rules']:
+                    self.log.debug(rule)
+                    rule['action'] = Action[rule.get('action', 'DENY').upper()].value
+                    await self.dao.create('core_rule', dict(**rule))
 
     """ PERSIST """
 
