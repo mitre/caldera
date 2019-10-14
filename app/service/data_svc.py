@@ -305,7 +305,7 @@ class DataService(BaseService):
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
-            op['rules'] = await self._sort_rules(await self.dao.get_in('core_rule', 'source_id', source_list))
+            op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
@@ -394,7 +394,7 @@ class DataService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    async def _sort_rules(rules):
+    async def _sort_rules_by_fact(rules):
         organized_rules = defaultdict(list)
         for rule in rules:
             fact = rule.pop('fact')
