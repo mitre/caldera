@@ -176,8 +176,8 @@ class PlanningService(BaseService):
     @staticmethod
     async def _is_fact_allowed(rules, fact):
         allowed = True
-        for rule in rules:
-            if rule['fact'] == fact['property'] and re.match(rule.get('match', '.*'), fact['value']):
+        for rule in rules.get(fact['property'], []):
+            if re.match(rule.get('match', '.*'), fact['value']):
                 if rule['action'] == RuleAction.DENY.value:
                     allowed = False
                 elif rule['action'] == RuleAction.ALLOW.value:
@@ -234,6 +234,7 @@ class PlanningService(BaseService):
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
+
 
 class RuleAction(Enum):
     ALLOW = 1

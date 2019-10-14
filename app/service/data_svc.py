@@ -303,8 +303,9 @@ class DataService(BaseService):
             op['adversary'] = adversaries[0]
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
-            op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
-            op['rules'] = await self.dao.get_in('core_rule', 'source_id', [s['source_id'] for s in sources])
+            source_list = [s['source_id'] for s in sources]
+            op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
+            op['rules'] = await self._sort_rules(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
@@ -391,6 +392,14 @@ class DataService(BaseService):
         await self.dao.update(table, key, value, data)
 
     """ PRIVATE """
+
+    @staticmethod
+    async def _sort_rules(rules):
+        organized_rules = defaultdict(list)
+        for rule in rules:
+            fact = rule.pop('fact')
+            organized_rules[fact].append(rule)
+        return organized_rules
 
     async def _save_ability_to_database(self, filename):
         for entries in self.strip_yml(filename):
