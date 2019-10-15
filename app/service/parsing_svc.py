@@ -90,11 +90,11 @@ class ParsingService(BaseService):
                 agents_to_check.append(link['paw'])
         if result['link']['paw'] not in agents_to_check:
             return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'], value=match['value'],
-                        set_id=match['set_id'], score=1)
+                        score=1)
 
     @staticmethod
     async def _create_global_fact(operation, match, source, result):
         if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] <= 0 for f in
                    operation['facts']):
             return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'],
-                        value=match['value'], set_id=match['set_id'], score=1)
+                        value=match['value'], score=1)

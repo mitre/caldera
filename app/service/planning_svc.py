@@ -156,12 +156,6 @@ class PlanningService(BaseService):
         return links
 
     @staticmethod
-    def _reward_fact_relationship(combo_set, combo_link, score):
-        if len(combo_set) == 1 and len(combo_link) == 1:
-            score *= 2
-        return score
-
-    @staticmethod
     def _is_fact_bound(fact):
         return not fact['link_id']
 
@@ -205,14 +199,12 @@ class PlanningService(BaseService):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards, combo_set_id, combo_link_id = 0, list(), set(), set()
+        score, rewards, combo_link_id = 0, list(), set(), set()
         for var in combo:
             score += (score + var['score'])
             rewards.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            combo_set_id.add(var['set_id'])
             combo_link_id.add(var['link_id'])
-        score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
         return copy_test, score, rewards
 
     async def _get_agent_facts(self, op_id, paw):

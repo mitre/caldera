@@ -201,19 +201,18 @@ class DataService(BaseService):
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
 
-    async def create_fact(self, property, value, source_id, score=1, set_id=0, link_id=None):
+    async def create_fact(self, property, value, source_id, score=1, link_id=None):
         """
         Save a new fact to the database
         :param property:
         :param value:
         :param source_id:
         :param score:
-        :param set_id:
         :param link_id:
         :return: the database id
         """
         return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
-                                                       score=score, set_id=set_id, link_id=link_id))
+                                                       score=score, link_id=link_id))
 
     async def create_rule(self, fact, source_id, action='DENY', match='.*'):
         """
