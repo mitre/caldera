@@ -215,7 +215,7 @@ class DataService(BaseService):
         return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
                                                        score=score, set_id=set_id, link_id=link_id))
 
-    async def create_rule(self, fact, source_id, action="DENY", match=".*"):
+    async def create_rule(self, fact, source_id, action='DENY', match='.*'):
         """
         Create fact rule. White list or black list. Order matters, executes like firewall rules.
         :param source_id: ties to source of rule
@@ -227,7 +227,7 @@ class DataService(BaseService):
             action = RuleAction[action.upper()].value
             await self.dao.create('core_rule', dict(fact=fact, source_id=source_id, action=action, match=match))
         except KeyError:
-            self.log.error("Rule action must be in [%s] not %s" % (', '.join(RuleAction.__members__.keys()), action.upper()))
+            self.log.error('Rule action must be in [%s] not %s' % (', '.join(RuleAction.__members__.keys()), action.upper()))
 
     async def create_agent(self, agent, executors):
         """
