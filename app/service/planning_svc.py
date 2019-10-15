@@ -199,12 +199,11 @@ class PlanningService(BaseService):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards, combo_link_id = 0, list(), set(), set()
+        score, rewards = 0, list()
         for var in combo:
             score += (score + var['score'])
             rewards.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            combo_link_id.add(var['link_id'])
         return copy_test, score, rewards
 
     async def _get_agent_facts(self, op_id, paw):
