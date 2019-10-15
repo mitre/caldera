@@ -134,7 +134,7 @@ class AgentService(BaseService):
         operation = (await self.data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         while operation['state'] != operation_svc.op_states['RUNNING']:
             if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                link_id = await self._create_link(link)
+                link_id = await self.data_svc.create('core_chain', link)
                 await self.data_svc.dao.update('core_operation', 'id', op_id,
                                                dict(state=operation_svc.op_states['PAUSED']))
                 return link_id

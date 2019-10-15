@@ -12,26 +12,26 @@ def json(parser, blob, log):
             return matched_facts
         if isinstance(structured, (list,)):
             for i, entry in enumerate(structured):
-                matched_facts.append((dict(fact=parser['property'], value=entry.get(parser['script']), set_id=i)))
+                matched_facts.append((dict(fact=parser['property'], value=entry.get(parser['script']))))
         elif isinstance(structured, (dict,)):
             dict_match = parser['script']
             dict_match = dict_match.split(',')
             match = structured
             for d in dict_match:
                 match = match[d]
-            matched_facts.append((dict(fact=parser['property'], value=match, set_id=0)))
+            matched_facts.append((dict(fact=parser['property'], value=match)))
         else:
-            matched_facts.append((dict(fact=parser['property'], value=structured[parser['script']], set_id=0)))
+            matched_facts.append((dict(fact=parser['property'], value=structured[parser['script']])))
     return matched_facts
 
 
 def regex(parser, blob, **kwargs):
     matched_facts = []
     for i, v in enumerate([m for m in re.findall(parser['script'], blob.strip())]):
-        matched_facts.append(dict(fact=parser['property'], value=v, set_id=i))
+        matched_facts.append(dict(fact=parser['property'], value=v))
     return matched_facts
 
 
 def line(parser, blob, **kwargs):
-    return [dict(fact=parser['property'], value=f.strip(), set_id=0) for f in blob.split('\n') if f.strip()]
+    return [dict(fact=parser['property'], value=f.strip()) for f in blob.split('\n') if f.strip()]
 
