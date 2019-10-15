@@ -57,8 +57,8 @@ class Database:
     async def read_in(connection, table, field, elements):
         connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
-        sql = 'SELECT * FROM %s WHERE %s IN (%s)' % (table, field, ','.join(map(str, elements)))
-        cursor.execute(sql)
+        sql = 'SELECT * FROM {} WHERE {} IN ({})'.format(table, field, ','.join('?'*len(elements)))
+        cursor.execute(sql, elements)
         rows = cursor.fetchall()
         return [dict(ix) for ix in rows]
 

@@ -11,6 +11,7 @@ class AgentService(BaseService):
 
     def __init__(self, untrusted_timer):
         self.log = self.add_service('agent_svc', self)
+        self.data_svc = self.get_service('data_svc')
         self.loop = asyncio.get_event_loop()
         self.untrusted_timer = untrusted_timer
 
@@ -19,12 +20,11 @@ class AgentService(BaseService):
         Cyclic function that repeatedly checks if there are agents to be marked as untrusted
         :return: None
         """
-        data_svc = self.get_service('data_svc')
         next_check = self.untrusted_timer
         try:
             while True:
                 await asyncio.sleep(next_check+1)
-                trusted_agents = await data_svc.explode_agents(criteria=dict(trusted=1))
+                trusted_agents = await self.data_svc.explode_agents(criteria=dict(trusted=1))
                 next_check = self.untrusted_timer
                 for a in trusted_agents:
                     last_trusted_seen = datetime.strptime(a['last_trusted_seen'], '%Y-%m-%d %H:%M:%S')
@@ -48,7 +48,7 @@ class AgentService(BaseService):
         data = dict(trusted=trusted)
         if trusted:
             data['last_trusted_seen'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        await self.get_service('data_svc').update('core_agent', 'paw', paw, data)
+        await self.data_svc.update('core_agent', 'paw', paw, data)
         self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
@@ -66,19 +66,19 @@ class AgentService(BaseService):
         :return: the agent object from explode_agents
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
-        agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+        agent = await self.data_svc.explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
         if agent:
             update_data = dict(last_seen=now, pid=pid, ppid=ppid)
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
-            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
+            await self.data_svc.update('core_agent', 'paw', paw, data=update_data)
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
                           trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep)
-            await self.get_service('data_svc').create_agent(agent=queued, executors=executors)
-            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
+            await self.data_svc.create_agent(agent=queued, executors=executors)
+            agent = await self.data_svc.explode_agents(criteria=dict(paw=paw))
         agent[0]['sleep'] = self.jitter('{}/{}'.format(agent[0]['sleep_min'], agent[0]['sleep_max']))
         return agent[0]
 
@@ -88,10 +88,10 @@ class AgentService(BaseService):
         :param paw:
         :return: a list of links in JSON format
         """
-        commands = await self.get_service('data_svc').explode_chain(criteria=dict(paw=paw))
+        commands = await self.data_svc.explode_chain(criteria=dict(paw=paw))
         instructions = []
         for link in [c for c in commands if not c['collect'] and c['status'] == self.LinkState.EXECUTE.value]:
-            await self.get_service('data_svc').update('core_chain', key='id', value=link['id'],
+            await self.data_svc.update('core_chain', key='id', value=link['id'],
                                                       data=dict(collect=datetime.now()))
             payload = await self._gather_payload(link['ability'])
             instructions.append(json.dumps(dict(id=link['id'],
@@ -109,17 +109,16 @@ class AgentService(BaseService):
         :param status:
         :return: a JSON status message
         """
-        await self.get_service('data_svc').create('core_result', dict(link_id=link_id, output=output))
-        await self.get_service('data_svc').update('core_chain', key='id', value=link_id,
-                                                  data=dict(status=int(status),
-                                                            finish=self.get_current_timestamp()))
-        link = await self.get_service('data_svc').explode_chain(criteria=dict(id=link_id))
-        agent = (await self.get_service('data_svc').get('core_agent', dict(paw=link[0]['paw'])))[0]
+        await self.data_svc.create('core_result', dict(link_id=link_id, output=output))
+        await self.data_svc.update('core_chain', key='id', value=link_id, data=dict(status=int(status),
+                                                                                    finish=self.get_current_timestamp()))
+        link = await self.data_svc.explode_chain(criteria=dict(id=link_id))
+        agent = (await self.data_svc.get('core_agent', dict(paw=link[0]['paw'])))[0]
         now = self.get_current_timestamp()
         update_data = dict(last_seen=now)
         if agent['trusted']:
             update_data['last_trusted_seen'] = now
-        await self.get_service('data_svc').update('core_agent', 'paw', link[0]['paw'], data=update_data)
+        await self.data_svc.update('core_agent', 'paw', link[0]['paw'], data=update_data)
         return json.dumps(dict(status=True))
 
     async def perform_action(self, link: typing.Dict) -> int:
@@ -130,24 +129,23 @@ class AgentService(BaseService):
         :param link:
         :return: the id of the created link
         """
-        data_svc = self.get_service('data_svc')
         operation_svc = self.get_service('operation_svc')
         op_id = link['op_id']
-
-        operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+        operation = (await self.data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         while operation['state'] != operation_svc.op_states['RUNNING']:
             if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                link_id = await data_svc.create('core_chain', link)
-                await data_svc.dao.update('core_operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
+                link_id = await self._create_link(link)
+                await self.data_svc.dao.update('core_operation', 'id', op_id,
+                                               dict(state=operation_svc.op_states['PAUSED']))
                 return link_id
             else:
                 await asyncio.sleep(30)
-                operation = (await data_svc.dao.get('core_operation', dict(id=op_id)))[0]
+                operation = (await self.data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         link.pop('adversary_map_id')
-        return await data_svc.create('core_chain', link)
+        return await self.data_svc.create('core_chain', link)
 
     """ PRIVATE """
 
     async def _gather_payload(self, ability_id):
-        payload = await self.get_service('data_svc').get('core_payload', criteria=dict(ability=ability_id))
+        payload = await self.data_svc.get('core_payload', criteria=dict(ability=ability_id))
         return payload[0]['payload'] if payload else ''
