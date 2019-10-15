@@ -6,6 +6,7 @@ from collections import defaultdict
 import yaml
 
 from app.service.base_service import BaseService
+from app.service.planning_svc import RuleAction
 
 
 class DataService(BaseService):
@@ -62,9 +63,13 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for source in self.strip_yml(filename):
                 source_id = await self.dao.create('core_source', dict(name=source['name']))
-                for fact in source['facts']:
+                for fact in source.get('facts', []):
                     fact['source_id'] = source_id
                     await self.create_fact(**fact)
+
+                for rule in source.get('rules', []):
+                    rule['source_id'] = source_id
+                    await self.create_rule(**rule)
 
     async def load_planner(self, directory):
         """
@@ -210,6 +215,20 @@ class DataService(BaseService):
         return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
                                                        score=score, set_id=set_id, link_id=link_id))
 
+    async def create_rule(self, fact, source_id, action='DENY', match='.*'):
+        """
+        Create fact rule. White list or black list. Order matters, executes like firewall rules.
+        :param source_id: ties to source of rule
+        :param fact: name of the fact (file.sensitive.extension)
+        :param action: ALLOW or DENY
+        :param match: regex or subnet
+        """
+        try:
+            action = RuleAction[action.upper()].value
+            await self.dao.create('core_rule', dict(fact=fact, source_id=source_id, action=action, match=match))
+        except KeyError:
+            self.log.error('Rule action must be in [%s] not %s' % (', '.join(RuleAction.__members__.keys()), action.upper()))
+
     async def create_agent(self, agent, executors):
         """
         Save a new agent to the database
@@ -284,7 +303,9 @@ class DataService(BaseService):
             op['adversary'] = adversaries[0]
             op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
-            op['facts'] = await self.dao.get_in('core_fact', 'source_id', [s['source_id'] for s in sources])
+            source_list = [s['source_id'] for s in sources]
+            op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
+            op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
 
     async def explode_agents(self, criteria: object = None) -> object:
@@ -371,6 +392,14 @@ class DataService(BaseService):
         await self.dao.update(table, key, value, data)
 
     """ PRIVATE """
+
+    @staticmethod
+    async def _sort_rules_by_fact(rules):
+        organized_rules = defaultdict(list)
+        for rule in rules:
+            fact = rule.pop('fact')
+            organized_rules[fact].append(rule)
+        return organized_rules
 
     async def _save_ability_to_database(self, filename):
         for entries in self.strip_yml(filename):

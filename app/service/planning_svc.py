@@ -4,6 +4,7 @@ import itertools
 import re
 from base64 import b64decode
 from datetime import datetime
+from enum import Enum
 
 from app.service.base_service import BaseService
 
@@ -140,7 +141,8 @@ class PlanningService(BaseService):
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
-                for combo in list(itertools.product(*relevant_facts)):
+                valid_facts = await self._apply_rules(rules=operation.get('rules', []), facts=relevant_facts)
+                for combo in list(itertools.product(*valid_facts)):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
@@ -162,6 +164,25 @@ class PlanningService(BaseService):
     @staticmethod
     def _is_fact_bound(fact):
         return not fact['link_id']
+
+    async def _apply_rules(self, rules, facts):
+        valid_facts = []
+        if len(rules):
+            for fact in facts[0]:
+                if await self._is_fact_allowed(rules, fact):
+                    valid_facts.append(fact)
+        return [valid_facts]
+
+    @staticmethod
+    async def _is_fact_allowed(rules, fact):
+        allowed = True
+        for rule in rules.get(fact['property'], []):
+            if re.match(rule.get('match', '.*'), fact['value']):
+                if rule['action'] == RuleAction.DENY.value:
+                    allowed = False
+                elif rule['action'] == RuleAction.ALLOW.value:
+                    allowed = True
+        return allowed
 
     async def _build_relevant_facts(self, variables, facts, agent_facts):
         """
@@ -213,3 +234,8 @@ class PlanningService(BaseService):
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
+
+
+class RuleAction(Enum):
+    ALLOW = 1
+    DENY = 0
