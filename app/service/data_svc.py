@@ -151,8 +151,6 @@ class DataService(BaseService):
         for entry in await self.dao.get('core_ability', unique_criteria):
             await self.update('core_ability', 'id', entry['id'], ability)
             for parser in await self.dao.get('core_parser', dict(ability=entry['id'])):
-                parser.pop('ability')
-                parser.pop('module')
                 await self.dao.delete('core_parser_map', dict(parser_id=parser['id']))
             await self.dao.delete('core_parser', dict(ability=entry['id']))
             await self.dao.delete('core_payload', dict(ability=entry['id']))
