@@ -6,7 +6,7 @@ from collections import defaultdict
 import yaml
 
 from app.service.base_service import BaseService
-from app.utility.rule import RuleAction
+from app.service.planning_svc import RuleAction
 
 
 class DataService(BaseService):
@@ -125,7 +125,7 @@ class DataService(BaseService):
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                             platform, cleanup=None, payload=None, parser=None):
+                             platform, cleanup=None, payload=None, parsers=None):
         """
         Save a new ability to the database
         :param ability_id:
@@ -139,7 +139,7 @@ class DataService(BaseService):
         :param platform:
         :param cleanup:
         :param payload:
-        :param parser:
+        :param parsers:
         :return: the database id
         """
         ability = dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
@@ -151,12 +151,13 @@ class DataService(BaseService):
         for entry in await self.dao.get('core_ability', unique_criteria):
             await self.update('core_ability', 'id', entry['id'], ability)
             await self.dao.delete('core_parser', dict(ability=entry['id']))
+            await self.dao.delete('core_parser_map', dict(ability=entry['id']))
             await self.dao.delete('core_payload', dict(ability=entry['id']))
-            return await self._save_ability_extras(entry['id'], payload, parser)
+            return await self._save_ability_extras(entry['id'], payload, parsers)
 
         # new
         identifier = await self.dao.create('core_ability', ability)
-        return await self._save_ability_extras(identifier, payload, parser)
+        return await self._save_ability_extras(identifier, payload, parsers)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -226,7 +227,8 @@ class DataService(BaseService):
             action = RuleAction[action.upper()].value
             await self.dao.create('core_rule', dict(fact=fact, source_id=source_id, action=action, match=match))
         except KeyError:
-            self.log.error('Rule action must be in [%s] not %s' % (', '.join(RuleAction.__members__.keys()), action.upper()))
+            self.log.error(
+                'Rule action must be in [%s] not %s' % (', '.join(RuleAction.__members__.keys()), action.upper()))
 
     async def create_agent(self, agent, executors):
         """
@@ -366,6 +368,17 @@ class DataService(BaseService):
             p['params'] = json.loads(p['params'])
         return planners
 
+    async def explode_parser(self, criteria=None):
+        """
+        Get all parser data
+        :param criteria:
+        :return:
+        """
+        parsers = await self.get('core_parser', criteria=criteria)
+        for parser in parsers:
+            parser['relationships'] = await self.get('core_parser_map', dict(parser_id=parser['id']))
+        return parsers
+
     """ DELETE """
 
     async def delete(self, index, criteria):
@@ -382,7 +395,7 @@ class DataService(BaseService):
     async def update(self, table, key, value, data):
         """
         Update any field in any table in the database
-        :param table: 
+        :param table:
         :param key:
         :param value:
         :param data:
@@ -417,15 +430,17 @@ class DataService(BaseService):
                                                           info['cleanup'].strip().encode(
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
-                                                      payload=info.get('payload'), parser=info.get('parser'))
+                                                      payload=info.get('payload'), parsers=info.get('parsers', []))
                 await self._delete_stale_abilities(ab)
 
-    async def _save_ability_extras(self, identifier, payload, parser):
+    async def _save_ability_extras(self, identifier, payload, parsers):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
-        if parser:
-            parser['ability'] = identifier
-            await self.dao.create('core_parser', parser)
+        for module in parsers:
+            parser_id = await self.dao.create('core_parser', dict(ability=identifier, module=module))
+            for r in parsers.get(module):
+                relationship = dict(parser_id=parser_id, source=r.get('source'), edge=r.get('edge'), target=r.get('target'))
+                await self.dao.create('core_parser_map', relationship)
         return identifier
 
     async def _delete_stale_abilities(self, ability):

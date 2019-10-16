@@ -1,10 +1,6 @@
-import os
-import glob
-from pydoc import locate
 from base64 import b64decode
+from importlib import import_module
 
-import app.parsers.standard as parsers
-import app.parsers.mimikatz as mimikatz_parser
 from app.service.base_service import BaseService
 
 
@@ -12,28 +8,6 @@ class ParsingService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('parsing_svc', self)
-        self.parsers = {
-            'json': parsers.json,
-            'line': parsers.line,
-            'mimikatz': mimikatz_parser.mimikatz
-        }
-
-    async def load_parsers(self, directory):
-        """
-        Load all parser plugins
-        :param directory:
-        :return: None
-        """
-        if not os.path.exists(directory):
-            raise ValueError('Unable to find plugin parser directory:  %s' % directory)
-        else:
-            for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-                for entries in self.strip_yml(filename):
-                    parser = locate(entries['parser'])
-                    if not parser:
-                        raise ValueError('Unable to load the function %s for parser %s declared in %s'
-                                         % (entries['parser'], entries['name'], filename))
-                    await self._add_parser(entries['id'], entries['name'], parser)
 
     async def parse_facts(self, operation):
         """
@@ -44,57 +18,49 @@ class ParsingService(BaseService):
         data_svc = self.get_service('data_svc')
         results = await data_svc.explode_results()
         for result in [r for r in results if not r['parsed']]:
-            parse_info = await data_svc.get('core_parser', dict(ability=result['link']['ability']))
-            if parse_info and result['link']['status'] == 0:
+            for parser_info in await data_svc.explode_parser(dict(ability=result['link']['ability'])):
+                if result['link']['status'] != 0:
+                    continue
                 blob = b64decode(result['output']).decode('utf-8')
-                parser = self.parsers.get(parse_info[0]['name'], parsers.regex)
-                matched_facts = parser(parser=parse_info[0], blob=blob, log=self.log)
+                parser = await self._load_parser(parser_info)
+                relationships = parser.parse(blob=blob)
 
-                await self._matched_fact_creation(matched_facts, operation, data_svc, result)
+                await self._matched_fact_creation(relationships, operation, data_svc, result)
                 update = dict(parsed=self.get_current_timestamp())
                 await data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
-    
-    async def _add_parser(self, p_id, name, parser):
-        """
-        Load the specified parser plugin
-        :param p_id:  the id of the yaml file that defines the parser
-        :param name:  the unique name of the parser
-        :param parser:  an instance of the parser class 
-        :return: None
-        """        
-        if name in self.parsers:
-            self.log.warning('Duplicate parser name detected:  %s:%s' % (p_id, name))
-        else:
-            self.parsers[name] = parser           
 
-    async def _matched_fact_creation(self, matched_facts, operation, data_svc, result):
+    @staticmethod
+    async def _load_parser(parser_info):
+        parsing_module = import_module(parser_info['module'])
+        return getattr(parsing_module, 'Parser')(parser_info['relationships'])
+
+    async def _matched_fact_creation(self, relationships, operation, data_svc, result):
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
-        for match in matched_facts:
+        for relationship in relationships:
             operation = (await data_svc.explode_operation(dict(id=operation['id'])))[0]
-            if match['fact'].startswith('host'):
-                fact = await self._create_host_fact(operation, match, source, result)
+            s = relationship.get_source()
+            if s[0].startswith('host'):
+                fact = await self._create_host_fact(operation, s, source, result)
             else:
-                fact = await self._create_global_fact(operation, match, source, result)
+                fact = await self._create_global_fact(operation, s, source, result)
             if fact:
                 await data_svc.create_fact(**fact)
 
     @staticmethod
     async def _create_host_fact(operation, match, source, result):
-        already_stashed = [f for f in operation['facts'] if f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] > 0]
+        already_stashed = [f for f in operation['facts'] if f['property'] == match[0] and f['value'] == match[1] and f['score'] > 0]
         agents_to_check = []
         for fact in already_stashed:
             link = next((lnk for lnk in operation['chain'] if lnk['id'] == fact['link_id']), False)
             if link:
                 agents_to_check.append(link['paw'])
         if result['link']['paw'] not in agents_to_check:
-            return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'], value=match['value'],
-                        score=1)
+            return dict(source_id=source['id'], link_id=result['link_id'], property=match[0], value=match[1], score=1)
 
     @staticmethod
     async def _create_global_fact(operation, match, source, result):
-        if not any(f['property'] == match['fact'] and f['value'] == match['value'] and f['score'] <= 0 for f in
+        if not any(f['property'] == match[0] and f['value'] == match[1] and f['score'] <= 0 for f in
                    operation['facts']):
-            return dict(source_id=source['id'], link_id=result['link_id'], property=match['fact'],
-                        value=match['value'], score=1)
+            return dict(source_id=source['id'], link_id=result['link_id'], property=match[0], value=match[1], score=1)
