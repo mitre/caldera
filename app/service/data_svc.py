@@ -272,7 +272,7 @@ class DataService(BaseService):
         abilities = await self.dao.get('core_ability', criteria=criteria)
         for ab in abilities:
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
-            ab['parser'] = await self.dao.get('core_parser', dict(ability=ab['id']))
+            ab['parsers'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
         return abilities
 
