@@ -73,13 +73,8 @@ class AgentService(BaseService):
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
             await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
-            incoming_executors =[]
-            for i,e in enumerate(executors):
-                incoming_executors.append(dict(executor=e, preferred=1 if i == 0 else 0))
-            if agent[0]['executors'] != incoming_executors:
-                await self.get_service('data_svc').delete('core_executor', dict(agent_id=agent[0]['id']))
-                for item in incoming_executors:
-                    await self.get_service('data_svc').create('core_executor', dict(agent_id=agent[0]['id'], executor=item['executor'], preferred=item['preferred']))
+            await self.get_service('data_svc').update_agent('core_executor', dict(agent_id=agent[0]['id'],
+                incoming_executors=executors, previous_executors=agent[0]['executors']))
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
