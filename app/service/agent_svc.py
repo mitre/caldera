@@ -72,8 +72,8 @@ class AgentService(BaseService):
             update_data = dict(last_seen=now, pid=pid, ppid=ppid)
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
-            await self.get_service('data_svc').update('core_agent', 'paw', paw, data=update_data)
-            await self.get_service('data_svc').update_agent('core_executor', dict(agent_id=agent[0]['id'],
+            await self.data_svc.update('core_agent', 'paw', paw, data=update_data)
+            await self.data_svc.update_agent_executor(dict(agent_id=agent[0]['id'],
                 incoming_executors=executors, previous_executors=agent[0]['executors']))
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,

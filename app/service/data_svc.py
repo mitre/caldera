@@ -390,22 +390,24 @@ class DataService(BaseService):
         :return: None
         """
         await self.dao.update(table, key, value, data)
-        
-    async def update_agent(self, table, data):
+
+    async def update_agent_executor(self, data):
         """
         Update the agent's core executor
-        :param table:
-        :param data:
-        :return:
+        :param data: dict of agent_id, incoming executors, and agent executors
+        :return: None
         """
-        executors_organized=[]
-        for i,e in enumerate(data['incoming_executors']):
-                executors_organized.append(dict(executor=e, preferred=1 if i == 0 else 0))
-        if executors_organized != data['previous_executors']:
-            await self.dao.delete(table, dict(agent_id=data['agent_id']))
-            for item in executors_organized:
+        executors_organized = []
+        for index,incoming_executor in enumerate(data['incoming_executors']):
+                executors_organized.append(dict(executor=incoming_executor, preferred=1 if index == 0 else 0))
+        for item in data['previous_executors']:
+            if item not in executors_organized:
+                await self.dao.delete('core_executor', dict(agent_id=data['agent_id'],
+                                                            executor=item['executor']))
+        for item in executors_organized:
+            if item not in data['previous_executors']:
                 await self.dao.create('core_executor', dict(agent_id=data['agent_id'], executor=item['executor'],
-                    preferred=item['preferred']))
+                                                            preferred=item['preferred']))
 
     """ PRIVATE """
 
