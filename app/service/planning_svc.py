@@ -6,7 +6,7 @@ from base64 import b64decode
 from datetime import datetime
 
 from app.service.base_service import BaseService
-from app.utility.rule import RuleAction, RuleSet
+from app.utility.rule import RuleSet
 
 
 class PlanningService(BaseService):
@@ -63,8 +63,8 @@ class PlanningService(BaseService):
                                       decide=datetime.now(), status=link_status))
             links[:] = await self._trim_links(op, links, member)
             for link in reversed(links):
-                link.pop('rewards', [])
-                await self.get_service('data_svc').create('core_chain', link)
+                await self.get_service('data_svc').create_link(link)
+
         await self.wait_for_phase(op)
 
     async def wait_for_phase(self, operation):
@@ -146,10 +146,10 @@ class PlanningService(BaseService):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
-                    variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
+                    variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link['command'] = self.encode_string(variant)
                     copy_link['score'] = score
-                    copy_link['rewards'] = rewards
+                    copy_link['used'] = used
                     links.append(copy_link)
             else:
                 link['command'] = self.encode_string(decoded_test)
@@ -176,16 +176,17 @@ class PlanningService(BaseService):
             relevant_facts.append(variable_facts)
         return relevant_facts
 
-    async def _build_single_test_variant(self, copy_test, combo):
+    @staticmethod
+    async def _build_single_test_variant(copy_test, combo):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards = 0, list()
+        score, used = 0, list()
         for var in combo:
             score += (score + var['score'])
-            rewards.append(var['id'])
+            used.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-        return copy_test, score, rewards
+        return copy_test, score, used
 
     async def _get_agent_facts(self, op_id, paw):
         """
@@ -206,5 +207,3 @@ class PlanningService(BaseService):
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
-
-
