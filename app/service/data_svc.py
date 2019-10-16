@@ -243,6 +243,17 @@ class DataService(BaseService):
             await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
         return agent_id
 
+    async def create_link(self, link):
+        """
+        Create a new link for the chain
+        :param link:
+        :return:
+        """
+        used = link.pop('used', [])
+        link_id = await self.create('core_chain', link)
+        for uf in used:
+            await self.dao.create('core_used', dict(link_id=link_id, fact_id=uf))
+
     async def create(self, table, data):
         """
         Create a new object in the database

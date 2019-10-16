@@ -134,7 +134,7 @@ class AgentService(BaseService):
         operation = (await self.data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         while operation['state'] != operation_svc.op_states['RUNNING']:
             if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                link_id = await self.data_svc.create('core_chain', link)
+                link_id = await self.data_svc.create_link(link)
                 await self.data_svc.dao.update('core_operation', 'id', op_id,
                                                dict(state=operation_svc.op_states['PAUSED']))
                 return link_id
@@ -142,7 +142,7 @@ class AgentService(BaseService):
                 await asyncio.sleep(30)
                 operation = (await self.data_svc.dao.get('core_operation', dict(id=op_id)))[0]
         link.pop('adversary_map_id')
-        return await self.data_svc.create('core_chain', link)
+        return await self.data_svc.create_link(link)
 
     """ PRIVATE """
 
