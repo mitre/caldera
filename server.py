@@ -20,6 +20,7 @@ from app.service.operation_svc import OperationService
 from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
 from app.service.plugin_svc import PluginService
+from app.service.reporting_svc import ReportingService
 
 
 async def background_tasks(app):
@@ -104,6 +105,7 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
         operation_svc = OperationService()
+        reporting_svc = ReportingService()
         auth_svc = AuthService(cfg['api_key'])
 
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
