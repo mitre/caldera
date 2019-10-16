@@ -6,7 +6,7 @@ from collections import defaultdict
 import yaml
 
 from app.service.base_service import BaseService
-from app.service.planning_svc import RuleAction
+from app.utility.rule import RuleAction
 
 
 class DataService(BaseService):
