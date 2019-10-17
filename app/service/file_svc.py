@@ -95,12 +95,13 @@ class FileSvc(BaseService):
         :param xored: whether or not to xor the contents when saving
         :return: full path of the saved file
         """
-        filename='plugins/stockpile/payloads/%s' % name
+        filebase='plugins/stockpile/payloads/'
         f_content = content
+        filename = str(os.path.join("dummy",name).split(os.path.sep)[-1])
         if xored:
             filename = filename + 'xored'
             f_content = xor_file(content)
-        with open(filename, 'wb') as file:
+        with open(os.path.join(filebase, filename), 'xb') as file:
             file.write(f_content)
         return filename
 
