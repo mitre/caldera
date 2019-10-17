@@ -388,8 +388,21 @@ class DataService(BaseService):
         """
         parsers = await self.get('core_parser', criteria=criteria)
         for parser in parsers:
-            parser['relationships'] = await self.get('core_parser_map', dict(parser_id=parser['id']))
+            parser['mappers'] = await self.get('core_parser_map', dict(parser_id=parser['id']))
         return parsers
+
+    async def explode_used(self, criteria=None):
+        """
+        Get all used facts
+        :param criteria:
+        :return:
+        """
+        used_facts = await self.get('core_used', criteria=criteria)
+        for uf in used_facts:
+            fact = (await self.get('core_fact', dict(id=uf['id'])))[0]
+            uf['property'] = fact['property']
+            uf['value'] = fact['value']
+        return used_facts
 
     """ DELETE """
 
