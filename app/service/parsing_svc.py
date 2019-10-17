@@ -70,6 +70,6 @@ class ParsingService(BaseService):
             return dict(source_id=source['id'], link_id=result['link_id'], property=match[0], value=match[1], score=1)
 
     async def _save_relationship(self, link_id, source_id, edge, target_id):
-        if source_id and edge and target_id:
+        if source_id and edge:
             relationship = dict(link_id=link_id, source=source_id, edge=edge, target=target_id)
             await self.data_svc.create('core_relationships', relationship)
