@@ -36,7 +36,7 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
         await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
-        report = await self.reporting_svc.generate_operation_report(operation['id'], agent_output=True)
+        report = await self.reporting_svc.generate_operation_report(operation['id'], agent_output=False)
         await self.reporting_svc.write_report(report)
 
     async def run(self, op_id):
