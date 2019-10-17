@@ -16,3 +16,5 @@ CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, na
 CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, params json, UNIQUE(name) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_rule (id integer primary key AUTOINCREMENT, action integer, fact text, match text, source_id text);
+CREATE TABLE if not exists core_requirement (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
+CREATE TABLE if not exists core_requirement_map (requirement_id integer, source text, edge text, target text, UNIQUE(requirement_id, source, edge, target) ON CONFLICT IGNORE);
