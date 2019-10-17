@@ -475,7 +475,7 @@ class DataService(BaseService):
             _id = await self.dao.create(table, dict(ability=identifier, module=module))
             for r in relationships.get(module):
                 relationship = {id_type: _id, 'source': r.get('source'), 'edge': r.get('edge'), 'target': r.get('target')}
-                await self.dao.create(table+'_map', relationship)
+                await self.dao.create('%s_map' % table, relationship)
 
     async def _delete_stale_abilities(self, ability):
         for saved in await self.dao.get('core_ability', dict(ability_id=ability.get('id'))):
