@@ -11,7 +11,7 @@ class ParsingService(BaseService):
 
     async def parse_facts(self, operation):
         """
-        For a given operation, parse all facts for un-parsed results that have been sent in to the agent_svc
+        For a given operation, parse all facts for un-parsed results
         :param operation:
         :return: None
         """
@@ -22,6 +22,7 @@ class ParsingService(BaseService):
                 if result['link']['status'] != 0:
                     continue
                 blob = b64decode(result['output']).decode('utf-8')
+                parser_info['used_facts'] = await data_svc.explode_used(dict(link_id=result['link_id']))
                 parser = await self._load_parser(parser_info)
                 relationships = parser.parse(blob=blob)
 
@@ -34,7 +35,7 @@ class ParsingService(BaseService):
     @staticmethod
     async def _load_parser(parser_info):
         parsing_module = import_module(parser_info['module'])
-        return getattr(parsing_module, 'Parser')(parser_info['relationships'])
+        return getattr(parsing_module, 'Parser')(parser_info)
 
     async def _matched_fact_creation(self, relationships, operation, data_svc, result):
         source = (await data_svc.explode_sources(dict(name=operation['name'])))[0]
