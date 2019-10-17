@@ -41,8 +41,11 @@ class ReportingService(BaseService):
                                            technique_id=ability['technique_id'])
                                )
             if agent_output:
-                result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
-                step_report['output'] = self.decode_bytes(result['output'])
+                try:
+                    result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
+                    step_report['output'] = self.decode_bytes(result['output'])
+                except IndexError as e:
+                    continue
             agents_steps[step['paw']]['steps'].append(step_report)
         report['steps'] = agents_steps
         report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(op_id=op['id'])
