@@ -50,7 +50,7 @@ class ParsingService(BaseService):
             fact = await self._build_host_fact(operation, prop, source, result)
         else:
             fact = await self._build_global_fact(operation, prop, source, result)
-        if fact:
+        if fact and fact['property']:
             return await self.data_svc.create_fact(**fact)
 
     @staticmethod
