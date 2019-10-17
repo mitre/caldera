@@ -50,11 +50,11 @@ class ReportingService(BaseService):
 
     async def get_skipped_abilities_by_agent(self, op_id):
         """
-        Generate a list of skipped abilities for agents in an operation
+        Generates a list of abilities that an agent skipped (did not execute) during an operation
         :param op_id: operation id
-        :return: a JSON skipped abilities list by agent
+        :return: a JSON formatted list of abilities all agents skipped
         """
-        op_facts, op_results, op_state, op_group, op_adversary = await self._get_operation_skipped_ability_data(op_id)
+        op_facts, op_results, op_state, op_group, op_adversary = await self._get_operation_data(op_id)
         abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=op_group, adversary=op_adversary)
         skipped_abilities = []
         for agent in op_group:
@@ -67,7 +67,6 @@ class ReportingService(BaseService):
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
                         if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
-                            del agent_skipped[skipped['ability_id']]
                             agent_skipped[skipped['ability_id']] = skipped
                     else:
                         agent_skipped[skipped['ability_id']] = skipped
@@ -86,19 +85,12 @@ class ReportingService(BaseService):
         return {a['paw']: {'agent_id': a['id'], 'all_abilities': [ab for p in adversary['phases']
                                                                   for ab in adversary['phases'][p]]} for a in hosts}
 
-    async def _get_operation_skipped_ability_data(self, op_id):
+    async def _get_operation_data(self, op_id):
         operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
-        return set([f['property'] for f in operation['facts']]), \
-            {a['paw']: set([s['ability'] for s in operation['chain'] if s['paw'] == a['paw']]) for a in operation['host_group']}, \
-            operation['state'], operation['host_group'], operation['adversary']
-
-    async def _get_ran_ability_ids(self, op_id, agent):
-        operation = (await self.data_svc.explode_operation(criteria=dict(id=op_id)))[0]
-        data = []
-        for i in operation['chain']:
-            if i['paw'] == agent['paw']:
-                data.append((await self.data_svc.explode_abilities(dict(i)))[0]['ability_id'])
-        return data
+        op_facts = set([f['property'] for f in operation['facts']])
+        op_results = {a['paw']: set([s['ability'] for s in operation['chain'] if s['paw'] == a['paw']])
+                      for a in operation['host_group']}
+        return op_facts, op_results, operation['state'], operation['host_group'], operation['adversary']
 
     async def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}',
@@ -108,19 +100,19 @@ class ReportingService(BaseService):
         if ability['ability_id'] in agent_ran:
             return
         elif ability['platform'] != agent['platform']:
-            return dict(reason="Wrong platform", reason_id=self.Reason.PLATFORM.value, ability_id=ability['ability_id'])
+            return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability['ability_id'])
         elif ability['executor'] not in agent_executors:
-            return dict(reason="Executor not available", reason_id=self.Reason.EXECUTOR.value,
+            return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability['ability_id'])
         elif variables and not all(op_fact in op_facts for op_fact in variables):
-            return dict(reason="Fact dependency not fulfilled", reason_id=self.Reason.FACT_DEPENDENCY.value,
+            return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability['ability_id'])
         else:
             if (ability['platform'] == agent['platform'] and ability['executor'] in agent_executors
                     and ability['ability_id'] not in agent_ran):
                 if state != 'finished':
-                    return dict(reason="Operation not completed", reason_id=self.Reason.OP_RUNNING.value,
+                    return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
                                 ability_id=ability['ability_id'])
                 else:
-                    return dict(reason="Agent untrusted", reason_id=self.Reason.UNTRUSTED.value,
+                    return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                                 ability_id=ability['ability_id'])

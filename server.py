@@ -104,8 +104,8 @@ if __name__ == '__main__':
         logging.debug('Using an in-memory database: %s' % cfg['memory'])
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
-        operation_svc = OperationService()
         reporting_svc = ReportingService()
+        operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
 
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
