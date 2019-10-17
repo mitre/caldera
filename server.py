@@ -20,6 +20,7 @@ from app.service.operation_svc import OperationService
 from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
 from app.service.plugin_svc import PluginService
+from app.service.reporting_svc import ReportingService
 
 
 async def background_tasks(app):
@@ -103,6 +104,7 @@ if __name__ == '__main__':
         logging.debug('Using an in-memory database: %s' % cfg['memory'])
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
+        reporting_svc = ReportingService()
         operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
 
