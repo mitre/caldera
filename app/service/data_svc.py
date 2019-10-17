@@ -125,7 +125,7 @@ class DataService(BaseService):
     """ CREATE """
 
     async def create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                             platform, cleanup=None, payload=None, parsers=None):
+                             platform, cleanup=None, payload=None, parsers=None, requirements=None):
         """
         Save a new ability to the database
         :param ability_id:
@@ -152,13 +152,15 @@ class DataService(BaseService):
             await self.update('core_ability', 'id', entry['id'], ability)
             for parser in await self.dao.get('core_parser', dict(ability=entry['id'])):
                 await self.dao.delete('core_parser_map', dict(parser_id=parser['id']))
+            for requirement in await self.dao.get('core_requirement', dict(ability=entry['id'])):
+                await self.dao.delete('core_requirement_map', dict(requirement_id=requirement['id']))
             await self.dao.delete('core_parser', dict(ability=entry['id']))
             await self.dao.delete('core_payload', dict(ability=entry['id']))
-            return await self._save_ability_extras(entry['id'], payload, parsers)
+            return await self._save_ability_extras(entry['id'], payload, parsers, requirements)
 
         # new
         identifier = await self.dao.create('core_ability', ability)
-        return await self._save_ability_extras(identifier, payload, parsers)
+        return await self._save_ability_extras(identifier, payload, parsers, requirements)
 
     async def create_adversary(self, i, name, description, phases):
         """
@@ -455,18 +457,25 @@ class DataService(BaseService):
                                                           info['cleanup'].strip().encode(
                                                               'utf-8')).decode() if info.get(
                                                           'cleanup') else None,
-                                                      payload=info.get('payload'), parsers=info.get('parsers', []))
+                                                      payload=info.get('payload'), parsers=info.get('parsers', []),
+                                                      requirements=ab.get('requirements', []))
                 await self._delete_stale_abilities(ab)
 
-    async def _save_ability_extras(self, identifier, payload, parsers):
+    async def _save_ability_extras(self, identifier, payload, parsers, requirements):
         if payload:
             await self.dao.create('core_payload', dict(ability=identifier, payload=payload))
-        for module in parsers:
-            parser_id = await self.dao.create('core_parser', dict(ability=identifier, module=module))
-            for r in parsers.get(module):
-                relationship = dict(parser_id=parser_id, source=r.get('source'), edge=r.get('edge'), target=r.get('target'))
-                await self.dao.create('core_parser_map', relationship)
+        await self._save_ability_relationships(identifier, table='core_parser', id_type='parser_id',
+                                               relationships=parsers)
+        await self._save_ability_relationships(identifier, table='core_requirement', id_type='requirement_id',
+                                               relationships=requirements)
         return identifier
+
+    async def _save_ability_relationships(self, identifier, table, id_type, relationships):
+        for module in relationships:
+            _id = await self.dao.create(table, dict(ability=identifier, module=module))
+            for r in relationships.get(module):
+                relationship = {id_type: _id, 'source': r.get('source'), 'edge': r.get('edge'), 'target': r.get('target')}
+                await self.dao.create(table+'_map', relationship)
 
     async def _delete_stale_abilities(self, ability):
         for saved in await self.dao.get('core_ability', dict(ability_id=ability.get('id'))):
