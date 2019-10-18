@@ -324,25 +324,9 @@ class DataService(BaseService):
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
             for fact in op['facts']:
-                fact['relationships'] = await self.explode_fact_relationships(dict(source=fact['id']))
+                fact['relationships'] = await self._add_fact_relationships(dict(source=fact['id']))
             op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
-
-    async def explode_fact_relationships(self, criteria=None):
-        """
-        Gets all fact relationships for a given criteria
-        :param criteria:
-        :return:
-        """
-        relationships = await self.dao.get('core_relationships', criteria)
-        for r in relationships:
-            r.pop('source')
-            r.pop('link_id')
-            if r.get('target'):
-                r['target'] = (await self.dao.get('core_fact', dict(id=r.get('target'))))[0]['value']
-        return relationships
-
-
 
     async def explode_agents(self, criteria: object = None) -> object:
         """
@@ -510,3 +494,12 @@ class DataService(BaseService):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
         for adv in self.strip_yml(filename):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
+
+    async def _add_fact_relationships(self, criteria=None):
+        relationships = await self.dao.get('core_relationships', criteria)
+        for r in relationships:
+            r.pop('source')
+            r.pop('link_id')
+            if r.get('target'):
+                r['target'] = (await self.dao.get('core_fact', dict(id=r.get('target'))))[0]['value']
+        return relationships
