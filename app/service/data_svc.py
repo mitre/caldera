@@ -287,6 +287,9 @@ class DataService(BaseService):
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parsers'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
+            ab['requirements'] = await self.dao.get('core_requirement', dict(ability=ab['id']))
+            for r in ab['requirements']:
+                r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
         return abilities
 
     async def explode_adversaries(self, criteria=None):
@@ -320,8 +323,26 @@ class DataService(BaseService):
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
+            for fact in op['facts']:
+                fact['relationships'] = await self.explode_fact_relationships(dict(source=fact['id']))
             op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
+
+    async def explode_fact_relationships(self, criteria=None):
+        """
+        Gets all fact relationships for a given criteria
+        :param criteria:
+        :return:
+        """
+        relationships = await self.dao.get('core_relationships', criteria)
+        for r in relationships:
+            r.pop('source')
+            r.pop('link_id')
+            if r.get('target'):
+                r['target'] = (await self.dao.get('core_fact', dict(id=r.get('target'))))[0]['value']
+        return relationships
+
+
 
     async def explode_agents(self, criteria: object = None) -> object:
         """
