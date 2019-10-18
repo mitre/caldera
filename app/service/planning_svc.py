@@ -6,6 +6,7 @@ from base64 import b64decode
 from datetime import datetime
 
 from app.service.base_service import BaseService
+from app.utility.rule import RuleSet
 
 
 class PlanningService(BaseService):
@@ -46,25 +47,25 @@ class PlanningService(BaseService):
         :param operation:
         :return: None
         """
-        op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-        link_status = await self._default_link_status(operation)
-        for member in op[0]['host_group']:
-            if (not member['trusted']) and (not op[0]['allow_untrusted']):
+        op = (await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id'])))[0]
+        link_status = await self._default_link_status(op)
+        for member in op['host_group']:
+            if (not member['trusted']) and (not op['allow_untrusted']):
                 self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
                 continue
             links = []
             for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=op[0]['id'])):
+                                                                                       op_id=op['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup'] and link['status'] >= 0:
-                    links.append(dict(op_id=op[0]['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
+                    links.append(dict(op_id=op['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
                                       command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
                                       decide=datetime.now(), status=link_status))
-            links[:] = await self._trim_links(op[0], links, member)
+            links[:] = await self._trim_links(op, links, member)
             for link in reversed(links):
-                link.pop('rewards', [])
-                await self.get_service('data_svc').create('core_chain', link)
-        await self.wait_for_phase(op[0])
+                await self.get_service('data_svc').create_link(link)
+
+        await self.wait_for_phase(op)
 
     async def wait_for_phase(self, operation):
         """
@@ -140,27 +141,25 @@ class PlanningService(BaseService):
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
-                for combo in list(itertools.product(*relevant_facts)):
+                valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
+                for combo in list(itertools.product(*valid_facts)):
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
 
-                    variant, score, rewards = await self._build_single_test_variant(copy_test, combo)
+                    variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link['command'] = self.encode_string(variant)
                     copy_link['score'] = score
-                    copy_link['rewards'] = rewards
+                    copy_link['used'] = used
                     links.append(copy_link)
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
 
     @staticmethod
-    def _reward_fact_relationship(combo_set, combo_link, score):
-        if len(combo_set) == 1 and len(combo_link) == 1:
-            score *= 2
-        return score
+    def _is_fact_bound(fact):
+        return not fact['link_id']
 
-    @staticmethod
-    async def _build_relevant_facts(variables, facts, agent_facts):
+    async def _build_relevant_facts(self, variables, facts, agent_facts):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -170,26 +169,24 @@ class PlanningService(BaseService):
             variable_facts = []
             for fact in [f for f in facts if f['property'] == v]:
                 if fact['property'].startswith('host'):
-                    if fact['id'] in agent_facts:
+                    if fact['id'] in agent_facts or self._is_fact_bound(fact):
                         variable_facts.append(fact)
                 else:
                     variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 
-    async def _build_single_test_variant(self, copy_test, combo):
+    @staticmethod
+    async def _build_single_test_variant(copy_test, combo):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
-        score, rewards, combo_set_id, combo_link_id = 0, list(), set(), set()
+        score, used = 0, list()
         for var in combo:
             score += (score + var['score'])
-            rewards.append(var['id'])
+            used.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
-            combo_set_id.add(var['set_id'])
-            combo_link_id.add(var['link_id'])
-        score = self._reward_fact_relationship(combo_set_id, combo_link_id, score)
-        return copy_test, score, rewards
+        return copy_test, score, used
 
     async def _get_agent_facts(self, op_id, paw):
         """

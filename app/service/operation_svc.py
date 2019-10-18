@@ -1,6 +1,4 @@
 import asyncio
-import json
-import os
 import traceback
 from importlib import import_module
 
@@ -17,6 +15,7 @@ class OperationService(BaseService):
                               PAUSED='paused',
                               FINISHED='finished')
         self.data_svc = self.get_service('data_svc')
+        self.reporting_svc = self.get_service('reporting_svc')
 
     async def resume(self):
         """
@@ -37,8 +36,8 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % operation['id'])
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
         await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
-        report = await self.generate_operation_report(operation['id'])
-        await self._write_report(report)
+        report = await self.reporting_svc.generate_operation_report(operation['id'], agent_output=False)
+        await self.reporting_svc.write_report(report)
 
     async def run(self, op_id):
         """
@@ -61,35 +60,7 @@ class OperationService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    async def generate_operation_report(self, op_id):
-        """
-        Create a new operation report and write it to the logs directory
-        :param op_id:
-        :return: a JSON report
-        """
-        op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
-        planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
-        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
-
-        for step in op['chain']:
-            ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
-            command = self.decode_bytes(step['command'])
-            report['steps'].append(dict(ability_id=ability['ability_id'], paw=step['paw'],
-                                        command=command, delegated=step['collect'],
-                                        run=step['finish'], status=step['status'],
-                                        description=ability['description'], name=ability['name'],
-                                        attack=dict(tactic=ability['tactic'],
-                                                    technique_name=ability['technique_name'],
-                                                    technique_id=ability['technique_id'])))
-        return report
-
     """ PRIVATE """
-
-    @staticmethod
-    async def _write_report(report):
-        with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
-            f.write(json.dumps(report, indent=4))
 
     async def _get_planning_module(self, operation):
         chosen_planner = await self.data_svc.explode_planners(dict(id=operation['planner']))

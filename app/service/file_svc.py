@@ -1,11 +1,7 @@
 import os
 import uuid
-import random
-import string
 
 from aiohttp import web
-from shutil import which
-from hashlib import md5
 
 from app.service.base_service import BaseService
 from app.utility.payload_encoder import xor_file
@@ -18,6 +14,7 @@ class FileSvc(BaseService):
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
+        self.special_payloads = dict()
 
     async def download(self, request):
         """
@@ -26,11 +23,16 @@ class FileSvc(BaseService):
         :return: a multipart file via HTTP
         """
         try:
-            name, content = await self._get_file(request.headers.get('file'), request.headers.get('platform'))
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % name)])
+            payload = request.headers.get('file')
+            if payload in self.special_payloads:
+                payload = await self.special_payloads[payload](request.headers)
+            payload, content = await self.read_file(payload)
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % payload)])
             return web.Response(body=content, headers=headers)
         except FileNotFoundError:
             return web.HTTPNotFound(body='File not found')
+        except Exception as e:
+            return web.HTTPNotFound(body=e)
 
     async def upload(self, request):
         """
@@ -70,6 +72,42 @@ class FileSvc(BaseService):
                 return plugin, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
+    async def read_file(self, name):
+        """
+        Open a file and read the contents
+        :param name:
+        :return: a tuple (file_path, contents)
+        """
+        _, file_name = await self.find_file_path(name, location='payloads')
+        if file_name:
+            with open(file_name, 'rb') as file_stream:
+                return name, file_stream.read()
+        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        if file_name:
+            return name, xor_file(file_name)
+        raise FileNotFoundError
+
+    async def add_special_payload(self, name, func):
+        """
+        Call a special function when specific payloads are downloaded
+        :param name:
+        :param func:
+        :return:
+        """
+        self.special_payloads[name] = func
+
+    @staticmethod
+    async def compile_go(platform, output, src_fle, ldflags='-s -w'):
+        """
+        Dynamically compile a go file
+        :param platform:
+        :param output:
+        :param src_fle:
+        :param ldflags: A string of ldflags to use when building the go executable
+        :return:
+        """
+        os.system('GOOS=%s go build -o %s -ldflags="%s" %s' % (platform, output, ldflags, src_fle))
+
     """ PRIVATE """
 
     async def _walk_file_path(self, path, target):
@@ -85,43 +123,3 @@ class FileSvc(BaseService):
         if not os.path.exists(path):
             os.makedirs(path)
         return path
-
-    async def _get_file(self, name, platform):
-        if name.endswith('.go'):
-            if not platform or platform.lower() not in {ab['platform'].lower() for ab in await self.data_svc.explode_abilities()}:
-                raise FileNotFoundError
-            name = await self._go_compile(name, platform.lower())
-            _, file_path = await self.find_file_path(name, location='payloads')
-            with open(file_path, 'rb') as file_stream:
-                return name, file_stream.read()
-
-        _, file_name = await self.find_file_path(name, location='payloads')
-        if file_name:
-            with open(file_name, 'rb') as file_stream:
-                return name, file_stream.read()
-
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
-        if file_name:
-            return name, xor_file(file_name)
-
-        raise FileNotFoundError
-
-    async def _go_compile(self, name, platform):
-        if which('go') is not None:
-            plugin, file_path = await self.find_file_path(name)
-            await self._change_file_hash(file_path)
-            output = 'plugins/%s/payloads/%s-%s' % (plugin, name, platform)
-            os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, file_path))
-            self.log.debug('%s compiled for %s with MD5=%s' %
-                           (name, platform, md5(open(output, 'rb').read()).hexdigest()))
-        return '%s-%s' % (name, platform)
-
-    @staticmethod
-    async def _change_file_hash(file_path, size=30):
-        key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(size))
-        lines = open(file_path, 'r').readlines()
-        lines[-1] = 'var key = "%s"' % key
-        out = open(file_path, 'w')
-        out.writelines(lines)
-        out.close()
-        return key

@@ -20,6 +20,7 @@ from app.service.operation_svc import OperationService
 from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
 from app.service.plugin_svc import PluginService
+from app.service.reporting_svc import ReportingService
 
 
 async def background_tasks(app):
@@ -68,6 +69,17 @@ async def init(address, port, services, users):
     await web.TCPSite(runner, address, port).start()
 
 
+def set_logging_state():
+    state = logging.FATAL
+    if cfg['debug']:
+        state = logging.ERROR
+    logging.getLogger('aiohttp.access').setLevel(state)
+    logging.getLogger('aiohttp_session').setLevel(state)
+    logging.getLogger('aiohttp.server').setLevel(state)
+    logging.getLogger('asyncio').setLevel(state)
+    logging.getLogger().setLevel(logging.DEBUG)
+
+
 def main(services, host, port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(host, port, services, users))
@@ -82,15 +94,8 @@ if __name__ == '__main__':
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
     with open('conf/%s.yml' % args.environment) as c:
-        cfg = yaml.load(c)
-        state = logging.FATAL
-        if cfg['debug']:
-            state = logging.ERROR
-        logging.getLogger('aiohttp.access').setLevel(state)
-        logging.getLogger('aiohttp_session').setLevel(state)
-        logging.getLogger('aiohttp.server').setLevel(state)
-        logging.getLogger('asyncio').setLevel(state)
-        logging.getLogger().setLevel(logging.DEBUG)
+        cfg = yaml.load(c, Loader=yaml.FullLoader)
+        set_logging_state()
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
@@ -99,11 +104,14 @@ if __name__ == '__main__':
         logging.debug('Using an in-memory database: %s' % cfg['memory'])
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
+        reporting_svc = ReportingService()
         operation_svc = OperationService()
-        auth_svc = AuthService()
+        auth_svc = AuthService(cfg['api_key'])
+
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])

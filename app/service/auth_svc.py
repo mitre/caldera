@@ -17,7 +17,8 @@ class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
-    def __init__(self):
+    def __init__(self, api_key):
+        self.api_key = api_key
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
 
@@ -63,14 +64,15 @@ class AuthService(BaseService):
             return response
         raise web.HTTPFound('/login')
 
-    @staticmethod
-    async def check_permissions(request):
+    async def check_permissions(self, request):
         """
         Check if a request is allowed based on the user permissions
         :param request:
         :return: None
         """
         try:
+            if request.headers.get('API_KEY') == self.api_key:
+                return True
             await check_permission(request, 'admin')
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')

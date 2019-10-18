@@ -4,10 +4,11 @@ from app.database.persist import Persist
 
 class CoreDao:
 
-    def __init__(self, database, memory=False):
-        self.db = Persist(database)
+    def __init__(self, database=None, memory=False):
         if memory:
             self.db = Memory()
+        else:
+            self.db = Persist(database)
 
     async def build(self, schema):
         await self.db.build(schema)

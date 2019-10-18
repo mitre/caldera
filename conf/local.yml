@@ -11,5 +11,6 @@ plugins:
   - gui
   - chain
 debug: False
+api_key: ADMIN123
 users:
   admin: admin

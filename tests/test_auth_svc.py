@@ -1,18 +1,12 @@
-import asyncio
-from unittest import TestCase
-
+from tests.base_service import TestBaseServiceCase
 from app.service.auth_svc import DictionaryAuthorizationPolicy
 from app.service.auth_svc import AuthService
 
 
-class TestDictionaryAuthorizationPolicy(TestCase):
+class TestDictionaryAuthorizationPolicy(TestBaseServiceCase):
     def setUp(self) -> None:
         self.user_map = {'admin': AuthService.User(username='admin', password='admin', permissions=('admin', 'user'))}
         self.dap = DictionaryAuthorizationPolicy(self.user_map)
-
-    @staticmethod
-    def run_async(function):
-        return asyncio.get_event_loop().run_until_complete(function)
 
     def test_authorized_userid(self):
         self.assertTrue(self.run_async(self.dap.authorized_userid('admin')))
