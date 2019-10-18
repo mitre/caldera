@@ -3,6 +3,7 @@ import itertools
 import re
 from base64 import b64decode
 from datetime import datetime
+from importlib import import_module
 
 from app.service.base_service import BaseService
 from app.utility.rule import RuleSet
@@ -91,10 +92,12 @@ class PlanningService(BaseService):
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
+                ability_requirements = await self._get_operation_requirements(link, operation)
                 for combo in list(itertools.product(*valid_facts)):
+                    if not await self._do_enforcements(ability_requirements, operation, link, combo):
+                        continue
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
-
                     variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link['command'] = self.encode_string(variant)
                     copy_link['score'] = score
@@ -103,6 +106,34 @@ class PlanningService(BaseService):
             else:
                 link['command'] = self.encode_string(decoded_test)
         return links
+
+    async def _do_enforcements(self, ability_requirements, operation, link, combo):
+        for requirements_info in ability_requirements:
+            # list of facts that have a relationship
+            requirements_info['fact_relationships'] = [fact for fact in operation['facts'] if
+                                                       len(fact['relationships']) > 0]
+            # list of used facts
+            uf = link.get('used', [])
+            requirement = await self._load_requirements(requirements_info)
+            if not requirement.enforce(combo[0], uf, operation['facts']):
+                return False
+        return True
+
+    @staticmethod
+    async def _get_operation_requirements(link, operation):
+        requirements = []
+        # get the requirement module from the operation dict
+        for phase in (operation['adversary']['phases']).values():
+            for ab in phase:
+                if ab['id'] == link['ability']:
+                    for req in ab.get('requirements', []):
+                        requirements.append(req)
+        return requirements
+
+    @staticmethod
+    async def _load_requirements(requirements_info):
+        requirements_module = import_module(requirements_info['module'])
+        return getattr(requirements_module, 'Requirement')(requirements_info)
 
     @staticmethod
     def _is_fact_bound(fact):
