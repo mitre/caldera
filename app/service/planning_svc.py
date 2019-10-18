@@ -13,8 +13,11 @@ class PlanningService(BaseService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
+    # TODO: Should PlanningService hold/define standard function for placing/routing
+    # call to agent_svc.perform_action() for pushing links to agents?
+
     async def select_links(self, operation, agent, phase, trim=False):
-        #TODO:I think this method should be called "craft_links". Will cause breaking changes
+        #TODO:I think this method should be called "craft_phase_links". Will cause breaking changes
         """
         For an operation, phase and agent combination, determine which potential links can be executed
         :param operation:
@@ -44,7 +47,7 @@ class PlanningService(BaseService):
         return await self._sort_links(links)
 
     async def create_cleanup_links(self, operation):
-        #TODO: I think this method's name should more imply that it is crafting linnks
+        #TODO: I think this method's name should more imply that it is crafting links
         # and pushing them to agents queue. Will cause breaking changes.
         """
         For a given operation, create a link for every cleanup action on every executed ability
@@ -71,6 +74,19 @@ class PlanningService(BaseService):
                 await self.get_service('data_svc').create('core_chain', link)
         await self.wait_for_phase(op)
 
+    async def craft_link(self, operation, agent, ability, **params):
+        """
+        """
+        # craft link based on default operation, agent and ability values
+        link = dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'], cleanup=1,
+                    command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
+                    decide=datetime.now(), status=await self._default_link_status(operation))
+
+        # if caller further specifies modified link fields, update link
+        link.update({k:v for k, v in params.items()})
+        
+        return link
+
     async def wait_for_phase(self, operation):
         """
         Wait for all started links to be completed
@@ -88,17 +104,18 @@ class PlanningService(BaseService):
                     break
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
     
-    async def wait_for_link(self, link_id):
+    async def wait_for_links(self, link_ids):
         """
-        Wait for started link to be completed
+        Wait for started links to be completed
         :param
         :return: None
         """
-        link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
-        while ((link["finish"] is not None) and (link["status"] != self.LinkState.DISCARD.value)):
-            await asyncio.sleep(1)  #TODO: how long should wait for single link to complete?
-            #TODO: Do I need to check for trust issue hold up here too?
+        for link_id in link_ids:
             link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
+            while ((link["finish"] is not None) and (link["status"] != self.LinkState.DISCARD.value)):
+                await asyncio.sleep(1)  #TODO: how long should wait for single link to complete?
+                #TODO: Do I need to check for trust issue hold up here too?
+                link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
 
     async def decode(self, encoded_cmd, agent, group):
         """
@@ -181,6 +198,9 @@ class PlanningService(BaseService):
 
     @staticmethod
     async def capable_agent_abilities(phase_abilities, agent):
+        """
+        TODO: docs
+        """
         abilities = []
         preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
         executors = [e['executor'] for e in agent['executors']]
