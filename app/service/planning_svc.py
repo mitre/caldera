@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import itertools
 import re
@@ -16,7 +15,7 @@ class PlanningService(BaseService):
 
     async def select_links(self, operation, agent, phase):
         """
-        For an operation, phase and agent combination, determine which potential links can be executed
+        For an operation, phase and agent combination, determine which (potential) links can be executed
         :param operation:
         :param agent:
         :param phase:
@@ -41,47 +40,26 @@ class PlanningService(BaseService):
         links[:] = await self._trim_links(operation, links, agent)
         return await self._sort_links(links)
 
-    async def create_cleanup_links(self, operation):
+    async def select_cleanup_links(self, operation, agent):
         """
-        For a given operation, create a link for every cleanup action on every executed ability
+        For a given operation, select all cleanup links
         :param operation:
+        :param agent:
         :return: None
         """
-        op = (await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id'])))[0]
-        link_status = await self._default_link_status(op)
-        for member in op['host_group']:
-            if (not member['trusted']) and (not op['allow_untrusted']):
-                self.log.debug('Agent %s untrusted: no cleanup-link created' % member['paw'])
-                continue
-            links = []
-            for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=member['paw'],
-                                                                                       op_id=op['id'])):
-                ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
-                if ability['cleanup'] and link['status'] >= 0:
-                    links.append(dict(op_id=op['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
-                                      decide=datetime.now(), status=link_status))
-            links[:] = await self._trim_links(op, links, member)
-            for link in reversed(links):
-                await self.get_service('data_svc').create_link(link)
-        await self.wait_for_phase(op)
-
-    async def wait_for_phase(self, operation):
-        """
-        Wait for all started links to be completed
-        :param operation:
-        :return: None
-        """
-        for member in operation['host_group']:
-            if (not member['trusted']) and (not operation['allow_untrusted']):
-                continue
-            op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish'] and not lnk['status'] == self.LinkState.DISCARD.value),
-                       False):
-                await asyncio.sleep(3)
-                if await self._trust_issues(operation, member['paw']):
-                    break
-                op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
+        link_status = await self._default_link_status(operation)
+        if (not agent['trusted']) and (not operation['allow_untrusted']):
+            self.log.debug('Agent %s untrusted: no cleanup-link created' % agent['paw'])
+            return
+        links = []
+        for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=agent['paw'],
+                                                                                   op_id=operation['id'])):
+            ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
+            if ability['cleanup'] and link['status'] >= 0:
+                links.append(dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'], cleanup=1,
+                                  command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
+                                  decide=datetime.now(), status=link_status))
+        return reversed(await self._trim_links(operation, links, agent))
 
     """ PRIVATE """
 
@@ -169,12 +147,6 @@ class PlanningService(BaseService):
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
-
-    async def _trust_issues(self, operation, paw):
-        if not operation['allow_untrusted']:
-            agent = await self.get_service('data_svc').explode_agents(criteria=dict(paw=paw))
-            return not agent[0]['trusted']
-        return False
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
