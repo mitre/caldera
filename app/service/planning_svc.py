@@ -33,7 +33,7 @@ class PlanningService(BaseService):
         link_status = await self._default_link_status(operation)
 
         links = []
-        for a in await self.capable_agent_abilities(phase_abilities, agent):
+        for a in await self.get_service('agent_svc').capable_agent_abilities(phase_abilities, agent):
             links.append(
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
@@ -64,7 +64,6 @@ class PlanningService(BaseService):
             links[:] = await self._trim_links(op, links, member)
             for link in reversed(links):
                 await self.get_service('data_svc').create_link(link)
-
         await self.wait_for_phase(op)
 
     async def wait_for_phase(self, operation):
@@ -83,34 +82,6 @@ class PlanningService(BaseService):
                 if await self._trust_issues(operation, member['paw']):
                     break
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-
-    async def decode(self, encoded_cmd, agent, group):
-        """
-        Replace all global variables in a command with the values associated to a specific agent
-        :param encoded_cmd:
-        :param agent:
-        :param group:
-        :return: the updated command string
-        """
-        decoded_cmd = self.decode_bytes(encoded_cmd)
-        decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
-        decoded_cmd = decoded_cmd.replace('#{group}', group)
-        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
-        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
-        return decoded_cmd
-
-    @staticmethod
-    async def capable_agent_abilities(phase_abilities, agent):
-        abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
-        executors = [e['executor'] for e in agent['executors']]
-        for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
-                             and (ab['platform'] == agent['platform']) and (ab['executor'] in executors)]
-            if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
-                abilities.append(val)
-        return abilities
 
     """ PRIVATE """
 
@@ -136,7 +107,7 @@ class PlanningService(BaseService):
         """
         group = agent['host_group']
         for link in links:
-            decoded_test = await self.decode(link['command'], agent, group)
+            decoded_test = self.decode(link['command'], agent, group)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
