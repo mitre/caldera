@@ -391,23 +391,28 @@ class DataService(BaseService):
         """
         await self.dao.update(table, key, value, data)
 
-    async def update_agent_executor(self, data):
+    async def update_agent_executor(self, agent_id, new_executors, previous_executors):
         """
         Update the agent's core executor
-        :param data: dict of agent_id, incoming executors, and agent executors
+        :param agent_id: string with the agent_id for the agent calling back
+        :param new_executors: list with incoming executors being reported by deployed agent
+        :param previous_executors: list of dict with previous executors and their preferred status
         :return: None
         """
-        executors_organized = []
-        for index,incoming_executor in enumerate(data['incoming_executors']):
-                executors_organized.append(dict(executor=incoming_executor, preferred=1 if index == 0 else 0))
-        for item in data['previous_executors']:
-            if item not in executors_organized:
-                await self.dao.delete('core_executor', dict(agent_id=data['agent_id'],
-                                                            executor=item['executor']))
-        for item in executors_organized:
-            if item not in data['previous_executors']:
-                await self.dao.create('core_executor', dict(agent_id=data['agent_id'], executor=item['executor'],
-                                                            preferred=item['preferred']))
+        old_executors = [d['executor'] for d in(sorted(previous_executors, key = lambda i: i['preferred'],
+                                                       reverse = True))]
+
+        for item in set(new_executors) - set(old_executors):
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=item, preferred=0))
+
+        if old_executors[0] != new_executors[0]:
+            await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=old_executors[0]))
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=old_executors[0], preferred=0))
+            await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=new_executors[0]))
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=new_executors[0], preferred=1))
+
+        for item in set(old_executors) - set(new_executors):
+            await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=item))
 
     """ PRIVATE """
 
