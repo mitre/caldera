@@ -26,7 +26,9 @@ class ParsingService(BaseService):
                 parser = await self._load_parser(parser_info)
                 relationships = parser.parse(blob=blob)
 
+                await self._update_scores(link_id=result['link_id'], increment=len(relationships))
                 await self._create_relationships(relationships, operation, result)
+
                 update = dict(parsed=self.get_current_timestamp())
                 await self.data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
@@ -73,3 +75,10 @@ class ParsingService(BaseService):
         if source_id and edge:
             relationship = dict(link_id=link_id, source=source_id, edge=edge, target=target_id)
             await self.data_svc.create('core_relationships', relationship)
+
+    async def _update_scores(self, link_id, increment):
+        used_facts = await self.data_svc.get('core_used', dict(link_id=link_id))
+        for uf in used_facts:
+            existing = (await self.data_svc.get('core_fact', dict(id=uf['fact_id'])))[0]
+            update = dict(score=existing['score'] + increment)
+            await self.data_svc.update('core_fact', key='id', value=uf['fact_id'], data=update)
