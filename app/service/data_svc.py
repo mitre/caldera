@@ -497,9 +497,5 @@ class DataService(BaseService):
 
     async def _add_fact_relationships(self, criteria=None):
         relationships = await self.dao.get('core_relationships', criteria)
-        for r in relationships:
-            r.pop('source')
-            r.pop('link_id')
-            if r.get('target'):
-                r['target'] = (await self.dao.get('core_fact', dict(id=r.get('target'))))[0]['value']
-        return relationships
+        return [dict(edge=r.get('edge'), target=(await self.dao.get('core_fact', dict(id=r.get('target'))))[0])
+                for r in relationships if r.get('target')]
