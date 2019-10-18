@@ -43,17 +43,9 @@ class ParsingService(BaseService):
         source = (await self.data_svc.explode_sources(dict(name=operation['name'])))[0]
         for relationship in relationships:
             operation = (await self.data_svc.explode_operation(dict(id=operation['id'])))[0]
-            s_id, t_id = await self._get_rel_fact_ids(operation, relationship, source, result)
-            await self._save_relationship(result['link_id'], s_id, relationship.get_edge(), t_id)
-
-    async def _get_rel_fact_ids(self, operation, relationship, source, result):
-        s_id = relationship.get_source_id()
-        t_id = relationship.get_target_id()
-        if not s_id:
             s_id = await self._save_fact_entry(operation, relationship.get_source(), source, result)
-        if not t_id:
             t_id = await self._save_fact_entry(operation, relationship.get_target(), source, result)
-        return s_id, t_id
+            await self._save_relationship(result['link_id'], s_id, relationship.get_edge(), t_id)
 
     async def _save_fact_entry(self, operation, prop, source, result):
         if prop[0] and prop[0].startswith('host'):
