@@ -10,7 +10,7 @@ CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_
 CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
 CREATE TABLE if not exists core_parser_map (parser_id integer, source text, edge text, target text, UNIQUE(parser_id, source, edge, target) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, source_id text, link_id integer DEFAULT 0);
-CREATE TABLE if not exists core_used (id integer primary key AUTOINCREMENT, link_id integer, fact_id integer, rewarded date, UNIQUE(link_id, fact_id) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_used (id integer primary key AUTOINCREMENT, link_id integer, fact_id integer, UNIQUE(link_id, fact_id) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_relationships (link_id integer, source integer, edge text, target integer, UNIQUE(link_id, source, edge, target) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, UNIQUE(name) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);

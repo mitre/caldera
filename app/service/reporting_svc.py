@@ -96,10 +96,7 @@ class ReportingService(BaseService):
         return op_facts, op_results, operation['state'], operation['host_group'], operation['adversary']
 
     async def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}',
-                               await self.get_service('planning_svc').decode(ability['test'], agent,
-                                                                             agent['host_group']),
-                               flags=re.DOTALL)
+        variables = re.findall(r'#{(.*?)}', self.decode(ability['test'], agent, agent['host_group']), flags=re.DOTALL)
         if ability['ability_id'] in agent_ran:
             return
         elif ability['platform'] != agent['platform']:
