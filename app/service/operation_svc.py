@@ -67,3 +67,4 @@ class OperationService(BaseService):
         planning_module = import_module(chosen_planner[0]['module'])
         return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'),
                                                           **chosen_planner[0]['params'])
+
