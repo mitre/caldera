@@ -54,6 +54,13 @@ class ParsingService(BaseService):
             fact = await self._build_global_fact(operation, prop, source, result)
         if fact and fact['property']:
             return await self.data_svc.create_fact(**fact)
+        return await self._get_fact_id(operation, prop)
+
+    @staticmethod
+    async def _get_fact_id(operation, prop):
+        for fact in operation['facts']:
+            if fact['property'] == prop[0] and fact['value'] == prop[1]:
+                return fact['id']
 
     @staticmethod
     async def _build_host_fact(operation, match, source, result):
