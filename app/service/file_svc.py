@@ -78,13 +78,14 @@ class FileSvc(BaseService):
         :param name:
         :return: a tuple (file_path, contents)
         """
-        _, file_name = await self.find_file_path(name, location='payloads')
-        if file_name:
-            with open(file_name, 'rb') as file_stream:
-                return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
-        if file_name:
-            return name, xor_file(file_name)
+        for loc in ['payloads', 'data']:
+            _, file_name = await self.find_file_path(name, location=loc)
+            if file_name:
+                with open(file_name, 'rb') as file_stream:
+                    return name, file_stream.read()
+            _, file_name = await self.find_file_path('%s.xored' % (name,), location=loc)
+            if file_name:
+                return name, xor_file(file_name)
         raise FileNotFoundError
 
     async def save_file(self, name, content, xored=False):
@@ -95,9 +96,9 @@ class FileSvc(BaseService):
         :param xored: whether or not to xor the contents when saving
         :return: full path of the saved file
         """
-        filebase='plugins/stockpile/payloads/'
+        filebase = 'data/payloads/'
         f_content = content
-        filename = str(os.path.join("dummy",name).split(os.path.sep)[-1])
+        filename = str(os.path.join('a',name).split(os.path.sep)[-1])
         if xored:
             filename = filename + 'xored'
             f_content = xor_file(content)
@@ -116,7 +117,7 @@ class FileSvc(BaseService):
 
     async def find_payloads(self):
         """
-        Identify the full gambit of available payloads (filtering out adversary mode)
+        Identify the full gamut of available payloads (filtering out adversary mode)
         :return: list of available payloads
         """
         listing = []
@@ -124,6 +125,10 @@ class FileSvc(BaseService):
             for root, _, files in os.walk('plugins/%s' % plugin):
                 if root.endswith('payloads') and 'adversary' not in root:
                     listing.extend(files)
+            for _, _, files in os.walk('data/payloads'):
+                for file in files:
+                    if not file.endswith('.gitkeep'):
+                        listing.append(file)
         return listing
 
     @staticmethod
