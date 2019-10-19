@@ -195,9 +195,12 @@ class DataService(BaseService):
         :param autonomous
         :return: the database id
         """
+        group_id = await self.dao.create('core_operation_group', dict(name=group))
+        for a in await self.dao.get('core_agent', dict(host_group=group)):
+            await self.dao.create('core_operation_group_map', dict(group_id=group_id, agent_id=a['id']))
         op_id = await self.dao.create('core_operation', dict(
-            name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=self.get_current_timestamp(), planner=planner, state=state,
+            name=name, group_id=group_id, host_group=group, adversary_id=adversary_id, finish=None, phase=0,
+            jitter=jitter, start=self.get_current_timestamp(), planner=planner, state=state,
             allow_untrusted=allow_untrusted, autonomous=autonomous))
         source_id = await self.dao.create('core_source', dict(name=name))
         await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
@@ -316,7 +319,8 @@ class DataService(BaseService):
             op['chain'] = sorted(await self.explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
             adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
             op['adversary'] = adversaries[0]
-            op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
+            op['host_group'] = [(await self.explode_agents(criteria=dict(id=a['agent_id'])))[0]
+                                for a in await self.dao.get('core_operation_group_map', dict(group_id=op['group_id']))]
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
