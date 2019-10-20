@@ -38,7 +38,8 @@ class PlanningService(BaseService):
                 dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
                      jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
-        links[:] = await self._trim_links(operation, links, agent)
+        ability_requirements = {ab['id']: ab.get('requirements', []) for ab in phase_abilities}
+        links[:] = await self._trim_links(operation, links, agent, ability_requirements)
         return await self._sort_links(links)
 
     async def select_cleanup_links(self, operation, agent):
@@ -71,16 +72,16 @@ class PlanningService(BaseService):
         """
         return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
 
-    async def _trim_links(self, operation, links, agent):
+    async def _trim_links(self, operation, links, agent, ability_requirements=None):
         host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw']]
-        links[:] = await self._add_test_variants(links, agent, operation)
+        links[:] = await self._add_test_variants(links, agent, operation, ability_requirements)
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
         self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
         return links
 
-    async def _add_test_variants(self, links, agent, operation):
+    async def _add_test_variants(self, links, agent, operation, ability_requirements=None):
         """
         Create a list of all possible links for a given phase
         """
@@ -92,9 +93,8 @@ class PlanningService(BaseService):
                 agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
-                ability_requirements = await self._get_operation_requirements(link, operation)
                 for combo in list(itertools.product(*valid_facts)):
-                    if not await self._do_enforcements(ability_requirements, operation, link, combo):
+                    if not await self._do_enforcements(ability_requirements[link['ability']], operation, link, combo):
                         continue
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
@@ -118,17 +118,6 @@ class PlanningService(BaseService):
             if not requirement.enforce(combo[0], uf, operation['facts']):
                 return False
         return True
-
-    @staticmethod
-    async def _get_operation_requirements(link, operation):
-        requirements = []
-        # get the requirement module from the operation dict
-        for phase in (operation['adversary']['phases']).values():
-            for ab in phase:
-                if ab['id'] == link['ability']:
-                    for req in ab.get('requirements', []):
-                        requirements.append(req)
-        return requirements
 
     @staticmethod
     def _is_fact_bound(fact):
