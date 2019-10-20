@@ -406,7 +406,7 @@ class DataService(BaseService):
         """
         used_facts = await self.get('core_used', criteria=criteria)
         for uf in used_facts:
-            fact = (await self.get('core_fact', dict(id=uf['id'])))[0]
+            fact = (await self.get('core_fact', dict(id=uf['fact_id'])))[0]
             uf['property'] = fact['property']
             uf['value'] = fact['value']
         return used_facts
