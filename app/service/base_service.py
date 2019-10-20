@@ -2,6 +2,7 @@ from base64 import b64encode, b64decode
 from enum import Enum
 from random import randint
 from datetime import datetime
+from importlib import import_module
 
 import yaml
 
@@ -79,3 +80,8 @@ class BaseService:
         FACT_DEPENDENCY = 2
         OP_RUNNING = 3
         UNTRUSTED = 4
+
+    @staticmethod
+    async def load_module(module_type, module_info):
+        module = import_module(module_info['module'])
+        return getattr(module, module_type)(module_info)

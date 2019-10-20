@@ -114,7 +114,7 @@ class PlanningService(BaseService):
                                                        len(fact['relationships']) > 0]
             # list of used facts
             uf = link.get('used', [])
-            requirement = await self._load_requirements(requirements_info)
+            requirement = await self.load_module('Requirement', requirements_info)
             if not requirement.enforce(combo[0], uf, operation['facts']):
                 return False
         return True
@@ -129,11 +129,6 @@ class PlanningService(BaseService):
                     for req in ab.get('requirements', []):
                         requirements.append(req)
         return requirements
-
-    @staticmethod
-    async def _load_requirements(requirements_info):
-        requirements_module = import_module(requirements_info['module'])
-        return getattr(requirements_module, 'Requirement')(requirements_info)
 
     @staticmethod
     def _is_fact_bound(fact):
