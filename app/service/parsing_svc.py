@@ -23,7 +23,7 @@ class ParsingService(BaseService):
                     continue
                 blob = b64decode(result['output']).decode('utf-8')
                 parser_info['used_facts'] = await self.data_svc.explode_used(dict(link_id=result['link_id']))
-                parser = await self._load_parser(parser_info)
+                parser = await self.load_module('Parser', parser_info)
                 relationships = parser.parse(blob=blob)
 
                 await self._update_scores(link_id=result['link_id'], increment=len(relationships))
@@ -33,11 +33,6 @@ class ParsingService(BaseService):
                 await self.data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
-
-    @staticmethod
-    async def _load_parser(parser_info):
-        parsing_module = import_module(parser_info['module'])
-        return getattr(parsing_module, 'Parser')(parser_info)
 
     async def _create_relationships(self, relationships, operation, result):
         source = (await self.data_svc.explode_sources(dict(name=operation['name'])))[0]
