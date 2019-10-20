@@ -109,10 +109,6 @@ class PlanningService(BaseService):
 
     async def _do_enforcements(self, ability_requirements, operation, link, combo):
         for requirements_info in ability_requirements:
-            # list of facts that have a relationship
-            requirements_info['fact_relationships'] = [fact for fact in operation['facts'] if
-                                                       len(fact['relationships']) > 0]
-            # list of used facts
             uf = link.get('used', [])
             requirement = await self.load_module('Requirement', requirements_info)
             if not requirement.enforce(combo[0], uf, operation['facts']):
