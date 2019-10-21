@@ -9,14 +9,14 @@ from app.service.base_service import BaseService
 from app.utility.rule import RuleSet
 
 
-class PlanningService(BaseService):
+class PlanningService(BasePlanningService):
 
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
     async def get_links(self, operation, agent, phase=None, trim=False):
         """
-        For an operation, phase and agent combination, determine which (potential) links can be executed
+        For an operation, phase and agent combination, create links (that can be executed)
         :param operation:
         :param agent:
         :param phase:
@@ -39,17 +39,17 @@ class PlanningService(BaseService):
         link_status = await self._default_link_status(operation)
         links = []
         for a in await self.get_service('agent_svc').capable_agent_abilities(abilities, agent):
-            links.append(await self.craft_link(operation, agent, a))
+            links.append(await self.get_link(operation, agent, a))
         if trim:
             ability_requirements = {ab['id']: ab.get('requirements', []) for ab in abilities}
-            links[:] = await self.trim_links(operation, links, agent, ability_requirements)
+            links[:] = await self.trim_links(operation, agent, links, ability_requirements)
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent):
         """
-        For a given operation, select all cleanup links
+        For a given operation, create all cleanup links
         :param operation:
-        :param agent
+        :param agent:
         :return: None
         """
         link_status = await self._default_link_status(operation)
@@ -61,12 +61,18 @@ class PlanningService(BaseService):
                                                                                    op_id=operation['id'])):
             ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
             if ability['cleanup'] and link['status'] >= 0:
-                links.append(craft_link(operation, agent, ability, dict(cleanup=1, jitter=0)))
+                links.append(await self.get_link(operation, agent, ability, dict(cleanup=1, jitter=0)))
         return reversed(await self._trim_links(operation, links, agent))
         
-    async def craft_link(self, operation, agent, ability, fields):
+    async def get_link(self, operation, agent, ability, fields):
         """
-        TODO: docs
+        For an operation, agent, ability combination create link. Any field/values
+        in 'fields' dict parameter will overwrite the default link fields
+        :param operation:
+        :param agent:
+        :param ability:
+        :param fields:
+        :return: link
         """
         # craft link based on default operation, agent and ability values
         link = dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'],
@@ -80,88 +86,6 @@ class PlanningService(BaseService):
 
         return link
 
-    async def trim_links(self, operation, links, agent, ability_requirements=None):
-        """
-        Trim links in supplied list. Where 'trim' entails:
-            - adding all possible test variants
-            - removing completed links (i.e. agent has already completed)
-            - removing links that did not have template fact variables replaced by fact values
-        
-        :param operation:
-        :param links:
-        :param agent:
-        :return: trimmed list of links
-        """
-        links[:] = await self.add_test_variants(links, agent, operation, ability_requirements)
-        links = await self.remove_completed_links(operation, links, agent)
-        links = await self.remove_links_missing_facts(links)
-        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
-        return links
-
-    async def add_test_variants(self, links, agent, operation, ability_requirements=None):
-        """
-        Create a list of all possible links for a given phase
-        """
-        group = agent['host_group']
-        for link in links:
-            decoded_test = self.decode(link['command'], agent, group)
-            variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
-            if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
-                relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
-                valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
-                for combo in list(itertools.product(*valid_facts)):
-                    if ability_requirements and not await self._do_enforcements(ability_requirements[link['ability']], operation, link, combo):
-                        continue
-                    copy_test = copy.deepcopy(decoded_test)
-                    copy_link = copy.deepcopy(link)
-                    variant, score, used = await self._build_single_test_variant(copy_test, combo)
-                    copy_link['command'] = self.encode_string(variant)
-                    copy_link['score'] = score
-                    copy_link['used'] = used
-                    links.append(copy_link)
-            else:
-                link['command'] = self.encode_string(decoded_test)
-        return links
-
-    async def remove_completed_links(self, operation, links, agent):
-        """
-        Remove any links that have already been completed by the operation for the agent
-        :param operation:
-        :param links:
-        :param agent:
-        :return: updated list of links
-        """
-        completed_links = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and (l["finish"] or l["status"] == self.LinkState.DISCARD.value)]
-        links[:] = [l for l in links if l["command"] not in completed_links]
-        return links
-
-    async def remove_links_missing_facts(self, links):
-        """
-        Remove any links that did not have facts encoded into command
-        :param links:
-        :return: updated list of links
-        """
-        links[:] = [l for l in links if
-                    not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        return links
-
-    @staticmethod
-    async def capable_agent_abilities(phase_abilities, agent):
-        """
-        TODO: docs
-        """
-        abilities = []
-        preferred = next((e['executor'] for e in agent['executors'] if e['preferred']))
-        executors = [e['executor'] for e in agent['executors']]
-        for ai in set([pa['ability_id'] for pa in phase_abilities]):
-            total_ability = [ab for ab in phase_abilities if (ab['ability_id'] == ai)
-                             and (ab['platform'] == agent['platform']) and (ab['executor'] in executors)]
-            if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
-                abilities.append(val)
-        return abilities
-
     """ PRIVATE """
 
     @staticmethod
@@ -173,6 +97,9 @@ class PlanningService(BaseService):
 
     @staticmethod
     def _reward_fact_relationship(combo_set, combo_link, score):
+        """
+        Reware fact relationship
+        """
         if len(combo_set) == 1 and len(combo_link) == 1:
             score *= 2
         return score

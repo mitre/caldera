@@ -60,7 +60,8 @@ class OperationService(BaseService):
     async def wait_for_links_completion(self, operation, link_ids):
         """
         Wait for started links to be completed
-        :param
+        :param operation:
+        :param link_ids:
         :return: None
         """
         for link_id in link_ids:
