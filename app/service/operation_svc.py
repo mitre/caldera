@@ -95,6 +95,21 @@ class OperationService(BaseService):
             report['steps'].append(step_report)
         return report
 
+
+    async def wait_for_links_completion(self, operation, link_ids):
+        """
+        Wait for started links to be completed
+        :param
+        :return: None
+        """
+        for link_id in link_ids:
+            link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
+            while ((link["finish"] is not None) and (link["status"] != self.LinkState.DISCARD.value)):
+                await asyncio.sleep(5)  #TODO: Make this configurable in planner file
+                if await self._trust_issues(operation, link["paw"]):
+                    break
+                link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
+
     """ PRIVATE """
 
     @staticmethod

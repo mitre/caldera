@@ -13,11 +13,7 @@ class PlanningService(BaseService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
-    # TODO: Should PlanningService hold/define standard function for placing/routing
-    # call to agent_svc.perform_action() for pushing links to agents?
-
-    async def select_links(self, operation, agent, phase, trim=False):
-        #TODO:I think this method should be called "craft_phase_links". Will cause breaking changes
+    async def get_links(self, operation, agent, phase=None, trim=False):
         """
         For an operation, phase and agent combination, determine which potential links can be executed
         :param operation:
@@ -32,12 +28,16 @@ class PlanningService(BaseService):
         if (not agent['trusted']) and (not operation['allow_untrusted']):
             self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
             return []
-        phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
-        phase_abilities = sorted(phase_abilities, key=lambda i: i['id'])
+        if phase:
+            abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
+        else:
+            abilities = [i for p, v in operation['adversary']['phases'].items() for i in v]
+    
+        abilities = sorted(abilities, key=lambda i: i['id'])
         link_status = await self._default_link_status(operation)
-
         links = []
-        for a in await self.capable_agent_abilities(phase_abilities, agent):
+
+        for a in await self.capable_agent_abilities(abilities, agent):
             links.append(await self.craft_link(operation, agent, a))
         if trim:
             links[:] = await self.trim_links(operation, links, agent)
@@ -101,19 +101,6 @@ class PlanningService(BaseService):
                 if await self._trust_issues(operation, member['paw']):
                     break
                 op = await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id']))
-    
-    async def wait_for_links(self, link_ids):
-        """
-        Wait for started links to be completed
-        :param
-        :return: None
-        """
-        for link_id in link_ids:
-            link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
-            while ((link["finish"] is not None) and (link["status"] != self.LinkState.DISCARD.value)):
-                await asyncio.sleep(1)  #TODO: how long should wait for single link to complete?
-                #TODO: Do I need to check for trust issue hold up here too?
-                link = await self.get_service('data_svc').get("core_chain", criteria=dict(id=link_id))
 
     async def decode(self, encoded_cmd, agent, group):
         """
