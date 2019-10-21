@@ -96,26 +96,24 @@ class ReportingService(BaseService):
         return op_facts, op_results, operation['state'], operation['host_group'], operation['adversary']
 
     async def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}',
-                               await self.get_service('planning_svc').decode(ability['test'], agent,
-                                                                             agent['host_group']),
-                               flags=re.DOTALL)
+        variables = re.findall(r'#{(.*?)}', self.decode(ability['test'], agent, agent['host_group']), flags=re.DOTALL)
         if ability['ability_id'] in agent_ran:
             return
         elif ability['platform'] != agent['platform']:
-            return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability['ability_id'])
+            return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability['ability_id'],
+                        ability_name=ability['name'])
         elif ability['executor'] not in agent_executors:
             return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
-                        ability_id=ability['ability_id'])
+                        ability_id=ability['ability_id'], ability_name=ability['name'])
         elif variables and not all(op_fact in op_facts for op_fact in variables):
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
-                        ability_id=ability['ability_id'])
+                        ability_id=ability['ability_id'], ability_name=ability['name'])
         else:
             if (ability['platform'] == agent['platform'] and ability['executor'] in agent_executors
                     and ability['ability_id'] not in agent_ran):
                 if state != 'finished':
                     return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
-                                ability_id=ability['ability_id'])
+                                ability_id=ability['ability_id'], ability_name=ability['name'])
                 else:
                     return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
-                                ability_id=ability['ability_id'])
+                                ability_id=ability['ability_id'], ability_name=ability['name'])

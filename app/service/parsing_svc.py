@@ -23,19 +23,16 @@ class ParsingService(BaseService):
                     continue
                 blob = b64decode(result['output']).decode('utf-8')
                 parser_info['used_facts'] = await self.data_svc.explode_used(dict(link_id=result['link_id']))
-                parser = await self._load_parser(parser_info)
+                parser = await self.load_module('Parser', parser_info)
                 relationships = parser.parse(blob=blob)
 
+                await self._update_scores(link_id=result['link_id'], increment=len(relationships))
                 await self._create_relationships(relationships, operation, result)
+
                 update = dict(parsed=self.get_current_timestamp())
                 await self.data_svc.update('core_result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
-
-    @staticmethod
-    async def _load_parser(parser_info):
-        parsing_module = import_module(parser_info['module'])
-        return getattr(parsing_module, 'Parser')(parser_info)
 
     async def _create_relationships(self, relationships, operation, result):
         source = (await self.data_svc.explode_sources(dict(name=operation['name'])))[0]
@@ -52,6 +49,13 @@ class ParsingService(BaseService):
             fact = await self._build_global_fact(operation, prop, source, result)
         if fact and fact['property']:
             return await self.data_svc.create_fact(**fact)
+        return await self._get_fact_id(operation, prop)
+
+    @staticmethod
+    async def _get_fact_id(operation, prop):
+        for fact in operation['facts']:
+            if fact['property'] == prop[0] and fact['value'] == prop[1]:
+                return fact['id']
 
     @staticmethod
     async def _build_host_fact(operation, match, source, result):
@@ -73,3 +77,10 @@ class ParsingService(BaseService):
         if source_id and edge:
             relationship = dict(link_id=link_id, source=source_id, edge=edge, target=target_id)
             await self.data_svc.create('core_relationships', relationship)
+
+    async def _update_scores(self, link_id, increment):
+        used_facts = await self.data_svc.get('core_used', dict(link_id=link_id))
+        for uf in used_facts:
+            existing = (await self.data_svc.get('core_fact', dict(id=uf['fact_id'])))[0]
+            update = dict(score=existing['score'] + increment)
+            await self.data_svc.update('core_fact', key='id', value=uf['fact_id'], data=update)

@@ -287,6 +287,9 @@ class DataService(BaseService):
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
             ab['parsers'] = await self.dao.get('core_parser', dict(ability=ab['id']))
             ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
+            ab['requirements'] = await self.dao.get('core_requirement', dict(ability=ab['id']))
+            for r in ab['requirements']:
+                r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
         return abilities
 
     async def explode_adversaries(self, criteria=None):
@@ -320,6 +323,8 @@ class DataService(BaseService):
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
+            for fact in op['facts']:
+                fact['relationships'] = await self._add_fact_relationships(dict(source=fact['id']))
             op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
 
@@ -401,7 +406,7 @@ class DataService(BaseService):
         """
         used_facts = await self.get('core_used', criteria=criteria)
         for uf in used_facts:
-            fact = (await self.get('core_fact', dict(id=uf['id'])))[0]
+            fact = (await self.get('core_fact', dict(id=uf['fact_id'])))[0]
             uf['property'] = fact['property']
             uf['value'] = fact['value']
         return used_facts
@@ -489,3 +494,8 @@ class DataService(BaseService):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
         for adv in self.strip_yml(filename):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
+
+    async def _add_fact_relationships(self, criteria=None):
+        relationships = await self.dao.get('core_relationships', criteria)
+        return [dict(edge=r.get('edge'), target=(await self.dao.get('core_fact', dict(id=r.get('target'))))[0])
+                for r in relationships if r.get('target')]
