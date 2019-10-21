@@ -51,7 +51,7 @@ class AgentService(BaseService):
         await self.data_svc.update('core_agent', 'paw', paw, data)
         self.log.debug('Agent %s is now trusted: %s' % (paw, bool(int(trusted))))
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, father=""):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -63,11 +63,14 @@ class AgentService(BaseService):
         :param location:
         :param pid:
         :param ppid:
+        :param father:
         :return: the agent object from explode_agents
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
         agent = await self.data_svc.explode_agents(criteria=dict(paw=paw))
         now = self.get_current_timestamp()
+        if father:
+            await self.data_svc.create('core_agent_father', dict(father=father, child=paw, correlation_date=now))
         if agent:
             update_data = dict(last_seen=now, pid=pid, ppid=ppid)
             if agent[0]['trusted']:
