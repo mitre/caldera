@@ -1,6 +1,4 @@
 import asyncio
-import json
-import os
 import traceback
 from importlib import import_module
 
@@ -17,6 +15,7 @@ class OperationService(BaseService):
                               PAUSED='paused',
                               FINISHED='finished')
         self.data_svc = self.get_service('data_svc')
+        self.reporting_svc = self.get_service('reporting_svc')
 
     async def resume(self):
         """
@@ -27,18 +26,17 @@ class OperationService(BaseService):
             if not op['finish']:
                 self.loop.create_task(self.run(op['id']))
 
-    async def close_operation(self, operation):
+    async def close_operation(self, op_id):
         """
         Perform all close actions for an operation
-        :param operation:
+        :param op_id:
         :return: None
         """
-        await self.get_service('planning_svc').create_cleanup_links(operation)
-        self.log.debug('Operation complete: %s' % operation['id'])
+        self.log.debug('Operation complete: %s' % op_id)
         update = dict(finish=self.get_current_timestamp(), state=self.op_states['FINISHED'])
-        await self.data_svc.update('core_operation', key='id', value=operation['id'], data=update)
-        report = await self.generate_operation_report(operation['id'], agent_output=True)
-        await self._write_report(report)
+        await self.data_svc.update('core_operation', key='id', value=op_id, data=update)
+        report = await self.reporting_svc.generate_operation_report(op_id, agent_output=False)
+        await self.reporting_svc.write_report(report)
 
     async def run(self, op_id):
         """
@@ -51,50 +49,13 @@ class OperationService(BaseService):
         try:
             planner = await self._get_planning_module(operation[0])
             for phase in operation[0]['adversary']['phases']:
-                operation_phase_name = 'Operation %s (%s) phase %s' % (op_id, operation[0]['name'], phase)
-                self.log.debug('%s: started' % operation_phase_name)
                 await planner.execute(phase)
-                self.log.debug('%s: completed' % operation_phase_name)
-                await self.data_svc.update('core_operation', key='id', value=op_id,
-                                           data=dict(phase=phase))
-            await self.close_operation(operation[0])
+                await self._wait_for_phase_completion(operation[0])
+                await self.data_svc.update('core_operation', key='id', value=op_id, data=dict(phase=phase))
+            await self._run_cleanup_actions(op_id)
+            await self.close_operation(operation[0]['id'])
         except Exception:
             traceback.print_exc()
-
-    async def generate_operation_report(self, op_id, agent_output=False):
-        """
-        Create a new operation report and write it to the logs directory
-        :param op_id: operation id
-        :param agent_output: bool to include agent_output with report
-        :return: a JSON report
-        """
-        op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
-        planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
-        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
-
-        for step in op['chain']:
-            ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
-            command = self.decode_bytes(step['command'])
-            step_report = dict(ability_id=ability['ability_id'],
-                               paw=step['paw'],
-                               command=command,
-                               delegated=step['collect'],
-                               run=step['finish'],
-                               status=step['status'],
-                               description=ability['description'],
-                               name=ability['name'],
-                               attack=dict(tactic=ability['tactic'],
-                                           technique_name=ability['technique_name'],
-                                           technique_id=ability['technique_id'])
-                               )
-            if agent_output:
-                result = await self.data_svc.explode_results(criteria=dict(link_id=step['id']))
-                if result:
-                    step_report['output'] = self.decode_bytes(result[0]['output'])
-            report['steps'].append(step_report)
-        return report
-
 
     async def wait_for_links_completion(self, operation, link_ids):
         """
@@ -112,13 +73,34 @@ class OperationService(BaseService):
 
     """ PRIVATE """
 
-    @staticmethod
-    async def _write_report(report):
-        with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
-            f.write(json.dumps(report, indent=4, sort_keys=True))
-
     async def _get_planning_module(self, operation):
         chosen_planner = await self.data_svc.explode_planners(dict(id=operation['planner']))
         planning_module = import_module(chosen_planner[0]['module'])
         return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'),
                                                           **chosen_planner[0]['params'])
+
+    async def _wait_for_phase_completion(self, operation):
+        for member in operation['host_group']:
+            if (not member['trusted']) and (not operation['allow_untrusted']):
+                continue
+            op = await self.data_svc.explode_operation(criteria=dict(id=operation['id']))
+            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish'] and not lnk['status'] == self.LinkState.DISCARD.value),
+                       False):
+                await asyncio.sleep(3)
+                if await self._trust_issues(operation, member['paw']):
+                    break
+                op = await self.data_svc.explode_operation(criteria=dict(id=operation['id']))
+
+    async def _trust_issues(self, operation, paw):
+        if not operation['allow_untrusted']:
+            agent = await self.data_svc.explode_agents(criteria=dict(paw=paw))
+            return not agent[0]['trusted']
+        return False
+
+    async def _run_cleanup_actions(self, op_id):
+        operation = (await self.data_svc.explode_operation(criteria=dict(id=op_id)))[0]
+        for member in operation['host_group']:
+            for link in await self.get_service('planning_svc').select_cleanup_links(operation, member):
+                await self.data_svc.create_link(link)
+        await self._wait_for_phase_completion(operation)
+

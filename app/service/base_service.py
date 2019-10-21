@@ -2,6 +2,7 @@ from base64 import b64encode, b64decode
 from enum import Enum
 from random import randint
 from datetime import datetime
+from importlib import import_module
 
 import yaml
 
@@ -59,7 +60,28 @@ class BaseService:
     def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
         return datetime.now().strftime(date_format)
 
+    @staticmethod
+    def decode(encoded_cmd, agent, group):
+        decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
+        decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
+        decoded_cmd = decoded_cmd.replace('#{group}', group)
+        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
+        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
+        return decoded_cmd
+
     class LinkState(Enum):
         EXECUTE = -3
         DISCARD = -2
         PAUSE = -1
+
+    class Reason(Enum):
+        PLATFORM = 0
+        EXECUTOR = 1
+        FACT_DEPENDENCY = 2
+        OP_RUNNING = 3
+        UNTRUSTED = 4
+
+    @staticmethod
+    async def load_module(module_type, module_info):
+        module = import_module(module_info['module'])
+        return getattr(module, module_type)(module_info)

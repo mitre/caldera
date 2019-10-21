@@ -97,15 +97,16 @@ class FileSvc(BaseService):
         self.special_payloads[name] = func
 
     @staticmethod
-    async def compile_go(platform, output, src_fle):
+    async def compile_go(platform, output, src_fle, ldflags='-s -w'):
         """
         Dynamically compile a go file
         :param platform:
         :param output:
         :param src_fle:
+        :param ldflags: A string of ldflags to use when building the go executable
         :return:
         """
-        os.system('GOOS=%s go build -o %s -ldflags="-s -w" %s' % (platform, output, src_fle))
+        os.system('GOOS=%s go build -o %s -ldflags="%s" %s' % (platform, output, ldflags, src_fle))
 
     """ PRIVATE """
 

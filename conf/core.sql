@@ -7,8 +7,14 @@ CREATE TABLE if not exists core_agent (id integer primary key AUTOINCREMENT, paw
 CREATE TABLE if not exists core_executor (id integer primary key AUTOINCREMENT, agent_id integer, executor text, preferred integer);
 CREATE TABLE if not exists core_operation (id integer primary key AUTOINCREMENT, name text, host_group text, adversary_id text, jitter text, start date, finish date, phase integer, autonomous integer, planner integer, state text, allow_untrusted integer);
 CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_id integer, paw text, ability integer, jitter integer, command text, executor text, cleanup integer, score integer, status integer, decide date, collect date, finish date, UNIQUE(op_id, paw, command));
-CREATE TABLE if not exists core_parser (ability integer, name text, property text, script text, UNIQUE(ability, property) ON CONFLICT REPLACE);
-CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, set_id integer, source_id text, link_id integer DEFAULT 0);
+CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
+CREATE TABLE if not exists core_parser_map (parser_id integer, source text, edge text, target text, UNIQUE(parser_id, source, edge, target) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, source_id text, link_id integer DEFAULT 0);
+CREATE TABLE if not exists core_used (id integer primary key AUTOINCREMENT, link_id integer, fact_id integer, UNIQUE(link_id, fact_id) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_relationships (link_id integer, source integer, edge text, target integer, UNIQUE(link_id, source, edge, target) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, UNIQUE(name) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_source_map (id integer primary key AUTOINCREMENT, op_id integer, source_id integer, UNIQUE(op_id, source_id) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, params json, UNIQUE(name) ON CONFLICT IGNORE);
+CREATE TABLE if not exists core_rule (id integer primary key AUTOINCREMENT, action integer, fact text, match text, source_id text);
+CREATE TABLE if not exists core_requirement (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
+CREATE TABLE if not exists core_requirement_map (requirement_id integer, source text, edge text, target text, UNIQUE(requirement_id, source, edge, target) ON CONFLICT IGNORE);
