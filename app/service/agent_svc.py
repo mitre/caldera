@@ -73,6 +73,7 @@ class AgentService(BaseService):
             if agent[0]['trusted']:
                 update_data['last_trusted_seen'] = now
             await self.data_svc.update('core_agent', 'paw', paw, data=update_data)
+            await self.data_svc.update_agent_executor(agent[0]['id'], executors, agent[0]['executors'])
         else:
             queued = dict(last_seen=now, paw=paw, platform=platform, server=server, host_group=group,
                           location=location, architecture=architecture, pid=pid, ppid=ppid,
