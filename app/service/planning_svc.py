@@ -95,15 +95,6 @@ class PlanningService(BasePlanningService):
         """
         return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
 
-    @staticmethod
-    def _reward_fact_relationship(combo_set, combo_link, score):
-        """
-        Reware fact relationship
-        """
-        if len(combo_set) == 1 and len(combo_link) == 1:
-            score *= 2
-        return score
-
     async def _do_enforcements(self, ability_requirements, operation, link, combo):
         for requirements_info in ability_requirements:
             uf = link.get('used', [])
