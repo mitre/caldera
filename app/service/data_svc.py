@@ -407,8 +407,7 @@ class DataService(BaseService):
 
         if old_executors[0] != new_executors[0]:
             await self.dao.update('core_executor', 'agent_id', agent_id, data=dict(preferred=0))
-            await self.dao.update('core_executor', 'agent_id', str(agent_id) +
-                                  '" AND executor = "{}'.format(new_executors[0]), data=dict(preferred=1))
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=new_executors[0], preferred=1))
 
         for item in set(old_executors) - set(new_executors):
             await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=item))
