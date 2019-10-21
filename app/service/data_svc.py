@@ -338,6 +338,11 @@ class DataService(BaseService):
         for a in agents:
             executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
             a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
+            agent_father = await self.dao.get('core_agent_father', criteria=dict(child=a['paw']))
+            if agent_father:
+                a['father'] = agent_father[0]['father']
+            else:
+                a['father'] = ""
         return agents
 
     async def explode_results(self, criteria=None):
