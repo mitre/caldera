@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import yaml
 
+from app.objects.c_result import Result
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
 
@@ -339,6 +340,17 @@ class DataService(BaseService):
             executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
             a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
         return agents
+
+    async def select_results(self, criteria=None):
+        """
+        Select all - or a filtered list of - results
+        :param criteria:
+        :return:
+        """
+        results = [Result(**r) for r in await self.dao.get('core_result', criteria=criteria)]
+        for r in results:
+            await r.attach_link()
+        return results
 
     async def explode_results(self, criteria=None):
         """

@@ -100,8 +100,7 @@ if __name__ == '__main__':
 
         plugin_modules = build_plugins(cfg['plugins'])
         plugin_svc = PluginService(plugin_modules)
-        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
-        logging.debug('Using an in-memory database: %s' % cfg['memory'])
+        data_svc = DataService(CoreDao())
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
         reporting_svc = ReportingService()

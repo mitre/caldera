@@ -4,6 +4,7 @@ import traceback
 import typing
 from datetime import datetime
 
+from app.objects.c_result import Result
 from app.service.base_service import BaseService
 
 
@@ -109,7 +110,8 @@ class AgentService(BaseService):
         :param status:
         :return: a JSON status message
         """
-        await self.data_svc.create('core_result', dict(link_id=link_id, output=output))
+        result = Result(link_id=link_id, output=output)
+        await result.save()
         await self.data_svc.update('core_chain', key='id', value=link_id, data=dict(status=int(status),
                                                                                     finish=self.get_current_timestamp()))
         link = await self.data_svc.explode_chain(criteria=dict(id=link_id))
