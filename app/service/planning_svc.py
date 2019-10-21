@@ -38,10 +38,7 @@ class PlanningService(BaseService):
 
         links = []
         for a in await self.capable_agent_abilities(phase_abilities, agent):
-            links.append(
-                dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
-                     status=link_status, decide=datetime.now(), executor=a['executor'],
-                     jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
+            links.append(await self.craft_link(operation, agent, a))
         if trim:
             links[:] = await self.trim_links(operation, links, agent)
         return await self._sort_links(links)
@@ -65,26 +62,27 @@ class PlanningService(BaseService):
                                                                                        op_id=op['id'])):
                 ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
                 if ability['cleanup'] and link['status'] >= 0:
-                    links.append(dict(op_id=op['id'], paw=member['paw'], ability=ability['id'], cleanup=1,
-                                      command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
-                                      decide=datetime.now(), status=link_status))
+                    links.append(await self.craft_link(operation, member, ability, dict(cleanup=1, jitter=0)))
             links[:] = await self.trim_links(op, links, member)
             for link in reversed(links):
                 link.pop('rewards', [])
                 await self.get_service('data_svc').create('core_chain', link)
         await self.wait_for_phase(op)
 
-    async def craft_link(self, operation, agent, ability, **params):
+    async def craft_link(self, operation, agent, ability, fields):
         """
+        TODO: docs
         """
         # craft link based on default operation, agent and ability values
-        link = dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'], cleanup=1,
-                    command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
-                    decide=datetime.now(), status=await self._default_link_status(operation))
+        link = dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'],
+                    command=ability['test'], executor=ability['executor'], score=0,
+                    jitter=self.jitter(operation["jitter"]), decide=datetime.now(),
+                    status=await self._default_link_status(operation),
+                    adversary_map_id=ability["adversary_map_id"])
 
         # if caller further specifies modified link fields, update link
-        link.update({k:v for k, v in params.items()})
-        
+        link.update(fields)
+
         return link
 
     async def wait_for_phase(self, operation):
