@@ -79,3 +79,57 @@ class BasePlanningService(BaseService):
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
         return links
+
+    """ PRIVATE """
+
+    @staticmethod
+    async def _build_single_test_variant(copy_test, combo):
+        """
+        Replace all variables with facts from the combo to build a single test variant
+        """
+        score, used = 0, list()
+        for var in combo:
+            score += (score + var['score'])
+            used.append(var['id'])
+            copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
+        return copy_test, score, used
+
+    @staticmethod
+    def _is_fact_bound(fact):
+        return not fact['link_id']
+
+    async def _build_relevant_facts(self, variables, facts, agent_facts):
+        """
+        Create a list of ([fact, value, score]) tuples for each variable/fact
+        """
+        facts = [f for f in facts if f['score'] > 0]
+        relevant_facts = []
+        for v in variables:
+            variable_facts = []
+            for fact in [f for f in facts if f['property'] == v]:
+                if fact['property'].startswith('host'):
+                    if fact['id'] in agent_facts or self._is_fact_bound(fact):
+                        variable_facts.append(fact)
+                else:
+                    variable_facts.append(fact)
+            relevant_facts.append(variable_facts)
+        return relevant_facts
+
+    async def _get_agent_facts(self, op_id, paw):
+        """
+        Collect a list of this agent's facts
+        """
+        agent_facts = []
+        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
+            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
+            for f in facts:
+                agent_facts.append(f['id'])
+        return agent_facts
+
+    async def _do_enforcements(self, ability_requirements, operation, link, combo):
+        for requirements_info in ability_requirements:
+            uf = link.get('used', [])
+            requirement = await self.load_module('Requirement', requirements_info)
+            if not requirement.enforce(combo[0], uf, operation['facts']):
+                return False
+        return True
