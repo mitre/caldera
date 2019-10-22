@@ -26,61 +26,10 @@ class DataService(BaseService):
             await self.dao.build(schema.read())
         if directory:
             self.log.debug('Loading data from %s' % directory)
-            await self.load_abilities(directory='%s/abilities' % directory)
-            await self.load_adversaries(directory='%s/adversaries' % directory)
-            await self.load_facts(directory='%s/facts' % directory)
-            await self.load_planner(directory='%s/planners' % directory)
-
-    async def load_abilities(self, directory):
-        """
-        For a given directory, load all abilities into the database
-        :param directory:
-        :return: None
-        """
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            await self._save_ability_to_database(filename)
-
-    async def load_adversaries(self, directory):
-        """
-        Load all adversary YML files into the database
-        :param directory:
-        :return: None
-        """
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-            for adv in self.strip_yml(filename):
-                phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
-                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
-                    phases += pack
-                if adv.get('visible', True):
-                    await self._create_adversary(adv['id'], adv['name'], adv['description'], phases)
-
-    async def load_facts(self, directory):
-        """
-        Load all fact YML files into the database
-        :param directory:
-        :return: None
-        """
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for source in self.strip_yml(filename):
-                source_id = await self.dao.create('core_source', dict(name=source['name']))
-                for fact in source.get('facts', []):
-                    fact['source_id'] = source_id
-                    await self.create_fact(**fact)
-
-                for rule in source.get('rules', []):
-                    rule['source_id'] = source_id
-                    await self._create_rule(**rule)
-
-    async def load_planner(self, directory):
-        """
-        Load all planner YML files into the database
-        :param directory:
-        :return: None
-        """
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for planner in self.strip_yml(filename):
-                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
-                                                           params=json.dumps(planner.get('params'))))
+            await self._load_abilities(directory='%s/abilities' % directory)
+            await self._load_adversaries(directory='%s/adversaries' % directory)
+            await self._load_facts(directory='%s/facts' % directory)
+            await self._load_planner(directory='%s/planners' % directory)
 
     """ PERSIST """
 
@@ -387,6 +336,37 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
+    async def _load_abilities(self, directory):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+            await self._save_ability_to_database(filename)
+
+    async def _load_adversaries(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+            for adv in self.strip_yml(filename):
+                phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
+                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
+                    phases += pack
+                if adv.get('visible', True):
+                    await self._create_adversary(adv['id'], adv['name'], adv['description'], phases)
+
+    async def _load_facts(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for source in self.strip_yml(filename):
+                source_id = await self.dao.create('core_source', dict(name=source['name']))
+                for fact in source.get('facts', []):
+                    fact['source_id'] = source_id
+                    await self.create_fact(**fact)
+
+                for rule in source.get('rules', []):
+                    rule['source_id'] = source_id
+                    await self._create_rule(**rule)
+
+    async def _load_planner(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for planner in self.strip_yml(filename):
+                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
+                                                           params=json.dumps(planner.get('params'))))
+                
     async def _create_rule(self, fact, source_id, action='DENY', match='.*'):
         try:
             action = RuleAction[action.upper()].value
