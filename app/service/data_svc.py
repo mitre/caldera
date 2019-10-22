@@ -33,23 +33,6 @@ class DataService(BaseService):
 
     """ PERSIST """
 
-    async def persist_ability(self, ability_id, file_contents):
-        """
-        Save a new ability from either the GUI or REST API. This updates an existing ability, if found, or writes
-        a new YML file into the core data/ directory.
-        :param ability_id:
-        :param file_contents:
-        :return:
-        """
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % ability_id, location='data')
-        if not file_path:
-            file_path = 'data/abilities/all/%s.yml' % ability_id
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(file_contents)
-            f.truncate()
-        await self._save_ability_to_database(file_path)
-
     async def persist_adversary(self, i, name, description, phases):
         """
         Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
