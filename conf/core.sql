@@ -5,7 +5,6 @@ CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ab
 CREATE TABLE if not exists core_parser_map (parser_id integer, source text, edge text, target text, UNIQUE(parser_id, source, edge, target) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_requirement (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
 CREATE TABLE if not exists core_requirement_map (requirement_id integer, source text, edge text, target text, UNIQUE(requirement_id, source, edge, target) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_relationships (link_id integer, source integer, edge text, target integer, UNIQUE(link_id, source, edge, target) ON CONFLICT IGNORE);
 /** planners **/
 CREATE TABLE if not exists core_planner (id integer primary key AUTOINCREMENT, name text, module text, params json, UNIQUE(name) ON CONFLICT IGNORE);
 /** adversaries **/
@@ -24,3 +23,4 @@ CREATE TABLE if not exists core_operation (id integer primary key AUTOINCREMENT,
 CREATE TABLE if not exists core_chain (id integer primary key AUTOINCREMENT, op_id integer, paw text, ability integer, jitter integer, command text, executor text, cleanup integer, score integer, status integer, decide date, collect date, finish date, UNIQUE(op_id, paw, command));
 CREATE TABLE if not exists core_used (id integer primary key AUTOINCREMENT, link_id integer, fact_id integer, UNIQUE(link_id, fact_id) ON CONFLICT IGNORE);
 CREATE TABLE if not exists core_result (link_id integer, output text, parsed data);
+CREATE TABLE if not exists core_relationships (link_id integer, source integer, edge text, target integer, UNIQUE(link_id, source, edge, target) ON CONFLICT IGNORE);
