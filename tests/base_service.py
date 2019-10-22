@@ -8,3 +8,4 @@ class TestBaseServiceCase(TestCase):
     def run_async(function):
         return asyncio.get_event_loop().run_until_complete(function)
 
+# test
