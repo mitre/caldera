@@ -56,19 +56,6 @@ class DataService(BaseService):
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
 
-    async def create_fact(self, property, value, source_id, score=1, link_id=None):
-        """
-        Save a new fact to the database
-        :param property:
-        :param value:
-        :param source_id:
-        :param score:
-        :param link_id:
-        :return: the database id
-        """
-        return await self.dao.create('core_fact', dict(property=property, value=value, source_id=source_id,
-                                                       score=score, link_id=link_id))
-
     async def create_agent(self, agent, executors):
         """
         Save a new agent to the database
@@ -313,7 +300,8 @@ class DataService(BaseService):
                 source_id = await self.dao.create('core_source', dict(name=source['name']))
                 for fact in source.get('facts', []):
                     fact['source_id'] = source_id
-                    await self.create_fact(**fact)
+                    fact['score'] = fact.get('score', 1)
+                    await self.create('core_fact', fact)
 
                 for rule in source.get('rules', []):
                     rule['source_id'] = source_id
