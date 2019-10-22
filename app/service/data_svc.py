@@ -3,8 +3,6 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
-import yaml
-
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
 
@@ -30,29 +28,6 @@ class DataService(BaseService):
             await self._load_adversaries(directory='%s/adversaries' % directory)
             await self._load_facts(directory='%s/facts' % directory)
             await self._load_planner(directory='%s/planners' % directory)
-
-    """ PERSIST """
-
-    async def persist_adversary(self, i, name, description, phases):
-        """
-        Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
-        :param i:
-        :param name:
-        :param description:
-        :param phases:
-        :return: the ID of the created adversary
-        """
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
-        if not file_path:
-            file_path = 'data/adversaries/%s.yml' % i
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            p = defaultdict(list)
-            for ability in phases:
-                p[ability['phase']].append(ability['id'])
-            f.write(yaml.dump(dict(id=i, name=name, description=description, phases=dict(p))))
-            f.truncate()
-        return await self._create_adversary(i, name, description, phases)
 
     """ CREATE """
 
