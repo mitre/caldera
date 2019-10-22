@@ -4,6 +4,7 @@ from base64 import b64encode
 from collections import defaultdict
 
 import yaml
+import json
 
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
@@ -469,8 +470,9 @@ class DataService(BaseService):
         for module in relationships:
             _id = await self.dao.create(table, dict(ability=identifier, module=module))
             for r in relationships.get(module):
-                relationship = {id_type: _id, 'source': r.get('source'), 'edge': r.get('edge'),
-                                'target': r.get('target')}
+                relationship = {id_type: _id, 'source': r.pop('source', None), 'edge': r.pop('edge', None),
+                                'target': r.pop('target', None), 'props': json.dumps(r)}
+                self.log.debug(relationship)
                 await self.dao.create('%s_map' % table, relationship)
 
     async def _delete_stale_abilities(self, ability):
