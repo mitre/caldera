@@ -4,7 +4,7 @@ import uuid
 from aiohttp import web
 
 from app.service.base_service import BaseService
-from app.utility.payload_encoder import xor_file
+from app.utility.payload_encoder import xor_file, xor_bytes
 
 
 class FileSvc(BaseService):
@@ -97,11 +97,11 @@ class FileSvc(BaseService):
         :return: full path of the saved file
         """
         filebase = 'data/payloads/'
-        f_content = content
+        f_content = str.encode(content)
         filename = str(os.path.join('a',name).split(os.path.sep)[-1])
         if xored:
-            filename = filename + 'xored'
-            f_content = xor_file(content)
+            filename = filename + '.xored'
+            f_content = xor_bytes(f_content)
         with open(os.path.join(filebase, filename), 'xb') as file:
             file.write(f_content)
         return filename
