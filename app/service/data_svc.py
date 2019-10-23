@@ -29,92 +29,119 @@ class DataService(BaseService):
             await self._load_facts(directory='%s/facts' % directory)
             await self._load_planner(directory='%s/planners' % directory)
 
-    """ CREATE """
-
-    async def create_operation(self, name, group, adversary_id, jitter='2/8', sources=[],
-                               planner=None, state=None, allow_untrusted=False, autonomous=True):
+    async def save(self, object_name, object_dict):
         """
-        Save a new operation to the database
-        :param name:
-        :param group:
-        :param adversary_id:
-        :param jitter:
-        :param sources:
-        :param planner:
-        :param state:
-        :param allow_untrusted:
-        :param autonomous
-        :return: the database id
-        """
-        op_id = await self.dao.create('core_operation', dict(
-            name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
-            start=self.get_current_timestamp(), planner=planner, state=state,
-            allow_untrusted=allow_untrusted, autonomous=autonomous))
-        source_id = await self.dao.create('core_source', dict(name=name))
-        await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
-        for s_id in [s for s in sources if s]:
-            await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
-        return op_id
-
-    async def create_agent(self, agent, executors):
-        """
-        Save a new agent to the database
-        :param agent:
-        :param executors:
-        :return: the database id
-        """
-        agent_id = await self.dao.create('core_agent', agent)
-        for i, e in enumerate(executors):
-            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
-        return agent_id
-
-    async def create_link(self, link):
-        """
-        Create a new link for the chain
-        :param link:
+        Save a dict() for any object
+        :param object_name:
+        :param object_dict:
         :return:
         """
-        used = link.pop('used', [])
-        link_id = await self.create('core_chain', link)
-        for uf in used:
-            await self.dao.create('core_used', dict(link_id=link_id, fact_id=uf))
+        try:
+            if object_name == 'operation':
+                return await self._create_operation(**object_dict)
+            elif object_name == 'agent':
+                return await self._create_agent(**object_dict)
+            elif object_name == 'link':
+                return await self._create_link(object_dict)
+            elif object_name == 'adversary':
+                return await self._create_adversary(**object_dict)
+            elif object_name == 'ability':
+                return await self._create_ability(**object_dict)
+            elif object_name == 'relationship':
+                return await self.dao.create('core_relationship', object_dict)
+            elif object_name == 'executor':
+                return await self.dao.create('core_executor', object_dict)
+            elif object_name == 'fact':
+                return await self.dao.create('core_fact', object_dict)
+            elif object_name == 'result':
+                return await self.dao.create('core_result', object_dict)
+            self.log.warning('[!] SAVE on non-core type: %s' % object_name)
+            return await self.dao.create(object_name, object_dict)
+        except Exception as e:
+            self.log.error('[!] SAVE %s: %s' % (object_name, e))
 
-    async def create(self, table, data):
+    async def delete(self, object_name, criteria):
         """
-        Create a new object in the database
-        :param table:
+        Delete any object in the database by table name and ID
+        :param object_name: the name of the table
+        :param criteria: a dict of key/value pairs to match on
+        """
+        self.log.debug('Deleting %s from %s' % (criteria, object_name))
+        await self.dao.delete('core_%s' % object_name, data=criteria)
+
+    async def update(self, object_name, key, value, data):
+        """
+        Update any field in any table in the database
+        :param object_name:
+        :param key:
+        :param value:
         :param data:
-        :return: the database id
+        :return: None
         """
-        return await self.dao.create(table, data)
+        await self.dao.update('core_%s' % object_name, key, value, data)
 
-    async def create_adversary(self, i, name, description, phases):
-        identifier = await self.dao.create('core_adversary',
-                                           dict(adversary_id=i, name=name, description=description))
-
-        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
-        for ability in phases:
-            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
-            await self.dao.create('core_adversary_map', a)
-        return identifier
-
-    """ VIEW """
-
-    async def get(self, table, criteria):
+    async def get(self, object_name, criteria):
         """
-        Get the contents of any table
-        :param table:
+        Get the contents of any object
+        :param object_name:
         :param criteria:
         :return: a list of dictionary results
         """
-        return await self.dao.get(table, criteria)
+        try:
+            if object_name == 'operation':
+                return await self.dao.get('core_operation', criteria)
+            elif object_name == 'agent':
+                return await self.dao.get('core_agent', criteria)
+            elif object_name == 'chain':
+                return await self.dao.get('core_chain', criteria)
+            elif object_name == 'ability':
+                return await self.dao.get('core_ability', criteria)
+            elif object_name == 'payload':
+                return await self.dao.get('core_payload', criteria)
+            elif object_name == 'used':
+                return await self.dao.get('core_used', criteria)
+            elif object_name == 'fact':
+                return await self.dao.get('core_fact', criteria)
+            self.log.warning('[!] GET on non-core type: %s' % object_name)
+            return await self.dao.get(object_name, criteria)
+        except Exception as e:
+            self.log.error('[!] GET %s: %s' % (object_name, e))
 
-    async def explode_abilities(self, criteria=None):
+    async def explode(self, object_name, criteria=None):
         """
-        Get all - or a filtered list of - abilities, built out with all sub-objects
+        Get an exploded version of any object
+        :param object_name:
         :param criteria:
-        :return: a list of dictionary results
+        :return:
         """
+        try:
+            if object_name == 'operation':
+                return await self._explode_operation(criteria)
+            elif object_name == 'agent':
+                return await self._explode_agents(criteria)
+            elif object_name == 'chain':
+                return await self._explode_chain(criteria)
+            elif object_name == 'adversary':
+                return await self._explode_adversaries(criteria)
+            elif object_name == 'ability':
+                return await self._explode_abilities(criteria)
+            elif object_name == 'parser':
+                return await self._explode_parser(criteria)
+            elif object_name == 'source':
+                return await self._explode_sources(criteria)
+            elif object_name == 'result':
+                return await self._explode_results(criteria)
+            elif object_name == 'planner':
+                return await self._explode_planners(criteria)
+            elif object_name == 'used':
+                return await self._explode_used(criteria)
+            self.log.error('[!] EXPLODE on unknown type: %s' % object_name)
+        except Exception as e:
+            self.log.error('[!] EXPLODE %s: %s' % (object_name, e))
+
+    """ PRIVATE """
+
+    async def _explode_abilities(self, criteria=None):
         abilities = await self.dao.get('core_ability', criteria=criteria)
         for ab in abilities:
             ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
@@ -125,34 +152,24 @@ class DataService(BaseService):
                 r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
         return abilities
 
-    async def explode_adversaries(self, criteria=None):
-        """
-        Get all - or a filtered list of - adversaries, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_adversaries(self, criteria=None):
         adversaries = await self.dao.get('core_adversary', criteria)
         for adv in adversaries:
             phases = defaultdict(list)
             for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['adversary_id'])):
-                for ability in await self.explode_abilities(dict(ability_id=t['ability_id'])):
+                for ability in await self._explode_abilities(dict(ability_id=t['ability_id'])):
                     ability['adversary_map_id'] = t['id']
                     phases[t['phase']].append(ability)
             adv['phases'] = dict(phases)
         return adversaries
 
-    async def explode_operation(self, criteria=None):
-        """
-        Get all - or a filtered list of - operations, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_operation(self, criteria=None):
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
-            op['chain'] = sorted(await self.explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
-            adversaries = await self.explode_adversaries(dict(id=op['adversary_id']))
+            op['chain'] = sorted(await self._explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
+            adversaries = await self._explode_adversaries(dict(id=op['adversary_id']))
             op['adversary'] = adversaries[0]
-            op['host_group'] = await self.explode_agents(criteria=dict(host_group=op['host_group']))
+            op['host_group'] = await self._explode_agents(criteria=dict(host_group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
@@ -161,24 +178,14 @@ class DataService(BaseService):
             op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
 
-    async def explode_agents(self, criteria: object = None) -> object:
-        """
-        Get all - or a filtered list of - agents, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_agents(self, criteria: object = None) -> object:
         agents = await self.dao.get('core_agent', criteria)
         for a in agents:
             executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
             a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
         return agents
 
-    async def explode_results(self, criteria=None):
-        """
-        Get all - or a filtered list of - results, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_results(self, criteria=None):
         results = await self.dao.get('core_result', criteria=criteria)
         for r in results:
             link = await self.dao.get('core_chain', dict(id=r['link_id']))
@@ -186,110 +193,62 @@ class DataService(BaseService):
             r['link'] = link[0]
         return results
 
-    async def explode_chain(self, criteria=None):
-        """
-        Get all - or a filtered list of - chain links, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_chain(self, criteria=None):
         chain = []
         for link in await self.dao.get('core_chain', criteria=criteria):
             a = await self.dao.get('core_ability', criteria=dict(id=link['ability']))
             chain.append(dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link))
         return chain
 
-    async def explode_sources(self, criteria=None):
-        """
-        Get all - or a filtered list of - sources, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_sources(self, criteria=None):
         sources = await self.dao.get('core_source', criteria=criteria)
         for s in sources:
             s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
         return sources
 
-    async def explode_planners(self, criteria=None):
-        """
-        Get all - or a filtered list of - planners, built out with all sub-objects
-        :param criteria:
-        :return: a list of dictionary results
-        """
+    async def _explode_planners(self, criteria=None):
         planners = await self.dao.get('core_planner', criteria=criteria)
         for p in planners:
             p['params'] = json.loads(p['params'])
         return planners
 
-    async def explode_parser(self, criteria=None):
-        """
-        Get all parser data
-        :param criteria:
-        :return:
-        """
-        parsers = await self.get('core_parser', criteria=criteria)
+    async def _explode_parser(self, criteria=None):
+        parsers = await self.dao.get('core_parser', criteria)
         for parser in parsers:
-            parser['mappers'] = await self.get('core_parser_map', dict(parser_id=parser['id']))
+            parser['mappers'] = await self.dao.get('core_parser_map', dict(parser_id=parser['id']))
         return parsers
 
-    async def explode_used(self, criteria=None):
-        """
-        Get all used facts
-        :param criteria:
-        :return:
-        """
-        used_facts = await self.get('core_used', criteria=criteria)
+    async def _explode_used(self, criteria=None):
+        used_facts = await self.dao.get('core_used', criteria=criteria)
         for uf in used_facts:
-            fact = (await self.get('core_fact', dict(id=uf['fact_id'])))[0]
+            fact = (await self.dao.get('core_fact', dict(id=uf['fact_id'])))[0]
             uf['property'] = fact['property']
             uf['value'] = fact['value']
         return used_facts
 
-    """ DELETE """
+    async def _create_agent(self, agent, executors):
+        agent_id = await self.dao.create('core_agent', agent)
+        for i, e in enumerate(executors):
+            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
+        return agent_id
 
-    async def delete(self, index, criteria):
-        """
-        Delete any object in the database by table name and ID
-        :param index: the name of the table
-        :param criteria: a dict of key/value pairs to match on
-        """
-        self.log.debug('Deleting %s from %s' % (criteria, index))
-        await self.dao.delete(index, data=criteria)
+    async def _create_link(self, link):
+        used = link.pop('used', [])
+        link_id = await self.dao.create('core_chain', link)
+        for uf in used:
+            await self.dao.create('core_used', dict(link_id=link_id, fact_id=uf))
 
-    """ UPDATE """
+    async def _create_adversary(self, i, name, description, phases):
+        identifier = await self.dao.create('core_adversary',
+                                           dict(adversary_id=i, name=name, description=description))
 
-    async def update(self, table, key, value, data):
-        """
-        Update any field in any table in the database
-        :param table:
-        :param key:
-        :param value:
-        :param data:
-        :return: None
-        """
-        await self.dao.update(table, key, value, data)
+        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
+        for ability in phases:
+            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
+            await self.dao.create('core_adversary_map', a)
+        return identifier
 
-    async def update_agent_executor(self, agent_id, new_executors, previous_executors):
-        """
-        Update the agent's core executor
-        :param agent_id: string with the agent_id for the agent calling back
-        :param new_executors: list with incoming executors being reported by deployed agent
-        :param previous_executors: list of dict with previous executors and their preferred status
-        :return: None
-        """
-        old_executors = [d['executor'] for d in (sorted(previous_executors, key=lambda i: i['preferred'],
-                                                        reverse=True))]
-
-        for item in set(new_executors) - set(old_executors):
-            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=item, preferred=0))
-
-        if old_executors[0] != new_executors[0]:
-            await self.dao.update('core_executor', 'agent_id', agent_id, data=dict(preferred=0))
-            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=new_executors[0], preferred=1))
-
-        for item in set(old_executors) - set(new_executors):
-            await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=item))
-
-    async def save_ability_to_database(self, filename):
+    async def _write_ability(self, filename):
         for entries in self.strip_yml(filename):
             for ab in entries:
                 for pl, executors in ab['platforms'].items():
@@ -310,11 +269,9 @@ class DataService(BaseService):
                                                        requirements=ab.get('requirements', []))
                 await self._delete_stale_abilities(ab)
 
-    """ PRIVATE """
-
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            await self.save_ability_to_database(filename)
+            await self._write_ability(filename)
 
     async def _load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
@@ -323,7 +280,7 @@ class DataService(BaseService):
                 for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
                     phases += pack
                 if adv.get('visible', True):
-                    await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
+                    await self._create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def _load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -332,7 +289,7 @@ class DataService(BaseService):
                 for fact in source.get('facts', []):
                     fact['source_id'] = source_id
                     fact['score'] = fact.get('score', 1)
-                    await self.create('core_fact', fact)
+                    await self.save('fact', fact)
 
                 for rule in source.get('rules', []):
                     rule['source_id'] = source_id
@@ -413,6 +370,18 @@ class DataService(BaseService):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
 
     async def _add_fact_relationships(self, criteria=None):
-        relationships = await self.dao.get('core_relationships', criteria)
+        relationships = await self.dao.get('core_relationship', criteria)
         return [dict(edge=r.get('edge'), target=(await self.dao.get('core_fact', dict(id=r.get('target'))))[0])
                 for r in relationships if r.get('target')]
+
+    async def _create_operation(self, name, group, adversary_id, jitter='2/8', sources=[],
+                               planner=None, state=None, allow_untrusted=False, autonomous=True):
+        op_id = await self.dao.create('core_operation', dict(
+            name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
+            start=self.get_current_timestamp(), planner=planner, state=state,
+            allow_untrusted=allow_untrusted, autonomous=autonomous))
+        source_id = await self.dao.create('core_source', dict(name=name))
+        await self.dao.create('core_source_map', dict(op_id=op_id, source_id=source_id))
+        for s_id in [s for s in sources if s]:
+            await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
+        return op_id

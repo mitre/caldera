@@ -19,13 +19,13 @@ class ReportingService(BaseService):
         :param agent_output: bool to include agent_output with report
         :return: a JSON report
         """
-        op = (await self.data_svc.explode_operation(dict(id=op_id)))[0]
-        planner = (await self.data_svc.explode_planners(criteria=dict(id=op['planner'])))[0]
+        op = (await self.data_svc.explode('operation', dict(id=op_id)))[0]
+        planner = (await self.data_svc.explode('planner', criteria=dict(id=op['planner'])))[0]
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
                       finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
         agents_steps = {a['paw']: {'agent_id': a['id'], 'steps': []} for a in op['host_group']}
         for step in op['chain']:
-            ability = (await self.data_svc.explode_abilities(criteria=dict(id=step['ability'])))[0]
+            ability = (await self.data_svc.explode('ability', criteria=dict(id=step['ability'])))[0]
             command = self.decode_bytes(step['command'])
             step_report = dict(ability_id=ability['ability_id'],
                                command=command,
@@ -42,7 +42,7 @@ class ReportingService(BaseService):
                                )
             if agent_output:
                 try:
-                    result = (await self.data_svc.explode_results(criteria=dict(link_id=step['id'])))[0]
+                    result = (await self.data_svc.explode('result', criteria=dict(link_id=step['id'])))[0]
                     step_report['output'] = self.decode_bytes(result['output'])
                 except IndexError as e:
                     continue
@@ -63,7 +63,7 @@ class ReportingService(BaseService):
         for agent in op_group:
             agent_skipped = defaultdict(dict)
             agent_executors = [a['executor'] for a in agent['executors']]
-            agent_ran = set([(await self.data_svc.explode_abilities(dict(id=ab)))[0]['ability_id'] for ab in op_results[agent['paw']]])
+            agent_ran = set([(await self.data_svc.explode('ability', dict(id=ab)))[0]['ability_id'] for ab in op_results[agent['paw']]])
             for ab in abilities_by_agent[agent['paw']]['all_abilities']:
                 skipped = await self._check_reason_skipped(agent=agent, ability=ab, op_facts=op_facts, state=op_state,
                                                            agent_executors=agent_executors, agent_ran=agent_ran)
@@ -89,7 +89,7 @@ class ReportingService(BaseService):
                                                                   for ab in adversary['phases'][p]]} for a in hosts}
 
     async def _get_operation_data(self, op_id):
-        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=op_id)))[0]
+        operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=op_id)))[0]
         op_facts = set([f['property'] for f in operation['facts']])
         op_results = {a['paw']: set([s['ability'] for s in operation['chain'] if s['paw'] == a['paw']])
                       for a in operation['host_group']}

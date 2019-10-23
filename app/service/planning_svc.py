@@ -22,7 +22,7 @@ class PlanningService(BaseService):
         :return: a list of links
         """
         await self.get_service('parsing_svc').parse_facts(operation)
-        operation = (await self.get_service('data_svc').explode_operation(criteria=dict(id=operation['id'])))[0]
+        operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=operation['id'])))[0]
 
         if (not agent['trusted']) and (not operation['allow_untrusted']):
             self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
@@ -53,9 +53,9 @@ class PlanningService(BaseService):
             self.log.debug('Agent %s untrusted: no cleanup-link created' % agent['paw'])
             return
         links = []
-        for link in await self.get_service('data_svc').explode_chain(criteria=dict(paw=agent['paw'],
+        for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent['paw'],
                                                                                    op_id=operation['id'])):
-            ability = (await self.get_service('data_svc').explode_abilities(criteria=dict(id=link['ability'])))[0]
+            ability = (await self.get_service('data_svc').explode('ability', criteria=dict(id=link['ability'])))[0]
             if ability['cleanup'] and link['status'] >= 0:
                 links.append(dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'], cleanup=1,
                                   command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
@@ -152,8 +152,8 @@ class PlanningService(BaseService):
         Collect a list of this agent's facts
         """
         agent_facts = []
-        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
-            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
+        for link in await self.get_service('data_svc').get('chain', criteria=dict(op_id=op_id, paw=paw)):
+            facts = await self.get_service('data_svc').get('fact', criteria=dict(link_id=link['id']))
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
