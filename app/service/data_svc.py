@@ -88,6 +88,16 @@ class DataService(BaseService):
         """
         return await self.dao.create(table, data)
 
+    async def create_adversary(self, i, name, description, phases):
+        identifier = await self.dao.create('core_adversary',
+                                           dict(adversary_id=i, name=name, description=description))
+
+        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
+        for ability in phases:
+            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
+            await self.dao.create('core_adversary_map', a)
+        return identifier
+
     """ VIEW """
 
     async def get(self, table, criteria):
@@ -279,11 +289,32 @@ class DataService(BaseService):
         for item in set(old_executors) - set(new_executors):
             await self.dao.delete('core_executor', dict(agent_id=agent_id, executor=item))
 
+    async def save_ability_to_database(self, filename):
+        for entries in self.strip_yml(filename):
+            for ab in entries:
+                for pl, executors in ab['platforms'].items():
+                    for name, info in executors.items():
+                        for e in name.split(','):
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                            await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                       technique_name=ab['technique']['name'],
+                                                       technique_id=ab['technique']['attack_id'],
+                                                       test=encoded_test.decode(),
+                                                       description=ab.get('description') or '',
+                                                       executor=e, name=ab['name'], platform=pl,
+                                                       cleanup=b64encode(
+                                                           info['cleanup'].strip().encode(
+                                                               'utf-8')).decode() if info.get(
+                                                           'cleanup') else None,
+                                                       payload=info.get('payload'), parsers=info.get('parsers', []),
+                                                       requirements=ab.get('requirements', []))
+                await self._delete_stale_abilities(ab)
+
     """ PRIVATE """
 
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            await self._save_ability_to_database(filename)
+            await self.save_ability_to_database(filename)
 
     async def _load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
@@ -292,7 +323,7 @@ class DataService(BaseService):
                 for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
                     phases += pack
                 if adv.get('visible', True):
-                    await self._create_adversary(adv['id'], adv['name'], adv['description'], phases)
+                    await self.create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def _load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -343,16 +374,6 @@ class DataService(BaseService):
         identifier = await self.dao.create('core_ability', ability)
         return await self._save_ability_extras(identifier, payload, parsers, requirements)
 
-    async def _create_adversary(self, i, name, description, phases):
-        identifier = await self.dao.create('core_adversary',
-                                           dict(adversary_id=i, name=name, description=description))
-
-        await self.dao.delete('core_adversary_map', data=dict(adversary_id=i))
-        for ability in phases:
-            a = dict(adversary_id=i, phase=ability['phase'], ability_id=ability['id'])
-            await self.dao.create('core_adversary_map', a)
-        return identifier
-
     @staticmethod
     async def _sort_rules_by_fact(rules):
         organized_rules = defaultdict(list)
@@ -360,27 +381,6 @@ class DataService(BaseService):
             fact = rule.pop('fact')
             organized_rules[fact].append(rule)
         return organized_rules
-
-    async def _save_ability_to_database(self, filename):
-        for entries in self.strip_yml(filename):
-            for ab in entries:
-                for pl, executors in ab['platforms'].items():
-                    for name, info in executors.items():
-                        for e in name.split(','):
-                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                       technique_name=ab['technique']['name'],
-                                                       technique_id=ab['technique']['attack_id'],
-                                                       test=encoded_test.decode(),
-                                                       description=ab.get('description') or '',
-                                                       executor=e, name=ab['name'], platform=pl,
-                                                       cleanup=b64encode(
-                                                           info['cleanup'].strip().encode(
-                                                               'utf-8')).decode() if info.get(
-                                                           'cleanup') else None,
-                                                       payload=info.get('payload'), parsers=info.get('parsers', []),
-                                                       requirements=ab.get('requirements', []))
-                await self._delete_stale_abilities(ab)
 
     async def _save_ability_extras(self, identifier, payload, parsers, requirements):
         if payload:
