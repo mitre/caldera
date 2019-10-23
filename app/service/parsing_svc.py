@@ -1,5 +1,4 @@
 from base64 import b64decode
-from importlib import import_module
 
 from app.service.base_service import BaseService
 
@@ -48,7 +47,7 @@ class ParsingService(BaseService):
         else:
             fact = await self._build_global_fact(operation, prop, source, result)
         if fact and fact['property']:
-            return await self.data_svc.create_fact(**fact)
+            return await self.data_svc.create('core_fact', fact)
         return await self._get_fact_id(operation, prop)
 
     @staticmethod

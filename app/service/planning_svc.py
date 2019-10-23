@@ -3,7 +3,6 @@ import itertools
 import re
 from base64 import b64decode
 from datetime import datetime
-from importlib import import_module
 
 from app.service.base_service import BaseService
 from app.utility.rule import RuleSet
