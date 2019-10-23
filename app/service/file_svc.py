@@ -125,10 +125,10 @@ class FileSvc(BaseService):
             for root, _, files in os.walk('plugins/%s' % plugin):
                 if root.endswith('payloads') and 'adversary' not in root:
                     listing.extend(files)
-            for _, _, files in os.walk('data/payloads'):
-                for file in files:
-                    if not file.endswith('.gitkeep'):
-                        listing.append(file)
+        for _, _, files in os.walk('data/payloads'):
+            for file in files:
+                if not file.endswith('.gitkeep'):
+                    listing.append(file)
         return listing
 
     @staticmethod
