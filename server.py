@@ -97,7 +97,6 @@ if __name__ == '__main__':
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
-        print('caldera starting using the %s config file' % (c.name))
         set_logging_state()
         sys.path.append('')
 

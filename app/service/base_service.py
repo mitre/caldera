@@ -63,10 +63,10 @@ class BaseService:
     @staticmethod
     def decode(encoded_cmd, agent, group):
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
-        decoded_cmd = decoded_cmd.replace('#{server}', agent['server'])
+        decoded_cmd = decoded_cmd.replace('#{server}', agent.server)
         decoded_cmd = decoded_cmd.replace('#{group}', group)
-        decoded_cmd = decoded_cmd.replace('#{paw}', agent['paw'])
-        decoded_cmd = decoded_cmd.replace('#{location}', agent['location'])
+        decoded_cmd = decoded_cmd.replace('#{paw}', agent.paw)
+        decoded_cmd = decoded_cmd.replace('#{location}', agent.location)
         return decoded_cmd
 
     class LinkState(Enum):

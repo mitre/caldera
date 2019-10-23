@@ -12,6 +12,7 @@ class DataService(BaseService):
     def __init__(self, dao):
         self.dao = dao
         self.log = self.add_service('data_svc', self)
+        self.ram = dict(agents=[])
 
     async def load_data(self, directory=None, schema='conf/core.sql'):
         """
@@ -39,8 +40,6 @@ class DataService(BaseService):
         try:
             if object_name == 'operation':
                 return await self._create_operation(**object_dict)
-            elif object_name == 'agent':
-                return await self._create_agent(**object_dict)
             elif object_name == 'link':
                 return await self._create_link(object_dict)
             elif object_name == 'adversary':
@@ -49,8 +48,6 @@ class DataService(BaseService):
                 return await self._create_ability(**object_dict)
             elif object_name == 'relationship':
                 return await self.dao.create('core_relationship', object_dict)
-            elif object_name == 'executor':
-                return await self.dao.create('core_executor', object_dict)
             elif object_name == 'fact':
                 return await self.dao.create('core_fact', object_dict)
             elif object_name == 'result':
@@ -90,8 +87,6 @@ class DataService(BaseService):
         try:
             if object_name == 'operation':
                 return await self.dao.get('core_operation', criteria)
-            elif object_name == 'agent':
-                return await self.dao.get('core_agent', criteria)
             elif object_name == 'chain':
                 return await self.dao.get('core_chain', criteria)
             elif object_name == 'ability':
@@ -117,8 +112,6 @@ class DataService(BaseService):
         try:
             if object_name == 'operation':
                 return await self._explode_operation(criteria)
-            elif object_name == 'agent':
-                return await self._explode_agents(criteria)
             elif object_name == 'chain':
                 return await self._explode_chain(criteria)
             elif object_name == 'adversary':
@@ -138,6 +131,41 @@ class DataService(BaseService):
             self.log.error('[!] EXPLODE on unknown type: %s' % object_name)
         except Exception as e:
             self.log.error('[!] EXPLODE %s: %s' % (object_name, e))
+
+    async def store(self, c_object):
+        """
+        Accept any c_object type and store it (create/update) in RAM
+        :param c_object:
+        :return: a single c_object
+        """
+        try:
+            return c_object.store(self.ram)
+        except Exception as e:
+            self.log.error('[!] STORE: %s' % e)
+
+    async def locate(self, object_name, match=None):
+        """
+        Find all c_objects which match a search. Return all c_objects if no match.
+        :param object_name:
+        :param match: dict()
+        :return: a list of c_object types
+        """
+        try:
+            return [obj for obj in self.ram[object_name] if obj.match(match)]
+        except Exception as e:
+            self.log.error('[!] LOCATE: %s' % e)
+
+    async def remove(self, object_name, match):
+        """
+        Remove any c_objects which match a search
+        :param object_name:
+        :param match: dict()
+        :return:
+        """
+        try:
+            self.ram[object_name][:] = [obj for obj in self.ram[object_name] if not obj.match(match)]
+        except Exception as e:
+            self.log.error('[!] REMOVE: %s' % e)
 
     """ PRIVATE """
 
@@ -169,7 +197,7 @@ class DataService(BaseService):
             op['chain'] = sorted(await self._explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
             adversaries = await self._explode_adversaries(dict(id=op['adversary_id']))
             op['adversary'] = adversaries[0]
-            op['host_group'] = await self._explode_agents(criteria=dict(host_group=op['host_group']))
+            op['host_group'] = await self.locate('agents', match=dict(group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
             source_list = [s['source_id'] for s in sources]
             op['facts'] = await self.dao.get_in('core_fact', 'source_id', source_list)
@@ -177,13 +205,6 @@ class DataService(BaseService):
                 fact['relationships'] = await self._add_fact_relationships(dict(source=fact['id']))
             op['rules'] = await self._sort_rules_by_fact(await self.dao.get_in('core_rule', 'source_id', source_list))
         return operations
-
-    async def _explode_agents(self, criteria: object = None) -> object:
-        agents = await self.dao.get('core_agent', criteria)
-        for a in agents:
-            executors = await self.dao.get('core_executor', criteria=dict(agent_id=a['id']))
-            a['executors'] = [dict(executor=e['executor'], preferred=e['preferred']) for e in executors]
-        return agents
 
     async def _explode_results(self, criteria=None):
         results = await self.dao.get('core_result', criteria=criteria)
@@ -225,12 +246,6 @@ class DataService(BaseService):
             uf['property'] = fact['property']
             uf['value'] = fact['value']
         return used_facts
-
-    async def _create_agent(self, agent, executors):
-        agent_id = await self.dao.create('core_agent', agent)
-        for i, e in enumerate(executors):
-            await self.dao.create('core_executor', dict(agent_id=agent_id, executor=e, preferred=1 if i == 0 else 0))
-        return agent_id
 
     async def _create_link(self, link):
         used = link.pop('used', [])
@@ -300,7 +315,7 @@ class DataService(BaseService):
             for planner in self.strip_yml(filename):
                 await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
                                                            params=json.dumps(planner.get('params'))))
-                
+
     async def _create_rule(self, fact, source_id, action='DENY', match='.*'):
         try:
             action = RuleAction[action.upper()].value
@@ -375,7 +390,7 @@ class DataService(BaseService):
                 for r in relationships if r.get('target')]
 
     async def _create_operation(self, name, group, adversary_id, jitter='2/8', sources=[],
-                               planner=None, state=None, allow_untrusted=False, autonomous=True):
+                                planner=None, state=None, allow_untrusted=False, autonomous=True):
         op_id = await self.dao.create('core_operation', dict(
             name=name, host_group=group, adversary_id=adversary_id, finish=None, phase=0, jitter=jitter,
             start=self.get_current_timestamp(), planner=planner, state=state,
