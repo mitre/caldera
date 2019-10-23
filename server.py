@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+import pathlib
 from importlib import import_module
 
 import aiohttp_jinja2
@@ -93,8 +94,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     args = parser.parse_args()
-    with open('conf/%s.yml' % args.environment) as c:
+    config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
+    with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
+        print('caldera starting using the %s config file' % (c.name))
         set_logging_state()
         sys.path.append('')
 
