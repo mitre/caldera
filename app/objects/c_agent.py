@@ -5,7 +5,7 @@ class Agent(BaseObject):
 
     @property
     def unique(self):
-        return self.paw
+        return self.hash(self.paw)
 
     @property
     def display(self):
