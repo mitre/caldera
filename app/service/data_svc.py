@@ -15,6 +15,14 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.ram = dict(agents=[], planners=[])
 
+    async def apply(self, collection):
+        """
+        Add a new collection to RAM
+        :param collection:
+        :return:
+        """
+        self.ram[collection] = []
+
     async def load_data(self, directory=None, schema='conf/core.sql'):
         """
         Read all the data sources to populate the SQL database
