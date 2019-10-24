@@ -18,5 +18,6 @@ class BaseObject:
     def retrieve(collection, unique):
         return next((i for i in collection if i.unique == unique), None)
 
-    def hash(self, s):
-        return hashlib.md5(s)
+    @staticmethod
+    def hash(s):
+        return hashlib.md5(s.encode())
