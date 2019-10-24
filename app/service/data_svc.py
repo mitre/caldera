@@ -3,6 +3,7 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
+from app.objects.c_planner import Planner
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
 
@@ -12,7 +13,7 @@ class DataService(BaseService):
     def __init__(self, dao):
         self.dao = dao
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[])
+        self.ram = dict(agents=[], planners=[])
 
     async def load_data(self, directory=None, schema='conf/core.sql'):
         """
@@ -28,7 +29,7 @@ class DataService(BaseService):
             await self._load_abilities(directory='%s/abilities' % directory)
             await self._load_adversaries(directory='%s/adversaries' % directory)
             await self._load_facts(directory='%s/facts' % directory)
-            await self._load_planner(directory='%s/planners' % directory)
+            await self._load_planners(directory='%s/planners' % directory)
 
     async def save(self, object_name, object_dict):
         """
@@ -124,8 +125,6 @@ class DataService(BaseService):
                 return await self._explode_sources(criteria)
             elif object_name == 'result':
                 return await self._explode_results(criteria)
-            elif object_name == 'planner':
-                return await self._explode_planners(criteria)
             elif object_name == 'used':
                 return await self._explode_used(criteria)
             self.log.error('[!] EXPLODE on unknown type: %s' % object_name)
@@ -227,12 +226,6 @@ class DataService(BaseService):
             s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
         return sources
 
-    async def _explode_planners(self, criteria=None):
-        planners = await self.dao.get('core_planner', criteria=criteria)
-        for p in planners:
-            p['params'] = json.loads(p['params'])
-        return planners
-
     async def _explode_parser(self, criteria=None):
         parsers = await self.dao.get('core_parser', criteria)
         for parser in parsers:
@@ -310,11 +303,14 @@ class DataService(BaseService):
                     rule['source_id'] = source_id
                     await self._create_rule(**rule)
 
-    async def _load_planner(self, directory):
+    async def _load_planners(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.strip_yml(filename):
-                await self.dao.create('core_planner', dict(name=planner.get('name'), module=planner.get('module'),
-                                                           params=json.dumps(planner.get('params'))))
+                await self.store(
+                    Planner(name=planner.get('name'), module=planner.get('module'),
+                            params=json.dumps(planner.get('params')))
+                )
+        self.log.debug('Loaded %s planners' % len(self.ram['planners']))
 
     async def _create_rule(self, fact, source_id, action='DENY', match='.*'):
         try:

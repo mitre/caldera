@@ -20,9 +20,9 @@ class ReportingService(BaseService):
         :return: a JSON report
         """
         op = (await self.data_svc.explode('operation', dict(id=op_id)))[0]
-        planner = (await self.data_svc.explode('planner', criteria=dict(id=op['planner'])))[0]
+        planner = await self.data_svc.locate('planners', match=dict(name=op['planner']))
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner, adversary=op['adversary'], jitter=op['jitter'], steps=[])
+                      finish=op['finish'], planner=planner[0].name, adversary=op['adversary'], jitter=op['jitter'], steps=[])
         agents_steps = {a.paw: {'steps': []} for a in op['host_group']}
         for step in op['chain']:
             ability = (await self.data_svc.explode('ability', criteria=dict(id=step['ability'])))[0]
@@ -49,7 +49,7 @@ class ReportingService(BaseService):
             agents_steps[step['paw']]['steps'].append(step_report)
         report['steps'] = agents_steps
         report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(op_id=op['id'])
-        report.pop('host_group')
+        report['host_group'] = [a.display for a in report['host_group']]
         return report
 
     async def get_skipped_abilities_by_agent(self, op_id):

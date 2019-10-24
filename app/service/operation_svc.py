@@ -1,8 +1,9 @@
 import asyncio
+import ast
 import traceback
+
 from importlib import import_module
 
-from app.objects.c_agent import Agent
 from app.service.base_service import BaseService
 
 
@@ -61,10 +62,10 @@ class OperationService(BaseService):
     """ PRIVATE """
 
     async def _get_planning_module(self, operation):
-        chosen_planner = await self.data_svc.explode('planner', dict(id=operation['planner']))
-        planning_module = import_module(chosen_planner[0]['module'])
-        return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'),
-                                                          **chosen_planner[0]['params'])
+        chosen_planner = await self.data_svc.locate('planners', match=dict(name=operation['planner']))
+        planning_module = import_module(chosen_planner[0].module)
+        planner_params = ast.literal_eval(chosen_planner[0].params)
+        return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'), **planner_params)
 
     async def _wait_for_phase_completion(self, operation):
         for member in operation['host_group']:
