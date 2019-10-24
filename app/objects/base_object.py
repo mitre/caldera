@@ -20,4 +20,4 @@ class BaseObject:
 
     @staticmethod
     def hash(s):
-        return hashlib.md5(s.encode())
+        return s
