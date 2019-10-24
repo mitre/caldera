@@ -1,6 +1,3 @@
-import hashlib
-
-
 class BaseObject:
 
     def match(self, criteria):
