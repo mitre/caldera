@@ -5,7 +5,7 @@ class Fact(BaseObject):
 
     @property
     def unique(self):
-        return hash('%s%s%s' % (self.source, self.prop, self.value))
+        return self.hash('%s%s%s' % (self.source, self.prop, self.value))
 
     @property
     def display(self):
