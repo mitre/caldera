@@ -89,12 +89,15 @@ class AgentService(BaseService):
         :param status:
         :return: a JSON status message
         """
-        await self.data_svc.save('result', dict(link_id=link_id, output=output))
-        await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
-                                                                               finish=self.get_current_timestamp()))
-        link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
-        await self.data_svc.store('agents', Agent(paw=link[0]['paw']))
-        return json.dumps(dict(status=True))
+        try:
+            await self.data_svc.save('result', dict(link_id=link_id, output=output))
+            await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
+                                                                                   finish=self.get_current_timestamp()))
+            link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
+            await self.data_svc.store(Agent(paw=link[0]['paw']))
+            return json.dumps(dict(status=True))
+        except Exception as e:
+            self.log.error('[!] save_results: %s' % e)
 
     async def perform_action(self, link: typing.Dict) -> int:
         """
