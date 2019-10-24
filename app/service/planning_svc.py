@@ -24,8 +24,8 @@ class PlanningService(BaseService):
         await self.get_service('parsing_svc').parse_facts(operation)
         operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=operation['id'])))[0]
 
-        if (not agent['trusted']) and (not operation['allow_untrusted']):
-            self.log.debug('Agent %s untrusted: no link created' % agent['paw'])
+        if (not agent.trusted) and (not operation['allow_untrusted']):
+            self.log.debug('Agent %s untrusted: no link created' % agent.paw)
             return []
         phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
         phase_abilities = sorted(phase_abilities, key=lambda i: i['id'])
@@ -34,7 +34,7 @@ class PlanningService(BaseService):
         links = []
         for a in await self.get_service('agent_svc').capable_agent_abilities(phase_abilities, agent):
             links.append(
-                dict(op_id=operation['id'], paw=agent['paw'], ability=a['id'], command=a['test'], score=0,
+                dict(op_id=operation['id'], paw=agent.paw, ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
                      jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
         ability_requirements = {ab['id']: ab.get('requirements', []) for ab in phase_abilities}
@@ -49,15 +49,14 @@ class PlanningService(BaseService):
         :return: None
         """
         link_status = await self._default_link_status(operation)
-        if (not agent['trusted']) and (not operation['allow_untrusted']):
-            self.log.debug('Agent %s untrusted: no cleanup-link created' % agent['paw'])
+        if (not agent.trusted) and (not operation['allow_untrusted']):
+            self.log.debug('Agent %s untrusted: no cleanup-link created' % agent.paw)
             return
         links = []
-        for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent['paw'],
-                                                                                   op_id=operation['id'])):
+        for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent.paw, op_id=operation['id'])):
             ability = (await self.get_service('data_svc').explode('ability', criteria=dict(id=link['ability'])))[0]
             if ability['cleanup'] and link['status'] >= 0:
-                links.append(dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'], cleanup=1,
+                links.append(dict(op_id=operation['id'], paw=agent.paw, ability=ability['id'], cleanup=1,
                                   command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
                                   decide=datetime.now(), status=link_status))
         return reversed(await self._trim_links(operation, links, agent))
@@ -72,24 +71,24 @@ class PlanningService(BaseService):
         return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
 
     async def _trim_links(self, operation, links, agent, ability_requirements=None):
-        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw']]
+        host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent.paw]
         links[:] = await self._add_test_variants(links, agent, operation, ability_requirements)
         links[:] = [l for l in links if l['command'] not in host_already_ran]
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l['command']).decode('utf-8'), flags=re.DOTALL)]
-        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
+        self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
     async def _add_test_variants(self, links, agent, operation, ability_requirements=None):
         """
         Create a list of all possible links for a given phase
         """
-        group = agent['host_group']
+        group = agent.group
         for link in links:
             decoded_test = self.decode(link['command'], agent, group)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
+                agent_facts = await self._get_agent_facts(operation['id'], agent.paw)
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):

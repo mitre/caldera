@@ -2,6 +2,7 @@ import asyncio
 import traceback
 from importlib import import_module
 
+from app.objects.c_agent import Agent
 from app.service.base_service import BaseService
 
 
@@ -67,20 +68,20 @@ class OperationService(BaseService):
 
     async def _wait_for_phase_completion(self, operation):
         for member in operation['host_group']:
-            if (not member['trusted']) and (not operation['allow_untrusted']):
+            if (not member.trusted) and (not operation['allow_untrusted']):
                 continue
             op = await self.data_svc.explode('operation', criteria=dict(id=operation['id']))
-            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member['paw'] and not lnk['finish'] and not lnk['status'] == self.LinkState.DISCARD.value),
+            while next((True for lnk in op[0]['chain'] if lnk['paw'] == member.paw and not lnk['finish'] and not lnk['status'] == self.LinkState.DISCARD.value),
                        False):
                 await asyncio.sleep(3)
-                if await self._trust_issues(operation, member['paw']):
+                if await self._trust_issues(operation, member.paw):
                     break
                 op = await self.data_svc.explode('operation', criteria=dict(id=operation['id']))
 
     async def _trust_issues(self, operation, paw):
         if not operation['allow_untrusted']:
-            agent = await self.data_svc.explode('agent', criteria=dict(paw=paw))
-            return not agent[0]['trusted']
+            agent = await self.data_svc.locate('agents', match=dict(paw=paw))
+            return not agent[0].trusted
         return False
 
     async def _run_cleanup_actions(self, op_id):
