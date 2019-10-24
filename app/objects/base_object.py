@@ -1,3 +1,6 @@
+import hashlib
+
+
 class BaseObject:
 
     def match(self, criteria):
@@ -14,3 +17,6 @@ class BaseObject:
     @staticmethod
     def retrieve(collection, unique):
         return next((i for i in collection if i.unique == unique), None)
+
+    def hash(self, s):
+        return hashlib.md5(s)

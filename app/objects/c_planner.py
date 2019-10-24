@@ -5,7 +5,7 @@ class Planner(BaseObject):
 
     @property
     def unique(self):
-        return self.name
+        return self.hash(self.name)
 
     @property
     def display(self):
