@@ -3,9 +3,9 @@ class BaseObject:
     def match(self, criteria):
         if not criteria:
             return self
-        for k,v in criteria.items():
-            if self.__getattribute__(k) == v:
-                return self
+        criteria_matches = [True for k,v in criteria.items() if self.__getattribute__(k) == v]
+        if len(criteria_matches) == len(criteria) and all(criteria_matches):
+            return self
 
     def update(self, field, value):
         if value:
