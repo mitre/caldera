@@ -37,34 +37,38 @@ class FileSvc(BaseService):
     async def upload(self, request, file_target=None, filebase=None, xored=False):
         """
         Accept a multipart file via HTTP and save it to the server
-        :param request:
-        :return: None
+        :param request: request object from aiohttp
+        :param file_target: filename of the file to be saved
+        :param filebase: base directory to save an uploaded file to
+        :param xored: whether the file needs to be encrypted on disk or not
+        :return: raw web response for failure or success
         """
         try:
             reader = await request.multipart()
-            exfil_dir = await self._create_exfil_sub_directory(request.headers)
+            save_dir = await self._create_exfil_sub_directory(request.headers)
             while True:
                 field = await reader.next()
                 if not field:
                     break
                 filename = field.filename
                 if file_target:
-                    exfil_dir = filebase
+                    save_dir = filebase
                     filename = file_target
-                with open(os.path.join(exfil_dir, filename), 'wb') as f:
+                with open(os.path.join(save_dir, filename), 'wb') as f:
                     while True:
                         chunk = await field.read_chunk()
                         if not chunk:
                             break
                         f.write(chunk)
                 if file_target:
-                    self.decode_file(os.path.join(exfil_dir, filename))
+                    self.decode_file(os.path.join(save_dir, filename))
                 if xored:
-                    xor_file(os.path.join(exfil_dir, filename))
+                    xor_file(os.path.join(save_dir, filename))
                 self.log.debug('Uploaded file %s' % filename)
             return web.Response()
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
+            return web.HTTPException()
 
     async def find_file_path(self, name, location=''):
         """
@@ -104,13 +108,12 @@ class FileSvc(BaseService):
         :return: full path of the saved file
         """
         filebase = 'data/payloads/'
-        filename = str(os.path.join('a',request.headers['x-name']).split(os.path.sep)[-1])
+        filename = str(os.path.join('a', request.headers['x-name']).split(os.path.sep)[-1])
         xored = False
         if request.headers['x-xored'] == 'true':
             filename = filename + '.xored'
             xored = True
-        await self.upload(request,file_target=filename,filebase=filebase, xored=xored)
-        return filename
+        return await self.upload(request, file_target=filename, filebase=filebase, xored=xored)
 
     async def add_special_payload(self, name, func):
         """
