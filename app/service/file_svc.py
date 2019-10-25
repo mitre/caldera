@@ -34,7 +34,7 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload(self, request):
+    async def upload(self, request, file_target=None, filebase=None, xored=False):
         """
         Accept a multipart file via HTTP and save it to the server
         :param request:
@@ -48,12 +48,17 @@ class FileSvc(BaseService):
                 if not field:
                     break
                 filename = field.filename
+                if file_target:
+                    exfil_dir = filebase
+                    filename = file_target
                 with open(os.path.join(exfil_dir, filename), 'wb') as f:
                     while True:
                         chunk = await field.read_chunk()
                         if not chunk:
                             break
                         f.write(chunk)
+                if xored:
+                    xor_file(os.path.join(exfil_dir, filename))
                 self.log.debug('Uploaded file %s' % filename)
             return web.Response()
         except Exception as e:
@@ -88,7 +93,7 @@ class FileSvc(BaseService):
                 return name, xor_file(file_name)
         raise FileNotFoundError
 
-    async def save_file(self, name, content, xored=False):
+    async def save_file(self, request):
         """
         Save a (payload) file to the stockpile
         :param name: filename
@@ -97,13 +102,12 @@ class FileSvc(BaseService):
         :return: full path of the saved file
         """
         filebase = 'data/payloads/'
-        f_content = str.encode(content)
-        filename = str(os.path.join('a',name).split(os.path.sep)[-1])
-        if xored:
+        filename = str(os.path.join('a',request.headers['x-name']).split(os.path.sep)[-1])
+        xored = False
+        if request.headers['x-xored'] == 'true':
             filename = filename + '.xored'
-            f_content = xor_bytes(f_content)
-        with open(os.path.join(filebase, filename), 'xb') as file:
-            file.write(f_content)
+            xored = True
+        await self.upload(request,file_target=filename,filebase=filebase, xored=xored)
         return filename
 
     async def add_special_payload(self, name, func):
