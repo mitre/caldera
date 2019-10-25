@@ -86,7 +86,7 @@ class DataService(BaseService):
         """
         await self.dao.update('core_%s' % object_name, key, value, data)
 
-    async def get(self, object_name, criteria):
+    async def get(self, object_name, criteria=None):
         """
         Get the contents of any object
         :param object_name:
