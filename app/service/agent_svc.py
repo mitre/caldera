@@ -38,7 +38,7 @@ class AgentService(BaseService):
         except Exception as e:
             self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, privilege):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -57,7 +57,7 @@ class AgentService(BaseService):
         return await self.data_svc.store(
             Agent(last_seen=now, paw=paw, platform=platform, server=server, group=group,
                   location=location, architecture=architecture, pid=pid, ppid=ppid,
-                  trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors)
+                  trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors, privilege=privilege)
         )
 
     async def calculate_sleep(self, agent):
