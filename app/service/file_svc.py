@@ -57,6 +57,8 @@ class FileSvc(BaseService):
                         if not chunk:
                             break
                         f.write(chunk)
+                if file_target:
+                    self.decode_file(os.path.join(exfil_dir, filename))
                 if xored:
                     xor_file(os.path.join(exfil_dir, filename))
                 self.log.debug('Uploaded file %s' % filename)

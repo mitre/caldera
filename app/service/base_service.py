@@ -1,4 +1,4 @@
-from base64 import b64encode, b64decode
+from base64 import b64encode, b64decode, decodebytes
 from enum import Enum
 from random import randint
 from datetime import datetime
@@ -28,6 +28,13 @@ class BaseService:
     @staticmethod
     def decode_bytes(s):
         return b64decode(s).decode('utf-8', errors='ignore').replace('\n', '')
+
+    @staticmethod
+    def decode_file(filename):
+        with open(filename, 'rb') as file:
+            data = file.read()
+        with open(filename, 'wb') as file:
+            file.write(decodebytes(data))
 
     @staticmethod
     def encode_string(s):
