@@ -54,7 +54,6 @@ async def attach_plugins(app, services):
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
-@asyncio.coroutine
 async def init(address, port, services, users):
     app = web.Application()
     await auth_svc.apply(app, users)
