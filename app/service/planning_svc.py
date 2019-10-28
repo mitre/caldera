@@ -6,6 +6,7 @@ from datetime import datetime
 from importlib import import_module
 
 from app.service.base_service import BaseService
+from app.service.base_planning_svc import BasePlanningService
 from app.utility.rule import RuleSet
 
 
@@ -64,7 +65,7 @@ class PlanningService(BasePlanningService):
                 links.append(await self.get_link(operation, agent, ability, dict(cleanup=1, jitter=0, adversary_map_id=None)))
         return reversed(await self._trim_links(operation, links, agent))
         
-    async def get_link(self, operation, agent, ability, fields):
+    async def get_link(self, operation, agent, ability, fields=None):
         """
         For an operation, agent, ability combination create link. Any field/values
         in 'fields' dict parameter will overwrite the default link fields
@@ -82,7 +83,8 @@ class PlanningService(BasePlanningService):
                     adversary_map_id=ability["adversary_map_id"])
 
         # if caller further specifies modified link fields, update link
-        link.update(fields)
+        if fields:
+            link.update(fields)
 
         return link
 

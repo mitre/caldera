@@ -101,7 +101,7 @@ class OperationService(BaseService):
     async def _run_cleanup_actions(self, op_id):
         operation = (await self.data_svc.explode_operation(criteria=dict(id=op_id)))[0]
         for member in operation['host_group']:
-            for link in await self.get_service('planning_svc').select_cleanup_links(operation, member):
+            for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 await self.data_svc.create_link(link)
         await self._wait_for_phase_completion(operation)
 
