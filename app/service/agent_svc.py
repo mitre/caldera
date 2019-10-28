@@ -81,7 +81,7 @@ class AgentService(BaseService):
                                                 payload=payload)))
         return json.dumps(instructions)
 
-    async def save_results(self, link_id, output, status):
+    async def save_results(self, link_id, output, status, pid):
         """
         Save the results from a single executed link
         :param link_id:
@@ -92,7 +92,8 @@ class AgentService(BaseService):
         try:
             await self.data_svc.save('result', dict(link_id=link_id, output=output))
             await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
-                                                                                   finish=self.get_current_timestamp()))
+                                                                                   finish=self.get_current_timestamp(),
+                                                                                   pid=int(pid)))
             link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
             await self.data_svc.store(Agent(paw=link[0]['paw']))
             return json.dumps(dict(status=True))
