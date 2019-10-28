@@ -36,6 +36,7 @@ class ReportingService(BaseService):
                                executor=step['executor'],
                                description=ability['description'],
                                name=ability['name'],
+                               pid=step['pid'],
                                attack=dict(tactic=ability['tactic'],
                                            technique_name=ability['technique_name'],
                                            technique_id=ability['technique_id'])
