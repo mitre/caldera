@@ -15,3 +15,5 @@ core.db
 .venv/
 venv/
 .env
+conf/*.yml
+!conf/default.yml
