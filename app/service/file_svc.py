@@ -78,11 +78,12 @@ class FileSvc(BaseService):
         :param name:
         :return: a tuple (file_path, contents)
         """
-        _, file_name = await self.find_file_path(name, location='payloads')
+        loc = 'data/payloads'
+        _, file_name = await self.find_file_path(name, location=loc)
         if file_name:
             with open(file_name, 'rb') as file_stream:
                 return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        _, file_name = await self.find_file_path('%s.xored' % (name,), location=loc)
         if file_name:
             return name, xor_file(file_name)
         raise FileNotFoundError
