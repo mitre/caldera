@@ -12,11 +12,11 @@ class Agent(BaseObject):
         return dict(paw=self.paw, group=self.group, architecture=self.architecture, platform=self.platform,
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
                     last_seen=self.last_seen, last_trusted_seen=self.last_trusted_seen, sleep_min=self.sleep_min,
-                    sleep_max=self.sleep_max, executors=self.executors)
+                    sleep_max=self.sleep_max, executors=self.executors, privilege=self.privilege)
 
     def __init__(self, paw, last_seen=None, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
-                 sleep_max=None, executors=None):
+                 sleep_max=None, executors=None, privilege=None):
         self.paw = paw
         self.group = group
         self.architecture = architecture
@@ -31,6 +31,7 @@ class Agent(BaseObject):
         self.sleep_min = sleep_min
         self.sleep_max = sleep_max
         self.executors = executors
+        self.privilege = privilege
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -48,5 +49,6 @@ class Agent(BaseObject):
             existing.update('sleep_min', self.sleep_min)
             existing.update('sleep_max', self.sleep_max)
             existing.update('group', self.group)
+            existing.update('privilege', self.privilege)
         return existing
 
