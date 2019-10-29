@@ -89,19 +89,19 @@ class FileSvc(BaseService):
         :param name:
         :return: a tuple (file_path, contents)
         """
-        for loc in ['payloads', 'data']:
-            _, file_name = await self.find_file_path(name, location=loc)
-            if file_name:
-                with open(file_name, 'rb') as file_stream:
-                    return name, file_stream.read()
-            _, file_name = await self.find_file_path('%s.xored' % (name,), location=loc)
-            if file_name:
-                return name, xor_file(file_name)
+        loc = 'data/payloads'
+        _, file_name = await self.find_file_path(name, location=loc)
+        if file_name:
+            with open(file_name, 'rb') as file_stream:
+                return name, file_stream.read()
+        _, file_name = await self.find_file_path('%s.xored' % (name,), location=loc)
+        if file_name:
+            return name, xor_file(file_name)
         raise FileNotFoundError
 
     async def save_file(self, request):
         """
-        Save a (payload) file to the stockpile
+        Save a (payload) file to the root data/payloads directory
         :param name: filename
         :param content: content to save
         :param xored: whether or not to xor the contents when saving
@@ -132,12 +132,12 @@ class FileSvc(BaseService):
         listing = []
         for plugin in self.plugins:
             for root, _, files in os.walk('plugins/%s' % plugin):
-                if root.endswith('payloads') and 'adversary' not in root:
+                if root.endswith('data/payloads') and 'adversary' not in root:
                     listing.extend(files)
         for _, _, files in os.walk('data/payloads'):
-            for file in files:
-                if not file.endswith('.gitkeep'):
-                    listing.append(file)
+            for f in files:
+                if not f.startswith('.'):
+                    listing.append(f)
         return listing
 
     @staticmethod
