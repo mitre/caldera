@@ -27,7 +27,7 @@ class PlanningService(BaseService):
         if (not agent.trusted) and (not operation['allow_untrusted']):
             self.log.debug('Agent %s untrusted: no link created' % agent.paw)
             return []
-        phase_abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
+        phase_abilities = [i for p, v in operation['adversary'].phases.items() if p <= phase for i in v]
         phase_abilities = sorted(phase_abilities, key=lambda i: i['id'])
         link_status = await self._default_link_status(operation)
 
@@ -36,7 +36,7 @@ class PlanningService(BaseService):
             links.append(
                 dict(op_id=operation['id'], paw=agent.paw, ability=a['id'], command=a['test'], score=0,
                      status=link_status, decide=datetime.now(), executor=a['executor'],
-                     jitter=self.jitter(operation['jitter']), adversary_map_id=a['adversary_map_id']))
+                     jitter=self.jitter(operation['jitter'])))
         ability_requirements = {ab['id']: ab.get('requirements', []) for ab in phase_abilities}
         links[:] = await self._trim_links(operation, links, agent, ability_requirements)
         return await self._sort_links(links)
@@ -68,7 +68,7 @@ class PlanningService(BaseService):
         """
         sort links by their score then by the order they are defined in an adversary profile
         """
-        return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
+        return sorted(links, key=lambda k: (-k['score']))
 
     async def _trim_links(self, operation, links, agent, ability_requirements=None):
         host_already_ran = [l['command'] for l in operation['chain'] if l['paw'] == agent.paw]

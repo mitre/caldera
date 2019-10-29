@@ -118,7 +118,6 @@ class AgentService(BaseService):
             else:
                 await asyncio.sleep(30)
                 operation = (await self.data_svc.get('operation', dict(id=op_id)))[0]
-        link.pop('adversary_map_id')
         return await self.data_svc.save('link', link)
 
     @staticmethod
