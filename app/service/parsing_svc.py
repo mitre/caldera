@@ -20,11 +20,7 @@ class ParsingService(BaseService):
             for parser_info in await self.data_svc.explode('parser', dict(ability=result['link']['ability'])):
                 if result['link']['status'] != 0:
                     continue
-                blob = b64decode(result['output']).decode('utf-8')
-                parser_info['used_facts'] = await self.data_svc.explode('used', dict(link_id=result['link_id']))
-                parser = await self.load_module('Parser', parser_info)
-                relationships = parser.parse(blob=blob)
-
+                relationships = await self._parse_link_result(result, parser_info)
                 await self._update_scores(link_id=result['link_id'], increment=len(relationships))
                 await self._create_relationships(relationships, operation, result)
 
@@ -32,6 +28,16 @@ class ParsingService(BaseService):
                 await self.data_svc.update('result', key='link_id', value=result['link_id'], data=update)
 
     """ PRIVATE """
+
+    async def _parse_link_result(self, result, parser_info):
+        blob = b64decode(result['output']).decode('utf-8')
+        parser_info['used_facts'] = await self.data_svc.explode('used', dict(link_id=result['link_id']))
+        parser = await self.load_module('Parser', parser_info)
+        try:
+            return parser.parse(blob=blob)
+        except:
+            self.log.error('parsing error on link: %s' % result['link_id'])
+            return []
 
     async def _create_relationships(self, relationships, operation, result):
         source = (await self.data_svc.explode('source', dict(name=operation['name'])))[0]
