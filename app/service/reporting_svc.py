@@ -22,7 +22,7 @@ class ReportingService(BaseService):
         op = (await self.data_svc.explode('operation', dict(id=op_id)))[0]
         planner = await self.data_svc.locate('planners', match=dict(name=op['planner']))
         report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner[0].name, adversary=op['adversary'], jitter=op['jitter'], steps=[])
+                      finish=op['finish'], planner=planner[0].name, adversary=op['adversary'].display, jitter=op['jitter'], steps=[])
         agents_steps = {a.paw: {'steps': []} for a in op['host_group']}
         for step in op['chain']:
             ability = (await self.data_svc.explode('ability', criteria=dict(id=step['ability'])))[0]
@@ -87,8 +87,8 @@ class ReportingService(BaseService):
 
     @staticmethod
     async def _get_all_possible_abilities_by_agent(hosts, adversary):
-        return {a.paw: {'all_abilities': [ab for p in adversary['phases']
-                                          for ab in adversary['phases'][p]]} for a in hosts}
+        return {a.paw: {'all_abilities': [ab for p in adversary.phases
+                                          for ab in adversary.phases[p]]} for a in hosts}
 
     async def _get_operation_data(self, op_id):
         operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=op_id)))[0]

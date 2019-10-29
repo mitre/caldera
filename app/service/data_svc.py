@@ -3,6 +3,7 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_planner import Planner
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
@@ -13,7 +14,7 @@ class DataService(BaseService):
     def __init__(self, dao):
         self.dao = dao
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[])
 
     async def apply(self, collection):
         """
@@ -51,8 +52,6 @@ class DataService(BaseService):
                 return await self._create_operation(**object_dict)
             elif object_name == 'link':
                 return await self._create_link(object_dict)
-            elif object_name == 'adversary':
-                return await self._create_adversary(**object_dict)
             elif object_name == 'ability':
                 return await self._create_ability(**object_dict)
             elif object_name == 'relationship':
@@ -123,8 +122,6 @@ class DataService(BaseService):
                 return await self._explode_operation(criteria)
             elif object_name == 'chain':
                 return await self._explode_chain(criteria)
-            elif object_name == 'adversary':
-                return await self._explode_adversaries(criteria)
             elif object_name == 'ability':
                 return await self._explode_abilities(criteria)
             elif object_name == 'parser':
@@ -187,22 +184,11 @@ class DataService(BaseService):
                 r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
         return abilities
 
-    async def _explode_adversaries(self, criteria=None):
-        adversaries = await self.dao.get('core_adversary', criteria)
-        for adv in adversaries:
-            phases = defaultdict(list)
-            for t in await self.dao.get('core_adversary_map', dict(adversary_id=adv['adversary_id'])):
-                for ability in await self._explode_abilities(dict(ability_id=t['ability_id'])):
-                    ability['adversary_map_id'] = t['id']
-                    phases[t['phase']].append(ability)
-            adv['phases'] = dict(phases)
-        return adversaries
-
     async def _explode_operation(self, criteria=None):
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
             op['chain'] = sorted(await self._explode_chain(criteria=dict(op_id=op['id'])), key=lambda k: k['id'])
-            adversaries = await self._explode_adversaries(dict(id=op['adversary_id']))
+            adversaries = await self.locate('adversaries', match=dict(adversary_id=op['adversary_id']))
             op['adversary'] = adversaries[0]
             op['host_group'] = await self.locate('agents', match=dict(group=op['host_group']))
             sources = await self.dao.get('core_source_map', dict(op_id=op['id']))
@@ -288,15 +274,6 @@ class DataService(BaseService):
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             await self._write_ability(filename)
-
-    async def _load_adversaries(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
-            for adv in self.strip_yml(filename):
-                phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
-                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
-                    phases += pack
-                if adv.get('visible', True):
-                    await self._create_adversary(adv['id'], adv['name'], adv['description'], phases)
 
     async def _load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -404,3 +381,20 @@ class DataService(BaseService):
         for s_id in [s for s in sources if s]:
             await self.dao.create('core_source_map', dict(op_id=op_id, source_id=s_id))
         return op_id
+
+    async def _load_adversaries(self, directory):
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+            for adv in self.strip_yml(filename):
+                phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
+                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
+                    phases += pack
+                if adv.get('visible', True):
+                    pp = defaultdict(list)
+                    for phase in phases:
+                        for ability in await self._explode_abilities(dict(ability_id=phase['id'])):
+                            pp[phase['phase']].append(ability)
+                    phases = dict(pp)
+                    await self.store(
+                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'], phases=phases)
+                    )
+        self.log.debug('Loaded %s adversaries' % len(self.ram['adversaries']))
