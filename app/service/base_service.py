@@ -80,6 +80,7 @@ class BaseService:
         FACT_DEPENDENCY = 2
         OP_RUNNING = 3
         UNTRUSTED = 4
+        PRIVILEGE = 5
 
     @staticmethod
     async def load_module(module_type, module_info):

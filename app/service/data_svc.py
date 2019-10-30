@@ -341,11 +341,13 @@ class DataService(BaseService):
                                                                    'utf-8')).decode() if info.get(
                                                                'cleanup') else None,
                                                            payload=info.get('payload'), parsers=info.get('parsers', []),
-                                                           requirements=ab.get('requirements', []))
+                                                           requirements=ab.get('requirements', []),
+                                                           privilege= ab['privilege'] if "privilege" in ab.keys()
+                                                           else None)
         self.log.debug('Loaded %s abilities' % len(self.ram['abilities']))
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                              platform, cleanup=None, payload=None, parsers=None, requirements=None):
+                              platform, cleanup=None, payload=None, parsers=None, requirements=None, privilege=None):
         ps = []
         for module in parsers:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
@@ -359,4 +361,4 @@ class DataService(BaseService):
         await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                  technique_id=technique_id, technique=technique_name,
                                  executor=executor, platform=platform, description=description,
-                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs))
+                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs, privilege=privilege))
