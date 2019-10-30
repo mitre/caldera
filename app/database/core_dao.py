@@ -5,7 +5,6 @@ from app.database.persist import Persist
 class CoreDao:
 
     def __init__(self, database=None, memory=False):
-        self.memory = memory
         if memory:
             self.db = Memory()
         else:
