@@ -203,12 +203,6 @@ class DataService(BaseService):
             s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
         return sources
 
-    async def _explode_parser(self, criteria=None):
-        parsers = await self.dao.get('core_parser', criteria)
-        for parser in parsers:
-            parser['mappers'] = await self.dao.get('core_parser_map', dict(parser_id=parser['id']))
-        return parsers
-
     async def _explode_used(self, criteria=None):
         used_facts = await self.dao.get('core_used', criteria=criteria)
         for uf in used_facts:
