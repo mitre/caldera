@@ -167,17 +167,6 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _explode_abilities(self, criteria=None):
-        abilities = await self.dao.get('core_ability', criteria=criteria)
-        for ab in abilities:
-            ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
-            ab['parsers'] = await self.dao.get('core_parser', dict(ability=ab['id']))
-            ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
-            ab['requirements'] = await self.dao.get('core_requirement', dict(ability=ab['id']))
-            for r in ab['requirements']:
-                r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
-        return abilities
-
     async def _explode_operation(self, criteria=None):
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
