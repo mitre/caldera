@@ -3,8 +3,12 @@ import json
 from base64 import b64encode
 from collections import defaultdict
 
+from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_parser import Parser
 from app.objects.c_planner import Planner
+from app.objects.c_relationship import Relationship
+from app.objects.c_requirement import Requirement
 from app.service.base_service import BaseService
 from app.utility.rule import RuleAction
 
@@ -14,7 +18,7 @@ class DataService(BaseService):
     def __init__(self, dao):
         self.dao = dao
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[], adversaries=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[])
 
     async def apply(self, collection):
         """
@@ -34,7 +38,7 @@ class DataService(BaseService):
         with open(schema) as schema:
             await self.dao.build(schema.read())
         if directory:
-            self.log.debug('Loading data from %s' % directory)
+            self.log.debug('Loading data from %s...' % directory)
             await self._load_abilities(directory='%s/abilities' % directory)
             await self._load_adversaries(directory='%s/adversaries' % directory)
             await self._load_facts(directory='%s/facts' % directory)
@@ -52,8 +56,6 @@ class DataService(BaseService):
                 return await self._create_operation(**object_dict)
             elif object_name == 'link':
                 return await self._create_link(object_dict)
-            elif object_name == 'ability':
-                return await self._create_ability(**object_dict)
             elif object_name == 'relationship':
                 return await self.dao.create('core_relationship', object_dict)
             elif object_name == 'fact':
@@ -97,10 +99,6 @@ class DataService(BaseService):
                 return await self.dao.get('core_operation', criteria)
             elif object_name == 'chain':
                 return await self.dao.get('core_chain', criteria)
-            elif object_name == 'ability':
-                return await self.dao.get('core_ability', criteria)
-            elif object_name == 'payload':
-                return await self.dao.get('core_payload', criteria)
             elif object_name == 'used':
                 return await self.dao.get('core_used', criteria)
             elif object_name == 'fact':
@@ -122,10 +120,6 @@ class DataService(BaseService):
                 return await self._explode_operation(criteria)
             elif object_name == 'chain':
                 return await self._explode_chain(criteria)
-            elif object_name == 'ability':
-                return await self._explode_abilities(criteria)
-            elif object_name == 'parser':
-                return await self._explode_parser(criteria)
             elif object_name == 'source':
                 return await self._explode_sources(criteria)
             elif object_name == 'result':
@@ -210,8 +204,8 @@ class DataService(BaseService):
     async def _explode_chain(self, criteria=None):
         chain = []
         for link in await self.dao.get('core_chain', criteria=criteria):
-            a = await self.dao.get('core_ability', criteria=dict(id=link['ability']))
-            chain.append(dict(abilityName=a[0]['name'], abilityDescription=a[0]['description'], **link))
+            a = await self.locate('abilities', match=dict(unique=link['ability']))
+            chain.append(dict(abilityName=a[0].name, abilityDescription=a[0].description, **link))
         return chain
 
     async def _explode_sources(self, criteria=None):
@@ -250,31 +244,6 @@ class DataService(BaseService):
             await self.dao.create('core_adversary_map', a)
         return identifier
 
-    async def _write_ability(self, filename):
-        for entries in self.strip_yml(filename):
-            for ab in entries:
-                for pl, executors in ab['platforms'].items():
-                    for name, info in executors.items():
-                        for e in name.split(','):
-                            encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                            await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                       technique_name=ab['technique']['name'],
-                                                       technique_id=ab['technique']['attack_id'],
-                                                       test=encoded_test.decode(),
-                                                       description=ab.get('description') or '',
-                                                       executor=e, name=ab['name'], platform=pl,
-                                                       cleanup=b64encode(
-                                                           info['cleanup'].strip().encode(
-                                                               'utf-8')).decode() if info.get(
-                                                           'cleanup') else None,
-                                                       payload=info.get('payload'), parsers=info.get('parsers', []),
-                                                       requirements=ab.get('requirements', []))
-                await self._delete_stale_abilities(ab)
-
-    async def _load_abilities(self, directory):
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
-            await self._write_ability(filename)
-
     async def _load_facts(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for source in self.strip_yml(filename):
@@ -305,28 +274,6 @@ class DataService(BaseService):
             self.log.error(
                 'Rule action must be in [%s] not %s' % (', '.join(RuleAction.__members__.keys()), action.upper()))
 
-    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                              platform, cleanup=None, payload=None, parsers=None, requirements=None):
-        ability = dict(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                       technique_id=technique_id, technique_name=technique_name,
-                       executor=executor, platform=platform, description=description,
-                       cleanup=cleanup)
-        # update
-        unique_criteria = dict(ability_id=ability_id, platform=platform, executor=executor)
-        for entry in await self.dao.get('core_ability', unique_criteria):
-            await self.update('ability', 'id', entry['id'], ability)
-            for parser in await self.dao.get('core_parser', dict(ability=entry['id'])):
-                await self.dao.delete('core_parser_map', dict(parser_id=parser['id']))
-            for requirement in await self.dao.get('core_requirement', dict(ability=entry['id'])):
-                await self.dao.delete('core_requirement_map', dict(requirement_id=requirement['id']))
-            await self.dao.delete('core_parser', dict(ability=entry['id']))
-            await self.dao.delete('core_payload', dict(ability=entry['id']))
-            return await self._save_ability_extras(entry['id'], payload, parsers, requirements)
-
-        # new
-        identifier = await self.dao.create('core_ability', ability)
-        return await self._save_ability_extras(identifier, payload, parsers, requirements)
-
     @staticmethod
     async def _sort_rules_by_fact(rules):
         organized_rules = defaultdict(list)
@@ -351,14 +298,6 @@ class DataService(BaseService):
                 relationship = {id_type: _id, 'source': r.get('source'), 'edge': r.get('edge'),
                                 'target': r.get('target')}
                 await self.dao.create('%s_map' % table, relationship)
-
-    async def _delete_stale_abilities(self, ability):
-        for saved in await self.dao.get('core_ability', dict(ability_id=ability.get('id'))):
-            for platform, executors in ability['platforms'].items():
-                if platform == saved['platform'] and not saved['executor'] in str(executors.keys()):
-                    await self.dao.delete('core_ability', dict(id=saved['id']))
-            if saved['platform'] not in ability['platforms']:
-                await self.dao.delete('core_ability', dict(id=saved['id']))
 
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
@@ -391,10 +330,50 @@ class DataService(BaseService):
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
-                        for ability in await self._explode_abilities(dict(ability_id=phase['id'])):
+                        for ability in await self.locate('abilities', match=dict(ability_id=phase['id'])):
                             pp[phase['phase']].append(ability)
                     phases = dict(pp)
                     await self.store(
-                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'], phases=phases)
+                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
+                                  phases=phases)
                     )
         self.log.debug('Loaded %s adversaries' % len(self.ram['adversaries']))
+
+    async def _load_abilities(self, directory):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+            for entries in self.strip_yml(filename):
+                for ab in entries:
+                    for pl, executors in ab['platforms'].items():
+                        for name, info in executors.items():
+                            for e in name.split(','):
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                                await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                           technique_name=ab['technique']['name'],
+                                                           technique_id=ab['technique']['attack_id'],
+                                                           test=encoded_test.decode(),
+                                                           description=ab.get('description') or '',
+                                                           executor=e, name=ab['name'], platform=pl,
+                                                           cleanup=b64encode(
+                                                               info['cleanup'].strip().encode(
+                                                                   'utf-8')).decode() if info.get(
+                                                               'cleanup') else None,
+                                                           payload=info.get('payload'), parsers=info.get('parsers', []),
+                                                           requirements=ab.get('requirements', []))
+        self.log.debug('Loaded %s abilities' % len(self.ram['abilities']))
+
+    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
+                              platform, cleanup=None, payload=None, parsers=None, requirements=None):
+        ps = []
+        for module in parsers:
+            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
+                        parsers[module]]
+            ps.append(Parser(module=module, relationships=relation))
+        rs = []
+        for module in requirements:
+            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
+                        requirements[module]]
+            rs.append(Requirement(module=module, relationships=relation))
+        await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                                 technique_id=technique_id, technique=technique_name,
+                                 executor=executor, platform=platform, description=description,
+                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs))
