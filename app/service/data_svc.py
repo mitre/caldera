@@ -167,17 +167,6 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _explode_abilities(self, criteria=None):
-        abilities = await self.dao.get('core_ability', criteria=criteria)
-        for ab in abilities:
-            ab['cleanup'] = '' if ab['cleanup'] is None else ab['cleanup']
-            ab['parsers'] = await self.dao.get('core_parser', dict(ability=ab['id']))
-            ab['payload'] = await self.dao.get('core_payload', dict(ability=ab['id']))
-            ab['requirements'] = await self.dao.get('core_requirement', dict(ability=ab['id']))
-            for r in ab['requirements']:
-                r['enforcements'] = (await self.dao.get('core_requirement_map', dict(requirement_id=r['id'])))[0]
-        return abilities
-
     async def _explode_operation(self, criteria=None):
         operations = await self.dao.get('core_operation', criteria)
         for op in operations:
@@ -213,12 +202,6 @@ class DataService(BaseService):
         for s in sources:
             s['facts'] = await self.dao.get('core_fact', dict(source_id=s['id']))
         return sources
-
-    async def _explode_parser(self, criteria=None):
-        parsers = await self.dao.get('core_parser', criteria)
-        for parser in parsers:
-            parser['mappers'] = await self.dao.get('core_parser_map', dict(parser_id=parser['id']))
-        return parsers
 
     async def _explode_used(self, criteria=None):
         used_facts = await self.dao.get('core_used', criteria=criteria)
