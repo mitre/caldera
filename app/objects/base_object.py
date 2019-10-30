@@ -18,3 +18,10 @@ class BaseObject:
     @staticmethod
     def hash(s):
         return s
+
+    @staticmethod
+    def clean(d):
+        for k,v in d.items():
+            if v is None:
+                d[k] = ''
+        return d

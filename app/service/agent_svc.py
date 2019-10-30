@@ -132,16 +132,16 @@ class AgentService(BaseService):
         abilities = []
         preferred = agent.executors[0]
         executors = agent.executors
-        for ai in set([pa['ability_id'] for pa in ability_set]):
-            total_ability = [ab for ab in ability_set if (ab['ability_id'] == ai)
-                             and (ab['platform'] == agent.platform) and (ab['executor'] in executors)]
+        for ai in set([pa.ability_id for pa in ability_set]):
+            total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
+                             and (ab.platform == agent.platform) and (ab.executor in executors)]
             if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
+                val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
                 abilities.append(val)
         return abilities
 
     """ PRIVATE """
 
     async def _gather_payload(self, ability_id):
-        payload = await self.data_svc.get('payload', criteria=dict(ability=ability_id))
-        return payload[0]['payload'] if payload else ''
+        a = await self.data_svc.locate('abilities', match=dict(unique=ability_id))
+        return a[0].payload if a[0].payload else ''
