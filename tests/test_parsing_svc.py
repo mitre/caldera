@@ -2,7 +2,7 @@ import string
 import random
 import base64
 
-from asynctest.mock import MagicMock
+from unittest.mock import MagicMock
 
 from tests.base_service import TestBaseServiceCase
 from app.service.parsing_svc import ParsingService
