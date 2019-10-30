@@ -34,6 +34,7 @@ class ReportingService(BaseService):
                                status=step['status'],
                                platform=ability.platform,
                                executor=step['executor'],
+                               pid=step['pid'],
                                description=ability.description,
                                name=ability.name,
                                attack=dict(tactic=ability.tactic,
