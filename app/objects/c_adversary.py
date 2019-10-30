@@ -9,7 +9,11 @@ class Adversary(BaseObject):
 
     @property
     def display(self):
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=self.phases)
+        phases = dict()
+        for k,v in self.phases.items():
+            phases[k] = [val.display for val in v]
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
+                    phases=phases)
 
     def __init__(self, adversary_id, name, description, phases):
         self.adversary_id = adversary_id

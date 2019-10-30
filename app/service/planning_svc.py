@@ -28,16 +28,15 @@ class PlanningService(BaseService):
             self.log.debug('Agent %s untrusted: no link created' % agent.paw)
             return []
         phase_abilities = [i for p, v in operation['adversary'].phases.items() if p <= phase for i in v]
-        phase_abilities = sorted(phase_abilities, key=lambda i: i['id'])
         link_status = await self._default_link_status(operation)
 
         links = []
         for a in await self.get_service('agent_svc').capable_agent_abilities(phase_abilities, agent):
             links.append(
-                dict(op_id=operation['id'], paw=agent.paw, ability=a['id'], command=a['test'], score=0,
-                     status=link_status, decide=datetime.now(), executor=a['executor'],
+                dict(op_id=operation['id'], paw=agent.paw, command=a.test, score=0, ability=a.unique,
+                     status=link_status, decide=datetime.now(), executor=a.executor,
                      jitter=self.jitter(operation['jitter'])))
-        ability_requirements = {ab['id']: ab.get('requirements', []) for ab in phase_abilities}
+        ability_requirements = {ab.unique: ab.requirements for ab in phase_abilities}
         links[:] = await self._trim_links(operation, links, agent, ability_requirements)
         return await self._sort_links(links)
 
@@ -54,10 +53,10 @@ class PlanningService(BaseService):
             return
         links = []
         for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent.paw, op_id=operation['id'])):
-            ability = (await self.get_service('data_svc').explode('ability', criteria=dict(id=link['ability'])))[0]
-            if ability['cleanup'] and link['status'] >= 0:
-                links.append(dict(op_id=operation['id'], paw=agent.paw, ability=ability['id'], cleanup=1,
-                                  command=ability['cleanup'], executor=ability['executor'], score=0, jitter=0,
+            ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link['ability'])))[0]
+            if ability.cleanup and link['status'] >= 0:
+                links.append(dict(op_id=operation['id'], paw=agent.paw, cleanup=1, ability=ability.unique,
+                                  command=ability.cleanup, executor=ability.executor, score=0, jitter=0,
                                   decide=datetime.now(), status=link_status))
         return reversed(await self._trim_links(operation, links, agent))
 

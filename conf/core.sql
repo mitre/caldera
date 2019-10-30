@@ -1,10 +1,3 @@
-/** abilities **/
-CREATE TABLE if not exists core_ability (id integer primary key AUTOINCREMENT, ability_id text, tactic text, technique_name, technique_id text, name text, test text, description text, cleanup text, executor, platform, UNIQUE (ability_id, platform, executor) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_payload (ability integer, payload text, UNIQUE (ability, payload) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_parser (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
-CREATE TABLE if not exists core_parser_map (parser_id integer, source text, edge text, target text, UNIQUE(parser_id, source, edge, target) ON CONFLICT IGNORE);
-CREATE TABLE if not exists core_requirement (id integer primary key AUTOINCREMENT, ability integer, module text, UNIQUE(ability, module) ON CONFLICT REPLACE);
-CREATE TABLE if not exists core_requirement_map (requirement_id integer, source text, edge text, target text, UNIQUE(requirement_id, source, edge, target) ON CONFLICT IGNORE);
 /** facts **/
 CREATE TABLE if not exists core_fact (id integer primary key AUTOINCREMENT, property text, value text, score integer, source_id text, link_id integer DEFAULT 0);
 CREATE TABLE if not exists core_source (id integer primary key AUTOINCREMENT, name text, UNIQUE(name) ON CONFLICT IGNORE);
