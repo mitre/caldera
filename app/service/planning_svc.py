@@ -14,7 +14,7 @@ class PlanningService(BasePlanningService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, agent, phase=None, trim=False):
+    async def get_links(self, operation, agent, phase=None, trim=True):
         """
         For an operation, phase and agent combination, create links (that can be executed)
         :param operation:
@@ -39,7 +39,7 @@ class PlanningService(BasePlanningService):
         link_status = await self._default_link_status(operation)
         links = []
         for a in await self.get_service('agent_svc').capable_agent_abilities(abilities, agent):
-            links.append(await self.get_link(operation, agent, a))
+            links.append(await self.get_link(operation, agent.paw, a, dict(adversary_map_id=a["adversary_map_id"])))
         if trim:
             ability_requirements = {ab['id']: ab.get('requirements', []) for ab in abilities}
             links[:] = await self.trim_links(operation, agent, links, ability_requirements)
@@ -61,16 +61,23 @@ class PlanningService(BasePlanningService):
         for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent.paw, op_id=operation['id'])):
             ability = (await self.get_service('data_svc').explode('ability', criteria=dict(id=link['ability'])))[0]
             if ability['cleanup'] and link['status'] >= 0:
-                links.append(await self.get_link(operation, agent, ability, dict(cleanup=1, jitter=0, adversary_map_id=None)))
-        return reversed(await self._trim_links(operation, links, agent))
+                links.append(await self.get_link(operation, agent.paw, ability, dict(cleanup=1, jitter=0)))
+        return reversed(await self.trim_links(operation, agent, links))
         
-    async def get_link(self, operation, agent, ability, fields=None):
+    async def get_link(self, operation, agent_paw, ability, fields=None):
+        """
+        :param operation: dict
+        :param agent_paw: agent paw (str)
+        :param ability: dict
+        """
+        #TODO: reduce what the default fields/values in a link will be. For instance, 'adversary_map_id'
+        # shouldnt be in there by default and 1 of 2 main functions (get_cleanup_links()) doesnt use it
+        
         # craft link based on default operation, agent and ability values
-        link = dict(op_id=operation['id'], paw=agent['paw'], ability=ability['id'],
+        link = dict(op_id=operation['id'], paw=agent_paw, ability=ability['id'],
                     command=ability['test'], executor=ability['executor'], score=0,
                     jitter=self.jitter(operation["jitter"]), decide=datetime.now(),
-                    status=await self._default_link_status(operation),
-                    adversary_map_id=ability["adversary_map_id"])
+                    status=await self._default_link_status(operation))
         # if caller further specifies modified link fields, update link
         if fields:
             link.update(fields)

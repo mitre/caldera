@@ -18,30 +18,30 @@ class BasePlanningService(BaseService):
         
         :param operation:
         :param links:
-        :param agent:
+        :param agent: C_agent #TODO fill
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(operation, agent, links, ability_requirements)
-        links = await self.remove_completed_links(operation, links, agent)
+        links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
-        self.log.debug('Created %d links for %s' % (len(links), agent['paw']))
+        self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
     async def add_test_variants(self, operation, agent, links, ability_requirements=None):
         """
         Create a list of all possible links for a given phase
         :param operation:
-        :param agent:
+        :param agent: C_agent #TODO
         :param links:
         :param ability_requirements:
         return: list of links, with additional variant links
         """
-        group = agent['host_group']
+        group = agent.group
         for link in links:
             decoded_test = self.decode(link['command'], agent, group)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation['id'], agent['paw'])
+                agent_facts = await self._get_agent_facts(operation['id'], agent.paw)
                 relevant_facts = await self._build_relevant_facts(variables, operation.get('facts', []), agent_facts)
                 valid_facts = await RuleSet(rules=operation.get('rules', [])).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
@@ -58,7 +58,7 @@ class BasePlanningService(BaseService):
                 link['command'] = self.encode_string(decoded_test)
         return links
 
-    async def remove_completed_links(self, operation, links, agent):
+    async def remove_completed_links(self, operation, agent, links):
         """
         Remove any links that have already been completed by the operation for the agent
         :param operation:
@@ -66,7 +66,7 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [l['command'] for l in operation['chain'] if l['paw'] == agent['paw'] and (l["finish"] or l["status"] == self.LinkState.DISCARD.value)]
+        completed_links = [l['command'] for l in operation['chain'] if l['paw'] == agent.paw and (l["finish"] or l["status"] == self.LinkState.DISCARD.value)]
         links[:] = [l for l in links if l["command"] not in completed_links]
         return links
 
