@@ -2,15 +2,15 @@ import argparse
 import asyncio
 import logging
 import os
-import sys
 import pathlib
+import sys
 from importlib import import_module
+from subprocess import Popen, DEVNULL
 
 import aiohttp_jinja2
 import jinja2
 import yaml
 from aiohttp import web
-from subprocess import Popen, DEVNULL
 
 from app.database.core_dao import CoreDao
 from app.service.agent_svc import AgentService
@@ -28,6 +28,7 @@ async def background_tasks(app):
     app.loop.create_task(operation_svc.resume())
     app.loop.create_task(data_svc.load_data(directory='data'))
     app.loop.create_task(agent_svc.start_sniffer_untrusted_agents())
+    app.loop.create_task(data_svc.restore_state())
 
 
 def build_plugins(plugs):
@@ -86,7 +87,8 @@ def main(services, host, port, users):
     try:
         loop.run_forever()
     except KeyboardInterrupt:
-        pass
+        loop.run_until_complete(data_svc.save_state())
+        logging.debug('[!] shutting down server...good-bye')
 
 
 if __name__ == '__main__':
@@ -102,7 +104,6 @@ if __name__ == '__main__':
         plugin_modules = build_plugins(cfg['plugins'])
         plugin_svc = PluginService(plugin_modules)
         data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
-        logging.debug('Using an in-memory database: %s' % cfg['memory'])
         planning_svc = PlanningService()
         parsing_svc = ParsingService()
         reporting_svc = ReportingService()

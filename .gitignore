@@ -17,3 +17,4 @@ venv/
 .env
 conf/*.yml
 !conf/default.yml
+data/object_store
