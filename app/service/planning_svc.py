@@ -105,8 +105,9 @@ class PlanningService(BaseService):
         return links
 
     async def _do_enforcements(self, ability_requirements, operation, link, combo):
-        for requirements_info in ability_requirements:
+        for req_inst in ability_requirements:
             uf = link.get('used', [])
+            requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships)
             requirement = await self.load_module('Requirement', requirements_info)
             if not requirement.enforce(combo[0], uf, operation['facts']):
                 return False
