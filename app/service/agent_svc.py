@@ -4,6 +4,7 @@ import typing
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.c_result import Result
 from app.service.base_service import BaseService
 
 
@@ -87,9 +88,11 @@ class AgentService(BaseService):
         :param link_id:
         :param output:
         :param status:
+        :param pid:
         :return: a JSON status message
         """
         try:
+            await self.data_svc.store(Result(link_id=link_id, output=output, parsed=False))
             await self.data_svc.save('result', dict(link_id=link_id, output=output))
             await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
                                                                                    finish=self.get_current_timestamp(),

@@ -1,5 +1,8 @@
+import asyncio
 import glob
 import json
+import pickle
+
 from base64 import b64encode
 from collections import defaultdict
 
@@ -19,6 +22,28 @@ class DataService(BaseService):
         self.dao = dao
         self.log = self.add_service('data_svc', self)
         self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[])
+
+    async def save_state(self):
+        """
+        Save RAM database to file
+        :return:
+        """
+        with open('data/object_store', 'wb') as objects:
+            pickle.dump(self.ram, objects)
+
+    async def restore_state(self):
+        """
+        Restore the object database - but wait for YML files to load first
+        :return:
+        """
+        await asyncio.sleep(3)
+        with open('data/object_store', 'rb') as objects:
+            ram = pickle.load(objects)
+            [await self.store(x) for x in ram['agents']]
+            [await self.store(x) for x in ram['planners']]
+            [await self.store(x) for x in ram['abilities']]
+            [await self.store(x) for x in ram['adversaries']]
+        self.log.debug('Restored objects from persistent storage')
 
     async def apply(self, collection):
         """
@@ -228,6 +253,7 @@ class DataService(BaseService):
         return identifier
 
     async def _load_facts(self, directory):
+        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for source in self.strip_yml(filename):
                 source_id = await self.dao.create('core_source', dict(name=source['name']))
@@ -235,19 +261,22 @@ class DataService(BaseService):
                     fact['source_id'] = source_id
                     fact['score'] = fact.get('score', 1)
                     await self.save('fact', fact)
-
                 for rule in source.get('rules', []):
                     rule['source_id'] = source_id
                     await self._create_rule(**rule)
+                total += 1
+        self.log.debug('Loaded %s fact sources' % total)
 
     async def _load_planners(self, directory):
+        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.strip_yml(filename):
                 await self.store(
                     Planner(name=planner.get('name'), module=planner.get('module'),
                             params=json.dumps(planner.get('params')))
                 )
-        self.log.debug('Loaded %s planners' % len(self.ram['planners']))
+                total += 1
+        self.log.debug('Loaded %s planners' % total)
 
     async def _create_rule(self, fact, source_id, action='DENY', match='.*'):
         try:
@@ -305,6 +334,7 @@ class DataService(BaseService):
         return op_id
 
     async def _load_adversaries(self, directory):
+        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
@@ -320,9 +350,11 @@ class DataService(BaseService):
                         Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                   phases=phases)
                     )
-        self.log.debug('Loaded %s adversaries' % len(self.ram['adversaries']))
+                    total += 1
+        self.log.debug('Loaded %s adversaries' % total)
 
     async def _load_abilities(self, directory):
+        total = 0
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
@@ -342,9 +374,10 @@ class DataService(BaseService):
                                                                'cleanup') else None,
                                                            payload=info.get('payload'), parsers=info.get('parsers', []),
                                                            requirements=ab.get('requirements', []),
-                                                           privilege= ab['privilege'] if "privilege" in ab.keys()
+                                                           privilege=ab['privilege'] if "privilege" in ab.keys()
                                                            else None)
-        self.log.debug('Loaded %s abilities' % len(self.ram['abilities']))
+                                total += 1
+        self.log.debug('Loaded %s abilities' % total)
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
                               platform, cleanup=None, payload=None, parsers=None, requirements=None, privilege=None):
