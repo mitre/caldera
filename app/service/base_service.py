@@ -13,7 +13,7 @@ class BaseService:
 
     _services = dict()
 
-    def add_service(self, name: str, svc: 'BaseService') -> Logger:
+    def add_service(self, name, svc):
         self.__class__._services[name] = svc
         return Logger(name)
 

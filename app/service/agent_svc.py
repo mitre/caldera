@@ -72,7 +72,7 @@ class AgentService(BaseService):
         instructions = []
         for link in [c for op in ops for c in op.chain if c.paw == paw and not c.collect and c.status == self.LinkState.EXECUTE.value]:
             link.collect = datetime.now()
-            payload = await self._gather_payload(link.ability)
+            payload = link.ability.payload if link.ability.payload else ''
             instructions.append(json.dumps(dict(id=link.id,
                                                 sleep=link.jitter,
                                                 command=link.command,
@@ -142,9 +142,3 @@ class AgentService(BaseService):
                 val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
                 abilities.append(val)
         return abilities
-
-    """ PRIVATE """
-
-    async def _gather_payload(self, ability):
-        a = await self.data_svc.locate('abilities', match=dict(unique=ability.unique))
-        return a[0].payload if a[0].payload else ''
