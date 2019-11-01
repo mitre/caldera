@@ -17,8 +17,6 @@ class Fact(BaseObject):
         self.score = score
 
     def store(self, ram):
-        existing = self.retrieve(ram['facts'], self.unique)
-        if not existing:
-            ram['facts'].append(self)
-            return self.retrieve(ram['facts'], self.unique)
+        pass
+
 
