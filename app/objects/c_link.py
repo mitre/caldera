@@ -1,7 +1,6 @@
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
-from random import randint
 
 from app.objects.base_object import BaseObject
 from app.objects.c_fact import Fact
@@ -22,7 +21,7 @@ class Link(BaseObject):
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
     def __init__(self, operation, command, paw, ability, status, score=0, jitter=0, cleanup=0):
-        self.id = randint(0, 9999999)
+        self.id = None
         self.command = command
         self.operation = operation
         self.paw = paw
@@ -41,9 +40,6 @@ class Link(BaseObject):
 
     def store(self, ram):
         pass
-
-    def apply_id(self):
-        self.id = randint(0, 9999999)
 
     async def parse(self, operation):
         try:

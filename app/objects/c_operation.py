@@ -41,6 +41,10 @@ class Operation(BaseObject):
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
 
+    def add_link(self, link):
+        link.id = len(self.chain) + 1
+        self.chain.append(link)
+
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]

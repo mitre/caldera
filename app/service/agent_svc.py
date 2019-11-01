@@ -116,13 +116,13 @@ class AgentService(BaseService):
         operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
         while operation.state != operation_svc.op_states['RUNNING']:
             if operation.state == operation_svc.op_states['RUN_ONE_LINK']:
-                operation.chain.append(link)
+                operation.add_link(link)
                 operation.state = operation_svc.op_states['PAUSED']
                 return link.id
             else:
                 await asyncio.sleep(30)
                 operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
-        return operation.chain.append(link)
+        return operation.add_link(link)
 
     @staticmethod
     async def capable_agent_abilities(ability_set, agent):

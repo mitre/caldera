@@ -88,6 +88,6 @@ class OperationService(BaseService):
         operation = (await self.data_svc.locate('operations', match=dict(name=name)))[0]
         for member in operation.agents:
             for link in await self.get_service('planning_svc').select_cleanup_links(operation, member):
-                operation.chain.append(link)
+                operation.add_link(link)
         await self._wait_for_phase_completion(operation)
 

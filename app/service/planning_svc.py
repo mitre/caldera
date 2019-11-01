@@ -95,7 +95,6 @@ class PlanningService(BaseService):
                     copy_link.command = self.encode_string(variant)
                     copy_link.score = score
                     copy_link.used = used
-                    copy_link.apply_id()
                     links.append(copy_link)
             else:
                 link.command = self.encode_string(decoded_test)
