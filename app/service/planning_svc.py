@@ -31,17 +31,16 @@ class PlanningService(BasePlanningService):
             return []
 
         if phase:
-            abilities = [i for p, v in operation['adversary']['phases'].items() if p <= phase for i in v]
+            abilities = [i for p, v in operation['adversary'].phases.items() if p <= phase for i in v]
         else:
-            abilities = [i for p, v in operation['adversary']['phases'].items() for i in v]
+            abilities = [i for p, v in operation['adversary'].phases.items() for i in v]
     
-        abilities = sorted(abilities, key=lambda i: i['id'])
         link_status = await self._default_link_status(operation)
         links = []
         for a in await self.get_service('agent_svc').capable_agent_abilities(abilities, agent):
-            links.append(await self.get_link(operation, agent.paw, a, dict(adversary_map_id=a["adversary_map_id"])))
+            links.append(await self.get_link(operation, agent.paw, a))
         if trim:
-            ability_requirements = {ab['id']: ab.get('requirements', []) for ab in abilities}
+            ability_requirements = {ab.unique: ab.requirements for ab in abilities}
             links[:] = await self.trim_links(operation, agent, links, ability_requirements)
         return await self._sort_links(links)
 
@@ -58,9 +57,11 @@ class PlanningService(BasePlanningService):
             return
         links = []
         for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent.paw, op_id=operation['id'])):
-            ability = (await self.get_service('data_svc').explode('ability', criteria=dict(id=link['ability'])))[0]
-            if ability['cleanup'] and link['status'] >= 0:
-                links.append(await self.get_link(operation, agent.paw, ability, dict(cleanup=1, jitter=0)))
+            ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link['ability'])))[0]
+            if ability.cleanup and link['status'] >= 0:
+                links.append(await self.get_link(operation, agent.paw, ability, dict(cleanup=1,
+                                                                                    command=ability.cleanup,
+                                                                                    jitter=0)))
         return reversed(await self.trim_links(operation, agent, links))
         
     async def get_link(self, operation, agent_paw, ability, fields=None):
@@ -73,8 +74,8 @@ class PlanningService(BasePlanningService):
         # shouldnt be in there by default and 1 of 2 main functions (get_cleanup_links()) doesnt use it
         
         # craft link based on default operation, agent and ability values
-        link = dict(op_id=operation['id'], paw=agent_paw, ability=ability['id'],
-                    command=ability['test'], executor=ability['executor'], score=0,
+        link = dict(op_id=operation['id'], paw=agent_paw, ability=ability.unique,
+                    command=ability.test, executor=ability.executor, score=0,
                     jitter=self.jitter(operation["jitter"]), decide=datetime.now(),
                     status=await self._default_link_status(operation))
         # if caller further specifies modified link fields, update link

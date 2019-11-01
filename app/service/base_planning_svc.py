@@ -31,7 +31,7 @@ class BasePlanningService(BaseService):
         """
         Create a list of all possible links for a given phase
         :param operation:
-        :param agent: C_agent #TODO
+        :param agent: C_agent
         :param links:
         :param ability_requirements:
         return: list of links, with additional variant links
@@ -120,15 +120,16 @@ class BasePlanningService(BaseService):
         Collect a list of this agent's facts
         """
         agent_facts = []
-        for link in await self.get_service('data_svc').dao.get('core_chain', criteria=dict(op_id=op_id, paw=paw)):
-            facts = await self.get_service('data_svc').dao.get('core_fact', criteria=dict(link_id=link['id']))
+        for link in await self.get_service('data_svc').get('chain', criteria=dict(op_id=op_id, paw=paw)):
+            facts = await self.get_service('data_svc').get('fact', criteria=dict(link_id=link['id']))
             for f in facts:
                 agent_facts.append(f['id'])
         return agent_facts
 
     async def _do_enforcements(self, ability_requirements, operation, link, combo):
-        for requirements_info in ability_requirements:
+        for req_inst in ability_requirements:
             uf = link.get('used', [])
+            requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
             if not requirement.enforce(combo[0], uf, operation['facts']):
                 return False
