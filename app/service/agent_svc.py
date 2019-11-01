@@ -4,6 +4,7 @@ import typing
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.c_result import Result
 from app.service.base_service import BaseService
 
 
@@ -38,7 +39,7 @@ class AgentService(BaseService):
         except Exception as e:
             self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, privilege):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -57,7 +58,7 @@ class AgentService(BaseService):
         return await self.data_svc.store(
             Agent(last_seen=now, paw=paw, platform=platform, server=server, group=group,
                   location=location, architecture=architecture, pid=pid, ppid=ppid,
-                  trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors)
+                  trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors, privilege=privilege)
         )
 
     async def calculate_sleep(self, agent):
@@ -81,18 +82,21 @@ class AgentService(BaseService):
                                                 payload=payload)))
         return json.dumps(instructions)
 
-    async def save_results(self, link_id, output, status):
+    async def save_results(self, link_id, output, status, pid):
         """
         Save the results from a single executed link
         :param link_id:
         :param output:
         :param status:
+        :param pid:
         :return: a JSON status message
         """
         try:
+            await self.data_svc.store(Result(link_id=link_id, output=output, parsed=False))
             await self.data_svc.save('result', dict(link_id=link_id, output=output))
             await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
-                                                                                   finish=self.get_current_timestamp()))
+                                                                                   finish=self.get_current_timestamp(),
+                                                                                   pid=int(pid)))
             link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
             await self.data_svc.store(Agent(paw=link[0]['paw']))
             return json.dumps(dict(status=True))
@@ -118,7 +122,6 @@ class AgentService(BaseService):
             else:
                 await asyncio.sleep(30)
                 operation = (await self.data_svc.get('operation', dict(id=op_id)))[0]
-        link.pop('adversary_map_id')
         return await self.data_svc.save('link', link)
 
     @staticmethod
@@ -132,16 +135,16 @@ class AgentService(BaseService):
         abilities = []
         preferred = agent.executors[0]
         executors = agent.executors
-        for ai in set([pa['ability_id'] for pa in ability_set]):
-            total_ability = [ab for ab in ability_set if (ab['ability_id'] == ai)
-                             and (ab['platform'] == agent.platform) and (ab['executor'] in executors)]
+        for ai in set([pa.ability_id for pa in ability_set]):
+            total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
+                             and (ab.platform == agent.platform) and (ab.executor in executors)]
             if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta['executor'] == preferred), total_ability[0])
+                val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
                 abilities.append(val)
         return abilities
 
     """ PRIVATE """
 
     async def _gather_payload(self, ability_id):
-        payload = await self.data_svc.get('payload', criteria=dict(ability=ability_id))
-        return payload[0]['payload'] if payload else ''
+        a = await self.data_svc.locate('abilities', match=dict(unique=ability_id))
+        return a[0].payload if a[0].payload else ''

@@ -50,7 +50,7 @@ class OperationService(BaseService):
         operation = await self.data_svc.explode('operation', dict(id=op_id))
         try:
             planner = await self._get_planning_module(operation[0])
-            for phase in operation[0]['adversary']['phases']:
+            for phase in operation[0]['adversary'].phases:
                 await planner.execute(phase)
                 await self._wait_for_phase_completion(operation[0])
                 await self.data_svc.update('operation', key='id', value=op_id, data=dict(phase=phase))

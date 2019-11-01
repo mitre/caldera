@@ -43,7 +43,6 @@ class PlanningService(BasePlanningService):
         if trim:
             ability_requirements = {ab['id']: ab.get('requirements', []) for ab in abilities}
             links[:] = await self.trim_links(operation, agent, links, ability_requirements)
-
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent):
@@ -90,7 +89,7 @@ class PlanningService(BasePlanningService):
         """
         Sort links by their score then by the order they are defined in an adversary profile
         """
-        return sorted(links, key=lambda k: (-k['score'], k['adversary_map_id']))
+        return sorted(links, key=lambda k: (-k['score']))
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
