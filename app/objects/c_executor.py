@@ -14,6 +14,3 @@ class Executor(BaseObject):
     def __init__(self, name, preferred):
         self.name = name
         self.preferred = preferred
-
-    def store(self, ram):
-        pass

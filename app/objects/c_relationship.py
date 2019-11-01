@@ -15,6 +15,3 @@ class Relationship(BaseObject):
         self.source = source
         self.edge = edge
         self.target = target
-
-    def store(self, ram):
-        pass

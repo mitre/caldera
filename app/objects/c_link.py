@@ -38,9 +38,6 @@ class Link(BaseObject):
         self.relationships = []
         self.used = []
 
-    def store(self, ram):
-        pass
-
     async def parse(self, operation):
         try:
             with open('data/results/%s' % int(float(self.id)), 'r') as fle:

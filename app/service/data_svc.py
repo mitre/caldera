@@ -75,7 +75,7 @@ class DataService(BaseService):
         try:
             return c_object.store(self.ram)
         except Exception as e:
-            self.log.error('[!] STORE: %s' % e)
+            self.log.error('[!] can only store first-class objects: %s' % e)
 
     async def locate(self, object_name, match=None):
         """

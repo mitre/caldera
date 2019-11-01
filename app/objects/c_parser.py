@@ -14,6 +14,3 @@ class Parser(BaseObject):
     def __init__(self, module, relationships):
         self.module = module
         self.relationships = relationships
-
-    def store(self, ram):
-        pass

@@ -16,7 +16,4 @@ class Fact(BaseObject):
         self.value = value
         self.score = score
 
-    def store(self, ram):
-        pass
-
 
