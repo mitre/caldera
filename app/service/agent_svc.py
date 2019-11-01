@@ -99,6 +99,9 @@ class AgentService(BaseService):
                                                                                    pid=int(pid)))
             link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
             await self.data_svc.store(Agent(paw=link[0]['paw']))
+            op_id = link[0]['op_id']
+            operation = (await self.data_svc.get('operation', dict(id=op_id)))[0]
+            await self.get_service('parsing_svc').parse_facts(operation)
             return json.dumps(dict(status=True))
         except Exception as e:
             self.log.error('[!] save_results: %s' % e)
