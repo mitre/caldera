@@ -21,4 +21,5 @@ class Planner(BaseObject):
         if not existing:
             ram['planners'].append(self)
             return self.retrieve(ram['planners'], self.unique)
+        return existing
 

@@ -20,4 +20,5 @@ class Source(BaseObject):
         if not existing:
             ram['sources'].append(self)
             return self.retrieve(ram['sources'], self.unique)
+        return existing
 

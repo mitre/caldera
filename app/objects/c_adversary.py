@@ -26,3 +26,4 @@ class Adversary(BaseObject):
         if not existing:
             ram['adversaries'].append(self)
             return self.retrieve(ram['adversaries'], self.unique)
+        return existing

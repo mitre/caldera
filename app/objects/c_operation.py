@@ -40,6 +40,7 @@ class Operation(BaseObject):
         if not existing:
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
+        return existing
 
     def add_link(self, link):
         link.id = len(self.chain) + 1

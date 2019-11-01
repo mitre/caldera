@@ -37,3 +37,4 @@ class Ability(BaseObject):
         if not existing:
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
+        return existing
