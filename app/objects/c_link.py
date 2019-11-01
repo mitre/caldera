@@ -19,7 +19,7 @@ class Link(BaseObject):
                                executor=self.ability.executor, status=self.status, score=self.score,
                                decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
-                               finish=self.finish, ability=self.ability.display))
+                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
     def __init__(self, operation, command, paw, ability, status, score=0, jitter=0, cleanup=0):
         self.id = randint(0, 9999999)
@@ -88,4 +88,5 @@ class Link(BaseObject):
             for found_fact in operation.all_facts():
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
+                    break
 

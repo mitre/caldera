@@ -52,8 +52,8 @@ class PlanningService(BaseService):
         for link in [l for l in operation.chain if l.paw == agent.paw]:
             ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link.ability.unique)))[0]
             if ability.cleanup and link.status >= 0:
-                links.append(Link(operation=operation.name, command=ability.test, paw=agent.paw, cleanup=1, ability=ability,
-                                  score=0, jitter=0, status=link_status))
+                links.append(Link(operation=operation.name, command=ability.cleanup, paw=agent.paw, cleanup=1,
+                                  ability=ability, score=0, jitter=0, status=link_status))
         return reversed(await self._trim_links(operation, links, agent))
 
     """ PRIVATE """

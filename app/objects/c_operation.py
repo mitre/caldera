@@ -13,7 +13,7 @@ class Operation(BaseObject):
     def display(self):
         return self.clean(dict(name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display, jitter=self.jitter,
-                               source=self.source.display, planner=self.planner.name, state=self.state,
+                               source=self.source.display if self.source else '', planner=self.planner.name, state=self.state,
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
