@@ -66,41 +66,6 @@ class DataService(BaseService):
             await self._load_sources(directory='%s/facts' % directory)
             await self._load_planners(directory='%s/planners' % directory)
 
-    async def save(self, object_name, object_dict):
-        """
-        Save a dict() for any object
-        :param object_name:
-        :param object_dict:
-        :return:
-        """
-        try:
-            self.log.warning('[!] SAVE on non-core type: %s' % object_name)
-            return await self.dao.create(object_name, object_dict)
-        except Exception as e:
-            self.log.error('[!] SAVE %s: %s' % (object_name, e))
-
-    async def delete(self, object_name, criteria):
-        """
-        Delete any object in the database by table name and ID
-        :param object_name: the name of the table
-        :param criteria: a dict of key/value pairs to match on
-        """
-        self.log.debug('Deleting %s from %s' % (criteria, object_name))
-        await self.dao.delete('core_%s' % object_name, data=criteria)
-
-    async def get(self, object_name, criteria=None):
-        """
-        Get the contents of any object
-        :param object_name:
-        :param criteria:
-        :return: a list of dictionary results
-        """
-        try:
-            self.log.warning('[!] GET on non-core type: %s' % object_name)
-            return await self.dao.get(object_name, criteria)
-        except Exception as e:
-            self.log.error('[!] GET %s: %s' % (object_name, e))
-
     async def store(self, c_object):
         """
         Accept any c_object type and store it (create/update) in RAM
