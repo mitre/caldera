@@ -12,54 +12,45 @@ class ReportingService(BaseService):
         self.log = self.add_service('reporting_svc', self)
         self.data_svc = self.get_service('data_svc')
 
-    async def generate_operation_report(self, op_id, agent_output=False):
+    async def generate_operation_report(self, op, agent_output=False):
         """
         Create a new operation report and write it to the logs directory
-        :param op_id: operation id
+        :param op: operation id
         :param agent_output: bool to include agent_output with report
         :return: a JSON report
         """
-        op = (await self.data_svc.explode('operation', dict(id=op_id)))[0]
-        planner = await self.data_svc.locate('planners', match=dict(name=op['planner']))
-        report = dict(name=op['name'], id=op['id'], host_group=op['host_group'], start=op['start'], facts=op['facts'],
-                      finish=op['finish'], planner=planner[0].name, adversary=op['adversary'].display, jitter=op['jitter'], steps=[])
-        agents_steps = {a.paw: {'steps': []} for a in op['host_group']}
-        for step in op['chain']:
-            ability = (await self.data_svc.locate('abilities', match=dict(unique=step['ability'])))[0]
-            command = self.decode_bytes(step['command'])
+        report = dict(name=op.name, host_group=op.agents[0].group, start=op.start.strftime('%Y-%m-%d %H:%M:%S'), steps=[],
+                      finish=op.finish, planner=op.planner.name, adversary=op.adversary.display, jitter=op.jitter)
+        agents_steps = {a.paw: {'steps': []} for a in op.agents}
+        for step in op.chain:
+            ability = (await self.data_svc.locate('abilities', match=dict(unique=step.ability.unique)))[0]
+            command = self.decode_bytes(step.command)
             step_report = dict(ability_id=ability.ability_id,
                                command=command,
-                               delegated=step['collect'],
-                               run=step['finish'],
-                               status=step['status'],
+                               delegated=step.collect,
+                               run=step.finish,
+                               status=step.status,
                                platform=ability.platform,
-                               executor=step['executor'],
-                               pid=step['pid'],
+                               executor=ability.executor,
+                               pid=step.pid,
                                description=ability.description,
                                name=ability.name,
                                attack=dict(tactic=ability.tactic,
                                            technique_name=ability.technique_name,
                                            technique_id=ability.technique_id)
                                )
-            if agent_output:
-                try:
-                    result = (await self.data_svc.explode('result', criteria=dict(link_id=step['id'])))[0]
-                    step_report['output'] = self.decode_bytes(result['output'])
-                except IndexError as e:
-                    continue
-            agents_steps[step['paw']]['steps'].append(step_report)
+            agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
-        report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(op_id=op['id'])
-        report['host_group'] = [a.display for a in report['host_group']]
+        report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(op)
         return report
 
-    async def get_skipped_abilities_by_agent(self, op_id):
+    async def get_skipped_abilities_by_agent(self, operation):
         """
         Generates a list of abilities that an agent skipped (did not execute) during an operation
-        :param op_id: operation id
+        :param operation:
         :return: a JSON formatted list of abilities all agents skipped
         """
-        op_facts, op_results, op_state, op_group, op_adversary = await self._get_operation_data(op_id)
+        op_facts, op_results, op_state, op_group, op_adversary = await self._get_operation_data(operation)
         abilities_by_agent = await self._get_all_possible_abilities_by_agent(hosts=op_group, adversary=op_adversary)
         skipped_abilities = []
         for agent in op_group:
@@ -91,12 +82,11 @@ class ReportingService(BaseService):
         return {a.paw: {'all_abilities': [ab for p in adversary.phases
                                           for ab in adversary.phases[p]]} for a in hosts}
 
-    async def _get_operation_data(self, op_id):
-        operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=op_id)))[0]
-        op_facts = set([f['property'] for f in operation['facts']])
-        op_results = {a.paw: set([s['ability'] for s in operation['chain'] if s['paw'] == a.paw])
-                      for a in operation['host_group']}
-        return op_facts, op_results, operation['state'], operation['host_group'], operation['adversary']
+    @staticmethod
+    async def _get_operation_data(operation):
+        op_results = {a.paw: set([s.ability.unique for s in operation.chain if s.paw == a.paw])
+                      for a in operation.agents}
+        return operation.all_facts(), op_results, operation.state, operation.agents, operation.adversary
 
     async def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group), flags=re.DOTALL)

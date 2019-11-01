@@ -1,10 +1,8 @@
 import asyncio
 import json
-import typing
 from datetime import datetime
 
 from app.objects.c_agent import Agent
-from app.objects.c_result import Result
 from app.service.base_service import BaseService
 
 
@@ -70,15 +68,15 @@ class AgentService(BaseService):
         :param paw:
         :return: a list of links in JSON format
         """
-        commands = await self.data_svc.explode('chain', criteria=dict(paw=paw))
+        ops = await self.data_svc.locate('operations')
         instructions = []
-        for link in [c for c in commands if not c['collect'] and c['status'] == self.LinkState.EXECUTE.value]:
-            await self.data_svc.update('chain', key='id', value=link['id'], data=dict(collect=datetime.now()))
-            payload = await self._gather_payload(link['ability'])
-            instructions.append(json.dumps(dict(id=link['id'],
-                                                sleep=link['jitter'],
-                                                command=link['command'],
-                                                executor=link['executor'],
+        for link in [c for op in ops for c in op.chain if c.paw == paw and not c.collect and c.status == self.LinkState.EXECUTE.value]:
+            link.collect = datetime.now()
+            payload = await self._gather_payload(link.ability)
+            instructions.append(json.dumps(dict(id=link.id,
+                                                sleep=link.jitter,
+                                                command=link.command,
+                                                executor=link.ability.executor,
                                                 payload=payload)))
         return json.dumps(instructions)
 
@@ -92,18 +90,21 @@ class AgentService(BaseService):
         :return: a JSON status message
         """
         try:
-            await self.data_svc.store(Result(link_id=link_id, output=output, parsed=False))
-            await self.data_svc.save('result', dict(link_id=link_id, output=output))
-            await self.data_svc.update('chain', key='id', value=link_id, data=dict(status=int(status),
-                                                                                   finish=self.get_current_timestamp(),
-                                                                                   pid=int(pid)))
-            link = await self.data_svc.explode('chain', criteria=dict(id=link_id))
-            await self.data_svc.store(Agent(paw=link[0]['paw']))
-            return json.dumps(dict(status=True))
+            for op in await self.data_svc.locate('operations', match=dict(finish=None)):
+                link = next((l for l in op.chain if l.id == int(float(link_id))), None)
+                link.pid = int(pid)
+                link.finish = self.get_current_timestamp()
+                link.status = int(status)
+                if output:
+                    with open('data/results/%s' % int(float(link_id)), 'w') as out:
+                        out.write(output)
+                    asyncio.create_task(link.parse(op))
+                await self.data_svc.store(Agent(paw=link.paw))
+                return json.dumps(dict(status=True))
         except Exception as e:
             self.log.error('[!] save_results: %s' % e)
 
-    async def perform_action(self, link: typing.Dict) -> int:
+    async def perform_action(self, link):
         """
         Perform a link in the context of an operation, respecting the 'run', 'paused' and 'run_one_step' operation
         states. Calling data_svc.save('link', link) directly will schedule the link for execution,
@@ -112,17 +113,16 @@ class AgentService(BaseService):
         :return: the id of the created link
         """
         operation_svc = self.get_service('operation_svc')
-        op_id = link['op_id']
-        operation = (await self.data_svc.get('operation', dict(id=op_id)))[0]
-        while operation['state'] != operation_svc.op_states['RUNNING']:
-            if operation['state'] == operation_svc.op_states['RUN_ONE_LINK']:
-                link_id = await self.data_svc.save('link', link)
-                await self.data_svc.update('operation', 'id', op_id, dict(state=operation_svc.op_states['PAUSED']))
-                return link_id
+        operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
+        while operation.state != operation_svc.op_states['RUNNING']:
+            if operation.state == operation_svc.op_states['RUN_ONE_LINK']:
+                operation.chain.append(link)
+                operation.state = operation_svc.op_states['PAUSED']
+                return link.id
             else:
                 await asyncio.sleep(30)
-                operation = (await self.data_svc.get('operation', dict(id=op_id)))[0]
-        return await self.data_svc.save('link', link)
+                operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
+        return operation.chain.append(link)
 
     @staticmethod
     async def capable_agent_abilities(ability_set, agent):
@@ -145,6 +145,6 @@ class AgentService(BaseService):
 
     """ PRIVATE """
 
-    async def _gather_payload(self, ability_id):
-        a = await self.data_svc.locate('abilities', match=dict(unique=ability_id))
+    async def _gather_payload(self, ability):
+        a = await self.data_svc.locate('abilities', match=dict(unique=ability.unique))
         return a[0].payload if a[0].payload else ''

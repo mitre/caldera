@@ -12,13 +12,11 @@ import jinja2
 import yaml
 from aiohttp import web
 
-from app.database.core_dao import CoreDao
 from app.service.agent_svc import AgentService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.operation_svc import OperationService
-from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
 from app.service.plugin_svc import PluginService
 from app.service.reporting_svc import ReportingService
@@ -103,9 +101,8 @@ if __name__ == '__main__':
 
         plugin_modules = build_plugins(cfg['plugins'])
         plugin_svc = PluginService(plugin_modules)
-        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
+        data_svc = DataService()
         planning_svc = PlanningService()
-        parsing_svc = ParsingService()
         reporting_svc = ReportingService()
         operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
