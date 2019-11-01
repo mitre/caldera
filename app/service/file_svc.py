@@ -106,7 +106,7 @@ class FileSvc(BaseService):
         :param ldflags: A string of ldflags to use when building the go executable
         :return:
         """
-        os.system('GOOS=%s %s go build %s -o %s -ldflags="%s" %s' % (platform, cflags, buildmode, output, ldflags, src_fle))
+        os.system('GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (platform, cflags, buildmode, output, ldflags, src_fle))
 
     """ PRIVATE """
 
