@@ -70,9 +70,6 @@ class PlanningService(BasePlanningService):
         :param agent_paw: agent paw (str)
         :param ability: dict
         """
-        #TODO: reduce what the default fields/values in a link will be. For instance, 'adversary_map_id'
-        # shouldnt be in there by default and 1 of 2 main functions (get_cleanup_links()) doesnt use it
-        
         # craft link based on default operation, agent and ability values
         link = dict(op_id=operation['id'], paw=agent_paw, ability=ability.unique,
                     command=ability.test, executor=ability.executor, score=0,

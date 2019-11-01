@@ -18,7 +18,7 @@ class BasePlanningService(BaseService):
         
         :param operation:
         :param links:
-        :param agent: C_agent #TODO fill
+        :param agent: C_agent
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(operation, agent, links, ability_requirements)
