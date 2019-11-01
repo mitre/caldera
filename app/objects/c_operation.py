@@ -42,6 +42,6 @@ class Operation(BaseObject):
             return self.retrieve(ram['operations'], self.unique)
 
     def all_facts(self):
-        seeded_facts = [f for f in self.source.facts]
+        seeded_facts = [f for f in self.source.facts] if self.source else []
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
