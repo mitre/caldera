@@ -12,22 +12,18 @@ import jinja2
 import yaml
 from aiohttp import web
 
-from app.database.core_dao import CoreDao
 from app.service.agent_svc import AgentService
+from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
-from app.service.operation_svc import OperationService
-from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
-from app.service.plugin_svc import PluginService
-from app.service.reporting_svc import ReportingService
 
 
 async def background_tasks(app):
-    app.loop.create_task(operation_svc.resume())
+    app.loop.create_task(application.start_sniffer_untrusted_agents())
+    app.loop.create_task(application.resume_operations())
     app.loop.create_task(data_svc.load_data(directory='data'))
-    app.loop.create_task(agent_svc.start_sniffer_untrusted_agents())
     app.loop.create_task(data_svc.restore_state())
 
 
@@ -48,10 +44,10 @@ def build_plugins(plugs):
 
 
 async def attach_plugins(app, services):
-    for pm in services.get('plugin_svc').get_plugins():
+    for pm in services.get('app_svc').get_plugins():
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
-    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('plugin_svc').get_plugins()]
+    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('app_svc').get_plugins()]
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
@@ -102,18 +98,14 @@ if __name__ == '__main__':
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
-        plugin_svc = PluginService(plugin_modules)
-        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
+        data_svc = DataService()
         planning_svc = PlanningService()
-        parsing_svc = ParsingService()
-        reporting_svc = ReportingService()
-        operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
-
-        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
-        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+        agent_svc = AgentService()
+        application = AppService(config=cfg, plugins=plugin_modules)
 
+        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])

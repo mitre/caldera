@@ -1,4 +1,4 @@
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Requirement(BaseObject):
@@ -14,6 +14,3 @@ class Requirement(BaseObject):
     def __init__(self, module, relationships):
         self.module = module
         self.relationships = relationships
-
-    def store(self, ram):
-        pass

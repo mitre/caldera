@@ -1,4 +1,4 @@
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Adversary(BaseObject):
@@ -26,3 +26,4 @@ class Adversary(BaseObject):
         if not existing:
             ram['adversaries'].append(self)
             return self.retrieve(ram['adversaries'], self.unique)
+        return existing

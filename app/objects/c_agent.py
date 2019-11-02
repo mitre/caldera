@@ -1,4 +1,4 @@
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Agent(BaseObject):
@@ -52,3 +52,17 @@ class Agent(BaseObject):
             existing.update('privilege', self.privilege)
         return existing
 
+    async def calculate_sleep(self):
+        return self.jitter('{}/{}'.format(self.sleep_min, self.sleep_max))
+
+    async def capabilities(self, ability_set):
+        abilities = []
+        preferred = self.executors[0]
+        executors = self.executors
+        for ai in set([pa.ability_id for pa in ability_set]):
+            total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
+                             and (ab.platform == self.platform) and (ab.executor in executors)]
+            if len(total_ability) > 0:
+                val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
+                abilities.append(val)
+        return abilities

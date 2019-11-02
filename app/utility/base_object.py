@@ -1,4 +1,7 @@
-class BaseObject:
+from app.utility.base_world import BaseWorld
+
+
+class BaseObject(BaseWorld):
 
     def match(self, criteria):
         if not criteria:
@@ -25,3 +28,4 @@ class BaseObject:
             if v is None:
                 d[k] = ''
         return d
+
