@@ -70,7 +70,7 @@ class AgentService(BaseService):
                 link.finish = self.get_current_timestamp()
                 link.status = int(status)
                 if output:
-                    with open('data/results/%s-%s' % (op.name, int(float(link_id))), 'w') as out:
+                    with open('data/results/%s-%s-%s' % (op.id, op.name, int(float(link_id))), 'w') as out:
                         out.write(output)
                     asyncio.create_task(link.parse(op))
                 await self.data_svc.store(Agent(paw=link.paw))
