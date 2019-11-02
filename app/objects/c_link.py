@@ -47,7 +47,7 @@ class Link(BaseObject):
 
     async def parse(self, operation):
         try:
-            with open('data/results/%s' % int(float(self.id)), 'r') as fle:
+            with open('data/results/%s-%s' % (operation.name, int(float(self.id))), 'r') as fle:
                 for parser in self.ability.parsers:
                     if self.status != 0:
                         continue

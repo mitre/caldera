@@ -56,17 +56,16 @@ class DataService(BaseService):
 
     async def load_data(self, directory=None):
         """
-        Read all the data sources to populate the SQL database
+        Read all the data sources to populate the object store
         :param directory:
         :param schema:
         :return: None
         """
-        if directory:
-            self.log.debug('Loading data from %s...' % directory)
-            await self._load_abilities(directory='%s/abilities' % directory)
-            await self._load_adversaries(directory='%s/adversaries' % directory)
-            await self._load_sources(directory='%s/facts' % directory)
-            await self._load_planners(directory='%s/planners' % directory)
+        self.log.debug('Loading data from %s...' % directory)
+        await self._load_abilities(directory='%s/abilities' % directory)
+        await self._load_adversaries(directory='%s/adversaries' % directory)
+        await self._load_sources(directory='%s/facts' % directory)
+        await self._load_planners(directory='%s/planners' % directory)
 
     async def store(self, c_object):
         """
