@@ -27,8 +27,9 @@ class Operation(BaseObject):
                     PAUSED='paused',
                     FINISHED='finished')
 
-    def __init__(self, name, agents, adversary, jitter='2/8', source=None, planner=None, state=None,
+    def __init__(self, op_id, name, agents, adversary, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True):
+        self.id = op_id
         self.name = name
         self.agents = agents
         self.adversary = adversary

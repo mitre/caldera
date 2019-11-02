@@ -53,11 +53,13 @@ class AgentService(BaseService):
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
         now = self.get_current_timestamp()
-        return await self.data_svc.store(
-            Agent(last_seen=now, paw=paw, platform=platform, server=server, group=group,
-                  location=location, architecture=architecture, pid=pid, ppid=ppid,
-                  trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors, privilege=privilege)
-        )
+        agent = Agent(last_seen=now, paw=paw, platform=platform, server=server, group=group, location=location,
+                      architecture=architecture, pid=pid, ppid=ppid, trusted=True, last_trusted_seen=now,
+                      executors=executors, privilege=privilege)
+        if await self.data_svc.locate('agents', dict(paw=paw)):
+            return await self.data_svc.store(agent)
+        agent.sleep_min = agent.sleep_max = sleep
+        return await self.data_svc.store(agent)
 
     async def get_instructions(self, paw):
         """
