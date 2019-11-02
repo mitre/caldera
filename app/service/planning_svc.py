@@ -144,6 +144,12 @@ class PlanningService(BaseService):
             score += (score + var['score'])
             used.append(var['id'])
             copy_test = copy_test.replace('#{%s}' % var['property'], var['value'])
+            if len(var['relationships']):
+                for link in var['relationships']:
+                    entry = link['target']
+                    score += (score + entry['score'])
+                    used.append(entry['id'])
+                    copy_test = copy_test.replace('#{%s}' % entry['property'], entry['value'])
         return copy_test, score, used
 
     async def _get_agent_facts(self, op_id, paw):
