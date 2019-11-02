@@ -27,7 +27,7 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    def __init__(self, operation, command, paw, ability, status, score=0, jitter=0, cleanup=0):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
         self.id = None
         self.command = command
         self.operation = operation

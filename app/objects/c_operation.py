@@ -39,7 +39,7 @@ class Operation(BaseObject):
             command = self.decode_bytes(step.command)
             step_report = dict(ability_id=step.ability.ability_id,
                                command=command,
-                               delegated=step.collect.strftime('%Y-%m-%d %H:%M:%S'),
+                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                run=step.finish,
                                status=step.status,
                                platform=step.ability.platform,
@@ -97,7 +97,7 @@ class Operation(BaseObject):
                 self.state = self.states['PAUSED']
                 return link.id
             else:
-                await asyncio.sleep(30)
+                await asyncio.sleep(15)
         return self.add_link(link)
 
     async def close(self):
