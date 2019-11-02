@@ -1,5 +1,8 @@
 import asyncio
+import re
+from collections import defaultdict
 from datetime import datetime
+from enum import Enum
 
 from app.utility.base_object import BaseObject
 
@@ -12,7 +15,7 @@ class Operation(BaseObject):
 
     @property
     def display(self):
-        return self.clean(dict(name=self.name, host_group=[a.display for a in self.agents],
+        return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display, jitter=self.jitter,
                                source=self.source.display if self.source else '', planner=self.planner.name,
                                state=self.state,
@@ -26,6 +29,33 @@ class Operation(BaseObject):
                     RUN_ONE_LINK='run_one_link',
                     PAUSED='paused',
                     FINISHED='finished')
+
+    @property
+    def report(self):
+        report = dict(name=self.name, host_group=[a.display for a in self.agents], start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
+                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
+        agents_steps = {a.paw: {'steps': []} for a in self.agents}
+        for step in self.chain:
+            command = self.decode_bytes(step.command)
+            step_report = dict(ability_id=step.ability.ability_id,
+                               command=command,
+                               delegated=step.collect.strftime('%Y-%m-%d %H:%M:%S'),
+                               run=step.finish,
+                               status=step.status,
+                               platform=step.ability.platform,
+                               executor=step.ability.executor,
+                               pid=step.pid,
+                               description=step.ability.description,
+                               name=step.ability.name,
+                               attack=dict(tactic=step.ability.tactic,
+                                           technique_name=step.ability.technique_name,
+                                           technique_id=step.ability.technique_id)
+                               )
+            agents_steps[step.paw]['steps'].append(step_report)
+        report['steps'] = agents_steps
+        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+        return report
 
     def __init__(self, op_id, name, agents, adversary, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True):
@@ -90,3 +120,58 @@ class Operation(BaseObject):
         if not self.allow_untrusted:
             return not agent.trusted
         return False
+
+    def _get_skipped_abilities_by_agent(self):
+        abilities_by_agent = self._get_all_possible_abilities_by_agent()
+        skipped_abilities = []
+        for agent in self.agents:
+            agent_skipped = defaultdict(dict)
+            agent_executors = agent.executors
+            agent_ran = []
+            agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
+            for ab in abilities_by_agent[agent.paw]['all_abilities']:
+                skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
+                                                     op_facts=[f.display for f in self.all_facts()],
+                                                     state=self.state, agent_ran=agent_ran)
+                if skipped:
+                    if agent_skipped[skipped['ability_id']]:
+                        if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
+                            agent_skipped[skipped['ability_id']] = skipped
+                    else:
+                        agent_skipped[skipped['ability_id']] = skipped
+            skipped_abilities.append({agent.paw: list(agent_skipped.values())})
+        return skipped_abilities
+
+    def _get_all_possible_abilities_by_agent(self):
+        return {a.paw: {'all_abilities': [ab for p in self.adversary.phases
+                                          for ab in self.adversary.phases[p]]} for a in self.agents}
+
+    def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
+        variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group), flags=re.DOTALL)
+        if ability.ability_id in agent_ran:
+            return
+        elif ability.platform != agent.platform:
+            return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability.ability_id,
+                        ability_name=ability.name)
+        elif ability.executor not in agent_executors:
+            return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
+        elif variables and not all(op_fact in op_facts for op_fact in variables):
+            return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
+        else:
+            if (ability.platform == agent.platform and ability.executor in agent_executors
+                    and ability.ability_id not in agent_ran):
+                if state != 'finished':
+                    return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
+                                ability_id=ability.ability_id, ability_name=ability.name)
+                else:
+                    return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
+                                ability_id=ability.ability_id, ability_name=ability.name)
+
+    class Reason(Enum):
+        PLATFORM = 0
+        EXECUTOR = 1
+        FACT_DEPENDENCY = 2
+        OP_RUNNING = 3
+        UNTRUSTED = 4
