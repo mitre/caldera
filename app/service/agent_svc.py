@@ -34,6 +34,7 @@ class AgentService(BaseService):
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep
+        agent.group = group
         return await self.data_svc.store(agent)
 
     async def get_instructions(self, paw):

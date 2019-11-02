@@ -51,6 +51,7 @@ class AppService(BaseService):
 
     async def run_operation(self, operation):
         try:
+            self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
@@ -58,6 +59,7 @@ class AppService(BaseService):
                 operation.phase = phase
             await self._cleanup_operation(operation)
             await operation.close()
+            self.log.debug('Completed operation: %s' % operation.name)
         except Exception:
             traceback.print_exc()
 

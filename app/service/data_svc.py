@@ -2,6 +2,7 @@ import asyncio
 import glob
 import json
 import pickle
+import os.path
 from base64 import b64encode
 from collections import defaultdict
 
@@ -35,16 +36,17 @@ class DataService(BaseService):
         Restore the object database - but wait for YML files to load first
         :return:
         """
-        await asyncio.sleep(3)
-        with open('data/object_store', 'rb') as objects:
-            ram = pickle.load(objects)
-            [await self.store(x) for x in ram['agents']]
-            [await self.store(x) for x in ram['planners']]
-            [await self.store(x) for x in ram['abilities']]
-            [await self.store(x) for x in ram['adversaries']]
-            [await self.store(x) for x in ram['sources']]
-            [await self.store(x) for x in ram['operations']]
-        self.log.debug('Restored objects from persistent storage')
+        if os.path.exists('data/object_store'):
+            await asyncio.sleep(3)
+            with open('data/object_store', 'rb') as objects:
+                ram = pickle.load(objects)
+                [await self.store(x) for x in ram['agents']]
+                [await self.store(x) for x in ram['planners']]
+                [await self.store(x) for x in ram['abilities']]
+                [await self.store(x) for x in ram['adversaries']]
+                [await self.store(x) for x in ram['sources']]
+                [await self.store(x) for x in ram['operations']]
+            self.log.debug('Restored objects from persistent storage')
 
     async def apply(self, collection):
         """
