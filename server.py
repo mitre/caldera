@@ -18,7 +18,6 @@ from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
-from app.service.reporting_svc import ReportingService
 
 
 async def background_tasks(app):
@@ -101,7 +100,6 @@ if __name__ == '__main__':
         plugin_modules = build_plugins(cfg['plugins'])
         data_svc = DataService()
         planning_svc = PlanningService()
-        reporting_svc = ReportingService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService()

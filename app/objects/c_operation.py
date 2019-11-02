@@ -11,15 +11,14 @@ class Operation(BaseObject):
 
     @property
     def unique(self):
-        return self.name
+        return self.hash('%s' % self.id)
 
     @property
     def display(self):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display, jitter=self.jitter,
                                source=self.source.display if self.source else '', planner=self.planner.name,
-                               state=self.state,
-                               start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                               start=self.start.strftime('%Y-%m-%d %H:%M:%S'), state=self.state,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -127,7 +126,6 @@ class Operation(BaseObject):
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
             agent_executors = agent.executors
-            agent_ran = []
             agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
