@@ -68,14 +68,15 @@ class AgentService(BaseService):
         try:
             for op in await self.data_svc.locate('operations', match=dict(finish=None)):
                 link = next((l for l in op.chain if l.unique == id), None)
-                link.pid = int(pid)
-                link.finish = self.get_current_timestamp()
-                link.status = int(status)
-                if output:
-                    with open('data/results/%s' % id, 'w') as out:
-                        out.write(output)
-                    asyncio.create_task(link.parse(op))
-                await self.data_svc.store(Agent(paw=link.paw))
-                return json.dumps(dict(status=True))
+                if link:
+                    link.pid = int(pid)
+                    link.finish = self.get_current_timestamp()
+                    link.status = int(status)
+                    if output:
+                        with open('data/results/%s' % id, 'w') as out:
+                            out.write(output)
+                        asyncio.create_task(link.parse(op))
+                    await self.data_svc.store(Agent(paw=link.paw))
+                    return json.dumps(dict(status=True))
         except Exception as e:
             self.log.error('[!] save_results: %s' % e)
