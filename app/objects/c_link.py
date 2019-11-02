@@ -14,10 +14,10 @@ class Link(BaseObject):
 
     @property
     def display(self):
-        facts = [fact.display for fact in self.facts]
         return self.clean(dict(id=self.id, operation=self.operation, paw=self.paw, command=self.command,
                                executor=self.ability.executor, status=self.status, score=self.score,
-                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), facts=facts,
+                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                               facts=[fact.display for fact in self.facts],
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
