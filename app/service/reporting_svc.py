@@ -1,9 +1,7 @@
-import json
-import os
 import re
 from collections import defaultdict
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class ReportingService(BaseService):
@@ -69,11 +67,6 @@ class ReportingService(BaseService):
                         agent_skipped[skipped['ability_id']] = skipped
             skipped_abilities.append({agent.paw: list(agent_skipped.values())})
         return skipped_abilities
-
-    @staticmethod
-    async def write_report(report):
-        with open(os.path.join('logs', 'operation_report_' + report['name'] + '.json'), 'w') as f:
-            f.write(json.dumps(report, indent=4, sort_keys=True))
 
     """ PRIVATE """
 

@@ -4,7 +4,7 @@ import re
 from base64 import b64decode
 
 from app.objects.c_link import Link
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 from app.utility.rule import RuleSet
 
 

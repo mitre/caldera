@@ -4,7 +4,7 @@ import traceback
 
 from importlib import import_module
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class OperationService(BaseService):
@@ -13,7 +13,6 @@ class OperationService(BaseService):
         self.loop = asyncio.get_event_loop()
         self.log = self.add_service('operation_svc', self)
         self.data_svc = self.get_service('data_svc')
-        self.reporting_svc = self.get_service('reporting_svc')
 
     async def resume(self):
         """
@@ -33,8 +32,6 @@ class OperationService(BaseService):
         self.log.debug('Operation complete: %s' % operation.name)
         operation.state = operation.states['FINISHED']
         operation.finish = self.get_current_timestamp()
-        report = await self.reporting_svc.generate_operation_report(operation, agent_output=False)
-        await self.reporting_svc.write_report(report)
 
     async def run(self, name):
         """

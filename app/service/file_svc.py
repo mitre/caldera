@@ -3,7 +3,7 @@ import uuid
 
 from aiohttp import web
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file
 
 

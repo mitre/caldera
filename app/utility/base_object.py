@@ -1,4 +1,7 @@
-class BaseObject:
+from app.utility.base_world import BaseWorld
+
+
+class BaseObject(BaseWorld):
 
     def match(self, criteria):
         if not criteria:

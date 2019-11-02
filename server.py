@@ -20,12 +20,13 @@ from app.service.operation_svc import OperationService
 from app.service.planning_svc import PlanningService
 from app.service.plugin_svc import PluginService
 from app.service.reporting_svc import ReportingService
+from app.utility.application import Application
 
 
 async def background_tasks(app):
+    app.loop.create_task(application.start_sniffer_untrusted_agents())
     app.loop.create_task(operation_svc.resume())
     app.loop.create_task(data_svc.load_data(directory='data'))
-    app.loop.create_task(agent_svc.start_sniffer_untrusted_agents())
     app.loop.create_task(data_svc.restore_state())
 
 
@@ -107,8 +108,9 @@ if __name__ == '__main__':
         operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
+        agent_svc = AgentService()
 
+        application = Application(services=data_svc.get_services(), config=cfg)
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))

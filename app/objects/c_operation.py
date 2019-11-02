@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Operation(BaseObject):

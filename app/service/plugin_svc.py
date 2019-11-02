@@ -1,4 +1,4 @@
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class PluginService(BaseService):

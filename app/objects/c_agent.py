@@ -1,6 +1,4 @@
-from random import randint
-
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Agent(BaseObject):
@@ -55,7 +53,7 @@ class Agent(BaseObject):
         return existing
 
     async def calculate_sleep(self):
-        return self._jitter('{}/{}'.format(self.sleep_min, self.sleep_max))
+        return self.jitter('{}/{}'.format(self.sleep_min, self.sleep_max))
 
     async def capabilities(self, ability_set):
         abilities = []
@@ -68,10 +66,3 @@ class Agent(BaseObject):
                 val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
                 abilities.append(val)
         return abilities
-
-    """ PRIVATE """
-
-    @staticmethod
-    def _jitter(fraction):
-        i = fraction.split('/')
-        return randint(int(i[0]), int(i[1]))

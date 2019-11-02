@@ -2,7 +2,7 @@ from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 from app.objects.c_fact import Fact
 
 

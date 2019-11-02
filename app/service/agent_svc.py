@@ -3,39 +3,14 @@ import json
 from datetime import datetime
 
 from app.objects.c_agent import Agent
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class AgentService(BaseService):
 
-    def __init__(self, untrusted_timer):
+    def __init__(self):
         self.log = self.add_service('agent_svc', self)
         self.data_svc = self.get_service('data_svc')
-        self.loop = asyncio.get_event_loop()
-        self.untrusted_timer = untrusted_timer
-
-    async def start_sniffer_untrusted_agents(self):
-        """
-        Cyclic function that repeatedly checks if there are agents to be marked as untrusted
-        :return: None
-        """
-        next_check = self.untrusted_timer
-        try:
-            while True:
-                await asyncio.sleep(next_check + 1)
-                trusted_agents = await self.data_svc.locate('agents', match=dict(trusted=1))
-                next_check = self.untrusted_timer
-                for a in trusted_agents:
-                    last_trusted_seen = datetime.strptime(a.last_trusted_seen, '%Y-%m-%d %H:%M:%S')
-                    silence_time = (datetime.now() - last_trusted_seen).total_seconds()
-                    if silence_time > (self.untrusted_timer + a.sleep_max):
-                        await self.data_svc.store(Agent(paw=a.paw, trusted=0))
-                    else:
-                        trust_time_left = self.untrusted_timer - silence_time
-                        if trust_time_left < next_check:
-                            next_check = trust_time_left
-        except Exception as e:
-            self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, privilege):
         """

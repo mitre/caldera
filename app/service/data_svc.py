@@ -13,7 +13,7 @@ from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
 from app.objects.c_source import Source
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class DataService(BaseService):
