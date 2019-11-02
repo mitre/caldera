@@ -59,9 +59,6 @@ class AgentService(BaseService):
                   trusted=True, last_trusted_seen=now, sleep_min=sleep, sleep_max=sleep, executors=executors, privilege=privilege)
         )
 
-    async def calculate_sleep(self, agent):
-        return self.jitter('{}/{}'.format(agent.sleep_min, agent.sleep_max))
-
     async def get_instructions(self, paw):
         """
         Get next set of instructions to execute
@@ -103,42 +100,3 @@ class AgentService(BaseService):
                 return json.dumps(dict(status=True))
         except Exception as e:
             self.log.error('[!] save_results: %s' % e)
-
-    async def perform_action(self, link):
-        """
-        Perform a link in the context of an operation, respecting the 'run', 'paused' and 'run_one_step' operation
-        states. Calling data_svc.save('link', link) directly will schedule the link for execution,
-        ignoring the state of the operation.
-        :param link:
-        :return: the id of the created link
-        """
-        operation_svc = self.get_service('operation_svc')
-        operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
-        while operation.state != operation_svc.op_states['RUNNING']:
-            if operation.state == operation_svc.op_states['RUN_ONE_LINK']:
-                operation.add_link(link)
-                operation.state = operation_svc.op_states['PAUSED']
-                return link.id
-            else:
-                await asyncio.sleep(30)
-                operation = (await self.data_svc.locate('operations', match=dict(name=link.operation)))[0]
-        return operation.add_link(link)
-
-    @staticmethod
-    async def capable_agent_abilities(ability_set, agent):
-        """
-        Trim a list of abilities down to those an agent can actually execute
-        :param ability_set:
-        :param agent:
-        :return:
-        """
-        abilities = []
-        preferred = agent.executors[0]
-        executors = agent.executors
-        for ai in set([pa.ability_id for pa in ability_set]):
-            total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
-                             and (ab.platform == agent.platform) and (ab.executor in executors)]
-            if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                abilities.append(val)
-        return abilities

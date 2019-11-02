@@ -28,7 +28,7 @@ class PlanningService(BaseService):
         link_status = await self._default_link_status(operation)
 
         links = []
-        for a in await self.get_service('agent_svc').capable_agent_abilities(phase_abilities, agent):
+        for a in await agent.capabilities(phase_abilities):
             links.append(
                 Link(operation=operation.name, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))

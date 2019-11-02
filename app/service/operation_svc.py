@@ -70,7 +70,7 @@ class OperationService(BaseService):
         for member in operation.agents:
             if (not member.trusted) and (not operation.allow_untrusted):
                 continue
-            while next((True for lnk in operation[0].chain if lnk.paw == member.paw and not lnk.finish and not lnk.status == self.LinkState.DISCARD.value),
+            while next((True for lnk in operation.chain if lnk.paw == member.paw and not lnk.finish and not lnk.status == self.LinkState.DISCARD.value),
                        False):
                 await asyncio.sleep(3)
                 if await self._trust_issues(operation, member.paw):

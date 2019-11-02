@@ -25,3 +25,4 @@ class BaseObject:
             if v is None:
                 d[k] = ''
         return d
+
