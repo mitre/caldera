@@ -40,6 +40,12 @@ class AppService(BaseService):
         except Exception as e:
             self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 
+    async def find_link(self, link_id):
+        for op in await self._services.get('data_svc').locate('operations'):
+            exists = next((link for link in op.chain if link.unique == link_id), None)
+            if exists:
+                return exists
+
     async def resume_operations(self):
         """
         Resume all unfinished operations

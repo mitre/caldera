@@ -49,17 +49,17 @@ class AgentService(BaseService):
         for link in [c for op in ops for c in op.chain if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(json.dumps(dict(id=link.id,
+            instructions.append(json.dumps(dict(id=link.unique,
                                                 sleep=link.jitter,
                                                 command=link.command,
                                                 executor=link.ability.executor,
                                                 payload=payload)))
         return json.dumps(instructions)
 
-    async def save_results(self, link_id, output, status, pid):
+    async def save_results(self, id, output, status, pid):
         """
         Save the results from a single executed link
-        :param link_id:
+        :param id:
         :param output:
         :param status:
         :param pid:
@@ -67,12 +67,12 @@ class AgentService(BaseService):
         """
         try:
             for op in await self.data_svc.locate('operations', match=dict(finish=None)):
-                link = next((l for l in op.chain if l.id == int(float(link_id))), None)
+                link = next((l for l in op.chain if l.unique == id), None)
                 link.pid = int(pid)
                 link.finish = self.get_current_timestamp()
                 link.status = int(status)
                 if output:
-                    with open('data/results/%s-%s-%s' % (op.id, op.name, int(float(link_id))), 'w') as out:
+                    with open('data/results/%s' % id, 'w') as out:
                         out.write(output)
                     asyncio.create_task(link.parse(op))
                 await self.data_svc.store(Agent(paw=link.paw))
