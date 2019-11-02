@@ -11,8 +11,9 @@ from app.utility.base_service import BaseService
 
 class AppService(BaseService):
 
-    def __init__(self, config):
+    def __init__(self, config, plugins):
         self.config = config
+        self.plugins = plugins
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
 
@@ -59,6 +60,13 @@ class AppService(BaseService):
             await operation.close()
         except Exception:
             traceback.print_exc()
+
+    def get_plugins(self):
+        """
+        Get a list of all plugins
+        :return: a list of plugins
+        """
+        return self.plugins
 
     """ PRIVATE """
 

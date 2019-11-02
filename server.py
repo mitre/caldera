@@ -18,7 +18,6 @@ from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
-from app.service.plugin_svc import PluginService
 from app.service.reporting_svc import ReportingService
 
 
@@ -46,10 +45,10 @@ def build_plugins(plugs):
 
 
 async def attach_plugins(app, services):
-    for pm in services.get('plugin_svc').get_plugins():
+    for pm in services.get('app_svc').get_plugins():
         plugin = getattr(pm, 'initialize')
         await plugin(app, services)
-    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('plugin_svc').get_plugins()]
+    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('app_svc').get_plugins()]
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
 
 
@@ -100,14 +99,13 @@ if __name__ == '__main__':
         sys.path.append('')
 
         plugin_modules = build_plugins(cfg['plugins'])
-        plugin_svc = PluginService(plugin_modules)
         data_svc = DataService()
         planning_svc = PlanningService()
         reporting_svc = ReportingService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService()
-        application = AppService(config=cfg)
+        application = AppService(config=cfg, plugins=plugin_modules)
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
