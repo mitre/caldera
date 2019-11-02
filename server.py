@@ -106,11 +106,10 @@ if __name__ == '__main__':
         reporting_svc = ReportingService()
         operation_svc = OperationService()
         auth_svc = AuthService(cfg['api_key'])
-
-        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
-        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
 
+        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
         main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])

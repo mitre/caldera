@@ -70,13 +70,11 @@ class OperationService(BaseService):
         for member in operation.agents:
             if (not member.trusted) and (not operation.allow_untrusted):
                 continue
-            op = await self.data_svc.locate('operations', match=dict(name=operation.name))
-            while next((True for lnk in op[0].chain if lnk.paw == member.paw and not lnk.finish and not lnk.status == self.LinkState.DISCARD.value),
+            while next((True for lnk in operation[0].chain if lnk.paw == member.paw and not lnk.finish and not lnk.status == self.LinkState.DISCARD.value),
                        False):
                 await asyncio.sleep(3)
                 if await self._trust_issues(operation, member.paw):
                     break
-                op = await self.data_svc.locate('operations', match=dict(name=operation.name))
 
     async def _trust_issues(self, operation, paw):
         if not operation.allow_untrusted:
