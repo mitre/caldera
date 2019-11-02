@@ -24,6 +24,7 @@ class AgentService(BaseService):
         :param location:
         :param pid:
         :param ppid:
+        :param privilege:
         :return: the agent object from explode
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
