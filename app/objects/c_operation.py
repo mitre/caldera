@@ -16,8 +16,8 @@ class Operation(BaseObject):
     @property
     def display(self):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
-                               adversary=self.adversary.display, jitter=self.jitter,
-                               source=self.source.display if self.source else '', planner=self.planner.name,
+                               adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
+                               source=self.source.display if self.source else '', planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S'), state=self.state,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
