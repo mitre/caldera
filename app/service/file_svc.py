@@ -111,10 +111,10 @@ class FileSvc(BaseService):
 
     """ PRIVATE """
 
-    async def _walk_file_path(self, path, target):
+    @staticmethod
+    async def _walk_file_path(path, target):
         for root, dirs, files in os.walk(path):
             if target in files:
-                self.log.debug('Located %s' % target)
                 return os.path.join(root, target)
         return None
 

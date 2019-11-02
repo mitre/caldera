@@ -148,5 +148,6 @@ class PlanningService(BaseService):
                 agent_facts.append(f.unique)
         return agent_facts
 
-    async def _default_link_status(self, operation):
-        return self.LinkState.EXECUTE.value if operation.autonomous else self.LinkState.PAUSE.value
+    @staticmethod
+    async def _default_link_status(operation):
+        return -3 if operation.autonomous else -1

@@ -21,6 +21,12 @@ class Link(BaseObject):
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
+    @property
+    def states(self):
+        return dict(EXECUTE=-3,
+                    DISCARD=-2,
+                    PAUSE=-1)
+
     def __init__(self, operation, command, paw, ability, status, score=0, jitter=0, cleanup=0):
         self.id = None
         self.command = command

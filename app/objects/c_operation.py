@@ -70,3 +70,23 @@ class Operation(BaseObject):
             else:
                 await asyncio.sleep(30)
         return self.add_link(link)
+
+    async def close(self):
+        self.state = self.states['FINISHED']
+        self.finish = self.get_current_timestamp()
+
+    async def wait_for_phase_completion(self):
+        for member in self.agents:
+            if (not member.trusted) and (not self.allow_untrusted):
+                continue
+            while next((True for lnk in self.chain if
+                        lnk.paw == member.paw and not lnk.finish and not lnk.status == lnk.states['DISCARD']),
+                       False):
+                await asyncio.sleep(3)
+                if await self._trust_issues(member):
+                    break
+
+    async def _trust_issues(self, agent):
+        if not self.allow_untrusted:
+            return not agent.trusted
+        return False

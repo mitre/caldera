@@ -42,6 +42,8 @@ class DataService(BaseService):
             [await self.store(x) for x in ram['planners']]
             [await self.store(x) for x in ram['abilities']]
             [await self.store(x) for x in ram['adversaries']]
+            [await self.store(x) for x in ram['sources']]
+            [await self.store(x) for x in ram['operations']]
         self.log.debug('Restored objects from persistent storage')
 
     async def apply(self, collection):
