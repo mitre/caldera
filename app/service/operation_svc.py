@@ -12,10 +12,6 @@ class OperationService(BaseService):
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.log = self.add_service('operation_svc', self)
-        self.op_states = dict(RUNNING='running',
-                              RUN_ONE_LINK='run_one_link',
-                              PAUSED='paused',
-                              FINISHED='finished')
         self.data_svc = self.get_service('data_svc')
         self.reporting_svc = self.get_service('reporting_svc')
 
@@ -35,7 +31,7 @@ class OperationService(BaseService):
         :return: None
         """
         self.log.debug('Operation complete: %s' % operation.name)
-        operation.state = self.op_states['FINISHED']
+        operation.state = operation.states['FINISHED']
         operation.finish = self.get_current_timestamp()
         report = await self.reporting_svc.generate_operation_report(operation, agent_output=False)
         await self.reporting_svc.write_report(report)
