@@ -46,16 +46,13 @@ class Link(BaseObject):
         self.used = []
 
     async def parse(self, operation):
-        try:
-            with open('data/results/%s' % self.unique, 'r') as fle:
-                for parser in self.ability.parsers:
-                    if self.status != 0:
-                        continue
-                    relationships = await self._parse_link_result(fle.read(), parser)
-                    await self._update_scores(operation, increment=len(relationships))
-                    await self._create_relationships(relationships, operation)
-        except Exception as e:
-            print(e)
+        with open('data/results/%s' % self.unique, 'r') as fle:
+            for parser in self.ability.parsers:
+                if self.status != 0:
+                    continue
+                relationships = await self._parse_link_result(fle.read(), parser)
+                await self._update_scores(operation, increment=len(relationships))
+                await self._create_relationships(relationships, operation)
 
     """ PRIVATE """
 
@@ -79,9 +76,9 @@ class Link(BaseObject):
             await self._save_fact(operation, relationship.target)
             self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, prop):
-        if not any(f.prop == prop[0] and f.value == prop[1] for f in operation.all_facts()):
-            self.facts.append(Fact(prop=prop[0], value=prop[1], score=1))
+    async def _save_fact(self, operation, trait):
+        if not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
+            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:
