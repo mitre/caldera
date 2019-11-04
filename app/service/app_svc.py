@@ -40,9 +40,14 @@ class AppService(BaseService):
         except Exception as e:
             self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 
-    async def find_link(self, link_id):
+    async def find_link(self, unique):
+        """
+        Locate a given link by its unique property
+        :param unique:
+        :return:
+        """
         for op in await self._services.get('data_svc').locate('operations'):
-            exists = next((link for link in op.chain if link.unique == link_id), None)
+            exists = next((link for link in op.chain if link.unique == unique), None)
             if exists:
                 return exists
 
