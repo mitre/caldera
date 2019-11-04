@@ -77,12 +77,11 @@ class Link(BaseObject):
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
             await self._save_fact(operation, relationship.source)
-            if all(relationship.target):
-                await self._save_fact(operation, relationship.target)
+            await self._save_fact(operation, relationship.target)
             self.relationships.append(relationship)
 
     async def _save_fact(self, operation, trait):
-        if not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
+        if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
             self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
 
     async def _update_scores(self, operation, increment):
