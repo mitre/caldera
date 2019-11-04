@@ -21,10 +21,10 @@ from app.service.planning_svc import PlanningService
 
 
 async def background_tasks(app):
-    app.loop.create_task(application.start_sniffer_untrusted_agents())
-    app.loop.create_task(application.resume_operations())
-    app.loop.create_task(data_svc.load_data(directory='data'))
-    app.loop.create_task(data_svc.restore_state())
+    asyncio.create_task(application.start_sniffer_untrusted_agents())
+    asyncio.create_task(application.resume_operations())
+    asyncio.create_task(data_svc.load_data(directory='data'))
+    asyncio.create_task(data_svc.restore_state())
 
 
 def build_plugins(plugs):
