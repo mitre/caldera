@@ -40,12 +40,9 @@ class DataService(BaseService):
             await asyncio.sleep(3)
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
-                [await self.store(x) for x in ram['agents']]
-                [await self.store(x) for x in ram['planners']]
-                [await self.store(x) for x in ram['abilities']]
-                [await self.store(x) for x in ram['adversaries']]
-                [await self.store(x) for x in ram['sources']]
-                [await self.store(x) for x in ram['operations']]
+                for key in ram.keys():
+                    for c_object in ram[key]:
+                        await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
 
     async def apply(self, collection):
