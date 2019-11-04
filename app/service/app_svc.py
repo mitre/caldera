@@ -31,7 +31,7 @@ class AppService(BaseService):
                 for a in trusted_agents:
                     last_trusted_seen = datetime.strptime(a.last_trusted_seen, '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
-                    if silence_time > (self.config['untrusted_timer'] + a.sleep_max):
+                    if silence_time > (self.config['untrusted_timer'] + int(a.sleep_max)):
                         await self.get_service('data_svc').store(Agent(paw=a.paw, trusted=0))
                     else:
                         trust_time_left = self.config['untrusted_timer'] - silence_time
