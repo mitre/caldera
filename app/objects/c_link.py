@@ -33,7 +33,8 @@ class Link(BaseObject):
             with open('data/results/%s' % self.unique, 'r') as fle:
                 return fle.read()
         except FileNotFoundError as e:
-            print(e)
+            pass
+        return None
 
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
         self.id = None
