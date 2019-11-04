@@ -14,7 +14,7 @@ class RuleSet:
 
     async def is_fact_allowed(self, fact):
         allowed = True
-        for rule in self.rules.get(fact['property'], []):
+        for rule in self.rules.get(fact['trait'], []):
             if await self._is_ip_rule_match(rule, fact):
                 allowed = await self._rule_judgement(rule['action'])
                 continue
