@@ -45,12 +45,12 @@ class TestObjects(TestBase):
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='whoami', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[])
+                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
         ))
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='whoami', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[])
+                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
         ))
         self.assertEqual(1, len(self.data_svc.ram['abilities']))
         for x in self.data_svc.ram['abilities']:
