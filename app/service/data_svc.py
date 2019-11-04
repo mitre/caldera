@@ -156,7 +156,7 @@ class DataService(BaseService):
             for src in self.strip_yml(filename):
                 source = Source(
                     name=src['name'],
-                    facts=[Fact(prop=f['property'], value=str(f['value'])) for f in src.get('facts')]
+                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
                 )
                 await self.store(source)
                 total += 1
