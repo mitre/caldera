@@ -55,7 +55,6 @@ class Link(BaseObject):
 
     async def parse(self, operation):
         try:
-
             for parser in self.ability.parsers:
                 if self.status != 0:
                     continue
