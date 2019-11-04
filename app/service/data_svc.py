@@ -108,7 +108,10 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
-                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
+                ps = []
+                for p in adv.get('packs', []):
+                    ps.append(await self._add_adversary_packs(p))
+                for pack in ps:
                     phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
