@@ -27,6 +27,14 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
+    @property
+    def output(self):
+        try:
+            with open('data/results/%s' % self.unique, 'r') as fle:
+                return fle.read()
+        except FileNotFoundError as e:
+            print(e)
+
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
         self.id = None
         self.command = command
@@ -47,12 +55,11 @@ class Link(BaseObject):
 
     async def parse(self, operation):
         try:
-            with open('data/results/%s' % self.unique, 'r') as fle:
-                blob = fle.read()
+
             for parser in self.ability.parsers:
                 if self.status != 0:
                     continue
-                relationships = await self._parse_link_result(blob, parser)
+                relationships = await self._parse_link_result(self.output, parser)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
