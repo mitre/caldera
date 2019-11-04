@@ -1,18 +1,18 @@
-from app.objects.base_object import BaseObject
+from app.utility.base_object import BaseObject
 
 
 class Ability(BaseObject):
 
     @property
     def unique(self):
-        return '%s-%s-%s' % (self.ability_id, self.platform, self.executor)
+        return '%s%s%s' % (self.ability_id, self.platform, self.executor)
 
     @property
     def display(self):
         return self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic, technique_name=self.technique_name,
                                technique_id=self.technique_id, name=self.name,
                                test=self.test, description=self.description, cleanup=self.cleanup,
-                               executor=self.executor,
+                               executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements]))
 
@@ -37,3 +37,4 @@ class Ability(BaseObject):
         if not existing:
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
+        return existing

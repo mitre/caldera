@@ -2,10 +2,9 @@ import copy
 import itertools
 import re
 from base64 import b64decode
-from datetime import datetime
 
-from app.service.base_service import BaseService
-from app.service.base_planning_svc import BasePlanningService
+from app.objects.c_link import Link
+from app.utility.base_service import BaseService
 from app.utility.rule import RuleSet
 
 
@@ -20,13 +19,10 @@ class PlanningService(BasePlanningService):
         :param operation:
         :param agent:
         :param phase:
-        :param trim: call trim_links() call on list of links before returning
+        :param trim: call trim_links() on list of links before returning
         :return: a list of links
         """
-        await self.get_service('parsing_svc').parse_facts(operation)
-        operation = (await self.get_service('data_svc').explode('operation', criteria=dict(id=operation['id'])))[0]
-
-        if (not agent.trusted) and (not operation['allow_untrusted']):
+        if (not agent.trusted) and (not operation.allow_untrusted):
             self.log.debug('Agent %s untrusted: no link created' % agent.paw)
             return []
 
@@ -37,11 +33,15 @@ class PlanningService(BasePlanningService):
     
         link_status = await self._default_link_status(operation)
         links = []
-        for a in await self.get_service('agent_svc').capable_agent_abilities(abilities, agent):
-            links.append(await self.get_link(operation, agent.paw, a))
+        for a in await agent.capabilities(abilities):
+            links.append(
+                 Link(operation=operation.name, command=a.test, paw=agent.paw, score=0, ability=a,
+                     status=link_status, jitter=self.jitter(operation.jitter))
+            )
         if trim:
             ability_requirements = {ab.unique: ab.requirements for ab in abilities}
-            links[:] = await self.trim_links(operation, agent, links, ability_requirements)
+            links[:] = await self.trim_links(operation, links, agent, ability_requirements)
+
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent):
@@ -52,34 +52,17 @@ class PlanningService(BasePlanningService):
         :return: None
         """
         link_status = await self._default_link_status(operation)
-        if (not agent.trusted) and (not operation['allow_untrusted']):
+        if (not agent.trusted) and (not operation.allow_untrusted):
             self.log.debug('Agent %s untrusted: no cleanup-link created' % agent.paw)
             return
         links = []
-        for link in await self.get_service('data_svc').explode('chain', criteria=dict(paw=agent.paw, op_id=operation['id'])):
-            ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link['ability'])))[0]
-            if ability.cleanup and link['status'] >= 0:
-                links.append(await self.get_link(operation, agent.paw, ability, dict(cleanup=1,
-                                                                                    command=ability.cleanup,
-                                                                                    jitter=0)))
-        return reversed(await self.trim_links(operation, agent, links))
-        
-    async def get_link(self, operation, agent_paw, ability, fields=None):
-        """
-        :param operation: dict
-        :param agent_paw: agent paw (str)
-        :param ability: dict
-        """
-        # craft link based on default operation, agent and ability values
-        link = dict(op_id=operation['id'], paw=agent_paw, ability=ability.unique,
-                    command=ability.test, executor=ability.executor, score=0,
-                    jitter=self.jitter(operation["jitter"]), decide=datetime.now(),
-                    status=await self._default_link_status(operation))
-        # if caller further specifies modified link fields, update link
-        if fields:
-            link.update(fields)
-        return link
-    
+        for link in [l for l in operation.chain if l.paw == agent.paw]:
+            ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link.ability.unique)))[0]
+            if ability.cleanup and link.status >= 0:
+                links.append(Link(operation=operation.name, command=ability.cleanup, paw=agent.paw, cleanup=1,
+                                  ability=ability, score=0, jitter=0, status=link_status))
+        return reversed(await self.trim_links(operation, links, agent))
+
     """ PRIVATE """
 
     @staticmethod
@@ -87,7 +70,7 @@ class PlanningService(BasePlanningService):
         """
         Sort links by their score then by the order they are defined in an adversary profile
         """
-        return sorted(links, key=lambda k: (-k['score']))
+        return sorted(links, key=lambda k: (-k.score))
 
     async def _default_link_status(self, operation):
         return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value

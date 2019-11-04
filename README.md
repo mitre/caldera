@@ -1,3 +1,5 @@
+[![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
+
 # CALDERA
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/).
@@ -19,9 +21,9 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
-git clone --branch x.x.x https://github.com/mitre/caldera.git --depth 1 --recursive
+git clone --branch x.x.x https://github.com/mitre/caldera.git --recursive
 ```
-> Clone the master branch - recursively - if you want to use bleeding-edge code
+> Here are our [stable releases](https://github.com/mitre/caldera/releases). 
 
 From the root of this project, install the PIP requirements.
 ```

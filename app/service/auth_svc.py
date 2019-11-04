@@ -10,7 +10,7 @@ from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class AuthService(BaseService):

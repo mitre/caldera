@@ -3,7 +3,7 @@ import uuid
 
 from aiohttp import web
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file
 
 
@@ -72,17 +72,18 @@ class FileSvc(BaseService):
                 return plugin, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
-    async def read_file(self, name):
+    async def read_file(self, name, location='payloads'):
         """
         Open a file and read the contents
         :param name:
+        :param location:
         :return: a tuple (file_path, contents)
         """
-        _, file_name = await self.find_file_path(name, location='payloads')
+        _, file_name = await self.find_file_path(name, location=location)
         if file_name:
             with open(file_name, 'rb') as file_stream:
                 return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
+        _, file_name = await self.find_file_path('%s.xored' % (name,), location=location)
         if file_name:
             return name, xor_file(file_name)
         raise FileNotFoundError
@@ -110,10 +111,10 @@ class FileSvc(BaseService):
 
     """ PRIVATE """
 
-    async def _walk_file_path(self, path, target):
+    @staticmethod
+    async def _walk_file_path(path, target):
         for root, dirs, files in os.walk(path):
             if target in files:
-                self.log.debug('Located %s' % target)
                 return os.path.join(root, target)
         return None
 
