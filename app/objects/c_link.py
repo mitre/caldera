@@ -48,12 +48,13 @@ class Link(BaseObject):
     async def parse(self, operation):
         try:
             with open('data/results/%s' % self.unique, 'r') as fle:
-                for parser in self.ability.parsers:
-                    if self.status != 0:
-                        continue
-                    relationships = await self._parse_link_result(fle.read(), parser)
-                    await self._update_scores(operation, increment=len(relationships))
-                    await self._create_relationships(relationships, operation)
+                blob = fle.read()
+            for parser in self.ability.parsers:
+                if self.status != 0:
+                    continue
+                relationships = await self._parse_link_result(blob, parser)
+                await self._update_scores(operation, increment=len(relationships))
+                await self._create_relationships(relationships, operation)
         except Exception as e:
             print(e)
 
