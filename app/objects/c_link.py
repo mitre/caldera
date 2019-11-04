@@ -77,7 +77,8 @@ class Link(BaseObject):
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
             await self._save_fact(operation, relationship.source)
-            await self._save_fact(operation, relationship.target)
+            if all(relationship.target):
+                await self._save_fact(operation, relationship.target)
             self.relationships.append(relationship)
 
     async def _save_fact(self, operation, trait):
