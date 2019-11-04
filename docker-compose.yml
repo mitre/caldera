@@ -9,11 +9,10 @@ services:
     - "8888"
 
     ports:
-      - "8880:8880"
       - "8888:8888"
     working_dir: /usr/src/app
 
     volumes:
       - ./:/usr/src/app
 
-    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py -E local"
+    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py"
