@@ -49,7 +49,8 @@ class Operation(BaseObject):
                                name=step.ability.name,
                                attack=dict(tactic=step.ability.tactic,
                                            technique_name=step.ability.technique_name,
-                                           technique_id=step.ability.technique_id)
+                                           technique_id=step.ability.technique_id),
+                               output=step.output
                                )
             agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
