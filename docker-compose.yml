@@ -5,7 +5,6 @@ services:
     image: python:3
 
     expose:
-    - "8880"
     - "8888"
 
     ports:
