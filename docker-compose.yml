@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  caldera:
+    image: python:3
+
+    expose:
+    - "8888"
+
+    ports:
+      - "8888:8888"
+    working_dir: /usr/src/app
+
+    volumes:
+      - ./:/usr/src/app
+
+    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py"

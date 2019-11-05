@@ -11,6 +11,7 @@ class AgentService(BaseService):
     def __init__(self):
         self.log = self.add_service('agent_svc', self)
         self.data_svc = self.get_service('data_svc')
+        self.loop = asyncio.get_event_loop()
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, privilege):
         """
@@ -29,9 +30,9 @@ class AgentService(BaseService):
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
         now = self.get_current_timestamp()
-        agent = Agent(last_seen=now, paw=paw, platform=platform, server=server, group=group, location=location,
+        agent = Agent(last_seen=now, paw=paw, platform=platform, server=server, location=location, executors=executors,
                       architecture=architecture, pid=pid, ppid=ppid, trusted=True, last_trusted_seen=now,
-                      executors=executors, privilege=privilege)
+                      privilege=privilege)
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep
@@ -75,7 +76,7 @@ class AgentService(BaseService):
                     if output:
                         with open('data/results/%s' % id, 'w') as out:
                             out.write(output)
-                        asyncio.create_task(link.parse(op))
+                        self.loop.create_task(link.parse(op))
                     await self.data_svc.store(Agent(paw=link.paw))
                     return json.dumps(dict(status=True))
         except Exception as e:

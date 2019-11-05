@@ -40,12 +40,9 @@ class DataService(BaseService):
             await asyncio.sleep(3)
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
-                [await self.store(x) for x in ram['agents']]
-                [await self.store(x) for x in ram['planners']]
-                [await self.store(x) for x in ram['abilities']]
-                [await self.store(x) for x in ram['adversaries']]
-                [await self.store(x) for x in ram['sources']]
-                [await self.store(x) for x in ram['operations']]
+                for key in ram.keys():
+                    for c_object in ram[key]:
+                        await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
 
     async def apply(self, collection):
@@ -111,7 +108,10 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
-                for pack in [await self._add_adversary_packs(p) for p in adv.get('packs', [])]:
+                ps = []
+                for p in adv.get('packs', []):
+                    ps.append(await self._add_adversary_packs(p))
+                for pack in ps:
                     phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
@@ -146,7 +146,9 @@ class DataService(BaseService):
                                                                    'utf-8')).decode() if info.get(
                                                                'cleanup') else None,
                                                            payload=info.get('payload'), parsers=info.get('parsers', []),
-                                                           requirements=ab.get('requirements', []))
+                                                           requirements=ab.get('requirements', []),
+                                                           privilege=ab['privilege'] if 'privilege' in ab.keys() else
+                                                           None)
                                 total += 1
         self.log.debug('Loaded %s abilities' % total)
 
@@ -156,7 +158,7 @@ class DataService(BaseService):
             for src in self.strip_yml(filename):
                 source = Source(
                     name=src['name'],
-                    facts=[Fact(prop=f['property'], value=f['value']) for f in src.get('facts')]
+                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
                 )
                 await self.store(source)
                 total += 1
@@ -179,7 +181,7 @@ class DataService(BaseService):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                              platform, cleanup=None, payload=None, parsers=None, requirements=None):
+                              platform, cleanup=None, payload=None, parsers=None, requirements=None, privilege=None):
         ps = []
         for module in parsers:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
@@ -193,4 +195,4 @@ class DataService(BaseService):
         await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                  technique_id=technique_id, technique=technique_name,
                                  executor=executor, platform=platform, description=description,
-                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs))
+                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs, privilege=privilege))

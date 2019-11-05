@@ -49,7 +49,8 @@ class Operation(BaseObject):
                                name=step.ability.name,
                                attack=dict(tactic=step.ability.tactic,
                                            technique_name=step.ability.technique_name,
-                                           technique_id=step.ability.technique_id)
+                                           technique_id=step.ability.technique_id),
+                               output=step.output
                                )
             agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
@@ -171,6 +172,9 @@ class Operation(BaseObject):
         elif variables and not all(op_fact in op_facts for op_fact in variables):
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
+        elif ability.privilege != agent.privilege:
+             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
+                         ability_id=ability.ability_id, ability_name=ability.name)
         else:
             if (ability.platform == agent.platform and ability.executor in agent_executors
                     and ability.ability_id not in agent_ran):
@@ -187,3 +191,4 @@ class Operation(BaseObject):
         FACT_DEPENDENCY = 2
         OP_RUNNING = 3
         UNTRUSTED = 4
+        PRIVILEGE = 5
