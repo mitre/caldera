@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.utility.base_object import BaseObject
 
 
@@ -14,7 +16,7 @@ class Agent(BaseObject):
                     last_seen=self.last_seen, last_trusted_seen=self.last_trusted_seen, sleep_min=self.sleep_min,
                     sleep_max=self.sleep_max, executors=self.executors, privilege=self.privilege)
 
-    def __init__(self, paw, last_seen=None, architecture=None, platform=None, server=None, group=None,
+    def __init__(self, paw, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
                  sleep_max=None, executors=None, privilege=None):
         self.paw = paw
@@ -26,7 +28,7 @@ class Agent(BaseObject):
         self.pid = pid
         self.ppid = ppid
         self.trusted = trusted
-        self.last_seen = last_seen
+        self.last_seen = datetime.now()
         self.last_trusted_seen = last_trusted_seen
         self.sleep_min = sleep_min
         self.sleep_max = sleep_max
