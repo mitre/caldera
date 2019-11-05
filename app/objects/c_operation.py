@@ -117,7 +117,7 @@ class Operation(BaseObject):
                     break
 
     def get_fact_dict(self, agent_paw=None):
-        facts = self._create_fact_dict(self.source.facts)
+        facts = self._create_fact_dict(self.source.facts, f_dict={})
         found_facts = self._get_found_facts(agent_paw=agent_paw)
         return self._create_fact_dict(list_facts=found_facts, f_dict=facts)
 
@@ -134,7 +134,7 @@ class Operation(BaseObject):
         return found_facts
 
     @staticmethod
-    def _create_fact_dict(list_facts, f_dict={}):
+    def _create_fact_dict(list_facts, f_dict):
         for f in list_facts:
             try:
                 f_dict[f.trait].add(f)
