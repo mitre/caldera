@@ -9,7 +9,10 @@ class Source(BaseObject):
 
     @property
     def display(self):
-        return dict(name=self.name, facts=[f.display for f in self.facts])
+        return dict(name=self.name, facts=[f.display for f in self.get_facts()])
+
+    def get_facts(self):
+        return [fact for fact_set in self.facts.values() for fact in fact_set]
 
     def __init__(self, name, facts):
         self.name = name

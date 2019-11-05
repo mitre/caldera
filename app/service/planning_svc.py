@@ -144,7 +144,7 @@ class PlanningService(BaseService):
     async def _get_agent_facts(operation, paw):
         agent_facts = []
         for link in [l for l in operation.chain if l.paw == paw]:
-            for f in link.facts:
+            for f in link.get_found_facts():
                 agent_facts.append(f.unique)
         return agent_facts
 

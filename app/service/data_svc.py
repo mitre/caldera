@@ -156,9 +156,15 @@ class DataService(BaseService):
         total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
+                facts = {}
+                for f in src.get('facts'):
+                    try:
+                        facts[f['trait']].add(Fact(trait=f['trait'], value=str(f['value'])))
+                    except KeyError:
+                        facts[f['trait']] = {Fact(trait=f['trait'], value=str(f['value']))}
                 source = Source(
                     name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
+                    facts=facts
                 )
                 await self.store(source)
                 total += 1

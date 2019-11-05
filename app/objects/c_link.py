@@ -17,7 +17,7 @@ class Link(BaseObject):
         return self.clean(dict(id=self.id, operation=self.operation, paw=self.paw, command=self.command,
                                executor=self.ability.executor, status=self.status, score=self.score,
                                decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
-                               facts=[fact.display for fact in self.facts], unique=self.unique,
+                               facts=[fact.display for fact in self.get_found_facts()], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
@@ -49,9 +49,9 @@ class Link(BaseObject):
         self.pid = None
         self.collect = None
         self.finish = None
-        self.facts = []
+        self.facts = {}
         self.relationships = []
-        self.used = []
+        self.used = {}
 
     async def parse(self, operation):
         try:
@@ -60,9 +60,12 @@ class Link(BaseObject):
                     continue
                 relationships = await self._parse_link_result(self.output, parser)
                 await self._update_scores(operation, increment=len(relationships))
-                await self._create_relationships(relationships, operation)
+                await self._create_relationships(relationships)
         except Exception as e:
             print(e)
+
+    def get_found_facts(self):
+        return [fact for fact_set in self.facts.values() for fact in fact_set]
 
     """ PRIVATE """
 
@@ -80,15 +83,17 @@ class Link(BaseObject):
         module = import_module(module_info['module'])
         return getattr(module, module_type)(module_info)
 
-    async def _create_relationships(self, relationships, operation):
+    async def _create_relationships(self, relationships):
         for relationship in relationships:
-            await self._save_fact(operation, relationship.source)
-            await self._save_fact(operation, relationship.target)
+            await self._save_fact(relationship.source)
+            await self._save_fact(relationship.target)
             self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, trait):
-        if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+    async def _save_fact(self, trait):
+        try:
+            self.facts[trait[0]].add(Fact(trait=trait[0], value=str(trait[1])))
+        except KeyError:
+            self.facts[trait[0]] = {Fact(trait=trait[0], value=str(trait[1]))}
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:
