@@ -61,7 +61,7 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [l.command for l in operation.chain if l.paw == agent.paw and (l.finish or l.status == self.LinkState.DISCARD.value)]
+        completed_links = [l.command for l in operation.chain if l.paw == agent.paw and (l.finish or l.status == l.states["DISCARD"])]
         links[:] = [l for l in links if l.command not in completed_links]
         return links
 
