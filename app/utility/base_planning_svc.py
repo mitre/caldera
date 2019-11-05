@@ -86,7 +86,7 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            copy_test = copy_test.replace('#{%s}' % var.prop, var.value)
+            copy_test = copy_test.replace('#{%s}' % var.trait, var.value)
         return copy_test, score, used
 
     @staticmethod
@@ -103,8 +103,8 @@ class BasePlanningService(BaseService):
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            for fact in [f for f in facts if f.prop == v]:
-                if fact.prop.startswith('host'):
+            for fact in [f for f in facts if f.trait == v]:
+                if fact.trait.startswith('host'):
                     if fact.unique in agent_facts:
                         variable_facts.append(fact)
                 else:
