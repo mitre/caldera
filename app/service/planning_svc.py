@@ -79,54 +79,51 @@ class PlanningService(BaseService):
         Create a list of all possible links for a given phase
         """
         group = agent.group
+        fact_dict = operation.get_fact_dict(agent_paw=agent.paw)
+        final_links = []
         for link in links:
             decoded_test = self.decode(link.command, agent, group)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation, agent.paw)
-                relevant_facts = await self._build_relevant_facts(variables, operation, agent_facts)
-                valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
-                for combo in list(itertools.product(*valid_facts)):
-                    if ability_requirements and not await self._do_enforcements(ability_requirements[link.ability.unique], operation, link, combo):
+                valid_facts = await self._get_relevant_facts(all_facts=fact_dict, variables=variables,
+                                                             ruleset=RuleSet(rules=operation.rules))
+                if not valid_facts:
+                    continue
+                for combo in list(itertools.product(*valid_facts.values())):
+                    if ability_requirements and not await self._do_enforcements(ability_requirements[link.ability.unique], combo):
                         continue
+
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
                     variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link.command = self.encode_string(variant)
                     copy_link.score = score
                     copy_link.used = used
-                    links.append(copy_link)
+                    final_links.append(copy_link)
             else:
                 link.command = self.encode_string(decoded_test)
-        return links
+                final_links.append(link)
+        return final_links
 
-    async def _do_enforcements(self, ability_requirements, operation, link, combo):
+    async def _do_enforcements(self, ability_requirements, combo):
         for req_inst in ability_requirements:
-            uf = link.get('used', [])
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(combo[0], uf, operation['facts']):
+            if not requirement.enforce(combo):
                 return False
         return True
 
     @staticmethod
-    async def _build_relevant_facts(variables, operation, agent_facts):
-        """
-        Create a list of ([fact, value, score]) tuples for each variable/fact
-        """
-        facts = operation.all_facts()
-
-        relevant_facts = []
-        for v in variables:
-            variable_facts = []
-            for fact in [f for f in facts if f.trait == v]:
-                if fact.trait.startswith('host'):
-                    if fact.unique in agent_facts:
-                        variable_facts.append(fact)
-                else:
-                    variable_facts.append(fact)
-            relevant_facts.append(variable_facts)
-        return relevant_facts
+    async def _get_relevant_facts(all_facts, variables, ruleset):
+        facts = {}
+        for var in variables:
+            try:
+                facts[var] = await ruleset.apply_rules(all_facts[var])
+                if len(facts[var]) < 1:
+                    return False
+            except KeyError:
+                return False
+        return facts
 
     @staticmethod
     async def _build_single_test_variant(copy_test, combo):
@@ -139,14 +136,6 @@ class PlanningService(BaseService):
             used.append(var)
             copy_test = copy_test.replace('#{%s}' % var.trait, var.value)
         return copy_test, score, used
-
-    @staticmethod
-    async def _get_agent_facts(operation, paw):
-        agent_facts = []
-        for link in [l for l in operation.chain if l.paw == paw]:
-            for f in link.facts:
-                agent_facts.append(f.unique)
-        return agent_facts
 
     @staticmethod
     async def _default_link_status(operation):

@@ -116,6 +116,32 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
+    def get_fact_dict(self, agent_paw=None):
+        facts = self._create_fact_dict(self.source.facts)
+        found_facts = self._get_found_facts(agent_paw=agent_paw)
+        return self._create_fact_dict(list_facts=found_facts, f_dict=facts)
+
+    def _get_found_facts(self, agent_paw=None):
+        found_facts = []
+        for link in self.chain:
+            for f in link.facts:
+                if f.score > 0:
+                    if f.trait.startswith('host'):
+                        if link.paw == agent_paw:
+                            found_facts.append(f)
+                    else:
+                        found_facts.append(f)
+        return found_facts
+
+    @staticmethod
+    def _create_fact_dict(list_facts, f_dict={}):
+        for f in list_facts:
+            try:
+                f_dict[f.trait].add(f)
+            except KeyError:
+                f_dict[f.trait] = {f}
+        return f_dict
+
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:
             return not agent.trusted

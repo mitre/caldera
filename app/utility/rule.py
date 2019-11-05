@@ -25,13 +25,13 @@ class RuleSet:
 
     async def apply_rules(self, facts):
         if await self._has_rules():
-            valid_facts = []
+            valid_facts = set()
             for fact in facts:
                 if await self.is_fact_allowed(fact):
-                    valid_facts.append(fact)
-            return [valid_facts]
+                    valid_facts.add(fact)
+            return valid_facts
         else:
-            return [facts]
+            return facts
 
     async def _has_rules(self):
         return len(self.rules)
