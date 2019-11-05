@@ -4,7 +4,7 @@ import re
 from base64 import b64decode
 
 from app.objects.c_link import Link
-from app.utility.base_service import BaseService
+from app.service.base_planning_svc import BasePlanningService
 from app.utility.rule import RuleSet
 
 
@@ -27,9 +27,9 @@ class PlanningService(BasePlanningService):
             return []
 
         if phase:
-            abilities = [i for p, v in operation['adversary'].phases.items() if p <= phase for i in v]
+            abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
         else:
-            abilities = [i for p, v in operation['adversary'].phases.items() for i in v]
+            abilities = [i for p, v in operation.adversary.phases.items() for i in v]
     
         link_status = await self._default_link_status(operation)
         links = []
@@ -72,5 +72,6 @@ class PlanningService(BasePlanningService):
         """
         return sorted(links, key=lambda k: (-k.score))
 
-    async def _default_link_status(self, operation):
-        return self.LinkState.EXECUTE.value if operation['autonomous'] else self.LinkState.PAUSE.value
+    @staticmethod
+    async def _default_link_status(operation):
+        return -3 if operation.autonomous else -1
