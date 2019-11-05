@@ -90,7 +90,7 @@ class PlanningService(BaseService):
                 if not valid_facts:
                     continue
                 for combo in list(itertools.product(*valid_facts.values())):
-                    if ability_requirements and not await self._do_enforcements(ability_requirements[link.ability.unique], combo):
+                    if ability_requirements and not await self._do_enforcements(ability_requirements[link.ability.unique], operation, link, combo):
                         continue
 
                     copy_test = copy.deepcopy(decoded_test)
@@ -105,11 +105,12 @@ class PlanningService(BaseService):
                 final_links.append(link)
         return final_links
 
-    async def _do_enforcements(self, ability_requirements, combo):
+    async def _do_enforcements(self, ability_requirements, operation, link, combo):
         for req_inst in ability_requirements:
+            uf = link.get('used', [])
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(combo):
+            if not requirement.enforce(combo[0], uf, operation['facts']):
                 return False
         return True
 
