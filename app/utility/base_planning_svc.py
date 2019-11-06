@@ -15,10 +15,9 @@ class BasePlanningService(BaseService):
             - adding all possible test variants
             - removing completed links (i.e. agent has already completed)
             - removing links that did not have template fact variables replaced by fact values
-        
         :param operation:
         :param links:
-        :param agent: C_agent
+        :param agent:
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation, ability_requirements)
@@ -30,6 +29,11 @@ class BasePlanningService(BaseService):
     async def add_test_variants(self, links, agent, operation, ability_requirements=None):
         """
         Create a list of all possible links for a given phase
+        :param links:
+        :param agent:
+        :param operation:
+        :param ability_requirements:
+        :return: updated list of links
         """
         group = agent.group
         for link in links:
@@ -114,6 +118,9 @@ class BasePlanningService(BaseService):
 
     @staticmethod
     async def _get_agent_facts(operation, paw):
+        """
+        get facts for given agent
+        """
         agent_facts = []
         for link in [l for l in operation.chain if l.paw == paw]:
             for f in link.facts:
@@ -121,6 +128,9 @@ class BasePlanningService(BaseService):
         return agent_facts
 
     async def _do_enforcements(self, ability_requirements, operation, link, combo):
+        """
+        enforce any defined requirements on the link
+        """
         for req_inst in ability_requirements:
             uf = link.get('used', [])
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
