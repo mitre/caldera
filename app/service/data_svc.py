@@ -186,9 +186,7 @@ class DataService(BaseService):
         ps = []
         for module in parsers:
             mapper = [Mapper(source=m['source'], edge=m.get('edge'), target=m.get('target'), json_key=m.get('json_key')) for m in parsers[module]]
-            print('data_svc 1')
             ps.append(Parser(module=module, mappers=mapper))
-            print('data_svc 2')
         rs = []
         for module in requirements:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
