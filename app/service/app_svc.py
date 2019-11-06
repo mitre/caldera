@@ -58,7 +58,7 @@ class AppService(BaseService):
         :return:
         """
         while True:
-            interval = 180
+            interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
                 now = datetime.now().time()
                 diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
