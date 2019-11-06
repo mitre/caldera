@@ -68,7 +68,9 @@ class Link(BaseObject):
 
     async def _parse_link_result(self, result, parser):
         blob = b64decode(result).decode('utf-8')
-        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.relationships)
+        print('c_link.py 1')
+        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.mappers)
+        print('c_link.py 2')
         p_inst = await self._load_module('Parser', parser_info)
         try:
             return p_inst.parse(blob=blob)

@@ -9,8 +9,11 @@ class Parser(BaseObject):
 
     @property
     def display(self):
-        return dict(module=self.module, relationships=[r.display for r in self.relationships])
+        print('c_parser.py 1')
+        d = dict(module=self.module, relationships=[m.display for m in self.mappers])
+        print('c_parser.py 2')
+        return d
 
-    def __init__(self, module, relationships):
+    def __init__(self, module, mappers):
         self.module = module
-        self.relationships = relationships
+        self.mappers = mappers

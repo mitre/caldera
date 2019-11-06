@@ -14,6 +14,7 @@ from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
 from app.objects.c_source import Source
+from app.objects.c_mapper import Mapper
 from app.utility.base_service import BaseService
 
 
@@ -184,9 +185,10 @@ class DataService(BaseService):
                               platform, cleanup=None, payload=None, parsers=None, requirements=None, privilege=None):
         ps = []
         for module in parsers:
-            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
-                        parsers[module]]
-            ps.append(Parser(module=module, relationships=relation))
+            mapper = [Mapper(source=m['source'], edge=m.get('edge'), target=m.get('target'), json_key=m.get('json_key')) for m in parsers[module]]
+            print('data_svc 1')
+            ps.append(Parser(module=module, mappers=mapper))
+            print('data_svc 2')
         rs = []
         for module in requirements:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
