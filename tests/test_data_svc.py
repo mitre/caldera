@@ -11,7 +11,7 @@ from app.service.data_svc import DataService
 from tests.test_base import TestBase
 
 
-class TestObjects(TestBase):
+class TestData(TestBase):
 
     def setUp(self):
         self.data_svc = DataService()
@@ -23,22 +23,28 @@ class TestObjects(TestBase):
         self.run_async(self.data_svc.store(
             Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
         ))
-        self.assertEqual(1, len(self.data_svc.ram['adversaries']))
-        for x in self.data_svc.ram['adversaries']:
+        adversaries = self.run_async(self.data_svc.locate('adversaries'))
+
+        self.assertEqual(1, len(adversaries))
+        for x in adversaries:
             json.dumps(x.display)
 
     def test_planner(self):
         self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None)))
         self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None)))
-        self.assertEqual(1, len(self.data_svc.ram['planners']))
-        for x in self.data_svc.ram['planners']:
+        planners = self.run_async(self.data_svc.locate('planners'))
+
+        self.assertEqual(1, len(planners))
+        for x in planners:
             json.dumps(x.display)
 
     def test_agent(self):
         self.run_async(self.data_svc.store(Agent(paw='123$abc')))
         self.run_async(self.data_svc.store(Agent(paw='123$abc')))
-        self.assertEqual(1, len(self.data_svc.ram['agents']))
-        for x in self.data_svc.ram['agents']:
+        agents = self.run_async(self.data_svc.locate('agents'))
+
+        self.assertEqual(1, len(agents))
+        for x in agents:
             json.dumps(x.display)
 
     def test_ability(self):
@@ -52,8 +58,10 @@ class TestObjects(TestBase):
                     test='whoami', description='find active user', cleanup='', executor='sh',
                     platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
         ))
-        self.assertEqual(1, len(self.data_svc.ram['abilities']))
-        for x in self.data_svc.ram['abilities']:
+        abilities = self.run_async(self.data_svc.locate('abilities'))
+
+        self.assertEqual(1, len(abilities))
+        for x in abilities:
             json.dumps(x.display)
 
     def test_operation(self):
@@ -61,15 +69,27 @@ class TestObjects(TestBase):
             Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
         ))
         self.run_async(self.data_svc.store(Operation(op_id=1, name='my first op', agents=[], adversary=adversary)))
-        self.assertEqual(1, len(self.data_svc.ram['operations']))
+        operations = self.run_async(self.data_svc.locate('operations'))
+        self.assertEqual(1, len(operations))
+
         self.run_async(self.data_svc.store(Operation(op_id=2, name='my first op', agents=[], adversary=adversary)))
-        self.assertEqual(2, len(self.data_svc.ram['operations']))
-        for x in self.data_svc.ram['operations']:
+        operations = self.run_async(self.data_svc.locate('operations'))
+
+        self.assertEqual(2, len(operations))
+        for x in operations:
             json.dumps(x.display)
 
     def test_executor(self):
         x = Executor(name='sh', preferred=1)
         self.assertRaises(Exception, self.run_async(self.data_svc.store(x)))
+
+    def test_remove(self):
+        self.run_async(self.data_svc.store(Agent(paw='new$test')))
+        agents = self.run_async(self.data_svc.locate('agents', match=dict(paw='new$test')))
+        self.assertEqual(1, len(agents))
+        self.run_async(self.data_svc.remove('agents', match=dict(paw='new$test')))
+        agents = self.run_async(self.data_svc.locate('agents', match=dict(paw='new$test')))
+        self.assertEqual(0, len(agents))
 
 
 if __name__ == '__main__':

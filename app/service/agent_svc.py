@@ -13,7 +13,8 @@ class AgentService(BaseService):
         self.data_svc = self.get_service('data_svc')
         self.loop = asyncio.get_event_loop()
 
-    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid, sleep, privilege):
+    async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid,
+                               sleep, privilege):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -25,12 +26,13 @@ class AgentService(BaseService):
         :param location:
         :param pid:
         :param ppid:
+        :param sleep:
         :param privilege:
         :return: the agent object from explode
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
         now = self.get_current_timestamp()
-        agent = Agent(last_seen=now, paw=paw, platform=platform, server=server, location=location, executors=executors,
+        agent = Agent(paw=paw, platform=platform, server=server, location=location, executors=executors,
                       architecture=architecture, pid=pid, ppid=ppid, trusted=True, last_trusted_seen=now,
                       privilege=privilege)
         if await self.data_svc.locate('agents', dict(paw=paw)):
