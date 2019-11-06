@@ -69,13 +69,9 @@ class TestData(TestBase):
             Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
         ))
         self.run_async(self.data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
+
         operations = self.run_async(self.data_svc.locate('operations'))
         self.assertEqual(1, len(operations))
-
-        self.run_async(self.data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
-        operations = self.run_async(self.data_svc.locate('operations'))
-
-        self.assertEqual(2, len(operations))
         for x in operations:
             json.dumps(x.display)
 
