@@ -6,7 +6,7 @@ from app.service.data_svc import DataService
 from tests.test_base import TestBase
 
 
-class TestObjects(TestBase):
+class TestAgent(TestBase):
 
     def setUp(self):
         self.data_svc = DataService()
