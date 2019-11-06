@@ -83,6 +83,14 @@ class TestData(TestBase):
         x = Executor(name='sh', preferred=1)
         self.assertRaises(Exception, self.run_async(self.data_svc.store(x)))
 
+    def test_remove(self):
+        self.run_async(self.data_svc.store(Agent(paw='new$test')))
+        agents = self.run_async(self.data_svc.locate('agents', match=dict(paw='new$test')))
+        self.assertEqual(1, len(agents))
+        self.run_async(self.data_svc.remove('agents', match=dict(paw='new$test')))
+        agents = self.run_async(self.data_svc.locate('agents', match=dict(paw='new$test')))
+        self.assertEqual(0, len(agents))
+
 
 if __name__ == '__main__':
     unittest.main()
