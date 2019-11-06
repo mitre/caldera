@@ -1,8 +1,9 @@
 import ast
 import asyncio
+import copy
 import traceback
 
-from datetime import datetime
+from datetime import datetime, date
 from importlib import import_module
 
 from app.objects.c_agent import Agent
@@ -51,6 +52,23 @@ class AppService(BaseService):
             if exists:
                 return exists
 
+    async def run_scheduler(self):
+        """
+        Kick off all scheduled jobs, as their schedule determines
+        :return:
+        """
+        while True:
+            interval = 60
+            for s in await self.get_service('data_svc').locate('schedules'):
+                now = datetime.now().time()
+                diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
+                if interval > diff.total_seconds() > 0:
+                    self.log.debug('Pulling %s off the scheduler' % s.name)
+                    sop = copy.deepcopy(s.task)
+                    await self._services.get('data_svc').store(sop)
+                    asyncio.create_task(self.run_operation(sop))
+            await asyncio.sleep(interval)
+
     async def resume_operations(self):
         """
         Resume all unfinished operations
@@ -63,6 +81,7 @@ class AppService(BaseService):
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
+            operation.set_start_details()
             planner = await self._get_planning_module(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)

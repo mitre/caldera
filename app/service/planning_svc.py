@@ -40,7 +40,6 @@ class PlanningService(BasePlanningService):
         if trim:
             ability_requirements = {ab.unique: ab.requirements for ab in abilities}
             links[:] = await self.trim_links(operation, links, agent, ability_requirements)
-
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -86,7 +85,7 @@ class PlanningService(BasePlanningService):
         links = []
         for a in await agent.capabilities(abilities):
             links.append(
-                Link(operation=operation.name, command=a.test, paw=agent.paw, score=0, ability=a,
+                Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))
             )
         return links
@@ -97,6 +96,6 @@ class PlanningService(BasePlanningService):
             ability = (await self.get_service('data_svc').locate('abilities', match=dict(unique=link.ability.unique)))[
                 0]
             if ability.cleanup and link.status >= 0:
-                links.append(Link(operation=operation.name, command=ability.cleanup, paw=agent.paw, cleanup=1,
+                links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
