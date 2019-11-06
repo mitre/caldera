@@ -109,7 +109,7 @@ class AppService(BaseService):
 
     async def _cleanup_operation(self, operation):
         for member in operation.agents:
-            for link in await self.get_service('planning_svc').select_cleanup_links(operation, member):
+            for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
 

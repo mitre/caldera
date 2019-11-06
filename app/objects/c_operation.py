@@ -123,6 +123,20 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
+    async def wait_for_links_completion(self, link_paws):
+        """
+        Wait for started links to be completed
+        :param link_paws:
+        :return: None
+        """
+        for link_paw in link_paws:
+            link = [link for link in self.chain if link.paw == link_paw][0]
+            member = [member for member in self.agents if member.paw == link_paw][0]
+            while (not link.finish and not link.status == link.states["DISCARD"]):
+                await asyncio.sleep(5)  #TODO: Make this configurable in planner file
+                if await self._trust_issues(member):
+                    break
+
     """ PRIVATE """
 
     async def _trust_issues(self, agent):
