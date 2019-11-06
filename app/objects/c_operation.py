@@ -1,8 +1,10 @@
 import asyncio
 import re
-from collections import defaultdict
+
 from datetime import datetime
+from collections import defaultdict
 from enum import Enum
+from random import randint
 
 from app.utility.base_object import BaseObject
 
@@ -18,7 +20,8 @@ class Operation(BaseObject):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
                                source=self.source.display if self.source else '', planner=self.planner.name if self.planner else '',
-                               start=self.start.strftime('%Y-%m-%d %H:%M:%S'), state=self.state, phase=self.phase,
+                               start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
+                               state=self.state, phase=self.phase,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -31,7 +34,7 @@ class Operation(BaseObject):
 
     @property
     def report(self):
-        report = dict(name=self.name, host_group=[a.display for a in self.agents], start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+        report = dict(name=self.name, host_group=[a.display for a in self.agents], start=self.start.strftime('%Y-%m-%d %H:%M:%S') ,
                       steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
                       jitter=self.jitter, facts=[f.display for f in self.all_facts()])
         agents_steps = {a.paw: {'steps': []} for a in self.agents}
@@ -57,9 +60,10 @@ class Operation(BaseObject):
         report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
         return report
 
-    def __init__(self, op_id, name, agents, adversary, jitter='2/8', source=None, planner=None, state=None,
+    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True):
-        self.id = op_id
+        self.id = id
+        self.start = None
         self.name = name
         self.agents = agents
         self.adversary = adversary
@@ -70,7 +74,6 @@ class Operation(BaseObject):
         self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
         self.phase = 0
-        self.start = datetime.now()
         self.finish = None
         self.chain = []
         self.rules = []
@@ -81,6 +84,10 @@ class Operation(BaseObject):
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
         return existing
+
+    def set_start_details(self):
+        self.id = self.id if self.id else randint(0, 999999)
+        self.start = datetime.now()
 
     def add_link(self, link):
         link.id = len(self.chain) + 1
@@ -115,6 +122,8 @@ class Operation(BaseObject):
                 await asyncio.sleep(3)
                 if await self._trust_issues(member):
                     break
+
+    """ PRIVATE """
 
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:
