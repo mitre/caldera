@@ -1,8 +1,7 @@
-import asyncio
 import glob
 import json
-import pickle
 import os.path
+import pickle
 from base64 import b64encode
 from collections import defaultdict
 
@@ -21,7 +20,7 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[])
 
     async def save_state(self):
         """
@@ -37,13 +36,13 @@ class DataService(BaseService):
         :return:
         """
         if os.path.exists('data/object_store'):
-            await asyncio.sleep(3)
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
                 for key in ram.keys():
                     for c_object in ram[key]:
                         await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
+        self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
         """

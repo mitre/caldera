@@ -68,11 +68,11 @@ class TestData(TestBase):
         adversary = self.run_async(self.data_svc.store(
             Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
         ))
-        self.run_async(self.data_svc.store(Operation(op_id=1, name='my first op', agents=[], adversary=adversary)))
+        self.run_async(self.data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
         operations = self.run_async(self.data_svc.locate('operations'))
         self.assertEqual(1, len(operations))
 
-        self.run_async(self.data_svc.store(Operation(op_id=2, name='my first op', agents=[], adversary=adversary)))
+        self.run_async(self.data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
         operations = self.run_async(self.data_svc.locate('operations'))
 
         self.assertEqual(2, len(operations))

@@ -25,6 +25,7 @@ async def background_tasks(app):
     asyncio.create_task(application.resume_operations())
     asyncio.create_task(data_svc.load_data(directory='data'))
     asyncio.create_task(data_svc.restore_state())
+    asyncio.create_task(application.run_scheduler())
 
 
 def build_plugins(plugs):
