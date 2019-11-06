@@ -53,7 +53,7 @@ class PlanningService(BasePlanningService):
         """
         link_status = await self._default_link_status(operation)
         links = []
-        if agent and self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no cleanup-link created'):
+        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no cleanup-link created'):
             links.extend(await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status))
         else:
             for agent in operation.agents:
