@@ -24,6 +24,10 @@ class TestObjects(TestBase):
         self.assertEqual(1, len(self.data_svc.ram['agents']))
         self.assertTrue(t2 > t1)
 
+    def test_instructions(self):
+        i = self.run_async(self.agent_svc.get_instructions('test$user'))
+        self.assertEqual(i, '[]')
+
 
 if __name__ == '__main__':
     unittest.main()
