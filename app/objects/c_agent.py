@@ -13,8 +13,9 @@ class Agent(BaseObject):
     def display(self):
         return dict(paw=self.paw, group=self.group, architecture=self.architecture, platform=self.platform,
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
-                    last_seen=self.last_seen, last_trusted_seen=self.last_trusted_seen, sleep_min=self.sleep_min,
-                    sleep_max=self.sleep_max, executors=self.executors, privilege=self.privilege)
+                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'), last_trusted_seen=self.last_trusted_seen,
+                    sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
+                    privilege=self.privilege)
 
     def __init__(self, paw, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
