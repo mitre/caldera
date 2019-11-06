@@ -90,7 +90,7 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            copy_test = copy_test.replace('#{%s}' % var.trait, var.value)
+            copy_test = copy_test.replace('#{%s}' % var.trait, var.value.strip())
         return copy_test, score, used
 
     @staticmethod
