@@ -67,6 +67,6 @@ class Agent(BaseObject):
                              and (ab.platform == self.platform) and (ab.executor in executors)]
             if len(total_ability) > 0:
                 val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                if val.privilege and val.privilege == self.privilege or not val.privilege:
+                if (val.privilege and val.privilege == self.privilege) or not val.privilege:
                     abilities.append(val)
         return abilities
