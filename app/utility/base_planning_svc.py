@@ -57,7 +57,8 @@ class BasePlanningService(BaseService):
                 link.command = self.encode_string(decoded_test)
         return links
 
-    async def remove_completed_links(self, operation, agent, links):
+    @staticmethod
+    async def remove_completed_links(operation, agent, links):
         """
         Remove any links that have already been completed by the operation for the agent
         :param operation:
@@ -69,7 +70,8 @@ class BasePlanningService(BaseService):
         links[:] = [l for l in links if l.command not in completed_links]
         return links
 
-    async def remove_links_missing_facts(self, links):
+    @staticmethod
+    async def remove_links_missing_facts(links):
         """
         Remove any links that did not have facts encoded into command
         :param links:
@@ -135,6 +137,6 @@ class BasePlanningService(BaseService):
             uf = link.used
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(combo[0], uf, operation.facts):
+            if not requirement.enforce(combo[0], uf, operation.all_facts()):
                 return False
         return True

@@ -21,7 +21,6 @@ class PlanningService(BasePlanningService):
             abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
         else:
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]
-    
         link_status = await self._default_link_status(operation)
         links = []
         if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
@@ -30,7 +29,6 @@ class PlanningService(BasePlanningService):
             for agent in operation.agents:
                 if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
                     links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
-
         if trim:
             ability_requirements = {ab.unique: ab.requirements for ab in abilities}
             links[:] = await self.trim_links(operation, links, agent, ability_requirements)
