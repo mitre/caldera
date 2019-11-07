@@ -9,8 +9,7 @@ class Parser(BaseObject):
 
     @property
     def display(self):
-        d = dict(module=self.module, relationships=[m.display for m in self.mappers])
-        return d
+        return self.clean(dict(module=self.module, mappers=[m.display for m in self.mappers]))
 
     def __init__(self, module, mappers):
         self.module = module
