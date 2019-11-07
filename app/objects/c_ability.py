@@ -9,7 +9,8 @@ class Ability(BaseObject):
 
     @property
     def display(self):
-        return self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic, technique_name=self.technique_name,
+        return self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic,
+                               technique_name=self.technique_name,
                                technique_id=self.technique_id, name=self.name,
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
