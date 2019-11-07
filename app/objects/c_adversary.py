@@ -10,7 +10,7 @@ class Adversary(BaseObject):
     @property
     def display(self):
         phases = dict()
-        for k,v in self.phases.items():
+        for k, v in self.phases.items():
             phases[k] = [val.display for val in v]
         return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
                     phases=phases)

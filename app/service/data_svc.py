@@ -144,7 +144,8 @@ class DataService(BaseService):
                                                                info['cleanup'].strip().encode(
                                                                    'utf-8')).decode() if info.get(
                                                                'cleanup') else None,
-                                                           payload=info.get('payload'), parsers=info.get('parsers', []),
+                                                           payload=info.get('payload'),
+                                                           parsers=info.get('parsers', []),
                                                            requirements=ab.get('requirements', []),
                                                            privilege=ab['privilege'] if 'privilege' in ab.keys() else
                                                            None)
@@ -179,8 +180,9 @@ class DataService(BaseService):
         for adv in self.strip_yml(filename):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
 
-    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description, executor,
-                              platform, cleanup=None, payload=None, parsers=None, requirements=None, privilege=None):
+    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
+                              executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
+                              privilege=None):
         ps = []
         for module in parsers:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
