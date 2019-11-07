@@ -3,7 +3,7 @@ python:
   - "3.5"
 install:
   - pip install -r requirements.txt
-  - flake8
+  - pip install flake8
 script: 
   - python -m unittest
   - flake8 --max-line-length 119
