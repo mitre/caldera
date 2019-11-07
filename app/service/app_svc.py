@@ -2,8 +2,7 @@ import ast
 import asyncio
 import copy
 import traceback
-
-from datetime import datetime, date
+from datetime import datetime
 from importlib import import_module
 
 from app.objects.c_agent import Agent
@@ -59,12 +58,14 @@ class AppService(BaseService):
         """
         while True:
             interval = 60
-            for s in await self.get_service('data_svc').locate('schedules'):
-                now = datetime.now().time()
-                diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
-                if interval > diff.total_seconds() > 0:
-                    self.log.debug('Pulling %s off the scheduler' % s.name)
-                    sop = copy.deepcopy(s.task)
+            for op in await self.get_service('data_svc').locate('operations', match=dict(state='scheduled')):
+                now = datetime.now()
+                seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+                if interval > seconds_since_midnight > 0:
+                    self.log.debug('Scheduling %s for execution' % op.name)
+                    sop = copy.deepcopy(op)
+                    sop.state = sop.states['RUNNING']
+                    sop.set_start_details()
                     await self._services.get('data_svc').store(sop)
                     asyncio.create_task(self.run_operation(sop))
             await asyncio.sleep(interval)
@@ -74,14 +75,13 @@ class AppService(BaseService):
         Resume all unfinished operations
         :return: None
         """
+        await asyncio.sleep(10)
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
-            self.log.debug('Resuming operation: %s' % op.name)
             self.loop.create_task(self.run_operation(op))
 
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
-            operation.set_start_details()
             planner = await self._get_planning_module(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)

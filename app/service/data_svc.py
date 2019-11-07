@@ -20,7 +20,7 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[])
 
     async def save_state(self):
         """
