@@ -44,7 +44,8 @@ class BasePlanningService(BaseService):
                 relevant_facts = await self._build_relevant_facts(variables, operation, agent_facts)
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
-                    if ability_requirements and not await self._do_enforcements(ability_requirements[link.ability.unique], operation, link, combo):
+                    if ability_requirements and not await self._do_enforcements(
+                            ability_requirements[link.ability.unique], operation, link, combo):
                         continue
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
@@ -66,7 +67,8 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [l.command for l in operation.chain if l.paw == agent.paw and (l.finish or l.status == l.states["DISCARD"])]
+        completed_links = [l.command for l in operation.chain
+                           if l.paw == agent.paw and (l.finish or l.status == l.states["DISCARD"])]
         links[:] = [l for l in links if l.command not in completed_links]
         return links
 

@@ -6,7 +6,7 @@ class BaseObject(BaseWorld):
     def match(self, criteria):
         if not criteria:
             return self
-        criteria_matches = [True for k,v in criteria.items() if self.__getattribute__(k) == v]
+        criteria_matches = [True for k, v in criteria.items() if self.__getattribute__(k) == v]
         if len(criteria_matches) == len(criteria) and all(criteria_matches):
             return self
 
@@ -24,8 +24,7 @@ class BaseObject(BaseWorld):
 
     @staticmethod
     def clean(d):
-        for k,v in d.items():
+        for k, v in d.items():
             if v is None:
                 d[k] = ''
         return d
-
