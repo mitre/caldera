@@ -142,3 +142,21 @@ class BasePlanningService(BaseService):
             if not requirement.enforce(link.used, relationships):
                 return False
         return True
+
+    async def _exclude_existing(self, combo, operation):
+        all_hostnames = [agent.paw.split('$')[0].lower() for agent in await self._active_agents(operation)]
+        for item in combo:
+            # prevent backwards lateral movement
+            if 'remote.host' in item.trait:
+                if item.value.split('.')[0].lower() in all_hostnames:
+                    return False
+                elif any(h in item.value.split('.')[0].lower() for h in all_hostnames):
+                    return False
+        return True
+
+    async def _active_agents(self, operation):
+        active = []
+        for agent in operation.agents:
+            if agent.last_seen > operation.start:
+                active.append(agent)
+        return active
