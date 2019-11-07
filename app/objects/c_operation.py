@@ -30,7 +30,6 @@ class Operation(BaseObject):
         return dict(RUNNING='running',
                     RUN_ONE_LINK='run_one_link',
                     PAUSED='paused',
-                    SCHEDULED='scheduled',
                     FINISHED='finished')
 
     @property
@@ -89,9 +88,6 @@ class Operation(BaseObject):
     def set_start_details(self):
         self.id = self.id if self.id else randint(0, 999999)
         self.start = datetime.now()
-
-    def is_runnable(self):
-        return self.state != self.states['SCHEDULED']
 
     def add_link(self, link):
         link.id = len(self.chain) + 1
