@@ -49,7 +49,8 @@ class AgentService(BaseService):
         """
         ops = await self.data_svc.locate('operations', match=dict(finish=None))
         instructions = []
-        for link in [c for op in ops for c in op.chain if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
+        for link in [c for op in ops for c in op.chain
+                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
             instructions.append(json.dumps(dict(id=link.unique,

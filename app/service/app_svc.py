@@ -104,12 +104,11 @@ class AppService(BaseService):
     async def _get_planning_module(self, operation):
         planning_module = import_module(operation.planner.module)
         planner_params = ast.literal_eval(operation.planner.params)
-        return getattr(planning_module, 'LogicalPlanner')(operation, self.get_service('planning_svc'), **planner_params)
+        return getattr(planning_module, 'LogicalPlanner')(operation,
+                                                          self.get_service('planning_svc'), **planner_params)
 
     async def _cleanup_operation(self, operation):
         for member in operation.agents:
             for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
-
-

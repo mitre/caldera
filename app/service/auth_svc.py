@@ -110,6 +110,3 @@ class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
         if not user:
             return False
         return permission in user.permissions
-
-
-
