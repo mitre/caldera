@@ -14,10 +14,3 @@ class Executor(BaseObject):
     def __init__(self, name, preferred):
         self.name = name
         self.preferred = preferred
-
-    def store(self, ram):
-        existing = self.retrieve(ram['executors'], self.unique)
-        if not existing:
-            ram['executors'].append(self)
-            return self.retrieve(ram['executors'], self.unique)
-        return existing
