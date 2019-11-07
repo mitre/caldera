@@ -32,7 +32,7 @@ class Link(BaseObject):
         try:
             with open('data/results/%s' % self.unique, 'r') as fle:
                 return fle.read()
-        except Exception as e:
+        except Exception:
             return None
 
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
@@ -72,7 +72,7 @@ class Link(BaseObject):
         p_inst = await self._load_module('Parser', parser_info)
         try:
             return p_inst.parse(blob=blob)
-        except Exception as e:
+        except Exception:
             return []
 
     @staticmethod
@@ -96,4 +96,3 @@ class Link(BaseObject):
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
                     break
-

@@ -19,7 +19,8 @@ class Operation(BaseObject):
     def display(self):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
-                               source=self.source.display if self.source else '', planner=self.planner.name if self.planner else '',
+                               source=self.source.display if self.source else '',
+                               planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, phase=self.phase,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
@@ -34,8 +35,9 @@ class Operation(BaseObject):
 
     @property
     def report(self):
-        report = dict(name=self.name, host_group=[a.display for a in self.agents], start=self.start.strftime('%Y-%m-%d %H:%M:%S') ,
-                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
+        report = dict(name=self.name, host_group=[a.display for a in self.agents],
+                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'), steps=[], finish=self.finish,
+                      planner=self.planner.name, adversary=self.adversary.display,
                       jitter=self.jitter, facts=[f.display for f in self.all_facts()])
         agents_steps = {a.paw: {'steps': []} for a in self.agents}
         for step in self.chain:
@@ -132,8 +134,8 @@ class Operation(BaseObject):
         for link_paw in link_paws:
             link = [link for link in self.chain if link.paw == link_paw][0]
             member = [member for member in self.agents if member.paw == link_paw][0]
-            while (not link.finish and not link.status == link.states["DISCARD"]):
-                await asyncio.sleep(5)  #TODO: Make this configurable in planner file
+            while not link.finish and not link.status == link.states["DISCARD"]:
+                await asyncio.sleep(5)  # TODO: Make this configurable in planner file
                 if await self._trust_issues(member):
                     break
 
@@ -182,8 +184,8 @@ class Operation(BaseObject):
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif ability.privilege != agent.privilege:
-             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
-                         ability_id=ability.ability_id, ability_name=ability.name)
+            return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
         else:
             if (ability.platform == agent.platform and ability.executor in agent_executors
                     and ability.ability_id not in agent_ran):

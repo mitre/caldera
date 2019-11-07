@@ -15,5 +15,3 @@ class Fact(BaseObject):
         self.trait = trait
         self.value = value
         self.score = score
-
-

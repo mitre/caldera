@@ -23,7 +23,8 @@ class PlanningService(BasePlanningService):
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]
         link_status = await self._default_link_status(operation)
         links = []
-        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+                                                                msg='no link created'):
             links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
         else:
             for agent in operation.agents:
@@ -44,11 +45,13 @@ class PlanningService(BasePlanningService):
         """
         link_status = await self._default_link_status(operation)
         links = []
-        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no cleanup-link created'):
+        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+                                                                msg='no cleanup-link created'):
             links.extend(await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status))
         else:
             for agent in operation.agents:
-                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no cleanup-link created'):
+                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+                                                              msg='no cleanup-link created'):
                     links.extend(
                         await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status)
                     )
