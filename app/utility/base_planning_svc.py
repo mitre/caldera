@@ -52,7 +52,7 @@ class BasePlanningService(BaseService):
                     variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link.command = self.encode_string(variant)
                     copy_link.score = score
-                    copy_link.used = used
+                    copy_link.used.extend(used)
                     links.append(copy_link)
             else:
                 link.command = self.encode_string(decoded_test)
