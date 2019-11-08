@@ -9,7 +9,7 @@ from app.utility.rule import RuleSet
 
 class BasePlanningService(BaseService):
 
-    async def trim_links(self, operation, links, agent, ability_requirements=None):
+    async def trim_links(self, operation, links, agent):
         """
         Trim links in supplied list. Where 'trim' entails:
             - adding all possible test variants
@@ -20,19 +20,19 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, operation, ability_requirements)
+        links[:] = await self.add_test_variants(links, agent, operation)
         links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
+        links = await self.remove_links_missing_requirements(links, operation.all_relationships())
         self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
-    async def add_test_variants(self, links, agent, operation, ability_requirements=None):
+    async def add_test_variants(self, links, agent, operation):
         """
         Create a list of all possible links for a given phase
         :param links:
         :param agent:
         :param operation:
-        :param ability_requirements:
         :return: updated list of links
         """
         group = agent.group
@@ -44,9 +44,6 @@ class BasePlanningService(BaseService):
                 relevant_facts = await self._build_relevant_facts(variables, operation, agent_facts)
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
-                    if ability_requirements and not await self._do_enforcements(
-                            ability_requirements[link.ability.unique], operation, link, combo):
-                        continue
                     copy_test = copy.deepcopy(decoded_test)
                     copy_link = copy.deepcopy(link)
                     variant, score, used = await self._build_single_test_variant(copy_test, combo)
@@ -82,6 +79,11 @@ class BasePlanningService(BaseService):
         links[:] = [l for l in links if
                     not re.findall(r'#{(.*?)}', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
         return links
+
+    async def remove_links_missing_requirements(self, links, relationships):
+        links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
+        return links
+
 
     """ PRIVATE """
 
@@ -131,14 +133,13 @@ class BasePlanningService(BaseService):
                 agent_facts.append(f.unique)
         return agent_facts
 
-    async def _do_enforcements(self, ability_requirements, operation, link, combo):
+    async def _do_enforcements(self, link, relationships):
         """
         enforce any defined requirements on the link
         """
-        for req_inst in ability_requirements:
-            uf = link.used
+        for req_inst in link.ability.requirements:
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(combo[0], uf, operation.all_facts()):
+            if not requirement.enforce(link.used, relationships):
                 return False
         return True
