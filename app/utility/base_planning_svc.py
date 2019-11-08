@@ -84,7 +84,6 @@ class BasePlanningService(BaseService):
         links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
         return links
 
-
     """ PRIVATE """
 
     @staticmethod
