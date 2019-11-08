@@ -100,6 +100,9 @@ class Operation(BaseObject):
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
 
+    def all_relationships(self):
+        return [r for lnk in self.chain for r in lnk.relationships]
+
     async def apply(self, link):
         while self.state != self.states['RUNNING']:
             if self.state == self.states['RUN_ONE_LINK']:

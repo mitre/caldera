@@ -32,8 +32,7 @@ class PlanningService(BasePlanningService):
                                                               msg='no link created'):
                     links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
         if trim:
-            ability_requirements = {ab.unique: ab.requirements for ab in abilities}
-            links[:] = await self.trim_links(operation, links, agent, ability_requirements)
+            links[:] = await self.trim_links(operation, links, agent)
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
