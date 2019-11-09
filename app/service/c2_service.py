@@ -8,7 +8,6 @@ class C2Service(BaseService):
     def __init__(self, services):
         self.agent_svc = services.get('agent_svc')
         self.log = self.add_service('c2_svc', self)
-        self.c2_channels = []
         self.running = False
         self.q = asyncio.Queue()
         self.loop = asyncio.get_event_loop()
