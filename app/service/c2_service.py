@@ -23,12 +23,9 @@ class C2Service(BaseService):
     """ PRIVATE """
 
     def _start_active_channel_process(self):
-        try:
-            p = mp.Process(target=self._handle_c2_channels, args=(self.q,))
-            p.start()
-            self.running = True
-        except Exception as e:
-            print(e)
+        p = mp.Process(target=self._handle_c2_channels, args=(self.q,))
+        p.start()
+        self.running = True
 
     @staticmethod
     def _handle_c2_channels(queue):
