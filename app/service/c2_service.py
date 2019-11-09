@@ -1,6 +1,7 @@
 from app.utility.base_service import BaseService
 import time
 import asyncio
+import json
 
 
 class C2Service(BaseService):
@@ -27,8 +28,10 @@ class C2Service(BaseService):
     async def _handle_c2_channels(self, queue):
         while True:
             c2 = await queue.get()
-            received_data = await c2.get_beacons()
-            for beacon in received_data:
+            beacons = await c2.get_beacons()
+            for beacon in beacons:
                 await self.agent_svc.handle_heartbeat(**beacon)
-            queue.put(c2)
-            time.sleep(10)
+                instructions = await self.agent_svc.get_instructions(beacon['paw'])
+                await c2.post_instructions(instructions, beacon['paw'])
+            await queue.put(c2)
+            time.sleep(30)
