@@ -13,6 +13,7 @@ from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
 from app.objects.c_source import Source
+from app.objects.c_c2 import C2
 from app.utility.base_service import BaseService
 
 
@@ -20,7 +21,8 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
+                        c2=[])
 
     async def save_state(self):
         """
@@ -64,6 +66,7 @@ class DataService(BaseService):
         await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
+        await self._load_c2(directory='%s/c2' % directory)
 
     async def store(self, c_object):
         """
@@ -174,6 +177,15 @@ class DataService(BaseService):
                 )
                 total += 1
         self.log.debug('Loaded %s planners' % total)
+
+    async def _load_c2(self, directory):
+        total = 0
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for c2 in self.strip_yml(filename):
+                await self.store(C2(name=c2.get('name'), module=c2.get('module'), config=c2.get('config'),
+                                    c2_type=c2.get('type')))
+                total += 1
+        self.log.debug('Loaded %s c2 channels' % total)
 
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
