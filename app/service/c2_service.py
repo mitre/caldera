@@ -1,5 +1,6 @@
 from app.utility.base_service import BaseService
 import multiprocessing as mp
+import time
 
 
 class C2Service(BaseService):
@@ -31,5 +32,7 @@ class C2Service(BaseService):
     def _handle_c2_channels(queue):
         while True:
             c2 = queue.get()
-            c2.handle_beacon()
+            received_data = c2.get_beacons()
+            print(received_data)
             queue.put(c2)
+            time.sleep(10)
