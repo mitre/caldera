@@ -36,4 +36,3 @@ class C2Service(BaseService):
             c2 = queue.get()
             c2.handle_beacon()
             queue.put(c2)
-
