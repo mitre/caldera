@@ -6,4 +6,3 @@ jinja2
 pyyaml
 cryptography
 msgpack-python
-PyGithub

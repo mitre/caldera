@@ -18,7 +18,6 @@ from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
-from app.service.c2_service import C2Service
 
 
 async def background_tasks(app):
