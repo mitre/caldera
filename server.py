@@ -104,7 +104,6 @@ if __name__ == '__main__':
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService()
-        c2_service = C2Service(services=data_svc.get_services())
         application = AppService(config=cfg, plugins=plugin_modules)
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
