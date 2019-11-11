@@ -183,7 +183,7 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for c2 in self.strip_yml(filename):
                 await self.store(C2(name=c2.get('name'), module=c2.get('module'), config=c2.get('config'),
-                                    c2_type=c2.get('type')))
+                                    c2_type=c2.get('type'), enabled=c2.get('enabled')))
                 total += 1
         self.log.debug('Loaded %s c2 channels' % total)
 

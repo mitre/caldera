@@ -10,13 +10,19 @@ class C2(BaseObject):
     def display(self):
         return dict(module=self.module, config=self.config)
 
-    def __init__(self, c2_type, name='http', module=None, config={}):
+    def __init__(self, c2_type, name='http', module=None, config={}, enabled=False):
         self.name = name
         self.module = module
         self.config = config
         self.c2_type = c2_type
+        self.enabled = enabled
 
     def store(self, ram):
+        """
+        Store the object in ram
+        :param ram:
+        :return:
+        """
         existing = self.retrieve(ram['c2'], self.unique)
         if not existing:
             ram['c2'].append(self)

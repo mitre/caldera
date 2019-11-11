@@ -18,6 +18,7 @@ from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
+from app.service.c2_service import C2Service
 
 
 async def background_tasks(app):
@@ -26,6 +27,7 @@ async def background_tasks(app):
     asyncio.create_task(data_svc.load_data(directory='data'))
     asyncio.create_task(data_svc.restore_state())
     asyncio.create_task(application.run_scheduler())
+    asyncio.create_task(c2_svc.start())
 
 
 def build_plugins(plugs):
@@ -104,7 +106,7 @@ if __name__ == '__main__':
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         agent_svc = AgentService()
         application = AppService(config=cfg, plugins=plugin_modules)
-
+        c2_svc = C2Service(data_svc.get_services())
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
