@@ -36,8 +36,6 @@ async def background_tasks(app):
         app.loop.create_task(application.run_scheduler())
 
 
-
-
 def build_plugins(plugs):
     modules = []
     for plug in plugs if plugs else []:
