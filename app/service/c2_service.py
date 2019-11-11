@@ -11,8 +11,6 @@ class C2Service(BaseService):
         self.data_svc = services.get('data_svc')
         self.file_svc = services.get('file_svc')
         self.log = self.add_service('c2_svc', self)
-        # loop = asyncio.get_event_loop()
-        # self.start(loop, services)
 
     async def start(self):
         """
