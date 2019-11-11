@@ -77,4 +77,3 @@ class C2Service(BaseService):
             else:
                 payload_content.append(await self.file_svc.read_file(p))
         return payload_content
-
