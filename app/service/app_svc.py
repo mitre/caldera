@@ -63,7 +63,7 @@ class AppService(BaseService):
                 diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
                 if interval > diff.total_seconds() > 0:
                     self.log.debug('Pulling %s off the scheduler' % s.name)
-                    sop = copy.deepcopy(s.operation)
+                    sop = copy.deepcopy(s.task)
                     sop.set_start_details()
                     await self._services.get('data_svc').store(sop)
                     asyncio.create_task(self.run_operation(sop))
