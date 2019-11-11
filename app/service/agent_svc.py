@@ -14,7 +14,7 @@ class AgentService(BaseService):
         self.loop = asyncio.get_event_loop()
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid,
-                               sleep, privilege, c2):
+                               sleep, privilege, c2='API'):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
