@@ -11,10 +11,10 @@ class Schedule(BaseObject):
     def display(self):
         return dict()
 
-    def __init__(self, name, schedule, operation):
+    def __init__(self, name, schedule, task):
         self.name = name
         self.schedule = schedule
-        self.operation = operation
+        self.task = task
 
     def store(self, ram):
         existing = self.retrieve(ram['schedules'], self.unique)
