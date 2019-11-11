@@ -30,7 +30,7 @@ class AgentService(BaseService):
         :param privilege:
         :return: the agent object from explode
         """
-        self.log.debug('HEARTBEAT (%s)' % paw)
+        self.log.debug('HEARTBEAT (%s): (%s)' % (c2, paw))
         now = self.get_current_timestamp()
         agent = Agent(paw=paw, platform=platform, server=server, location=location, executors=executors,
                       architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now, privilege=privilege)
