@@ -40,7 +40,7 @@ class C2Service(BaseService):
                     agent = await self.agent_svc.handle_heartbeat(**beacon)
                     instructions = await self.agent_svc.get_instructions(beacon['paw'])
                     payloads = self._get_payloads(instructions)
-                    payload_contents = await self._get_payload_content(payloads)
+                    payload_contents = await self._get_payload_content(payloads, beacon)
                     try:
                         await c2_module.post_payloads(payload_contents, beacon['paw'])
                     except Exception:
@@ -83,12 +83,11 @@ class C2Service(BaseService):
         return [json.loads(instruction).get('payload') for instruction in list_instructions
                 if json.loads(instruction).get('payload')]
 
-    async def _get_payload_content(self, payloads):
+    async def _get_payload_content(self, payloads, beacon):
         payload_content = []
         for p in payloads:
             if p in self.file_svc.special_payloads:
-                # TODO handle special payloads
-                pass
+                payload_content.append(self.file_svc[p](dict(file=p, platform=beacon['platform'])))
             else:
                 payload_content.append(await self.file_svc.read_file(p))
         return payload_content
