@@ -10,7 +10,7 @@ class C2(BaseObject):
     def display(self):
         return dict(module=self.module, config=self.config)
 
-    def __init__(self, c2_type, name='http', module=None, config={}, enabled=False):
+    def __init__(self, c2_type=None, name='API', module=None, config={}, enabled=False):
         self.name = name
         self.module = module
         self.config = config

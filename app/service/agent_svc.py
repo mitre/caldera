@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.c_c2 import C2
 from app.utility.base_service import BaseService
 
 
@@ -14,7 +15,7 @@ class AgentService(BaseService):
         self.loop = asyncio.get_event_loop()
 
     async def handle_heartbeat(self, paw, platform, server, group, executors, architecture, location, pid, ppid,
-                               sleep, privilege, c2='API'):
+                               sleep, privilege, c2=C2('API', enabled=True)):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -28,9 +29,10 @@ class AgentService(BaseService):
         :param ppid:
         :param sleep:
         :param privilege:
+        :param c2
         :return: the agent object from explode
         """
-        self.log.debug('HEARTBEAT (%s): (%s)' % (c2, paw))
+        self.log.debug('HEARTBEAT (%s): (%s)' % (c2.name, paw))
         now = self.get_current_timestamp()
         agent = Agent(paw=paw, platform=platform, server=server, location=location, executors=executors,
                       architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now, privilege=privilege)
