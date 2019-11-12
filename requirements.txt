@@ -3,6 +3,6 @@ aiohttp
 aiohttp_session
 aiohttp-security
 jinja2
-pyyaml
+pyyaml>=5.1
 cryptography
 msgpack-python
