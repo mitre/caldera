@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app.utility.base_object import BaseObject
+from app.objects.c_c2 import C2
 
 
 class Agent(BaseObject):
@@ -19,7 +20,7 @@ class Agent(BaseObject):
 
     def __init__(self, paw, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None, c2='API'):
+                 sleep_max=None, executors=None, privilege=None, c2=C2('API')):
         self.paw = paw
         self.group = group
         self.architecture = architecture

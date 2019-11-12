@@ -87,7 +87,8 @@ class C2Service(BaseService):
         payload_content = []
         for p in payloads:
             if p in self.file_svc.special_payloads:
-                payload_content.append(self.file_svc[p](dict(file=p, platform=beacon['platform'])))
+                f = await self.file_svc.special_payloads[p](dict(file=p, platform=beacon['platform']))
+                payload_content.append(await self.file_svc.read_file(f))
             else:
                 payload_content.append(await self.file_svc.read_file(p))
         return payload_content
