@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 
 from app.objects.c_agent import Agent
-from app.objects.c_c2 import C2
 from app.utility.base_service import BaseService
 
 
