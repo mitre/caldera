@@ -187,11 +187,7 @@ class DataService(BaseService):
         for module in parsers:
             ms = []
             for m in parsers[module]:
-                misc = {}
-                for k, v in m.items():
-                    if k not in ['source', 'edge', 'target']:
-                        misc[k] = v
-                ms.append(Mapper(source=m['source'], edge=m.get('edge'), target=m.get('target'), misc=misc))
+                ms.append(Mapper(**m))
             ps.append(Parser(module=module, mappers=ms))
         rs = []
         for module in requirements:

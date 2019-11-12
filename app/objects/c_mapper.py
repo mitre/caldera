@@ -5,14 +5,27 @@ class Mapper(BaseObject):
 
     @property
     def unique(self):
-        return '%s%s%s%s' % (self.source, self.edge, self.target, self.misc)
+        uniq = ""
+        for f in self.fields:
+            uniq = uniq + getattr(self, f)
+        return uniq
 
     @property
     def display(self):
-        return self.clean(dict(source=self.source, edge=self.edge, target=self.target, misc=self.misc))
+        attrs = {}
+        for f in self.fields:
+            attrs[f] = getattr(self, f)
+        return self.clean(attrs)
 
-    def __init__(self, source, edge=None, target=None, misc=None):
-        self.source = source
-        self.edge = edge
-        self.target = target
-        self.misc = misc
+    def __init__(self, **kwargs):
+        self.source = kwargs["source"]
+        self.edge = None
+        self.target = None
+        self.fields = []
+        for k, v in kwargs.items():
+            self.fields.append(k)
+            setattr(self, k, v)
+        for f in ["edge", "source"]:
+            if f not in self.fields:
+                self.fields.append(f)
+        self.fields.sort()
