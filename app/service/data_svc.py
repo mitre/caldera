@@ -182,9 +182,13 @@ class DataService(BaseService):
         total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for c2 in self.strip_yml(filename):
-                await self.store(C2(name=c2.get('name'), module=c2.get('module'), config=c2.get('config'),
-                                    c2_type=c2.get('type'), enabled=c2.get('enabled')))
-                total += 1
+                c2_module = await self.load_module(module_type=c2.get('name'), module_info=dict(module=c2.get('module'),
+                                                                                         config=c2.get('config'),
+                                                                                         c2_type=c2.get('c2_type')))
+                if c2_module.valid_config():
+                    await self.store(C2(name=c2.get('name'), module=c2.get('module'), config=c2.get('config'),
+                                        c2_type=c2.get('type'), enabled=c2.get('enabled')))
+                    total += 1
         self.log.debug('Loaded %s c2 channels' % total)
 
     async def _add_adversary_packs(self, pack):
