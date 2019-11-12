@@ -21,37 +21,39 @@ class C2Service(BaseService):
         while True:
             c2_channels = await self.data_svc.locate('c2', dict(enabled=True, c2_type='active'))
             for c2 in c2_channels:
+
                 c2_module = await self.load_module(module_type=c2.name, module_info=dict(module=c2.module,
                                                                                          config=c2.config,
                                                                                          c2_type=c2.c2_type))
-                beacons = []
-                results = []
-                try:
-                    beacons = await c2_module.get_beacons()
-                except Exception:
-                    self.log.debug('Receiving beacons over c2 (%s) failed!' % c2_module.name)
-                try:
-                    results = await c2_module.get_results()
-                except Exception:
-                    self.log.debug('Retrieving results over c2 (%s) failed!' % c2_module.name)
-                for data in results:
-                    data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    await self.agent_svc.save_results(data['id'], data['output'], data['status'], data['pid'])
-                for beacon in beacons:
-                    agent = await self.agent_svc.handle_heartbeat(**beacon)
-                    instructions = await self.agent_svc.get_instructions(beacon['paw'])
-                    payloads = self._get_payloads(instructions)
-                    payload_contents = await self._get_payload_content(payloads)
+                if c2_module.valid_key():
+                    beacons = []
+                    results = []
                     try:
-                        await c2_module.post_payloads(payload_contents, beacon['paw'])
+                        beacons = await c2_module.get_beacons()
                     except Exception:
-                        self.log.warning('Posting payload over c2 (%s) failed!' % c2_module.name)
-                    response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
-                    text = self.agent_svc.encode_string(json.dumps(response))
+                        self.log.debug('Receiving beacons over c2 (%s) failed!' % c2_module.name)
                     try:
-                        await c2_module.post_instructions(text, beacon['paw'])
+                        results = await c2_module.get_results()
                     except Exception:
-                        self.log.warning('Posting instructions over c2 (%s) failed!' % c2_module.name)
+                        self.log.debug('Retrieving results over c2 (%s) failed!' % c2_module.name)
+                    for data in results:
+                        data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                        await self.agent_svc.save_results(data['id'], data['output'], data['status'], data['pid'])
+                    for beacon in beacons:
+                        agent = await self.agent_svc.handle_heartbeat(**beacon)
+                        instructions = await self.agent_svc.get_instructions(beacon['paw'])
+                        payloads = self._get_payloads(instructions)
+                        payload_contents = await self._get_payload_content(payloads)
+                        try:
+                            await c2_module.post_payloads(payload_contents, beacon['paw'])
+                        except Exception:
+                            self.log.warning('Posting payload over c2 (%s) failed!' % c2_module.name)
+                        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+                        text = self.agent_svc.encode_string(json.dumps(response))
+                        try:
+                            await c2_module.post_instructions(text, beacon['paw'])
+                        except Exception:
+                            self.log.warning('Posting instructions over c2 (%s) failed!' % c2_module.name)
             await asyncio.sleep(10)
 
     async def stop_channel(self, criteria):
