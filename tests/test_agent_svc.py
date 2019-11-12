@@ -4,6 +4,7 @@ import unittest
 from app.service.agent_svc import AgentService
 from app.service.data_svc import DataService
 from tests.test_base import TestBase
+from app.objects.c_c2 import C2
 
 
 class TestAgent(TestBase):
@@ -15,8 +16,8 @@ class TestAgent(TestBase):
     def test_heartbeat(self):
         agent_details = dict(
             paw='test$user', platform='windows', server='http://localhost:8888', group='my_group',
-            executors='psh,cmd', architecture=None, location=None, pid=1000, ppid=1, sleep=60, privilege=None
-        )
+            executors='psh,cmd', architecture=None, location=None, pid=1000, ppid=1, sleep=60, privilege=None,
+            c2=C2('API'))
         t1 = self.run_async(self.agent_svc.handle_heartbeat(**agent_details)).last_seen
         self.assertEqual(1, len(self.data_svc.ram['agents']))
         time.sleep(2)
