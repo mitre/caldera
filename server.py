@@ -22,12 +22,13 @@ from app.service.c2_service import C2Service
 
 
 async def background_tasks(app):
-    asyncio.create_task(application.start_sniffer_untrusted_agents())
-    asyncio.create_task(application.resume_operations())
-    asyncio.create_task(data_svc.load_data(directory='data'))
-    asyncio.create_task(data_svc.restore_state())
-    asyncio.create_task(application.run_scheduler())
-    asyncio.create_task(c2_svc.start())
+    loop = asyncio.get_event_loop()
+    loop.create_task(application.start_sniffer_untrusted_agents())
+    loop.create_task(application.resume_operations())
+    loop.create_task(data_svc.load_data(directory='data'))
+    loop.create_task(data_svc.restore_state())
+    loop.create_task(application.run_scheduler())
+    loop.create_task(c2_svc.start())
 
 
 def build_plugins(plugs):
