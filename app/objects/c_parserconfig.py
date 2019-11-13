@@ -21,3 +21,4 @@ class ParserConfig(BaseObject):
 
 class ParserConfigException(Exception):
     pass
+
