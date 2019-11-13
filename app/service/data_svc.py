@@ -9,6 +9,7 @@ from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
 from app.objects.c_parser import Parser
+from app.objects.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
@@ -185,9 +186,8 @@ class DataService(BaseService):
                               privilege=None):
         ps = []
         for module in parsers:
-            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
-                        parsers[module]]
-            ps.append(Parser(module=module, relationships=relation))
+            pcs = [(ParserConfig(**m)) for m in parsers[module]]
+            ps.append(Parser(module=module, parserconfigs=pcs))
         rs = []
         for module in requirements:
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
