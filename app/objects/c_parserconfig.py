@@ -19,6 +19,6 @@ class ParserConfig(BaseObject):
         if (self.edge is None) ^ (self.target is None):
             raise ParserConfigException('Edge or Target provided without the other.')
 
+
 class ParserConfigException(Exception):
     pass
-
