@@ -23,7 +23,7 @@ class BasePlanningService(BaseService):
         links[:] = await self.add_test_variants(links, agent, operation)
         links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
-        links = await self.remove_links_missing_requirements(links, operation.all_relationships())
+        links = await self.remove_links_missing_requirements(links, operation)
         self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
@@ -80,8 +80,10 @@ class BasePlanningService(BaseService):
                     not re.findall(r'#{(.*?)}', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
         return links
 
-    async def remove_links_missing_requirements(self, links, relationships):
+    async def remove_links_missing_requirements(self, links, operation):
+        relationships = operation.all_relationships()
         links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
+        links[:] = [l for l in links if await self._exclude_existing(l, operation)]
         return links
 
     """ PRIVATE """
@@ -143,9 +145,9 @@ class BasePlanningService(BaseService):
                 return False
         return True
 
-    async def _exclude_existing(self, combo, operation):
+    async def _exclude_existing(self, link, operation):
         all_hostnames = [agent.paw.split('$')[0].lower() for agent in await self._active_agents(operation)]
-        for item in combo:
+        for item in link.relationships:
             # prevent backwards lateral movement
             if 'remote.host' in item.trait:
                 if item.value.split('.')[0].lower() in all_hostnames:
