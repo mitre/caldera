@@ -86,8 +86,7 @@ class BasePlanningService(BaseService):
         links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
         return links
 
-    async def remove_links_duplicate_hosts(self, links ,operation):
-        relationships = operation.all_relationships()
+    async def remove_links_duplicate_hosts(self, links, operation):
         links[:] = [l for l in links if await self._exclude_existing(l, operation)]
         return links
 
