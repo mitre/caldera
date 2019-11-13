@@ -1,11 +1,9 @@
 [![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
- Core:[![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)
- Chain:[![Build Status](https://travis-ci.com/mitre/chain.svg?branch=master)](https://travis-ci.com/mitre/chain)
- Sandcat:[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)
- GUI: [![Build Status](https://travis-ci.com/mitre/gui.svg?branch=master)](https://travis-ci.com/mitre/gui)
- Mock: [![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)
- Terminal: [![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)
- SSL: [![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)
+
+| Caldera (Core)                                                                                                          | Chain | Sandcat | Gui | Mock | Terminal | SSL |
+|---------------------------------------------------------------------------------------------------------------|-------|---------|-----|------|----------|-----|
+|[![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)|[![Build Status](https://travis-ci.com/mitre/chain.svg?branch=master)](https://travis-ci.com/mitre/chain)|[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)| [![Build Status](https://travis-ci.com/mitre/gui.svg?branch=master)](https://travis-ci.com/mitre/gui)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|
+
 # CALDERA
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/).
