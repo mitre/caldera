@@ -24,6 +24,7 @@ class BasePlanningService(BaseService):
         links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_missing_requirements(links, operation)
+        links = await self.remove_links_duplicate_hosts(links, operation)
         self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
@@ -83,6 +84,10 @@ class BasePlanningService(BaseService):
     async def remove_links_missing_requirements(self, links, operation):
         relationships = operation.all_relationships()
         links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
+        return links
+
+    async def remove_links_duplicate_hosts(self, links ,operation):
+        relationships = operation.all_relationships()
         links[:] = [l for l in links if await self._exclude_existing(l, operation)]
         return links
 
@@ -146,7 +151,7 @@ class BasePlanningService(BaseService):
         return True
 
     async def _exclude_existing(self, link, operation):
-        all_hostnames = [agent.paw.split('$')[0].lower() for agent in await self._active_agents(operation)]
+        all_hostnames = [agent.paw.split('$')[0].lower() for agent in await operation._active_agents()]
         for item in link.relationships:
             # prevent backwards lateral movement
             if 'remote.host' in item.trait:
@@ -155,10 +160,3 @@ class BasePlanningService(BaseService):
                 elif any(h in item.value.split('.')[0].lower() for h in all_hostnames):
                     return False
         return True
-
-    async def _active_agents(self, operation):
-        active = []
-        for agent in operation.agents:
-            if agent.last_seen > operation.start:
-                active.append(agent)
-        return active
