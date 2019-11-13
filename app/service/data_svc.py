@@ -14,7 +14,7 @@ from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
 from app.objects.c_source import Source
-from app.objects.c_mapper import Mapper
+from app.objects.c_parserconfig import ParserConfig
 from app.utility.base_service import BaseService
 
 
@@ -187,7 +187,7 @@ class DataService(BaseService):
         for module in parsers:
             ms = []
             for m in parsers[module]:
-                ms.append(Mapper(**m))
+                ms.append(ParserConfig(**m))
             ps.append(Parser(module=module, mappers=ms))
         rs = []
         for module in requirements:
