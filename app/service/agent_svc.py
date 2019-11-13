@@ -34,8 +34,9 @@ class AgentService(BaseService):
         """
         self.log.debug('HEARTBEAT (%s)' % paw)
         now = self.get_current_timestamp()
-        agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location, executors=executors,
-                      architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now, privilege=privilege)
+        agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
+                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now,
+                      privilege=privilege)
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep
