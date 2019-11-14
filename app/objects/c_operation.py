@@ -143,6 +143,13 @@ class Operation(BaseObject):
                     break
 
     """ PRIVATE """
+    
+    async def _active_agents(self):
+        active = []
+        for agent in self.agents:
+            if agent.last_seen > self.start:
+                active.append(agent)
+        return active
 
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:
