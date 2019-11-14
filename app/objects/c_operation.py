@@ -143,7 +143,7 @@ class Operation(BaseObject):
                     break
 
     """ PRIVATE """
-    
+
     async def _active_agents(self):
         active = []
         for agent in self.agents:
