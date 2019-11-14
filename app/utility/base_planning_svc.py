@@ -154,8 +154,7 @@ class BasePlanningService(BaseService):
         for item in link.relationships:
             # prevent backwards lateral movement
             if 'remote.host' in item.trait:
-                if item.value.split('.')[0].lower() in all_hostnames:
-                    return False
-                elif any(h in item.value.split('.')[0].lower() for h in all_hostnames):
+                target_name = item.value.split('.')[0].lower()
+                if target_name in all_hostnames or any (target_name in h for h in all_hostnames):
                     return False
         return True
