@@ -155,6 +155,6 @@ class BasePlanningService(BaseService):
             # prevent backwards lateral movement
             if 'remote.host' in item.trait:
                 target_name = item.value.split('.')[0].lower()
-                if target_name in all_hostnames or any (target_name in h for h in all_hostnames):
+                if target_name in all_hostnames or any(target_name in h for h in all_hostnames):
                     return False
         return True
