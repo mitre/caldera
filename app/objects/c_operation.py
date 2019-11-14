@@ -128,13 +128,6 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def _active_agents(self):
-        active = []
-        for agent in self.agents:
-            if agent.last_seen > self.start:
-                active.append(agent)
-        return active
-
     async def wait_for_links_completion(self, link_paws):
         """
         Wait for started links to be completed
@@ -150,6 +143,13 @@ class Operation(BaseObject):
                     break
 
     """ PRIVATE """
+    
+    async def _active_agents(self):
+        active = []
+        for agent in self.agents:
+            if agent.last_seen > self.start:
+                active.append(agent)
+        return active
 
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:
