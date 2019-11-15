@@ -45,7 +45,7 @@ class PlanningService(BasePlanningService):
         links = []
         if agent:
             if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                                msg='no cleanup-link created'):
+                                                          msg='no cleanup-link created'):
                 links.extend(
                     await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status)
                     )
@@ -78,9 +78,9 @@ class PlanningService(BasePlanningService):
         agent_links = []
         if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
                                                       msg='no link created'):
-                agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
-                if trim:
-                    agent_links = await self.trim_links(operation, agent_links, agent)
+            agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
+            if trim:
+                agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
 
     async def _check_untrusted_agents_allowed(self, agent, operation, msg):
@@ -102,7 +102,7 @@ class PlanningService(BasePlanningService):
     async def _generate_cleanup_links(self, operation, agent, link_status):
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:
-            ability = (await self.get_service('data_svc').locate('abilities', 
+            ability = (await self.get_service('data_svc').locate('abilities',
                                                                  match=dict(unique=link.ability.unique)))[0]
             if ability.cleanup and link.status >= 0:
                 links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
