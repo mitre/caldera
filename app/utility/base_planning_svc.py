@@ -25,7 +25,6 @@ class BasePlanningService(BaseService):
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_duplicate_hosts(links, operation)
         links = await self.remove_links_missing_requirements(links, operation)
-        self.log.debug('Created %d links for %s' % (len(links), agent.paw))
         return links
 
     async def add_test_variants(self, links, agent, operation):
