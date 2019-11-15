@@ -74,7 +74,7 @@ class PlanningService(BasePlanningService):
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
-    
+
     async def _check_and_generate_cleanup_links(self, agent, operation, link_status):
         """
         repeated subroutine
