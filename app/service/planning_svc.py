@@ -23,18 +23,14 @@ class PlanningService(BasePlanningService):
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]
         link_status = await self._default_link_status(operation)
         links = []
-        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                                msg='no link created'):
-            links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
+        if agent:
+            links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
         else:
             updated_agents = await self.get_service('data_svc').locate('agents',
                                                                        match=dict(group=operation.agents[0].group))
             operation.agents = updated_agents
             for agent in operation.agents:
-                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
-                    agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
-                    if trim:
-                        links[:] = await self.trim_links(operation, agent_links, agent)
+                links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -47,9 +43,10 @@ class PlanningService(BasePlanningService):
         """
         link_status = await self._default_link_status(operation)
         links = []
-        if agent and await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+        if agent:
+            if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
                                                                 msg='no cleanup-link created'):
-            links.extend(await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status))
+                links.extend(await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status))
         else:
             for agent in operation.agents:
                 if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
@@ -71,6 +68,18 @@ class PlanningService(BasePlanningService):
     @staticmethod
     async def _default_link_status(operation):
         return -3 if operation.autonomous else -1
+
+    async def _generate_and_trim_links(self, agent, operation, abilities, link_status, trim):
+        """
+        repeated subroutine
+        """
+        agent_links = []
+        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+                                                      msg='no link created'):
+                agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
+                if trim:
+                    agent_links = await self.trim_links(operation, agent_links, agent)
+        return agent_links
 
     async def _check_untrusted_agents_allowed(self, agent, operation, msg):
         if (not agent.trusted) and (not operation.allow_untrusted):
@@ -97,3 +106,4 @@ class PlanningService(BasePlanningService):
                 links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
+        
