@@ -20,3 +20,5 @@ conf/*.yml
 data/object_store
 data/results/*
 !data/results/.gitkeep
+data/payloads/*
+!data/payloads/.gitkeep
