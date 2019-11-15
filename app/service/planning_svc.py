@@ -44,18 +44,10 @@ class PlanningService(BasePlanningService):
         link_status = await self._default_link_status(operation)
         links = []
         if agent:
-            if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                          msg='no cleanup-link created'):
-                links.extend(
-                    await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status)
-                    )
+            links.extend(await self._check_and_generate_cleanup_links(agent, operation, link_status))
         else:
             for agent in operation.agents:
-                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                              msg='no cleanup-link created'):
-                    links.extend(
-                        await self._generate_cleanup_links(operation=operation, agent=agent, link_status=link_status)
-                    )
+                links.extend(await self._check_and_generate_cleanup_links(agent, operation, link_status))
         return reversed(await self.trim_links(operation, links, agent))
 
     """ PRIVATE """
@@ -82,6 +74,18 @@ class PlanningService(BasePlanningService):
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
+    
+    async def _check_and_generate_cleanup_links(self, agent, operation, link_status):
+        """
+        repeated subroutine
+        """
+        agent_cleanup_links = []
+        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
+                                                      msg='no cleanup-link created'):
+            agent_cleanup_links = await self._generate_cleanup_links(operation=operation,
+                                                                     agent=agent,
+                                                                     link_status=link_status)
+        return agent_cleanup_links
 
     async def _check_untrusted_agents_allowed(self, agent, operation, msg):
         if (not agent.trusted) and (not operation.allow_untrusted):
