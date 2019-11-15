@@ -106,4 +106,3 @@ class PlanningService(BasePlanningService):
                 links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
-        
