@@ -27,12 +27,15 @@ class PlanningService(BasePlanningService):
                                                                 msg='no link created'):
             links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
         else:
+            updated_agents = await self.get_service('data_svc').locate('agents',
+                                                                       match=dict(group=operation.agents[0].group))
+            operation.agents = updated_agents
             for agent in operation.agents:
                 if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
                                                               msg='no link created'):
                     links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
-        if trim:
-            links[:] = await self.trim_links(operation, links, agent)
+                if trim:
+                    links[:] = await self.trim_links(operation, links, agent)
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
