@@ -120,10 +120,10 @@ class Operation(BaseObject):
     async def wait_for_phase_completion(self):
         for member in self.agents:
             if (not member.trusted) and (not self.allow_untrusted):
+                for link in await self._unfinished_links_for_agent(member.paw):
+                    link.status = link.states['UNTRUSTED']
                 continue
-            while next((True for lnk in self.chain if
-                        lnk.paw == member.paw and not lnk.finish and not lnk.status == lnk.states['DISCARD']),
-                       False):
+            while len(await self._unfinished_links_for_agent(member.paw)) > 1:
                 await asyncio.sleep(3)
                 if await self._trust_issues(member):
                     break
@@ -143,6 +143,9 @@ class Operation(BaseObject):
                     break
 
     """ PRIVATE """
+
+    async def _unfinished_links_for_agent(self, paw):
+        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
 
     async def _active_agents(self):
         active = []

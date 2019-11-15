@@ -23,7 +23,8 @@ class Link(BaseObject):
 
     @property
     def states(self):
-        return dict(EXECUTE=-3,
+        return dict(UNTRUSTED=-4,
+                    EXECUTE=-3,
                     DISCARD=-2,
                     PAUSE=-1)
 

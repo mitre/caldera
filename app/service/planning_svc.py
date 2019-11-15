@@ -31,11 +31,10 @@ class PlanningService(BasePlanningService):
                                                                        match=dict(group=operation.agents[0].group))
             operation.agents = updated_agents
             for agent in operation.agents:
-                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                              msg='no link created'):
-                    links.extend(await self._generate_new_links(operation, agent, abilities, link_status))
-                if trim:
-                    links[:] = await self.trim_links(operation, links, agent)
+                if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+                    agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
+                    if trim:
+                        links[:] = await self.trim_links(operation, agent_links, agent)
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -86,6 +85,7 @@ class PlanningService(BasePlanningService):
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))
             )
+        self.log.debug('Generated %s links for %s' % (len(links), agent.paw))
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
