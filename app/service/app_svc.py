@@ -37,7 +37,7 @@ class AppService(BaseService):
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
 
     async def find_link(self, unique):
