@@ -123,7 +123,7 @@ class Operation(BaseObject):
                 for link in await self._unfinished_links_for_agent(member.paw):
                     link.status = link.states['UNTRUSTED']
                 continue
-            while len(await self._unfinished_links_for_agent(member.paw)) > 1:
+            while len(await self._unfinished_links_for_agent(member.paw)) > 0:
                 await asyncio.sleep(3)
                 if await self._trust_issues(member):
                     break
