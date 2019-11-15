@@ -32,11 +32,12 @@ class AppService(BaseService):
                     last_trusted_seen = datetime.strptime(a.last_trusted_seen, '%Y-%m-%d %H:%M:%S')
                     silence_time = (datetime.now() - last_trusted_seen).total_seconds()
                     if silence_time > (self.config['untrusted_timer'] + int(a.sleep_max)):
-                        await self.get_service('data_svc').store(Agent(paw=a.paw, trusted=0))
+                        a.trusted = 0
                     else:
                         trust_time_left = self.config['untrusted_timer'] - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
+                await asyncio.sleep(15)
         except Exception as e:
             self.log.error('[!] start_sniffer_untrusted_agents: %s' % e)
 

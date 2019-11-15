@@ -137,8 +137,8 @@ class Operation(BaseObject):
         for link_paw in link_paws:
             link = [link for link in self.chain if link.paw == link_paw][0]
             member = [member for member in self.agents if member.paw == link_paw][0]
-            while not link.finish and not link.status == link.states["DISCARD"]:
-                await asyncio.sleep(5)  # TODO: Make this configurable in planner file
+            while not link.finish and not link.status == link.states['DISCARD']:
+                await asyncio.sleep(5)
                 if await self._trust_issues(member):
                     break
 

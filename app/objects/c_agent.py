@@ -13,7 +13,7 @@ class Agent(BaseObject):
     def display(self):
         return dict(paw=self.paw, group=self.group, architecture=self.architecture, platform=self.platform,
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
-                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'), last_trusted_seen=self.last_trusted_seen,
+                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name)
 
@@ -50,8 +50,8 @@ class Agent(BaseObject):
         else:
             existing.update('trusted', self.trusted)
             if existing.trusted:
-                self.update('trusted', self.last_trusted_seen)
-            existing.update('last_seen', self.last_seen)
+                existing.update('last_trusted_seen', datetime.now())
+            existing.update('last_seen', datetime.now())
             existing.update('pid', self.pid)
             existing.update('ppid', self.ppid)
             existing.update('executors', self.executors)
