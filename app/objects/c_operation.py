@@ -120,10 +120,10 @@ class Operation(BaseObject):
     async def wait_for_phase_completion(self):
         for member in self.agents:
             if (not member.trusted) and (not self.allow_untrusted):
+                for link in await self._unfinished_links_for_agent(member.paw):
+                    link.status = link.states['UNTRUSTED']
                 continue
-            while next((True for lnk in self.chain if
-                        lnk.paw == member.paw and not lnk.finish and not lnk.status == lnk.states['DISCARD']),
-                       False):
+            while len(await self._unfinished_links_for_agent(member.paw)) > 0:
                 await asyncio.sleep(3)
                 if await self._trust_issues(member):
                     break
@@ -137,12 +137,22 @@ class Operation(BaseObject):
         for link_paw in link_paws:
             link = [link for link in self.chain if link.paw == link_paw][0]
             member = [member for member in self.agents if member.paw == link_paw][0]
-            while not link.finish and not link.status == link.states["DISCARD"]:
-                await asyncio.sleep(5)  # TODO: Make this configurable in planner file
+            while not link.finish and not link.status == link.states['DISCARD']:
+                await asyncio.sleep(5)
                 if await self._trust_issues(member):
                     break
 
     """ PRIVATE """
+
+    async def _unfinished_links_for_agent(self, paw):
+        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
+
+    async def _active_agents(self):
+        active = []
+        for agent in self.agents:
+            if agent.last_seen > self.start:
+                active.append(agent)
+        return active
 
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:
