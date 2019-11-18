@@ -9,8 +9,8 @@ class Parser(BaseObject):
 
     @property
     def display(self):
-        return dict(module=self.module, relationships=[r.display for r in self.relationships])
+        return dict(module=self.module, relationships=[p.display for p in self.parserconfigs])
 
-    def __init__(self, module, relationships):
+    def __init__(self, module, parserconfigs):
         self.module = module
-        self.relationships = relationships
+        self.parserconfigs = parserconfigs
