@@ -73,6 +73,9 @@ class FileSvc(BaseService):
             file_path = await self._walk_file_path('plugins/%s/%s' % (plugin, location), name)
             if file_path:
                 return plugin, file_path
+            file_path = await self._walk_file_path('plugins/%s/data/%s' % (plugin, location), name)
+            if file_path:
+                return plugin, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
     async def read_file(self, name, location='payloads'):
