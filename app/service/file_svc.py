@@ -34,21 +34,24 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload(self, request):
+    async def upload_exfil(self, request):
+        exfil_dir = await self._create_exfil_sub_directory(request.headers)
+        return await self.save_multipart_file_upload(request, exfil_dir)
+
+    async def save_multipart_file_upload(self, request, target_dir):
         """
         Accept a multipart file via HTTP and save it to the server
         :param request:
-        :return: None
+        :param target_dir: The path of the directory to save the uploaded file to.
         """
         try:
             reader = await request.multipart()
-            exfil_dir = await self._create_exfil_sub_directory(request.headers)
             while True:
                 field = await reader.next()
                 if not field:
                     break
                 filename = field.filename
-                with open(os.path.join(exfil_dir, filename), 'wb') as f:
+                with open(os.path.join(target_dir, filename), 'wb') as f:
                     while True:
                         chunk = await field.read_chunk()
                         if not chunk:

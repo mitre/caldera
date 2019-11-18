@@ -59,7 +59,7 @@ async def init(address, port, services, users):
     app.on_startup.append(background_tasks)
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
-    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
+    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
