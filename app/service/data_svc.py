@@ -118,7 +118,7 @@ class DataService(BaseService):
                     for phase in phases:
                         matching_abilities = await self.locate('abilities', match=dict(ability_id=phase['id']))
                         if not len(matching_abilities):
-                            self.log.error("Missing Ability (%s) for adversary: %s" % (phase['id'], adv['name']))
+                            self.log.error('Missing Ability (%s) for adversary: %s' % (phase['id'], adv['name']))
                         for ability in matching_abilities:
                             pp[phase['phase']].append(ability)
                     phases = dict(pp)
