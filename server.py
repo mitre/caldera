@@ -12,7 +12,6 @@ import jinja2
 import yaml
 from aiohttp import web
 
-from app.service.agent_svc import AgentService
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
@@ -103,7 +102,6 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService()
         application = AppService(config=cfg, plugins=plugin_modules)
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])

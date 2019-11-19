@@ -2,6 +2,8 @@ import glob
 import json
 import os.path
 import pickle
+
+from importlib import import_module
 from base64 import b64encode
 from collections import defaultdict
 
@@ -21,7 +23,8 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[])
+        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
+                        c2=[])
 
     async def save_state(self):
         """
@@ -65,6 +68,18 @@ class DataService(BaseService):
         await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
+        await self._load_c2(directory='%s/c2' % directory)
+
+    async def _load_c2(self, directory):
+        total = 0
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for c2 in self.strip_yml(filename):
+                module = import_module(c2.get('module'))
+                c2_obj = getattr(module, c2.get('name'))(services=self.get_services(), module=c2.get('module'),
+                                                         config=c2.get('config'), name=c2.get('name'))
+                await self.store(c2_obj)
+                total += 1
+        self.log.debug('Loaded %s c2 channels' % total)
 
     async def store(self, c_object):
         """
