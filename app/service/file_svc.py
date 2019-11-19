@@ -70,8 +70,9 @@ class FileSvc(BaseService):
         :return: a tuple: the plugin the file is found in & the relative file path
         """
         for plugin in self.plugins:
-            for subd in ['', 'data/']:
-                file_path = await self._walk_file_path('plugins/%s/%s%s' % (plugin, subd, location), name)
+            for subd in ['', 'data']:
+                path = os.path.join('plugins', plugin, subd, location)
+                file_path = await self._walk_file_path(path, name)
                 if file_path:
                     return plugin, file_path
         return None, await self._walk_file_path('%s' % location, name)
