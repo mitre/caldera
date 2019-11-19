@@ -71,8 +71,7 @@ class FileSvc(BaseService):
         """
         for plugin in self.plugins:
             for subd in ['', 'data']:
-                path = os.path.join('plugins', plugin, subd, location)
-                file_path = await self._walk_file_path(path, name)
+                file_path = await self._walk_file_path(os.path.join('plugins', plugin, subd, location), name)
                 if file_path:
                     return plugin, file_path
         return None, await self._walk_file_path('%s' % location, name)
