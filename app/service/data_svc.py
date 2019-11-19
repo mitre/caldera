@@ -8,6 +8,7 @@ from collections import defaultdict
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
+from app.objects.c_rule import Rule
 from app.objects.c_parser import Parser
 from app.objects.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
@@ -159,7 +160,8 @@ class DataService(BaseService):
             for src in self.strip_yml(filename):
                 source = Source(
                     name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
+                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    rules=[Rule(**r) for r in src.get('rules')]
                 )
                 await self.store(source)
                 total += 1
