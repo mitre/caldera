@@ -91,7 +91,8 @@ def main(services, host, port, users):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
-    parser.add_argument('--fresh', action='store_true', required=False, default=False, help='remove object_store on start')
+    parser.add_argument('--fresh', action='store_true', required=False, default=False, 
+                        help='remove object_store on start')
     args = parser.parse_args()
 
     if args.fresh:
