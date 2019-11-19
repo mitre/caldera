@@ -18,7 +18,6 @@ class C2(BaseObject):
         self.module = module
         self.config = config
         self.data_svc = services.get('data_svc')
-        self.loop = asyncio.get_event_loop()
         self.log = services.get('app_svc').create_logger('c2')
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
@@ -79,6 +78,7 @@ class C2(BaseObject):
         :return: a JSON status message
         """
         try:
+            loop = asyncio.get_event_loop()
             for op in await self.data_svc.locate('operations', match=dict(finish=None)):
                 link = next((l for l in op.chain if l.unique == id), None)
                 if link:
@@ -88,7 +88,7 @@ class C2(BaseObject):
                     if output:
                         with open('data/results/%s' % id, 'w') as out:
                             out.write(output)
-                        self.loop.create_task(link.parse(op))
+                        loop.create_task(link.parse(op))
                     await self.data_svc.store(Agent(paw=link.paw))
                     return json.dumps(dict(status=True))
         except Exception as e:
