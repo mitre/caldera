@@ -113,3 +113,65 @@ class C2(BaseObject):
         :return: True if config is valid, False if not
         """
         return False
+
+    def start(self, app):
+        """
+        Default c2 task creation, useful for Active-style c2. Passive style c2 channels should override this function
+        :param app:
+        :return:
+        """
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._c2_loop())
+
+    """ PRIVATE """
+
+    async def _c2_loop(self):
+        await asyncio.sleep(2)
+        while True:
+            beacons, results = [], []
+            try:
+                beacons = await self.get_beacons()
+            except Exception:
+                self.log.debug('Receiving beacons over c2 (%s) failed!' % self.name)
+            try:
+                results = await self.get_results()
+            except Exception:
+                self.log.debug('Retrieving results over c2 (%s) failed!' % self.name)
+            for data in results:
+                data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                await self.save_results(data['id'], data['output'], data['status'], data['pid'])
+            for beacon in beacons:
+                beacon['c2'] = self.name
+                agent = await self.handle_heartbeat(**beacon)
+                instructions = await self.get_instructions(beacon['paw'])
+                payloads = self._get_payloads(instructions)
+                payload_contents = await self._get_payload_content(payloads, beacon)
+                try:
+                    await self.post_payloads(payload_contents, beacon['paw'])
+                except Exception:
+                    self.log.warning('Posting payload over c2 (%s) failed!' % self.name)
+                response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+                text = self.self.encode_string(json.dumps(response))
+                try:
+                    await self.post_instructions(text, beacon['paw'])
+                except Exception:
+                    self.log.warning('Posting instructions over c2 (%s) failed!' % self.name)
+            await asyncio.sleep(10)
+
+    """ PRIVATE """
+
+    @staticmethod
+    def _get_payloads(instructions):
+        list_instructions = json.loads(instructions)
+        return [json.loads(instruction).get('payload') for instruction in list_instructions
+                if json.loads(instruction).get('payload')]
+
+    async def _get_payload_content(self, payloads, beacon):
+        payload_content = []
+        for p in payloads:
+            if p in self.file_svc.special_payloads:
+                f = await self.file_svc.special_payloads[p](dict(file=p, platform=beacon['platform']))
+                payload_content.append(await self.file_svc.read_file(f))
+            else:
+                payload_content.append(await self.file_svc.read_file(p))
+        return payload_content
