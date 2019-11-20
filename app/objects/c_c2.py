@@ -153,7 +153,7 @@ class C2(BaseObject, abc.ABC):
                 except Exception:
                     self.log.warning('Posting payload over c2 (%s) failed!' % self.name)
                 response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
-                text = self.self.encode_string(json.dumps(response))
+                text = self.encode_string(json.dumps(response))
                 try:
                     await self.post_instructions(text, beacon['paw'])
                 except Exception:
