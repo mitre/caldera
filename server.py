@@ -108,7 +108,7 @@ if __name__ == '__main__':
         application = AppService(config=cfg, plugins=plugin_modules)
 
         if args.fresh:
-            data_svc.clear()
+            asyncio.get_event_loop().run_until_complete(data_svc.clear())
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
