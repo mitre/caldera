@@ -32,7 +32,8 @@ class DataService(BaseService):
         Clear out all data
         :return:
         """
-        os.remove('data/object_store')
+        if os.path.exists('data/object_store'):
+            os.remove('data/object_store')
         for f in glob.glob('data/results/*'):
             if not f.startswith('.'):
                 os.remove(f)
