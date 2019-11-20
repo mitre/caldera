@@ -41,7 +41,7 @@ class C2(BaseObject):
         """
         self.log.debug('HEARTBEAT (%s) (%s)' % (c2, paw))
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
-                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege)
+                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2)
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep

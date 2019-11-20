@@ -70,17 +70,6 @@ class DataService(BaseService):
         await self._load_planners(directory='%s/planners' % directory)
         await self._load_c2(directory='%s/c2' % directory)
 
-    async def _load_c2(self, directory):
-        total = 0
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for c2 in self.strip_yml(filename):
-                module = import_module(c2.get('module'))
-                c2_obj = getattr(module, c2.get('name'))(services=self.get_services(), module=c2.get('module'),
-                                                         config=c2.get('config'), name=c2.get('name'))
-                await self.store(c2_obj)
-                total += 1
-        self.log.debug('Loaded %s c2 channels' % total)
-
     async def store(self, c_object):
         """
         Accept any c_object type and store it (create/update) in RAM
@@ -167,6 +156,17 @@ class DataService(BaseService):
                                                            None)
                                 total += 1
         self.log.debug('Loaded %s abilities' % total)
+
+    async def _load_c2(self, directory):
+        total = 0
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for c2 in self.strip_yml(filename):
+                module = import_module(c2.get('module'))
+                c2_obj = getattr(module, c2.get('name'))(services=self.get_services(), module=c2.get('module'),
+                                                         config=c2.get('config'), name=c2.get('name'))
+                await self.store(c2_obj)
+                total += 1
+        self.log.debug('Loaded %s c2 channels' % total)
 
     async def _load_sources(self, directory):
         total = 0
