@@ -23,7 +23,7 @@ class Agent(BaseObject):
 
     def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None):
+                 sleep_max=None, executors=None, privilege=None, c2='HTTP'):
         self.paw = paw
         self.host = host
         self.username = username
@@ -41,6 +41,7 @@ class Agent(BaseObject):
         self.sleep_max = sleep_max
         self.executors = executors
         self.privilege = privilege
+        self.c2 = c2
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -59,6 +60,7 @@ class Agent(BaseObject):
             existing.update('sleep_max', self.sleep_max)
             existing.update('group', self.group)
             existing.update('privilege', self.privilege)
+            existing.update('c2', self.c2)
         return existing
 
     async def calculate_sleep(self):
