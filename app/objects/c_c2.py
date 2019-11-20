@@ -19,6 +19,7 @@ class C2(BaseObject, abc.ABC):
         self.module = module
         self.config = config
         self.data_svc = services.get('data_svc')
+        self.file_svc = services.get('file_svc')
         self.log = services.get('app_svc').create_logger('c2')
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
