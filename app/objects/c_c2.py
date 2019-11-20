@@ -117,18 +117,19 @@ class C2(BaseObject, abc.ABC):
         """
         return
 
+    @abc.abstractmethod
     def start(self, app):
         """
-        Default c2 task creation, useful for Active-style c2. Passive style c2 channels should override this function
+        Override this function to launch a C2 channel. Use the default c2_loop for Active-style c2 or override the
+        function. Passive style c2 channels should override this function
         :param app:
         :return:
         """
-        loop = asyncio.get_event_loop()
-        loop.create_task(self._c2_loop())
+        return
 
     """ PRIVATE """
 
-    async def _c2_loop(self):
+    async def _default_active_c2_loop(self):
         while True:
             beacons, results = [], []
             try:
