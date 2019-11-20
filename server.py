@@ -94,9 +94,6 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     args = parser.parse_args()
 
-    if args.fresh:
-        os.remove('data/object_store')
-
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
@@ -109,6 +106,9 @@ if __name__ == '__main__':
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
         application = AppService(config=cfg, plugins=plugin_modules)
+
+        if args.fresh:
+            data_svc.clear()
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
