@@ -126,7 +126,6 @@ class C2(BaseObject):
     """ PRIVATE """
 
     async def _c2_loop(self):
-        await asyncio.sleep(2)
         while True:
             beacons, results = [], []
             try:
