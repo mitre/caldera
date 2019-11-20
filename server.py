@@ -97,7 +97,6 @@ if __name__ == '__main__':
     if args.fresh:
         os.remove('data/object_store')
 
-    args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
