@@ -26,8 +26,7 @@ class DataService(BaseService):
         self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
                         c2=[])
 
-    @staticmethod
-    async def clear():
+    async def reset(self):
         """
         Clear out all data
         :return:
@@ -37,8 +36,9 @@ class DataService(BaseService):
         for f in glob.glob('data/results/*'):
             if not f.startswith('.'):
                 os.remove(f)
+        await self.reload()
 
-    async def refresh(self):
+    async def reload(self):
         """
         Refresh the data store
         :return:
