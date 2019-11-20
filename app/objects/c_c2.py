@@ -107,4 +107,9 @@ class C2(BaseObject):
         return existing
 
     def valid_config(self):
+        """
+        Function that allows data_svc to check that c2 channels have valid configuration info.
+        Needs to be overwritten by subclasses
+        :return: True if config is valid, False if not
+        """
         return False
