@@ -167,6 +167,9 @@ class DataService(BaseService):
                 module = import_module(c2.get('module'))
                 c2_obj = getattr(module, c2.get('name'))(services=self.get_services(), module=c2.get('module'),
                                                          config=c2.get('config'), name=c2.get('name'))
+                if not c2_obj.valid_config():
+                    self.log.debug('C2 channel (%s) does not have a valid configuration. Skipping!' % (c2.get('name')))
+                    continue
                 await self.store(c2_obj)
                 total += 1
         self.log.debug('Loaded %s c2 channels' % total)

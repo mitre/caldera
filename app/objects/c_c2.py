@@ -105,3 +105,6 @@ class C2(BaseObject):
             ram['c2'].append(self)
             return self.retrieve(ram['c2'], self.unique)
         return existing
+
+    def valid_config(self):
+        return False
