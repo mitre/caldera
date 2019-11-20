@@ -107,7 +107,8 @@ class BasePlanningService(BaseService):
     def _is_fact_bound(fact):
         return not fact['link_id']
 
-    async def _build_relevant_facts(self, variables, operation, agent_facts):
+    @staticmethod
+    async def _build_relevant_facts(variables, operation, agent_facts):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -116,15 +117,12 @@ class BasePlanningService(BaseService):
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            if v == "sandcat.compile.name":
-                variable_facts.append(self.get_service('sand_svc').name_fact)
-            else:
-                for fact in [f for f in facts if f.trait == v]:
-                    if fact.trait.startswith('host'):
-                        if fact.unique in agent_facts:
-                            variable_facts.append(fact)
-                    else:
+            for fact in [f for f in facts if f.trait == v]:
+                if fact.trait.startswith('host'):
+                    if fact.unique in agent_facts:
                         variable_facts.append(fact)
+                else:
+                    variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
 
