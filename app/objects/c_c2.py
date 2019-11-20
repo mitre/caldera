@@ -1,5 +1,6 @@
 import asyncio
 import json
+import abc
 
 from datetime import datetime
 
@@ -7,7 +8,7 @@ from app.objects.c_agent import Agent
 from app.utility.base_object import BaseObject
 
 
-class C2(BaseObject):
+class C2(BaseObject, abc.ABC):
 
     @property
     def unique(self):
@@ -106,13 +107,14 @@ class C2(BaseObject):
             return self.retrieve(ram['c2'], self.unique)
         return existing
 
+    @abc.abstractmethod
     def valid_config(self):
         """
         Function that allows data_svc to check that c2 channels have valid configuration info.
         Needs to be overwritten by subclasses
         :return: True if config is valid, False if not
         """
-        return False
+        return
 
     def start(self, app):
         """
