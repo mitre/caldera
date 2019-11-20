@@ -1,20 +1,27 @@
 import asyncio
 import json
+
 from datetime import datetime
 
 from app.objects.c_agent import Agent
-from app.utility.base_service import BaseService
+from app.utility.base_object import BaseObject
 
 
-class AgentService(BaseService):
+class C2(BaseObject):
 
-    def __init__(self):
-        self.log = self.add_service('agent_svc', self)
-        self.data_svc = self.get_service('data_svc')
-        self.loop = asyncio.get_event_loop()
+    @property
+    def unique(self):
+        return '%s%s' % (self.module, self.config)
+
+    def __init__(self, services, module, config, name):
+        self.name = name
+        self.module = module
+        self.config = config
+        self.data_svc = services.get('data_svc')
+        self.log = services.get('app_svc').create_logger('c2')
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege, exe_name):
+                               pid, ppid, sleep, privilege, c2):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -32,11 +39,9 @@ class AgentService(BaseService):
         :param privilege:
         :return: the agent object from explode
         """
-        self.log.debug('HEARTBEAT (%s)' % paw)
-        now = self.get_current_timestamp()
+        self.log.debug('HEARTBEAT (%s) (%s)' % (c2, paw))
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
-                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now,
-                      privilege=privilege, exe_name=exe_name)
+                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2)
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep
@@ -73,17 +78,30 @@ class AgentService(BaseService):
         :return: a JSON status message
         """
         try:
+            loop = asyncio.get_event_loop()
             for op in await self.data_svc.locate('operations', match=dict(finish=None)):
                 link = next((l for l in op.chain if l.unique == id), None)
                 if link:
                     link.pid = int(pid)
-                    link.finish = self.get_current_timestamp()
+                    link.finish = self.data_svc.get_current_timestamp()
                     link.status = int(status)
                     if output:
                         with open('data/results/%s' % id, 'w') as out:
                             out.write(output)
-                        self.loop.create_task(link.parse(op))
+                        loop.create_task(link.parse(op))
                     await self.data_svc.store(Agent(paw=link.paw))
                     return json.dumps(dict(status=True))
         except Exception as e:
             self.log.error('[!] save_results: %s' % e)
+
+    def store(self, ram):
+        """
+        Store the object in ram
+        :param ram:
+        :return:
+        """
+        existing = self.retrieve(ram['c2'], self.unique)
+        if not existing:
+            ram['c2'].append(self)
+            return self.retrieve(ram['c2'], self.unique)
+        return existing

@@ -12,7 +12,6 @@ import jinja2
 import yaml
 from aiohttp import web
 
-from app.service.agent_svc import AgentService
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
@@ -59,7 +58,7 @@ async def init(address, port, services, users):
     app.on_startup.append(background_tasks)
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
-    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
+    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
     await attach_plugins(app, services)
     runner = web.AppRunner(app)
@@ -91,6 +90,13 @@ def main(services, host, port, users):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
+    parser.add_argument('--fresh', action='store_true', required=False, default=False,
+                        help='remove object_store on start')
+    args = parser.parse_args()
+
+    if args.fresh:
+        os.remove('data/object_store')
+
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
@@ -103,7 +109,6 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService()
         application = AppService(config=cfg, plugins=plugin_modules)
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])

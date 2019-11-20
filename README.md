@@ -69,13 +69,13 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
-Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
+Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "sources"
 section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
 Note that the _built-in_ fact source contains the file extensions that you will be hunting for.
 
 Click into the "operations" section and start a new operation. Choose the "hunter" adversary
-and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
-the adversary profile chosen (file hunter) will utilize them inside its abilities.
+and ensure that you select the fact source of built-in. By feeding these facts into the operation, 
+the adversary profile chosen (hunter) will utilize them inside its abilities.
 
 Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
 

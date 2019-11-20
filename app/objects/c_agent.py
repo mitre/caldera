@@ -13,7 +13,7 @@ class Agent(BaseObject):
     def display(self):
         return dict(paw=self.paw, group=self.group, architecture=self.architecture, platform=self.platform,
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
-                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'), last_trusted_seen=self.last_trusted_seen,
+                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name)
 
@@ -22,8 +22,8 @@ class Agent(BaseObject):
         return '{}${}'.format(self.host, self.username)
 
     def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
-                 location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None, exe_name=None):
+                 location=None, pid=None, ppid=None, trusted=None, sleep_min=None,
+                 sleep_max=None, executors=None, privilege=None, c2='HTTP'):
         self.paw = paw
         self.host = host
         self.username = username
@@ -36,12 +36,12 @@ class Agent(BaseObject):
         self.ppid = ppid
         self.trusted = trusted
         self.last_seen = datetime.now()
-        self.last_trusted_seen = last_trusted_seen
+        self.last_trusted_seen = datetime.now()
         self.sleep_min = sleep_min
         self.sleep_max = sleep_max
         self.executors = executors
         self.privilege = privilege
-        self.exe_name = exe_name
+        self.c2 = c2
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -51,8 +51,8 @@ class Agent(BaseObject):
         else:
             existing.update('trusted', self.trusted)
             if existing.trusted:
-                self.update('trusted', self.last_trusted_seen)
-            existing.update('last_seen', self.last_seen)
+                existing.update('last_trusted_seen', datetime.now())
+            existing.update('last_seen', datetime.now())
             existing.update('pid', self.pid)
             existing.update('ppid', self.ppid)
             existing.update('executors', self.executors)
@@ -60,6 +60,7 @@ class Agent(BaseObject):
             existing.update('sleep_max', self.sleep_max)
             existing.update('group', self.group)
             existing.update('privilege', self.privilege)
+            existing.update('c2', self.c2)
         return existing
 
     async def calculate_sleep(self):
