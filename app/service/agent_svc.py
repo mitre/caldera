@@ -14,7 +14,7 @@ class AgentService(BaseService):
         self.loop = asyncio.get_event_loop()
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege):
+                               pid, ppid, sleep, privilege, exe_name):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -36,7 +36,7 @@ class AgentService(BaseService):
         now = self.get_current_timestamp()
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
                       executors=executors, architecture=architecture, pid=pid, ppid=ppid, last_trusted_seen=now,
-                      privilege=privilege)
+                      privilege=privilege, exe_name=exe_name)
         if await self.data_svc.locate('agents', dict(paw=paw)):
             return await self.data_svc.store(agent)
         agent.sleep_min = agent.sleep_max = sleep

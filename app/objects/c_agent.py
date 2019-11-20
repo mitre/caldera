@@ -15,7 +15,7 @@ class Agent(BaseObject):
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'), last_trusted_seen=self.last_trusted_seen,
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
-                    privilege=self.privilege, display_name=self.display_name)
+                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name)
 
     @property
     def display_name(self):
@@ -23,7 +23,7 @@ class Agent(BaseObject):
 
     def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, last_trusted_seen=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None):
+                 sleep_max=None, executors=None, privilege=None, exe_name=None):
         self.paw = paw
         self.host = host
         self.username = username
@@ -41,6 +41,7 @@ class Agent(BaseObject):
         self.sleep_max = sleep_max
         self.executors = executors
         self.privilege = privilege
+        self.exe_name = exe_name
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
