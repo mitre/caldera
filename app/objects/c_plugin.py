@@ -27,6 +27,6 @@ class Plugin(BaseObject):
         return existing
 
     async def enable(self, application, services):
-        plugin = getattr(import_module('plugins.%s.hook' % self.name), 'initialize')
+        plugin = getattr(import_module('plugins.%s.hook' % self.name), 'enable')
         await plugin(application, services)
         self.enabled = True
