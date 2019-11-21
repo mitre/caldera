@@ -26,6 +26,9 @@ class DataService(BaseService):
         self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
                         c2=[], plugins=[])
 
+    async def add_data_dir(self, dir):
+        self.data_dirs.add(dir)
+
     async def reset(self):
         """
         Clear out all data
@@ -136,7 +139,7 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _load_adversaries(self, directory):
+    async def load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
@@ -144,8 +147,7 @@ class DataService(BaseService):
                 for p in adv.get('packs', []):
                     ps.append(await self._add_adversary_packs(p))
                 for pack in ps:
-                    if pack:
-                        phases += pack
+                    phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
@@ -160,8 +162,9 @@ class DataService(BaseService):
                                   phases=phases)
                     )
 
-    async def _load_abilities(self, directory):
+    async def load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+            print(filename)
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     for pl, executors in ab['platforms'].items():
@@ -184,7 +187,7 @@ class DataService(BaseService):
                                                            privilege=ab['privilege'] if 'privilege' in ab.keys() else
                                                            None)
 
-    async def _load_c2(self, directory):
+    async def load_c2(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for c2 in self.strip_yml(filename):
                 module = import_module(c2.get('module'))
@@ -195,7 +198,7 @@ class DataService(BaseService):
                     continue
                 await self.store(c2_obj)
 
-    async def _load_sources(self, directory):
+    async def load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
@@ -204,7 +207,7 @@ class DataService(BaseService):
                 )
                 await self.store(source)
 
-    async def _load_planners(self, directory):
+    async def load_planners(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.strip_yml(filename):
                 await self.store(

@@ -112,13 +112,45 @@ class AppService(BaseService):
                 self.log.warning('Ensure you have installed the PIP requirements for plugin=%s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
-            if plugin.name in enabled:
-                await plugin.enable(self.application, self.get_services())
+        plugins = await self.get_service('data_svc').locate('plugins')
+        enabled_plugins = [plugin for plugin in plugins if plugin.name in enabled]
+        await self._plugins_load_data(enabled_plugins)
+        for plugin in enabled_plugins:
+            await plugin.enable(self.application, self.get_services())
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     """ PRIVATE """
+
+    async def _plugins_load_data(self, plugins):
+        await self._plugins_load_abilities(plugins)
+        await self._plugins_load_adversaries(plugins)
+        await self._plugins_load_sources(plugins)
+        await self._plugins_load_planners(plugins)
+        await self._plugins_load_c2(plugins)
+
+    async def _plugins_load_adversaries(self, plugins):
+        for plugin in plugins:
+            self.log.debug('Loading data from %s...' % plugin.directory)
+            await self.get_service('data_svc').add_data_dir(plugin.directory)
+            await self.get_service('data_svc').load_adversaries(directory='{}/{}'.format(plugin.directory, 'adversaries'))
+
+    async def _plugins_load_abilities(self, plugins):
+        for plugin in plugins:
+            await self.get_service('data_svc').load_abilities(directory='{}/{}'.format(plugin.directory, 'abilities'))
+
+    async def _plugins_load_sources(self, plugins):
+        for plugin in plugins:
+            await self.get_service('data_svc').load_sources(directory='{}/{}'.format(plugin.directory, 'sources'))
+
+    async def _plugins_load_planners(self, plugins):
+        for plugin in plugins:
+            await self.get_service('data_svc').load_planners(directory='{}/{}'.format(plugin.directory, 'planners'))
+
+    async def _plugins_load_c2(self, plugins):
+        for plugin in plugins:
+            await self.get_service('data_svc').load_c2(directory='{}/{}'.format(plugin.directory, 'c2'))
 
     async def _get_planning_module(self, operation):
         planning_module = import_module(operation.planner.module)
