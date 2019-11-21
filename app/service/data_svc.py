@@ -24,7 +24,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
-                        c2=[])
+                        c2=[], plugins=[])
 
     async def reset(self):
         """
@@ -81,7 +81,6 @@ class DataService(BaseService):
         """
         Read all the data sources to populate the object store
         :param directory:
-        :param schema:
         :return: None
         """
         self.log.debug('Loading data from %s...' % directory)
@@ -145,7 +144,8 @@ class DataService(BaseService):
                 for p in adv.get('packs', []):
                     ps.append(await self._add_adversary_packs(p))
                 for pack in ps:
-                    phases += pack
+                    if pack:
+                        phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
