@@ -37,14 +37,13 @@ async def init(app, address, port, services, users):
 
 
 def set_logging_state():
-    state = logging.FATAL
     if cfg['debug']:
-        state = logging.DEBUG
-    logging.getLogger('aiohttp.access').setLevel(state)
-    logging.getLogger('aiohttp_session').setLevel(state)
-    logging.getLogger('aiohttp.server').setLevel(state)
-    logging.getLogger('asyncio').setLevel(state)
-    logging.getLogger().setLevel(state)
+        logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
+    logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
+    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
+    logging.getLogger('asyncio').setLevel(logging.FATAL)
+
 
 
 def main(app, services, host, port, users):
