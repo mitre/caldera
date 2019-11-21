@@ -2,6 +2,7 @@ import re
 from enum import Enum
 import ipaddress
 
+
 class RuleAction(Enum):
     ALLOW = 1
     DENY = 0
@@ -19,7 +20,6 @@ class RuleSet:
                 continue
             if await self._is_regex_rule_match(rule, fact):
                 allowed = await self._rule_judgement(rule.action)
-                logging.debug(allowed)
         return allowed
 
     async def _applicable_rules(self, fact):
