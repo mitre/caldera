@@ -45,7 +45,6 @@ def set_logging_state():
     logging.getLogger('asyncio').setLevel(logging.FATAL)
 
 
-
 def main(app, services, host, port, users):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(init(app, host, port, services, users))
