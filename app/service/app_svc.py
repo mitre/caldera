@@ -105,7 +105,7 @@ class AppService(BaseService):
         """
         for plug in os.listdir('plugins'):
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
             self.log.debug('Loading plugin: %s' % plug)
             if os.path.isfile('plugins/%s/requirements.txt' % plug):
