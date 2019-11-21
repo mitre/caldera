@@ -5,7 +5,6 @@ import os
 import traceback
 from datetime import datetime, date
 from importlib import import_module
-from subprocess import Popen, DEVNULL
 
 import aiohttp_jinja2
 import jinja2
