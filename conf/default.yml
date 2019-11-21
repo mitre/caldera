@@ -4,6 +4,12 @@ host: 0.0.0.0
 port: 8888
 exfil_dir: /tmp
 untrusted_timer: 15
+enabled:
+  - gui
+  - chain
+  - sandcat
+  - stockpile
+  - dark
 debug: True
 api_key: ADMIN123
 users:

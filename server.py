@@ -23,17 +23,17 @@ async def background_tasks(app):
     loop.create_task(data_svc.restore_state())
 
 
-async def init(app, address, port, services, users):
-    await auth_svc.apply(app, users)
+async def init(app, config, services):
+    await auth_svc.apply(app, config['users'])
     app.on_startup.append(background_tasks)
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
-    await app_svc.load_plugins()
+    await app_svc.load_plugins(config['enabled'])
     runner = web.AppRunner(app)
     await runner.setup()
-    await web.TCPSite(runner, address, port).start()
+    await web.TCPSite(runner, config['host'], config['port']).start()
 
 
 def set_logging_state():
@@ -45,11 +45,11 @@ def set_logging_state():
     logging.getLogger('asyncio').setLevel(logging.FATAL)
 
 
-def main(app, services, host, port, users):
+def main(app, services, config):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(init(app, host, port, services, users))
+    loop.run_until_complete(init(app, config, services))
     try:
-        print('All systems ready. Navigate to http://%s:%s to log in.' % (host, port))
+        print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(data_svc.save_state())
@@ -82,4 +82,4 @@ if __name__ == '__main__':
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
-        main(app=app, services=app_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])
+        main(app=app, config=cfg, services=app_svc.get_services())

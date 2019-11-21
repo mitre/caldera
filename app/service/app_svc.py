@@ -97,9 +97,10 @@ class AppService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    async def load_plugins(self):
+    async def load_plugins(self, enabled):
         """
-        Store all plugins in the data store, enabling those which are auto-enabled
+        Store all plugins in the data store
+        :param enabled: a list of all plugins to enable right away
         :return:
         """
         for plug in os.listdir('plugins'):
@@ -111,7 +112,7 @@ class AppService(BaseService):
                 self.log.warning('Ensure you have installed the PIP requirements for plugin=%s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
-            if plugin.enabled:
+            if plugin.name in enabled:
                 await plugin.enable(self.application, self.get_services())
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]
