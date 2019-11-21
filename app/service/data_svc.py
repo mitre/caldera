@@ -2,10 +2,9 @@ import glob
 import json
 import os.path
 import pickle
-
-from importlib import import_module
 from base64 import b64encode
 from collections import defaultdict
+from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -23,8 +22,30 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
+        self.data_dirs = set()
         self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
-                        c2=[])
+                        c2=[], plugins=[])
+
+    async def reset(self):
+        """
+        Clear out all data
+        :return:
+        """
+        if os.path.exists('data/object_store'):
+            os.remove('data/object_store')
+        for f in glob.glob('data/results/*'):
+            if not f.startswith('.'):
+                os.remove(f)
+        await self.reload()
+
+    async def reload(self):
+        """
+        Refresh the data store
+        :return:
+        """
+        for d in self.data_dirs:
+            await self.load_data(d)
+        await self.print_statistics()
 
     async def save_state(self):
         """
@@ -60,10 +81,10 @@ class DataService(BaseService):
         """
         Read all the data sources to populate the object store
         :param directory:
-        :param schema:
         :return: None
         """
         self.log.debug('Loading data from %s...' % directory)
+        self.data_dirs.add(directory)
         await self._load_abilities(directory='%s/abilities' % directory)
         await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
@@ -105,10 +126,17 @@ class DataService(BaseService):
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
 
+    async def print_statistics(self):
+        """
+        Print out the statistics for all objects in the store
+        :return:
+        """
+        for key in self.ram.keys():
+            self.log.debug('%s loaded: %s' % (key, len(self.ram[key])))
+
     """ PRIVATE """
 
     async def _load_adversaries(self, directory):
-        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
@@ -116,7 +144,8 @@ class DataService(BaseService):
                 for p in adv.get('packs', []):
                     ps.append(await self._add_adversary_packs(p))
                 for pack in ps:
-                    phases += pack
+                    if pack:
+                        phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
@@ -130,11 +159,8 @@ class DataService(BaseService):
                         Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                   phases=phases)
                     )
-                    total += 1
-        self.log.debug('Loaded %s adversaries' % total)
 
     async def _load_abilities(self, directory):
-        total = 0
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
@@ -157,11 +183,8 @@ class DataService(BaseService):
                                                            requirements=ab.get('requirements', []),
                                                            privilege=ab['privilege'] if 'privilege' in ab.keys() else
                                                            None)
-                                total += 1
-        self.log.debug('Loaded %s abilities' % total)
 
     async def _load_c2(self, directory):
-        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for c2 in self.strip_yml(filename):
                 module = import_module(c2.get('module'))
@@ -171,11 +194,8 @@ class DataService(BaseService):
                     self.log.error('C2 channel (%s) does not have a valid configuration. Skipping!' % c2.get('name'))
                     continue
                 await self.store(c2_obj)
-                total += 1
-        self.log.debug('Loaded %s c2 channels' % total)
 
     async def _load_sources(self, directory):
-        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
@@ -183,19 +203,14 @@ class DataService(BaseService):
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
                 )
                 await self.store(source)
-                total += 1
-        self.log.debug('Loaded %s sources' % total)
 
     async def _load_planners(self, directory):
-        total = 0
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.strip_yml(filename):
                 await self.store(
                     Planner(name=planner.get('name'), module=planner.get('module'),
                             params=json.dumps(planner.get('params')))
                 )
-                total += 1
-        self.log.debug('Loaded %s planners' % total)
 
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
