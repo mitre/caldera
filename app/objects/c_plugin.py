@@ -17,7 +17,7 @@ class Plugin(BaseObject):
         self.name = name
         module = import_module('plugins.%s.hook' % self.name)
         self.address = module.address
-        self.enabled = module.enabled
+        self.enabled = False
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
