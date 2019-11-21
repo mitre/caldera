@@ -25,12 +25,14 @@ async def background_tasks(app):
 
 async def init(app, config, services):
     await auth_svc.apply(app, config['users'])
+
     app.on_startup.append(background_tasks)
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
     await app_svc.load_plugins(config['enabled'])
+
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, config['host'], config['port']).start()

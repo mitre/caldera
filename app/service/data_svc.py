@@ -144,8 +144,7 @@ class DataService(BaseService):
                 for p in adv.get('packs', []):
                     ps.append(await self._add_adversary_packs(p))
                 for pack in ps:
-                    if pack:
-                        phases += pack
+                    phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
