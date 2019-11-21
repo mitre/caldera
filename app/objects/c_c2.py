@@ -131,37 +131,30 @@ class C2(BaseObject, abc.ABC):
 
     async def _default_active_c2_loop(self):
         while True:
-            beacons, results = [], []
-            try:
-                beacons = await self.get_beacons()
-            except Exception:
-                self.log.debug('Receiving beacons over c2 (%s) failed!' % self.name)
-            try:
-                results = await self.get_results()
-            except Exception:
-                self.log.debug('Retrieving results over c2 (%s) failed!' % self.name)
-            for data in results:
-                data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                await self.save_results(data['id'], data['output'], data['status'], data['pid'])
-            for beacon in beacons:
-                beacon['c2'] = self.name
-                agent = await self.handle_heartbeat(**beacon)
-                instructions = await self.get_instructions(beacon['paw'])
-                payloads = self._get_payloads(instructions)
-                payload_contents = await self._get_payload_content(payloads, beacon)
-                try:
-                    await self.post_payloads(payload_contents, beacon['paw'])
-                except Exception:
-                    self.log.warning('Posting payload over c2 (%s) failed!' % self.name)
-                response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
-                text = self.encode_string(json.dumps(response))
-                try:
-                    await self.post_instructions(text, beacon['paw'])
-                except Exception:
-                    self.log.warning('Posting instructions over c2 (%s) failed!' % self.name)
+            await self._handle_results(await self.get_results())
+            await self._handle_beacons(await self.get_beacons())
             await asyncio.sleep(10)
 
     """ PRIVATE """
+
+    async def _handle_results(self, results):
+        for data in results:
+            data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            await self.save_results(data['id'], data['output'], data['status'], data['pid'])
+
+    async def _handle_beacons(self, beacons):
+        for beacon in beacons:
+            beacon['c2'] = self.name
+            agent = await self.handle_heartbeat(**beacon)
+            await self._send_instructions(agent, beacon, await self.get_instructions(beacon['paw']))
+
+    async def _send_instructions(self, agent, beacon, instructions):
+        payloads = self._get_payloads(instructions)
+        payload_contents = await self._get_payload_content(payloads, beacon)
+        await self.post_payloads(payload_contents, beacon['paw'])
+        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+        text = self.encode_string(json.dumps(response))
+        await self.post_instructions(text, beacon['paw'])
 
     @staticmethod
     def _get_payloads(instructions):
