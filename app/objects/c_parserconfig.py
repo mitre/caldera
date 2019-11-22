@@ -12,6 +12,7 @@ class ParserConfig(BaseObject):
         return self.clean(self.__dict__)
 
     def __init__(self, source, edge=None, target=None, **kwargs):
+        super().__init__()
         self.source = source
         self.edge = edge
         self.target = target

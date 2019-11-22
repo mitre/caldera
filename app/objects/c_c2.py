@@ -15,6 +15,7 @@ class C2(BaseObject, abc.ABC):
         return '%s%s' % (self.module, self.config)
 
     def __init__(self, services, module, config, name):
+        super().__init__()
         self.name = name
         self.module = module
         self.config = config

@@ -12,5 +12,6 @@ class Requirement(BaseObject):
         return dict(module=self.module, relationships=[r.display for r in self.relationships])
 
     def __init__(self, module, relationships):
+        super().__init__()
         self.module = module
         self.relationships = relationships

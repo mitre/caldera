@@ -12,6 +12,7 @@ class Schedule(BaseObject):
         return dict()
 
     def __init__(self, name, schedule, task):
+        super().__init__()
         self.name = name
         self.schedule = schedule
         self.task = task
