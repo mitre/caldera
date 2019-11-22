@@ -135,8 +135,6 @@ class C2(BaseObject, abc.ABC):
             await self._handle_beacons(await self.get_beacons())
             await asyncio.sleep(10)
 
-    """ PRIVATE """
-
     async def _handle_results(self, results):
         for data in results:
             data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
