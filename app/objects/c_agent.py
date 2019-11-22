@@ -36,8 +36,9 @@ class Agent(BaseObject):
         self.pid = pid
         self.ppid = ppid
         self.trusted = trusted
-        self.last_seen = datetime.now()
-        self.last_trusted_seen = datetime.now()
+        self.created = datetime.now()
+        self.last_seen = self.created
+        self.last_trusted_seen = self.created
         self.sleep_min = sleep_min
         self.sleep_max = sleep_max
         self.executors = executors
@@ -50,10 +51,11 @@ class Agent(BaseObject):
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
         else:
+            now = datetime.now()
             existing.update('trusted', self.trusted)
             if existing.trusted:
-                existing.update('last_trusted_seen', datetime.now())
-            existing.update('last_seen', datetime.now())
+                existing.update('last_trusted_seen', now)
+            existing.update('last_seen', now)
             existing.update('pid', self.pid)
             existing.update('ppid', self.ppid)
             existing.update('executors', self.executors)
