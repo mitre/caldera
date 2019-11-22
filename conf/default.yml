@@ -9,7 +9,6 @@ enabled:
   - chain
   - sandcat
   - stockpile
-  - dark
 debug: True
 api_key: ADMIN123
 users:
