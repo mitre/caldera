@@ -9,7 +9,7 @@ class ParserConfig(BaseObject):
 
     @property
     def display(self):
-        return self.clean(self.__dict__)
+        return self.clean(dict(source=self.source, edge=self.edge, target=self.target))
 
     def __init__(self, source, edge=None, target=None, **kwargs):
         super().__init__()
