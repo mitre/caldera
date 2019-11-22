@@ -83,6 +83,10 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(self.run_operation(op))
 
+    async def start_c2(self, app):
+        for c2 in await self.get_service('data_svc').locate('c2'):
+            c2.start(app)
+
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)

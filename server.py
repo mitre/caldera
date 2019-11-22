@@ -32,6 +32,7 @@ async def init(app, config, services):
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
     await app_svc.load_plugins(config['enabled'])
+    await app_svc.start_c2(app)
 
     runner = web.AppRunner(app)
     await runner.setup()
