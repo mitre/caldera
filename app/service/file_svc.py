@@ -9,8 +9,7 @@ from app.utility.payload_encoder import xor_file
 
 class FileSvc(BaseService):
 
-    def __init__(self, plugins, exfil_dir):
-        self.plugins = plugins
+    def __init__(self, exfil_dir):
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
@@ -69,10 +68,10 @@ class FileSvc(BaseService):
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        for plugin in self.plugins:
-            file_path = await self._walk_file_path('plugins/%s/%s' % (plugin, location), name)
+        for plugin in await self.data_svc.locate('plugins', match=dict(enabled=True)):
+            file_path = await self._walk_file_path('plugins/%s/%s' % (plugin.name, location), name)
             if file_path:
-                return plugin, file_path
+                return plugin.name, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
     async def read_file(self, name, location='payloads'):

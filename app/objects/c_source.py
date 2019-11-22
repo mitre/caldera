@@ -11,7 +11,8 @@ class Source(BaseObject):
     def display(self):
         return dict(name=self.name, facts=[f.display for f in self.facts])
 
-    def __init__(self, name, facts, rules):
+    def __init__(self, name, facts):
+        super().__init__()
         self.name = name
         self.facts = facts
         self.rules = rules

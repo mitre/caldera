@@ -37,6 +37,7 @@ class Link(BaseObject):
             return None
 
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
+        super().__init__()
         self.id = None
         self.command = command
         self.operation = operation

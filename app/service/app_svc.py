@@ -1,18 +1,23 @@
 import ast
 import asyncio
 import copy
+import os
 import traceback
 from datetime import datetime, date
 from importlib import import_module
 
+import aiohttp_jinja2
+import jinja2
+
+from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
 
 class AppService(BaseService):
 
-    def __init__(self, config, plugins):
+    def __init__(self, application, config):
+        self.application = application
         self.config = config
-        self.plugins = plugins
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
 
@@ -92,12 +97,27 @@ class AppService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    def get_plugins(self):
+    async def load_plugins(self, enabled):
         """
-        Get a list of all plugins
-        :return: a list of plugins
+        Store all plugins in the data store
+        :param enabled: a list of all plugins to enable right away
+        :return:
         """
-        return self.plugins
+        for plug in os.listdir('plugins'):
+            if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
+                self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                exit(0)
+            self.log.debug('Loading plugin: %s' % plug)
+            plugin = Plugin(name=plug)
+            await self.get_service('data_svc').store(plugin)
+            if plugin.name in enabled:
+                plugin.enabled = True
+        for plug in await self._services.get('data_svc').locate('plugins', match=dict(enabled=True)):
+            await plug.enable(self.application, self.get_services())
+
+        templates = ['plugins/%s/templates' % p.name.lower()
+                     for p in await self.get_service('data_svc').locate('plugins')]
+        aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     """ PRIVATE """
 

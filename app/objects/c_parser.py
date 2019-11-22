@@ -12,5 +12,6 @@ class Parser(BaseObject):
         return dict(module=self.module, relationships=[p.display for p in self.parserconfigs])
 
     def __init__(self, module, parserconfigs):
+        super().__init__()
         self.module = module
         self.parserconfigs = parserconfigs
