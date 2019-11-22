@@ -31,7 +31,7 @@ async def init(app, config, services):
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
-    await app_svc.load_plugins(config['enabled'])
+    await app_svc.load_plugins()
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -67,7 +67,6 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
-
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         set_logging_state()
@@ -81,7 +80,7 @@ if __name__ == '__main__':
         app_svc = AppService(application=app, config=cfg)
 
         if args.fresh:
-            asyncio.get_event_loop().run_until_complete(data_svc.reset())
+            asyncio.get_event_loop().run_until_complete(data_svc.destroy())
 
         logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
         logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
