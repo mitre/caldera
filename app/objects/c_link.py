@@ -37,6 +37,7 @@ class Link(BaseObject):
             return None
 
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
+        super().__init__()
         self.id = None
         self.command = command
         self.operation = operation
@@ -69,7 +70,7 @@ class Link(BaseObject):
 
     async def _parse_link_result(self, result, parser):
         blob = b64decode(result).decode('utf-8')
-        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.relationships)
+        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs)
         p_inst = await self._load_module('Parser', parser_info)
         try:
             return p_inst.parse(blob=blob)

@@ -12,6 +12,7 @@ class Planner(BaseObject):
         return dict(name=self.name, module=self.module, params=self.params)
 
     def __init__(self, name, module, params):
+        super().__init__()
         self.name = name
         self.module = module
         self.params = params

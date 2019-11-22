@@ -12,6 +12,7 @@ class Fact(BaseObject):
         return dict(unique=self.unique, trait=self.trait, value=self.value, score=self.score)
 
     def __init__(self, trait, value, score=1):
+        super().__init__()
         self.trait = trait
         self.value = value
         self.score = score
