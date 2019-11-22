@@ -46,6 +46,7 @@ class DataService(BaseService):
         Save RAM database to file
         :return:
         """
+        self.ram.pop('c2')
         with open('data/object_store', 'wb') as objects:
             pickle.dump(self.ram, objects)
 
