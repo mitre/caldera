@@ -39,12 +39,14 @@ async def init(app, config, services):
 
 
 def set_logging_state():
-    if cfg['debug']:
-        logging.getLogger().setLevel(logging.DEBUG)
     logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
     logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
-    logging.getLogger('asyncio').setLevel(logging.FATAL)
+    logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
+    logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    if cfg['debug']:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
+        logging.getLogger('asyncio').setLevel(logging.DEBUG)
 
 
 def main(app, services, config):
