@@ -14,11 +14,12 @@ class Plugin(BaseObject):
         return dict(name=self.name, enabled=self.enabled)
 
     def __init__(self, name):
+        super().__init__()
         self.name = name
         self.enabled = False
         module = self._load_module()
-        if module:
-            self.address = module.address
+        self.description = module.description
+        self.address = module.address
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -38,4 +39,5 @@ class Plugin(BaseObject):
         try:
             return import_module('plugins.%s.hook' % self.name)
         except Exception:
-            return None
+            self.log.error('Failed to import plugin: %s' % self.name)
+            exit(1)

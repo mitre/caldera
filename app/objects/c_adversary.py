@@ -16,6 +16,7 @@ class Adversary(BaseObject):
                     phases=phases)
 
     def __init__(self, adversary_id, name, description, phases):
+        super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description

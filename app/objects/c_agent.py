@@ -24,6 +24,7 @@ class Agent(BaseObject):
     def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
                  location=None, pid=None, ppid=None, trusted=None, sleep_min=None,
                  sleep_max=None, executors=None, privilege=None, c2='HTTP'):
+        super().__init__()
         self.paw = paw
         self.host = host
         self.username = username

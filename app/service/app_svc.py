@@ -108,8 +108,6 @@ class AppService(BaseService):
                 self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
             self.log.debug('Loading plugin: %s' % plug)
-            if os.path.isfile('plugins/%s/requirements.txt' % plug):
-                self.log.warning('Ensure you have installed the PIP requirements for plugin=%s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
             if plugin.name in enabled:

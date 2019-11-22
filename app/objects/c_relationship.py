@@ -12,6 +12,7 @@ class Relationship(BaseObject):
         return self.clean(dict(source=self.source, edge=self.edge, target=self.target))
 
     def __init__(self, source, edge=None, target=None):
+        super().__init__()
         self.source = source
         self.edge = edge
         self.target = target
