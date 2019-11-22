@@ -97,7 +97,7 @@ class AppService(BaseService):
         except Exception:
             traceback.print_exc()
 
-    async def load_plugins(self, enabled):
+    async def load_plugins(self):
         """
         Store all plugins in the data store
         :param enabled: a list of all plugins to enable right away
@@ -110,7 +110,7 @@ class AppService(BaseService):
             self.log.debug('Loading plugin: %s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
-            if plugin.name in enabled:
+            if plugin.name in self.config['enabled']:
                 plugin.enabled = True
         for plug in await self._services.get('data_svc').locate('plugins', match=dict(enabled=True)):
             await plug.enable(self.application, self.get_services())

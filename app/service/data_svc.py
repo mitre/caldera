@@ -1,7 +1,9 @@
+import copy
 import glob
 import json
 import os.path
 import pickle
+
 from base64 import b64encode
 from collections import defaultdict
 from importlib import import_module
@@ -23,10 +25,12 @@ class DataService(BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
-                        c2=[], plugins=[])
+        self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
+                           schedules=[], c2=[], plugins=[])
+        self.ram = copy.deepcopy(self.schema)
 
-    async def reset(self):
+    @staticmethod
+    async def destroy():
         """
         Clear out all data
         :return:
@@ -36,16 +40,6 @@ class DataService(BaseService):
         for f in glob.glob('data/results/*'):
             if not f.startswith('.'):
                 os.remove(f)
-        await self.reload()
-
-    async def reload(self):
-        """
-        Refresh the data store
-        :return:
-        """
-        for d in self.data_dirs:
-            await self.load_data(d)
-        await self.print_statistics()
 
     async def save_state(self):
         """
