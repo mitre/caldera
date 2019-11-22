@@ -15,9 +15,10 @@ class Plugin(BaseObject):
 
     def __init__(self, name):
         self.name = name
-        module = import_module('plugins.%s.hook' % self.name)
-        self.address = module.address
         self.enabled = False
+        module = self._load_module()
+        if module:
+            self.address = module.address
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -27,6 +28,14 @@ class Plugin(BaseObject):
         return existing
 
     async def enable(self, application, services):
-        plugin = getattr(import_module('plugins.%s.hook' % self.name), 'enable')
+        plugin = getattr(self._load_module(), 'enable')
         await plugin(application, services)
         self.enabled = True
+
+    """ PRIVATE """
+
+    def _load_module(self):
+        try:
+            return import_module('plugins.%s.hook' % self.name)
+        except Exception:
+            return None
