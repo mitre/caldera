@@ -114,10 +114,10 @@ class AppService(BaseService):
             self.log.debug('Loading plugin: %s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
-            if plugin.name in self.config['enabled']:
+            if plugin.name in self.config['enabled_plugins']:
                 plugin.enabled = True
         for plug in await self._services.get('data_svc').locate('plugins'):
-            if plug.name in self.config['enabled'] or plug.enabled:
+            if plug.name in self.config['enabled_plugins'] or plug.enabled:
                 await plug.enable(self.application, self.get_services())
 
         templates = ['plugins/%s/templates' % p.name.lower()
