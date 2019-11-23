@@ -58,8 +58,9 @@ class DataService(BaseService):
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
                 for key in ram.keys():
-                    for c_object in ram[key]:
-                        await self.store(c_object)
+                    if key in self.schema:
+                        for c_object in ram[key]:
+                            await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
