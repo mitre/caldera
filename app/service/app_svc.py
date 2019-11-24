@@ -104,7 +104,6 @@ class AppService(BaseService):
     async def load_plugins(self):
         """
         Store all plugins in the data store
-        :param enabled: a list of all plugins to enable right away
         :return:
         """
         for plug in os.listdir('plugins'):
@@ -118,7 +117,7 @@ class AppService(BaseService):
                 plugin.enabled = True
         for plug in await self._services.get('data_svc').locate('plugins'):
             if plug.name in self.config['enabled_plugins'] or plug.enabled:
-                await plug.enable(self.application, self.get_services())
+                await plug.enable(self.get_services())
 
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]

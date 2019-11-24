@@ -28,9 +28,9 @@ class Plugin(BaseObject):
             return self.retrieve(ram['plugins'], self.unique)
         return existing
 
-    async def enable(self, application, services):
+    async def enable(self, services):
         plugin = getattr(self._load_module(), 'enable')
-        await plugin(application, services)
+        await plugin(services)
         self.enabled = True
 
     """ PRIVATE """
