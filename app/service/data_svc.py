@@ -82,10 +82,17 @@ class DataService(BaseService):
         self.log.debug('Loading data from %s...' % directory)
         self.data_dirs.add(directory)
         await self._load_abilities(directory='%s/abilities' % directory)
-        await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
         await self._load_c2(directory='%s/c2' % directory)
+
+    async def load_adversaries(self):
+        """
+        Load adversaries separately, to ensure all abilities are in place
+        :return:
+        """
+        for d in self.data_dirs:
+            await self._load_adversaries(directory='%s/adversaries' % d)
 
     async def store(self, c_object):
         """
