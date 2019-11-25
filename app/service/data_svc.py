@@ -78,14 +78,15 @@ class DataService(BaseService):
         """
         Read all the data sources to populate the object store
         :param directory:
+        :param poll:
         :return: None
         """
         loop = asyncio.get_event_loop()
         if not poll:
+            self.data_dirs.add(directory)
             loop.create_task(self._load_sources(directory='%s/facts' % directory))
             loop.create_task(self._load_planners(directory='%s/planners' % directory))
             loop.create_task(self._load_c2(directory='%s/c2' % directory))
-            self.data_dirs.add(directory)
         loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
         loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
 
