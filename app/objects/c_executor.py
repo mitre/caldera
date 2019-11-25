@@ -12,5 +12,6 @@ class Executor(BaseObject):
         return dict(name=self.name, preferred=self.preferred)
 
     def __init__(self, name, preferred):
+        super().__init__()
         self.name = name
         self.preferred = preferred

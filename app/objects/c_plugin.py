@@ -14,10 +14,12 @@ class Plugin(BaseObject):
         return dict(name=self.name, enabled=self.enabled)
 
     def __init__(self, name):
+        super().__init__()
         self.name = name
-        module = import_module('plugins.%s.hook' % self.name)
+        self.enabled = False
+        module = self._load_module()
+        self.description = module.description
         self.address = module.address
-        self.enabled = module.enabled
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -26,7 +28,16 @@ class Plugin(BaseObject):
             return self.retrieve(ram['plugins'], self.unique)
         return existing
 
-    async def enable(self, application, services):
-        plugin = getattr(import_module('plugins.%s.hook' % self.name), 'enable')
-        await plugin(application, services)
+    async def enable(self, services):
+        plugin = getattr(self._load_module(), 'enable')
+        await plugin(services)
         self.enabled = True
+
+    """ PRIVATE """
+
+    def _load_module(self):
+        try:
+            return import_module('plugins.%s.hook' % self.name)
+        except Exception:
+            self.log.error('Failed to import plugin: %s' % self.name)
+            exit(1)

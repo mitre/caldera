@@ -64,6 +64,7 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True):
+        super().__init__()
         self.id = id
         self.start = None
         self.name = name

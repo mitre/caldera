@@ -1,5 +1,6 @@
 import asyncio
 import json
+import abc
 
 from datetime import datetime
 
@@ -7,17 +8,19 @@ from app.objects.c_agent import Agent
 from app.utility.base_object import BaseObject
 
 
-class C2(BaseObject):
+class C2(BaseObject, abc.ABC):
 
     @property
     def unique(self):
         return '%s%s' % (self.module, self.config)
 
     def __init__(self, services, module, config, name):
+        super().__init__()
         self.name = name
         self.module = module
         self.config = config
         self.data_svc = services.get('data_svc')
+        self.file_svc = services.get('file_svc')
         self.log = services.get('app_svc').create_logger('c2')
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
@@ -107,10 +110,64 @@ class C2(BaseObject):
             return self.retrieve(ram['c2'], self.unique)
         return existing
 
+    @abc.abstractmethod
     def valid_config(self):
         """
         Function that allows data_svc to check that c2 channels have valid configuration info.
         Needs to be overwritten by subclasses
         :return: True if config is valid, False if not
         """
-        return False
+        return
+
+    @abc.abstractmethod
+    def start(self, app):
+        """
+        Override this function to launch a C2 channel. Use the default c2_loop for Active-style c2 or override the
+        function. Passive style c2 channels should override this function
+        :param app:
+        :return:
+        """
+        return
+
+    """ PRIVATE """
+
+    async def _default_active_c2_loop(self):
+        while True:
+            await self._handle_results(await self.get_results())
+            await self._handle_beacons(await self.get_beacons())
+            await asyncio.sleep(10)
+
+    async def _handle_results(self, results):
+        for data in results:
+            data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            await self.save_results(data['id'], data['output'], data['status'], data['pid'])
+
+    async def _handle_beacons(self, beacons):
+        for beacon in beacons:
+            beacon['c2'] = self.name
+            agent = await self.handle_heartbeat(**beacon)
+            await self._send_instructions(agent, beacon, await self.get_instructions(beacon['paw']))
+
+    async def _send_instructions(self, agent, beacon, instructions):
+        payloads = self._get_payloads(instructions)
+        payload_contents = await self._get_payload_content(payloads, beacon)
+        await self.post_payloads(payload_contents, beacon['paw'])
+        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+        text = self.encode_string(json.dumps(response))
+        await self.post_instructions(text, beacon['paw'])
+
+    @staticmethod
+    def _get_payloads(instructions):
+        list_instructions = json.loads(instructions)
+        return [json.loads(instruction).get('payload') for instruction in list_instructions
+                if json.loads(instruction).get('payload')]
+
+    async def _get_payload_content(self, payloads, beacon):
+        payload_content = []
+        for p in payloads:
+            if p in self.file_svc.special_payloads:
+                f = await self.file_svc.special_payloads[p](dict(file=p, platform=beacon['platform']))
+                payload_content.append(await self.file_svc.read_file(f))
+            else:
+                payload_content.append(await self.file_svc.read_file(p))
+        return payload_content
