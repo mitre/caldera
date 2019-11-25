@@ -14,14 +14,20 @@ class RuleSet:
 
     async def is_fact_allowed(self, fact):
         allowed = True
-        for rule in self.rules.get(fact['trait'], []):
+        for rule in await self._applicable_rules(fact):
             if await self._is_ip_rule_match(rule, fact):
-                allowed = await self._rule_judgement(rule['action'])
+                allowed = await self._rule_judgement(rule.action)
                 continue
-
             if await self._is_regex_rule_match(rule, fact):
-                allowed = await self._rule_judgement(rule['action'])
+                allowed = await self._rule_judgement(rule.action)
         return allowed
+
+    async def _applicable_rules(self, fact):
+        applicable_rules = []
+        for rule in self.rules:
+            if rule.trait == fact.trait:
+                applicable_rules.append(rule)
+        return applicable_rules
 
     async def apply_rules(self, facts):
         if await self._has_rules():
@@ -38,7 +44,7 @@ class RuleSet:
 
     @staticmethod
     async def _rule_judgement(action):
-        if action == RuleAction.DENY.value:
+        if action.value == RuleAction.DENY.value:
             return False
         return True
 
@@ -53,11 +59,11 @@ class RuleSet:
 
     @staticmethod
     async def _is_regex_rule_match(rule, fact):
-        return re.match(rule.get('match', '.*'), fact['value'])
+        return re.match(rule.match, fact.value)
 
     async def _is_ip_rule_match(self, rule, fact):
-        if rule['match'] != '.*' and await self._is_ip_network(rule['match']) and \
-                await self._is_ip_network(fact['value']):
-            if ipaddress.IPv4Network(fact['value']).subnet_of(ipaddress.IPv4Network(rule['match'])):
+        if rule.match != '.*' and await self._is_ip_network(rule.match) and \
+                await self._is_ip_network(fact.value):
+            if ipaddress.IPv4Network(fact.value).subnet_of(ipaddress.IPv4Network(rule.match)):
                 return True
         return False

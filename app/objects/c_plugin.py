@@ -52,4 +52,3 @@ class Plugin(BaseObject):
             return import_module('plugins.%s.hook' % self.name)
         except Exception:
             self.log.error('Error importing plugin=%s' % self.name)
-            exit(1)
