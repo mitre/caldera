@@ -4,7 +4,7 @@ import re
 from base64 import b64decode
 
 from app.utility.base_service import BaseService
-from app.utility.rule import RuleSet
+from app.utility.rule_set import RuleSet
 
 
 class BasePlanningService(BaseService):
