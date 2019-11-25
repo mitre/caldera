@@ -11,10 +11,11 @@ class Source(BaseObject):
     def display(self):
         return dict(name=self.name, facts=[f.display for f in self.facts])
 
-    def __init__(self, name, facts):
+    def __init__(self, name, facts, rules=None):
         super().__init__()
         self.name = name
         self.facts = facts
+        self.rules = rules or []
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)

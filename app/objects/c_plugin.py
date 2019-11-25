@@ -38,6 +38,6 @@ class Plugin(BaseObject):
     def _load_module(self):
         try:
             return import_module('plugins.%s.hook' % self.name)
-        except Exception:
-            self.log.error('Failed to import plugin: %s' % self.name)
+        except Exception as e:
+            self.log.error('Failed to import plugin: %s, %s' % (self.name, e))
             exit(1)

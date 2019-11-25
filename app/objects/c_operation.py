@@ -80,6 +80,8 @@ class Operation(BaseObject):
         self.finish = None
         self.chain = []
         self.rules = []
+        if source:
+            self.rules = source.rules
 
     def store(self, ram):
         existing = self.retrieve(ram['operations'], self.unique)
