@@ -17,8 +17,8 @@ from app.service.planning_svc import PlanningService
 def set_logging_state():
     logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
     logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
-    logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
+    logging.getLogger('asyncio').setLevel(logging.FATAL)
     if cfg['debug']:
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)

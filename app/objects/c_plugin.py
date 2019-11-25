@@ -16,10 +16,9 @@ class Plugin(BaseObject):
     def __init__(self, name):
         super().__init__()
         self.name = name
+        self.description = None
+        self.address = None
         self.enabled = False
-        module = self._load_module()
-        self.description = module.description
-        self.address = module.address
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -28,16 +27,28 @@ class Plugin(BaseObject):
             return self.retrieve(ram['plugins'], self.unique)
         return existing
 
+    async def load(self):
+        try:
+            plugin = self._load_module()
+            self.description = plugin.description
+            self.address = plugin.address
+            return True
+        except Exception:
+            self.log.error('Error loading plugin=%s' % self.name)
+            return True
+
     async def enable(self, services):
-        plugin = getattr(self._load_module(), 'enable')
-        await plugin(services)
-        self.enabled = True
+        try:
+            plugin = getattr(self._load_module(), 'enable')
+            await plugin(services)
+            self.enabled = True
+        except Exception:
+            self.log.error('Error enabling plugin=%s' % self.name)
 
     """ PRIVATE """
 
     def _load_module(self):
         try:
             return import_module('plugins.%s.hook' % self.name)
-        except Exception as e:
-            self.log.error('Failed to import plugin: %s, %s' % (self.name, e))
-            exit(1)
+        except Exception:
+            self.log.error('Error importing plugin=%s' % self.name)
