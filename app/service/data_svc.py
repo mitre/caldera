@@ -81,16 +81,13 @@ class DataService(BaseService):
         :return: None
         """
         loop = asyncio.get_event_loop()
-        if poll:
-            loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
-            loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
-        else:
-            loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
-            loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
+        if not poll:
             loop.create_task(self._load_sources(directory='%s/facts' % directory))
             loop.create_task(self._load_planners(directory='%s/planners' % directory))
             loop.create_task(self._load_c2(directory='%s/c2' % directory))
             self.data_dirs.add(directory)
+        loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
+        loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
 
     async def store(self, c_object):
         """
