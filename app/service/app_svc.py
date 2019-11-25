@@ -83,6 +83,10 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(self.run_operation(op))
 
+    async def start_c2(self, app):
+        for c2 in await self.get_service('data_svc').locate('c2'):
+            c2.start(app)
+
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
@@ -99,7 +103,7 @@ class AppService(BaseService):
 
     async def load_plugins(self):
         """
-        Store all plugins in the data store, enabling those which are auto-enabled
+        Store all plugins in the data store
         :return:
         """
         for plug in os.listdir('plugins'):
@@ -107,12 +111,14 @@ class AppService(BaseService):
                 self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
             self.log.debug('Loading plugin: %s' % plug)
-            if os.path.isfile('plugins/%s/requirements.txt' % plug):
-                self.log.warning('Ensure you have installed the PIP requirements for plugin=%s' % plug)
             plugin = Plugin(name=plug)
             await self.get_service('data_svc').store(plugin)
-            if plugin.enabled:
-                await plugin.enable(self.application, self.get_services())
+            if plugin.name in self.config['enabled_plugins']:
+                plugin.enabled = True
+        for plug in await self._services.get('data_svc').locate('plugins'):
+            if plug.name in self.config['enabled_plugins'] or plug.enabled:
+                await plug.enable(self.get_services())
+
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))

@@ -1,7 +1,9 @@
+import copy
 import glob
 import json
 import os.path
 import pickle
+
 from base64 import b64encode
 from collections import defaultdict
 from importlib import import_module
@@ -9,6 +11,7 @@ from importlib import import_module
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
+from app.objects.c_rule import Rule
 from app.objects.c_parser import Parser
 from app.objects.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
@@ -23,10 +26,12 @@ class DataService(BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
-        self.ram = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[], schedules=[],
-                        c2=[], plugins=[])
+        self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
+                           schedules=[], c2=[], plugins=[])
+        self.ram = copy.deepcopy(self.schema)
 
-    async def reset(self):
+    @staticmethod
+    async def destroy():
         """
         Clear out all data
         :return:
@@ -36,16 +41,6 @@ class DataService(BaseService):
         for f in glob.glob('data/results/*'):
             if not f.startswith('.'):
                 os.remove(f)
-        await self.reload()
-
-    async def reload(self):
-        """
-        Refresh the data store
-        :return:
-        """
-        for d in self.data_dirs:
-            await self.load_data(d)
-        await self.print_statistics()
 
     async def save_state(self):
         """
@@ -64,8 +59,9 @@ class DataService(BaseService):
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
                 for key in ram.keys():
-                    for c_object in ram[key]:
-                        await self.store(c_object)
+                    if key in self.schema:
+                        for c_object in ram[key]:
+                            await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
@@ -144,8 +140,7 @@ class DataService(BaseService):
                 for p in adv.get('packs', []):
                     ps.append(await self._add_adversary_packs(p))
                 for pack in ps:
-                    if pack:
-                        phases += pack
+                    phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
                     for phase in phases:
@@ -200,7 +195,8 @@ class DataService(BaseService):
             for src in self.strip_yml(filename):
                 source = Source(
                     name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')]
+                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    rules=[Rule(**r) for r in src.get('rules')]
                 )
                 await self.store(source)
 

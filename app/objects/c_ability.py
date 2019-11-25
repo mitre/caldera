@@ -19,6 +19,7 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic, technique_id, technique, name, test, description, cleanup, executor,
                  platform, payload, parsers, requirements, privilege):
+        super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
         self.technique_name = technique
