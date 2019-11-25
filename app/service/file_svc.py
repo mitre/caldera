@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import uuid
 
 from aiohttp import web
@@ -26,6 +28,8 @@ class FileSvc(BaseService):
             if payload in self.special_payloads:
                 payload = await self.special_payloads[payload](request.headers)
             payload, content = await self.read_file(payload)
+            if 'sandcat' in payload:
+                payload = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(16))
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % payload)])
             return web.Response(body=content, headers=headers)
         except FileNotFoundError:
