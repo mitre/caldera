@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import glob
 import json
@@ -73,19 +74,23 @@ class DataService(BaseService):
         """
         self.ram[collection] = []
 
-    async def load_data(self, directory=None):
+    async def load_data(self, directory=None, poll=False):
         """
         Read all the data sources to populate the object store
         :param directory:
         :return: None
         """
-        self.log.debug('Loading data from %s...' % directory)
-        self.data_dirs.add(directory)
-        await self._load_abilities(directory='%s/abilities' % directory)
-        await self._load_adversaries(directory='%s/adversaries' % directory)
-        await self._load_sources(directory='%s/facts' % directory)
-        await self._load_planners(directory='%s/planners' % directory)
-        await self._load_c2(directory='%s/c2' % directory)
+        loop = asyncio.get_event_loop()
+        if poll:
+            loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
+            loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
+        else:
+            loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
+            loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
+            loop.create_task(self._load_sources(directory='%s/facts' % directory))
+            loop.create_task(self._load_planners(directory='%s/planners' % directory))
+            loop.create_task(self._load_c2(directory='%s/c2' % directory))
+            self.data_dirs.add(directory)
 
     async def store(self, c_object):
         """

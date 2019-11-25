@@ -123,6 +123,13 @@ class AppService(BaseService):
                      for p in await self.get_service('data_svc').locate('plugins')]
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
+    async def poll_data(self):
+        loop = asyncio.get_event_loop()
+        while True:
+            await asyncio.sleep(60)
+            for d in self.get_service('data_svc').data_dirs:
+                loop.create_task(self.get_service('data_svc').load_data(directory=d, poll=True))
+
     """ PRIVATE """
 
     async def _get_planning_module(self, operation):
