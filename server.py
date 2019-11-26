@@ -9,6 +9,7 @@ from aiohttp import web
 
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
+from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
@@ -70,6 +71,7 @@ if __name__ == '__main__':
         set_logging_state()
 
         data_svc = DataService()
+        contact_svc = ContactService()
         planning_svc = PlanningService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc(cfg['exfil_dir'])

@@ -3,28 +3,18 @@ import json
 from datetime import datetime
 
 from app.objects.c_agent import Agent
-from app.utility.base_world import BaseWorld
+from app.utility.base_service import BaseService
 
 
-class BaseC2(BaseWorld):
+class ContactService(BaseService):
 
-    _c2s = dict()
+    def __init__(self):
+        self.log = self.add_service('contact_svc', self)
+        self.contacts = []
 
-    def add_c2(self, name, svc):
-        self.__class__._c2s[name] = svc
-        return self.create_logger(name)
-
-    @classmethod
-    def get_c2(cls, name):
-        return cls._c2s.get(name)
-
-    @classmethod
-    def get_c2s(cls):
-        return cls._c2s
-
-    def __init__(self, services):
-        self.data_svc = services.get('data_svc')
-        self.file_svc = services.get('file_svc')
+    async def register(self, contact):
+        self.contacts.append(contact)
+        await contact.start()
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
                                pid, ppid, sleep, privilege, c2):
@@ -47,12 +37,12 @@ class BaseC2(BaseWorld):
         """
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
                       executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2)
-        if await self.data_svc.locate('agents', dict(paw=paw)):
-            return await self.data_svc.store(agent)
+        if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
+            return await self.get_service('data_svc').store(agent)
         agent.sleep_min = agent.sleep_max = sleep
         agent.group = group
         agent.trusted = True
-        return await self.data_svc.store(agent)
+        return await self.get_service('data_svc').store(agent)
 
     async def get_instructions(self, paw):
         """
@@ -60,7 +50,7 @@ class BaseC2(BaseWorld):
         :param paw:
         :return: a list of links in JSON format
         """
-        ops = await self.data_svc.locate('operations', match=dict(finish=None))
+        ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
         for link in [c for op in ops for c in op.chain
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
@@ -84,17 +74,17 @@ class BaseC2(BaseWorld):
         """
         try:
             loop = asyncio.get_event_loop()
-            for op in await self.data_svc.locate('operations', match=dict(finish=None)):
+            for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
                 link = next((l for l in op.chain if l.unique == id), None)
                 if link:
                     link.pid = int(pid)
-                    link.finish = self.data_svc.get_current_timestamp()
+                    link.finish = self.get_service('data_svc').get_current_timestamp()
                     link.status = int(status)
                     if output:
                         with open('data/results/%s' % id, 'w') as out:
                             out.write(output)
                         loop.create_task(link.parse(op))
-                    await self.data_svc.store(Agent(paw=link.paw))
+                    await self.get_service('data_svc').store(Agent(paw=link.paw))
                     return json.dumps(dict(status=True))
         except Exception:
             pass
