@@ -53,7 +53,7 @@ class DataService(BaseService):
 
     async def restore_state(self):
         """
-        Restore the object database - but wait for YML files to load first
+        Restore the object database
         :return:
         """
         if os.path.exists('data/object_store'):
@@ -74,21 +74,20 @@ class DataService(BaseService):
         """
         self.ram[collection] = []
 
-    async def load_data(self, directory=None, poll=False):
+    async def load_data(self, directory):
         """
         Read all the data sources to populate the object store
         :param directory:
-        :param poll:
         :return: None
         """
+        self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
-        if not poll:
-            self.data_dirs.add(directory)
-            loop.create_task(self._load_sources(directory='%s/facts' % directory))
-            loop.create_task(self._load_planners(directory='%s/planners' % directory))
-            loop.create_task(self._load_c2(directory='%s/c2' % directory))
         loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
         loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
+        loop.create_task(self._load_sources(directory='%s/facts' % directory))
+        loop.create_task(self._load_planners(directory='%s/planners' % directory))
+        loop.create_task(self._load_c2(directory='%s/c2' % directory))
+        self.data_dirs.add(directory)
 
     async def store(self, c_object):
         """
@@ -149,7 +148,7 @@ class DataService(BaseService):
                     for phase in phases:
                         matching_abilities = await self.locate('abilities', match=dict(ability_id=phase['id']))
                         if not len(matching_abilities):
-                            self.log.error('Missing Ability (%s) for adversary: %s' % (phase['id'], adv['name']))
+                            self.log.error('Missing ability (%s) for adversary: %s' % (phase['id'], adv['name']))
                         for ability in matching_abilities:
                             pp[phase['phase']].append(ability)
                     phases = dict(pp)
