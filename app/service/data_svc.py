@@ -196,7 +196,7 @@ class DataService(BaseService):
                 source = Source(
                     name=src['name'],
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
-                    rules=[Rule(**r) for r in src.get('rules')]
+                    rules=[Rule(**r) for r in src.get('rules', [])]
                 )
                 await self.store(source)
 
