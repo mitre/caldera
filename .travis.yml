@@ -6,4 +6,4 @@ install:
   - pip install flake8
 script:
   - python -m unittest
-  - flake8 --max-line-length 119
+  - flake8 --max-line-length 180
