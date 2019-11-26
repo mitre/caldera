@@ -35,8 +35,6 @@ async def start_server(config, services):
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
-    await app_svc.start_c2(app)
-
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, config['host'], config['port']).start()

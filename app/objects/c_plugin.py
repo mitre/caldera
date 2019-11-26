@@ -33,8 +33,8 @@ class Plugin(BaseObject):
             self.description = plugin.description
             self.address = plugin.address
             return True
-        except Exception:
-            self.log.error('Error loading plugin=%s' % self.name)
+        except Exception as e:
+            self.log.error('Error loading plugin=%s, %s' % (self.name, e))
             return True
 
     async def enable(self, services):
@@ -42,13 +42,13 @@ class Plugin(BaseObject):
             plugin = getattr(self._load_module(), 'enable')
             await plugin(services)
             self.enabled = True
-        except Exception:
-            self.log.error('Error enabling plugin=%s' % self.name)
+        except Exception as e:
+            self.log.error('Error enabling plugin=%s, %s' % (self.name, e))
 
     """ PRIVATE """
 
     def _load_module(self):
         try:
             return import_module('plugins.%s.hook' % self.name)
-        except Exception:
-            self.log.error('Error importing plugin=%s' % self.name)
+        except Exception as e:
+            self.log.error('Error importing plugin=%s, %s' % (self.name, e))

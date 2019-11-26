@@ -4,20 +4,18 @@ import glob
 import json
 import os.path
 import pickle
-
 from base64 import b64encode
 from collections import defaultdict
-from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
-from app.objects.c_rule import Rule
 from app.objects.c_parser import Parser
 from app.objects.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
 from app.objects.c_relationship import Relationship
 from app.objects.c_requirement import Requirement
+from app.objects.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
@@ -28,7 +26,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], c2=[], plugins=[])
+                           schedules=[], plugins=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -86,7 +84,6 @@ class DataService(BaseService):
         loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
         loop.create_task(self._load_sources(directory='%s/facts' % directory))
         loop.create_task(self._load_planners(directory='%s/planners' % directory))
-        loop.create_task(self._load_c2(directory='%s/c2' % directory))
         self.data_dirs.add(directory)
 
     async def store(self, c_object):
@@ -180,17 +177,6 @@ class DataService(BaseService):
                                                            requirements=ab.get('requirements', []),
                                                            privilege=ab['privilege'] if 'privilege' in ab.keys() else
                                                            None)
-
-    async def _load_c2(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for c2 in self.strip_yml(filename):
-                module = import_module(c2.get('module'))
-                c2_obj = getattr(module, c2.get('name'))(services=self.get_services(), module=c2.get('module'),
-                                                         config=c2.get('config'), name=c2.get('name'))
-                if not c2_obj.valid_config():
-                    self.log.error('C2 channel (%s) does not have a valid configuration. Skipping!' % c2.get('name'))
-                    continue
-                await self.store(c2_obj)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
