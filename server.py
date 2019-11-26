@@ -35,7 +35,6 @@ async def start_server(config, services):
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
-    await app_svc.load_plugins()
     await app_svc.start_c2(app)
 
     runner = web.AppRunner(app)
@@ -45,11 +44,12 @@ async def start_server(config, services):
 
 def main(services, config):
     loop = asyncio.get_event_loop()
+    loop.run_until_complete(data_svc.restore_state())
+    loop.run_until_complete(app_svc.load_plugins())
+    loop.run_until_complete(data_svc.load_data(directory='data'))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
-    loop.create_task(data_svc.load_data(directory='data'))
-    loop.create_task(data_svc.restore_state())
     loop.run_until_complete(start_server(config, services))
     try:
         print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
