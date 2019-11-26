@@ -115,7 +115,7 @@ class FileSvc(BaseService):
         """
         os.system(
             'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
-                                                                            ldflags, src_fle)
+                                                                           ldflags, src_fle)
         )
 
     """ PRIVATE """

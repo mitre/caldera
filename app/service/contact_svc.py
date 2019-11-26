@@ -88,4 +88,3 @@ class ContactService(BaseService):
                     return json.dumps(dict(status=True))
         except Exception:
             pass
-
