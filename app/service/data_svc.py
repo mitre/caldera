@@ -150,7 +150,7 @@ class DataService(BaseService):
                             for ability in matching_abilities:
                                 pp[step['phase']].append(ability)
                         else:
-                            pack_abilities = self._add_adversary_packs(step['id']):
+                            pack_abilities = await self._add_adversary_packs(step['id'])
                             if not pack_abilities:
                                 self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adv['name']))
                             for pack_ability in pack_abilities:
