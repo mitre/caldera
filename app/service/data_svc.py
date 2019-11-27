@@ -137,17 +137,26 @@ class DataService(BaseService):
                 phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
                 ps = []
                 for p in adv.get('packs', []):
-                    ps.append(await self._add_adversary_packs(p))
+                    adv_pack = await self._add_adversary_packs(p)
+                    if adv_pack:
+                        ps.append(adv_pack)
                 for pack in ps:
                     phases += pack
                 if adv.get('visible', True):
                     pp = defaultdict(list)
-                    for phase in phases:
-                        matching_abilities = await self.locate('abilities', match=dict(ability_id=phase['id']))
-                        if not len(matching_abilities):
-                            self.log.error('Missing ability (%s) for adversary: %s' % (phase['id'], adv['name']))
-                        for ability in matching_abilities:
-                            pp[phase['phase']].append(ability)
+                    for step in phases:
+                        matching_abilities = await self.locate('abilities', match=dict(ability_id=step['id']))
+                        if matching_abilities:
+                            for ability in matching_abilities:
+                                pp[step['phase']].append(ability)
+                        else:
+                            pack_abilities = self._add_adversary_packs(step['id']):
+                            if not pack_abilities:
+                                self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adv['name']))
+                            for pack_ability in pack_abilities:
+                                for ability in await self.locate('abilities', match=dict(ability_id=pack_ability['id'])):
+                                    self.log.debug(ability.name)
+                                    pp[step['phase']].append(ability)
                     phases = dict(pp)
                     await self.store(
                         Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
@@ -197,7 +206,9 @@ class DataService(BaseService):
                 )
 
     async def _add_adversary_packs(self, pack):
-        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location='data')
+        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location=os.path.join('data', 'adversaries'))
+        if filename is None:
+            return []
         for adv in self.strip_yml(filename):
             return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
 
