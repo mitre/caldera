@@ -83,10 +83,6 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(self.run_operation(op))
 
-    async def start_c2(self, app):
-        for c2 in await self.get_service('data_svc').locate('c2'):
-            c2.start(app)
-
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
@@ -108,15 +104,15 @@ class AppService(BaseService):
         """
         for plug in os.listdir('plugins'):
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
-            self.log.debug('Loading plugin: %s' % plug)
             plugin = Plugin(name=plug)
-            await self.get_service('data_svc').store(plugin)
-            if plugin.name in self.config['enabled_plugins']:
-                plugin.enabled = True
+            if await plugin.load():
+                await self.get_service('data_svc').store(plugin)
+                if plugin.name in self.config['enabled_plugins']:
+                    plugin.enabled = True
         for plug in await self._services.get('data_svc').locate('plugins'):
-            if plug.name in self.config['enabled_plugins'] or plug.enabled:
+            if plug.name in self.config['enabled_plugins']:
                 await plug.enable(self.get_services())
 
         templates = ['plugins/%s/templates' % p.name.lower()

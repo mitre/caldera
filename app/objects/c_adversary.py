@@ -27,4 +27,7 @@ class Adversary(BaseObject):
         if not existing:
             ram['adversaries'].append(self)
             return self.retrieve(ram['adversaries'], self.unique)
+        existing.update('name', self.name)
+        existing.update('description', self.description)
+        existing.update('phases', self.phases)
         return existing
