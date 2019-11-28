@@ -55,6 +55,7 @@ class BaseWorld:
         decoded_cmd = decoded_cmd.replace('#{group}', group)
         decoded_cmd = decoded_cmd.replace('#{paw}', agent.paw)
         decoded_cmd = decoded_cmd.replace('#{location}', agent.location)
+        decoded_cmd = decoded_cmd.replace('#{exe_name}', agent.exe_name)
         return decoded_cmd
 
     @staticmethod
