@@ -131,6 +131,34 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
+    async def _add_phase_abilities(self, phase_dict, phase, phase_entries, is_pack=False):
+        if is_pack:
+            for pack_ability in phase_entries:
+                for ability in await self.locate('abilities', match=dict(ability_id=pack_ability['id'])):
+                    phase_dict[phase].append(ability)
+        else:
+            for ability in phase_entries:
+                phase_dict[phase].append(ability)
+
+        return phase_dict
+
+    async def _add_phases(self, phases, adversary):
+        pp = defaultdict(list)
+        for step in phases:
+            abilities = await self.locate('abilities', match=dict(ability_id=step['id']))
+
+            is_pack = False
+            if not abilities:
+                abilities = await self._add_adversary_packs(step['id'])
+                if not abilities:
+                    self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adversary['name']))
+                else:
+                    is_pack = True
+
+            await self._add_phase_abilities(pp, step['phase'], abilities, is_pack)
+
+        return dict(pp)
+
     async def _load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
@@ -143,21 +171,7 @@ class DataService(BaseService):
                 for pack in ps:
                     phases += pack
                 if adv.get('visible', True):
-                    pp = defaultdict(list)
-                    for step in phases:
-                        matching_abilities = await self.locate('abilities', match=dict(ability_id=step['id']))
-                        if matching_abilities:
-                            for ability in matching_abilities:
-                                pp[step['phase']].append(ability)
-                        else:
-                            pack_abilities = await self._add_adversary_packs(step['id'])
-                            if not pack_abilities:
-                                self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adv['name']))
-                            for pack_ability in pack_abilities:
-                                for ability in await self.locate('abilities', match=dict(ability_id=pack_ability['id'])):
-                                    self.log.debug(ability.name)
-                                    pp[step['phase']].append(ability)
-                    phases = dict(pp)
+                    phases = await self._add_phases(phases, adv)
                     await self.store(
                         Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                   phases=phases)
