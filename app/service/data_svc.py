@@ -158,25 +158,31 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
+                    saved = set()
                     for pl, executors in ab['platforms'].items():
                         for name, info in executors.items():
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                           technique_name=ab['technique']['name'],
-                                                           technique_id=ab['technique']['attack_id'],
-                                                           test=encoded_test.decode(),
-                                                           description=ab.get('description') or '',
-                                                           executor=e, name=ab['name'], platform=pl,
-                                                           cleanup=b64encode(
-                                                               info['cleanup'].strip().encode(
-                                                                   'utf-8')).decode() if info.get(
-                                                               'cleanup') else None,
-                                                           payload=info.get('payload'),
-                                                           parsers=info.get('parsers', []),
-                                                           requirements=ab.get('requirements', []),
-                                                           privilege=ab['privilege'] if 'privilege' in ab.keys() else
-                                                           None)
+                                a = await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                                               technique_name=ab['technique']['name'],
+                                                               technique_id=ab['technique']['attack_id'],
+                                                               test=encoded_test.decode(),
+                                                               description=ab.get('description') or '',
+                                                               executor=e, name=ab['name'], platform=pl,
+                                                               cleanup=b64encode(
+                                                                   info['cleanup'].strip().encode(
+                                                                       'utf-8')).decode() if info.get(
+                                                                   'cleanup') else None,
+                                                               payload=info.get('payload'),
+                                                               parsers=info.get('parsers', []),
+                                                               requirements=ab.get('requirements', []),
+                                                               privilege=ab[
+                                                                   'privilege'] if 'privilege' in ab.keys() else None)
+                                saved.add(a.unique)
+                    for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
+                        if existing.unique not in saved:
+                            self.log.debug('Ability no longer exists on disk, removing: %s' % existing.unique)
+                            await self.remove('abilities', match=dict(unique=existing.unique))
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -213,7 +219,8 @@ class DataService(BaseService):
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
                         requirements[module]]
             rs.append(Requirement(module=module, relationships=relation))
-        await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                                 technique_id=technique_id, technique=technique_name,
-                                 executor=executor, platform=platform, description=description,
-                                 cleanup=cleanup, payload=payload, parsers=ps, requirements=rs, privilege=privilege))
+        return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                                        technique_id=technique_id, technique=technique_name,
+                                        executor=executor, platform=platform, description=description,
+                                        cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
+                                        privilege=privilege))
