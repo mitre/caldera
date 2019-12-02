@@ -9,6 +9,7 @@ from importlib import import_module
 import aiohttp_jinja2
 import jinja2
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -87,6 +88,16 @@ class AppService(BaseService):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
+            # ---
+            if not operation.phases_enabled:
+                # Replace operation adversary with new Adversary whose
+                # phases are collapsed. Modified adversary is temporary and
+                # not stored, just used for this operation.
+                operation.adversary = Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
+                                                name=(operation.adversary.name + " - with phases disabled"),
+                                                description=(operation.adversary.name + " with phases disabled"),
+                                                phases={1: [i for i in ab for phase, ab in operation.adversary.phases.items()]})
+            # ---
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()

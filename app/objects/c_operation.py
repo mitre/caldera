@@ -63,7 +63,7 @@ class Operation(BaseObject):
         return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True):
         super().__init__()
         self.id = id
         self.start = None
@@ -76,6 +76,7 @@ class Operation(BaseObject):
         self.state = state
         self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
+        self.phases_enabled = phases_enabled
         self.phase = 0
         self.finish = None
         self.chain = []
