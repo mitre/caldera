@@ -276,13 +276,28 @@
     background: var(--primary-background);
     border: None;
     color: white;
-    width: 50%;
+    width: 70%;
 }
 .topright {
     position: absolute;
     top: 2px;
     right: 0;
     padding: 10px;
+}
+.topleft {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    padding: 10px;
+}
+.removal {
+    padding: 1px;
+    border-radius: 5px;
+    background-color: red;
+    border: 1px solid black;
+}
+.removal p {
+    font-size:16px;
 }
 .bottomright {
     position: absolute;
