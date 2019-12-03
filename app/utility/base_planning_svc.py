@@ -45,7 +45,10 @@ class BasePlanningService(BaseService):
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
                     copy_test = copy.deepcopy(decoded_test)
-                    copy_link = copy.deepcopy(link)
+                    try:
+                        copy_link = copy.deepcopy(link)
+                    except:
+                        continue
                     variant, score, used = await self._build_single_test_variant(copy_test, combo)
                     copy_link.command = self.encode_string(variant)
                     copy_link.score = score
