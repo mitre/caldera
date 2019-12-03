@@ -45,7 +45,7 @@ class RestApi:
         try:
             abilities = await self.data_svc.locate('abilities')
             tactics = set([a.tactic.lower() for a in abilities])
-            payloads = set([a.payload for a in abilities if a.payload ])
+            payloads = set([a.payload for a in abilities if a.payload])
             hosts = [h.display for h in await self.data_svc.locate('agents')]
             groups = list(set(([h['group'] for h in hosts])))
             adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
