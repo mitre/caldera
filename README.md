@@ -25,7 +25,7 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
-git clone --branch x.x.x https://github.com/mitre/caldera.git --recursive
+git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 > Here are our [stable releases](https://github.com/mitre/caldera/releases). 
 
