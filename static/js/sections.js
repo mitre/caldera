@@ -20,6 +20,10 @@ function showHide(show, hide) {
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
 }
 
+function removeSection(identifier){
+    $('#'+identifier).hide();
+}
+
 function removeIntro(){
     $('#intro').remove();
     localStorage.setItem('intro', '0');

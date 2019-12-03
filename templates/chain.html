@@ -26,9 +26,11 @@
       <a onclick="viewSection('reports')">Reports</a>
     </div>
   </div>
-  <div class="subnav">
+  <a href="/logout" style="float:right">Logout</a>
+  <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
+  <div class="subnav-right">
     <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
-    <div class="subnav-content">
+    <div class="subnav-content subnav-content-right">
         {% for plugin in plugins %}
           {% if plugin.address %}
               <a href="{{ plugin.address }}">{{ plugin.name }}</a>
@@ -36,8 +38,6 @@
         {% endfor %}
     </div>
   </div>
-  <a href="/logout" style="float:right">Logout</a>
-  <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
 </div>
 <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
 
@@ -48,7 +48,7 @@
       <center>
 
         <div id="intro" class="home-box">
-            <div onclick="removeIntro()" class="topright" style="font-size:16px;top:50px;right:50px">&#x274C;</div>
+            <div class="topleft duk-icon"><img onclick="removeIntro()" src="/gui/img/x.png"></div>
             <h1 id="big-head" class="big-head">CALDERA</h1>
             <hr>
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
@@ -64,7 +64,8 @@
               <p class="section-description">
                   Groups are collections of agents so hosts can be compromised simultaneously.
               </p>
-              <div class="duk"><img onclick="openDuk4()" class="duk-icon" src="/gui/img/duk.png"></div>
+              <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -106,8 +107,9 @@
               <p class="section-description">
                   Adversaries are collections of ATT&CK TTPs, designed to test specific threats.
               </p>
-                <div class="duk"><img onclick="openDuk2()" class="duk-icon" src="/gui/img/duk.png"></div>
-              <br>
+              <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
+                <br>
               <div id="viewAdversary">
                   <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
                     <option value="" disabled selected>Select an existing adversary</option>
@@ -160,17 +162,17 @@
             <table frame=void rules=rows style="border-spacing:5px;width:100%">
                 <tr>
                     <td style="width:10%"><b>platform:</b></td>
-                    <td><input id="ability-platform" contenteditable="true" spellcheck="false"></td>
+                    <td><input id="ability-platform" contenteditable="true" spellcheck="false" placeholder="linux, darwin or windows"></td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>executor:</b></td>
-                    <td><input id="ability-executor" contenteditable="true" spellcheck="false"></td>
+                    <td><input id="ability-executor" contenteditable="true" spellcheck="false" placeholder="sh, psh or pwsh"></td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>payload:</b></td>
                     <td>
                       <select id="ability-payload">
-                        <option value="" disabled selected>Select a payload</option>
+                        <option value="" disabled selected>Download a payload before running this ability (optional)</option>
                         {% for p in payloads %}
                             <option value="{{ p }}">{{ p }}</option>
                         {% endfor %}}
@@ -179,7 +181,7 @@
                 </tr>
                 <tr>
                     <td style="width:10%"><b>command:</b></td>
-                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true"></textarea></td>
+                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
                 </tr>
             </table>
             <br>
@@ -207,7 +209,8 @@
               <p class="section-description">
                 View or start operations from here
               </p>
-              <div class="duk"><img onclick="openDuk3()" class="duk-icon" src="/gui/img/duk.png"></div>
+              <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
               <div id="viewOperation">
                 <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
@@ -387,6 +390,7 @@
               <p class="section-description">
                   View an operation report
               </p>
+              <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
               <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
                   <option id="reportDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
