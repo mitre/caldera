@@ -7,12 +7,14 @@ import sys
 import yaml
 from aiohttp import web
 
+from app.api.rest_api import RestApi
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
+from app.service.rest_svc import RestService
 
 
 def set_logging_state():
@@ -44,6 +46,7 @@ async def start_server(config, services):
 def main(services, config):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(data_svc.restore_state())
+    loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
@@ -73,6 +76,7 @@ if __name__ == '__main__':
         data_svc = DataService()
         contact_svc = ContactService()
         planning_svc = PlanningService()
+        rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc(cfg['exfil_dir'])
         app_svc = AppService(application=web.Application(), config=cfg)

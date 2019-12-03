@@ -1,0 +1,75 @@
+.reports-dash {
+    text-align: center;
+}
+.reports-dash .row {
+    margin-top: 0;
+}
+.report-box {
+    background-color: var(--primary-background);
+    padding: 10px;
+    border-radius: 7px;
+    width: 95%;
+    margin: 7px;
+}
+.reports-dash h4 {
+    margin-top: 0;
+    font-size: 20px;
+    color: var(--font-color);
+}
+.reports-dash-header {
+    border-bottom: 2px solid var(--theme-color);
+    padding: 2px;
+    border-radius: 7px;
+}
+.report-box table {
+    border-collapse: collapse;
+    width: 100%;
+    color: var(--font-color);
+}
+.report-box td, th {
+  text-align: center;
+  padding: 8px;
+}
+
+.report-thin td {
+    text-align: left;
+    padding: 2px;
+}
+
+.report-thin .thin-center {
+    text-align: center;
+}
+
+.skipped-abilities-list {
+    margin: 0;
+    padding: 0;
+}
+
+.agent-skipped {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #777;
+}
+
+.reports-skipped-container {
+    display: flex;
+    margin: 20px 0;
+}
+
+.reports-skipped-container .column-left {
+    flex: 30%;
+    padding:5px;
+    display: flex;
+    flex-direction: column;
+}
+.reports-skipped-container .column-left .skipped-box {
+    border-radius: 7px;
+    margin: 10px;
+    text-align: center;
+}
+.reports-skipped-container .column-left .skipped-box p {
+    margin: 13px;
+}
+.reports-skipped-container .column-right {
+    flex: 70%;
+}
+

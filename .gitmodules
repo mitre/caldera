@@ -1,9 +1,3 @@
-[submodule "plugins/chain"]
-	path = plugins/chain
-	url = https://github.com/mitre/chain.git
-[submodule "plugins/gui"]
-	path = plugins/gui
-	url = https://github.com/mitre/gui.git
 [submodule "plugins/sandcat"]
 	path = plugins/sandcat
 	url = https://github.com/mitre/sandcat.git
