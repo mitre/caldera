@@ -62,7 +62,8 @@
               <img src="/gui/img/group.png">
               <h4 style="margin-bottom:-5px">Agents</h4>
               <p class="section-description">
-                  Groups are collections of agents so hosts can be compromised simultaneously.
+                  Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
+                  least 1 agent in order to run an operation.
               </p>
               <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
@@ -105,7 +106,8 @@
               </div>
               <br>
               <p class="section-description">
-                  Adversaries are collections of ATT&CK TTPs, designed to test specific threats.
+                  Adversaries are collections of ATT&CK TTPs, designed to test specific threats. Build or review
+                  existing adversaries here.
               </p>
               <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
@@ -207,7 +209,7 @@
                 </label>
               </div>
               <p class="section-description">
-                View or start operations from here
+                Start a new operation or review previous ones here.
               </p>
               <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
@@ -388,7 +390,7 @@
               <img src="/gui/img/reports.png">
               <h4 style="margin-bottom:-5px">Reports</h4>
               <p class="section-description">
-                  View an operation report
+                  View a detailed report for any started operation.
               </p>
               <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
               <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
