@@ -11,7 +11,7 @@ class Plugin(BaseObject):
 
     @property
     def display(self):
-        return dict(name=self.name, enabled=self.enabled)
+        return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
 
     def __init__(self, name):
         super().__init__()

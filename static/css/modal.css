@@ -1,0 +1,95 @@
+input[type=text], input[type=password], input[type=number] {
+    width: 100%;
+    height: 30px;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    margin-top: 15px;
+    border-radius: 10px;
+}
+select {
+   overflow: hidden;
+   background: white;
+   font-size: 14px;
+   height: 30px;
+   width: 100%;
+   padding: 5px 15px;
+   margin-top: 15px;
+   border-radius: 10px;
+}
+.modal button {
+    background-color: green;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 90%;
+}
+.modal button:hover {
+    opacity: 0.6;
+}
+
+.cancelbtn {
+    width: auto;
+    padding: 10px 18px;
+    background-color: #7a1f1f;
+}
+.imgcontainer {
+    text-align: center;
+    position: relative;
+    margin-bottom: 25px;
+}
+img.avatar {
+    width: 40%;
+    border-radius: 50%;
+}
+.container {
+    padding: 16px;
+}
+span.psw {
+    float: right;
+    padding-top: 16px;
+}
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 100; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    padding-top: 70px;
+    overflow-y: scroll;
+    height: 100%;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+}
+.modal-content {
+    margin: 5% auto 15% auto;
+    width: 60%;
+}
+.modal p {
+    color: #333;
+}
+.close {
+    position: absolute;
+    right: 25px;
+    top: 0;
+    color: red;
+    font-size: 35px;
+    font-weight: bold;
+}
+.modal .approve{
+    background-color: green;
+}
+.modal .discard{
+    background-color: darkorange;
+}
+.modal .approveall{
+    background-color: darkgreen;
+}
+
+.close:hover,
+.close:focus {
+    color: #7a1f1f;
+    cursor: pointer;
+}
