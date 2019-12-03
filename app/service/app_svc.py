@@ -96,7 +96,7 @@ class AppService(BaseService):
                 operation.adversary = Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
                                                 name=(operation.adversary.name + " - with phases disabled"),
                                                 description=(operation.adversary.name + " with phases disabled"),
-                                                phases={1: [i for i in ab for phase, ab in operation.adversary.phases.items()]})
+                                                phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
             # ---
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
