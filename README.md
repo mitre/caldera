@@ -71,7 +71,7 @@ Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CA
 
 Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the hunter adversary and the group my_group.
 
-Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for along with how it determines which files are sensitive?
+Did the operation find the sensitive files? How many? Can you determine how it determines which files are sensitive? Hint- you may want to read about [facts](https://github.com/mitre/caldera/wiki/What-is-a-fact).
 
 ## Developers
 
