@@ -18,6 +18,9 @@
 .navbar a:hover, .subnav:hover .subnavbtn {
   background-color: black;
 }
+.navbar a:hover, .subnav-right:hover .subnavbtn {
+  background-color: black;
+}
 
 .subnav {
   float: left;

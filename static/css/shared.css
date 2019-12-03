@@ -265,6 +265,7 @@ select {
 }
 .section-description {
     padding: 10px 25px;
+    text-align: left;
 }
 
 /* notice bar */

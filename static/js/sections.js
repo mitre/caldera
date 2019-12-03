@@ -1019,8 +1019,9 @@ function openDuk3(){
 
 function openDuk4(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... To run an operation, you must first deploy an agent. The default agent is ' +
-        'called 54ndc47 (sandcat) and can be found in the plugins section.');
+    $('#duk-text').text('Did you know... The default agent is ' +
+        'called 54ndc47 (sandcat) and can be found in the plugins section. 54ndc47 is a multi-platform agent which ' +
+        'can be deployed by just pasting a 1-line command into a terminal.');
 }
 
 /** HUMAN-IN-LOOP */
