@@ -137,7 +137,8 @@ class AppService(BaseService):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
 
-    async def _adjust_adversary_phases(self, operation):
+    @staticmethod
+    async def _adjust_adversary_phases(operation):
         """If an operation has phases disabled, replace operation
         adversary with new adversary whose phases are collapsed.
         Modified adversary is temporary and not stored, just used
