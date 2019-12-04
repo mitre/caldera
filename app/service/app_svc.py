@@ -88,7 +88,7 @@ class AppService(BaseService):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
-            operation.adversary = _adjust_adversary_phases(operation)
+            operation.adversary = await self._adjust_adversary_phases(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()
