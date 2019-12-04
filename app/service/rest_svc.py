@@ -46,6 +46,13 @@ class RestService(BaseService):
             f.write(yaml.dump([data]))
         for d in self.get_service('data_svc').data_dirs:
             await self.get_service('data_svc').load_data(d)
+        ability = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=data.get('id')))
+        checks = 0
+        while not ability or checks == 5:
+            ability = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=data.get('id')))
+            await asyncio.sleep(1)
+            checks += 1
+        return ability[0].display
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)

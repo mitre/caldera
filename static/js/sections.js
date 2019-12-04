@@ -615,6 +615,13 @@ function saveAbility() {
 
 function saveAbilityCallback(data) {
     flashy('ability-flashy-holder', 'Ability saved!');
+    let options = $('#phase-modal').find('#ability-ability-filter');
+    let ability = options.find(":selected").data('ability');
+    if((!ability) || (ability && ability.ability_id != data.ability_id)) {
+        let a = addPlatforms([data]);
+        appendAbilityToList('phase-modal', a[0]);
+        options.val(a[0].name);
+    }
 }
 
 function removeBlock(element){
