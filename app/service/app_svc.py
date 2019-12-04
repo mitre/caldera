@@ -148,4 +148,4 @@ class AppService(BaseService):
                              description=(operation.adversary.name + " with phases disabled"),
                              phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
         else:
-            return operation.adversary 
+            return operation.adversary
