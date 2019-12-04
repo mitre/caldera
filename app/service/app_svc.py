@@ -136,7 +136,7 @@ class AppService(BaseService):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
 
-    async def _adjust_adversary_phases(operation):
+    async def _adjust_adversary_phases(self, operation):
         """If an operation has phases disabled, replace operation
         adversary with new adversary whose phases are collapsed.
         Modified adversary is temporary and not stored, just used
@@ -144,8 +144,8 @@ class AppService(BaseService):
         """
         if not operation.phases_enabled:
             return Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
-                            name=(operation.adversary.name + " - with phases disabled"),
-                            description=(operation.adversary.name + " with phases disabled"),
-                            phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
+                             name=(operation.adversary.name + " - with phases disabled"),
+                             description=(operation.adversary.name + " with phases disabled"),
+                             phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
         else:
             return operation.adversary 
