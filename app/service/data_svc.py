@@ -37,9 +37,10 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for f in glob.glob('data/results/*'):
-            if not f.startswith('.'):
-                os.remove(f)
+        for d in ['data/results', 'data/adversaries', 'data/abilities/attack']:
+            for f in glob.glob('%s/*' % d):
+                if not f.startswith('.'):
+                    os.remove(f)
 
     async def save_state(self):
         """
