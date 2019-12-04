@@ -541,7 +541,7 @@
                             <div class="column" style="flex:60%">
                                 <table frame=void rules=rows style="border-spacing:2px;width:100%">
                                     <tr>
-                                        <td onclick="freshId()" style="width:10%"><b>&#8634;&nbsp;&nbsp;id:</b></td>
+                                        <td style="width:10%"><b>id:</b></td>
                                         <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
                                     </tr>
                                     <tr>
@@ -566,21 +566,31 @@
                                     </tr>
                                 </table>
                             </div>
-                            <div class="column" style="flex:40%">
+                            <div class="column" style="flex:10%">
+                                <div>
+                                    <img src="/gui/img/recycle.png">
+                                    <p style="color:white;text-align: center;" onclick="freshId()">generate new id</p>
+                                </div>
+                            </div>
+                            <div class="column" style="flex:10%">
+                                <div>
+                                    <img src="/gui/img/executor.png">
+                                    <p style="color:white;text-align: center;" onclick="addExecutorBlock()">add executor</p>
+                                </div>
+                            </div>
+                            <div class="column" style="flex:10%">
                                 <div>
                                     <img src="/gui/img/payload.png">
                                     <form id="uploadPayloadForm">
-                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>&#10010; upload payload</label>
+                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
                                        <input type="file" id="uploadPayloadFile" style="display: none">
                                     </form>
                                 </div>
                             </div>
-
                             <br><br>
                         </div>
                         <ul id="ttp-tests"></ul>
                         <div style="float:right;">
-                            <p style="color:white;text-align: center;" onclick="addExecutorBlock()">&#10010; add executor</p>
                             <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
                             <button type="button" class="button-success atomic-button" onclick="addToPhase()">Add to phase</button>
                             <div id="ability-flashy-holder">

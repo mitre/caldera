@@ -833,7 +833,7 @@ function showAbility(parentId, exploits) {
 function addExecutorBlock(){
     let template = $("#ttp-template").clone();
     template.show();
-    $('#ttp-tests').append(template);
+    $('#ttp-tests').prepend(template);
 }
 
 function showPhaseModal(phase) {
