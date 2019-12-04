@@ -1,5 +1,6 @@
 from app.objects.c_link import Link
 from app.utility.base_planning_svc import BasePlanningService
+import re
 
 
 class PlanningService(BasePlanningService):
@@ -23,6 +24,11 @@ class PlanningService(BasePlanningService):
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]
         link_status = await self._default_link_status(operation)
         links = []
+        for index, link in enumerate(links):
+            x = re.compile(r"~`!@#\$%\^&*\(\)-_+=}{]\[|\\\:;'<>?/ \"")
+            if x.search(link):
+                links[index] = re.escape(link)
+
         if agent:
             links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
         else:
