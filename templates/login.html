@@ -1,0 +1,36 @@
+<script src="/gui/js/shared.js"></script>
+<head>
+    <title>Login | Access</title>
+	<link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+	<link rel="stylesheet" href="/gui/css/shared.css" type="text/css">
+	<link rel="stylesheet" href="/gui/css/basic.css" type="text/css">
+	<link rel="stylesheet" href="/gui/css/login.css" type="text/css">
+</head>
+<form action="/enter" method="POST">
+    <br><br><br><br>
+	<div class="login">
+		<div class="login-screen">
+			<div class="app-title">
+				<h3 style="color: black">access</h3>
+			</div>
+			<div class="login-form">
+				<div class="control-group">
+				<input type="text" class="login-field" value="" placeholder="username" name="username" autocomplete="username">
+				<label class="login-field-icon fui-user" for="login-name"></label>
+				</div>
+
+				<div class="control-group">
+				<input type="password" class="login-field" value="" placeholder="password" name="password" autocomplete="current-password">
+				<label class="login-field-icon fui-lock" for="login-pass"></label>
+				</div>
+
+                <input type="submit" value="Log in" class="button-success" >
+			    <br>
+                <p style="font-size:12px;color:grey">Trouble logging in?<br>Clear your cookies and try again.<br>For the best experience, use Chrome</p>
+			</div>
+		</div>
+	</div>
+</form>
+<script>
+    document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
+</script>

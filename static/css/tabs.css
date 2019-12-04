@@ -1,0 +1,121 @@
+.tab {
+    overflow: hidden;
+    background-color: var(--theme-color);
+}
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 4px 22px;
+    transition: 0.3s;
+    font-size: 14px;
+    color: white;
+}
+.tab button:hover {
+    background-color: white;
+    color: black;
+}
+.tab button.active-tab {
+    background-color: white;
+    color: black;
+}
+.tabcontent {
+
+}
+.subtabcontent {
+    display: none;
+    padding: 6px 12px;
+    border-top: none;
+}
+.subtab {
+    margin-top: 10px;
+    background-color: #262626;
+    border-radius: 4px;
+}
+
+.block-nav {
+    margin: 0 0 0 0;
+    font-family: Arial;
+    font-size: 100%;
+    width: 80%;
+    overflow: hidden;
+    padding: 0 35px;
+}
+
+.block-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 -35px;
+ }
+
+.block-nav ul li {
+    float: left;
+    width: 50%;
+    margin: 0;
+    padding: 0;
+}
+.block-nav ul li a {
+    display: block;
+    background: #000;
+    padding: 25px 0;
+ }
+
+.block-nav .active-tab {
+    background-color: var(--primary-background);
+ }
+
+.block-nav ul li a:hover {
+    background-color: var(--primary-background);
+ }
+
+.block-nav ul li::before{
+    display: none;
+}
+
+.top-block-nav {
+    margin: 0 -25px;
+    font-family: Arial;
+    font-size: 100%;
+    width: 90%;
+    overflow: hidden;
+    padding: 0 35px;
+}
+
+.top-block-nav h2 {
+    margin: 0;
+    text-align: center;
+}
+
+.top-block-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 -25px;
+ }
+
+.top-block-nav ul li {
+    float: left;
+    width: 25%;
+    margin: 0;
+    padding: 0;
+}
+.top-block-nav ul li a {
+    display: block;
+    background-color: black;
+    border-bottom: 3px solid #333;
+    padding: 25px 0 22px 0;
+ }
+
+.top-block-nav .active-tab {
+    border-bottom: 3px solid var(--theme-color);
+    background-color: #333;
+ }
+
+.top-block-nav ul li a:hover {
+    border-bottom: 3px solid var(--theme-color);
+ }
+
+.top-block-nav ul li::before{
+    display: none;
+}
