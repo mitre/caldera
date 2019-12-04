@@ -1,6 +1,5 @@
 
 $(document).ready(function () {
-    console.log(localStorage.getItem('intro'));
     if(localStorage.getItem('intro') !== '0') {
         $('#intro').show();
     }
@@ -418,12 +417,10 @@ function operationCallback(data){
         }
     }
     if(OPERATION.finish !== '') {
-        console.log("Turning off refresh interval for page");
         clearInterval(atomic_interval);
         atomic_interval = null;
     } else {
         if(!atomic_interval) {
-            console.log("Setting refresh interval for page");
             atomic_interval = setInterval(refresh, 5000);
         }
     }
@@ -607,7 +604,7 @@ function saveAbility() {
         platforms[platform] = executors;
     });
     data['index'] = 'ability';
-    data['id'] = $('#ability-identifier').text();
+    data['id'] = $('#ability-identifier').val();
     data['name'] = name;
     data['description'] = description;
     data['tactic'] = $('#ability-tactic-name').val();
@@ -805,7 +802,7 @@ function showAbility(parentId, exploits) {
     $('#ttp-tests').empty();
 
     let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
-    $('#ability-identifier').text(aid.ability_id);
+    $('#ability-identifier').val(aid.ability_id);
     $('#ability-name').val(aid.name);
     $('#ability-description').val(aid.description);
     $('#ability-tactic-name').val(aid.tactic);
@@ -838,8 +835,36 @@ function showPhaseModal(phase) {
 }
 
 function freshId(){
-    $('#ability-identifier').text(uuidv4());
+    $('#ability-identifier').val(uuidv4());
 }
+
+function uploadPayload() {
+    let file = document.getElementById('uploadPayloadFile').files[0];
+    let fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+         type: 'POST',
+         url: '/plugin/chain/payload',
+         data: fd,
+         processData: false,
+         contentType: false
+    }).done(function (){
+        let exists = $("#ability-payload option").filter(function (i, o) { return o.value === file.name; }).length > 0;
+        if(!exists) {
+            $('.ability-payload').each(function(i, obj) {
+                $(this).append(new Option(file.name, file.name));
+            });
+        }
+    })
+}
+$('#uploadPayloadFile').on('change', function (event){
+    if(event.currentTarget) {
+        let filename = event.currentTarget.files[0].name;
+        if(filename){
+            uploadPayload();
+        }
+    }
+});
 
 function addToPhase() {
     let parent = $('#phase-modal');

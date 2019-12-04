@@ -1,4 +1,5 @@
 import asyncio
+import pathlib
 from collections import defaultdict
 from datetime import time
 
@@ -98,6 +99,13 @@ class RestService(BaseService):
                      task=operation)
         )
         self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
+
+    async def list_payloads(self):
+        payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
+        payload_dirs.extend(pathlib.Path.cwd() / 'plugins' / plugin.name / 'payloads'
+                            for plugin in await self.get_service('data_svc').locate('plugins'))
+        return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
+                   if p.is_file() and not p.name.startswith('.'))
 
     """ PRIVATE """
 

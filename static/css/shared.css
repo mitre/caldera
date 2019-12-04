@@ -92,6 +92,11 @@ select {
     display: flex;
     position: relative;
 }
+.row-simple {
+    width: 95%;
+    display: flex;
+    position: relative;
+}
 .column {
     flex: 50%;
     color: var(--font-color);

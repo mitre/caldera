@@ -52,6 +52,11 @@
             <h1 id="big-head" class="big-head">CALDERA</h1>
             <hr>
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
+            <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ tactics|length }} tactics&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ payloads|length }} payloads&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ adversaries|length }} adversaries&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ agents|length }} agents</span>
         </div>
 
         <!-- agents -->
@@ -173,7 +178,7 @@
                 <tr>
                     <td style="width:10%"><b>payload:</b></td>
                     <td>
-                      <select id="ability-payload">
+                      <select id="ability-payload" class="ability-payload">
                         <option value="" disabled selected>Download a payload before running this ability (optional)</option>
                         {% for p in payloads %}
                             <option value="{{ p }}">{{ p }}</option>
@@ -528,15 +533,46 @@
                             <option disabled selected>0 abilities</option>
                         </select>
                         <br><br>
-                        <div class="ability-attack">
-                            <br>
-                            <span>Ability ID = </span><span id="ability-identifier"></span><span onclick="freshId()">&nbsp;&nbsp;&#8634;</span>
+                        <div class="ability-attack row-simple">
+                            <div class="column" style="flex:60%">
+                                <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                                    <tr>
+                                        <td onclick="freshId()" style="width:10%"><b>&#8634;&nbsp;&nbsp;id:</b></td>
+                                        <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>name:</b></td>
+                                        <td><input type="text" id="ability-name" placeholder="Name"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>description:</b></td>
+                                        <td><input type="text" id="ability-description" placeholder="Description"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>tactic:</b></td>
+                                        <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
+                                    <tr>
+                                    <tr>
+                                        <td style="width:10%"><b>technique:</b></td>
+                                        <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>technique:</b></td>
+                                        <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="column" style="flex:40%">
+                                <div>
+                                    <img src="/gui/img/payload.png">
+                                    <form id="uploadPayloadForm">
+                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>&#10010; upload payload</label>
+                                       <input type="file" id="uploadPayloadFile" style="display: none">
+                                    </form>
+                                </div>
+                            </div>
+
                             <br><br>
-                            <input type="text" id="ability-name" placeholder="Name">
-                            <input type="text" id="ability-description" placeholder="Description">
-                            <input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic">
-                            <input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID">
-                            <input type="text" id="ability-tech-name" placeholder="ATT&CK technique name">
                         </div>
                         <ul id="ttp-tests"></ul>
                         <div style="float:right;">
