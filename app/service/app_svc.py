@@ -88,14 +88,7 @@ class AppService(BaseService):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
-            if not operation.phases_enabled:
-                # Replace operation adversary with new Adversary whose
-                # phases are collapsed. Modified adversary is temporary and
-                # not stored, just used for this operation.
-                operation.adversary = Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
-                                                name=(operation.adversary.name + " - with phases disabled"),
-                                                description=(operation.adversary.name + " with phases disabled"),
-                                                phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
+            operation.adversary = _adjust_adversary_phases(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()
@@ -142,3 +135,17 @@ class AppService(BaseService):
             for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
+
+    async def _adjust_adversary_phases(operation):
+        """If an operation has phases disabled, replace operation
+        adversary with new adversary whose phases are collapsed.
+        Modified adversary is temporary and not stored, just used
+        for the operation.
+        """
+        if not operation.phases_enabled:
+            return Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
+                            name=(operation.adversary.name + " - with phases disabled"),
+                            description=(operation.adversary.name + " with phases disabled"),
+                            phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
+        else:
+            return operation.adversary 
