@@ -114,6 +114,7 @@ class AppService(BaseService):
         for plugin in self.config['plugins']:
             plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
             [await p.enable(self.get_services()) for p in plug]
+            self.log.debug('Enabling %s plugin' % plugin)
 
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]

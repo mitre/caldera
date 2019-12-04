@@ -25,6 +25,8 @@ class Plugin(BaseObject):
         if not existing:
             ram['plugins'].append(self)
             return self.retrieve(ram['plugins'], self.unique)
+        else:
+            existing.update('enabled', self.enabled)
         return existing
 
     async def load(self):
