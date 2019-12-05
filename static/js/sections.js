@@ -1,6 +1,5 @@
 
 $(document).ready(function () {
-    console.log(localStorage.getItem('intro'));
     if(localStorage.getItem('intro') !== '0') {
         $('#intro').show();
     }
@@ -18,6 +17,10 @@ function viewSection(identifier){
 function showHide(show, hide) {
     $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
+}
+
+function removeSection(identifier){
+    $('#'+identifier).hide();
 }
 
 function removeIntro(){
@@ -234,37 +237,40 @@ $(document).ready(function () {
     $('#factTbl').DataTable({});
 });
 
-class DefaultDict {
-  constructor(defaultInit) {
-    return new Proxy({}, {
-      get: (target, name) => name in target ?
-        target[name] :
-        (target[name] = typeof defaultInit === 'function' ?
-          new defaultInit().valueOf() :
-          defaultInit)
-    })
-  }
-}
-
 function loadSource(sources) {
     let sourceName = $('#profile-source-name').val();
     sources.forEach(s => {
         if(s.name === sourceName) {
-            const grouped = new DefaultDict(Array);
+            let table = $('#factTbl').DataTable();
             s.facts.forEach(f => {
-                grouped[f.trait].push(f.value);
-            });
-            $.each(grouped, function(trait, values) {
-                let template = $("#fact-template").clone();
-                template.find('#trait').text(trait);
-                values.forEach(v => {
-                    console.log(trait, v);
-                });
-                $('#fact-hosts').append(template);
-                template.show();
+                table.row.add([f.trait, f.value]).draw();
             });
         }
     });
+    validateFormState('#profile-source-name', '#sourceBtn');
+}
+
+function viewRules(sources){
+    $('#source-rules').empty();
+    document.getElementById("source-modal").style.display = "block";
+    let sourceName = $('#profile-source-name').val();
+    sources.forEach(s => {
+        if(s.name === sourceName) {
+            s.rules.forEach(r => {
+                let template = $("#rule-template").clone();
+                template.find('#trait').val(r.trait);
+                template.find('#match').val(r.match);
+                if(r.action === 0) {
+                    template.find('#action').val('DENY');
+                } else if (r.action === 1) {
+                    template.find('#action').val('ALLOW');
+                }
+                template.show();
+                $('#source-rules').append(template);
+            });
+        }
+    });
+    $('#rules-name').text(sourceName);
 }
 
 /** OPERATIONS **/
@@ -324,6 +330,7 @@ function buildOperationObject() {
         "state":document.getElementById("queueState").value,
         "planner":document.getElementById("queuePlanner").value,
         "autonomous":document.getElementById("queueAuto").value,
+        "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "jitter":jitter,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
@@ -426,12 +433,10 @@ function operationCallback(data){
         }
     }
     if(OPERATION.finish !== '') {
-        console.log("Turning off refresh interval for page");
         clearInterval(atomic_interval);
         atomic_interval = null;
     } else {
         if(!atomic_interval) {
-            console.log("Setting refresh interval for page");
             atomic_interval = setInterval(refresh, 5000);
         }
     }
@@ -563,7 +568,7 @@ function addPhase(number) {
     template.addClass("tempPhase");
     template.insertBefore('#dummy');
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ttp</span><hr></h4>');
+    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
     phaseHeader.insertBefore("#tempPhase" + number);
     phaseHeader.show();
     return template;
@@ -615,7 +620,7 @@ function saveAbility() {
         platforms[platform] = executors;
     });
     data['index'] = 'ability';
-    data['id'] = $('#ability-identifier').text();
+    data['id'] = $('#ability-identifier').val();
     data['name'] = name;
     data['description'] = description;
     data['tactic'] = $('#ability-tactic-name').val();
@@ -626,6 +631,13 @@ function saveAbility() {
 
 function saveAbilityCallback(data) {
     flashy('ability-flashy-holder', 'Ability saved!');
+    let options = $('#phase-modal').find('#ability-ability-filter');
+    let ability = options.find(":selected").data('ability');
+    if((!ability) || (ability && ability.ability_id != data.ability_id)) {
+        let a = addPlatforms([data]);
+        appendAbilityToList('phase-modal', a[0]);
+        options.val(a[0].name);
+    }
 }
 
 function removeBlock(element){
@@ -813,7 +825,7 @@ function showAbility(parentId, exploits) {
     $('#ttp-tests').empty();
 
     let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
-    $('#ability-identifier').text(aid.ability_id);
+    $('#ability-identifier').val(aid.ability_id);
     $('#ability-name').val(aid.name);
     $('#ability-description').val(aid.description);
     $('#ability-tactic-name').val(aid.tactic);
@@ -836,7 +848,7 @@ function showAbility(parentId, exploits) {
 function addExecutorBlock(){
     let template = $("#ttp-template").clone();
     template.show();
-    $('#ttp-tests').append(template);
+    $('#ttp-tests').prepend(template);
 }
 
 function showPhaseModal(phase) {
@@ -846,8 +858,36 @@ function showPhaseModal(phase) {
 }
 
 function freshId(){
-    $('#ability-identifier').text(uuidv4());
+    $('#ability-identifier').val(uuidv4());
 }
+
+function uploadPayload() {
+    let file = document.getElementById('uploadPayloadFile').files[0];
+    let fd = new FormData();
+    fd.append('file', file);
+    $.ajax({
+         type: 'POST',
+         url: '/plugin/chain/payload',
+         data: fd,
+         processData: false,
+         contentType: false
+    }).done(function (){
+        let exists = $("#ability-payload option").filter(function (i, o) { return o.value === file.name; }).length > 0;
+        if(!exists) {
+            $('.ability-payload').each(function(i, obj) {
+                $(this).append(new Option(file.name, file.name));
+            });
+        }
+    })
+}
+$('#uploadPayloadFile').on('change', function (event){
+    if(event.currentTarget) {
+        let filename = event.currentTarget.files[0].name;
+        if(filename){
+            uploadPayload();
+        }
+    }
+});
 
 function addToPhase() {
     let parent = $('#phase-modal');
@@ -1027,8 +1067,16 @@ function openDuk3(){
 
 function openDuk4(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... To run an operation, you must first deploy an agent. The default agent is ' +
-        'called 54ndc47 (sandcat) and can be found in the plugins section.');
+    $('#duk-text').text('Did you know... The default agent is ' +
+        'called 54ndc47 (sandcat) and can be found in the plugins section. 54ndc47 is a multi-platform agent which ' +
+        'can be deployed by just pasting a 1-line command into a terminal.');
+}
+
+function openDuk5(){
+    document.getElementById("duk-modal").style.display="block";
+    $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
+        'you to create extensible abilities. You can create new fact sources by adding YML files in the data/facts directory. '+
+        'Additionally, sources can include rules which can restrict agents from using specific traits.');
 }
 
 /** HUMAN-IN-LOOP */

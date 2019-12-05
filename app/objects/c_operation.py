@@ -63,7 +63,7 @@ class Operation(BaseObject):
         return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True):
         super().__init__()
         self.id = id
         self.start = None
@@ -76,6 +76,7 @@ class Operation(BaseObject):
         self.state = state
         self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
+        self.phases_enabled = phases_enabled
         self.phase = 0
         self.finish = None
         self.chain = []
@@ -114,7 +115,8 @@ class Operation(BaseObject):
                 return link.id
             else:
                 await asyncio.sleep(15)
-        return self.add_link(link)
+        self.add_link(link)
+        return link.id
 
     async def close(self):
         self.state = self.states['FINISHED']
@@ -131,15 +133,15 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def wait_for_links_completion(self, link_paws):
+    async def wait_for_links_completion(self, link_ids):
         """
         Wait for started links to be completed
         :param link_paws:
         :return: None
         """
-        for link_paw in link_paws:
-            link = [link for link in self.chain if link.paw == link_paw][0]
-            member = [member for member in self.agents if member.paw == link_paw][0]
+        for link_id in link_ids:
+            link = [link for link in self.chain if link.id == link_id][0]
+            member = [member for member in self.agents if member.paw == link.paw][0]
             while not link.finish and not link.status == link.states['DISCARD']:
                 await asyncio.sleep(5)
                 if await self._trust_issues(member):

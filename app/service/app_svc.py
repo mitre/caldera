@@ -9,6 +9,7 @@ from importlib import import_module
 import aiohttp_jinja2
 import jinja2
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -87,6 +88,7 @@ class AppService(BaseService):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
+            operation.adversary = await self._adjust_adversary_phases(operation)
             for phase in operation.adversary.phases:
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()
@@ -103,6 +105,8 @@ class AppService(BaseService):
         :return:
         """
         for plug in os.listdir('plugins'):
+            if plug.startswith('.'):
+                continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
                 self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
@@ -114,6 +118,7 @@ class AppService(BaseService):
         for plugin in self.config['plugins']:
             plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
             [await p.enable(self.get_services()) for p in plug]
+            self.log.debug('Enabling %s plugin' % plugin)
 
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]
@@ -133,3 +138,18 @@ class AppService(BaseService):
             for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
+
+    @staticmethod
+    async def _adjust_adversary_phases(operation):
+        """If an operation has phases disabled, replace operation
+        adversary with new adversary whose phases are collapsed.
+        Modified adversary is temporary and not stored, just used
+        for the operation.
+        """
+        if not operation.phases_enabled:
+            return Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
+                             name=(operation.adversary.name + " - with phases disabled"),
+                             description=(operation.adversary.name + " with phases disabled"),
+                             phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
+        else:
+            return operation.adversary

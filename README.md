@@ -1,8 +1,8 @@
 [![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
 
-| Caldera (Core)                                                                                                          | Chain | Sandcat | Gui | Mock | Terminal | SSL | Stockpile | Caltack |
-|---------------------------------------------------------------------------------------------------------------|-------|---------|-----|------|----------|-----|-----|-----|
-|[![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)|[![Build Status](https://travis-ci.com/mitre/chain.svg?branch=master)](https://travis-ci.com/mitre/chain)|[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)| [![Build Status](https://travis-ci.com/mitre/gui.svg?branch=master)](https://travis-ci.com/mitre/gui)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/caltack)|
+**[Caldera (Core)](https://github.com/mitre/caldera)**|**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Terminal](https://github.com/mitre/terminal)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Caltack](https://github.com/mitre/caltack)**
+:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
+[![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)|[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/caltack)
 
 # CALDERA
 
@@ -55,7 +55,7 @@ delivery command for your operating system. You should be welcomed by a log mess
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugins-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Click into campaigns and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
@@ -69,15 +69,9 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
-Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "sources"
-section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
-Note that the _built-in_ fact source contains the file extensions that you will be hunting for.
+Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the hunter adversary and the group my_group.
 
-Click into the "operations" section and start a new operation. Choose the "hunter" adversary
-and ensure that you select the fact source of built-in. By feeding these facts into the operation, 
-the adversary profile chosen (hunter) will utilize them inside its abilities.
-
-Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
+Did the operation find the sensitive files? How many? Can you determine how it determines which files are sensitive? Hint- you may want to read about [facts](https://github.com/mitre/caldera/wiki/What-is-a-fact).
 
 ## Developers
 

@@ -20,15 +20,23 @@
   <div class="subnav">
     <button class="subnavbtn">Campaigns <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content">
-      <a onclick="viewSection('agents')">Agents</a>
-      <a onclick="viewSection('adversaries')">Adversaries</a>
-      <a onclick="viewSection('operations')">Operations</a>
-      <a onclick="viewSection('reports')">Reports</a>
+      <a onclick="viewSection('agents')">agents</a>
+      <a onclick="viewSection('adversaries')">adversaries</a>
+      <a onclick="viewSection('operations')">operations</a>
+      <a onclick="viewSection('reports')">reports</a>
     </div>
   </div>
-  <div class="subnav">
+  <a href="/logout" style="float:right">Logout</a>
+  <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
+  <div class="subnav-right">
+    <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
+    <div class="subnav-content subnav-content-right">
+        <a onclick="viewSection('sources')">sources</a>
+    </div>
+  </div>
+  <div class="subnav-right">
     <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
-    <div class="subnav-content">
+    <div class="subnav-content subnav-content-right">
         {% for plugin in plugins %}
           {% if plugin.address %}
               <a href="{{ plugin.address }}">{{ plugin.name }}</a>
@@ -36,8 +44,6 @@
         {% endfor %}
     </div>
   </div>
-  <a href="/logout" style="float:right">Logout</a>
-  <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
 </div>
 <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
 
@@ -48,10 +54,15 @@
       <center>
 
         <div id="intro" class="home-box">
-            <div onclick="removeIntro()" class="topright" style="font-size:16px;top:50px;right:50px">&#x274C;</div>
+            <div class="topleft duk-icon"><img onclick="removeIntro()" src="/gui/img/x.png"></div>
             <h1 id="big-head" class="big-head">CALDERA</h1>
             <hr>
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
+            <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ tactics|length }} tactics&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ payloads|length }} payloads&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ adversaries|length }} adversaries&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+                <span>{{ agents|length }} agents</span>
         </div>
 
         <!-- agents -->
@@ -62,9 +73,11 @@
               <img src="/gui/img/group.png">
               <h4 style="margin-bottom:-5px">Agents</h4>
               <p class="section-description">
-                  Groups are collections of agents so hosts can be compromised simultaneously.
+                  Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
+                  least 1 agent in order to run an operation.
               </p>
-              <div class="duk"><img onclick="openDuk4()" class="duk-icon" src="/gui/img/duk.png"></div>
+              <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -88,7 +101,46 @@
             </div>
           </div>
         </div>
-      
+
+        <!-- sources -->
+
+        <div id="sources" class="section-profile" style="display: none">
+          <div class="advanced row">
+              <div class="column section-border" style="flex:25%">
+              <img src="/gui/img/facts.png">
+              <h4>Sources</h4>
+              <p class="section-description">
+                  Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
+                  A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
+              </p>
+              <br>
+              <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
+                <option value="" disabled selected>Select an existing source</option>
+                {% for s in sources %}
+                    <option value="{{ s.name }}">{{ s.name }}</option>
+                {% endfor %}}
+              </select>
+              <br>
+              <button id="sourceBtn" type="button" class="button-notready button-success atomic-button"
+                      onclick="viewRules({{ sources }})">View rules
+              </button>
+              <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
+            </div>
+            <div class="column" style="flex:75%;overflow:hidden;">
+                <table id="factTbl" class="display" style="width:100%;text-align:left">
+                    <thead align="left">
+                        <tr>
+                          <th>Trait</th>
+                          <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+          </div>
+        </div>
+
         <!-- adversary -->
 
         <div id="adversaries" class="section-profile" style="display: none">
@@ -104,10 +156,12 @@
               </div>
               <br>
               <p class="section-description">
-                  Adversaries are collections of ATT&CK TTPs, designed to test specific threats.
+                  Adversaries are collections of ATT&CK TTPs, designed to test specific threats. Build or review
+                  existing adversaries here.
               </p>
-                <div class="duk"><img onclick="openDuk2()" class="duk-icon" src="/gui/img/duk.png"></div>
-              <br>
+              <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
+                <br>
               <div id="viewAdversary">
                   <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
                     <option value="" disabled selected>Select an existing adversary</option>
@@ -118,10 +172,10 @@
               </div>
               <div id="addAdversary" style="display: none">
                   <button class="button-embedded" onclick="addPhase(null)">Add phase</button>
-                  <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
-                  <div id="adv-flashy-holder">
-                      <span id="message"></span>
-                  </div>
+              </div>
+              <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
+              <div id="adv-flashy-holder">
+                <span id="message"></span>
               </div>
             </div>
             <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
@@ -139,6 +193,26 @@
             <center>
                 <ul id="profile-tests" class="profile-tests"></ul>
             </center>
+        </div>
+
+        <div class="row-simple" style="display: none;">
+            <div id="rule-template" class="ttp-template column">
+                <table frame=void rules=rows style="border-spacing:20px;width:100%">
+                    <tr>
+                        <td style="width:20%"><b>trait:</b></td>
+                        <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>match:</b></td>
+                        <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>action:</b></td>
+                        <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <hr>
+                </table>
+            </div>
         </div>
 
         <li id="ability-template" class="ability-box" style="display: none">
@@ -160,17 +234,17 @@
             <table frame=void rules=rows style="border-spacing:5px;width:100%">
                 <tr>
                     <td style="width:10%"><b>platform:</b></td>
-                    <td><input id="ability-platform" contenteditable="true" spellcheck="false"></td>
+                    <td><input id="ability-platform" contenteditable="true" spellcheck="false" placeholder="linux, darwin or windows"></td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>executor:</b></td>
-                    <td><input id="ability-executor" contenteditable="true" spellcheck="false"></td>
+                    <td><input id="ability-executor" contenteditable="true" spellcheck="false" placeholder="sh, psh or pwsh"></td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>payload:</b></td>
                     <td>
-                      <select id="ability-payload">
-                        <option value="" disabled selected>Select a payload</option>
+                      <select id="ability-payload" class="ability-payload">
+                        <option value="" disabled selected>Download a payload before running this ability (optional)</option>
                         {% for p in payloads %}
                             <option value="{{ p }}">{{ p }}</option>
                         {% endfor %}}
@@ -179,17 +253,11 @@
                 </tr>
                 <tr>
                     <td style="width:10%"><b>command:</b></td>
-                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true"></textarea></td>
+                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
                 </tr>
             </table>
             <br>
         </li>
-
-        <div id="fact-template" style="display: none;">
-            <div class="fact-box">
-                <p id="trait"></p>
-            </div>
-        </div>
 
         <!-- operation -->
 
@@ -205,9 +273,10 @@
                 </label>
               </div>
               <p class="section-description">
-                View or start operations from here
+                Start a new operation or review previous ones here.
               </p>
-              <div class="duk"><img onclick="openDuk3()" class="duk-icon" src="/gui/img/duk.png"></div>
+              <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
               <div id="viewOperation">
                 <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
@@ -258,6 +327,10 @@
                       <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Run autonomously</option>
                         <option value="0">Require manual approval</option>
+                      </select>
+                      <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1" selected>Enable Phases</option>
+                        <option value="0">Disable Phases</option>
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
                   </div>
@@ -385,8 +458,9 @@
               <img src="/gui/img/reports.png">
               <h4 style="margin-bottom:-5px">Reports</h4>
               <p class="section-description">
-                  View an operation report
+                  View a detailed report for any started operation.
               </p>
+              <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
               <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
                   <option id="reportDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
@@ -522,19 +596,60 @@
                             <option disabled selected>0 abilities</option>
                         </select>
                         <br><br>
-                        <div class="ability-attack">
-                            <br>
-                            <span>Ability ID = </span><span id="ability-identifier"></span><span onclick="freshId()">&nbsp;&nbsp;&#8634;</span>
+                        <div class="ability-attack row-simple">
+                            <div class="column" style="flex:60%">
+                                <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                                    <tr>
+                                        <td style="width:10%"><b>id:</b></td>
+                                        <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>name:</b></td>
+                                        <td><input type="text" id="ability-name" placeholder="Name"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>description:</b></td>
+                                        <td><input type="text" id="ability-description" placeholder="Description"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>tactic:</b></td>
+                                        <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
+                                    <tr>
+                                    <tr>
+                                        <td style="width:10%"><b>technique:</b></td>
+                                        <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="width:10%"><b>technique:</b></td>
+                                        <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="column" style="flex:10%">
+                                <div>
+                                    <img src="/gui/img/recycle.png">
+                                    <p style="color:white;text-align: center;" onclick="freshId()">generate new id</p>
+                                </div>
+                            </div>
+                            <div class="column" style="flex:10%">
+                                <div>
+                                    <img src="/gui/img/executor.png">
+                                    <p style="color:white;text-align: center;" onclick="addExecutorBlock()">add executor</p>
+                                </div>
+                            </div>
+                            <div class="column" style="flex:10%">
+                                <div>
+                                    <img src="/gui/img/payload.png">
+                                    <form id="uploadPayloadForm">
+                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
+                                       <input type="file" id="uploadPayloadFile" style="display: none">
+                                    </form>
+                                </div>
+                            </div>
                             <br><br>
-                            <input type="text" id="ability-name" placeholder="Name">
-                            <input type="text" id="ability-description" placeholder="Description">
-                            <input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic">
-                            <input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID">
-                            <input type="text" id="ability-tech-name" placeholder="ATT&CK technique name">
                         </div>
                         <ul id="ttp-tests"></ul>
                         <div style="float:right;">
-                            <p style="color:white;text-align: center;" onclick="addExecutorBlock()">&#10010; add executor</p>
                             <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
                             <button type="button" class="button-success atomic-button" onclick="addToPhase()">Add to phase</button>
                             <div id="ability-flashy-holder">
@@ -579,6 +694,24 @@
                         </div>
                         <div class="column codearea" style="flex:75%">
                             <textarea id="hil-command" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+             </form>
+        </div>
+
+        <div id="source-modal" class="modal">
+            <form class="modal-content" style="width:25%;">
+                <div class="container">
+                    <div class="row ability-viewer">
+                        <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <div class="column" style="flex:100%">
+                            <center>
+                                <span>Rules</span>
+                                <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                                <ul id="source-rules"></ul>
+                                <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                            </center>
                         </div>
                     </div>
                 </div>

@@ -24,6 +24,7 @@ class RestApi:
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
+        self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}',
                                                   self.rest_update_operation)
@@ -45,7 +46,7 @@ class RestApi:
         try:
             abilities = await self.data_svc.locate('abilities')
             tactics = set([a.tactic.lower() for a in abilities])
-            payloads = set([a.payload for a in abilities if a.payload])
+            payloads = await self.rest_svc.list_payloads()
             hosts = [h.display for h in await self.data_svc.locate('agents')]
             groups = list(set(([h['group'] for h in hosts])))
             adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
@@ -58,6 +59,9 @@ class RestApi:
                         plugins=plugins)
         except Exception as e:
             logging.error('[!] landing: %s' % e)
+
+    async def upload_payload(self, request):
+        return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
     async def rest_full(self, request):
         base = await self.rest_core(request)

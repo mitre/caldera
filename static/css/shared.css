@@ -7,18 +7,6 @@
   --font-color: white;
   --invert-percentage: 100%;
 }
-[data-theme="red"] {
-  --theme-color: red;
-}
-[data-theme="green"] {
-  --theme-color: darkgreen;
-}
-[data-theme="rebeccapurple"] {
-  --theme-color: rebeccapurple;
-}
-[data-theme="blue"] {
-  --theme-color: cornflowerblue;
-}
 body {
     background-color: var(--primary-background);
     font-family: var(--default-font);
@@ -100,6 +88,11 @@ select {
     background-color: var(--navbar-background);
     padding:25px;
     border-radius:25px;
+    width: 95%;
+    display: flex;
+    position: relative;
+}
+.row-simple {
     width: 95%;
     display: flex;
     position: relative;
@@ -214,9 +207,10 @@ select {
 .select-info {
     padding-left: 10px;
 }
-.section-profile {
-
+.advanced {
+    background-color: #0d0d0d;
 }
+.section-profile {}
 .section-border {
     border-right: .5px var(--font-color) solid;
 }
@@ -277,6 +271,7 @@ select {
 }
 .section-description {
     padding: 10px 25px;
+    text-align: left;
 }
 
 /* notice bar */
@@ -305,21 +300,11 @@ select {
 .closebtn:hover {
   color: black;
 }
-.duk {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 17px;
-}
-.duk img {
+.duk-icon img {
     height: 22px;
     background-color: inherit;
     border-radius: 0;
     border: none;
-}
-.duk-icon:hover{
-    background: var(--theme-color);
-    border-radius: 25px;
 }
 .duk-modal {
     background-color: black;

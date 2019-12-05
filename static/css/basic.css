@@ -242,15 +242,20 @@
     margin: 2px;
     height: 12px;
     background-color: var(--primary-background);
-    border-bottom: 1px dotted var(--theme-color);
     color:white;
     text-align:left;
     border-radius: 0;
 }
+.ability-attack img {
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    margin-bottom: -5px;
+}
 .ability-viewer select {
     width: 30%;
 }
-.ability-viewer input {
+.ttp-template input {
     height: 20px;
     width: 50%;
     border-bottom: 1px dotted var(--theme-color);
@@ -276,13 +281,28 @@
     background: var(--primary-background);
     border: None;
     color: white;
-    width: 50%;
+    width: 70%;
 }
 .topright {
     position: absolute;
     top: 2px;
     right: 0;
     padding: 10px;
+}
+.topleft {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    padding: 10px;
+}
+.removal {
+    padding: 1px;
+    border-radius: 5px;
+    background-color: red;
+    border: 1px solid black;
+}
+.removal p {
+    font-size:16px;
 }
 .bottomright {
     position: absolute;
@@ -513,10 +533,4 @@ table.dataTable input[type=text] {
     text-align: left;
     padding-left: 15px;
     padding-right: 15px;
-}
-.fact-box {
-    border-radius: 5px;
-    background-color: var(--theme-color);
-    margin: 5px;
-    display: inline-block;
 }

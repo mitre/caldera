@@ -15,11 +15,18 @@
   background-color: black;
   color: white;
 }
+.navbar a:hover, .subnav:hover .subnavbtn {
+  background-color: black;
+}
+.navbar a:hover, .subnav-right:hover .subnavbtn {
+  background-color: black;
+}
+
 .subnav {
   float: left;
   overflow: hidden;
 }
-.subnav .subnavbtn {
+.subnavbtn {
   font-size: 16px;
   border: none;
   outline: none;
@@ -28,9 +35,6 @@
   background-color: inherit;
   font-family: inherit;
   margin: 0;
-}
-.navbar a:hover, .subnav:hover .subnavbtn {
-  background-color: black;
 }
 .subnav-content {
   display: none;
@@ -49,6 +53,20 @@
   background-color: white;
   color: black;
 }
+
 .subnav:hover .subnav-content {
+  display: block;
+}
+
+.subnav-right {
+  float: right;
+  overflow: hidden;
+}
+.subnav-content-right a {
+  float: right;
+  color: white;
+  text-decoration: none;
+}
+.subnav-right:hover .subnav-content {
   display: block;
 }
