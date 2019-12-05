@@ -162,8 +162,20 @@ $(document).ready(function () {
                 defaultContent: "&#x274C;"
             }
         ],
-        errMode: 'throw'
+        errMode: 'throw',
+        buttons: [ // Add the column selection button using ColVis.
+            {
+                extend: 'colvis',
+                text: 'Filter Columns', // Button text.
+                columns: ':lt(9)' // Keep last column (the remove agent column) as is.
+            }
+        ],
+        // Button, length-changer, pRocessing display element, filtering, table,
+        // table Info summary, pagination control
+        dom: 'Blrftip'
     });
+
+
     $('#netTbl tbody').on('click', 'td.delete-agent', function (e) {
         restRequest('DELETE', {"index": "agent", "paw": $(this).attr('paw')}, saveGroupsCallback);
     } );
