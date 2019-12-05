@@ -77,11 +77,18 @@ $(document).ready(function () {
                 targets: 0,
                 data: null,
                 render: function ( data, type, row, meta ) {
-                    return "[" + data['paw'] + "] " + data['host'];
+                    return data['paw'];
                 }
             },
             {
                 targets: 1,
+                data: null,
+                render: function ( data, type, row, meta ) {
+                    return data['host'];
+                }
+            },
+            {
+                targets: 2,
                 data: null,
                 render: function ( data, type, row, meta ){
                     let str = "<select id=\""+data['paw']+"-status\">";
@@ -97,14 +104,14 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 2,
+                targets: 3,
                 data: null,
                 render: {
                     _:'platform'
                 }
             },
             {
-                targets: 3,
+                targets: 4,
                 data: null,
                 render: function ( data, type, row, meta ) {
                     let str = "";
@@ -115,35 +122,35 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 4,
+                targets: 5,
                 data: null,
                 render: {
                     _:'last_seen'
                 }
             },
             {
-                targets: 5,
+                targets: 6,
                 data: null,
                 render: function ( data, type, row, meta ){
                     return "<input id=\""+data['paw']+"-sleep\" type=\"text\" value=\""+data['sleep_min']+"/"+data['sleep_max']+"\">";
                 }
             },
             {
-                targets: 6,
+                targets: 7,
                 data: null,
                 render: {
                     _:'pid'
                 }
             },
             {
-                targets: 7,
+                targets: 8,
                 data: null,
                 render: {
                     _:'privilege'
                 }
             },
             {
-                targets: 8,
+                targets: 9,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -153,7 +160,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 9,
+                targets: 10,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
