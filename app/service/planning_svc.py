@@ -50,7 +50,29 @@ class PlanningService(BasePlanningService):
                 links.extend(await self._check_and_generate_cleanup_links(agent, operation, link_status))
         return reversed(await self.trim_links(operation, links, agent))
 
+    async def check_stopping_conditions(self, operation, stopping_conditions):
+        """
+        Checks whether an operation has collected the proper facts to trigger this planner's stopping
+        conditions
+        :param operation:
+        :param stopping_conditions:
+        :return: True if all stopping conditions have been met, False if all stopping conditions have not
+        been met
+        """
+        for sc in stopping_conditions:
+            if not await self._stopping_condition_met(operation.all_facts(), sc):
+                return False
+        return True
+
     """ PRIVATE """
+
+    @staticmethod
+    async def _stopping_condition_met(facts, stopping_condition):
+        for f in facts:
+            items = list(stopping_condition.items())[0]
+            if f.trait == items[0] and f.value == items[1]:
+                return True
+        return False
 
     @staticmethod
     async def _sort_links(links):
