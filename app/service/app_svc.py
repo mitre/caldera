@@ -105,6 +105,8 @@ class AppService(BaseService):
         :return:
         """
         for plug in os.listdir('plugins'):
+            if plug.startswith('.'):
+                continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
                 self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
