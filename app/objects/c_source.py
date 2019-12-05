@@ -9,7 +9,9 @@ class Source(BaseObject):
 
     @property
     def display(self):
-        return dict(name=self.name, facts=[f.display for f in self.facts])
+        return self.clean(
+            dict(name=self.name, facts=[f.display for f in self.facts], rules=[r.display for r in self.rules])
+        )
 
     def __init__(self, name, facts, rules=None):
         super().__init__()

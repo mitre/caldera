@@ -207,9 +207,10 @@ select {
 .select-info {
     padding-left: 10px;
 }
-.section-profile {
-
+.advanced {
+    background-color: #0d0d0d;
 }
+.section-profile {}
 .section-border {
     border-right: .5px var(--font-color) solid;
 }

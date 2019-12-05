@@ -225,37 +225,40 @@ $(document).ready(function () {
     $('#factTbl').DataTable({});
 });
 
-class DefaultDict {
-  constructor(defaultInit) {
-    return new Proxy({}, {
-      get: (target, name) => name in target ?
-        target[name] :
-        (target[name] = typeof defaultInit === 'function' ?
-          new defaultInit().valueOf() :
-          defaultInit)
-    })
-  }
-}
-
 function loadSource(sources) {
     let sourceName = $('#profile-source-name').val();
     sources.forEach(s => {
         if(s.name === sourceName) {
-            const grouped = new DefaultDict(Array);
+            let table = $('#factTbl').DataTable();
             s.facts.forEach(f => {
-                grouped[f.trait].push(f.value);
-            });
-            $.each(grouped, function(trait, values) {
-                let template = $("#fact-template").clone();
-                template.find('#trait').text(trait);
-                values.forEach(v => {
-                    console.log(trait, v);
-                });
-                $('#fact-hosts').append(template);
-                template.show();
+                table.row.add([f.trait, f.value]).draw();
             });
         }
     });
+    validateFormState('#profile-source-name', '#sourceBtn');
+}
+
+function viewRules(sources){
+    $('#source-rules').empty();
+    document.getElementById("source-modal").style.display = "block";
+    let sourceName = $('#profile-source-name').val();
+    sources.forEach(s => {
+        if(s.name === sourceName) {
+            s.rules.forEach(r => {
+                let template = $("#rule-template").clone();
+                template.find('#trait').val(r.trait);
+                template.find('#match').val(r.match);
+                if(r.action === 0) {
+                    template.find('#action').val('DENY');
+                } else if (r.action === 1) {
+                    template.find('#action').val('ALLOW');
+                }
+                template.show();
+                $('#source-rules').append(template);
+            });
+        }
+    });
+    $('#rules-name').text(sourceName);
 }
 
 /** OPERATIONS **/
@@ -553,7 +556,7 @@ function addPhase(number) {
     template.addClass("tempPhase");
     template.insertBefore('#dummy');
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ttp</span><hr></h4>');
+    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
     phaseHeader.insertBefore("#tempPhase" + number);
     phaseHeader.show();
     return template;
@@ -1055,6 +1058,13 @@ function openDuk4(){
     $('#duk-text').text('Did you know... The default agent is ' +
         'called 54ndc47 (sandcat) and can be found in the plugins section. 54ndc47 is a multi-platform agent which ' +
         'can be deployed by just pasting a 1-line command into a terminal.');
+}
+
+function openDuk5(){
+    document.getElementById("duk-modal").style.display="block";
+    $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
+        'you to create extensible abilities. You can create new fact sources by adding YML files in the data/facts directory. '+
+        'Additionally, sources can include rules which can restrict agents from using specific traits.');
 }
 
 /** HUMAN-IN-LOOP */

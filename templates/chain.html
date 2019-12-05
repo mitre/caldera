@@ -20,14 +20,20 @@
   <div class="subnav">
     <button class="subnavbtn">Campaigns <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content">
-      <a onclick="viewSection('agents')">Agents</a>
-      <a onclick="viewSection('adversaries')">Adversaries</a>
-      <a onclick="viewSection('operations')">Operations</a>
-      <a onclick="viewSection('reports')">Reports</a>
+      <a onclick="viewSection('agents')">agents</a>
+      <a onclick="viewSection('adversaries')">adversaries</a>
+      <a onclick="viewSection('operations')">operations</a>
+      <a onclick="viewSection('reports')">reports</a>
     </div>
   </div>
   <a href="/logout" style="float:right">Logout</a>
   <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
+  <div class="subnav-right">
+    <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
+    <div class="subnav-content subnav-content-right">
+        <a onclick="viewSection('sources')">sources</a>
+    </div>
+  </div>
   <div class="subnav-right">
     <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content subnav-content-right">
@@ -95,7 +101,46 @@
             </div>
           </div>
         </div>
-      
+
+        <!-- sources -->
+
+        <div id="sources" class="section-profile" style="display: none">
+          <div class="advanced row">
+              <div class="column section-border" style="flex:25%">
+              <img src="/gui/img/facts.png">
+              <h4>Sources</h4>
+              <p class="section-description">
+                  Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
+                  A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
+              </p>
+              <br>
+              <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
+                <option value="" disabled selected>Select an existing source</option>
+                {% for s in sources %}
+                    <option value="{{ s.name }}">{{ s.name }}</option>
+                {% endfor %}}
+              </select>
+              <br>
+              <button id="sourceBtn" type="button" class="button-notready button-success atomic-button"
+                      onclick="viewRules({{ sources }})">View rules
+              </button>
+              <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
+            </div>
+            <div class="column" style="flex:75%;overflow:hidden;">
+                <table id="factTbl" class="display" style="width:100%;text-align:left">
+                    <thead align="left">
+                        <tr>
+                          <th>Trait</th>
+                          <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+          </div>
+        </div>
+
         <!-- adversary -->
 
         <div id="adversaries" class="section-profile" style="display: none">
@@ -150,6 +195,26 @@
             </center>
         </div>
 
+        <div class="row-simple" style="display: none;">
+            <div id="rule-template" class="ttp-template column">
+                <table frame=void rules=rows style="border-spacing:20px;width:100%">
+                    <tr>
+                        <td style="width:20%"><b>trait:</b></td>
+                        <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>match:</b></td>
+                        <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>action:</b></td>
+                        <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <hr>
+                </table>
+            </div>
+        </div>
+
         <li id="ability-template" class="ability-box" style="display: none">
             <h4 id="name"></h4>
             <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
@@ -193,12 +258,6 @@
             </table>
             <br>
         </li>
-
-        <div id="fact-template" style="display: none;">
-            <div class="fact-box">
-                <p id="trait"></p>
-            </div>
-        </div>
 
         <!-- operation -->
 
@@ -635,6 +694,24 @@
                         </div>
                         <div class="column codearea" style="flex:75%">
                             <textarea id="hil-command" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+                </div>
+             </form>
+        </div>
+
+        <div id="source-modal" class="modal">
+            <form class="modal-content" style="width:25%;">
+                <div class="container">
+                    <div class="row ability-viewer">
+                        <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <div class="column" style="flex:100%">
+                            <center>
+                                <span>Rules</span>
+                                <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                                <ul id="source-rules"></ul>
+                                <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                            </center>
                         </div>
                     </div>
                 </div>

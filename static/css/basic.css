@@ -534,9 +534,3 @@ table.dataTable input[type=text] {
     padding-left: 15px;
     padding-right: 15px;
 }
-.fact-box {
-    border-radius: 5px;
-    background-color: var(--theme-color);
-    margin: 5px;
-    display: inline-block;
-}
