@@ -129,10 +129,10 @@
             </div>
             <div class="column" style="flex:75%;overflow:hidden;">
                 <table id="factTbl" class="display" style="width:100%;text-align:left">
-                    <thead align="left">
+                    <thead>
                         <tr>
-                          <th>Trait</th>
-                          <th>Value</th>
+                          <th></th>
+                          <th></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -234,11 +234,26 @@
             <table frame=void rules=rows style="border-spacing:5px;width:100%">
                 <tr>
                     <td style="width:10%"><b>platform:</b></td>
-                    <td><input id="ability-platform" contenteditable="true" spellcheck="false" placeholder="linux, darwin or windows"></td>
+                    <td>
+                      <select id="ability-platform" class="ability-payload">
+                        <option value="" disabled selected>Select a platform</option>
+                            <option value="darwin">darwin</option>
+                            <option value="linux">linux</option>
+                            <option value="windows">windows</option>
+                      </select>
+                    </td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>executor:</b></td>
-                    <td><input id="ability-executor" contenteditable="true" spellcheck="false" placeholder="sh, psh or pwsh"></td>
+                    <td>
+                      <select id="ability-executor" class="ability-payload">
+                        <option value="" disabled selected>Select an executor</option>
+                            <option value="sh">sh</option>
+                            <option value="psh">psh</option>
+                            <option value="pwsh">pwsh</option>
+                            <option value="cmd">cmd</option>
+                      </select>
+                    </td>
                 </tr>
                 <tr>
                     <td style="width:10%"><b>payload:</b></td>
@@ -254,6 +269,10 @@
                 <tr>
                     <td style="width:10%"><b>command:</b></td>
                     <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
+                </tr>
+                <tr>
+                    <td style="width:10%"><b>cleanup:</b></td>
+                    <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
                 </tr>
             </table>
             <br>

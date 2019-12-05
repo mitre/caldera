@@ -594,18 +594,27 @@ function saveAbility() {
     let platforms = {};
     $('#ttp-tests li').each(function() {
         let platform = $(this).find('#ability-platform').val();
+
+        if(platforms[platform] === undefined) {
+            platforms[platform] = {};
+        }
+
         let executor = $(this).find('#ability-executor').val();
         let command = $(this).find('#ability-command').val();
         let payload = $(this).find('#ability-payload').val();
+        let cleanup = $(this).find('#ability-cleanup').val();
+
         if(!name || !description || !command) {
             return;
         }
-        let executors = {};
-        executors[executor] = {'command': command};
+        let ex = {'command': command};
         if(payload) {
-            executors[executor]['payload'] = payload;
+            ex['payload'] = payload;
         }
-        platforms[platform] = executors;
+        if(cleanup) {
+            ex['cleanup'] = cleanup;
+        }
+        platforms[platform][executor] = ex;
     });
     data['index'] = 'ability';
     data['id'] = $('#ability-identifier').val();
@@ -826,6 +835,7 @@ function showAbility(parentId, exploits) {
             template.find('#ability-platform').val(ability.platform);
             template.find('#ability-executor').val(ability.executor);
             template.find('#ability-command').val(atob(ability.test));
+            template.find('#ability-cleanup').val(atob(ability.cleanup));
             template.find('#ability-payload').val(ability.payload);
             template.show();
             $('#ttp-tests').append(template);
