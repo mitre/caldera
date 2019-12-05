@@ -77,7 +77,7 @@ $(document).ready(function () {
                 targets: 0,
                 data: null,
                 render: function ( data, type, row, meta ) {
-                    return data['paw'];
+                    return "[" + data['paw'] + "] " + data['host'];
                 }
             },
             {
