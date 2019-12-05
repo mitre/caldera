@@ -67,6 +67,11 @@ div.dt-button-collection-title:empty {
   display: none;
 }
 
+button.buttons-colvis {
+    top: 18px;
+    width: 100%;
+}
+
 button.dt-button,
 div.dt-button,
 a.dt-button {

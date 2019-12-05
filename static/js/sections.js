@@ -166,7 +166,7 @@ $(document).ready(function () {
         buttons: [ // Add the column selection button using ColVis.
             {
                 extend: 'colvis',
-                text: 'Columns', // Button text.
+                text: 'Filter Columns', // Button text.
                 columns: ':lt(9)' // Keep last column (the remove agent column) as is.
             }
         ],
