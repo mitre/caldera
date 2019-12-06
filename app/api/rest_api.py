@@ -98,6 +98,7 @@ class RestApi:
                 POST=dict(
                     ability=lambda d: self.rest_svc.display_objects('abilities', d),
                     adversary=lambda d: self.rest_svc.display_objects('adversaries', d),
+                    planners=lambda d: self.rest_svc.display_objects('planners', d),
                     agent=lambda d: self.rest_svc.display_objects('agents', d),
                     operation=lambda d: self.rest_svc.display_objects('operations', d),
                     source=lambda d: self.rest_svc.display_objects('sources', d),

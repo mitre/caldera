@@ -780,6 +780,20 @@ function loadAdversaryCallback(data) {
     });
 }
 
+function loadPlanner() {
+    restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
+}
+
+function loadPlannerCallback(data) {
+    // remove old text before displaying new text
+    $('#planner-title').empty();
+    $('#planner-description').empty();
+
+    // fill text from API callback
+    $('#planner-title').text(data[0]['name']);
+    $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
+}
+
 function addPlatforms(abilities) {
     let ab = [];
     abilities.forEach(function(a) {
