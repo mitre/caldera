@@ -192,6 +192,9 @@ class Operation(BaseObject):
         variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group), flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
+        elif not agent.trusted:
+            return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
         elif ability.platform != agent.platform:
             return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability.ability_id,
                         ability_name=ability.name)
