@@ -241,7 +241,7 @@
 .ability-attack input {
     margin: 2px;
     height: 12px;
-    background-color: var(--primary-background);
+    background-color: inherit;
     color:white;
     text-align:left;
     border-radius: 0;

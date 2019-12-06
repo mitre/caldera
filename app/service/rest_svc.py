@@ -54,6 +54,16 @@ class RestService(BaseService):
             checks += 1
         return ability[0].display
 
+    async def persist_source(self, data):
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
+        if not file_path:
+            file_path = 'data/facts/%s.yml' % data.get('id')
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(yaml.dump(data))
+        for d in self.get_service('data_svc').data_dirs:
+            await self.get_service('data_svc').load_data(d)
+
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
         return 'Delete action completed'
