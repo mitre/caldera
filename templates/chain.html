@@ -109,18 +109,28 @@
               <div class="column section-border" style="flex:25%">
               <img src="/gui/img/facts.png">
               <h4>Sources</h4>
+              <br>
+              <div class="toggle">
+                <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
+                  <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+                </label>
+              </div>
+              <br>
               <p class="section-description">
                   Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
                   A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
               </p>
               <br>
-              <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
-                <option value="" disabled selected>Select an existing source</option>
-                {% for s in sources %}
-                    <option value="{{ s.name }}">{{ s.name }}</option>
-                {% endfor %}}
-              </select>
-              <br><br>
+              <div id="viewSource">
+                  <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
+                    <option value="" disabled selected>Select an existing source</option>
+                    {% for s in sources %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}}
+                  </select>
+                  <br><br>
+              </div>
+              <div id="addSource"></div>
               <button id="sourceBtn" type="button" class="button-success atomic-button"
                       onclick="viewRules({{ sources }})">View rules
               </button>
@@ -145,8 +155,8 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow(['<input/>',
-                    '<input/>','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
+                <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow([
+                    'Enter trait', 'Enter value','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
                     &#10010;&nbsp;add row
                 </p>
             </div>
@@ -207,8 +217,11 @@
             </center>
         </div>
 
-        <div class="row-simple" style="display: none;">
-            <div id="rule-template" class="ttp-template column">
+        <li id="rule-template" class="row-simple ttp-template" style="display: none;">
+            <div class="column">
+                <div class="dotted">
+                    <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+                </div>
                 <table frame=void rules=rows style="border-spacing:20px;width:100%">
                     <tr>
                         <td style="width:20%"><b>trait:</b></td>
@@ -222,10 +235,9 @@
                         <td style="width:20%"><b>action:</b></td>
                         <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
                     </tr>
-                    <hr>
                 </table>
             </div>
-        </div>
+        </li>
 
         <li id="ability-template" class="ability-box" style="display: none">
             <h4 id="name"></h4>
@@ -740,8 +752,8 @@
                             <center>
                                 <span>Rules</span>
                                 <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
-                                <hr>
                                 <ul id="source-rules"></ul>
+                                <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
                                 <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
                             </center>
                         </div>

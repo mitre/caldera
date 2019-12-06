@@ -283,6 +283,9 @@
     color: white;
     width: 70%;
 }
+#source-rules li {
+    list-style-type:none;
+}
 .topright {
     position: absolute;
     top: 2px;
