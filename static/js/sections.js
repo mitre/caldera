@@ -317,6 +317,9 @@ function saveSource(){
         let trait = $(this).find('#trait').val();
         let match = $(this).find('#match').val();
         let action = $(this).find('#action').val();
+        if(trait === undefined || match === undefined || action === undefined){
+            return;
+        }
         if(action !== 'ALLOW' && action !== 'DENY') {
             invalidRules += 1;
         }
@@ -366,6 +369,7 @@ function applyRules(rules){
         $('#source-rules').append(template);
     });
 }
+
 function addRuleBlock(){
     let template = $("#rule-template").clone();
     template.show();
