@@ -15,7 +15,7 @@ class Agent(BaseObject):
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
-                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name)
+                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host)
 
     @property
     def display_name(self):
