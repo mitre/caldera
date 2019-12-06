@@ -796,7 +796,7 @@ function loadPlanner() {
 
 function loadPlannerCallback(data) {
     $('#planner-title').text(data[0]['name']);
-    $('#planner-description').text(data[0]['description']).show();
+    $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
 }
 
 function addPlatforms(abilities) {
