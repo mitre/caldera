@@ -534,3 +534,6 @@ table.dataTable input[type=text] {
     padding-left: 15px;
     padding-right: 15px;
 }
+.planners #planner-description {
+    white-space: pre-line;
+}
