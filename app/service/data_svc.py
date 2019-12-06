@@ -207,6 +207,13 @@ class DataService(BaseService):
                         if existing.unique not in saved:
                             self.log.debug('Ability no longer exists on disk, removing: %s' % existing.unique)
                             await self.remove('abilities', match=dict(unique=existing.unique))
+                        if existing.payload:
+                            _, path = await self.get_service('file_svc').find_file_path(existing.payload)
+                            if not path:
+                                _, path = await self.get_service('file_svc').find_file_path('%s.xored', existing.payload)
+                                if not path:
+                                    self.log.error('Payload referenced in %s but not found: %s' %
+                                                   (existing.ability_id, existing.payload))
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -246,10 +253,6 @@ class DataService(BaseService):
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
                         requirements[module]]
             rs.append(Requirement(module=module, relationships=relation))
-        if payload:
-            _, path = await self.get_service('file_svc').find_file_path(payload)
-            if not path:
-                self.log.error('Payload referenced in ability but not found: %s' % payload)
         return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
