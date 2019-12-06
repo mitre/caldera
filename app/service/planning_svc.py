@@ -59,6 +59,8 @@ class PlanningService(BasePlanningService):
         :return: True if all stopping conditions have been met, False if all stopping conditions have not
         been met
         """
+        if len(stopping_conditions) < 1:
+            return False
         for sc in stopping_conditions:
             if not await self._stopping_condition_met(operation.all_facts(), sc):
                 return False
