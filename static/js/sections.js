@@ -305,6 +305,7 @@ function saveSource(){
     data['rules'] = [];
 
     let table = $('#factTbl').DataTable();
+    table.rows().invalidate('dom').draw();
     let rows = table.rows().data();
     rows.each(function (value, index) {
         data['facts'].push({'trait': value[0], 'value': value[1]});
@@ -325,7 +326,7 @@ function saveSource(){
         alert(invalidRules + ' invalid rules!');
         return;
     }
-    //restRequest('PUT', data, saveSourceCallback);
+    restRequest('PUT', data, saveSourceCallback);
 }
 
 function saveSourceCallback(data) {

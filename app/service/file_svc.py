@@ -89,10 +89,9 @@ class FileSvc(BaseService):
         _, file_name = await self.find_file_path(name, location=location)
         if file_name:
             with open(file_name, 'rb') as file_stream:
+                if file_name.endswith('.xored'):
+                    return name, xor_file(file_name)
                 return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location=location)
-        if file_name:
-            return name, xor_file(file_name)
         raise FileNotFoundError
 
     async def add_special_payload(self, name, func):
@@ -129,6 +128,8 @@ class FileSvc(BaseService):
         for root, dirs, files in os.walk(path):
             if target in files:
                 return os.path.join(root, target)
+            if '%s.xored' % target in files:
+                return os.path.join(root, '%s.xored' % target)
         return None
 
     async def _create_exfil_sub_directory(self, headers):
