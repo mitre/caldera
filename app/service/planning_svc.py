@@ -26,9 +26,6 @@ class PlanningService(BasePlanningService):
         if agent:
             links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
         else:
-            updated_agents = await self.get_service('data_svc').locate('agents',
-                                                                       match=dict(group=operation.agents[0].group))
-            operation.agents = updated_agents
             for agent in operation.agents:
                 links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
         return await self._sort_links(links)
