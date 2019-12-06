@@ -7,7 +7,7 @@ class PlanningService(BasePlanningService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True, stopping_conditions=[]):
+    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[]):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
@@ -16,10 +16,12 @@ class PlanningService(BasePlanningService):
         :param agent:
         :param stopping_conditions:
         :param trim: call trim_links() on list of links before returning
+        :param planner
         :return: a list of links
         """
-        if await self.check_stopping_conditions(operation, stopping_conditions):
+        if len(stopping_conditions) > 0 and await self.check_stopping_conditions(operation, stopping_conditions):
             self.log.debug('Stopping conditions met. No more links will be generated!')
+            planner.stopping_condition_met = True
             return []
         if phase:
             abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
@@ -63,8 +65,6 @@ class PlanningService(BasePlanningService):
         :return: True if all stopping conditions have been met, False if all stopping conditions have not
         been met
         """
-        if len(stopping_conditions) < 1:
-            return False
         for sc in stopping_conditions:
             if not await self._stopping_condition_met(operation.all_facts(), sc):
                 return False
@@ -75,8 +75,7 @@ class PlanningService(BasePlanningService):
     @staticmethod
     async def _stopping_condition_met(facts, stopping_condition):
         for f in facts:
-            items = list(stopping_condition.items())[0]
-            if f.trait == items[0] and f.value == items[1]:
+            if f.unique == stopping_condition.unique:
                 return True
         return False
 
