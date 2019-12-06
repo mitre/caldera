@@ -210,10 +210,8 @@ class DataService(BaseService):
                         if existing.payload:
                             _, path = await self.get_service('file_svc').find_file_path(existing.payload)
                             if not path:
-                                _, path = await self.get_service('file_svc').find_file_path('%s.xored', existing.payload)
-                                if not path:
-                                    self.log.error('Payload referenced in %s but not found: %s' %
-                                                   (existing.ability_id, existing.payload))
+                                self.log.error('Payload referenced in %s but not found: %s' %
+                                               (existing.ability_id, existing.payload))
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
