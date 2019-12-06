@@ -317,7 +317,6 @@ function saveSource(){
         let trait = $(this).find('#trait').val();
         let match = $(this).find('#match').val();
         let action = $(this).find('#action').val();
-        console.log(trait, match, action);
         if(trait === undefined || match === undefined || action === undefined){
             return;
         }
