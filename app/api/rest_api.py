@@ -100,6 +100,7 @@ class RestApi:
                     adversary=lambda d: self.rest_svc.display_objects('adversaries', d),
                     agent=lambda d: self.rest_svc.display_objects('agents', d),
                     operation=lambda d: self.rest_svc.display_objects('operations', d),
+                    source=lambda d: self.rest_svc.display_objects('sources', d),
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                 )

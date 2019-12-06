@@ -5,7 +5,7 @@ class Source(BaseObject):
 
     @property
     def unique(self):
-        return self.hash('%s' % self.name)
+        return self.hash('%s' % self.id)
 
     @property
     def display(self):
@@ -25,4 +25,7 @@ class Source(BaseObject):
         if not existing:
             ram['sources'].append(self)
             return self.retrieve(ram['sources'], self.unique)
+        existing.update('name', self.name)
+        existing.update('facts', self.facts)
+        existing.update('rules', self.rules)
         return existing

@@ -122,10 +122,10 @@
               </p>
               <br>
               <div id="viewSource">
-                  <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
+                  <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
                     <option value="" disabled selected>Select an existing source</option>
                     {% for s in sources %}
-                        <option value="{{ s.name }}">{{ s.name }}</option>
+                        <option value="{{ s.id }}">{{ s.name }}</option>
                     {% endfor %}}
                   </select>
                   <br><br>
@@ -134,9 +134,11 @@
               <button id="sourceBtn" type="button" class="button-success atomic-button"
                       onclick="viewRules({{ sources }})">View rules
               </button>
+              <!--
               <button id="saveSourceBtn" type="button" class="button-success atomic-button"
                       onclick="saveSource()">Save
               </button>
+              -->
               <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
             </div>
@@ -215,8 +217,8 @@
             </center>
         </div>
 
-        <div class="row-simple" style="display: none;">
-            <div id="rule-template" class="ttp-template column">
+        <li id="rule-template" class="row-simple ttp-template" style="display: none;">
+            <div class="column">
                 <div class="dotted">
                     <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
                 </div>
@@ -235,7 +237,7 @@
                     </tr>
                 </table>
             </div>
-        </div>
+        </li>
 
         <li id="ability-template" class="ability-box" style="display: none">
             <h4 id="name"></h4>
