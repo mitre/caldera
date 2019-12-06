@@ -90,6 +90,7 @@ class AppService(BaseService):
             planner = await self._get_planning_module(operation)
             operation.adversary = await self._adjust_adversary_phases(operation)
             for phase in operation.adversary.phases:
+                await self._update_operation(operation)
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()
                 operation.phase = phase
@@ -162,3 +163,9 @@ class AppService(BaseService):
             facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
         )
         await self.get_service('rest_svc').persist_source(data)
+
+    async def _update_operation(self, operation):
+        updated_agents = await self.get_service('data_svc').locate(
+            'agents', match=dict(group=operation.agents[0].group)
+        )
+        operation.agents = updated_agents
