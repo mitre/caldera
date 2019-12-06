@@ -109,26 +109,34 @@
               <div class="column section-border" style="flex:25%">
               <img src="/gui/img/facts.png">
               <h4>Sources</h4>
+              <br>
+              <div class="toggle">
+                <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
+                  <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+                </label>
+              </div>
+              <br>
               <p class="section-description">
                   Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
                   A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
               </p>
               <br>
-              <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
-                <option value="" disabled selected>Select an existing source</option>
-                {% for s in sources %}
-                    <option value="{{ s.name }}">{{ s.name }}</option>
-                {% endfor %}}
-              </select>
-              <br><br>
+              <div id="viewSource">
+                  <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource({{ sources }});">
+                    <option value="" disabled selected>Select an existing source</option>
+                    {% for s in sources %}
+                        <option value="{{ s.name }}">{{ s.name }}</option>
+                    {% endfor %}}
+                  </select>
+                  <br><br>
+              </div>
+              <div id="addSource"></div>
               <button id="sourceBtn" type="button" class="button-success atomic-button"
                       onclick="viewRules({{ sources }})">View rules
               </button>
-              <!--
               <button id="saveSourceBtn" type="button" class="button-success atomic-button"
                       onclick="saveSource()">Save
               </button>
-              -->
               <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
             </div>
@@ -145,8 +153,8 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow(['<input/>',
-                    '<input/>','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
+                <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow([
+                    'Enter trait', 'Enter value','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
                     &#10010;&nbsp;add row
                 </p>
             </div>
@@ -740,7 +748,6 @@
                             <center>
                                 <span>Rules</span>
                                 <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
-                                <hr>
                                 <ul id="source-rules"></ul>
                                 <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
                             </center>

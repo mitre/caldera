@@ -233,20 +233,45 @@ function doNothing() {}
 
 /** FACTS **/
 
+const createdCell = function(cell) {
+  let original;
+  cell.setAttribute('contenteditable', true);
+  cell.setAttribute('spellcheck', false);
+  cell.addEventListener('focus', function(e) {
+    original = e.target.textContent
+  });
+};
 $(document).ready(function () {
-    $('#factTbl').DataTable({});
+    $('#factTbl').DataTable({
+            columnDefs: [{
+            targets: '_all',
+            createdCell: createdCell
+        }]
+    });
 });
 
-function loadSource(sources) {
-    $('#factTbl').DataTable().clear();
+function toggleSourceView() {
+    $('#viewSource').toggle();
+    $('#addSource').toggle();
+    clearFactCanvas();
+}
+
+function clearFactCanvas(){
+    $('#factTbl').DataTable().clear().draw();
     let source = $('#source-name');
-    source.data('id', undefined);
+    source.data('id', '');
+    source.val('');
+    $("#profile-source-name").val($("#profile-source-name option:first").val());
+    $('#source-rules').empty();
+}
+
+function loadSource(sources) {
+    let source = $('#source-name');
     let sourceName = $('#profile-source-name').val();
     sources.forEach(s => {
         if(s.name === sourceName) {
             s.facts.forEach(f => {
-                addFactRow(['<input type="text" value="'+f.trait+'"/>',
-                    '<input type="text" value="'+f.value+'"/>',
+                addFactRow([f.trait, f.value,
                     '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
             });
             source.data('id', s.id);
@@ -287,21 +312,24 @@ function viewRules(sources){
 }
 
 function saveSource(){
-    let name = $('#profile-source-name').val();
-    let id = $('#source-name').data('id');
+    let source = $('#source-name');
+    let name = source.val();
+    let id = source.data('id');
     if(!name){ alert('Please enter a name!'); return; }
-    if(id === undefined) { id = uuidv4(); }
+    if(!id) { id = uuidv4(); }
     let data = {};
     data['index'] = 'source';
     data['id'] = id;
     data['name'] = name;
+    data['facts'] = [];
 
     let table = $('#factTbl').DataTable();
     let rows = table.rows().data();
-     rows.each(function (value, index) {
-         console.log(`For index ${index}, data value is ${value}`);
-     });
-    //restRequest('PUT', data, saveSourceCallback);
+    rows.each(function (value, index) {
+        data['facts'].push({'trait': value[0], 'value': value[1]});
+    });
+    if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+    restRequest('PUT', data, doNothing);
 }
 
 /** OPERATIONS **/
