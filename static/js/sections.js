@@ -236,9 +236,7 @@ function doNothing() {}
 const createdCell = function(cell) {
   cell.setAttribute('contenteditable', true);
   cell.setAttribute('spellcheck', false);
-  cell.addEventListener('blur', function(e) {
-      console.log(e.target.textContent);
-  });
+  cell.addEventListener('blur', function(e) {});
 };
 $(document).ready(function () {
     $('#factTbl').DataTable({
@@ -334,22 +332,10 @@ function saveSource(){
 
 function saveSourceCallback(data) {
     clearFactCanvas();
-    let sources = $('#profile-source-name');
-    let exists = false;
-    $('#profile-source-name option').each(function(){
-        if (this.value === data[0].id) {
-            exists = true;
-            return false;
-        }
-    });
-    if(!exists) {
-        sources.append($("<option></option>")
-            .attr("value", data[0].id)
-            .text(data[0].name));
-    }
+    appendToSelect('profile-source-name', data[0].id, data[0].name, 'view-'+data[0].id);
 }
 
-function viewRules(sources){
+function viewRules(){
     document.getElementById("source-modal").style.display = "block";
     let sourceName = $('#source-name').val();
     $('#rules-name').text(sourceName);
@@ -696,7 +682,8 @@ function saveAdversary() {
 
 function saveAdversaryCallback(data) {
     flashy('adv-flashy-holder', 'Adversary saved!');
-    restRequest('POST', {"index":"adversary"}, reloadAdversaryElements);
+    appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'view-'+data[0].adversary_id);
+    appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
 }
 
 function saveAbility() {
@@ -756,35 +743,33 @@ function removeBlock(element){
     element.parent().parent().parent().remove();
 }
 
-function reloadAdversaryElements(data) {
-    let adv_view_elem = $("#profile-existing-name");
-    let adv_op_elem = $("#queueFlow");
-    adv_view_elem.empty();
-    adv_view_elem.append("<option value=\"\" disabled selected>Select an existing adversary</option>");
-    adv_op_elem.empty();
-    adv_op_elem.append("<option value=\"\" disabled selected>Adversary</option>");
-    $.each(data, function(index, adv) {
-        if(!adv_view_elem.find('option[value="'+ adv['adversary_id'] +'"]').length > 0) {
-            adv_view_elem.append("<option value='" + adv['adversary_id'] + "'>" + adv['name'] + "</option>");
-        }
-        if(!adv_op_elem.find('option[value="'+ adv['adversary_id'] +'"]').length > 0) {
-            adv_op_elem.append("<option id=\"qflow-" + adv['adversary_id'] + "\" value=\""+adv['id']+"\">"+ adv['name']+"</option>");
+function appendToSelect(field, identifier, value, optionId) {
+    let exists = false;
+    $('#'+field+' option').each(function(){
+        if (this.value === identifier) {
+            exists = true;
+            return false;
         }
     });
+    if(!exists) {
+        $("#"+field).append($("<option></option>")
+            .attr("id", optionId)
+            .attr("value", identifier)
+            .text(value));
+    }
 }
 
 function loadAdversary() {
     restRequest('POST', {'index':'adversary', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
-    validateFormState(($('#profile-existing-name').val()), '#advNewBtn');
 }
 
 function loadAdversaryCallback(data) {
-    $('#profile-goal').val(data[0]['name']);
-    $('#profile-description').val(data[0]['description']);
+    $('#profile-goal').val(data[0].name);
+    $('#profile-description').val(data[0].description);
 
     $('.tempPhase').remove();
     $('.phase-headers').remove();
-    $.each(data[0]['phases'], function(phase, abilities) {
+    $.each(data[0].phases, function(phase, abilities) {
         let template = addPhase(phase);
 
         abilities = addPlatforms(abilities);

@@ -36,6 +36,7 @@ class RestService(BaseService):
             f.truncate()
         for d in self.get_service('data_svc').data_dirs:
             await self.get_service('data_svc').load_data(d)
+        return await self._poll_for_data('adversaries', dict(adversary_id=i))
 
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
