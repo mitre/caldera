@@ -262,10 +262,10 @@ function clearFactCanvas(){
     source.data('id', '');
     source.val('');
     $("#profile-source-name").val($("#profile-source-name option:first").val());
-    $('#source-rules').empty();
 }
 
 function loadSource(sources) {
+    clearFactCanvas();
     let source = $('#source-name');
     let sourceName = $('#profile-source-name').val();
     sources.forEach(s => {
@@ -275,6 +275,7 @@ function loadSource(sources) {
                     '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
             });
             source.data('id', s.id);
+            applyRules(s);
         }
     });
     source.val(sourceName);
@@ -288,29 +289,6 @@ function removeFactRow(r){
     $('#factTbl').DataTable().row($(r).parents('tr')).remove().draw();
 }
 
-function viewRules(sources){
-    $('#source-rules').empty();
-    document.getElementById("source-modal").style.display = "block";
-    let sourceName = $('#source-name').val();
-    sources.forEach(s => {
-        if(s.name === sourceName) {
-            s.rules.forEach(r => {
-                let template = $("#rule-template").clone();
-                template.find('#trait').val(r.trait);
-                template.find('#match').val(r.match);
-                if(r.action === 0) {
-                    template.find('#action').val('DENY');
-                } else if (r.action === 1) {
-                    template.find('#action').val('ALLOW');
-                }
-                template.show();
-                $('#source-rules').append(template);
-            });
-        }
-    });
-    $('#rules-name').text(sourceName);
-}
-
 function saveSource(){
     let source = $('#source-name');
     let name = source.val();
@@ -322,6 +300,7 @@ function saveSource(){
     data['id'] = id;
     data['name'] = name;
     data['facts'] = [];
+    data['rules'] = [];
 
     let table = $('#factTbl').DataTable();
     let rows = table.rows().data();
@@ -329,7 +308,46 @@ function saveSource(){
         data['facts'].push({'trait': value[0], 'value': value[1]});
     });
     if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+
+    $('#source-rules li').each(function() {
+        let trait = $(this).find('#trait').val();
+        let match = $(this).find('#match').val();
+        let action = $(this).find('#action').val();
+        data['rules'].push({'trait': trait, 'match': match, 'action': action});
+    });
+    console.log(data);
     restRequest('PUT', data, doNothing);
+}
+
+function viewRules(sources){
+    document.getElementById("source-modal").style.display = "block";
+    let sourceName = $('#source-name').val();
+    sources.forEach(s => {
+        if(s.name === sourceName) {
+            applyRules(s);
+        }
+    });
+    $('#rules-name').text(sourceName);
+}
+
+function applyRules(src){
+    src.rules.forEach(r => {
+        let template = $("#rule-template").clone();
+        template.find('#trait').val(r.trait);
+        template.find('#match').val(r.match);
+        if(r.action === 0) {
+            template.find('#action').val('DENY');
+        } else if (r.action === 1) {
+            template.find('#action').val('ALLOW');
+        }
+        template.show();
+        $('#source-rules').append(template);
+    });
+}
+function addRuleBlock(){
+    let template = $("#rule-template").clone();
+    template.show();
+    $('#source-rules').append(template);
 }
 
 /** OPERATIONS **/

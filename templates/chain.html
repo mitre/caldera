@@ -217,6 +217,9 @@
 
         <div class="row-simple" style="display: none;">
             <div id="rule-template" class="ttp-template column">
+                <div class="dotted">
+                    <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+                </div>
                 <table frame=void rules=rows style="border-spacing:20px;width:100%">
                     <tr>
                         <td style="width:20%"><b>trait:</b></td>
@@ -230,7 +233,6 @@
                         <td style="width:20%"><b>action:</b></td>
                         <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
                     </tr>
-                    <hr>
                 </table>
             </div>
         </div>
@@ -749,6 +751,7 @@
                                 <span>Rules</span>
                                 <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
                                 <ul id="source-rules"></ul>
+                                <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
                                 <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
                             </center>
                         </div>
