@@ -41,6 +41,8 @@
         {% for plugin in plugins %}
           {% if plugin.address %}
               <a href="{{ plugin.address }}">{{ plugin.name }}</a>
+          {% else %}
+              <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
           {% endif %}
         {% endfor %}
     </div>
