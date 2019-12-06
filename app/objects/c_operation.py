@@ -221,6 +221,6 @@ class Operation(BaseObject):
         PLATFORM = 0
         EXECUTOR = 1
         FACT_DEPENDENCY = 2
-        OP_RUNNING = 3
-        UNTRUSTED = 4
-        PRIVILEGE = 5
+        PRIVILEGE = 3
+        OP_RUNNING = 4
+        UNTRUSTED = 5
