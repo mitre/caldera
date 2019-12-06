@@ -120,23 +120,35 @@
                     <option value="{{ s.name }}">{{ s.name }}</option>
                 {% endfor %}}
               </select>
-              <br>
-              <button id="sourceBtn" type="button" class="button-notready button-success atomic-button"
+              <br><br>
+              <button id="sourceBtn" type="button" class="button-success atomic-button"
                       onclick="viewRules({{ sources }})">View rules
               </button>
+              <!--
+              <button id="saveSourceBtn" type="button" class="button-success atomic-button"
+                      onclick="saveSource()">Save
+              </button>
+              -->
               <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
             </div>
-            <div class="column" style="flex:75%;overflow:hidden;">
-                <table id="factTbl" class="display" style="width:100%;text-align:left">
+            <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+                <input id="source-name" type="text" class="advGoal" placeholder="Enter source name"/>
+                <br><br>
+                <table id="factTbl" class="display ttp-template" style="width:100%;text-align:left">
                     <thead>
                         <tr>
+                          <th></th>
                           <th></th>
                           <th></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+                <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow(['<input/>',
+                    '<input/>','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
+                    &#10010;&nbsp;add row
+                </p>
             </div>
           </div>
         </div>
@@ -720,7 +732,7 @@
         </div>
 
         <div id="source-modal" class="modal">
-            <form class="modal-content" style="width:25%;">
+            <form class="modal-content" style="width:50%;">
                 <div class="container">
                     <div class="row ability-viewer">
                         <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
@@ -728,6 +740,7 @@
                             <center>
                                 <span>Rules</span>
                                 <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                                <hr>
                                 <ul id="source-rules"></ul>
                                 <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
                             </center>

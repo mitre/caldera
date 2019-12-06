@@ -148,6 +148,7 @@ select {
 .switch input {display:none;}
 
 .slider {
+  border: 1px solid white;
   position: absolute;
   cursor: pointer;
   top: 0;

@@ -238,22 +238,35 @@ $(document).ready(function () {
 });
 
 function loadSource(sources) {
+    $('#factTbl').DataTable().clear();
+    let source = $('#source-name');
+    source.data('id', undefined);
     let sourceName = $('#profile-source-name').val();
     sources.forEach(s => {
         if(s.name === sourceName) {
-            let table = $('#factTbl').DataTable();
             s.facts.forEach(f => {
-                table.row.add([f.trait, f.value]).draw();
+                addFactRow(['<input type="text" value="'+f.trait+'"/>',
+                    '<input type="text" value="'+f.value+'"/>',
+                    '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
             });
+            source.data('id', s.id);
         }
     });
-    validateFormState('#profile-source-name', '#sourceBtn');
+    source.val(sourceName);
+}
+
+function addFactRow(r){
+    $('#factTbl').DataTable().row.add(r).draw();
+}
+
+function removeFactRow(r){
+    $('#factTbl').DataTable().row($(r).parents('tr')).remove().draw();
 }
 
 function viewRules(sources){
     $('#source-rules').empty();
     document.getElementById("source-modal").style.display = "block";
-    let sourceName = $('#profile-source-name').val();
+    let sourceName = $('#source-name').val();
     sources.forEach(s => {
         if(s.name === sourceName) {
             s.rules.forEach(r => {
@@ -271,6 +284,24 @@ function viewRules(sources){
         }
     });
     $('#rules-name').text(sourceName);
+}
+
+function saveSource(){
+    let name = $('#profile-source-name').val();
+    let id = $('#source-name').data('id');
+    if(!name){ alert('Please enter a name!'); return; }
+    if(id === undefined) { id = uuidv4(); }
+    let data = {};
+    data['index'] = 'source';
+    data['id'] = id;
+    data['name'] = name;
+
+    let table = $('#factTbl').DataTable();
+    let rows = table.rows().data();
+     rows.each(function (value, index) {
+         console.log(`For index ${index}, data value is ${value}`);
+     });
+    //restRequest('PUT', data, saveSourceCallback);
 }
 
 /** OPERATIONS **/
