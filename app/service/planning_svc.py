@@ -7,16 +7,20 @@ class PlanningService(BasePlanningService):
     def __init__(self):
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True):
+    async def get_links(self, operation, phase=None, agent=None, trim=True, stopping_conditions=[]):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
         :param operation:
         :param phase:
         :param agent:
+        :param stopping_conditions:
         :param trim: call trim_links() on list of links before returning
         :return: a list of links
         """
+        if await self.check_stopping_conditions(operation, stopping_conditions):
+            self.log.debug('Stopping conditions met. No more links will be generated!')
+            return []
         if phase:
             abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
         else:
