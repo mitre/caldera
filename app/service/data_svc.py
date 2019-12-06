@@ -246,6 +246,10 @@ class DataService(BaseService):
             relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
                         requirements[module]]
             rs.append(Requirement(module=module, relationships=relation))
+        if payload:
+            _, path = await self.get_service('file_svc').find_file_path(payload)
+            if not path:
+                self.log.error('Payload referenced in ability but not found: %s' % payload)
         return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
