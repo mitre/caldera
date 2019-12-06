@@ -46,13 +46,18 @@ class RestService(BaseService):
             f.write(yaml.dump([data]))
         for d in self.get_service('data_svc').data_dirs:
             await self.get_service('data_svc').load_data(d)
-        ability = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=data.get('id')))
-        checks = 0
-        while not ability or checks == 5:
-            ability = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=data.get('id')))
-            await asyncio.sleep(1)
-            checks += 1
-        return ability[0].display
+        return await self._poll_for_data('abilities', dict(ability_id=data.get('id')))
+
+    async def persist_source(self, data):
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
+        if not file_path:
+            file_path = 'data/facts/%s.yml' % data.get('id')
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(yaml.dump(data))
+        for d in self.get_service('data_svc').data_dirs:
+            await self.get_service('data_svc').load_data(d)
+        return await self._poll_for_data('sources', dict(id=data.get('id')))
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
@@ -127,3 +132,11 @@ class RestService(BaseService):
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))))
+
+    async def _poll_for_data(self, collection, search):
+        coll, checks = 0, 0
+        while not coll or checks == 5:
+            coll = await self.get_service('data_svc').locate(collection, match=search)
+            await asyncio.sleep(1)
+            checks += 1
+        return [c.display for c in coll]

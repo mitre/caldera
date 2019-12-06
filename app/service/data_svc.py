@@ -212,6 +212,7 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
+                    identifier=src['id'],
                     name=src['name'],
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
                     rules=[Rule(**r) for r in src.get('rules', [])]

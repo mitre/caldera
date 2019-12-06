@@ -233,44 +233,142 @@ function doNothing() {}
 
 /** FACTS **/
 
+const createdCell = function(cell) {
+  cell.setAttribute('contenteditable', true);
+  cell.setAttribute('spellcheck', false);
+  cell.addEventListener('blur', function(e) {
+      console.log(e.target.textContent);
+  });
+};
 $(document).ready(function () {
-    $('#factTbl').DataTable({});
+    $('#factTbl').DataTable({
+            columnDefs: [{
+            targets: '_all',
+            createdCell: createdCell
+        }]
+    });
 });
 
-function loadSource(sources) {
-    let sourceName = $('#profile-source-name').val();
-    sources.forEach(s => {
-        if(s.name === sourceName) {
-            let table = $('#factTbl').DataTable();
-            s.facts.forEach(f => {
-                table.row.add([f.trait, f.value]).draw();
-            });
+function toggleSourceView() {
+    $('#viewSource').toggle();
+    $('#addSource').toggle();
+    clearFactCanvas();
+}
+
+function clearFactCanvas(){
+    $('#factTbl').DataTable().clear().draw();
+    let source = $('#source-name');
+    source.data('id', '');
+    source.val('');
+    $("#profile-source-name").val($("#profile-source-name option:first").val());
+    $('#source-rules').empty();
+}
+
+function loadSource() {
+    restRequest('POST', {'index':'source', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+}
+
+function loadSourceCallback(data) {
+    clearFactCanvas();
+    let source = $('#source-name');
+    data[0].facts.forEach(f => {
+        addFactRow([f.trait, f.value,
+            '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
+    });
+    source.data('id', data[0].id);
+    applyRules(data[0].rules);
+    source.val(data[0].name);
+}
+
+function addFactRow(r){
+    $('#factTbl').DataTable().row.add(r).draw();
+}
+
+function removeFactRow(r){
+    $('#factTbl').DataTable().row($(r).parents('tr')).remove().draw();
+}
+
+function saveSource(){
+    let source = $('#source-name');
+    let name = source.val();
+    let id = source.data('id');
+    if(!name){ alert('Please enter a name!'); return; }
+    if(!id) {
+        id = uuidv4();
+        source.data('id', id);
+    }
+    let data = {};
+    data['index'] = 'source';
+    data['id'] = id;
+    data['name'] = name;
+    data['facts'] = [];
+    data['rules'] = [];
+
+    let table = $('#factTbl').DataTable();
+    let rows = table.rows().data();
+    rows.each(function (value, index) {
+        data['facts'].push({'trait': value[0], 'value': value[1]});
+    });
+    if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+
+    let invalidRules = 0;
+    $('#source-rules li').each(function() {
+        let trait = $(this).find('#trait').val();
+        let match = $(this).find('#match').val();
+        let action = $(this).find('#action').val();
+        if(action !== 'ALLOW' && action !== 'DENY') {
+            invalidRules += 1;
+        }
+        data['rules'].push({'trait': trait, 'match': match, 'action': action});
+    });
+    if(invalidRules > 0) {
+        alert(invalidRules + ' invalid rules!');
+        return;
+    }
+    //restRequest('PUT', data, saveSourceCallback);
+}
+
+function saveSourceCallback(data) {
+    clearFactCanvas();
+    let sources = $('#profile-source-name');
+    let exists = false;
+    $('#profile-source-name option').each(function(){
+        if (this.value === data[0].id) {
+            exists = true;
+            return false;
         }
     });
-    validateFormState('#profile-source-name', '#sourceBtn');
+    if(!exists) {
+        sources.append($("<option></option>")
+            .attr("value", data[0].id)
+            .text(data[0].name));
+    }
 }
 
 function viewRules(sources){
-    $('#source-rules').empty();
     document.getElementById("source-modal").style.display = "block";
-    let sourceName = $('#profile-source-name').val();
-    sources.forEach(s => {
-        if(s.name === sourceName) {
-            s.rules.forEach(r => {
-                let template = $("#rule-template").clone();
-                template.find('#trait').val(r.trait);
-                template.find('#match').val(r.match);
-                if(r.action === 0) {
-                    template.find('#action').val('DENY');
-                } else if (r.action === 1) {
-                    template.find('#action').val('ALLOW');
-                }
-                template.show();
-                $('#source-rules').append(template);
-            });
-        }
-    });
+    let sourceName = $('#source-name').val();
     $('#rules-name').text(sourceName);
+}
+
+function applyRules(rules){
+    rules.forEach(r => {
+        let template = $("#rule-template").clone();
+        template.find('#trait').val(r.trait);
+        template.find('#match').val(r.match);
+        if(r.action === 0) {
+            template.find('#action').val('DENY');
+        } else if (r.action === 1) {
+            template.find('#action').val('ALLOW');
+        }
+        template.show();
+        $('#source-rules').append(template);
+    });
+}
+function addRuleBlock(){
+    let template = $("#rule-template").clone();
+    template.show();
+    $('#source-rules').append(template);
 }
 
 /** OPERATIONS **/
@@ -642,8 +740,8 @@ function saveAbilityCallback(data) {
     flashy('ability-flashy-holder', 'Ability saved!');
     let options = $('#phase-modal').find('#ability-ability-filter');
     let ability = options.find(":selected").data('ability');
-    if((!ability) || (ability && ability.ability_id != data.ability_id)) {
-        let a = addPlatforms([data]);
+    if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
+        let a = addPlatforms([data[0]]);
         appendAbilityToList('phase-modal', a[0]);
         options.val(a[0].name);
     }
@@ -1094,7 +1192,7 @@ function openDuk4(){
 function openDuk5(){
     document.getElementById("duk-modal").style.display="block";
     $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
-        'you to create extensible abilities. You can create new fact sources by adding YML files in the data/facts directory. '+
+        'you to create extensible abilities. '+
         'Additionally, sources can include rules which can restrict agents from using specific traits.');
 }
 
