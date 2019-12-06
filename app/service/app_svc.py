@@ -95,6 +95,7 @@ class AppService(BaseService):
                 operation.phase = phase
             await self._cleanup_operation(operation)
             await operation.close()
+            await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
         except Exception:
             traceback.print_exc()
@@ -153,3 +154,11 @@ class AppService(BaseService):
                              phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
         else:
             return operation.adversary
+
+    async def _save_new_source(self, operation):
+        data = dict(
+            id=str(operation.id),
+            name=operation.name,
+            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
+        )
+        await self.get_service('rest_svc').persist_source(data)
