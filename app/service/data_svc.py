@@ -183,6 +183,8 @@ class DataService(BaseService):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     saved = set()
+                    if ab['tactic'] not in filename:
+                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
                     for pl, executors in ab['platforms'].items():
                         for name, info in executors.items():
                             for e in name.split(','):
