@@ -81,10 +81,7 @@ class DataService(BaseService):
         """
         self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
-        loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
-        loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
-        loop.create_task(self._load_sources(directory='%s/facts' % directory))
-        loop.create_task(self._load_planners(directory='%s/planners' % directory))
+        loop.create_task(self._load_data(directory))
         self.data_dirs.add(directory)
 
     async def store(self, c_object):
@@ -258,3 +255,9 @@ class DataService(BaseService):
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
                                         privilege=privilege))
+    
+    async def _load_data(self, directory):
+        await self._load_abilities(directory='%s/abilities' % directory)
+        await self._load_adversaries(directory='%s/adversaries' % directory)
+        await self._load_sources(directory='%s/facts' % directory)
+        await self._load_planners(directory='%s/planners' % directory)
