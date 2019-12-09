@@ -255,7 +255,7 @@ class DataService(BaseService):
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
                                         privilege=privilege))
-    
+
     async def _load_data(self, directory):
         await self._load_abilities(directory='%s/abilities' % directory)
         await self._load_adversaries(directory='%s/adversaries' % directory)
