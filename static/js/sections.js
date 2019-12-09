@@ -174,7 +174,7 @@ $(document).ready(function () {
             {
                 extend: 'colvis',
                 text: 'Filter Columns', // Button text.
-                columns: ':lt(10)' // Keep last column (the remove agent column) as is.
+                columns: ':not(:last-child)' // Keep last column (the remove agent column) as is.
             }
         ],
         // Button, length-changer, pRocessing display element, filtering, table,
