@@ -5,6 +5,7 @@ from app.utility.base_planning_svc import BasePlanningService
 class PlanningService(BasePlanningService):
 
     def __init__(self):
+        super().__init__()
         self.log = self.add_service('planning_svc', self)
 
     async def get_links(self, operation, phase=None, agent=None, trim=True):

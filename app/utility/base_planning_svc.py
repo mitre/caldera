@@ -4,11 +4,14 @@ import re
 from base64 import b64decode
 
 from app.utility.base_service import BaseService
+from app.utility.obfuscation import Obfuscation
 from app.utility.rule_set import RuleSet
-from app.utility.obfuscation import obfuscate_ps1, obfuscate_bash
 
 
 class BasePlanningService(BaseService):
+
+    def __init__(self):
+        self.obfuscate = Obfuscation()
 
     async def trim_links(self, operation, links, agent):
         """
@@ -93,9 +96,9 @@ class BasePlanningService(BaseService):
 
     async def obfuscate_commands(self, operation, agent, links):
         if operation.obfuscated:
-            options = dict(windows=lambda c: obfuscate_ps1(c),
-                           darwin=lambda c: obfuscate_bash(c),
-                           linux=lambda c: obfuscate_bash(c))
+            options = dict(windows=lambda c: self.obfuscate.powershell(c),
+                           darwin=lambda c: self.obfuscate.bash(c),
+                           linux=lambda c: self.obfuscate.bash(c))
             for l in links:
                 l.command = self.encode_string(options[agent.platform](l.command))
         return links
