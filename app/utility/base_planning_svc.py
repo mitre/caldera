@@ -25,11 +25,11 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation)
+        links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_duplicate_hosts(links, operation)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(operation, agent, links)
-        links = await self.remove_completed_links(operation, agent, links)
         return links
 
     async def add_test_variants(self, links, agent, operation):

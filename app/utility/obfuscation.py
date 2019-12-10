@@ -8,8 +8,8 @@ class Obfuscation(BaseWorld):
 
     def powershell(self, code):
         ran1, ran2, ran3 = 'P4j', 'X5x', '5x4'
-        decoded_script = self.decode_bytes(code)
-        encoded_script = b64encode(decoded_script.encode('utf_16_le'))
+        decoded = self.decode_bytes(code)
+        encoded_script = b64encode(decoded.encode('utf_16_le'))
         random_range = randint(4000, 5000)
         random_logic = [encoded_script[i: i + random_range] for i in range(0, len(encoded_script), random_range)]
         empty_string = ''
