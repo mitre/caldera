@@ -149,7 +149,7 @@ class DataService(BaseService):
             if not abilities:
                 abilities = await self._add_adversary_packs(step['id'])
                 if not abilities:
-                    self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adversary['name']))
+                    self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
                 else:
                     is_pack = True
 
