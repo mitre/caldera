@@ -31,7 +31,7 @@ class RestService(BaseService):
             f.seek(0)
             p = defaultdict(list)
             for ability in data.pop('phases'):
-                p[ability['phase']].append(ability['id'])
+                p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
         for d in self.get_service('data_svc').data_dirs:
