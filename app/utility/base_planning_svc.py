@@ -4,10 +4,14 @@ import re
 from base64 import b64decode
 
 from app.utility.base_service import BaseService
+from app.utility.obfuscation import Obfuscation
 from app.utility.rule_set import RuleSet
 
 
 class BasePlanningService(BaseService):
+
+    def __init__(self):
+        self.obfuscate = Obfuscation()
 
     async def trim_links(self, operation, links, agent):
         """
@@ -21,10 +25,11 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation)
-        links = await self.remove_completed_links(operation, agent, links)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_duplicate_hosts(links, operation)
         links = await self.remove_links_missing_requirements(links, operation)
+        links = await self.obfuscate_commands(operation, agent, links)
+        links = await self.remove_completed_links(operation, agent, links)
         return links
 
     async def add_test_variants(self, links, agent, operation):
@@ -66,8 +71,7 @@ class BasePlanningService(BaseService):
         """
         completed_links = [l.command for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.status == l.states['DISCARD'])]
-        links[:] = [l for l in links if l.command not in completed_links]
-        return links
+        return [l for l in links if l.command not in completed_links]
 
     @staticmethod
     async def remove_links_missing_facts(links):
@@ -87,6 +91,15 @@ class BasePlanningService(BaseService):
 
     async def remove_links_duplicate_hosts(self, links, operation):
         links[:] = [l for l in links if await self._exclude_existing(l, operation)]
+        return links
+
+    async def obfuscate_commands(self, operation, agent, links):
+        if operation.obfuscated:
+            options = dict(windows=lambda c: self.obfuscate.powershell(c),
+                           darwin=lambda c: self.obfuscate.bash(c),
+                           linux=lambda c: self.obfuscate.bash(c))
+            for l in links:
+                l.command = self.encode_string(options[agent.platform](l.command))
         return links
 
     """ PRIVATE """

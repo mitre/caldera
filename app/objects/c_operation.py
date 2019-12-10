@@ -22,7 +22,7 @@ class Operation(BaseObject):
                                source=self.source.display if self.source else '',
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, phase=self.phase,
+                               state=self.state, phase=self.phase, obfuscated=self.obfuscated,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -63,7 +63,7 @@ class Operation(BaseObject):
         return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True, phases_enabled=True):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscated=False):
         super().__init__()
         self.id = id
         self.start = None
@@ -78,6 +78,7 @@ class Operation(BaseObject):
         self.autonomous = autonomous
         self.phases_enabled = phases_enabled
         self.phase = 0
+        self.obfuscated = obfuscated
         self.finish = None
         self.chain = []
         self.rules = []

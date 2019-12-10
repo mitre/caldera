@@ -132,7 +132,8 @@ class RestService(BaseService):
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary[0],
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
-                         phases_enabled=bool(int(data.pop('phases_enabled'))))
+                         phases_enabled=bool(int(data.pop('phases_enabled'))),
+                         obfuscated=bool(int(data.pop('obfuscated'))))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0
