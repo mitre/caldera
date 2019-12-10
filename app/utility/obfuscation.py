@@ -24,8 +24,8 @@ class Obfuscation(BaseWorld):
             empty_string = empty_string.replace("==", "'+'==")
             c = 1
         mangle_quotes = (choice(["''"]))
-        hidden_ps1 = '''robinhood /C "s{0}v {1} -;s{0}v {2} e{0}c;s{0}v {3} ((g{0}v {4}).value.toString()+(g{0}v {5}).value.toString());robinhood (g{0}v {6}).value.toString() (\''''.format(
-            mangle_quotes, ran1, ran2, ran3, ran1, ran2, ran3) + empty_string + ")" + '"'
+        hidden_ps1 = '''robinhood /C "s{0}v {1} -;s{0}v {2} e{0}c;s{0}v {3} ((g{0}v {4}).value.toString()+(g{0}v {5}).value.toString());
+        robinhood (g{0}v {6}).value.toString() (\''''.format(mangle_quotes, ran1, ran2, ran3, ran1, ran2, ran3) + empty_string + ")" + '"'
         return hidden_ps1.replace('robinhood', 'powershell')
 
     @staticmethod
