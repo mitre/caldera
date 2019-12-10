@@ -73,7 +73,7 @@ class AuthService(BaseService):
         try:
             if request.headers.get('API_KEY') == self.api_key:
                 return True
-            elif request.host.contains('localhost'):
+            elif 'localhost:' in request.host:
                 return True
             await check_permission(request, 'admin')
         except (HTTPUnauthorized, HTTPForbidden):
