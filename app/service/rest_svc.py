@@ -75,6 +75,9 @@ class RestService(BaseService):
         for f in glob.glob('data/results/*'):
             if '%s-' % data.get('id') in f:
                 os.remove(f)
+        for f in glob.glob('data/facts/*.yml'):
+            if '%s' % data.get('id') in f:
+                os.remove(f)
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
