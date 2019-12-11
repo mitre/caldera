@@ -427,7 +427,7 @@ function buildOperationObject() {
         "planner":document.getElementById("queuePlanner").value,
         "autonomous":document.getElementById("queueAuto").value,
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
-        "obfuscated":document.getElementById("queueObfuscated").value,
+        "obfuscator":document.getElementById("queueObfuscated").value,
         "jitter":jitter,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
