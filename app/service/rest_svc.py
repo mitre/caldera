@@ -45,7 +45,7 @@ class RestService(BaseService):
             d = 'data/abilities/%s' % data.get('tactic')
             if not os.path.exists(d):
                 os.makedirs(d)
-                file_path = 'data/abilities/%s/%s.yml' % (data.get('tactic'), data.get('id'))
+            file_path = '%s/%s.yml' % (d, data.get('id'))
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))

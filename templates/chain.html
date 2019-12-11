@@ -407,7 +407,7 @@
                         <option value="0">Disable Phases</option>
                       </select>
                       <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
-                          <option value="0" selected>Plain-text commands</option>
+                          <option value="" selected>Plain-text commands</option>
                           {% for o in obfuscators %}
                             <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
                         {% endfor %}
