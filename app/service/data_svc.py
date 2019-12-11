@@ -3,6 +3,7 @@ import copy
 import glob
 import json
 import os.path
+import shutil
 import pickle
 from base64 import b64encode
 from collections import defaultdict
@@ -37,10 +38,10 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities/attack']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
-                    os.remove(f)
+                    shutil.rmtree(d)
 
     async def save_state(self):
         """
