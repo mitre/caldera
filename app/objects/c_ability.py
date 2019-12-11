@@ -40,4 +40,15 @@ class Ability(BaseObject):
         if not existing:
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
+        existing.update('tactic', self.tactic)
+        existing.update('technique_name', self.technique_name)
+        existing.update('technique_id', self.technique_id)
+        existing.update('name', self.name)
+        existing.update('test', self.test)
+        existing.update('description', self.description)
+        existing.update('cleanup', self.cleanup)
+        existing.update('executor', self.executor)
+        existing.update('platform', self.platform)
+        existing.update('payload', self.payload)
+        existing.update('privilege', self.privilege)
         return existing

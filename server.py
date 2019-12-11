@@ -7,18 +7,21 @@ import sys
 import yaml
 from aiohttp import web
 
+from app.api.rest_api import RestApi
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
+from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
+from app.service.rest_svc import RestService
 
 
 def set_logging_state():
     logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
     logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
-    logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
+    logging.getLogger('asyncio').setLevel(logging.FATAL)
     if cfg['debug']:
         logging.getLogger().setLevel(logging.DEBUG)
         logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
@@ -35,9 +38,6 @@ async def start_server(config, services):
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
 
-    await app_svc.load_plugins()
-    await app_svc.start_c2(app)
-
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, config['host'], config['port']).start()
@@ -45,11 +45,13 @@ async def start_server(config, services):
 
 def main(services, config):
     loop = asyncio.get_event_loop()
+    loop.run_until_complete(data_svc.restore_state())
+    loop.run_until_complete(RestApi(services).enable())
+    loop.run_until_complete(app_svc.load_plugins())
+    loop.run_until_complete(data_svc.load_data(directory='data'))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
-    loop.create_task(data_svc.load_data(directory='data'))
-    loop.create_task(data_svc.restore_state())
     loop.run_until_complete(start_server(config, services))
     try:
         print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
@@ -72,7 +74,9 @@ if __name__ == '__main__':
         set_logging_state()
 
         data_svc = DataService()
+        contact_svc = ContactService()
         planning_svc = PlanningService()
+        rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc(cfg['exfil_dir'])
         app_svc = AppService(application=web.Application(), config=cfg)

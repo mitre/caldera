@@ -9,6 +9,7 @@ from importlib import import_module
 import aiohttp_jinja2
 import jinja2
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -83,20 +84,19 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(self.run_operation(op))
 
-    async def start_c2(self, app):
-        for c2 in await self.get_service('data_svc').locate('c2'):
-            c2.start(app)
-
     async def run_operation(self, operation):
         try:
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
+            operation.adversary = await self._adjust_adversary_phases(operation)
             for phase in operation.adversary.phases:
+                await self._update_operation(operation)
                 await planner.execute(phase)
                 await operation.wait_for_phase_completion()
                 operation.phase = phase
             await self._cleanup_operation(operation)
             await operation.close()
+            await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
         except Exception:
             traceback.print_exc()
@@ -107,20 +107,24 @@ class AppService(BaseService):
         :return:
         """
         for plug in os.listdir('plugins'):
+            if plug.startswith('.'):
+                continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
                 exit(0)
-            self.log.debug('Loading plugin: %s' % plug)
             plugin = Plugin(name=plug)
-            await self.get_service('data_svc').store(plugin)
-            if plugin.name in self.config['enabled_plugins']:
-                plugin.enabled = True
-        for plug in await self._services.get('data_svc').locate('plugins'):
-            if plug.name in self.config['enabled_plugins'] or plug.enabled:
-                await plug.enable(self.get_services())
+            if await plugin.load():
+                await self.get_service('data_svc').store(plugin)
+                if plugin.name in self.config['plugins']:
+                    plugin.enabled = True
+        for plugin in self.config['plugins']:
+            plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
+            [await p.enable(self.get_services()) for p in plug]
+            self.log.debug('Enabling %s plugin' % plugin)
 
         templates = ['plugins/%s/templates' % p.name.lower()
                      for p in await self.get_service('data_svc').locate('plugins')]
+        templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     """ PRIVATE """
@@ -136,3 +140,32 @@ class AppService(BaseService):
             for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
                 operation.add_link(link)
         await operation.wait_for_phase_completion()
+
+    @staticmethod
+    async def _adjust_adversary_phases(operation):
+        """If an operation has phases disabled, replace operation
+        adversary with new adversary whose phases are collapsed.
+        Modified adversary is temporary and not stored, just used
+        for the operation.
+        """
+        if not operation.phases_enabled:
+            return Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
+                             name=(operation.adversary.name + " - with phases disabled"),
+                             description=(operation.adversary.name + " with phases disabled"),
+                             phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
+        else:
+            return operation.adversary
+
+    async def _save_new_source(self, operation):
+        data = dict(
+            id=str(operation.id),
+            name=operation.name,
+            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
+        )
+        await self.get_service('rest_svc').persist_source(data)
+
+    async def _update_operation(self, operation):
+        updated_agents = await self.get_service('data_svc').locate(
+            'agents', match=dict(group=operation.agents[0].group)
+        )
+        operation.agents = updated_agents

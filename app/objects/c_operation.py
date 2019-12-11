@@ -22,7 +22,7 @@ class Operation(BaseObject):
                                source=self.source.display if self.source else '',
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, phase=self.phase,
+                               state=self.state, phase=self.phase, obfuscated=self.obfuscated,
                                allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -63,7 +63,7 @@ class Operation(BaseObject):
         return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscated=False):
         super().__init__()
         self.id = id
         self.start = None
@@ -76,7 +76,9 @@ class Operation(BaseObject):
         self.state = state
         self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
+        self.phases_enabled = phases_enabled
         self.phase = 0
+        self.obfuscated = obfuscated
         self.finish = None
         self.chain = []
         self.rules = []
@@ -114,7 +116,8 @@ class Operation(BaseObject):
                 return link.id
             else:
                 await asyncio.sleep(15)
-        return self.add_link(link)
+        self.add_link(link)
+        return link.id
 
     async def close(self):
         self.state = self.states['FINISHED']
@@ -131,15 +134,15 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def wait_for_links_completion(self, link_paws):
+    async def wait_for_links_completion(self, link_ids):
         """
         Wait for started links to be completed
         :param link_paws:
         :return: None
         """
-        for link_paw in link_paws:
-            link = [link for link in self.chain if link.paw == link_paw][0]
-            member = [member for member in self.agents if member.paw == link_paw][0]
+        for link_id in link_ids:
+            link = [link for link in self.chain if link.id == link_id][0]
+            member = [member for member in self.agents if member.paw == link.paw][0]
             while not link.finish and not link.status == link.states['DISCARD']:
                 await asyncio.sleep(5)
                 if await self._trust_issues(member):
@@ -190,6 +193,9 @@ class Operation(BaseObject):
         variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group), flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
+        elif not agent.trusted:
+            return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
         elif ability.platform != agent.platform:
             return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability.ability_id,
                         ability_name=ability.name)
@@ -216,6 +222,6 @@ class Operation(BaseObject):
         PLATFORM = 0
         EXECUTOR = 1
         FACT_DEPENDENCY = 2
-        OP_RUNNING = 3
-        UNTRUSTED = 4
-        PRIVILEGE = 5
+        PRIVILEGE = 3
+        OP_RUNNING = 4
+        UNTRUSTED = 5

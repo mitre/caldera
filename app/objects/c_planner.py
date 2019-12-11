@@ -9,13 +9,14 @@ class Planner(BaseObject):
 
     @property
     def display(self):
-        return dict(name=self.name, module=self.module, params=self.params)
+        return dict(name=self.name, module=self.module, params=self.params, description=self.description)
 
-    def __init__(self, name, module, params):
+    def __init__(self, name, module, params, description=None):
         super().__init__()
         self.name = name
         self.module = module
         self.params = params
+        self.description = description
 
     def store(self, ram):
         existing = self.retrieve(ram['planners'], self.unique)

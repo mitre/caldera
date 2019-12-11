@@ -3,10 +3,8 @@
 host: 0.0.0.0
 port: 8888
 exfil_dir: /tmp
-untrusted_timer: 15
-enabled_plugins:
-  - gui
-  - chain
+untrusted_timer: 60
+plugins:
   - sandcat
   - stockpile
 debug: True

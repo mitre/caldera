@@ -1,3 +1,4 @@
+import datetime
 import os
 import random
 import string
@@ -77,6 +78,9 @@ class FileSvc(BaseService):
                 file_path = await self._walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
                 if file_path:
                     return plugin.name, file_path
+        file_path = await self._walk_file_path(os.path.join('data'), name)
+        if file_path:
+            return None, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
     async def read_file(self, name, location='payloads'):
@@ -89,10 +93,9 @@ class FileSvc(BaseService):
         _, file_name = await self.find_file_path(name, location=location)
         if file_name:
             with open(file_name, 'rb') as file_stream:
+                if file_name.endswith('.xored'):
+                    return name, xor_file(file_name)
                 return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location=location)
-        if file_name:
-            return name, xor_file(file_name)
         raise FileNotFoundError
 
     async def add_special_payload(self, name, func):
@@ -105,16 +108,22 @@ class FileSvc(BaseService):
         self.special_payloads[name] = func
 
     @staticmethod
-    async def compile_go(platform, output, src_fle, ldflags='-s -w'):
+    async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode=''):
         """
         Dynamically compile a go file
         :param platform:
         :param output:
         :param src_fle:
+        :param arch: Compile architecture selection (defaults to AMD64)
         :param ldflags: A string of ldflags to use when building the go executable
+        :param cflags: A string of CFLAGS to pass to the go compiler
+        :param buildmode: GO compiler buildmode flag
         :return:
         """
-        os.system('GOOS=%s go build -o %s -ldflags="%s" %s' % (platform, output, ldflags, src_fle))
+        os.system(
+            'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
+                                                                           ldflags, src_fle)
+        )
 
     """ PRIVATE """
 
@@ -123,10 +132,13 @@ class FileSvc(BaseService):
         for root, dirs, files in os.walk(path):
             if target in files:
                 return os.path.join(root, target)
+            if '%s.xored' % target in files:
+                return os.path.join(root, '%s.xored' % target)
         return None
 
     async def _create_exfil_sub_directory(self, headers):
-        dir_name = headers.get('X-Request-ID', str(uuid.uuid4()))
+        dir_name = '{}.{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())),
+                                  datetime.datetime.now().strftime('%Y.%h.%d.%H.%M'))
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
             os.makedirs(path)

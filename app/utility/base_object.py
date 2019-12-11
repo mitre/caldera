@@ -15,7 +15,7 @@ class BaseObject(BaseWorld):
             return self
 
     def update(self, field, value):
-        if value:
+        if value and (value != self.__getattribute__(field)):
             self.__setattr__(field, value)
 
     @staticmethod

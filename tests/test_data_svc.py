@@ -30,8 +30,8 @@ class TestData(TestBase):
             json.dumps(x.display)
 
     def test_planner(self):
-        self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None)))
-        self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None)))
+        self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None, description='description')))
+        self.run_async(self.data_svc.store(Planner(name='test', module='some.path.here', params=None, description='description')))
         planners = self.run_async(self.data_svc.locate('planners'))
 
         self.assertEqual(1, len(planners))
