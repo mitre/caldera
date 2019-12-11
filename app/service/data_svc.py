@@ -3,6 +3,7 @@ import copy
 import glob
 import json
 import os.path
+import shutil
 import pickle
 from base64 import b64encode
 from collections import defaultdict
@@ -26,7 +27,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[])
+                           schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -37,10 +38,10 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities/attack']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
-                    os.remove(f)
+                    shutil.rmtree(d)
 
     async def save_state(self):
         """
@@ -81,10 +82,7 @@ class DataService(BaseService):
         """
         self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
-        loop.create_task(self._load_abilities(directory='%s/abilities' % directory))
-        loop.create_task(self._load_adversaries(directory='%s/adversaries' % directory))
-        loop.create_task(self._load_sources(directory='%s/facts' % directory))
-        loop.create_task(self._load_planners(directory='%s/planners' % directory))
+        loop.create_task(self._load_data(directory))
         self.data_dirs.add(directory)
 
     async def store(self, c_object):
@@ -152,7 +150,7 @@ class DataService(BaseService):
             if not abilities:
                 abilities = await self._add_adversary_packs(step['id'])
                 if not abilities:
-                    self.log.error('Missing ability or pack (%s) for adversary: %s' % (step['id'], adversary['name']))
+                    self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
                 else:
                     is_pack = True
 
@@ -259,3 +257,9 @@ class DataService(BaseService):
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
                                         privilege=privilege))
+
+    async def _load_data(self, directory):
+        await self._load_abilities(directory='%s/abilities' % directory)
+        await self._load_adversaries(directory='%s/adversaries' % directory)
+        await self._load_sources(directory='%s/facts' % directory)
+        await self._load_planners(directory='%s/planners' % directory)

@@ -53,10 +53,11 @@ class RestApi:
             operations = [o.display for o in await self.data_svc.locate('operations')]
             sources = [s.display for s in await self.data_svc.locate('sources')]
             planners = [p.display for p in await self.data_svc.locate('planners')]
+            obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins)
+                        plugins=plugins, obfuscators=obfuscators)
         except Exception as e:
             logging.error('[!] landing: %s' % e)
 
@@ -64,9 +65,12 @@ class RestApi:
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
     async def rest_full(self, request):
-        base = await self.rest_core(request)
-        base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
-        return web.json_response(base)
+        try:
+            base = await self.rest_core(request)
+            base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
+            return web.json_response(base)
+        except Exception:
+            pass
 
     async def rest_api(self, request):
         base = await self.rest_core(request)
@@ -85,6 +89,7 @@ class RestApi:
             options = dict(
                 DELETE=dict(
                     agent=lambda d: self.rest_svc.delete_agent(d),
+                    operation=lambda d: self.rest_svc.delete_operation(d)
                 ),
                 PUT=dict(
                     adversary=lambda d: self.rest_svc.persist_adversary(d),

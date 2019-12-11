@@ -261,7 +261,7 @@
                 <tr>
                     <td style="width:10%"><b>platform:</b></td>
                     <td>
-                      <select id="ability-platform" class="ability-payload">
+                      <select id="ability-platform">
                         <option value="" disabled selected>Select a platform</option>
                             <option value="darwin">darwin</option>
                             <option value="linux">linux</option>
@@ -272,7 +272,7 @@
                 <tr>
                     <td style="width:10%"><b>executor:</b></td>
                     <td>
-                      <select id="ability-executor" class="ability-payload">
+                      <select id="ability-executor">
                         <option value="" disabled selected>Select an executor</option>
                             <option value="sh">sh</option>
                             <option value="psh">psh</option>
@@ -352,7 +352,7 @@
               <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
               <div id="viewOperation">
-                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh()">
+                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpDeleteBtn()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
                         {%  if op.start|length%}
@@ -360,6 +360,8 @@
                         {% endif %}
                   {% endfor %}
                 </select>
+                <br>
+                <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
               <div id="addOperation" style="display: none;">
                   <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
@@ -405,6 +407,12 @@
                       <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Enable Phases</option>
                         <option value="0">Disable Phases</option>
+                      </select>
+                      <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
+                          <option value="" selected>Plain-text commands</option>
+                          {% for o in obfuscators %}
+                            <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
+                        {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
                   </div>
@@ -645,7 +653,7 @@
                 <div class="imgcontainer">
                   <span onclick="resetMoreModal();" class="close" title="Close Modal">&times;</span>
                 </div>
-                <div class="container">
+                <div class="container" style="text-align:left">
                     <code id="resultCmd"></code>
                     <hr>
                     <pre id="resultView" style="text-align: left;max-width:800px;"></pre>

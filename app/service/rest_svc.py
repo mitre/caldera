@@ -1,4 +1,6 @@
 import asyncio
+import glob
+import os
 import pathlib
 from collections import defaultdict
 from datetime import time
@@ -31,7 +33,7 @@ class RestService(BaseService):
             f.seek(0)
             p = defaultdict(list)
             for ability in data.pop('phases'):
-                p[ability['phase']].append(ability['id'])
+                p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
         for d in self.get_service('data_svc').data_dirs:
@@ -41,7 +43,10 @@ class RestService(BaseService):
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/abilities/attack/%s.yml' % data.get('id')
+            d = 'data/abilities/%s' % data.get('tactic')
+            if not os.path.exists(d):
+                os.makedirs(d)
+            file_path = '%s/%s.yml' % (d, data.get('id'))
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
@@ -62,6 +67,14 @@ class RestService(BaseService):
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
+        return 'Delete action completed'
+
+    async def delete_operation(self, data):
+        await self.get_service('data_svc').remove('operations', data)
+        await self.get_service('data_svc').remove('sources', dict(id=str(data.get('id'))))
+        for f in glob.glob('data/results/*'):
+            if '%s-' % data.get('id') in f:
+                os.remove(f)
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
@@ -132,7 +145,8 @@ class RestService(BaseService):
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary[0],
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
-                         phases_enabled=bool(int(data.pop('phases_enabled'))))
+                         phases_enabled=bool(int(data.pop('phases_enabled'))),
+                         obfuscator=data.pop('obfuscator'))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0

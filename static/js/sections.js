@@ -1,4 +1,6 @@
-
+$.ajaxSetup({
+    cache: false
+});
 $(document).ready(function () {
     if(localStorage.getItem('intro') !== '0') {
         $('#intro').show();
@@ -174,7 +176,7 @@ $(document).ready(function () {
             {
                 extend: 'colvis',
                 text: 'Filter Columns', // Button text.
-                columns: ':lt(9)' // Keep last column (the remove agent column) as is.
+                columns: ':not(:last-child)' // Keep last column (the remove agent column) as is.
             }
         ],
         // Button, length-changer, pRocessing display element, filtering, table,
@@ -390,6 +392,15 @@ function handleStartAction(){
     restRequest('PUT', op, handleStartActionCallback);
 }
 
+function checkOpDeleteBtn(){
+    validateFormState(($('#operation-list').val()), '#opDelete');
+}
+
+function deleteOperation(){
+    let data = {'index': 'operation', 'id': parseInt($('#operation-list option:selected').attr('value'))};
+    restRequest('DELETE', data, window.location.reload());
+}
+
 function handleScheduleAction(){
     let op = buildOperationObject();
     let hour = parseInt(document.getElementById("schedule-hour").value);
@@ -427,6 +438,7 @@ function buildOperationObject() {
         "planner":document.getElementById("queuePlanner").value,
         "autonomous":document.getElementById("queueAuto").value,
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
+        "obfuscator":document.getElementById("queueObfuscated").value,
         "jitter":jitter,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
