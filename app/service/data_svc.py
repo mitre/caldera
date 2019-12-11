@@ -26,7 +26,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[])
+                           schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
