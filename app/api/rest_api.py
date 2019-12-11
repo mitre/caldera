@@ -89,6 +89,7 @@ class RestApi:
             options = dict(
                 DELETE=dict(
                     agent=lambda d: self.rest_svc.delete_agent(d),
+                    operation=lambda d: self.rest_svc.delete_operation(d)
                 ),
                 PUT=dict(
                     adversary=lambda d: self.rest_svc.persist_adversary(d),

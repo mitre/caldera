@@ -392,6 +392,15 @@ function handleStartAction(){
     restRequest('PUT', op, handleStartActionCallback);
 }
 
+function checkOpDeleteBtn(){
+    validateFormState(($('#operation-list').val()), '#opDelete');
+}
+
+function deleteOperation(){
+    let data = {'index': 'operation', 'id': parseInt($('#operation-list option:selected').attr('value'))};
+    restRequest('DELETE', data, window.location.reload());
+}
+
 function handleScheduleAction(){
     let op = buildOperationObject();
     let hour = parseInt(document.getElementById("schedule-hour").value);

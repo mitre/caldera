@@ -1,6 +1,8 @@
 import asyncio
+import glob
 import os
 import pathlib
+import shutil
 from collections import defaultdict
 from datetime import time
 
@@ -66,6 +68,14 @@ class RestService(BaseService):
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
+        return 'Delete action completed'
+
+    async def delete_operation(self, data):
+        await self.get_service('data_svc').remove('operations', data)
+        await self.get_service('data_svc').remove('sources', dict(id=str(data.get('id'))))
+        for f in glob.glob('data/results/*'):
+            if '%s-' % data.get('id') in f:
+                os.remove(f)
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
