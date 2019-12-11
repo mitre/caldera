@@ -68,7 +68,7 @@ class RestApi:
             base = await self.rest_core(request)
             base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
             return web.json_response(base)
-        except:
+        except Exception:
             pass
 
     async def rest_api(self, request):
