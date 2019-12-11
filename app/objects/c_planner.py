@@ -18,10 +18,7 @@ class Planner(BaseObject):
         self.module = module
         self.params = params
         self.description = description
-        self.stopping_conditions = []
-        if stopping_conditions:
-            self.stopping_conditions = [Fact(trait, value) for sc in stopping_conditions for trait, value in
-                                        sc.items()]
+        self.stopping_conditions = self._set_stopping_conditions(stopping_conditions)
 
     def store(self, ram):
         existing = self.retrieve(ram['planners'], self.unique)
@@ -29,3 +26,12 @@ class Planner(BaseObject):
             ram['planners'].append(self)
             return self.retrieve(ram['planners'], self.unique)
         return existing
+
+    """ PRIVATE """
+
+    @staticmethod
+    def _set_stopping_conditions(conditions):
+        if conditions:
+            return [Fact(trait, value) for sc in conditions for trait, value in
+                    sc.items()]
+        return []
