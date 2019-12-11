@@ -64,9 +64,12 @@ class RestApi:
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
     async def rest_full(self, request):
-        base = await self.rest_core(request)
-        base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
-        return web.json_response(base)
+        try:
+            base = await self.rest_core(request)
+            base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
+            return web.json_response(base)
+        except:
+            pass
 
     async def rest_api(self, request):
         base = await self.rest_core(request)
