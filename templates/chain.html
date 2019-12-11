@@ -352,7 +352,7 @@
               <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
               <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
               <div id="viewOperation">
-                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh()">
+                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpDeleteBtn()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
                         {%  if op.start|length%}
@@ -360,6 +360,8 @@
                         {% endif %}
                   {% endfor %}
                 </select>
+                <br>
+                <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
               <div id="addOperation" style="display: none;">
                   <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
