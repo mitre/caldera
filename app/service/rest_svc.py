@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pathlib
 from collections import defaultdict
 from datetime import time
@@ -41,7 +42,10 @@ class RestService(BaseService):
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/abilities/attack/%s.yml' % data.get('id')
+            d = 'data/abilities/%s' % data.get('tactic')
+            if not os.path.exists(d):
+                os.makedirs(d)
+            file_path = '%s/%s.yml' % (d, data.get('id'))
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
