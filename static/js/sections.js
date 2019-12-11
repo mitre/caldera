@@ -1,4 +1,6 @@
-
+$.ajaxSetup({
+    cache: false
+});
 $(document).ready(function () {
     if(localStorage.getItem('intro') !== '0') {
         $('#intro').show();
