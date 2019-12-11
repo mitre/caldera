@@ -23,11 +23,11 @@ class FileSvc(BaseService):
         :return: a multipart file via HTTP
         """
         try:
-            payload = request.headers.get('file')
+            payload = disp_name = request.headers.get('file')
             if payload in self.special_payloads:
-                payload = await self.special_payloads[payload](request.headers)
+                payload, disp_name = await self.special_payloads[payload](request.headers)
             payload, content = await self.read_file(payload)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % payload)])
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % disp_name)])
             return web.Response(body=content, headers=headers)
         except FileNotFoundError:
             return web.HTTPNotFound(body='File not found')
