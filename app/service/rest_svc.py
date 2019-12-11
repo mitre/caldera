@@ -2,7 +2,6 @@ import asyncio
 import glob
 import os
 import pathlib
-import shutil
 from collections import defaultdict
 from datetime import time
 
