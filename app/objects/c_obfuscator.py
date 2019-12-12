@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 
 from app.utility.base_object import BaseObject
@@ -30,4 +31,4 @@ class Obfuscator(BaseObject):
             mod = import_module(self.module)
             return getattr(mod, 'Obfuscation')(agent)
         except Exception as e:
-            self.log.error('Error importing obfuscator=%s, %s' % (self.name, e))
+            logging.error('Error importing obfuscator=%s, %s' % (self.name, e))

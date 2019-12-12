@@ -1,11 +1,7 @@
 from app.utility.base_world import BaseWorld
-from app.utility.logger import Logger
 
 
 class BaseObject(BaseWorld):
-
-    def __init__(self):
-        self.log = Logger(name='object')
 
     def match(self, criteria):
         if not criteria:
