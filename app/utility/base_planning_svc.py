@@ -47,6 +47,7 @@ class BasePlanningService(BaseService):
                 for combo in list(itertools.product(*valid_facts)):
                     try:
                         link.log = None
+                        link.ability.log = None
                         copy_test = copy.copy(decoded_test)
                         copy_link = copy.deepcopy(link)
                         variant, score, used = await self._build_single_test_variant(copy_test, combo)
