@@ -45,13 +45,17 @@ class BasePlanningService(BaseService):
                 relevant_facts = await self._build_relevant_facts(variables, operation, agent_facts)
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
-                    copy_test = copy.deepcopy(decoded_test)
-                    copy_link = copy.deepcopy(link)
-                    variant, score, used = await self._build_single_test_variant(copy_test, combo)
-                    copy_link.command = self.encode_string(variant)
-                    copy_link.score = score
-                    copy_link.used.extend(used)
-                    links.append(copy_link)
+                    try:
+                        copy_test = copy.copy(decoded_test)
+                        copy_link = copy.deepcopy(link)
+                        variant, score, used = await self._build_single_test_variant(copy_test, combo)
+                        copy_link.command = self.encode_string(variant)
+                        copy_link.score = score
+                        copy_link.used.extend(used)
+                        links.append(copy_link)
+                    except Exception as ex:
+                        print('Could not create test variant: %s' % ex)
+                        print('%s' % link.__dict__)
             else:
                 link.command = self.encode_string(decoded_test)
         return links
