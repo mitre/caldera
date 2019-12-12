@@ -1,5 +1,6 @@
 import copy
 import itertools
+import logging
 import re
 from base64 import b64decode
 
@@ -46,8 +47,6 @@ class BasePlanningService(BaseService):
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
                     try:
-                        link.log = None
-                        link.ability.log = None
                         copy_test = copy.copy(decoded_test)
                         copy_link = copy.deepcopy(link)
                         variant, score, used = await self._build_single_test_variant(copy_test, combo)
@@ -56,9 +55,7 @@ class BasePlanningService(BaseService):
                         copy_link.used.extend(used)
                         links.append(copy_link)
                     except Exception as ex:
-                        print('Could not create test variant: %s' % ex)
-                        print('%s' % link.__dict__)
-                        print('%s' % link.ability.__dict__)
+                        logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
                 link.command = self.encode_string(decoded_test)
         return links

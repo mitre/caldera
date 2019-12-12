@@ -1,3 +1,4 @@
+import logging
 from importlib import import_module
 
 from app.utility.base_object import BaseObject
@@ -36,7 +37,7 @@ class Plugin(BaseObject):
             self.address = plugin.address
             return True
         except Exception as e:
-            self.log.error('Error loading plugin=%s, %s' % (self.name, e))
+            logging.error('Error loading plugin=%s, %s' % (self.name, e))
             return True
 
     async def enable(self, services):
@@ -45,7 +46,7 @@ class Plugin(BaseObject):
             await plugin(services)
             self.enabled = True
         except Exception as e:
-            self.log.error('Error enabling plugin=%s, %s' % (self.name, e))
+            logging.error('Error enabling plugin=%s, %s' % (self.name, e))
 
     """ PRIVATE """
 
@@ -53,4 +54,4 @@ class Plugin(BaseObject):
         try:
             return import_module('plugins.%s.hook' % self.name)
         except Exception as e:
-            self.log.error('Error importing plugin=%s, %s' % (self.name, e))
+            logging.error('Error importing plugin=%s, %s' % (self.name, e))
