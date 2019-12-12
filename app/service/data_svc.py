@@ -37,7 +37,7 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     os.remove(f)
