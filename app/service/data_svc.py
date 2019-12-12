@@ -121,47 +121,44 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _add_phase_abilities(self, phase_dict, phase, phase_entries, is_pack=False):
-        if is_pack:
-            for pack_ability in phase_entries:
-                for ability in await self.locate('abilities', match=dict(ability_id=pack_ability['id'])):
-                    phase_dict[phase].append(ability)
-        else:
-            for ability in phase_entries:
-                phase_dict[phase].append(ability)
-
+    async def _add_phase_abilities(self, phase_dict, phase, phase_entries):
+        for ability in phase_entries:
+            phase_dict[phase].append(ability)
         return phase_dict
+
+    async def _insert_pack_phases(self, pack, phases, current_phase, adversary):
+        phases_new = await self._add_adversary_packs(pack)
+        if phases_new:
+            for i, phase in phases_new.items():
+                phases.insert(current_phase + i, phase)
+        else:
+            self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
 
     async def _add_phases(self, phases, adversary):
         pp = defaultdict(list)
-        for step in phases:
-            abilities = await self.locate('abilities', match=dict(ability_id=step['id']))
-
-            is_pack = False
-            if not abilities:
-                abilities = await self._add_adversary_packs(step['id'])
-                if not abilities:
-                    self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
+        phase_id = 0
+        while phase_id < len(phases):
+            for step in phases[phase_id]:
+                abilities = await self.locate('abilities', match=dict(ability_id=step))
+                if abilities:
+                    await self._add_phase_abilities(pp, phase_id+1, abilities)
                 else:
-                    is_pack = True
-
-            await self._add_phase_abilities(pp, step['phase'], abilities, is_pack)
+                    await self._insert_pack_phases(step, phases, phase_id+1, adversary)
+            phase_id += 1
 
         return dict(pp)
 
     async def _load_adversaries(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
-                phases = [dict(phase=k, id=i) for k, v in adv.get('phases', dict()).items() for i in v]
-                ps = []
+                phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
                     adv_pack = await self._add_adversary_packs(p)
                     if adv_pack:
-                        ps.append(adv_pack)
-                for pack in ps:
-                    phases += pack
+                        await self._merge_phases(phases, adv_pack)
                 if adv.get('visible', True):
-                    phases = await self._add_phases(phases, adv)
+                    sorted_phases = [phases[x] for x in sorted(phases.keys())]
+                    phases = await self._add_phases(sorted_phases, adv)
                     await self.store(
                         Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                   phases=phases)
@@ -224,12 +221,19 @@ class DataService(BaseService):
                             stopping_conditions=planner.get('stopping_conditions'))
                 )
 
+    async def _merge_phases(self, phases, new_phases):
+        for phase, ids in new_phases.items():
+            if phase in phases:
+                phases[phase].extend(ids)
+            else:
+                phases[phase] = ids
+
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location=os.path.join('data', 'adversaries'))
         if filename is None:
-            return []
+            return {}
         for adv in self.strip_yml(filename):
-            return [dict(phase=k, id=i) for k, v in adv.get('phases').items() for i in v]
+            return adv.get('phases')
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
