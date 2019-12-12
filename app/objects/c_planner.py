@@ -32,6 +32,5 @@ class Planner(BaseObject):
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:
-            return [Fact(trait, value) for sc in conditions for trait, value in
-                    sc.items()]
+            return [Fact(trait, value) for sc in conditions for trait, value in sc.items()]
         return []
