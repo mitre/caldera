@@ -221,7 +221,8 @@ class DataService(BaseService):
             for planner in self.strip_yml(filename):
                 await self.store(
                     Planner(name=planner.get('name'), module=planner.get('module'),
-                            params=json.dumps(planner.get('params')), description=planner.get('description'))
+                            params=json.dumps(planner.get('params')), description=planner.get('description'),
+                            stopping_conditions=planner.get('stopping_conditions'))
                 )
 
     async def _add_adversary_packs(self, pack):

@@ -92,6 +92,8 @@ class AppService(BaseService):
             for phase in operation.adversary.phases:
                 await self._update_operation(operation)
                 await planner.execute(phase)
+                if planner.stopping_condition_met:
+                    break
                 await operation.wait_for_phase_completion()
                 operation.phase = phase
             await self._cleanup_operation(operation)
@@ -133,7 +135,8 @@ class AppService(BaseService):
         planning_module = import_module(operation.planner.module)
         planner_params = ast.literal_eval(operation.planner.params)
         return getattr(planning_module, 'LogicalPlanner')(operation,
-                                                          self.get_service('planning_svc'), **planner_params)
+                                                          self.get_service('planning_svc'), **planner_params,
+                                                          stopping_conditions=operation.planner.stopping_conditions)
 
     async def _cleanup_operation(self, operation):
         for member in operation.agents:
