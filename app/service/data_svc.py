@@ -120,14 +120,6 @@ class DataService(BaseService):
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
 
-    async def print_statistics(self):
-        """
-        Print out the statistics for all objects in the store
-        :return:
-        """
-        for key in self.ram.keys():
-            self.log.debug('%s loaded: %s' % (key, len(self.ram[key])))
-
     """ PRIVATE """
 
     async def _add_phase_abilities(self, phase_dict, phase, phase_entries, is_pack=False):
