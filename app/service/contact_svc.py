@@ -12,13 +12,13 @@ class ContactService(BaseService):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
 
-    async def register(self, contact, active=False):
+    async def register(self, contact, mode, enabled=False):
         try:
-            if contact.valid_config():
-                await self._start_c2_channel(contact=contact, active=active)
+            if contact.valid_config() and enabled:
+                await self._start_c2_channel(contact=contact, mode=mode)
                 self.log.debug('Started %s command and control channel' % contact.name)
             else:
-                self.log.debug('Invalid configuration for %s command and control channel' % contact.name)
+                self.log.debug('%s command and control channel not started' % contact.name)
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
@@ -98,8 +98,8 @@ class ContactService(BaseService):
 
     """ PRIVATE """
 
-    async def _start_c2_channel(self, contact, active):
-        if active:
+    async def _start_c2_channel(self, contact, mode):
+        if mode.lower() == 'active':
             loop = asyncio.get_event_loop()
             loop.create_task(contact.start())
         else:
