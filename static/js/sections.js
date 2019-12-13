@@ -636,6 +636,8 @@ function downloadOperationReport() {
 }
 
 function changeProgress(percent) {
+    if(percent > 100)
+        percent = 100;
     let elem = document.getElementById("myBar");
     elem.style.width = percent + "%";
     elem.innerHTML = percent + "%";
