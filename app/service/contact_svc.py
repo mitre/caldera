@@ -12,9 +12,13 @@ class ContactService(BaseService):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
 
-    async def register(self, contact):
+    async def register(self, contact, active=False):
         self.contacts.append(contact)
-        await contact.start()
+        if active and contact.valid_config():
+            loop = asyncio.get_event_loop()
+            loop.create_task(contact.start())
+        else:
+            await contact.start()
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
                                pid, ppid, sleep, privilege, c2, exe_name):
