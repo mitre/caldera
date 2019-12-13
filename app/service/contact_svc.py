@@ -13,12 +13,14 @@ class ContactService(BaseService):
         self.contacts = []
 
     async def register(self, contact, active=False):
-        self.contacts.append(contact)
-        if active and contact.valid_config():
-            loop = asyncio.get_event_loop()
-            loop.create_task(contact.start())
-        else:
-            await contact.start()
+        try:
+            if contact.valid_config():
+                await self._start_c2_channel(contact=contact, active=active)
+                self.log.debug('Started %s command and control channel' % contact.name)
+            else:
+                self.log.debug('Invalid configuration for %s command and control channel' % contact.name)
+        except Exception as e:
+            self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
                                pid, ppid, sleep, privilege, c2, exe_name):
@@ -93,3 +95,13 @@ class ContactService(BaseService):
                     return json.dumps(dict(status=True))
         except Exception:
             pass
+
+    """ PRIVATE """
+
+    async def _start_c2_channel(self, contact, active):
+        if active:
+            loop = asyncio.get_event_loop()
+            loop.create_task(contact.start())
+        else:
+            await contact.start()
+        self.contacts.append(contact)
