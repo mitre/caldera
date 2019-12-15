@@ -8,3 +8,4 @@ cryptography
 aioconsole==0.1.14
 termcolor==1.1.0
 pyfiglet==0.8.post1
+websockets
