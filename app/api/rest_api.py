@@ -13,6 +13,7 @@ class RestApi:
         self.reporting_svc = services.get('reporting_svc')
         self.auth_svc = services.get('auth_svc')
         self.plugin_svc = services.get('plugin_svc')
+        self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
 
@@ -55,9 +56,10 @@ class RestApi:
             planners = [p.display for p in await self.data_svc.locate('planners')]
             obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
+            contacts = [c.display for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators)
+                        plugins=plugins, obfuscators=obfuscators, contacts=contacts)
         except Exception as e:
             logging.error('[!] landing: %s' % e)
 
