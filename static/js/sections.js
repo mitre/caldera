@@ -815,6 +815,17 @@ function loadPlannerCallback(data) {
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
 }
 
+function showC2(contacts) {
+    let c2Name = $('#C2-select option:selected').attr('value');
+    contacts.forEach(function(c) {
+        if(c.name == c2Name) {
+            $('#c2-name').text(c.name);
+            $('#c2-description').text(c.description);
+            return;
+        }
+    });
+}
+
 function addPlatforms(abilities) {
     let ab = [];
     abilities.forEach(function(a) {

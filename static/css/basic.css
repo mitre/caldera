@@ -537,6 +537,9 @@ table.dataTable input[type=text] {
     padding-left: 15px;
     padding-right: 15px;
 }
-.planners #planner-description {
+#planner-description {
+    font-size: 15px;
+}
+#c2-description {
     font-size: 15px;
 }

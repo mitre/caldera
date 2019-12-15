@@ -9,9 +9,15 @@ from datetime import datetime
 
 class C2Active(ABC):
 
+    @property
+    def display(self):
+        return dict(name=self.name, description=self.description)
+
     @abc.abstractmethod
-    def __init__(self, name, services):
-        self.name = name
+    def __init__(self, config, services):
+        self.name = config['name']
+        self.description = config['description']
+        self.enabled = config['enabled']
         self.file_svc = services.get('file_svc')
         self.contact_svc = services.get('contact_svc')
 

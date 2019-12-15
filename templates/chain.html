@@ -33,6 +33,7 @@
     <div class="subnav-content subnav-content-right">
         <a onclick="viewSection('sources')">sources</a>
         <a onclick="viewSection('planners')">planners</a>
+        <a onclick="viewSection('c2')">c2</a>
     </div>
   </div>
   <div class="subnav-right">
@@ -329,6 +330,34 @@
             <div id="planner-info" class="column planner-header" style="flex:75%;text-align: left">
               <h3 id="planner-title"></h3>
               <p id="planner-description"></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="c2" class="section-profile" style="display: none">
+          <div class="advanced row">
+            <div class="column section-border" style="flex:25%">
+              <img src="/gui/img/group.png">
+              <h4>C2</h4>
+              <p class="section-description">
+                  A C2 is a command-and-control mechanism for agent-to-server communication. There are various
+                  types of communication protocols that can be used - and within this system - you can flexibly
+                  create and select how you want your agents to call back.
+              </p>
+              <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
+              <br>
+              <div id="viewC2">
+                  <select id="C2-select" onchange="showC2( {{ contacts }} )" style="margin-top:-15px">
+                    <option value="" disabled selected>Select an existing C2</option>
+                    {% for c in contacts %}
+                      <option value="{{ c.name }}">{{ c.name }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+            </div>
+            <div class="column planner-header" style="flex:75%;text-align: left">
+              <h3 id="c2-name"></h3>
+              <p id="c2-description"></p>
             </div>
           </div>
         </div>
