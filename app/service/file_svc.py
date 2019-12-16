@@ -133,8 +133,7 @@ class FileSvc(BaseService):
         return None
 
     async def _create_exfil_sub_directory(self, headers):
-        dir_name = '{}.{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())),
-                                  datetime.datetime.now().strftime('%Y.%h.%d.%H.%M'))
+        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
             os.makedirs(path)
