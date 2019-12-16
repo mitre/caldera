@@ -84,6 +84,8 @@ Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> o
 
 Next, navigate to the plugins -> terminal GUI page. From here, check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
 
+Can you figure out how to deploy the reverse-shell without using 54ndc47? 
+
 ## Developers
 
 We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge 
