@@ -133,7 +133,7 @@ class DataService(BaseService):
                 phases.insert(current_phase + i, phase)
             return current_phase + i
         else:
-            self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
+            self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (pack, adversary['name'], adversary['id']))
             return 0
 
     async def _add_phases(self, phases, adversary):
