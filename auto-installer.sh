@@ -1,0 +1,98 @@
+#!/bin/bash
+
+function usage()
+{
+cat << EOF
+usage: $0 options
+
+This script will install all of the Caldera server requirements
+
+OPTIONS:
+	-h 	      	  Show help
+	--ubuntu      Install on a debian/ubuntu system
+	--centos      Install on a centos/redhat system
+	--darwin      Install on a darwin/mac system
+
+EOF
+}
+
+
+function install_wrapper() {
+    echo "[-] Checking for $1"
+    which -s $2
+    if [[ $? != 0 ]]; then
+        echo "[-] Installing $1"
+        eval $3
+        echo "[+] $1 installed"
+    else
+        echo "[+] $1 already installed"
+    fi
+}
+
+function all_install_go_dependencies() {
+    echo "[-] Installing on GO dependencies"
+    go get "github.com/google/go-github/github"
+    go get "golang.org/x/oauth2"
+    echo "[+] GO dependencies installed"
+}
+
+function all_install_python_requirements() {
+    pip3 install virtualenv
+    python3 -m venv calderaenv
+    sleep 3
+    source calderaenv/bin/activate
+    pip install -r ./requirements.txt
+}
+
+function darwin_install_homebrew() {
+    install_wrapper "Homebrew" brew "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
+}
+
+function darwin_install_go() {
+    install_wrapper "GO" go "brew install go"
+}
+
+function darwin_install_mingw() {
+    install_wrapper "MinGW" x86_64-w64-mingw32-gcc "brew install mingw-w64"
+}
+
+function darwin_install_python() {
+    install_wrapper "Python" python3 "brew install python"
+}
+
+function display_welcome_msg() {
+cat << EOF
+[+] Caldera environment built
+[+] Start the server by copy pasting these commands into the terminal
+
+    source calderaenv/bin/activate
+    python server.py
+
+EOF
+}
+
+function darwin() {
+    echo "[-] Installing on OS X..."
+    darwin_install_homebrew
+    darwin_install_go
+    darwin_install_mingw
+    darwin_install_python
+    all_install_go_dependencies
+    all_install_python_requirements
+    display_welcome_msg
+}
+
+
+if [[ "$1" != "" ]]; then
+    case $1 in
+        -d | --darwin )     darwin
+                            ;;
+        -h | --help )       usage
+                            exit
+                            ;;
+        * )                 usage
+                            exit 1
+    esac
+fi
+
+
