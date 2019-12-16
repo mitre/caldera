@@ -809,10 +809,27 @@ function loadPlannerCallback(data) {
     // remove old text before displaying new text
     $('#planner-title').empty();
     $('#planner-description').empty();
+    $('#planner-stop-conditions').empty();
 
     // fill text from API callback
     $('#planner-title').text(data[0]['name']);
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
+    sc_traits = Array.from(data[0]['stopping_conditions'], x => x['trait'])
+    sc_values = Array.from(data[0]['stopping_conditions'], x => x['value'])
+    sc_table = $('#StopConditionTbl').DataTable({searching: false, paging: false, info: false})
+    $('#stop-conditions').text("Stopping Conditions");
+    sc =  data[0]['stopping_conditions']
+    sc.forEach(element => addStopConditionRow([element['trait'], element['value'],
+        '<p onclick="removeStopConditionRow($(this))">&#x274C;</p>']))
+
+}
+
+function addStopConditionRow(r){
+    $('#StopConditionTbl').DataTable().row.add(r).draw();
+}
+
+function removeStopConditionRow(r){
+    $('#StopConditionTbl').DataTable().row($(r).parents('tr')).remove().draw();
 }
 
 function showC2(contacts) {

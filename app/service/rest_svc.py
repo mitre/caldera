@@ -40,6 +40,27 @@ class RestService(BaseService):
             await self.get_service('data_svc').load_data(d)
         return await self._poll_for_data('adversaries', dict(adversary_id=i))
 
+    async def persist_planner(self, data):
+        """
+        Save a new planner from either the GUI or REST API. This writes a new YML file into the core data/ directory.
+        :param data:
+        :return: the ID of the created adversary
+        """
+        i = data.pop('i')
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
+        if not file_path:
+            file_path = 'data/planners/%s.yml' % i
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            p = defaultdict(list)
+            for ability in data.pop('phases'):
+                p[int(ability['phase'])].append(ability['id'])
+            f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
+            f.truncate()
+        for d in self.get_service('data_svc').data_dirs:
+            await self.get_service('data_svc').load_data(d)
+        return await self._poll_for_data('planners', dict(adversary_id=i))
+
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
