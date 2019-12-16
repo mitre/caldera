@@ -38,8 +38,7 @@ function all_install_go_dependencies() {
 
 function all_install_python_requirements() {
     pip3 install virtualenv
-    python3 -m venv calderaenv
-    sleep 3
+    virtualenv calderaenv
     source calderaenv/bin/activate
     pip install -r ./requirements.txt
 }
@@ -70,6 +69,18 @@ function ubuntu_install_mingw() {
 
 function ubuntu_install_python() {
     install_wrapper "Python" python3 "apt-get install -y software-properties-common && add-apt-repository -y ppa:deadsnakes/ppa && apt-get update -y && apt-get install -y python3.7"
+}
+
+function centos_install_go() {
+    install_wrapper "GO" go "yum install -y epel-release && yum update -y && wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin && source ~/.bash_profile"
+}
+
+function centos_install_mingw() {
+    install_wrapper "MinGW" x86_64-w64-mingw32-gcc "yum install -y mingw64-gcc"
+}
+
+function centos_install_python() {
+    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/bin/python3.7 /usr/bin/python3"
 }
 
 function display_welcome_msg() {
@@ -107,7 +118,13 @@ function ubuntu() {
 
 function centos() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
-    echo "[X] CentOS (RedHat) installer coming soon" && exit 1
+    echo "[-] Installing on CentOS (RedHat)..."
+    centos_install_go
+    centos_install_mingw
+    centos_install_python
+    all_install_go_dependencies
+    all_install_python_requirements
+    display_welcome_msg
 }
 
 if [[ "$1" != "" ]]; then
