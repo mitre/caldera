@@ -71,8 +71,12 @@ function ubuntu_install_python() {
     install_wrapper "Python" python3 "apt-get install -y software-properties-common && add-apt-repository -y ppa:deadsnakes/ppa && apt-get update -y && apt-get install -y python3.7"
 }
 
+function centos_install_core_tools() {
+    install_wrapper "Core" wget "yum update -y && yum install -y epel-release && yum install -y wget"
+}
+
 function centos_install_go() {
-    install_wrapper "GO" go "yum install -y epel-release && yum update -y && wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin && source ~/.bash_profile"
+    install_wrapper "GO" go "yum update -y && wget --no-check-certificate https://dl.google.com/go/go1.13.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin && source ~/.bash_profile"
 }
 
 function centos_install_mingw() {
@@ -80,7 +84,7 @@ function centos_install_mingw() {
 }
 
 function centos_install_python() {
-    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/bin/python3.7 /usr/bin/python3"
+    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/bin/python3.8 /usr/bin/python3"
 }
 
 function display_welcome_msg() {
