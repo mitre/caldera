@@ -31,8 +31,8 @@ function install_wrapper() {
 
 function all_install_go_dependencies() {
     echo "[-] Installing on GO dependencies"
-    go get -v -insecure "github.com/google/go-github/github"
-    go get -v -insecure "golang.org/x/oauth2"
+    go get "github.com/google/go-github/github"
+    go get "golang.org/x/oauth2"
     echo "[+] GO dependencies installed"
 }
 
@@ -84,7 +84,7 @@ function centos_install_mingw() {
 }
 
 function centos_install_python() {
-    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3"
+    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv"
 }
 
 function display_welcome_msg() {
