@@ -78,7 +78,7 @@ Did the operation find the sensitive files? How many? Can you determine how it d
 
 > You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
 
-Inside the CALDERA, enable the terminal plugin by updating the conf/default.yml file. Restart the server and 
+Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file. Restart the server and 
 
 Similar to the above missions, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
