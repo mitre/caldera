@@ -23,6 +23,8 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 ## Installation
 
+> You can also install [CALDERA through Docker](https://github.com/mitre/caldera/wiki/Docker-deployment)
+
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
@@ -37,8 +39,6 @@ Then start the server.
 ```
 python server.py
 ```
-
-> You can also install [CALDERA through Docker](https://github.com/mitre/caldera/wiki/Docker-deployment)
 
 ## Quick start
 
