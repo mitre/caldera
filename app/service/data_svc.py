@@ -131,19 +131,26 @@ class DataService(BaseService):
         if phases_new:
             for i, phase in phases_new.items():
                 phases.insert(current_phase + i, phase)
+            return current_phase + i
         else:
             self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (step['id'], adversary['name'], adversary['id']))
+            return 0
 
     async def _add_phases(self, phases, adversary):
         pp = defaultdict(list)
         phase_id = 0
         while phase_id < len(phases):
-            for step in phases[phase_id]:
+            for idx, step in enumerate(phases[phase_id]):
                 abilities = await self.locate('abilities', match=dict(ability_id=step))
                 if abilities:
                     await self._add_phase_abilities(pp, phase_id+1, abilities)
                 else:
-                    await self._insert_pack_phases(step, phases, phase_id+1, adversary)
+                    # insert this phase and shift down later abilities to new phase
+                    del phases[phase_id][idx]
+                    last_phase = await self._insert_pack_phases(step, phases, phase_id, adversary)
+                    if last_phase and idx < len(phases[phase_id]):
+                        phases.insert(last_phase + 1, [phases[phase_id][idx]])
+                        del phases[phase_id][idx+1:]
             phase_id += 1
 
         return dict(pp)
