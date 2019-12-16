@@ -19,7 +19,7 @@ EOF
 
 function install_wrapper() {
     echo "[-] Checking for $1"
-    which -s $2
+    which $2
     if [[ $? != 0 ]]; then
         echo "[-] Installing $1"
         eval $3
@@ -60,6 +60,18 @@ function darwin_install_python() {
     install_wrapper "Python" python3 "brew install python"
 }
 
+function ubuntu_install_go() {
+    install_wrapper "GO" go "add-apt-repository -y ppa:longsleep/golang-backports && apt-get update -y && apt-get install -y golang-go"
+}
+
+function ubuntu_install_mingw() {
+    install_wrapper "MinGW" x86_64-w64-mingw32-gcc "apt-get install -y mingw-w64"
+}
+
+function ubuntu_install_python() {
+    install_wrapper "Python" python3 "apt-get install -y software-properties-common && add-apt-repository -y ppa:deadsnakes/ppa && apt-get update -y && apt-get install -y python3.7"
+}
+
 function display_welcome_msg() {
 cat << EOF
 [+] Caldera environment built
@@ -82,10 +94,29 @@ function darwin() {
     display_welcome_msg
 }
 
+function ubuntu() {
+    [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
+    echo "[-] Installing on Ubuntu (Debian)..."
+    ubuntu_install_go
+    ubuntu_install_mingw
+    ubuntu_install_python
+    all_install_go_dependencies
+    all_install_python_requirements
+    display_welcome_msg
+}
+
+function centos() {
+    [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
+    echo "[X] CentOS (RedHat) installer coming soon" && exit 1
+}
 
 if [[ "$1" != "" ]]; then
     case $1 in
         -d | --darwin )     darwin
+                            ;;
+        -u | --ubuntu )     ubuntu
+                            ;;
+        -c | --centos )     centos
                             ;;
         -h | --help )       usage
                             exit
