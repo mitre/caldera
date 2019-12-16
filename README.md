@@ -39,24 +39,12 @@ Then start the server.
 python server.py
 ```
 
+> You can also install CALDERA through Docker
 
 ## Quick start
 
 To understand CALDERA, it helps to run an operation. Below are pre-built missions you can execute to understand 
 the system. The missions assume CALDERA is running locally.
-
-## Docker Quick Start
-If you wish to run CALDERA from a Docker container, execute the commands below.
-
-1. Build a container from the latest changes.
-```
-docker build . -t caldera:server
-```
-
-2. Run the docker caldera server
-```
-docker run -p 8888:8888 caldera:server
-```
 
 ### Mission #1: Nosy Neighbor
 
