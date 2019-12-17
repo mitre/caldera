@@ -49,10 +49,10 @@ class RestService(BaseService):
         :return: the ID of the created adversary
         """
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
-        id = planner.id
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % id, location='data')
+        planner_id = planner.planner_id
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % planner_id, location='data')
         if not file_path:
-            file_path = 'data/planners/%s.yml' % id
+            file_path = 'data/planners/%s.yml' % planner_id
         with open(file_path, 'r') as f:
             planner_obj = yaml.load(f.read(), Loader=yaml.FullLoader)
         sc = data.get('stopping_conditions')
@@ -63,9 +63,7 @@ class RestService(BaseService):
             f.write(yaml.dump(planner_obj))
         planner.stopping_conditions = [Fact(trait=f.get('trait'), value=f.get('value'))
                                        for f in data['stopping_conditions']]
-        await self.get_service('data_svc').remove('planners', dict(name=data['name']))
         await self.get_service('data_svc').store(planner)
-        return
 
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')

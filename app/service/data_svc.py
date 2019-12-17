@@ -219,7 +219,7 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for planner in self.strip_yml(filename):
                 await self.store(
-                    Planner(id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
+                    Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
                             params=json.dumps(planner.get('params')), description=planner.get('description'),
                             stopping_conditions=planner.get('stopping_conditions'))
                 )

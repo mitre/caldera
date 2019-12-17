@@ -13,9 +13,9 @@ class Planner(BaseObject):
         return dict(name=self.name, module=self.module, params=self.params, description=self.description,
                     stopping_conditions=[fact.display for fact in self.stopping_conditions])
 
-    def __init__(self, id, name, module, params, stopping_conditions=None, description=None):
+    def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None):
         super().__init__()
-        self.id = id
+        self.planner_id = planner_id
         self.name = name
         self.module = module
         self.params = params
@@ -27,6 +27,12 @@ class Planner(BaseObject):
         if not existing:
             ram['planners'].append(self)
             return self.retrieve(ram['planners'], self.unique)
+        else:
+            existing.update('stopping_conditions', self.stopping_conditions)
+            existing.update('module', self.module)
+            existing.update('description', self.description)
+            existing.update('params', self.params)
+            existing.update('planner_id', self.planner_id)
         return existing
 
     """ PRIVATE """

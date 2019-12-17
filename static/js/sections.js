@@ -826,7 +826,6 @@ function loadPlannerCallback(data) {
     sc =  data[0]['stopping_conditions']
     sc.forEach(element => addStopConditionRow([element['trait'], element['value'],
         '<p onclick="removeStopConditionRow($(this))">&#x274C;</p>']))
-
 }
 
 function addStopConditionRow(r){
@@ -845,7 +844,6 @@ function savePlanner(){
     data['index'] = 'planner';
     data['name'] = $('#planner-select').val()
     data['stopping_conditions'] = [];
-
     let table = $('#StopConditionTbl').DataTable();
     table.rows().invalidate('dom').draw();
     let rows = table.rows().data();
@@ -856,7 +854,7 @@ function savePlanner(){
 }
 
 function savePlannerCallback(data) {
-    return
+    location.reload();
 }
 
 function showC2(contacts) {
