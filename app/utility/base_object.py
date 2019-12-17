@@ -3,6 +3,9 @@ from app.utility.base_world import BaseWorld
 
 class BaseObject(BaseWorld):
 
+    RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
+                    exe_name='#{exe_name}')
+
     def match(self, criteria):
         if not criteria:
             return self
