@@ -145,6 +145,8 @@ if [[ "$1" != "" ]]; then
         * )                 usage
                             exit 1
     esac
+else
+  usage
 fi
 
 
