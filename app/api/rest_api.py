@@ -97,6 +97,7 @@ class RestApi:
                     adversary=lambda d: self.rest_svc.persist_adversary(d),
                     ability=lambda d: self.rest_svc.persist_ability(d),
                     source=lambda d: self.rest_svc.persist_source(d),
+                    planner=lambda d: self.rest_svc.update_planner(d),
                     agent=lambda d: self.rest_svc.update_agent_data(d),
                     chain=lambda d: self.rest_svc.update_chain_data(d),
                     operation=lambda d: self.rest_svc.create_operation(d),

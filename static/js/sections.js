@@ -801,6 +801,12 @@ function loadAdversaryCallback(data) {
     });
 }
 
+$('#StopConditionTbl').DataTable({columnDefs: [{
+            targets: '_all',
+            createdCell: createdCell
+        }],
+        searching: false, paging: false, info: false})
+
 function loadPlanner() {
     restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
 }
@@ -816,7 +822,6 @@ function loadPlannerCallback(data) {
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
     sc_traits = Array.from(data[0]['stopping_conditions'], x => x['trait'])
     sc_values = Array.from(data[0]['stopping_conditions'], x => x['value'])
-    sc_table = $('#StopConditionTbl').DataTable({searching: false, paging: false, info: false})
     $('#stop-conditions').text("Stopping Conditions");
     sc =  data[0]['stopping_conditions']
     sc.forEach(element => addStopConditionRow([element['trait'], element['value'],
@@ -830,6 +835,28 @@ function addStopConditionRow(r){
 
 function removeStopConditionRow(r){
     $('#StopConditionTbl').DataTable().row($(r).parents('tr')).remove().draw();
+}
+
+function savePlanner(){
+    let planner = $('#planner-title');
+    let id = planner.data('id');
+    if(!planner){ alert('Please select a planner!'); return; }
+    let data = {};
+    data['index'] = 'planner';
+    data['name'] = $('#planner-select').val()
+    data['stopping_conditions'] = [];
+
+    let table = $('#StopConditionTbl').DataTable();
+    table.rows().invalidate('dom').draw();
+    let rows = table.rows().data();
+    rows.each(function (value, index) {
+        data['stopping_conditions'].push({'trait': value[0], 'value': value[1]});
+    });
+    restRequest('PUT', data, savePlannerCallback);
+}
+
+function savePlannerCallback(data) {
+    return
 }
 
 function showC2(contacts) {

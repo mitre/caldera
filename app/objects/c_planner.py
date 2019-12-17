@@ -13,8 +13,9 @@ class Planner(BaseObject):
         return dict(name=self.name, module=self.module, params=self.params, description=self.description,
                     stopping_conditions=[fact.display for fact in self.stopping_conditions])
 
-    def __init__(self, name, module, params, stopping_conditions=None, description=None):
+    def __init__(self, id, name, module, params, stopping_conditions=None, description=None):
         super().__init__()
+        self.id = id
         self.name = name
         self.module = module
         self.params = params

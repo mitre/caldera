@@ -9,6 +9,7 @@ import yaml
 
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
+from app.objects.c_fact import Fact
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService
 
@@ -40,26 +41,31 @@ class RestService(BaseService):
             await self.get_service('data_svc').load_data(d)
         return await self._poll_for_data('adversaries', dict(adversary_id=i))
 
-    async def persist_planner(self, data):
+    async def update_planner(self, data):
         """
-        Save a new planner from either the GUI or REST API. This writes a new YML file into the core data/ directory.
+        Update a new planner from either the GUI or REST API with new stopping conditions.
+        This overwrites the existing YML file.
         :param data:
         :return: the ID of the created adversary
         """
-        i = data.pop('i')
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
+        planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
+        id = planner.id
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % id, location='data')
         if not file_path:
-            file_path = 'data/planners/%s.yml' % i
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            p = defaultdict(list)
-            for ability in data.pop('phases'):
-                p[int(ability['phase'])].append(ability['id'])
-            f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
-            f.truncate()
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('planners', dict(adversary_id=i))
+            file_path = 'data/planners/%s.yml' % id
+        with open(file_path, 'r') as f:
+            planner_obj = yaml.load(f.read(), Loader=yaml.FullLoader)
+        sc = data.get('stopping_conditions')
+        if sc:
+            sc = [{s.get('trait'): s.get('value')} for s in sc]
+        planner_obj['stopping_conditions'] = sc
+        with open(file_path, 'w') as f:
+            f.write(yaml.dump(planner_obj))
+        planner.stopping_conditions = [Fact(trait=f.get('trait'), value=f.get('value'))
+                                       for f in data['stopping_conditions']]
+        await self.get_service('data_svc').remove('planners', dict(name=data['name']))
+        await self.get_service('data_svc').store(planner)
+        return
 
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
