@@ -25,11 +25,10 @@ Start by cloning this repository recursively, passing the desired version/releas
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next, run the [auto-installer.sh script](https://github.com/mitre/caldera/wiki/Auto-install-script) to automatically configure CALDERA in our recommended way. Alternatively, you can install the basic requirements by simply running:
+Next, run the [auto-installer.sh](https://github.com/mitre/caldera/wiki/Auto-install-script) script to automatically configure CALDERA in our recommended way. Alternatively, you can install the basic requirements by simply running:
 ```
 pip install -r requirements.txt
 ```
-> You can also install [CALDERA through Docker](https://github.com/mitre/caldera/wiki/Docker-deployment)
 
 Finally, start the server:
 ```
