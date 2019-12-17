@@ -23,8 +23,7 @@ class Link(BaseObject):
 
     @property
     def states(self):
-        return dict(PARSED=-5,
-                    UNTRUSTED=-4,
+        return dict(UNTRUSTED=-4,
                     EXECUTE=-3,
                     DISCARD=-2,
                     PAUSE=-1)
@@ -64,7 +63,6 @@ class Link(BaseObject):
                 relationships = await self._parse_link_result(self.output, parser)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
-                self.status = self.states['PARSED']
         except Exception as e:
             print(e)
 
