@@ -298,6 +298,12 @@
     left: 0;
     padding: 10px;
 }
+.bottomleft {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    padding: 10px;
+}
 .removal {
     padding: 1px;
     border-radius: 5px;

@@ -303,9 +303,9 @@ select {
 }
 .duk-icon img {
     height: 22px;
-    background-color: inherit;
-    border-radius: 0;
-    border: none;
+    background-color: white;
+    border-radius: 50%;
+    border: black 1px solid;
 }
 .duk-modal {
     background-color: black;
