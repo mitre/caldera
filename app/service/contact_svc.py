@@ -67,6 +67,7 @@ class ContactService(BaseService):
                                                 sleep=link.jitter,
                                                 command=link.command,
                                                 executor=link.ability.executor,
+                                                timeout=link.ability.timeout,
                                                 payload=payload)))
         return json.dumps(instructions)
 
