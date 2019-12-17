@@ -39,7 +39,7 @@ class BasePlanningService(BaseService):
         """
         group = agent.group
         for link in links:
-            decoded_test = self.decode(link.command, agent, group)
+            decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 agent_facts = await self._get_agent_facts(operation, agent.paw)

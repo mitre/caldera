@@ -54,7 +54,7 @@ class BaseWorld:
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
         decoded_cmd = decoded_cmd.replace(reserved_words['server'], agent.server)
         decoded_cmd = decoded_cmd.replace(reserved_words['group'], group)
-        decoded_cmd = decoded_cmd.replace(reserved_words['paw'], agent.paw)
+        decoded_cmd = decoded_cmd.replace(reserved_words['agent_paw'], agent.paw)
         decoded_cmd = decoded_cmd.replace(reserved_words['location'], agent.location)
         decoded_cmd = decoded_cmd.replace(reserved_words['exe_name'], agent.exe_name)
         return decoded_cmd
