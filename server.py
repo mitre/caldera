@@ -3,6 +3,7 @@ import asyncio
 import logging
 import pathlib
 import sys
+import os
 
 import yaml
 from aiohttp import web
@@ -69,6 +70,7 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
+    os.environ["GOPATH"] = os.path.join(os.environ["HOME"], 'go')
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         set_logging_state()
