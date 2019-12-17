@@ -68,11 +68,6 @@ class Link(BaseObject):
         except Exception as e:
             print(e)
 
-    def is_finished(self):
-        if self.status == self.states['PARSED'] or self.status == 0:
-            return True
-        return False
-
     """ PRIVATE """
 
     async def _parse_link_result(self, result, parser):
