@@ -184,7 +184,6 @@
    color: var(--font-color);
    display: block;
    float: left;
-   width:30%;
    margin: 2px;
 }
 .ability-box {
