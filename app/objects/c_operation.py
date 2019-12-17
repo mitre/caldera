@@ -190,7 +190,8 @@ class Operation(BaseObject):
                                           for ab in self.adversary.phases[p]]} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group), flags=re.DOTALL)
+        variables = re.findall(r'#{(.*?)}', self.decode(ability.test, agent, agent.group, self.RESERVED),
+                               flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
         elif not agent.trusted:

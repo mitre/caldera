@@ -10,9 +10,6 @@ CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CKâ„
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki).
 
-## Pardon our dust!
-CALDERA is an actively developed project, and many features are subject to change. In April 2019 we released a new version of CALDERA that made much of our old documentation obsolete, leading to some confusion over CALDERA's current capabilities. For more information on this change, please read our [CALDERA 2.0](https://github.com/mitre/caldera/wiki/CALDERA-2.0) page on the wiki.
-
 ## Requirements
 
 * Python 3.5.3+
@@ -27,36 +24,21 @@ Start by cloning this repository recursively, passing the desired version/releas
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
-> Here are our [stable releases](https://github.com/mitre/caldera/releases). 
 
-From the root of this project, install the PIP requirements.
+Next, run the [auto-installer.sh](https://github.com/mitre/caldera/wiki/Auto-install-script) script to automatically configure CALDERA in our recommended way. Alternatively, you can install the basic requirements by simply running:
 ```
 pip install -r requirements.txt
 ```
 
-Then start the server.
+Finally, start the server:
 ```
 python server.py
 ```
-
 
 ## Quick start
 
 To understand CALDERA, it helps to run an operation. Below are pre-built missions you can execute to understand 
 the system. The missions assume CALDERA is running locally.
-
-## Docker Quick Start
-If you wish to run CALDERA from a Docker container, execute the commands below.
-
-1. Build a container from the latest changes.
-```
-docker build . -t caldera:server
-```
-
-2. Run the docker caldera server
-```
-docker run -p 8888:8888 caldera:server
-```
 
 ### Mission #1: Nosy Neighbor
 
@@ -86,6 +68,18 @@ Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CA
 Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the hunter adversary and the group my_group.
 
 Did the operation find the sensitive files? How many? Can you determine how it determines which files are sensitive? Hint- you may want to read about [facts](https://github.com/mitre/caldera/wiki/What-is-a-fact).
+
+### Mission #3: Terminal
+
+> You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
+
+Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file. Restart the server and - similar to the above missions - start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
+
+Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the terminal adversary and the group my_group. Then, inside the optional choices, select the terminal fact source. Run the operation and wait for it to complete. 
+
+Next, navigate to the plugins -> terminal GUI page. From here, check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
+
+Can you figure out how to deploy the reverse-shell without using 54ndc47? 
 
 ## Developers
 
