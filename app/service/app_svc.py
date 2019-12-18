@@ -89,10 +89,9 @@ class AppService(BaseService):
             self.log.debug('Starting operation: %s' % operation.name)
             planner = await self._get_planning_module(operation)
             operation.adversary = await self._adjust_adversary_phases(operation)
-            potential_abilities = await self._build_potential_abilities(operation)
 
             for phase in operation.adversary.phases:
-                await self._update_operation(operation, potential_abilities)
+                await self._update_operation(operation)
                 await planner.execute(phase)
                 if planner.stopping_condition_met:
                     break
@@ -169,23 +168,8 @@ class AppService(BaseService):
         )
         await self.get_service('rest_svc').persist_source(data)
 
-    async def _update_operation(self, operation, abilities):
+    async def _update_operation(self, operation):
         updated_agents = await self.get_service('data_svc').locate(
             'agents', match=dict(group=operation.agents[0].group)
         )
         operation.agents = updated_agents
-        operation.potential_links = await self._build_potential_links(operation, abilities)
-
-    async def _build_potential_abilities(self, operation):
-        potential_abilities = set()
-        for a in await self.get_service('data_svc').locate('abilities'):
-            if not operation.adversary.has_ability(a):
-                potential_abilities.add(a)
-        return potential_abilities
-
-    async def _build_potential_links(self, operation, abilities):
-        potential_links = set()
-        for a in operation.agents:
-            for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
-                potential_links.add(pl)
-        return potential_links

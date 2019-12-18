@@ -79,7 +79,7 @@ class Operation(BaseObject):
         self.phases_enabled = phases_enabled
         self.phase = 0
         self.obfuscator = obfuscator
-        self.chain, self.rules, self.potential_links = [], [], []
+        self.chain, self.rules = [], []
         if source:
             self.rules = source.rules
 
@@ -120,7 +120,6 @@ class Operation(BaseObject):
     async def close(self):
         self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
-        self.potential_links = []
 
     async def wait_for_phase_completion(self):
         for member in self.agents:
