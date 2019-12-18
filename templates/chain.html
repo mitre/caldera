@@ -218,6 +218,46 @@
 
         <!-- templates -->
 
+        <li id="link-template" class="event" data-date="" style="display: none">
+          <div class="member-infos">
+            <h1 id="time-tactic" class="member-title"></h1>
+            <div id="inner-contents">
+              <div id="decision-card" class="decision-card">
+                <table style="border-spacing:15px;">
+                  <tr>
+                    <td>Description:</td>
+                    <td><p id="link-description" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Technique:</td>
+                    <td><div class="tooltip" id="link-technique"></div></td>
+                  </tr>
+                  <tr>
+                    <td>Collected:</td>
+                    <td><p id="link-collect" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Finished:</td>
+                    <td><p id="link-finish" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Command:</td>
+                    <td><p id="time-action" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Executor:</td>
+                    <td><p id="time-executor" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Paw</td>
+                    <td><p id="paw-id" class="member-result"></p></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </li>
+
         <div id="phase-template" style="display: none;">
             <center>
                 <ul id="profile-tests" class="profile-tests"></ul>
@@ -247,7 +287,7 @@
         </li>
 
         <li id="ability-template" class="ability-box" style="display: none">
-            <h4 id="name"></h4>
+            <h4 id="name" style="margin:5px"></h4>
             <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
             <center>
                 <p class="topright" id="ability-rm"></p>
@@ -524,47 +564,7 @@
                 <ul id="timeline" class="timeline">
                   <li id="time-start">
                 </ul>
-                <li id="link-template" class="event" data-date="" style="display: none">
-                  <div class="member-infos">
-                    <h1 id="time-tactic" class="member-title"></h1>
-                    <div id="inner-contents">
-                      <div id="decision-card" class="decision-card">
-                        <table style="border-spacing:15px;">
-                          <tr>
-                            <td>Description:</td>
-                            <td><p id="link-description" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Technique:</td>
-                            <td><div class="tooltip" id="link-technique"></div></td>
-                          </tr>
-                          <tr>
-                            <td>Collected:</td>
-                            <td><p id="link-collect" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Finished:</td>
-                            <td><p id="link-finish" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Command:</td>
-                            <td><p id="time-action" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Executor:</td>
-                            <td><p id="time-executor" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Paw</td>
-                            <td><p id="paw-id" class="member-result"></p></td>
-                          </tr>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </li>
               </div>
-
             </div>
           </div>
         </div>

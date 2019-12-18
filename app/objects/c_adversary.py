@@ -12,8 +12,7 @@ class Adversary(BaseObject):
         phases = dict()
         for k, v in self.phases.items():
             phases[k] = [val.display for val in v]
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
-                    phases=phases)
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=phases)
 
     def __init__(self, adversary_id, name, description, phases):
         super().__init__()
@@ -31,3 +30,10 @@ class Adversary(BaseObject):
         existing.update('description', self.description)
         existing.update('phases', self.phases)
         return existing
+
+    def has_ability(self, ability):
+        for _, v in self.phases.items():
+            for a in v:
+                if ability.unique == a.unique:
+                    return True
+        return False

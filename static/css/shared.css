@@ -9,6 +9,8 @@
 }
 body {
     background-color: var(--primary-background);
+    background-image: url('/gui/img/christmas.png');
+    background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;
     transition: 0.7s opacity;
