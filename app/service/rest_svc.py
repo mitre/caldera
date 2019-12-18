@@ -10,6 +10,7 @@ import yaml
 
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
+from app.objects.c_fact import Fact
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService
 
@@ -40,6 +41,23 @@ class RestService(BaseService):
         for d in self.get_service('data_svc').data_dirs:
             await self.get_service('data_svc').load_data(d)
         return await self._poll_for_data('adversaries', dict(adversary_id=i))
+
+    async def update_planner(self, data):
+        """
+        Update a new planner from either the GUI or REST API with new stopping conditions.
+        This overwrites the existing YML file.
+        :param data:
+        :return: the ID of the created adversary
+        """
+        planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
+        planner_id = planner.planner_id
+        file_path = await self._get_file_path(planner_id)
+        planner_dict = await self._read_from_yaml(file_path)
+        planner_dict['stopping_conditions'] = self._get_stopping_conditions(data)
+        await self._write_to_yaml(file_path, planner_dict)
+        planner.stopping_conditions = [Fact(trait=f.get('trait'), value=f.get('value'))
+                                       for f in data['stopping_conditions']]
+        await self.get_service('data_svc').store(planner)
 
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -167,6 +185,28 @@ class RestService(BaseService):
             await asyncio.sleep(1)
             checks += 1
         return [c.display for c in coll]
+
+    @staticmethod
+    async def _read_from_yaml(file_path):
+        with open(file_path, 'r') as f:
+            return yaml.load(f.read(), Loader=yaml.FullLoader)
+
+    @staticmethod
+    async def _write_to_yaml(file_path, content):
+        with open(file_path, 'w') as f:
+            f.write(yaml.dump(content))
+
+    async def _get_file_path(self, planner_id):
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % planner_id, location='data')
+        if not file_path:
+            file_path = 'data/planners/%s.yml' % planner_id
+        return file_path
+
+    @staticmethod
+    def _get_stopping_conditions(data):
+        new_stopping_conditions = data.get('stopping_conditions')
+        if new_stopping_conditions:
+            return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
 
     async def _build_potential_abilities(self, operation):
         potential_abilities = set()

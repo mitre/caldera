@@ -849,6 +849,15 @@ function loadAdversaryCallback(data) {
     });
 }
 
+
+$('#StopConditionTbl').DataTable({columnDefs: [{
+            targets: '_all',
+            createdCell: createdCell
+        }],
+        searching: false, paging: false, info: false})
+ $('#StopConditionTbl').hide();
+
+
 function loadPlanner() {
     restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
 }
@@ -857,10 +866,48 @@ function loadPlannerCallback(data) {
     // remove old text before displaying new text
     $('#planner-title').empty();
     $('#planner-description').empty();
+    $('#planner-stop-conditions').empty();
 
     // fill text from API callback
+    $('#add_sc_button').show();
+    $('#StopConditionTbl').show();
     $('#planner-title').text(data[0]['name']);
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
+    sc_traits = Array.from(data[0]['stopping_conditions'], x => x['trait'])
+    sc_values = Array.from(data[0]['stopping_conditions'], x => x['value'])
+    $('#stop-conditions').text("Stopping Conditions");
+    sc =  data[0]['stopping_conditions']
+    sc.forEach(element => addStopConditionRow([element['trait'], element['value'],
+        '<p onclick="removeStopConditionRow($(this))">&#x274C;</p>']))
+}
+
+function addStopConditionRow(r){
+    $('#StopConditionTbl').DataTable().row.add(r).draw();
+}
+
+function removeStopConditionRow(r){
+    $('#StopConditionTbl').DataTable().row($(r).parents('tr')).remove().draw();
+}
+
+function savePlanner(){
+    let planner = $('#planner-title');
+    let id = planner.data('id');
+    if(!planner){ alert('Please select a planner!'); return; }
+    let data = {};
+    data['index'] = 'planner';
+    data['name'] = $('#planner-select').val()
+    data['stopping_conditions'] = [];
+    let table = $('#StopConditionTbl').DataTable();
+    table.rows().invalidate('dom').draw();
+    let rows = table.rows().data();
+    rows.each(function (value, index) {
+        data['stopping_conditions'].push({'trait': value[0], 'value': value[1]});
+    });
+    restRequest('PUT', data, savePlannerCallback);
+}
+
+function savePlannerCallback(data) {
+    location.reload();
 }
 
 function showC2(contacts) {
@@ -1272,10 +1319,20 @@ function openDuk5(){
 }
 
 function openDuk6(){
-    document.getElementById("duk-modal").style.display="block";
     $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
         'the planner, utilizing the abilities contained inside the chosen adversary profile. This list shows, per agent, ' +
         'the potential links that will not run as part of the operation but otherwise could.');
+}
+
+function openDuk7(){
+    document.getElementById("duk-modal").style.display="block";
+    $('#duk-text').text('Did you know... Stopping conditions are trait and value pairs that can signal to '+
+        'the adversary emulation system that it should stop an operation immediately. You can add them to '+
+        'your planners here. For example, let\'s say that I want an operation to stop once I laterally move '+
+        'to machine named "domaincontroller.acme". I could add a stopping condition below with a trait of '+
+        'local.host.name and a value of domaincontroller.acme. If during the course of an operation an ability '+
+        'parsers out a fact that matches the stopping condition, the planner will stop generating links and exit '+
+        'the operation. ');
 }
 
 /** HUMAN-IN-LOOP */
