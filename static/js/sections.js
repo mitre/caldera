@@ -810,11 +810,14 @@ function loadAdversaryCallback(data) {
     });
 }
 
+
 $('#StopConditionTbl').DataTable({columnDefs: [{
             targets: '_all',
             createdCell: createdCell
         }],
         searching: false, paging: false, info: false})
+ $('#StopConditionTbl').hide();
+
 
 function loadPlanner() {
     restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
@@ -827,6 +830,9 @@ function loadPlannerCallback(data) {
     $('#planner-stop-conditions').empty();
 
     // fill text from API callback
+    $('#add_sc_button').show();
+    $('#planner_sc_division').show();
+    $('#StopConditionTbl').show();
     $('#planner-title').text(data[0]['name']);
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
     sc_traits = Array.from(data[0]['stopping_conditions'], x => x['trait'])
@@ -1276,7 +1282,7 @@ function openDuk5(){
 
 function openDuk6(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... Stopping conditions are fact trait and value pairs that can signal to '+
+    $('#duk-text').text('Did you know... Stopping conditions are trait and value pairs that can signal to '+
         'CALDERA that it should stop an operation immediately. You can add them to your planners here. '+
         'For example, let\'s say that I want an operation to stop once I laterally move to machine named '+
         '"domaincontroller.acme". I could add a stopping condition below with a trait of local.host.name and '+
