@@ -120,6 +120,7 @@ class Operation(BaseObject):
     async def close(self):
         self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
+        self.potential_links = []
 
     async def wait_for_phase_completion(self):
         for member in self.agents:
