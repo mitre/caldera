@@ -18,7 +18,7 @@ class Ability(BaseObject):
                                requirements=[r.display for r in self.requirements], privilege=self.privilege, timeout=self.timeout))
 
     def __init__(self, ability_id, tactic, technique_id, technique, name, test, description, cleanup, executor,
-                 platform, payload, parsers, requirements, privilege, timeout):
+                 platform, payload, parsers, requirements, privilege, timeout=60):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
