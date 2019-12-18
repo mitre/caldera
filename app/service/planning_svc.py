@@ -52,6 +52,17 @@ class PlanningService(BasePlanningService):
                 links.extend(await self._check_and_generate_cleanup_links(agent, operation))
         return reversed(await self.trim_links(operation, links, agent))
 
+    async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
+        """
+        repeated subroutine
+        """
+        agent_links = []
+        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
+            if trim:
+                agent_links = await self.trim_links(operation, agent_links, agent)
+        return agent_links
+    
     """ PRIVATE """
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
@@ -81,17 +92,6 @@ class PlanningService(BasePlanningService):
         Sort links by their score then by the order they are defined in an adversary profile
         """
         return sorted(links, key=lambda k: (-k.score))
-
-    async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
-        """
-        repeated subroutine
-        """
-        agent_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
-            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
-            if trim:
-                agent_links = await self.trim_links(operation, agent_links, agent)
-        return agent_links
 
     async def _check_and_generate_cleanup_links(self, agent, operation):
         """
