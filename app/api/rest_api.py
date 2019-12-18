@@ -23,6 +23,7 @@ class RestApi:
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('*', '/plugin/chain/potential-links', self.potential_links)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
@@ -65,6 +66,12 @@ class RestApi:
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
+
+    async def potential_links(self, request):
+        await self.auth_svc.check_permissions(request)
+        data = dict(await request.json())
+        x = self.rest_svc.get_potential_links(**data)
+        return web.json_response(x)
 
     async def rest_full(self, request):
         try:

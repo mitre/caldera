@@ -137,6 +137,11 @@ class RestService(BaseService):
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
+    async def get_potential_links(self, op_id):
+        operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
+        potential_abilities = self._build_potential_abilities(operation)
+        return self._build_potential_links(operation, potential_abilities)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):
@@ -159,3 +164,17 @@ class RestService(BaseService):
             await asyncio.sleep(1)
             checks += 1
         return [c.display for c in coll]
+
+    async def _build_potential_abilities(self, operation):
+        potential_abilities = set()
+        for a in await self.get_service('data_svc').locate('abilities'):
+            if not operation.adversary.has_ability(a):
+                potential_abilities.add(a)
+        return potential_abilities
+
+    async def _build_potential_links(self, operation, abilities):
+        potential_links = set()
+        for a in operation.agents:
+            for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
+                potential_links.add(pl)
+        return potential_links
