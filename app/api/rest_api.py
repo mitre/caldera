@@ -23,7 +23,7 @@ class RestApi:
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
-        self.app_svc.application.router.add_route('*', '/plugin/chain/potential-links', self.potential_links)
+        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.potential_links)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
@@ -44,8 +44,8 @@ class RestApi:
 
     @template('chain.html')
     async def landing(self, request):
-        await self.auth_svc.check_permissions(request)
         try:
+            await self.auth_svc.check_permissions(request)
             abilities = await self.data_svc.locate('abilities')
             tactics = set([a.tactic.lower() for a in abilities])
             payloads = await self.rest_svc.list_payloads()
@@ -70,8 +70,8 @@ class RestApi:
     async def potential_links(self, request):
         await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
-        links = self.rest_svc.get_potential_links(**data)
-        return web.json_response(links)
+        links = await self.rest_svc.get_potential_links(**data)
+        return web.json_response(dict(links=[l.display for l in links]))
 
     async def rest_full(self, request):
         try:
@@ -82,8 +82,11 @@ class RestApi:
             pass
 
     async def rest_api(self, request):
-        base = await self.rest_core(request)
-        return web.json_response(base)
+        try:
+            base = await self.rest_core(request)
+            return web.json_response(base)
+        except Exception:
+            pass
 
     async def rest_core(self, request):
         """
@@ -91,8 +94,8 @@ class RestApi:
         :param request:
         :return:
         """
-        await self.auth_svc.check_permissions(request)
         try:
+            await self.auth_svc.check_permissions(request)
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(
