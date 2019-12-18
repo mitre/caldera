@@ -28,13 +28,12 @@ class PlanningService(BasePlanningService):
             abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
         else:
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]
-        link_status = await self._default_link_status(operation)
         links = []
         if agent:
-            links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
+            links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         else:
             for agent in operation.agents:
-                links.extend(await self._generate_and_trim_links(agent, operation, abilities, link_status, trim))
+                links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         return await self._sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -45,13 +44,12 @@ class PlanningService(BasePlanningService):
         :param agent:
         :return: None
         """
-        link_status = await self._default_link_status(operation)
         links = []
         if agent:
-            links.extend(await self._check_and_generate_cleanup_links(agent, operation, link_status))
+            links.extend(await self._check_and_generate_cleanup_links(agent, operation))
         else:
             for agent in operation.agents:
-                links.extend(await self._check_and_generate_cleanup_links(agent, operation, link_status))
+                links.extend(await self._check_and_generate_cleanup_links(agent, operation))
         return reversed(await self.trim_links(operation, links, agent))
 
     """ PRIVATE """
@@ -84,23 +82,18 @@ class PlanningService(BasePlanningService):
         """
         return sorted(links, key=lambda k: (-k.score))
 
-    @staticmethod
-    async def _default_link_status(operation):
-        return -3 if operation.autonomous else -1
-
-    async def _generate_and_trim_links(self, agent, operation, abilities, link_status, trim):
+    async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
         """
         repeated subroutine
         """
         agent_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                      msg='no link created'):
-            agent_links = await self._generate_new_links(operation, agent, abilities, link_status)
+        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
 
-    async def _check_and_generate_cleanup_links(self, agent, operation, link_status):
+    async def _check_and_generate_cleanup_links(self, agent, operation):
         """
         repeated subroutine
         """
@@ -109,7 +102,7 @@ class PlanningService(BasePlanningService):
                                                       msg='no cleanup-link created'):
             agent_cleanup_links = await self._generate_cleanup_links(operation=operation,
                                                                      agent=agent,
-                                                                     link_status=link_status)
+                                                                     link_status=operation.link_status())
         return agent_cleanup_links
 
     async def _check_untrusted_agents_allowed(self, agent, operation, msg):
