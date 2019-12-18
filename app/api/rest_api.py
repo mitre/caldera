@@ -70,8 +70,8 @@ class RestApi:
     async def potential_links(self, request):
         await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
-        x = self.rest_svc.get_potential_links(**data)
-        return web.json_response(x)
+        links = self.rest_svc.get_potential_links(**data)
+        return web.json_response(links)
 
     async def rest_full(self, request):
         try:
