@@ -155,10 +155,13 @@ class RestService(BaseService):
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
-    async def get_potential_links(self, op_id):
+    async def get_potential_links(self, op_id, paw):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
-        potential_abilities = self._build_potential_abilities(operation)
-        return self._build_potential_links(operation, potential_abilities)
+        if operation.finish:
+            return []
+        agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw))
+        potential_abilities = await self._build_potential_abilities(operation)
+        return await self._build_potential_links(operation, agents, potential_abilities)
 
     """ PRIVATE """
 
@@ -212,9 +215,9 @@ class RestService(BaseService):
                 potential_abilities.add(a)
         return potential_abilities
 
-    async def _build_potential_links(self, operation, abilities):
+    async def _build_potential_links(self, operation, agents, abilities):
         potential_links = set()
-        for a in operation.agents:
+        for a in agents:
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
                 potential_links.add(pl)
         return potential_links

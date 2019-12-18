@@ -70,6 +70,11 @@ span.psw {
 .modal p {
     color: #333;
 }
+.modal-box {
+    max-height: 70%;
+    overflow: auto;
+    overflow-y: auto;
+}
 .close {
     position: absolute;
     right: 25px;

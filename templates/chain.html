@@ -216,142 +216,9 @@
           </div>
         </div>
 
-        <!-- templates -->
-
-        <li id="link-template" class="event" data-date="" style="display: none">
-          <div class="member-infos">
-            <h1 id="time-tactic" class="member-title"></h1>
-            <div id="inner-contents">
-              <div id="decision-card" class="decision-card">
-                <table style="border-spacing:15px;">
-                  <tr>
-                    <td>Description:</td>
-                    <td><p id="link-description" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Technique:</td>
-                    <td><div class="tooltip" id="link-technique"></div></td>
-                  </tr>
-                  <tr>
-                    <td>Collected:</td>
-                    <td><p id="link-collect" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Finished:</td>
-                    <td><p id="link-finish" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Command:</td>
-                    <td><p id="time-action" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Executor:</td>
-                    <td><p id="time-executor" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Paw</td>
-                    <td><p id="paw-id" class="member-result"></p></td>
-                  </tr>
-                </table>
-              </div>
-            </div>
-          </div>
-        </li>
-
-        <div id="phase-template" style="display: none;">
-            <center>
-                <ul id="profile-tests" class="profile-tests"></ul>
-            </center>
-        </div>
-
-        <li id="rule-template" class="row-simple ttp-template" style="display: none;">
-            <div class="column">
-                <div class="dotted">
-                    <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
-                </div>
-                <table frame=void rules=rows style="border-spacing:20px;width:100%">
-                    <tr>
-                        <td style="width:20%"><b>trait:</b></td>
-                        <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
-                    </tr>
-                    <tr>
-                        <td style="width:20%"><b>match:</b></td>
-                        <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
-                    </tr>
-                    <tr>
-                        <td style="width:20%"><b>action:</b></td>
-                        <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
-                    </tr>
-                </table>
-            </div>
-        </li>
-
-        <li id="ability-template" class="ability-box" style="display: none">
-            <h4 id="name" style="margin:5px"></h4>
-            <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
-            <center>
-                <p class="topright" id="ability-rm"></p>
-                <table class="bottomright">
-                    <tr id="ability-metadata"></tr>
-                </table>
-                <div id="icon-row" class="icon-row"></div>
-            </center>
-        </li>
-
-        <li id="ttp-template" class="ttp-template" style="display: none">
-            <div class="dotted">
-                <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
-            </div>
-            <table frame=void rules=rows style="border-spacing:5px;width:100%">
-                <tr>
-                    <td style="width:10%"><b>platform:</b></td>
-                    <td>
-                      <select id="ability-platform">
-                        <option value="" disabled selected>Select a platform</option>
-                            <option value="darwin">darwin</option>
-                            <option value="linux">linux</option>
-                            <option value="windows">windows</option>
-                      </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:10%"><b>executor:</b></td>
-                    <td>
-                      <select id="ability-executor">
-                        <option value="" disabled selected>Select an executor</option>
-                            <option value="sh">sh</option>
-                            <option value="psh">psh</option>
-                            <option value="pwsh">pwsh</option>
-                            <option value="cmd">cmd</option>
-                      </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:10%"><b>payload:</b></td>
-                    <td>
-                      <select id="ability-payload" class="ability-payload">
-                        <option value="" disabled selected>Download a payload before running this ability (optional)</option>
-                        {% for p in payloads %}
-                            <option value="{{ p }}">{{ p }}</option>
-                        {% endfor %}}
-                      </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:10%"><b>command:</b></td>
-                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
-                </tr>
-                <tr>
-                    <td style="width:10%"><b>cleanup:</b></td>
-                    <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
-                </tr>
-            </table>
-            <br>
-        </li>
-
         <div id="planners" class="section-profile planners" style="display: none">
           <div class="advanced row">
-            <div class="topright duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
+            <div class="topright duk-icon"><img onclick="openDuk7()" src="/gui/img/duk.png"></div>
             <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
             <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
             <div id="planners-sidebar" class="column section-border" style="flex:25%">
@@ -586,9 +453,11 @@
                 </center>
               </div>
               <div id="content">
-                <ul id="timeline" class="timeline">
-                  <li id="time-start">
-                </ul>
+                  <span style="float:right;font-size:13px;margin-right:5%;" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
+                  <br>
+                  <ul id="timeline" class="timeline">
+                      <li id="time-start">
+                  </ul>
               </div>
             </div>
           </div>
@@ -709,7 +578,7 @@
           </div>
         </div>
 
-        <!-- START MODALS -->
+        <!-- modals-->
 
         <div id="more-modal" class="modal">
             <form class="modal-content ability-viewer">
@@ -726,7 +595,7 @@
 
         <div id="phase-modal" class="modal">
             <form class="modal-content">
-                <div class="container section-profile row ability-viewer">
+                <div class="container section-profile row ability-viewer modal-box">
                     <div class="column" style="flex:100%;">
                         <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', {{ exploits }});">
                             <option disabled selected>Choose a tactic</option>
@@ -809,9 +678,27 @@
              </form>
         </div>
 
+        <div id="potential-modal" class="modal">
+            <form class="modal-content">
+                <div class="container section-profile row ability-viewer modal-box">
+                    <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
+                    <div class="column" style="flex:100%;">
+                        <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
+                            <option disabled selected>Choose an agent</option>
+                        </select>
+                        <h2 id="potential-links-count"></h2>
+                        <ul id="potential-links"></ul>
+                    </div>
+                    <div class="imgcontainer">
+                        <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
+                    </div>
+                </div>
+             </form>
+        </div>
+
         <div id="duk-modal" class="modal">
             <form class="modal-content">
-                <div class="container">
+                <div class="container modal-box">
                     <div class="row duk-modal">
                         <span onclick="document.getElementById('duk-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                         <div class="column" style="flex:8%">
@@ -827,7 +714,7 @@
 
         <div id="loop-modal" class="modal section-profile">
             <form class="modal-content">
-                <div class="container">
+                <div class="container modal-box">
                     <div class="row duk-modal">
                         <div class="column" style="flex:25%">
                             <p id="hil-linkId"></p>
@@ -847,7 +734,7 @@
 
         <div id="source-modal" class="modal">
             <form class="modal-content" style="width:50%;">
-                <div class="container">
+                <div class="container modal-box">
                     <div class="row ability-viewer">
                         <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                         <div class="column" style="flex:100%">
@@ -864,7 +751,160 @@
              </form>
         </div>
 
-        <!-- END MODALS -->
+        <!-- templates -->
+
+        <li id="potential-link-template" style="display: none;margin-bottom:-50px">
+            <div class="row-simple">
+                <div class="column" style="flex:60%">
+                    <hr>
+                    <table frame=void style="border-spacing:5px;border-collapse:separate;width:100%">
+                        <tr>
+                            <td style="width:10%"><b>name:</b></td>
+                            <td><p id="potential-name"></td>
+                        </tr>
+                        <tr>
+                            <td style="width:10%"><b>description:</b></td>
+                            <td><p id="potential-description"></td>
+                        </tr>
+                        <tr>
+                            <td style="width:10%"><b>command:</b></td>
+                            <td><code contenteditable="false" id="potential-command"></code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </li>
+
+        <li id="link-template" class="event" data-date="" style="display: none">
+          <div class="member-infos">
+            <h1 id="time-tactic" class="member-title"></h1>
+            <div id="inner-contents">
+              <div id="decision-card" class="decision-card">
+                <table style="border-spacing:15px;">
+                  <tr>
+                    <td>Description:</td>
+                    <td><p id="link-description" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Technique:</td>
+                    <td><div class="tooltip" id="link-technique"></div></td>
+                  </tr>
+                  <tr>
+                    <td>Collected:</td>
+                    <td><p id="link-collect" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Finished:</td>
+                    <td><p id="link-finish" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Command:</td>
+                    <td><p id="time-action" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Executor:</td>
+                    <td><p id="time-executor" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Paw</td>
+                    <td><p id="paw-id" class="member-result"></p></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <div id="phase-template" style="display: none;">
+            <center>
+                <ul id="profile-tests" class="profile-tests"></ul>
+            </center>
+        </div>
+
+        <li id="rule-template" class="row-simple ttp-template" style="display: none;">
+            <div class="column">
+                <div class="dotted">
+                    <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+                </div>
+                <table frame=void rules=rows style="border-spacing:20px;width:100%">
+                    <tr>
+                        <td style="width:20%"><b>trait:</b></td>
+                        <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>match:</b></td>
+                        <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                    <tr>
+                        <td style="width:20%"><b>action:</b></td>
+                        <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+
+        <li id="ability-template" class="ability-box" style="display: none">
+            <h4 id="name" style="margin:5px"></h4>
+            <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
+            <center>
+                <p class="topright" id="ability-rm"></p>
+                <table class="bottomright">
+                    <tr id="ability-metadata"></tr>
+                </table>
+                <div id="icon-row" class="icon-row"></div>
+            </center>
+        </li>
+
+        <li id="ttp-template" class="ttp-template" style="display: none">
+            <div class="dotted">
+                <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+            </div>
+            <table frame=void rules=rows style="border-spacing:5px;width:100%">
+                <tr>
+                    <td style="width:10%"><b>platform:</b></td>
+                    <td>
+                      <select id="ability-platform">
+                        <option value="" disabled selected>Select a platform</option>
+                            <option value="darwin">darwin</option>
+                            <option value="linux">linux</option>
+                            <option value="windows">windows</option>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%"><b>executor:</b></td>
+                    <td>
+                      <select id="ability-executor">
+                        <option value="" disabled selected>Select an executor</option>
+                            <option value="sh">sh</option>
+                            <option value="psh">psh</option>
+                            <option value="pwsh">pwsh</option>
+                            <option value="cmd">cmd</option>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%"><b>payload:</b></td>
+                    <td>
+                      <select id="ability-payload" class="ability-payload">
+                        <option value="" disabled selected>Download a payload before running this ability (optional)</option>
+                        {% for p in payloads %}
+                            <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}}
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:10%"><b>command:</b></td>
+                    <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
+                </tr>
+                <tr>
+                    <td style="width:10%"><b>cleanup:</b></td>
+                    <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
+                </tr>
+            </table>
+            <br>
+        </li>
 
       </center>
     </div>
