@@ -29,10 +29,7 @@ class Planner(BaseObject):
             return self.retrieve(ram['planners'], self.unique)
         else:
             existing.update('stopping_conditions', self.stopping_conditions)
-            existing.update('module', self.module)
-            existing.update('description', self.description)
             existing.update('params', self.params)
-            existing.update('planner_id', self.planner_id)
         return existing
 
     """ PRIVATE """

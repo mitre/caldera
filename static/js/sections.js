@@ -870,7 +870,6 @@ function loadPlannerCallback(data) {
 
     // fill text from API callback
     $('#add_sc_button').show();
-    $('#planner_sc_division').show();
     $('#StopConditionTbl').show();
     $('#planner-title').text(data[0]['name']);
     $('#planner-description').html(data[0]['description'].replace(/\n\n/g, '<br/>')).show();
