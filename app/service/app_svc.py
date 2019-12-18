@@ -189,4 +189,3 @@ class AppService(BaseService):
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
                 potential_links.add(pl)
         return potential_links
-

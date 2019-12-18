@@ -32,7 +32,7 @@ class Adversary(BaseObject):
         return existing
 
     def has_ability(self, ability):
-        for _,v in self.phases.items():
+        for _, v in self.phases.items():
             for a in v:
                 if ability.unique == a.unique:
                     return True

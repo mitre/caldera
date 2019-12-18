@@ -62,7 +62,7 @@ class PlanningService(BasePlanningService):
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
-    
+
     """ PRIVATE """
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
