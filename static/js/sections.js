@@ -1328,11 +1328,12 @@ function openDuk6(){
 function openDuk7(){
     document.getElementById("duk-modal").style.display="block";
     $('#duk-text').text('Did you know... Stopping conditions are trait and value pairs that can signal to '+
-        'CALDERA that it should stop an operation immediately. You can add them to your planners here. '+
-        'For example, let\'s say that I want an operation to stop once I laterally move to machine named '+
-        '"domaincontroller.acme". I could add a stopping condition below with a trait of local.host.name and '+
-        'a value of domaincontroller.acme. If during the course of an operation an ability parsers out a fact '+
-        'that matches the stopping condition, the planner will stop generating links and exit the operation. ');
+        'the adversary emulation system that it should stop an operation immediately. You can add them to '+
+        'your planners here. For example, let\'s say that I want an operation to stop once I laterally move '+
+        'to machine named "domaincontroller.acme". I could add a stopping condition below with a trait of '+
+        'local.host.name and a value of domaincontroller.acme. If during the course of an operation an ability '+
+        'parsers out a fact that matches the stopping condition, the planner will stop generating links and exit '+
+        'the operation. ');
 }
 
 /** HUMAN-IN-LOOP */
