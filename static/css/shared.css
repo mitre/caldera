@@ -9,6 +9,8 @@
 }
 body {
     background-color: var(--primary-background);
+    background-image: url('/gui/img/christmas.png');
+    background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;
     transition: 0.7s opacity;
@@ -303,9 +305,9 @@ select {
 }
 .duk-icon img {
     height: 22px;
-    background-color: inherit;
-    border-radius: 0;
-    border: none;
+    background-color: white;
+    border-radius: 50%;
+    border: black 1px solid;
 }
 .duk-modal {
     background-color: black;

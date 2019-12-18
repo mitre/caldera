@@ -73,15 +73,16 @@
 
         <div id="agents" class="section-profile" style="display: none">
           <div class="row">
-            <div class="column section-border" style="flex:25%;">
+            <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
+            <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('agents-sidebar')" src="/gui/img/expand.png"></div>
+            <div id="agents-sidebar" class="column section-border" style="flex:25%;">
               <img src="/gui/img/group.png">
               <h4 style="margin-bottom:-5px">Agents</h4>
               <p class="section-description">
                   Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
                   least 1 agent in order to run an operation.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
-              <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -104,6 +105,7 @@
                 </thead>
               </table>
             </div>
+
           </div>
         </div>
 
@@ -111,7 +113,10 @@
 
         <div id="sources" class="section-profile" style="display: none">
           <div class="advanced row">
-              <div class="column section-border" style="flex:25%">
+              <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
+              <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
+              <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
+              <div id="sources-sidebar"  class="column section-border" style="flex:25%">
               <img src="/gui/img/facts.png">
               <h4>Sources</h4>
               <br>
@@ -142,8 +147,6 @@
               <button id="saveSourceBtn" type="button" class="button-success atomic-button"
                       onclick="saveSource()">Save
               </button>
-              <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
-              <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
             </div>
             <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
                 <input id="source-name" type="text" class="advGoal" placeholder="Enter source name"/>
@@ -170,7 +173,10 @@
 
         <div id="adversaries" class="section-profile" style="display: none">
           <div class="row">
-            <div class="column section-border" style="flex:25%;">
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('adversaries-sidebar')" src="/gui/img/expand.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
+            <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
+            <div id="adversaries-sidebar" class="column section-border" style="flex:25%;">
               <img src="/gui/img/hacker.png">
               <h4>Adversaries</h4>
               <br>
@@ -184,8 +190,6 @@
                   Adversaries are collections of ATT&CK TTPs, designed to test specific threats. Build or review
                   existing adversaries here.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
-              <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
                 <br>
               <div id="viewAdversary">
                   <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
@@ -213,6 +217,46 @@
         </div>
 
         <!-- templates -->
+
+        <li id="link-template" class="event" data-date="" style="display: none">
+          <div class="member-infos">
+            <h1 id="time-tactic" class="member-title"></h1>
+            <div id="inner-contents">
+              <div id="decision-card" class="decision-card">
+                <table style="border-spacing:15px;">
+                  <tr>
+                    <td>Description:</td>
+                    <td><p id="link-description" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Technique:</td>
+                    <td><div class="tooltip" id="link-technique"></div></td>
+                  </tr>
+                  <tr>
+                    <td>Collected:</td>
+                    <td><p id="link-collect" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Finished:</td>
+                    <td><p id="link-finish" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Command:</td>
+                    <td><p id="time-action" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Executor:</td>
+                    <td><p id="time-executor" class="member-result"></p></td>
+                  </tr>
+                  <tr>
+                    <td>Paw</td>
+                    <td><p id="paw-id" class="member-result"></p></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </li>
 
         <div id="phase-template" style="display: none;">
             <center>
@@ -243,7 +287,7 @@
         </li>
 
         <li id="ability-template" class="ability-box" style="display: none">
-            <h4 id="name"></h4>
+            <h4 id="name" style="margin:5px"></h4>
             <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
             <center>
                 <p class="topright" id="ability-rm"></p>
@@ -307,7 +351,9 @@
 
         <div id="planners" class="section-profile planners" style="display: none">
           <div class="advanced row">
-            <div class="column section-border" style="flex:25%">
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
+            <div id="planners-sidebar" class="column section-border" style="flex:25%">
               <img src="/gui/img/planners.png">
               <h4>Planners</h4>
               <p class="section-description">
@@ -316,7 +362,6 @@
 
                   Specifically, a planner's logic contains the decision making to execute a single phase of an operation.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
               <br>
               <div id="viewPlanner">
                   <select id="planner-select" style="margin-top:-15px" onchange="loadPlanner()">
@@ -357,7 +402,10 @@
 
         <div id="c2" class="section-profile" style="display: none">
           <div class="advanced row">
-            <div class="column section-border" style="flex:25%">
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('c2-sidebar')" src="/gui/img/expand.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
+
+            <div id="c2-sidebar" class="column section-border" style="flex:25%">
               <img src="/gui/img/group.png">
               <h4>C2</h4>
               <p class="section-description">
@@ -365,7 +413,6 @@
                   types of communication protocols that can be used - and within this system - you can flexibly
                   create and select how you want your agents to call back.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
               <br>
               <div id="viewC2">
                   <select id="C2-select" onchange="showC2( {{ contacts }} )" style="margin-top:-15px">
@@ -387,7 +434,10 @@
 
         <div id="operations" class="section-profile" style="display: none">
           <div class="row">
-            <div class="column section-border" style="flex:25%">
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('operations-sidebar')" src="/gui/img/expand.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
+            <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
+            <div id="operations-sidebar" class="column section-border" style="flex:25%">
               <img src="/gui/img/operation.png">
               <h4>Operations</h4>
               <br>
@@ -399,8 +449,6 @@
               <p class="section-description">
                 Start a new operation or review previous ones here.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
-              <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
               <div id="viewOperation">
                 <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpDeleteBtn()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
@@ -537,47 +585,7 @@
                 <ul id="timeline" class="timeline">
                   <li id="time-start">
                 </ul>
-                <li id="link-template" class="event" data-date="" style="display: none">
-                  <div class="member-infos">
-                    <h1 id="time-tactic" class="member-title"></h1>
-                    <div id="inner-contents">
-                      <div id="decision-card" class="decision-card">
-                        <table style="border-spacing:15px;">
-                          <tr>
-                            <td>Description:</td>
-                            <td><p id="link-description" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Technique:</td>
-                            <td><div class="tooltip" id="link-technique"></div></td>
-                          </tr>
-                          <tr>
-                            <td>Collected:</td>
-                            <td><p id="link-collect" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Finished:</td>
-                            <td><p id="link-finish" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Command:</td>
-                            <td><p id="time-action" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Executor:</td>
-                            <td><p id="time-executor" class="member-result"></p></td>
-                          </tr>
-                          <tr>
-                            <td>Paw</td>
-                            <td><p id="paw-id" class="member-result"></p></td>
-                          </tr>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </li>
               </div>
-
             </div>
           </div>
         </div>
@@ -586,13 +594,14 @@
 
         <div id="reports" class="section-profile" style="display: none">
           <div class="row">
-            <div class="column section-border" style="flex:25%;">
+            <div class="bottomright duk-icon"><img onclick="toggleSidebar('reports-sidebar')" src="/gui/img/expand.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
+            <div id="reports-sidebar" class="column section-border" style="flex:25%;">
               <img src="/gui/img/reports.png">
               <h4 style="margin-bottom:-5px">Reports</h4>
               <p class="section-description">
                   View a detailed report for any started operation.
               </p>
-              <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
               <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
                   <option id="reportDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}

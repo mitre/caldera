@@ -66,7 +66,7 @@ class Operation(BaseObject):
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None):
         super().__init__()
         self.id = id
-        self.start = None
+        self.start, self.finish = None, None
         self.name = name
         self.agents = agents
         self.adversary = adversary
@@ -79,9 +79,7 @@ class Operation(BaseObject):
         self.phases_enabled = phases_enabled
         self.phase = 0
         self.obfuscator = obfuscator
-        self.finish = None
-        self.chain = []
-        self.rules = []
+        self.chain, self.rules = [], []
         if source:
             self.rules = source.rules
 
@@ -147,6 +145,9 @@ class Operation(BaseObject):
                 await asyncio.sleep(5)
                 if await self._trust_issues(member):
                     break
+
+    def link_status(self):
+        return -3 if self.autonomous else -1
 
     """ PRIVATE """
 

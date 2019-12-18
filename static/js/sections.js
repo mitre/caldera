@@ -30,6 +30,15 @@ function removeIntro(){
     localStorage.setItem('intro', '0');
 }
 
+function toggleSidebar(identifier) {
+    let sidebar = $('#'+identifier);
+    if (sidebar.is(":visible")) {
+        sidebar.hide();
+    } else {
+        sidebar.show();
+    }
+}
+
 /** ALL DROPDOWNS **/
 
 function alphabetize_dropdown(obj) {

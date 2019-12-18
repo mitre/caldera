@@ -1,22 +1,5 @@
 #!/bin/bash
 
-function usage()
-{
-cat << EOF
-usage: $0 options
-
-This script will install all of the Caldera server requirements
-
-OPTIONS:
-	-h 	      	  Show help
-	--ubuntu      Install on a debian/ubuntu system
-	--centos      Install on a centos/redhat system
-	--darwin      Install on a darwin/mac system
-
-EOF
-}
-
-
 function install_wrapper() {
     echo "[-] Checking for $1"
     which $2
@@ -131,20 +114,10 @@ function centos() {
     display_welcome_msg
 }
 
-if [[ "$1" != "" ]]; then
-    case $1 in
-        -d | --darwin )     darwin
-                            ;;
-        -u | --ubuntu )     ubuntu
-                            ;;
-        -c | --centos )     centos
-                            ;;
-        -h | --help )       usage
-                            exit
-                            ;;
-        * )                 usage
-                            exit 1
-    esac
+if [[ "$(uname)" == *"Darwin"* ]]; then
+  darwin
+elif [[ "$(lsb_release -d)" == *"Ubuntu"* ]]; then
+  ubuntu
+elif [[ "$(lsb_release -d)" == *"CentOS"* ]]; then
+  centos
 fi
-
-
