@@ -508,6 +508,7 @@ function operationCallback(data){
     } else {
         $("#togBtnHil").prop("checked", false);
     }
+    applyOperationAgents(OPERATION);
     changeProgress(parseInt((OPERATION.phase / Object.keys(OPERATION.adversary.phases).length) * 100));
     clearTimeline();
     for(let i=0; i<OPERATION.chain.length; i++){
@@ -557,6 +558,44 @@ function operationCallback(data){
             atomic_interval = setInterval(refresh, 5000);
         }
     }
+}
+
+function applyOperationAgents(operation) {
+    for(let i=0; i<operation.host_group.length; i++){
+        let paw = operation.host_group[i].paw;
+        if($("#potential-agent-filter option[value='agent-"+paw+"'").length === 0){
+             $('#potential-agent-filter').append($("<option></option>")
+                    .attr("value", 'agent-'+paw)
+                    .text(operation.host_group[i].display_name));
+        }
+    }
+}
+
+function fetchPotentialLinks() {
+    let selectedOperationId = $('#operation-list option:selected').attr('value');
+    let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
+    let paw = selectedAgent.split('-')[1];
+    let postData = {"op_id": parseInt(selectedOperationId), "paw": paw};
+    restRequest('POST', postData, potentialLinksCallback, '/plugin/chain/potential-links');
+}
+
+function potentialLinksCallback(data){
+    $('#potential-links-count').html(data.links.length+' potential links');
+    for(let i=0; i<data.links.length; i++){
+        let link = data.links[i];
+        let template = $("#potential-link-template").clone();
+        template.find('#potential-name').html(link.ability.name);
+        template.find('#potential-description').html(link.ability.description);
+        template.find('#potential-command').html(atob(link.command));
+        template.show();
+        $('#potential-links').append(template);
+    }
+}
+
+function closePotentialLinksModal() {
+    document.getElementById('potential-modal').style.display='none';
+    $('#potential-links-count').html('');
+    $('#potential-links').empty();
 }
 
 function discard(linkId) {
@@ -1230,6 +1269,13 @@ function openDuk5(){
     $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
         'you to create extensible abilities. '+
         'Additionally, sources can include rules which can restrict agents from using specific traits.');
+}
+
+function openDuk6(){
+    document.getElementById("duk-modal").style.display="block";
+    $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
+        'the planner, utilizing the abilities contained inside the chosen adversary profile. This list shows, per agent, ' +
+        'the potential links that will not run as part of the operation but otherwise could.');
 }
 
 /** HUMAN-IN-LOOP */
