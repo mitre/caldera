@@ -382,11 +382,11 @@
             <div id="planner-info" class="column planner-header" style="flex:75%;text-align: left">
               <h3 id="planner-title"></h3>
               <p id="planner-description"></p>
-                <p>&nbsp;</p>
-                <hr>
+                <p>&nbsp; </p>
+                <hr id="planner_sc_division" style="display:none">
                  <p>&nbsp;</p>
               <h4 id="stop-conditions"></h4>
-                 <table id="StopConditionTbl" class="display ttp-template" style="width:100%;text-align:left">
+                 <table id="StopConditionTbl" class="display ttp-template" style="width:100%;text-align:left;display:none">
                     <thead>
                         <tr>
                           <th></th>
@@ -396,7 +396,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-                <p style="color:white;text-align:right;font-size:16px;" onclick="addStopConditionRow([
+                <p id="add_sc_button" style="color:white;text-align:right;font-size:16px;display:none;" onclick="addStopConditionRow([
                     'Enter trait', 'Enter value','<p onclick=removeStopConditionRow($(this))>&#x274C;</p>'])">
                     &#10010;&nbsp;add row
                 </p>
