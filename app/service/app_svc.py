@@ -98,6 +98,8 @@ class AppService(BaseService):
                         break
                     await operation.wait_for_phase_completion()
                 operation.phase = phase
+            while not await operation.should_close():
+                await asyncio.sleep(3)
             await self._cleanup_operation(operation)
             await operation.close()
             await self._save_new_source(operation)

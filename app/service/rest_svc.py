@@ -8,6 +8,7 @@ from datetime import time
 
 import yaml
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_link import Link
 from app.objects.c_operation import Operation
@@ -174,11 +175,11 @@ class RestService(BaseService):
     async def _build_operation_object(self, data):
         name = data.pop('name')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
-        adversary = await self.get_service('data_svc').locate('adversaries',
-                                                              match=dict(adversary_id=data.pop('adversary_id')))
+        adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
         agents = await self.get_service('data_svc').locate('agents', match=dict(group=data.pop('group')))
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
-        return Operation(name=name, planner=planner[0], agents=agents, adversary=copy.deepcopy(adversary[0]),
+
+        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
@@ -227,3 +228,9 @@ class RestService(BaseService):
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
                 potential_links.append(pl)
         return potential_links
+
+    async def _construct_adversary_for_op(self, adversary_id):
+        adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
+        if adv:
+            return copy.deepcopy(adv[0])
+        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={'1': []})

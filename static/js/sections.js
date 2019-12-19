@@ -1156,9 +1156,9 @@ function addToPhase() {
 }
 
 function checkOpformValid(){
-    validateFormState(($('#queueName').val()) && ($('#queueFlow').prop('selectedIndex') !== 0) && ($('#queueGroup').prop('selectedIndex') !== 0),
+    validateFormState(($('#queueName').val()) && ($('#queueGroup').prop('selectedIndex') !== 0),
         '#opBtn');
-    validateFormState(($('#queueName').val()) && ($('#queueFlow').prop('selectedIndex') !== 0) && ($('#queueGroup').prop('selectedIndex') !== 0) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
+    validateFormState(($('#queueName').val()) && ($('#queueGroup').prop('selectedIndex') !== 0) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
         '#scheduleBtn');
 }
 
