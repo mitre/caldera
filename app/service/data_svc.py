@@ -194,6 +194,7 @@ class DataService(BaseService):
                                                                    'cleanup') else None,
                                                                payload=info.get('payload'),
                                                                parsers=info.get('parsers', []),
+                                                               timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None)
@@ -244,7 +245,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None):
+                              privilege=None, timeout=60):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -258,7 +259,7 @@ class DataService(BaseService):
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                                        privilege=privilege))
+                                        privilege=privilege, timeout=timeout))
 
     async def _load_data(self, directory):
         await self._load_abilities(directory='%s/abilities' % directory)

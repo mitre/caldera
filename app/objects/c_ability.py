@@ -15,10 +15,10 @@ class Ability(BaseObject):
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
-                               requirements=[r.display for r in self.requirements], privilege=self.privilege))
+                               requirements=[r.display for r in self.requirements], privilege=self.privilege, timeout=self.timeout))
 
     def __init__(self, ability_id, tactic, technique_id, technique, name, test, description, cleanup, executor,
-                 platform, payload, parsers, requirements, privilege):
+                 platform, payload, parsers, requirements, privilege, timeout=60):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -34,6 +34,7 @@ class Ability(BaseObject):
         self.parsers = parsers
         self.requirements = requirements
         self.privilege = privilege
+        self.timeout = timeout
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -51,4 +52,5 @@ class Ability(BaseObject):
         existing.update('platform', self.platform)
         existing.update('payload', self.payload)
         existing.update('privilege', self.privilege)
+        existing.update('timeout', self.timeout)
         return existing
