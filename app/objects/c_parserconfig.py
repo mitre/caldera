@@ -7,6 +7,10 @@ class ParserConfigException(Exception):
 
 class ParserConfig(BaseObject):
 
+    @classmethod
+    def from_json(cls, json):
+        return cls(source=json['source'], edge=json.get('edge'), target=json.get('target'))
+
     @property
     def display(self):
         return self.clean(dict(source=self.source, edge=self.edge, target=self.target))

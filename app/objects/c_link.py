@@ -2,11 +2,17 @@ from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
-from app.utility.base_object import BaseObject
+from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
+from app.utility.base_object import BaseObject
 
 
 class Link(BaseObject):
+
+    @classmethod
+    def from_json(cls, json):
+        ability = Ability.from_json(json['ability'])
+        return cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
 
     @property
     def unique(self):
@@ -98,3 +104,4 @@ class Link(BaseObject):
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
                     break
+

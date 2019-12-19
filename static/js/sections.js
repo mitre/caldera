@@ -566,12 +566,13 @@ function applyOperationAgents(operation) {
         if($("#potential-agent-filter option[value='agent-"+paw+"'").length === 0){
              $('#potential-agent-filter').append($("<option></option>")
                     .attr("value", 'agent-'+paw)
-                    .text(operation.host_group[i].display_name));
+                    .text(operation.host_group[i].display_name + '-'+operation.host_group[i].paw));
         }
     }
 }
 
 function fetchPotentialLinks() {
+    $('#potential-links').empty();
     let selectedOperationId = $('#operation-list option:selected').attr('value');
     let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
     let paw = selectedAgent.split('-')[1];
@@ -580,22 +581,38 @@ function fetchPotentialLinks() {
 }
 
 function potentialLinksCallback(data){
-    $('#potential-links-count').html(data.links.length+' potential links');
     for(let i=0; i<data.links.length; i++){
         let link = data.links[i];
         let template = $("#potential-link-template").clone();
+        let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+        template.attr('id', uniqueLinkId);
         template.find('#potential-name').html(link.ability.name);
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
+        template.data('link', link);
         template.show();
         $('#potential-links').append(template);
     }
+    updatePotentialLinkCount();
 }
 
 function closePotentialLinksModal() {
     document.getElementById('potential-modal').style.display='none';
     $('#potential-links-count').html('');
     $('#potential-links').empty();
+    $('#potential-agent-filter').prop("selectedIndex", 0);
+}
+
+function addLink(l) {
+    let link = l.parent().parent().parent().parent().parent().parent().parent().data('link');
+    let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+    $('#'+uniqueLinkId).remove();
+    updatePotentialLinkCount();
+    restRequest('PUT', link, doNothing, '/plugin/chain/potential-links');
+}
+
+function updatePotentialLinkCount(){
+    $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
 function discard(linkId) {
@@ -891,7 +908,6 @@ function removeStopConditionRow(r){
 
 function savePlanner(){
     let planner = $('#planner-title');
-    let id = planner.data('id');
     if(!planner){ alert('Please select a planner!'); return; }
     let data = {};
     data['index'] = 'planner';

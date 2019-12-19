@@ -548,3 +548,11 @@ table.dataTable input[type=text] {
 #c2-description {
     font-size: 15px;
 }
+.potential-button {
+    float: right;
+    text-align: center;
+    width: 50px;
+    height: 10px;
+    margin: 0;
+    line-height: 1px;
+}

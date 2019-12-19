@@ -9,6 +9,7 @@ from datetime import time
 import yaml
 
 from app.objects.c_agent import Agent
+from app.objects.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_fact import Fact
 from app.objects.c_schedule import Schedule
@@ -163,6 +164,11 @@ class RestService(BaseService):
         potential_abilities = await self._build_potential_abilities(operation)
         return await self._build_potential_links(operation, agents, potential_abilities)
 
+    async def apply_potential_link(self, l):
+        link = Link.from_json(l)
+        operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
+        await operation.apply(link)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):
@@ -209,15 +215,15 @@ class RestService(BaseService):
             return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
 
     async def _build_potential_abilities(self, operation):
-        potential_abilities = set()
+        potential_abilities = []
         for a in await self.get_service('data_svc').locate('abilities'):
             if not operation.adversary.has_ability(a):
-                potential_abilities.add(a)
+                potential_abilities.append(a)
         return potential_abilities
 
     async def _build_potential_links(self, operation, agents, abilities):
-        potential_links = set()
+        potential_links = []
         for a in agents:
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
-                potential_links.add(pl)
+                potential_links.append(pl)
         return potential_links

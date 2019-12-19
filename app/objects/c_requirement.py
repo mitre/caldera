@@ -1,3 +1,4 @@
+from app.objects.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 
 
@@ -6,6 +7,11 @@ class Requirement(BaseObject):
     @property
     def unique(self):
         return self.module
+
+    @classmethod
+    def from_json(cls, json):
+        relationships = [Relationship.from_json(r) for r in json['relationships']]
+        return cls(module=json['module'], relationships=relationships)
 
     @property
     def display(self):
