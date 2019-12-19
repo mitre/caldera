@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import copy
+import time
 import os
 import traceback
 from datetime import datetime, date
@@ -72,7 +73,7 @@ class AppService(BaseService):
                     sop = copy.deepcopy(s.task)
                     sop.set_start_details()
                     await self._services.get('data_svc').store(sop)
-                    asyncio.create_task(self.run_operation(sop))
+                    self.loop.create_task(self.run_operation(sop))
             await asyncio.sleep(interval)
 
     async def resume_operations(self):
@@ -91,11 +92,12 @@ class AppService(BaseService):
             operation.adversary = await self._adjust_adversary_phases(operation)
 
             for phase in operation.adversary.phases:
-                await self._update_operation(operation)
-                await planner.execute(phase)
-                if planner.stopping_condition_met:
-                    break
-                await operation.wait_for_phase_completion()
+                if not await operation.should_close():
+                    await self._update_operation(operation)
+                    await planner.execute(phase)
+                    if planner.stopping_condition_met:
+                        break
+                    await operation.wait_for_phase_completion()
                 operation.phase = phase
             await self._cleanup_operation(operation)
             await operation.close()

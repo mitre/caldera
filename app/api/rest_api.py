@@ -154,7 +154,7 @@ class RestApi:
                 op = await self.data_svc.locate('operations', dict(id=body['name']))
                 if not len(op):
                     raise web.HTTPNotFound
-                elif op[0].state == op[0].states['FINISHED']:
+                elif await op[0].is_finished():
                     raise web.HTTPBadRequest(body='This operation has already finished.')
                 elif state not in op[0].states.values():
                     raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
