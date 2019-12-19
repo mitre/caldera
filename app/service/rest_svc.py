@@ -170,6 +170,11 @@ class RestService(BaseService):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
         await operation.apply(link)
 
+    async def change_operation_state(self, op_id, state):
+        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
+        operation[0].state = state
+        self.log.debug('changing operation=%s state to %s' % (op_id, state))
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):

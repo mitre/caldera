@@ -158,10 +158,11 @@ class RestApi:
                     raise web.HTTPBadRequest(body='This operation has already finished.')
                 elif state not in op[0].states.values():
                     raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
+                elif state == op[0].states['FINISHED']:
+                    await op[0].close()
             except Exception as e:
                 print(e)
 
         await _validate_request()
-        operation = await self.data_svc.locate('operations', match=dict(id=body['name']))
-        operation[0].state = body.get('state')
+        await self.rest_svc.change_operation_state(body['name'], body['state'])
         return web.Response()
