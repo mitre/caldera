@@ -229,7 +229,8 @@ class DataService(BaseService):
                             stopping_conditions=planner.get('stopping_conditions'))
                 )
 
-    async def _merge_phases(self, phases, new_phases):
+    @staticmethod
+    async def _merge_phases(phases, new_phases):
         for phase, ids in new_phases.items():
             if phase in phases:
                 phases[phase].extend(ids)

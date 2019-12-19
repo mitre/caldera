@@ -233,4 +233,4 @@ class RestService(BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary(adversary_id=0, name='ad-hoc', description='blah', phases=dict())
+        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={'1': []})
