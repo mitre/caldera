@@ -61,6 +61,8 @@ class RestApi:
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
                         plugins=plugins, obfuscators=obfuscators, contacts=contacts)
+        except web.HTTPFound as e:
+            raise e
         except Exception as e:
             logging.error('[!] landing: %s' % e)
 
