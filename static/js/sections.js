@@ -449,6 +449,8 @@ function buildOperationObject() {
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "obfuscator":document.getElementById("queueObfuscated").value,
         "jitter":jitter,
+        "min_time": document.getElementById("queueMinTime").value || 15,
+        "max_time": document.getElementById("queueMaxTime").value || 3600,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
     };
@@ -456,7 +458,7 @@ function buildOperationObject() {
 
 function changeCurrentOperationState(newState){
     let selectedOperationId = $('#operation-list option:selected').attr('value');
-    if(OPERATION.state === 'finished'){
+    if(OPERATION.finish !== ''){
         alert('This operation has finished.');
         return;
     }

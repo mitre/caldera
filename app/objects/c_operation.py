@@ -1,8 +1,7 @@
 import asyncio
 import re
-
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
 from enum import Enum
 from random import randint
 
@@ -31,6 +30,7 @@ class Operation(BaseObject):
         return dict(RUNNING='running',
                     RUN_ONE_LINK='run_one_link',
                     PAUSED='paused',
+                    OUT_OF_TIME='out_of_time',
                     FINISHED='finished')
 
     @property
@@ -63,9 +63,12 @@ class Operation(BaseObject):
         return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
+                 min_time=30, max_time=3600):
         super().__init__()
         self.id = id
+        self.min_time = min_time
+        self.max_time = max_time
         self.start, self.finish = None, None
         self.name = name
         self.agents = agents
@@ -118,7 +121,8 @@ class Operation(BaseObject):
         return link.id
 
     async def close(self):
-        self.state = self.states['FINISHED']
+        if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
+            self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
 
     async def wait_for_phase_completion(self):
@@ -132,19 +136,17 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def wait_for_links_completion(self, link_ids):
-        """
-        Wait for started links to be completed
-        :param link_paws:
-        :return: None
-        """
-        for link_id in link_ids:
-            link = [link for link in self.chain if link.id == link_id][0]
-            member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish and not link.status == link.states['DISCARD']:
-                await asyncio.sleep(5)
-                if await self._trust_issues(member):
-                    break
+    async def should_close(self):
+        running_seconds = (datetime.now() - self.start).total_seconds()
+        if (self.max_time > running_seconds) or (running_seconds < self.min_time):
+            return False
+        self.state = self.states['OUT_OF_TIME']
+        return True
+
+    async def is_finished(self):
+        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
+            return True
+        return False
 
     def link_status(self):
         return -3 if self.autonomous else -1
@@ -195,6 +197,9 @@ class Operation(BaseObject):
                                flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
+        elif self.state == self.states['OUT_OF_TIME']:
+            return dict(reason='Operation ran out of time', reason_id=self.Reason.OUT_OF_TIME.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
@@ -227,3 +232,4 @@ class Operation(BaseObject):
         PRIVILEGE = 3
         OP_RUNNING = 4
         UNTRUSTED = 5
+        OUT_OF_TIME = 6
