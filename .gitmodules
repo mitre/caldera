@@ -16,3 +16,6 @@
 [submodule "plugins/mock"]
 	path = plugins/mock
 	url = https://github.com/mitre/mock.git
+[submodule "plugins/compass"]
+	path = plugins/compass
+	url = https://github.com/mitre/compass.git
