@@ -163,7 +163,7 @@ class BasePlanningService(BaseService):
     @staticmethod
     async def _exclude_existing(link, operation):
         all_hostnames = [agent.host for agent in await operation._active_agents()]
-        for item in link.relationships:
+        for item in link.used:
             # prevent backwards lateral movement
             if 'remote.host' in item.trait:
                 target_name = item.value.split('.')[0].lower()
