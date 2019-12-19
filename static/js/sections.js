@@ -1335,9 +1335,10 @@ function openDuk5(){
 }
 
 function openDuk6(){
+    document.getElementById("duk-modal").style.display="block";
     $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
         'the planner, utilizing the abilities contained inside the chosen adversary profile. This list shows, per agent, ' +
-        'the potential links that will not run as part of the operation but otherwise could.');
+        'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
 }
 
 function openDuk7(){

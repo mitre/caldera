@@ -104,4 +104,3 @@ class Link(BaseObject):
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
                     break
-
