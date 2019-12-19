@@ -1,3 +1,4 @@
+from app.objects.c_parserconfig import ParserConfig
 from app.utility.base_object import BaseObject
 
 
@@ -6,6 +7,11 @@ class Parser(BaseObject):
     @property
     def unique(self):
         return self.module
+
+    @classmethod
+    def from_json(cls, json):
+        parserconfigs = [ParserConfig.from_json(r) for r in json['relationships']]
+        return cls(module=json['module'], parserconfigs=parserconfigs)
 
     @property
     def display(self):

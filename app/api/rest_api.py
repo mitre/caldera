@@ -23,7 +23,8 @@ class RestApi:
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
-        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.potential_links)
+        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
+        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
@@ -69,11 +70,17 @@ class RestApi:
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
-    async def potential_links(self, request):
+    async def find_potential_links(self, request):
         await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
         links = await self.rest_svc.get_potential_links(**data)
         return web.json_response(dict(links=[l.display for l in links]))
+
+    async def add_potential_link(self, request):
+        await self.auth_svc.check_permissions(request)
+        data = dict(await request.json())
+        await self.rest_svc.apply_potential_link(data)
+        return web.json_response(dict())
 
     async def rest_full(self, request):
         try:

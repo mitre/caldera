@@ -752,7 +752,7 @@
 
         <!-- templates -->
 
-        <li id="potential-link-template" style="display: none;margin-bottom:-50px">
+        <li id="potential-link-template" class="potential-links" style="display: none;margin-bottom:-50px">
             <div class="row-simple">
                 <div class="column" style="flex:60%">
                     <hr>
@@ -760,6 +760,7 @@
                         <tr>
                             <td style="width:10%"><b>name:</b></td>
                             <td><p id="potential-name"></td>
+                            <td style="width:10%"><button class="button-success potential-button" onclick="addLink($(this))">add</button></td>
                         </tr>
                         <tr>
                             <td style="width:10%"><b>description:</b></td>

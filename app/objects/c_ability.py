@@ -1,3 +1,5 @@
+from app.objects.c_parser import Parser
+from app.objects.c_requirement import Requirement
 from app.utility.base_object import BaseObject
 
 
@@ -6,6 +8,16 @@ class Ability(BaseObject):
     @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
+
+    @classmethod
+    def from_json(cls, json):
+        parsers = [Parser.from_json(p) for p in json['parsers']]
+        requirements = [Requirement.from_json(r) for r in json['requirements']]
+        return cls(ability_id=json['ability_id'], tactic=json['tactic'], technique_id=json['technique_id'],
+                   technique=json['technique_name'], name=json['name'], test=json['test'],
+                   description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
+                   platform=json['platform'], payload=json['payload'], parsers=parsers,
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'])
 
     @property
     def display(self):
