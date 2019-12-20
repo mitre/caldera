@@ -232,7 +232,7 @@ class RestService(BaseService):
         for a in agents:
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
                 potential_links.append(pl)
-        return potential_links
+        return await self.get_service('planning_svc').sort_links(potential_links)
 
     async def _construct_adversary_for_op(self, adversary_id):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))

@@ -591,6 +591,7 @@ function potentialLinksCallback(data){
         template.find('#potential-name').html(link.ability.name);
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
+        template.find('#potential-score').html(link.score);
         template.data('link', link);
         template.show();
         $('#potential-links').append(template);
@@ -606,8 +607,10 @@ function closePotentialLinksModal() {
 }
 
 function addLink(l) {
-    let link = l.parent().parent().parent().parent().parent().parent().parent().data('link');
+    let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
+    let link = linkDiv.data('link');
     let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+    link.command = btoa(linkDiv.find('#potential-command').html());
     $('#'+uniqueLinkId).remove();
     updatePotentialLinkCount();
     restRequest('PUT', link, doNothing, '/plugin/chain/potential-links');

@@ -422,7 +422,7 @@
               <div class="op-dets">
                 <center>
                     <div class="op-control-container">
-                        <span title="Stop Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('finished')">&#9632;</button></span>
+                        <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('finished')">&#9632;</button></span>
                         <span title="Pause Operation" class="op-control-item"><button id="op-control-pause" onclick="changeCurrentOperationState('paused')">&#2405;</button></span>
                         <span title="Run One Step" class="op-control-item"><button id="run-one-link" onclick="changeCurrentOperationState('run_one_link')">&#9658;&#10072;</button></span>
                         <span title="Run Operation" class="op-control-item"><button id="op-control-run" onclick="changeCurrentOperationState('running')">&#9658;</button></span>
@@ -770,7 +770,11 @@
                         </tr>
                         <tr>
                             <td style="width:10%"><b>command:</b></td>
-                            <td><code contenteditable="false" id="potential-command"></code></td>
+                            <td><code contenteditable="true" id="potential-command"></code></td>
+                        </tr>
+                        <tr>
+                            <td style="width:10%"><b>score:</b></td>
+                            <td><p contenteditable="false" id="potential-score"></p></td>
                         </tr>
                     </table>
                 </div>
