@@ -886,6 +886,7 @@ function loadPlannerCallback(data) {
     $('#planner-title').empty();
     $('#planner-description').empty();
     $('#planner-stop-conditions').empty();
+    $('#StopConditionTbl').DataTable().clear().draw();
 
     // fill text from API callback
     $('#add_sc_button').show();
