@@ -69,7 +69,7 @@ class PlanningService(BasePlanningService):
         Sort links by their score then by the order they are defined in an adversary profile
         """
         return sorted(links, key=lambda k: (-k.score))
-    
+
     """ PRIVATE """
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
