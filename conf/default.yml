@@ -7,6 +7,7 @@ untrusted_timer: 60
 plugins:
   - sandcat
   - stockpile
+  - compass
 debug: True
 api_key: ADMIN123
 users:
