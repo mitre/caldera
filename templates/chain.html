@@ -377,10 +377,9 @@
                         <option value="0">Disable Phases</option>
                       </select>
                       <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
-                          <option value="" selected>Plain-text commands</option>
                           {% for o in obfuscators %}
                             <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
-                        {% endfor %}
+                          {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
                       <input name="minTime" id="queueMinTime" class="queueOption" placeholder="Min run time (sec)" style="opacity:0.5;" disabled="true"/>
