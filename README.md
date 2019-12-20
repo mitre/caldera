@@ -74,13 +74,11 @@ Did the operation find the sensitive files? How many? Can you determine how it d
 
 > You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
 
-Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file. Restart the server and - similar to the above missions - start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
+Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file and restart the server.
 
-Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the terminal adversary and the group my_group. Then, inside the optional choices, select the terminal fact source. Run the operation and wait for it to complete. 
+Once confirmed, move to a browser at 127.0.0.1 and click into the plugins -> terminal section and deploy a terminal agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
 
-Next, navigate to the plugins -> terminal GUI page. From here, check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
-
-Can you figure out how to deploy the reverse-shell without using 54ndc47? 
+Can you figure out how to deploy the reverse-shell by running a regular CALDERA operation?
 
 ## Developers
 
