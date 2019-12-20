@@ -136,6 +136,20 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
+    async def wait_for_links_completion(self, link_ids):
+        """
+        Wait for started links to be completed
+        :param link_ids:
+        :return: None
+        """
+        for link_id in link_ids:
+            link = [link for link in self.chain if link.id == link_id][0]
+            member = [member for member in self.agents if member.paw == link.paw][0]
+            while not link.finish and not link.status == link.states['DISCARD']:
+                await asyncio.sleep(5)
+                if await self._trust_issues(member):
+                    break
+
     async def should_close(self):
         running_seconds = (datetime.now() - self.start).total_seconds()
         if (self.max_time > running_seconds) or (running_seconds < self.min_time):
