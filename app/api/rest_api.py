@@ -10,7 +10,6 @@ class RestApi:
     def __init__(self, services):
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
-        self.reporting_svc = services.get('reporting_svc')
         self.auth_svc = services.get('auth_svc')
         self.plugin_svc = services.get('plugin_svc')
         self.contact_svc = services.get('contact_svc')
