@@ -94,11 +94,10 @@ class BasePlanningService(BaseService):
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
-        if obfuscator:
-            o = (await self.get_service('data_svc').locate('obfuscators', match=dict(name=obfuscator)))[0]
-            mod = o.load(agent)
-            for l in links:
-                l.command = self.encode_string(mod.run(l.command))
+        o = (await self.get_service('data_svc').locate('obfuscators', match=dict(name=obfuscator)))[0]
+        mod = o.load(agent)
+        for l in links:
+            l.command = self.encode_string(mod.run(l.command))
         return links
 
     """ PRIVATE """
