@@ -34,7 +34,7 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
-        return await self._sort_links(links)
+        return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
         """
@@ -63,6 +63,13 @@ class PlanningService(BasePlanningService):
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
 
+    @staticmethod
+    async def sort_links(links):
+        """
+        Sort links by their score then by the order they are defined in an adversary profile
+        """
+        return sorted(links, key=lambda k: (-k.score))
+    
     """ PRIVATE """
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
@@ -85,13 +92,6 @@ class PlanningService(BasePlanningService):
             if f.unique == stopping_condition.unique:
                 return True
         return False
-
-    @staticmethod
-    async def _sort_links(links):
-        """
-        Sort links by their score then by the order they are defined in an adversary profile
-        """
-        return sorted(links, key=lambda k: (-k.score))
 
     async def _check_and_generate_cleanup_links(self, agent, operation):
         """
