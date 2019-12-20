@@ -41,9 +41,8 @@ class Operation(BaseObject):
                       jitter=self.jitter, facts=[f.display for f in self.all_facts()])
         agents_steps = {a.paw: {'steps': []} for a in self.agents}
         for step in self.chain:
-            command = self.decode_bytes(step.command)
             step_report = dict(ability_id=step.ability.ability_id,
-                               command=command,
+                               command=step.command,
                                delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                run=step.finish,
                                status=step.status,
