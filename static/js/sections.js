@@ -727,9 +727,6 @@ $(document).ready(function(){
 /** ADVERSARIES **/
 
 function toggleAdversaryView() {
-    $('#viewAdversary').toggle();
-    $('#addAdversary').toggle();
-
     //clear out canvas
     $('#profile-existing-name option:eq(0)').prop('selected', true);
     $('#profile-goal').val('');
