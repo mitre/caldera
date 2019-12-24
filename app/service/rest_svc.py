@@ -5,6 +5,7 @@ import os
 import pathlib
 from collections import defaultdict
 from datetime import time
+import uuid 
 
 import yaml
 
@@ -30,6 +31,8 @@ class RestService(BaseService):
         :return: the ID of the created adversary
         """
         i = data.pop('i')
+        if not i:
+            i = str(uuid.uuid4())
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
         if not file_path:
             file_path = 'data/adversaries/%s.yml' % i
