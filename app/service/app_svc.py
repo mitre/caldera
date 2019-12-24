@@ -172,7 +172,8 @@ class AppService(BaseService):
         await self.get_service('rest_svc').persist_source(data)
 
     async def _update_operation(self, operation):
-        updated_agents = await self.get_service('data_svc').locate(
-            'agents', match=dict(group=operation.agents[0].group)
-        )
+        if operation.group:
+            updated_agents = await self.get_service('data_svc').locate('agents', match=dict(group=operation.group))
+        else:
+            updated_agents = await self.get_service('data_svc').locate('agents')
         operation.agents = updated_agents

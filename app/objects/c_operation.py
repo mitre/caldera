@@ -63,12 +63,13 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
-                 min_time=30):
+                 max_time=1800, group=None):
         super().__init__()
         self.id = id
-        self.min_time = min_time
+        self.max_time = max_time
         self.start, self.finish = None, None
         self.name = name
+        self.group = group
         self.agents = agents
         self.adversary = adversary
         self.jitter = jitter
@@ -150,7 +151,7 @@ class Operation(BaseObject):
 
     async def should_close(self):
         running_seconds = (datetime.now() - self.start).total_seconds()
-        if running_seconds < self.min_time:
+        if running_seconds < self.max_time:
             return False
         self.state = self.states['OUT_OF_TIME']
         return True

@@ -439,7 +439,7 @@ function buildOperationObject() {
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "obfuscator":document.getElementById("queueObfuscated").value,
         "jitter":jitter,
-        "min_time": document.getElementById("queueMinTime").value || 30,
+        "max_time": document.getElementById("queueMaxTime").value || 1800,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
     };
@@ -1146,9 +1146,8 @@ function addToPhase() {
 }
 
 function checkOpformValid(){
-    validateFormState(($('#queueName').val()) && ($('#queueGroup').prop('selectedIndex') !== 0),
-        '#opBtn');
-    validateFormState(($('#queueName').val()) && ($('#queueGroup').prop('selectedIndex') !== 0) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
+    validateFormState(($('#queueName').val()), '#opBtn');
+    validateFormState(($('#queueName').val()) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
         '#scheduleBtn');
 }
 
