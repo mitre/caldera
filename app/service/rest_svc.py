@@ -179,16 +179,17 @@ class RestService(BaseService):
 
     async def _build_operation_object(self, data):
         name = data.pop('name')
+        group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
-        agents = await self.get_service('data_svc').locate('agents', match=dict(group=data.pop('group')))
+        agents = await self._construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
 
-        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
+        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         min_time=int(data.pop('min_time')))
+                         max_time=int(data.pop('max_time')))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0
@@ -239,3 +240,8 @@ class RestService(BaseService):
         if adv:
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={'1': []})
+
+    async def _construct_agents_for_group(self, group):
+        if group:
+            return await self.get_service('data_svc').locate('agents', match=dict(group=group))
+        return await self.get_service('data_svc').locate('agents')
