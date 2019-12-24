@@ -91,16 +91,16 @@ class AppService(BaseService):
             operation.adversary = await self._adjust_adversary_phases(operation)
 
             for phase in operation.adversary.phases:
-                if not await operation.should_close():
+                if not await operation.closeable():
                     await self._update_operation(operation)
                     await planner.execute(phase)
                     if planner.stopping_condition_met:
                         break
                     await operation.wait_for_phase_completion()
                 operation.phase = phase
-            while not await operation.should_close():
-                await asyncio.sleep(3)
             await self._cleanup_operation(operation)
+            while not await operation.closeable():
+                await asyncio.sleep(5)
             await operation.close()
             await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
