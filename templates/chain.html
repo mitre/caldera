@@ -58,7 +58,8 @@
       <center>
 
         <div id="intro" class="home-box">
-            <div class="topleft duk-icon"><img onclick="removeIntro()" src="/gui/img/x.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('intro')" src="/gui/img/x.png"></div>
+            <div class="topright duk-icon"><img onclick="openDukHelp()" src="/gui/img/duk.png"></div>
             <h1 id="big-head" class="big-head">CALDERA</h1>
             <hr>
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
@@ -363,8 +364,8 @@
                         {% endfor %}
                       </select>
                       <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="0" selected>Block untrusted agents</option>
-                        <option value="1">Allow untrusted agents</option>
+                        <option value="0">Block untrusted agents</option>
+                        <option value="1" selected>Allow untrusted agents</option>
                       </select>
                       <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Run autonomously</option>
@@ -381,7 +382,6 @@
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
                       <input name="minTime" id="queueMinTime" class="queueOption" placeholder="Min run time (sec)" style="opacity:0.5;" disabled="true"/>
-                      <input name="maxTime" id="queueMaxTime" class="queueOption" placeholder="Max run time (sec)" style="opacity:0.5;" disabled="true"/>
                   </div>
 
                   <div id="schedules" class="column sidebar-cutout" style="border-bottom: 1px solid white">

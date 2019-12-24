@@ -1,11 +1,6 @@
 $.ajaxSetup({
     cache: false
 });
-$(document).ready(function () {
-    if(localStorage.getItem('intro') !== '0') {
-        $('#intro').show();
-    }
-});
 
 /** SECTIONS **/
 
@@ -23,11 +18,6 @@ function showHide(show, hide) {
 
 function removeSection(identifier){
     $('#'+identifier).hide();
-}
-
-function removeIntro(){
-    $('#intro').remove();
-    localStorage.setItem('intro', '0');
 }
 
 function toggleSidebar(identifier) {
@@ -449,8 +439,7 @@ function buildOperationObject() {
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "obfuscator":document.getElementById("queueObfuscated").value,
         "jitter":jitter,
-        "min_time": document.getElementById("queueMinTime").value || 15,
-        "max_time": document.getElementById("queueMaxTime").value || 3600,
+        "min_time": document.getElementById("queueMinTime").value || 30,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value
     };
@@ -1353,6 +1342,17 @@ function openDuk7(){
         'local.host.name and a value of domaincontroller.acme. If during the course of an operation an ability '+
         'parsers out a fact that matches the stopping condition, the planner will stop generating links and exit '+
         'the operation. ');
+}
+
+function openDukHelp(){
+    document.getElementById("duk-modal").style.display="block";
+    $('#duk-text').html('<h4>Welcome. Here are a few instructions to get you started:</h4>' +
+        '<ol>' +
+        '<li>Start by deploying an agent on any compromised host. Sandcat (54ndc47) is our default agent.</li>' +
+        '<li>Review the pre-built adversaries and consider building your own</li>' +
+        '<li>Start a new operation, either with an adversary or without. If the latter, select potential links while it is running</li>' +
+        '<li>Review the full documentation via the <i>Docs</i> tab to learn more about any of the many options you see.</li>' +
+        '</ol>');
 }
 
 /** HUMAN-IN-LOOP */
