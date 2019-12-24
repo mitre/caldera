@@ -149,12 +149,12 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def should_close(self):
+    async def closeable(self):
         running_seconds = (datetime.now() - self.start).total_seconds()
-        if running_seconds < self.max_time and len(self.adversary.phases) > 0:
-            return False
-        self.state = self.states['OUT_OF_TIME']
-        return True
+        if running_seconds > self.max_time:
+            self.state = self.states['OUT_OF_TIME']
+            return True
+        return False
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
