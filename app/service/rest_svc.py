@@ -5,7 +5,7 @@ import os
 import pathlib
 from collections import defaultdict
 from datetime import time
-import uuid 
+import uuid
 
 import yaml
 
