@@ -572,17 +572,37 @@ function fetchPotentialLinks() {
 }
 
 function potentialLinksCallback(data){
+    tacticFilter = $('#potential-link-tactic-filter option:selected').attr('value')
+    techniqueFilter = $('#potential-link-technique-filter option:selected').attr('value')
     for(let i=0; i<data.links.length; i++){
         let link = data.links[i];
         let template = $("#potential-link-template").clone();
         let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+        if(!(tacticFilter === '-- any --' || typeof tacticFilter === 'undefined') && !(tacticFilter === ("tactic-" + link.ability.tactic)))
+            continue;
+        if(!(techniqueFilter === '-- any --' || typeof techniqueFilter === 'undefined') && !(techniqueFilter === ("technique-"+link.ability.technique_id)))
+            continue;
         template.attr('id', uniqueLinkId);
         template.find('#potential-name').html(link.ability.name);
+        template.find('#potential-description').html(link.ability.description);
+        template.find('#potential-technique').html(link.ability.technique_id+' - '+link.ability.technique_name+' ('+link.ability.tactic+')')
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
         template.find('#potential-score').html(link.score);
         template.data('link', link);
         template.show();
+        if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
+            $('#potential-link-tactic-filter').append($("<option></option>")
+                .attr("value", 'tactic-'+link.ability.tactic)
+                .text(link.ability.tactic)
+            );
+        }
+        if($("#potential-link-technique-filter option[value='technique-"+link.ability.technique_id+"'").length === 0){
+            $('#potential-link-technique-filter').append($("<option></option>")
+                .attr("value", 'technique-'+link.ability.technique_id)
+                .text(link.ability.technique_id + ' - ' + link.ability.technique_name)
+            );
+        }
         $('#potential-links').append(template);
     }
     updatePotentialLinkCount();
