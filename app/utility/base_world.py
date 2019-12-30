@@ -1,10 +1,11 @@
+import binascii
+import string
 from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
 from random import randint, choice
 
 import yaml
-import string
 
 from app.utility.logger import Logger
 
@@ -67,3 +68,11 @@ class BaseWorld:
     @staticmethod
     def generate_name(size=16):
         return ''.join(choice(string.ascii_lowercase) for _ in range(size))
+
+    @staticmethod
+    def is_base64(s):
+        try:
+            b64decode(s, validate=True)
+            return True
+        except binascii.Error:
+            return False
