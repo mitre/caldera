@@ -34,6 +34,7 @@
         <a onclick="viewSection('sources')">sources</a>
         <a onclick="viewSection('planners')">planners</a>
         <a onclick="viewSection('c2')">c2</a>
+        <a onclick="viewSection('obfuscators')">obfuscators</a>
     </div>
   </div>
   <div class="subnav-right">
@@ -295,6 +296,23 @@
             <div class="column planner-header" style="flex:75%;text-align: left">
               <h3 id="c2-name"></h3>
               <p id="c2-description"></p>
+            </div>
+          </div>
+        </div>
+
+        <div id="obfuscators" class="section-profile" style="display: none">
+          <div class="advanced row">
+            <div class="topleft duk-icon"><img onclick="removeSection('obfuscators')" src="/gui/img/x.png"></div>
+            <div class="column planner-header" style="flex:100%;text-align: left">
+                <table class="obfuscation-table" border=1 frame=void rules=rows>
+                    {% for o in obfuscators %}
+                        <tr>
+                            <td><img src="/gui/img/obfuscation.png"/></td>
+                            <td><h4>{{ o.name }}</h4></td>
+                            <td>{{ o.description }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
             </div>
           </div>
         </div>

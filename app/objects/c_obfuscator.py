@@ -12,11 +12,12 @@ class Obfuscator(BaseObject):
 
     @property
     def display(self):
-        return dict(name=self.name)
+        return dict(name=self.name, description=self.description)
 
-    def __init__(self, name, module):
+    def __init__(self, name, description, module):
         super().__init__()
         self.name = name
+        self.description = description
         self.module = module
 
     def store(self, ram):
