@@ -688,6 +688,14 @@
                         <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
                             <option disabled selected>Choose an agent</option>
                         </select>
+                        <select id="potential-link-tactic-filter" onchange="updateTacticFilter('potential-modal');">
+                            <option disabled selected>Choose a tactic</option>
+                            <option selected value="-- any --">-- any --</option>
+                        </select>
+                        <select id="potential-link-technique-filter" onchange="updateTechniqueFilter('potential-modal');">
+                            <option disabled selected>Choose an technique</option>
+                            <option selected value="-- any --">-- any --</option>
+                        </select>
                         <h2 id="potential-links-count"></h2>
                         <ul id="potential-links"></ul>
                     </div>
@@ -764,6 +772,14 @@
                             <td style="width:10%"><b>name:</b></td>
                             <td><p id="potential-name"></td>
                             <td style="width:10%"><button class="button-success potential-button" onclick="addLink($(this))">add</button></td>
+                        </tr>
+                        <!-- <tr>
+                            <td style="width:10%"><b>tactic:</b></td>
+                            <td><p id="potential-tactic"></td>
+                        </tr>-->
+                        <tr>
+                            <td style="width:10%"><b>technique:</b></td>
+                            <td><p id="potential-technique"></td>
                         </tr>
                         <tr>
                             <td style="width:10%"><b>description:</b></td>
