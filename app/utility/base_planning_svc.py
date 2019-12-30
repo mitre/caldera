@@ -97,7 +97,7 @@ class BasePlanningService(BaseService):
         o = (await self.get_service('data_svc').locate('obfuscators', match=dict(name=obfuscator)))[0]
         mod = o.load(agent)
         for l in links:
-            l.command = self.encode_string(mod.run(l.command))
+            l.command = self.encode_string(mod.run(l))
         return links
 
     """ PRIVATE """
