@@ -9,3 +9,4 @@ class BaseObfuscator(BaseWorld):
         if agent.platform in supported_platforms and link.ability.executor in agent.executors:
             o = self.__getattribute__(link.ability.executor)
             return o(link, **kwargs)
+        return self.decode_bytes(link.command)
