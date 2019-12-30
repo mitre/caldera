@@ -351,3 +351,12 @@ select {
   top: -1px;
   *overflow: hidden;
 }
+.obfuscation-table {
+    color: white;
+    width: 100%;
+    border-spacing: 15px;
+}
+.obfuscation-table img {
+    height: 30px;
+    margin: 5px;
+}
