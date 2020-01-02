@@ -28,6 +28,10 @@ class Link(BaseObject):
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
     @property
+    def pin(self):
+        return self.decide
+
+    @property
     def states(self):
         return dict(UNTRUSTED=-4,
                     EXECUTE=-3,
