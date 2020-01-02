@@ -37,6 +37,7 @@ async def start_server(config, services):
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
+    app.router.add_route('POST', '/generic', services.get('rest_svc').generic_endpoint)
 
     runner = web.AppRunner(app)
     await runner.setup()
