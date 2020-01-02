@@ -74,7 +74,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     @property
-    def report(self, redacted):
+    def report(self, redacted=False):
         report = dict(name=self.name, host_group=[a.display for a in self.agents],
                       start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                       steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
