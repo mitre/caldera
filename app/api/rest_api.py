@@ -165,3 +165,11 @@ class RestApi:
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])
         return web.Response()
+
+    async def internals(self, request):
+        options = dict(
+            pin=lambda d: self.rest_svc.get_link_pin(d)
+        )
+        data = dict(await request.json())
+        resp = await options[request.headers.get('property')](data)
+        return web.json_response(resp)

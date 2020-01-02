@@ -24,7 +24,6 @@ class RestService(BaseService):
     def __init__(self):
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
-        self.generic_funcs = dict()
 
     async def persist_adversary(self, data):
         """
@@ -180,15 +179,11 @@ class RestService(BaseService):
         operation[0].state = state
         self.log.debug('changing operation=%s state to %s' % (op_id, state))
 
-    async def register_generic_func(self, name, func):
-        self.generic_funcs[name] = func
-
-    async def generic_endpoint(self, request):
-        await self.get_service('auth_svc').check_permissions(request)
-        func = request.headers.get('function')
-        data = dict(await request.json())
-        resp = await self.generic_funcs[func](data)
-        return web.json_response(resp)
+    async def get_link_pin(self, json_data):
+        link = await self.get_service('app_svc').find_link(json_data['link'])
+        if link and link.collect and not link.finish:
+            return link.pin
+        return 'Invalid'
 
     """ PRIVATE """
 
