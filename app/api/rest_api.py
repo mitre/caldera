@@ -28,8 +28,8 @@ class RestApi:
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}',
-                                                  self.rest_update_operation)
+        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
+        self.app_svc.application.router.add_route('POST', '/internals', self.internals)
 
     @template('login.html', status=401)
     async def login(self, request):
