@@ -25,8 +25,7 @@ class Link(BaseObject):
                                decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
-                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
-                               extra_info=self.extra_info))
+                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
     @property
     def states(self):
