@@ -9,6 +9,45 @@ from random import randint
 from app.utility.base_object import BaseObject
 
 
+REDACTED = '**REDACTED**'
+
+
+def redact_report(report):
+    redacted = copy.deepcopy(report)
+    # host_group
+    for agent in redacted.get('host_group', []):
+        agent['group'] = REDACTED
+        agent['server'] = REDACTED
+        agent['location'] = REDACTED
+        agent['display_name'] = REDACTED
+        agent['host'] = REDACTED
+    # steps
+    steps = redacted.get('steps', dict())
+    for agentname, agent in steps.items():
+        for step in agent['steps']:
+            step['description'] = REDACTED
+            step['name'] = REDACTED
+            step['output'] = REDACTED
+    # adversary
+    redacted['adversary']['name'] = REDACTED
+    redacted['adversary']['description'] = REDACTED
+    for phase in redacted['adversary']['phases'].values():
+        for step in phase:
+            step['name'] = REDACTED
+            step['description'] = REDACTED
+    # facts
+    for fact in redacted.get('facts', []):
+        fact['unique'] = REDACTED
+        fact['value'] = REDACTED
+    # skipped_abilities
+    for s in redacted.get('skipped_abilities', []):
+        for agentname, ability_list in s.items():
+            for ability in ability_list:
+                ability['ability_name'] = REDACTED
+
+    return redacted
+
+
 class Operation(BaseObject):
 
     @property
@@ -35,7 +74,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     @property
-    def report(self):
+    def report(self, redacted):
         report = dict(name=self.name, host_group=[a.display for a in self.agents],
                       start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                       steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
@@ -60,7 +99,10 @@ class Operation(BaseObject):
             agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
         report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
-        return report
+        if redacted:
+            return redact_report(report)
+        else:
+            return report
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
@@ -108,41 +150,6 @@ class Operation(BaseObject):
 
     def all_relationships(self):
         return [r for lnk in self.chain for r in lnk.relationships]
-
-    def redacted_report(self):
-        redacted = copy.deepcopy(self.report)
-        # host_group
-        for agent in redacted.get('host_group', []):
-            agent['group'] = '**REDACTED**'
-            agent['server'] = '**REDACTED**'
-            agent['location'] = '**REDACTED**'
-            agent['display_name'] = '**REDACTED**'
-            agent['host'] = '**REDACTED**'
-        # steps
-        steps = redacted.get('steps', dict())
-        for agentname, agent in steps.items():
-            for step in agent['steps']:
-                step['description'] = '**REDACTED**'
-                step['name'] = '**REDACTED**'
-                step['output'] = '**REDACTED**'
-        # adversary
-        redacted['adversary']['name'] = '**REDACTED**'
-        redacted['adversary']['description'] = '**REDACTED**'
-        for phase in redacted['adversary']['phases'].values():
-            for step in phase:
-                step['name'] = '**REDACTED**'
-                step['description'] = '**REDACTED**'
-        # facts
-        for fact in redacted.get('facts', []):
-            fact['unique'] = '**REDACTED**'
-            fact['value'] = '**REDACTED**'
-        # skipped_abilities
-        for s in redacted.get('skipped_abilities', []):
-            for agentname, ability_list in s.items():
-                for ability in ability_list:
-                    ability['ability_name'] = '**REDACTED**'
-
-        return redacted
 
     async def apply(self, link):
         while self.state != self.states['RUNNING']:
