@@ -13,7 +13,7 @@ class Link(BaseObject):
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
         link = cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
-        link.extra_info = json['extra_info']
+        link.id = json['id']
         return link
 
     @property
@@ -63,7 +63,6 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
-        self.extra_info = dict()
 
     async def parse(self, operation):
         try:
@@ -76,8 +75,8 @@ class Link(BaseObject):
         except Exception as e:
             print(e)
 
-    def add_extra_info(self, key, value):
-        self.extra_info[key] = value
+    def apply_id(self):
+        self.id = self.generate_number()
 
     """ PRIVATE """
 

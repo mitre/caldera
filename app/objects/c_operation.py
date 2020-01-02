@@ -97,7 +97,6 @@ class Operation(BaseObject):
         self.start = datetime.now()
 
     def add_link(self, link):
-        link.id = len(self.chain) + 1
         self.chain.append(link)
 
     def all_facts(self):
