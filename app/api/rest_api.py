@@ -165,3 +165,4 @@ class RestApi:
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])
         return web.Response()
+

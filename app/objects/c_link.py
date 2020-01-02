@@ -12,7 +12,9 @@ class Link(BaseObject):
     @classmethod
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
-        return cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
+        link = cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
+        link.extra_info = json['extra_info']
+        return link
 
     @property
     def unique(self):
@@ -25,7 +27,8 @@ class Link(BaseObject):
                                decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
-                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
+                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
+                               extra_info=self.extra_info))
 
     @property
     def states(self):
@@ -60,6 +63,7 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
+        self.extra_info = dict()
 
     async def parse(self, operation):
         try:
@@ -71,6 +75,9 @@ class Link(BaseObject):
                 await self._create_relationships(relationships, operation)
         except Exception as e:
             print(e)
+
+    def add_extra_info(self, key, value):
+        self.extra_info[key] = value
 
     """ PRIVATE """
 
