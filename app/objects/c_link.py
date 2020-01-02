@@ -28,6 +28,10 @@ class Link(BaseObject):
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
 
     @property
+    def pin(self):
+        return self.decide
+
+    @property
     def states(self):
         return dict(UNTRUSTED=-4,
                     EXECUTE=-3,
@@ -42,9 +46,9 @@ class Link(BaseObject):
         except Exception:
             return None
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None):
         super().__init__()
-        self.id = None
+        self.id = id
         self.command = command
         self.operation = operation
         self.paw = paw
@@ -71,6 +75,9 @@ class Link(BaseObject):
                 await self._create_relationships(relationships, operation)
         except Exception as e:
             print(e)
+
+    def apply_id(self):
+        self.id = self.generate_number()
 
     """ PRIVATE """
 

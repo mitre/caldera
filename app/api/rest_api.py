@@ -28,8 +28,8 @@ class RestApi:
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}',
-                                                  self.rest_update_operation)
+        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
+        self.app_svc.application.router.add_route('POST', '/internals', self.internals)
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -165,3 +165,11 @@ class RestApi:
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])
         return web.Response()
+
+    async def internals(self, request):
+        options = dict(
+            pin=lambda d: self.rest_svc.get_link_pin(d)
+        )
+        data = dict(await request.json())
+        resp = await options[request.headers.get('property')](data)
+        return web.json_response(resp)
