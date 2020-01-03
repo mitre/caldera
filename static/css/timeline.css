@@ -1,0 +1,159 @@
+a,
+span,
+h1,
+h2,
+h3,
+span {
+  text-decoration: none;
+}
+
+a:hover {
+  color: #777;
+}
+.member-title {
+  font-family: 'Raleway', sans-serif;
+  letter-spacing: 1.5px;
+  color: var(--font-color);
+  font-weight: 100;
+  font-size: 2.4em;
+  margin: 0;
+  border-bottom: 1px solid #777;
+  padding-bottom: 0.2em;
+}
+#content {
+  margin-top: 50px;
+  text-align: center;
+}
+.timeline {
+  border-left: 0.25em solid var(--theme-color);
+  background: rgba(255, 255, 255, 0.1);
+  margin: 2em auto;
+  line-height: 1.4em;
+  padding: 1em;
+  padding-left: 3em;
+  list-style: none;
+  text-align: left;
+  margin-left: 10em;
+  margin-right: 3em;
+  border-radius: 0.5em;
+  min-width: 22em;
+}
+.event {
+  min-width: 20em;
+  width: 90%;
+  vertical-align: middle;
+  box-sizing: border-box;
+  position: relative;
+}
+.timeline .event:before,
+.timeline .event:after {
+  position: absolute;
+  display: block;
+  top: 1em;
+}
+.timeline .event:before {
+  left: -15em;
+  color: var(--font-color);
+  content: attr(data-date);
+  text-align: right;
+  font-weight: 100;
+  font-size: 0.9em;
+  min-width: 9em;
+}
+.timeline .event:after {
+  left: -3.5em;
+  background: var(--primary-background);
+  border-radius: 50%;
+  height: 0.75em;
+  width: 0.75em;
+  content: "";
+}
+.timeline .queued:after {
+  box-shadow: 0 0 0 0.2em grey;
+}
+.timeline .failure:after {
+  box-shadow: 0 0 0 0.2em red;
+}
+.timeline .success:after {
+  box-shadow: 0 0 0 0.2em rgb(28, 202, 0);
+}
+.timeline .timeout:after {
+  box-shadow: 0 0 0 0.2em cornflowerblue;
+}
+.timeline .collected:after {
+  box-shadow: 0 0 0 0.2em darkgoldenrod;
+}
+.timeline .untrusted:after {
+  box-shadow: 0 0 0 0.2em white;
+}
+.timeline .discarded:after {}
+
+.timeline .event .member-location,
+.timeline .event .member-parameters {
+  display: none;
+}
+.timeline .event:last-of-type .member-location,
+.timeline .event:last-of-type .member-parameters {
+  display: block;
+}
+.member-infos {
+  padding: 10px;
+  text-align: left;
+  position: relative;
+}
+.member-infos > h1 {
+  font-weight: bold;
+  font-size: 1.4em;
+}
+.member-location a:before {
+  margin-right: 5px;
+}
+.member-location {
+  text-indent: 2px;
+}
+.member-result {
+    color: var(--font-color);
+    font-size: 13px;
+    word-break: break-word;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+  font-size: 13px;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: 105%;
+  font-size: 13px;
+}
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+
+.cleanup ul{
+  padding-left: 0;
+}
+.cleanup .event:after {
+  display: none;
+}
+
+#cleanup-title p {
+  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 300;
+}
+
+.cleanup .event:before {
+  content: attr(data-host-name);
+}

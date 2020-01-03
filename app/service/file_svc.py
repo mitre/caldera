@@ -3,14 +3,13 @@ import uuid
 
 from aiohttp import web
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file
 
 
 class FileSvc(BaseService):
 
-    def __init__(self, plugins, exfil_dir):
-        self.plugins = plugins
+    def __init__(self, exfil_dir):
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
@@ -23,32 +22,35 @@ class FileSvc(BaseService):
         :return: a multipart file via HTTP
         """
         try:
-            payload = request.headers.get('file')
+            payload = display_name = request.headers.get('file')
             if payload in self.special_payloads:
-                payload = await self.special_payloads[payload](request.headers)
+                payload, display_name = await self.special_payloads[payload](request.headers)
             payload, content = await self.read_file(payload)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % payload)])
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
             return web.Response(body=content, headers=headers)
         except FileNotFoundError:
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload(self, request):
+    async def upload_exfil(self, request):
+        exfil_dir = await self._create_exfil_sub_directory(request.headers)
+        return await self.save_multipart_file_upload(request, exfil_dir)
+
+    async def save_multipart_file_upload(self, request, target_dir):
         """
         Accept a multipart file via HTTP and save it to the server
         :param request:
-        :return: None
+        :param target_dir: The path of the directory to save the uploaded file to.
         """
         try:
             reader = await request.multipart()
-            exfil_dir = await self._create_exfil_sub_directory(request.headers)
             while True:
                 field = await reader.next()
                 if not field:
                     break
                 filename = field.filename
-                with open(os.path.join(exfil_dir, filename), 'wb') as f:
+                with open(os.path.join(target_dir, filename), 'wb') as f:
                     while True:
                         chunk = await field.read_chunk()
                         if not chunk:
@@ -66,25 +68,29 @@ class FileSvc(BaseService):
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        for plugin in self.plugins:
-            file_path = await self._walk_file_path('plugins/%s/%s' % (plugin, location), name)
-            if file_path:
-                return plugin, file_path
+        for plugin in await self.data_svc.locate('plugins', match=dict(enabled=True)):
+            for subd in ['', 'data']:
+                file_path = await self._walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
+                if file_path:
+                    return plugin.name, file_path
+        file_path = await self._walk_file_path(os.path.join('data'), name)
+        if file_path:
+            return None, file_path
         return None, await self._walk_file_path('%s' % location, name)
 
-    async def read_file(self, name):
+    async def read_file(self, name, location='payloads'):
         """
         Open a file and read the contents
         :param name:
+        :param location:
         :return: a tuple (file_path, contents)
         """
-        _, file_name = await self.find_file_path(name, location='payloads')
+        _, file_name = await self.find_file_path(name, location=location)
         if file_name:
             with open(file_name, 'rb') as file_stream:
+                if file_name.endswith('.xored'):
+                    return name, xor_file(file_name)
                 return name, file_stream.read()
-        _, file_name = await self.find_file_path('%s.xored' % (name,), location='payloads')
-        if file_name:
-            return name, xor_file(file_name)
         raise FileNotFoundError
 
     async def add_special_payload(self, name, func):
@@ -97,28 +103,36 @@ class FileSvc(BaseService):
         self.special_payloads[name] = func
 
     @staticmethod
-    async def compile_go(platform, output, src_fle, ldflags='-s -w'):
+    async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode=''):
         """
         Dynamically compile a go file
         :param platform:
         :param output:
         :param src_fle:
+        :param arch: Compile architecture selection (defaults to AMD64)
         :param ldflags: A string of ldflags to use when building the go executable
+        :param cflags: A string of CFLAGS to pass to the go compiler
+        :param buildmode: GO compiler buildmode flag
         :return:
         """
-        os.system('GOOS=%s go build -o %s -ldflags="%s" %s' % (platform, output, ldflags, src_fle))
+        os.system(
+            'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
+                                                                           ldflags, src_fle)
+        )
 
     """ PRIVATE """
 
-    async def _walk_file_path(self, path, target):
+    @staticmethod
+    async def _walk_file_path(path, target):
         for root, dirs, files in os.walk(path):
             if target in files:
-                self.log.debug('Located %s' % target)
                 return os.path.join(root, target)
+            if '%s.xored' % target in files:
+                return os.path.join(root, '%s.xored' % target)
         return None
 
     async def _create_exfil_sub_directory(self, headers):
-        dir_name = headers.get('X-Request-ID', str(uuid.uuid4()))
+        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
             os.makedirs(path)

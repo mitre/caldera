@@ -1,117 +1,86 @@
 import argparse
 import asyncio
 import logging
-import os
+import pathlib
 import sys
-from importlib import import_module
 
-import aiohttp_jinja2
-import jinja2
 import yaml
 from aiohttp import web
-from subprocess import Popen, DEVNULL
 
-from app.database.core_dao import CoreDao
-from app.service.agent_svc import AgentService
+from app.api.rest_api import RestApi
+from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
+from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
-from app.service.operation_svc import OperationService
-from app.service.parsing_svc import ParsingService
 from app.service.planning_svc import PlanningService
-from app.service.plugin_svc import PluginService
-from app.service.reporting_svc import ReportingService
-
-
-async def background_tasks(app):
-    app.loop.create_task(operation_svc.resume())
-    app.loop.create_task(data_svc.load_data(directory='data'))
-    app.loop.create_task(agent_svc.start_sniffer_untrusted_agents())
-
-
-def build_plugins(plugs):
-    modules = []
-    for plug in plugs if plugs else []:
-        if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-            print('Problem validating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
-            exit(0)
-        logging.debug('Loading plugin: %s' % plug)
-        try:
-            if os.path.isfile('plugins/%s/requirements.txt' % plug):
-                Popen(['pip', 'install', '-r', 'plugins/%s/requirements.txt' % plug], stdout=DEVNULL)
-        except Exception:
-            print('Problem installing PIP requirements automatically. Try doing this manually.')
-        modules.append(import_module('plugins.%s.hook' % plug))
-    return modules
-
-
-async def attach_plugins(app, services):
-    for pm in services.get('plugin_svc').get_plugins():
-        plugin = getattr(pm, 'initialize')
-        await plugin(app, services)
-    templates = ['plugins/%s/templates' % p.name.lower() for p in services.get('plugin_svc').get_plugins()]
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(templates))
-
-
-@asyncio.coroutine
-async def init(address, port, services, users):
-    app = web.Application()
-    await auth_svc.apply(app, users)
-    app.on_startup.append(background_tasks)
-
-    app.router.add_route('*', '/file/download', services.get('file_svc').download)
-    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload)
-
-    await services.get('data_svc').load_data()
-    await attach_plugins(app, services)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    await web.TCPSite(runner, address, port).start()
+from app.service.rest_svc import RestService
 
 
 def set_logging_state():
-    state = logging.FATAL
+    logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
+    logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
+    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
+    logging.getLogger('asyncio').setLevel(logging.FATAL)
     if cfg['debug']:
-        state = logging.ERROR
-    logging.getLogger('aiohttp.access').setLevel(state)
-    logging.getLogger('aiohttp_session').setLevel(state)
-    logging.getLogger('aiohttp.server').setLevel(state)
-    logging.getLogger('asyncio').setLevel(state)
-    logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
+        logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+    logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
+    logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
 
-def main(services, host, port, users):
+async def start_server(config, services):
+    app = services.get('app_svc').application
+    await auth_svc.apply(app, config['users'])
+
+    app.router.add_route('*', '/file/download', services.get('file_svc').download)
+    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    await web.TCPSite(runner, config['host'], config['port']).start()
+
+
+def main(services, config):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(init(host, port, services, users))
+    loop.run_until_complete(data_svc.restore_state())
+    loop.run_until_complete(RestApi(services).enable())
+    loop.run_until_complete(app_svc.load_plugins())
+    loop.run_until_complete(data_svc.load_data(directory='data'))
+    loop.create_task(app_svc.start_sniffer_untrusted_agents())
+    loop.create_task(app_svc.resume_operations())
+    loop.create_task(app_svc.run_scheduler())
+    loop.run_until_complete(start_server(config, services))
     try:
+        print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
-        pass
+        loop.run_until_complete(services.get('data_svc').save_state())
+        logging.debug('[!] shutting down server...good-bye')
 
 
 if __name__ == '__main__':
+    sys.path.append('')
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
+    parser.add_argument('--fresh', action='store_true', required=False, default=False,
+                        help='remove object_store on start')
     args = parser.parse_args()
-    with open('conf/%s.yml' % args.environment) as c:
+    config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
+    with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         set_logging_state()
-        sys.path.append('')
 
-        plugin_modules = build_plugins(cfg['plugins'])
-        plugin_svc = PluginService(plugin_modules)
-        data_svc = DataService(CoreDao('core.db', memory=cfg['memory']))
-        logging.debug('Using an in-memory database: %s' % cfg['memory'])
+        data_svc = DataService()
+        contact_svc = ContactService()
         planning_svc = PlanningService()
-        parsing_svc = ParsingService()
-        reporting_svc = ReportingService()
-        operation_svc = OperationService()
+        rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
+        file_svc = FileSvc(cfg['exfil_dir'])
+        app_svc = AppService(application=web.Application(), config=cfg)
 
-        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
-        file_svc = FileSvc([p.name.lower() for p in plugin_modules], cfg['exfil_dir'])
-        agent_svc = AgentService(untrusted_timer=cfg['untrusted_timer'])
-        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
-
-        logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
-        main(services=data_svc.get_services(), host=cfg['host'], port=cfg['port'], users=cfg['users'])
+        if args.fresh:
+            asyncio.get_event_loop().run_until_complete(data_svc.destroy())
+        main(config=cfg, services=app_svc.get_services())

@@ -1,15 +1,18 @@
+[![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
+
+**[Caldera](https://github.com/mitre/caldera)**|**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Terminal](https://github.com/mitre/terminal)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Caltack](https://github.com/mitre/caltack)**|**[Compass](https://github.com/mitre/compass)**
+:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
+[![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)|[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/caltack)|[![Build Status](https://travis-ci.com/mitre/compass.svg?branch=master)](https://travis-ci.com/mitre/compass)
+
 # CALDERA
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/).
 
 CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki).
 
-## Pardon our dust!
-CALDERA is an actively developed project, and many features are subject to change. In April 2019 we released a new version of CALDERA that made much of our old documentation obsolete, leading to some confusion over CALDERA's current capabilities. For more information on this change, please read our [CALDERA 2.0](https://github.com/mitre/caldera/wiki/CALDERA-2.0) page on the wiki.
-
 ## Requirements
 
-* Python 3.5.3+
+* Python 3.6.1+
 * Google Chrome is our only supported/tested browser
 
 Additionally, this code (the C2 server) is intended to be run on Linux or MacOS. 
@@ -19,16 +22,16 @@ The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
 ```
-git clone --branch x.x.x https://github.com/mitre/caldera.git --depth 1 --recursive
+git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
-> Clone the master branch - recursively - if you want to use bleeding-edge code
 
-From the root of this project, install the PIP requirements.
+Next install the PIP requirements
 ```
 pip install -r requirements.txt
 ```
+> Instead of running the step above, you could run the [auto-installer.sh](https://github.com/mitre/caldera/wiki/Auto-install-script) script to automatically configure CALDERA in our recommended way. 
 
-Then start the server.
+Finally, start the server
 ```
 python server.py
 ```
@@ -49,7 +52,7 @@ delivery command for your operating system. You should be welcomed by a log mess
 a "beacon" to CALDERA.
 
 Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into the [Chain plugin](https://github.com/mitre/caldera/wiki/Plugins-chain) and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Click into campaigns and use the "Operations" section to fire off an operation using the "nosy neighbor" 
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
@@ -63,15 +66,19 @@ the file extensions (.txt and .yml) the sensitive files are known to have. Then 
 
 Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
 
-Once confirmed, move to a browser at 127.0.0.1 and click into Chain mode. Click into the "facts"
-section and examine the available [fact sources](https://github.com/mitre/caldera/wiki/What-is-a-fact).
-Note that the _built-in_ fact source contains the file extensions that you will be hunting for.
+Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the hunter adversary and the group my_group.
 
-Click into the "operations" section and start a new operation. Choose the "hunter" adversary
-and ensure that you select the fact source of extensions. By feeding these facts into the operation, 
-the adversary profile chosen (file hunter) will utilize them inside its abilities.
+Did the operation find the sensitive files? How many? Can you determine how it determines which files are sensitive? Hint- you may want to read about [facts](https://github.com/mitre/caldera/wiki/What-is-a-fact).
 
-Did the operation find the sensitive files? How many? Can you determine what controls the number of files it looks for?
+### Mission #3: Terminal
+
+> You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
+
+Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file and restart the server.
+
+Once confirmed, move to a browser at 127.0.0.1 and click into the plugins -> terminal section and deploy a terminal agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
+
+Can you figure out how to deploy the reverse-shell by running a regular CALDERA operation?
 
 ## Developers
 

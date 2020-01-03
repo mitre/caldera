@@ -10,7 +10,7 @@ from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
 
-from app.service.base_service import BaseService
+from app.utility.base_service import BaseService
 
 
 class AuthService(BaseService):
@@ -73,6 +73,8 @@ class AuthService(BaseService):
         try:
             if request.headers.get('API_KEY') == self.api_key:
                 return True
+            elif 'localhost:' in request.host:
+                return True
             await check_permission(request, 'admin')
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
@@ -110,6 +112,3 @@ class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
         if not user:
             return False
         return permission in user.permissions
-
-
-
