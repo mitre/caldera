@@ -1,3 +1,5 @@
+import hashlib
+
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
@@ -12,7 +14,7 @@ class Link(BaseObject):
     @classmethod
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
-        return cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
+        return cls(id=json['id'], operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
 
     @property
     def unique(self):
@@ -29,7 +31,7 @@ class Link(BaseObject):
 
     @property
     def pin(self):
-        return self.decide
+        return hashlib.md5(self.decide.strftime('%Y-%m-%d %H:%M:%S').encode('utf-8')).hexdigest()
 
     @property
     def states(self):
