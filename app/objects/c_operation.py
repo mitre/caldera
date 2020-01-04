@@ -10,40 +10,77 @@ from app.utility.base_object import BaseObject
 
 
 REDACTED = '**REDACTED**'
+DEFAULT_REDACTED_FIELDS = {
+    'host_group[]': [
+        'group',
+        'server',
+        'location',
+        'display_name',
+        'host',
+    ],
+    'steps{}steps[]': [
+        'description',
+        'name',
+        'output',
+    ],
+    'adversary': [
+        'name',
+        'description',
+    ],
+    'adversary.phases{}[]': [
+        'name',
+        'description',
+    ],
+    'facts[]': [
+        'unique',
+        'value',
+    ],
+    'skipped_abilities[]{}[]': [
+        'ability_name',
+    ],
+}
 
 
-def redact_report(report):
+def redact_fields(obj, fields, redacted_string=REDACTED):
+    for field in fields:
+        if field in obj:
+            obj[field] = redacted_string
+
+
+def redact_parse(path_segmts, item_to_redact, fields_to_redact):
+    segment = path_segmts[0] if len(path_segmts) else ''
+
+    if len(path_segmts) <= 1:
+        if segment == '[]':
+            for item in item_to_redact:
+                redact_fields(item, fields_to_redact)
+        elif segment == '{}':
+            for key, value in item_to_redact.items():
+                redact_fields(value, fields_to_redact)
+        else:
+            redact_fields(item_to_redact, fields_to_redact)
+
+    else:
+        if segment == '[]':
+            for item in item_to_redact:
+                redact_parse(path_segmts[1:], item, fields_to_redact)
+        elif segment == '{}':
+            for key, value in item_to_redact.items():
+                redact_parse(path_segmts[1:], value, fields_to_redact)
+        elif segment == '.':
+            item = item_to_redact[path_segmts[1]]
+            redact_parse(path_segmts[2:], item, fields_to_redact)
+        else:
+            redact_parse(path_segmts[1:], item_to_redact[segment], fields_to_redact)
+
+
+def redact_report(report, fields=DEFAULT_REDACTED_FIELDS):
     redacted = copy.deepcopy(report)
-    # host_group
-    for agent in redacted.get('host_group', []):
-        agent['group'] = REDACTED
-        agent['server'] = REDACTED
-        agent['location'] = REDACTED
-        agent['display_name'] = REDACTED
-        agent['host'] = REDACTED
-    # steps
-    steps = redacted.get('steps', dict())
-    for agentname, agent in steps.items():
-        for step in agent['steps']:
-            step['description'] = REDACTED
-            step['name'] = REDACTED
-            step['output'] = REDACTED
-    # adversary
-    redacted['adversary']['name'] = REDACTED
-    redacted['adversary']['description'] = REDACTED
-    for phase in redacted['adversary']['phases'].values():
-        for step in phase:
-            step['name'] = REDACTED
-            step['description'] = REDACTED
-    # facts
-    for fact in redacted.get('facts', []):
-        fact['unique'] = REDACTED
-        fact['value'] = REDACTED
-    # skipped_abilities
-    for s in redacted.get('skipped_abilities', []):
-        for agentname, ability_list in s.items():
-            for ability in ability_list:
-                ability['ability_name'] = REDACTED
+
+    for path, properties in fields.items():
+        path_segmts = re.split(r'(\[\]|\{\}|\.)', path)
+        path_segmts = [value for value in path_segmts if value != '']
+        redact_parse(path_segmts[1:], redacted[path_segmts[0]], properties)
 
     return redacted
 
