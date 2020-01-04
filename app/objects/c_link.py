@@ -102,12 +102,23 @@ class Link(BaseObject):
             self.relationships.append(relationship)
 
     async def _save_fact(self, operation, trait):
-        if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
-
+        if all(trait):
+            if trait[0].startswith('host'):
+                if not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts(paw=self.paw)):
+                    self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+            else:
+                if not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
+                    self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+    
     async def _update_scores(self, operation, increment):
         for uf in self.used:
-            for found_fact in operation.all_facts():
-                if found_fact.unique == uf.unique:
-                    found_fact.score += increment
-                    break
+            if uf.trait.startswith('host'):
+                for found_fact in operation.all_facts(paw=self.paw):
+                    if found_fact.unique == uf.unique:
+                        found_fact.score += increment
+                        break
+            else:
+                for found_fact in operation.all_facts():
+                    if found_fact.unique == uf.unique:
+                        found_fact.score += increment
+                        break
