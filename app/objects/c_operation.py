@@ -73,8 +73,7 @@ class Operation(BaseObject):
                     OUT_OF_TIME='out_of_time',
                     FINISHED='finished')
 
-    @property
-    def report(self, redacted=False):
+    def get_report(self, redacted=False):
         report = dict(name=self.name, host_group=[a.display for a in self.agents],
                       start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                       steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
@@ -103,6 +102,7 @@ class Operation(BaseObject):
             return redact_report(report)
         else:
             return report
+    report = property(get_report)
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
