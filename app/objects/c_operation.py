@@ -142,10 +142,15 @@ class Operation(BaseObject):
     def add_link(self, link):
         self.chain.append(link)
 
-    def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source else []
-        learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
-        return seeded_facts + learned_facts
+    def all_facts(self, paw=None):
+        if paw is not None:
+            agent_links = [l for l in self.chain if l.paw == paw] 
+            agent_facts = [f for lnk in agent_links for f in lnk.facts if f.score > 0]
+            return agent_facts
+        else:
+            seeded_facts = [f for f in self.source.facts] if self.source else []
+            learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
+            return seeded_facts + learned_facts
 
     def all_relationships(self):
         return [r for lnk in self.chain for r in lnk.relationships]
