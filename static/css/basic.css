@@ -89,6 +89,9 @@
 .highlight {
   background-color: yellow;
 }
+.delete-agent {
+    cursor: pointer;
+}
 .ability-table td {
     width: 30%;
     vertical-align: middle;
@@ -176,6 +179,12 @@
 .op-dets p {
     text-transform: uppercase;
 }
+.op-potential-links {
+    float: right;
+    font-size: 13px;
+    margin-right: 5%;
+    cursor: pointer;
+}
 .profile-tests {
     float: left;
     width: 100%;
@@ -252,6 +261,9 @@
     border-radius: 50%;
     margin-bottom: -5px;
 }
+.ability-attack label {
+    cursor: pointer;
+}
 .ability-viewer select {
     width: 30%;
 }
@@ -321,6 +333,14 @@
 }
 .phase-headers {
     text-align: left;
+}
+.ability-add {
+    float: right;
+    font-size: 13px;
+    cursor: pointer;
+}
+.ability-remove {
+    cursor: pointer;
 }
 .advGoal {
     font-size:36px;

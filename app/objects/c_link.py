@@ -1,3 +1,5 @@
+import hashlib
+
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
@@ -13,7 +15,7 @@ class Link(BaseObject):
     @classmethod
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
-        return cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
+        return cls(id=json['id'], operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
 
     @property
     def unique(self):
@@ -27,6 +29,10 @@ class Link(BaseObject):
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
+
+    @property
+    def pin(self):
+        return hashlib.md5(self.decide.strftime('%Y-%m-%d %H:%M:%S').encode('utf-8')).hexdigest()
 
     @property
     def states(self):
@@ -43,9 +49,9 @@ class Link(BaseObject):
         except Exception:
             return None
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None):
         super().__init__()
-        self.id = None
+        self.id = id
         self.command = command
         self.operation = operation
         self.paw = paw
@@ -73,6 +79,9 @@ class Link(BaseObject):
 
         except Exception as e:
             print(e)
+
+    def apply_id(self):
+        self.id = self.generate_number()
 
     """ PRIVATE """
 

@@ -70,6 +70,10 @@ class BaseWorld:
         return ''.join(choice(string.ascii_lowercase) for _ in range(size))
 
     @staticmethod
+    def generate_number(size=6):
+        return randint((10 ** (size - 1)), ((10 ** size) - 1))
+
+    @staticmethod
     def is_base64(s):
         try:
             b64decode(s, validate=True)

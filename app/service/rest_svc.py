@@ -3,17 +3,17 @@ import copy
 import glob
 import os
 import pathlib
+import uuid
 from collections import defaultdict
 from datetime import time
-import uuid
 
 import yaml
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
+from app.objects.c_fact import Fact
 from app.objects.c_link import Link
 from app.objects.c_operation import Operation
-from app.objects.c_fact import Fact
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService
 
@@ -177,6 +177,12 @@ class RestService(BaseService):
         operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
         operation[0].state = state
         self.log.debug('changing operation=%s state to %s' % (op_id, state))
+
+    async def get_link_pin(self, json_data):
+        link = await self.get_service('app_svc').find_link(json_data['link'])
+        if link and link.collect and not link.finish:
+            return link.pin
+        return 'Invalid'
 
     """ PRIVATE """
 

@@ -43,8 +43,7 @@ class BasePlanningService(BaseService):
             decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
-                agent_facts = await self._get_agent_facts(operation, agent.paw)
-                relevant_facts = await self._build_relevant_facts(variables, operation, agent_facts)
+                relevant_facts = await self._build_relevant_facts(variables, operation)
                 valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
                 for combo in list(itertools.product(*valid_facts)):
                     try:
@@ -54,11 +53,12 @@ class BasePlanningService(BaseService):
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
-                        copy_link.used.append(Fact(trait='paw', value=agent.paw))
+                        copy_link.apply_id()
                         links.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
+                link.apply_id()
                 link.command = self.encode_string(decoded_test)
         return links
 
@@ -121,7 +121,7 @@ class BasePlanningService(BaseService):
         return not fact['link_id']
 
     @staticmethod
-    async def _build_relevant_facts(variables, operation, agent_facts):
+    async def _build_relevant_facts(variables, operation):
         """
         Create a list of ([fact, value, score]) tuples for each variable/fact
         """
@@ -131,24 +131,9 @@ class BasePlanningService(BaseService):
         for v in variables:
             variable_facts = []
             for fact in [f for f in facts if f.trait == v]:
-                if fact.trait.startswith('host'):
-                    if fact.unique in agent_facts:
-                        variable_facts.append(fact)
-                else:
-                    variable_facts.append(fact)
+                variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
-
-    @staticmethod
-    async def _get_agent_facts(operation, paw):
-        """
-        get facts for given agent
-        """
-        agent_facts = []
-        for link in [l for l in operation.chain if l.paw == paw]:
-            for f in link.facts:
-                agent_facts.append(f.unique)
-        return agent_facts
 
     async def _do_enforcements(self, link, relationships):
         """
