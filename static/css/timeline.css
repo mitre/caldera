@@ -96,6 +96,12 @@ a:hover {
 .timeline .event:last-of-type .member-parameters {
   display: block;
 }
+.tactic-find-result {
+    font-size: 14px;
+    float: right;
+    display: none;
+    cursor: pointer;
+}
 .member-infos {
   padding: 10px;
   text-align: left;

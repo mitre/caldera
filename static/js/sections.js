@@ -524,7 +524,7 @@ function operationCallback(data){
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
             template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                 'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                title + '<span id="'+OPERATION.chain[i].id+'-rs" style="font-size:14px;float:right;display:none" ' +
+                title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right" onclick="discard(OPERATION.chain['+i+'].unique)">&#x274C;</span></div>');
@@ -763,7 +763,7 @@ function addPhase(number) {
     template.addClass("tempPhase");
     template.insertBefore('#dummy');
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
+    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
     phaseHeader.insertBefore("#tempPhase" + number);
     phaseHeader.show();
     return template;
@@ -1003,8 +1003,8 @@ function buildAbility(ability, phase){
     if(ability.payload.length > 0) {
        template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
     }
-    template.find('#ability-rm').html('<div id="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
-    template.find('#ability-remove').click(function() {
+    template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
+    template.find('.ability-remove').click(function() {
         removeAbility(ability.ability_id);
     });
 
