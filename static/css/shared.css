@@ -119,6 +119,7 @@ select {
     height: 25px;
     border: none;
     margin: 5px;
+    cursor: pointer;
 }
 .button-success {
     background-color: green;
@@ -135,6 +136,9 @@ select {
 .button-warn {
     background-color: darkred;
     pointer-events: auto;
+    cursor: pointer;
+}
+p[onclick] {
     cursor: pointer;
 }
 
@@ -276,6 +280,11 @@ select {
     padding: 10px 25px;
     text-align: left;
 }
+#optional,
+#schedules {
+    border-bottom: 1px solid white;
+    cursor: pointer;
+}
 
 /* notice bar */
 
@@ -308,6 +317,7 @@ select {
     background-color: white;
     border-radius: 50%;
     border: black 1px solid;
+    cursor: pointer;
 }
 .duk-modal {
     background-color: black;
