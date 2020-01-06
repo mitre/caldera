@@ -6,7 +6,6 @@ from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
-from app.objects.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 
 
@@ -76,7 +75,6 @@ class Link(BaseObject):
                 relationships = await self._parse_link_result(self.output, parser)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
-
         except Exception as e:
             print(e)
 
