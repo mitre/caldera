@@ -80,8 +80,3 @@ class BaseWorld:
             return True
         except binascii.Error:
             return False
-
-    @staticmethod
-    def apply_cipher(s):
-        shift = randint(-10, 10)
-        return ''.join([chr(ord(c)+shift) for c in s]), shift
