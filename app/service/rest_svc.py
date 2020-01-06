@@ -182,7 +182,7 @@ class RestService(BaseService):
         link = await self.get_service('app_svc').find_link(json_data['link'])
         if link and link.collect and not link.finish:
             return link.pin
-        return 'Invalid'
+        return 0
 
     """ PRIVATE """
 
