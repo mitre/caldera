@@ -4,6 +4,7 @@ from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
+from app.objects.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 
 
@@ -69,6 +70,7 @@ class Link(BaseObject):
                 relationships = await self._parse_link_result(self.output, parser)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
+
         except Exception as e:
             print(e)
 
@@ -96,7 +98,7 @@ class Link(BaseObject):
 
     async def _save_fact(self, operation, trait):
         if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1, collected_by=self.paw))
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:

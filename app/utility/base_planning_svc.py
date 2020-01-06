@@ -6,6 +6,7 @@ from base64 import b64decode
 
 from app.utility.base_service import BaseService
 from app.utility.rule_set import RuleSet
+from app.objects.c_fact import Fact
 
 
 class BasePlanningService(BaseService):
@@ -53,6 +54,7 @@ class BasePlanningService(BaseService):
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
+                        copy_link.used.append(Fact(trait='paw', value=agent.paw))
                         links.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
@@ -155,7 +157,7 @@ class BasePlanningService(BaseService):
         for req_inst in link.ability.requirements:
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(link.used, relationships):
+            if not requirement.enforce(link, relationships):
                 return False
         return True
 
