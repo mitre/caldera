@@ -180,7 +180,7 @@ class RestService(BaseService):
 
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
-        if link and link.collect and not link.finish:
+        if link and link.collect:# and not link.finish:
             return link.pin
         return 'Invalid'
 
