@@ -252,10 +252,11 @@ class DataService(BaseService):
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
             ps.append(Parser(module=module, parserconfigs=pcs))
         rs = []
-        for module in requirements:
-            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
-                        requirements[module]]
-            rs.append(Requirement(module=module, relationships=relation))
+        for requirement in requirements:
+            for module in requirement:
+                relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
+                            requirement[module]]
+                rs.append(Requirement(module=module, relationships=relation))
         return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,

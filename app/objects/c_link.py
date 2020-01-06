@@ -109,7 +109,7 @@ class Link(BaseObject):
 
     async def _save_fact(self, operation, trait):
         if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1, collected_by=self.paw))
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:
