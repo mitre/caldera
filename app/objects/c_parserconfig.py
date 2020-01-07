@@ -25,5 +25,5 @@ class ParserConfig(BaseObject):
         self._validate()
 
     def _validate(self):
-        if (self.edge is None) ^ (self.target is None):
-            raise ParserConfigException('Edge or Target provided without the other.')
+        if (self.edge is None) and (self.target is not None):
+            raise ParserConfigException('Target provided without an edge.')
