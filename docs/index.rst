@@ -7,7 +7,7 @@ Welcome to caldera's developer documentation!
 =============================================
 
 .. warning:: These are developer docs. For usage and manual documentation
-   see the `GitHub wiki <https://github.com/mitre/caldera/wiki>`
+   see the `GitHub wiki <https://github.com/mitre/caldera/wiki>`_
 
 This docsite contains information intended to help developers
 understand the inner workings of the caldera adversary emulation
