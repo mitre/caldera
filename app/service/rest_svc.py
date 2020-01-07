@@ -27,6 +27,7 @@ class RestService(BaseService):
     async def persist_adversary(self, data):
         """
         Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
+
         :param data:
         :return: the ID of the created adversary
         """
@@ -51,6 +52,7 @@ class RestService(BaseService):
         """
         Update a new planner from either the GUI or REST API with new stopping conditions.
         This overwrites the existing YML file.
+
         :param data:
         :return: the ID of the created adversary
         """

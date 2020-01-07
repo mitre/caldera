@@ -26,6 +26,7 @@ class ContactService(BaseService):
                                pid, ppid, sleep, privilege, c2, exe_name):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
+
         :param paw:
         :param platform:
         :param server:
@@ -54,6 +55,7 @@ class ContactService(BaseService):
     async def get_instructions(self, paw):
         """
         Get next set of instructions to execute
+
         :param paw:
         :return: a list of links in JSON format
         """
@@ -74,6 +76,7 @@ class ContactService(BaseService):
     async def save_results(self, id, output, status, pid):
         """
         Save the results from a single executed link
+
         :param id:
         :param output:
         :param status:
