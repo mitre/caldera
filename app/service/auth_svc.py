@@ -13,6 +13,17 @@ from cryptography import fernet
 from app.utility.base_service import BaseService
 
 
+def check_authorization(func):
+    async def process(func, *args, **params):
+        return await func(*args, **params)
+
+    async def helper(*args, **params):
+        await args[0].auth_svc.check_permissions(args[1])
+        result = await process(func, *args, **params)
+        return result
+    return helper
+
+
 class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
