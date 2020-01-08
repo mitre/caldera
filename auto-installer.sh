@@ -19,12 +19,12 @@ function all_install_go_dependencies() {
     echo "[+] GO dependencies installed"
 }
 
- function all_install_python_requirements() {
+function all_install_python_requirements() {
     pip3 install virtualenv
     virtualenv -p python3 calderaenv
     source calderaenv/bin/activate
     pip3 install -r ./requirements.txt
- }
+}
 
 function darwin_install_homebrew() {
     install_wrapper "Homebrew" brew "/usr/bin/ruby -e \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)\""
