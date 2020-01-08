@@ -4,6 +4,8 @@ import traceback
 from aiohttp import web
 from aiohttp_jinja2 import template
 
+from app.service.auth_svc import check_authorization
+
 
 class RestApi:
 
@@ -43,9 +45,9 @@ class RestApi:
         return await self.auth_svc.login_user(request)
 
     @template('chain.html')
+    @check_authorization
     async def landing(self, request):
         try:
-            await self.auth_svc.check_permissions(request)
             abilities = await self.data_svc.locate('abilities')
             tactics = set([a.tactic.lower() for a in abilities])
             payloads = await self.rest_svc.list_payloads()
@@ -69,14 +71,14 @@ class RestApi:
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
+    @check_authorization
     async def find_potential_links(self, request):
-        await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
         links = await self.rest_svc.get_potential_links(**data)
         return web.json_response(dict(links=[l.display for l in links]))
 
+    @check_authorization
     async def add_potential_link(self, request):
-        await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
         await self.rest_svc.apply_potential_link(data)
         return web.json_response(dict())
@@ -96,6 +98,7 @@ class RestApi:
         except Exception:
             pass
 
+    @check_authorization
     async def rest_core(self, request):
         """
         This function is under construction until all objects have been converted from SQL tables
@@ -103,7 +106,6 @@ class RestApi:
         :return:
         """
         try:
-            await self.auth_svc.check_permissions(request)
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(
