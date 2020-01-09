@@ -21,9 +21,9 @@ function all_install_go_dependencies() {
 
 function all_install_python_requirements() {
     pip3 install virtualenv
-    virtualenv calderaenv
+    virtualenv -p python3 calderaenv
     source calderaenv/bin/activate
-    pip install -r ./requirements.txt
+    pip3 install -r ./requirements.txt
 }
 
 function darwin_install_homebrew() {
