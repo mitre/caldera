@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="/gui/css/basic.css">
   <link rel="stylesheet" href="/gui/css/timeline.css">
   <link rel="stylesheet" href="/gui/css/reports.css">
-  <meta http-equiv="Pragma" content="no-cache">
 </head>
 <body style="margin-bottom: 100px">
 
@@ -23,7 +22,6 @@
       <a onclick="viewSection('agents')">agents</a>
       <a onclick="viewSection('adversaries')">adversaries</a>
       <a onclick="viewSection('operations')">operations</a>
-      <a onclick="viewSection('reports')">reports</a>
     </div>
   </div>
   <a href="/logout" style="float:right">Logout</a>
@@ -337,7 +335,7 @@
                 Start a new operation or review previous ones here.
               </p>
               <div id="viewOperation">
-                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpDeleteBtn()">
+                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpBtns()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
                         {%  if op.start|length%}
@@ -346,6 +344,16 @@
                   {% endfor %}
                 </select>
                 <br>
+                <center>
+                <table>
+                    <tr>
+                        <td><input id="agent-output" type="checkbox"></td>
+                        <td><p>&nbsp;&nbsp;include agent output</p></td>
+                    </tr>
+                </table>
+                </center>
+                <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download report</button>
+                <hr>
                 <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
               <div id="addOperation" style="display: none;">
@@ -475,121 +483,6 @@
                       <li id="time-start">
                   </ul>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- reports -->
-
-        <div id="reports" class="section-profile" style="display: none">
-          <div class="row">
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('reports-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
-            <div id="reports-sidebar" class="column section-border" style="flex:25%;">
-              <img src="/gui/img/reports.png">
-              <h4 style="margin-bottom:-5px">Reports</h4>
-              <p class="section-description">
-                  View a detailed report for any started operation.
-              </p>
-              <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
-                  <option id="reportDefault" value="" disabled selected>Operations</option>
-                  {% for op in operations %}
-                      {%  if op.start|length%}
-                        <option class="operationOption" id="{{ op.name }}" value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
-                      {% endif %}
-                  {% endfor %}
-               </select>
-              <select id="report-output" style="">
-                  <option value="0" selected>Exclude Agent Output</option>
-                  <option value="1">Include Agent Output</option>
-               </select>
-               <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download</button>
-            </div>
-            <div class="column" style="flex:75%">
-                <div class="reports-dash">
-                    <div class="row">
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">name</p>
-                            <h4 id="report-name"></h4>
-                            <p id="report-name-duration"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">adversary</p>
-                            <h4 id="report-adversary"></h4>
-                            <p id="report-adversary-desc"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">group</p>
-                            <h4 id="report-group"></h4>
-                            <p id="report-group-cnt"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">steps</p>
-                            <h4 id="report-steps"></h4>
-                            <p id="report-steps-attack"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">planner</p>
-                            <h4 id="report-planner"></h4>
-                            <p id="report-planner-desc"></p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:100%;">
-                            <p class="reports-dash-header">att&ck</p>
-                            <table id="reports-dash-attack" align="center" border=1 frame=void rules=rows>
-                                <th>worked / failed</th>
-                                <th>Tactic</th>
-                                <th>Technique ID</th>
-                                <th>Technique name</th>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:100%;">
-                            <p class="reports-dash-header">skipped abilities</p>
-                            <ul id="reports-skipped-abilities" class="skipped-abilities-list">
-                                <li id="skipped-start">
-                            </ul>
-                            <li id="reports-dash-skipped-template" class="agent-skipped reports-dash" style="display: none;">
-                                <div class="reports-skipped-container">
-                                    <div class="column-left">
-                                        <div class="skipped-box">
-                                            <p class="reports-dash-header">agent</p>
-                                            <h4 id="skipped-host-name">Agent</h4>
-                                        </div>
-                                        <div class="skipped-box">
-                                            <p class="reports-dash-header">total skipped</p>
-                                            <h4 id="skipped-host-total"></h4>
-                                        </div>
-                                    </div>
-                                    <div class="column-right">
-                                        <table id="skipped-host-abilities" align="center" border=1 frame=void rules=rows>
-                                            <thead>
-                                                <th>ability</th>
-                                                <th>reason</th>
-                                            </thead>
-                                        </table>
-                                    </div>
-                                </div>
-                            </li>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:40%;">
-                            <p class="reports-dash-header">facts</p>
-                            <table id="reports-dash-facts" align="center" border=1 frame=void rules=rows>
-                                <th>Property</th>
-                                <th>Count</th>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                        <div class="column report-box" style="flex:60%;">
-
-                        </div>
-                    </div>
-                </div>
             </div>
           </div>
         </div>
