@@ -206,17 +206,17 @@ class Operation(BaseObject):
     def link_status(self):
         return -3 if self.autonomous else -1
 
-    """ PRIVATE """
-
-    async def _unfinished_links_for_agent(self, paw):
-        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
-
-    async def _active_agents(self):
+    async def active_agents(self):
         active = []
         for agent in self.agents:
             if agent.last_seen > self.start:
                 active.append(agent)
         return active
+
+    """ PRIVATE """
+
+    async def _unfinished_links_for_agent(self, paw):
+        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
 
     async def _trust_issues(self, agent):
         if not self.allow_untrusted:

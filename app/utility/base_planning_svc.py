@@ -23,7 +23,6 @@ class BasePlanningService(BaseService):
         """
         links[:] = await self.add_test_variants(links, agent, operation)
         links = await self.remove_links_missing_facts(links)
-        links = await self.remove_links_duplicate_hosts(links, operation)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
@@ -86,12 +85,7 @@ class BasePlanningService(BaseService):
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        relationships = operation.all_relationships()
-        links[:] = [l for l in links if await self._do_enforcements(l, relationships)]
-        return links
-
-    async def remove_links_duplicate_hosts(self, links, operation):
-        links[:] = [l for l in links if await self._exclude_existing(l, operation)]
+        links[:] = [l for l in links if await self._do_enforcements(l, operation)]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
@@ -134,24 +128,13 @@ class BasePlanningService(BaseService):
             relevant_facts.append(variable_facts)
         return relevant_facts
 
-    async def _do_enforcements(self, link, relationships):
+    async def _do_enforcements(self, link, operation):
         """
         enforce any defined requirements on the link
         """
         for req_inst in link.ability.requirements:
             requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
             requirement = await self.load_module('Requirement', requirements_info)
-            if not requirement.enforce(link, relationships):
+            if not await requirement.enforce(link, operation):
                 return False
-        return True
-
-    @staticmethod
-    async def _exclude_existing(link, operation):
-        all_hostnames = [agent.host for agent in await operation._active_agents()]
-        for item in link.used:
-            # prevent backwards lateral movement
-            if 'remote.host' in item.trait:
-                target_name = item.value.split('.')[0].lower()
-                if target_name in all_hostnames or any(target_name in h for h in all_hostnames):
-                    return False
         return True
