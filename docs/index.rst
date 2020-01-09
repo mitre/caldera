@@ -21,7 +21,7 @@ and usage information on our `GitHub wiki <https://github.com/mitre/caldera/wiki
    :maxdepth: 3
    :caption: Developer Information:
 
-   services/services.rst
+   _generated/modules
 
 
 Indices and tables

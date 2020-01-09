@@ -16,6 +16,7 @@ class BasePlanningService(BaseService):
             - adding all possible test variants
             - removing completed links (i.e. agent has already completed)
             - removing links that did not have template fact variables replaced by fact values
+
         :param operation:
         :param links:
         :param agent:
@@ -31,6 +32,7 @@ class BasePlanningService(BaseService):
     async def add_test_variants(self, links, agent, operation):
         """
         Create a list of all possible links for a given phase
+
         :param links:
         :param agent:
         :param operation:
@@ -64,6 +66,7 @@ class BasePlanningService(BaseService):
     async def remove_completed_links(operation, agent, links):
         """
         Remove any links that have already been completed by the operation for the agent
+
         :param operation:
         :param links:
         :param agent:
@@ -77,6 +80,7 @@ class BasePlanningService(BaseService):
     async def remove_links_missing_facts(links):
         """
         Remove any links that did not have facts encoded into command
+
         :param links:
         :return: updated list of links
         """

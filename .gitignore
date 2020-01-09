@@ -18,6 +18,7 @@ venv/
 conf/*.yml
 !conf/default.yml
 docs/_build
+docs/_generated
 data/object_store
 data/results/*
 !data/results/.gitkeep

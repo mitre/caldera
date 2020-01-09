@@ -1,6 +1,17 @@
 import os
 import sys
+
+import sphinx.ext.apidoc as apidoc
+
 sys.path.insert(0, os.path.abspath('..'))
+
+# Call sphinx-apidoc to generate stub files from our source code.
+# -o generated: output rst stubs to this directory
+# --implicit-namespaces: will find modules in packages without explicit __init__.py
+# --force: overwrite existing generated stubs
+# ../app/: this is the directory where caldera lives
+apidocs_argv = ['-o', '_generated', '--implicit-namespaces', '--force', '../app/']
+apidoc.main(apidocs_argv)
 
 # -- Project information -----------------------------------------------------
 
@@ -10,9 +21,8 @@ author = 'The MITRE Corporation'
 
 
 # -- General configuration ---------------------------------------------------
-
 extensions = [
-    'sphinx.ext.autodoc'
+    'sphinx.ext.autodoc',
 ]
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
