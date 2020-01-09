@@ -121,7 +121,7 @@ class RestService(BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return op.report
+        return op.report(output=data.get('agent_output'))
 
     async def update_agent_data(self, data):
         agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),

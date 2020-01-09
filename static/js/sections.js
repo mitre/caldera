@@ -1,7 +1,3 @@
-$.ajaxSetup({
-    cache: false
-});
-
 /** SECTIONS **/
 
 function viewSection(identifier){
@@ -391,8 +387,9 @@ function handleStartAction(){
     restRequest('PUT', op, handleStartActionCallback);
 }
 
-function checkOpDeleteBtn(){
+function checkOpBtns(){
     validateFormState(($('#operation-list').val()), '#opDelete');
+    validateFormState(($('#operation-list').val()), '#reportBtn');
 }
 
 function deleteOperation(){
@@ -716,10 +713,9 @@ function downloadOperationReport() {
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     }
-
-    let selectedOperationId = $('#report-list option:selected').attr('value');
-    let selectedOpOutput = parseInt($('#report-output option:selected').attr('value'), 10);
-    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': selectedOpOutput} : null;
+    let selectedOperationId = $('#operation-list option:selected').attr('value');
+    let agentOutput = $('#agent-output').prop("checked");
+    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
     restRequest('POST', postData, downloadObjectAsJson, '/plugin/chain/rest');
 }
 
@@ -1192,136 +1188,6 @@ function resetMoreModal() {
     modal.hide();
     modal.find('#resultCmd').text('');
     modal.find('#resultView').text('');
-}
-
-/** REPORTS **/
-
-function showReports(){
-    validateFormState(($('#report-list').prop('selectedIndex') !== 0), '#reportBtn');
-    let selectedOperationId = $('#report-list option:selected').attr('value');
-    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId} : null;
-    restRequest('POST', postData, displayReport, '/plugin/chain/rest');
-}
-
-function displayReport(data) {
-    $('#report-name').html(data.name);
-    $('#report-name-duration').html("The operation lasted " + reportDuration(data) + " with a random "+data.jitter + " second pause between steps");
-    $('#report-adversary').html(data.adversary.name);
-    $('#report-adversary-desc').html(data.adversary.description);
-    $('#report-group').html(data.host_group[0]['group']);
-    $('#report-group-cnt').html(data.host_group.length + ' agents were included');
-    $('#report-steps').html(reportStepLength(data.steps));
-    $('#report-steps-attack').html(data.adversary.name + " was " + reportScore(data.steps) + " successful in the attack");
-    $('#report-planner').html(data.planner.name);
-    $('#report-planner-desc').html(data.adversary.name + " collected " + data.facts.length + " facts and used them to make decisions");
-    addAttackBreakdown(data.adversary.phases, data.steps);
-    addFacts(data.facts);
-    addSkippedAbilities(data.skipped_abilities);
-}
-
-function reportDuration(data) {
-    if(data.finish) {
-        let operationInSeconds = Math.abs(new Date(data.finish) - new Date(data.start)) / 1000;
-        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
-        operationInSeconds -= operationInMinutes * 60;
-        let secondsRemainder = operationInSeconds % 60;
-        return operationInMinutes + 'min ' + secondsRemainder + 'sec';
-    }
-    return "(not finished yet))"
-}
-
-function reportStepLength(steps) {
-    let step_len = 0;
-    for ( let agent in steps ){
-        step_len += steps[agent].steps.length;
-    }
-    return step_len;
-}
-
-function reportScore(steps) {
-    let failed = 0;
-    for ( let agent in steps ) {
-        steps[agent].steps.forEach(s => {
-        if(s.status > 0) {
-            failed += 1;
-        }
-    });
-    }
-    return parseInt(100 - (failed/reportStepLength(steps) * 100)) + '%';
-}
-
-function addAttackBreakdown(phases, steps) {
-    $("#reports-dash-attack").find("tr:gt(0)").remove();
-    let plans = [];
-    $.each(phases, function (k, v) {
-        v.forEach(plannedStep => {
-            if(!plans.some(e => e.tactic == plannedStep.tactic) || !plans.some(e => e.technique_id == plannedStep.technique_id) || !plans.some(e => e.technique_name == plannedStep.technique_name)) {
-                plans.push({'tactic': plannedStep.tactic, 'technique_id': plannedStep.technique_id, 'technique_name': plannedStep.technique_name, "success": 0, "failure": 0});
-            }
-        });
-    });
-    plans.forEach(p => {
-        for ( let agent in steps ) {
-            steps[agent].steps.forEach(s => {
-                if (p.tactic == s.attack.tactic && p.technique_id == s.attack.technique_id && p.technique_name == s.attack.technique_name) {
-                    if (s.status > 0) {
-                        p['failure'] += 1;
-                    } else {
-                        p['success'] += 1;
-                    }
-                }
-            });
-        }
-    });
-    plans.forEach(p => {
-        $("#reports-dash-attack").append("<tr><td><span style='color:green'>"+p.success+"</span> / <span style='color:red'>"+p.failure+"</span></td><td>"+p.tactic+"</td><td>"+p.technique_id+"</td><td>"+p.technique_name+"</td></tr>");
-    });
-}
-
-function addFacts(facts){
-    $("#reports-dash-facts").find("tr:gt(0)").remove();
-    let unique = [];
-    facts.forEach(f => {
-        let found = false;
-        for(let i in unique){
-            if(unique[i].trait == f.trait) {
-                unique[i].count += 1;
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            unique.push({'trait':f.trait, 'count':1});
-        }
-    });
-    unique.forEach(u => {
-        $("#reports-dash-facts").append("<tr><td>"+u.trait+"</td><td>"+u.count+"</td></tr>");
-    });
-}
-
-function addSkippedAbilities(skipped_abilities) {
-    clearSkippedAbilities();
-    skipped_abilities.forEach(s => {
-        for ( let agent in s ) {
-            let template = $("#reports-dash-skipped-template").clone();
-            template.attr('id', 'agent_'+agent);
-            template.find('#skipped-host-name').text(agent);
-            template.find('#skipped-host-total').text(s[agent].length);
-            let skip_table = template.find("#skipped-host-abilities");
-            s[agent].forEach(skipped => {
-                skip_table.append("<tr id='skipped-"+skipped.ability_id+"'><td>"+skipped.ability_name+"</td><td>"+skipped.reason+"</td></tr>");
-            });
-            template.insertBefore("#skipped-start");
-            template.show();
-        }
-    });
-}
-
-function clearSkippedAbilities() {
-    let skipped = $('#reports-skipped-abilities');
-    skipped.find('.agent-skipped').each(function() {
-        $(this).remove();
-    });
 }
 
 /** DUK MODALS */

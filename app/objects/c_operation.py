@@ -73,37 +73,6 @@ class Operation(BaseObject):
                     OUT_OF_TIME='out_of_time',
                     FINISHED='finished')
 
-    @property
-    def report(self, redacted=False):
-        report = dict(name=self.name, host_group=[a.display for a in self.agents],
-                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
-                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
-                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
-        agents_steps = {a.paw: {'steps': []} for a in self.agents}
-        for step in self.chain:
-            step_report = dict(ability_id=step.ability.ability_id,
-                               command=step.command,
-                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
-                               run=step.finish,
-                               status=step.status,
-                               platform=step.ability.platform,
-                               executor=step.ability.executor,
-                               pid=step.pid,
-                               description=step.ability.description,
-                               name=step.ability.name,
-                               attack=dict(tactic=step.ability.tactic,
-                                           technique_name=step.ability.technique_name,
-                                           technique_id=step.ability.technique_id),
-                               output=step.output
-                               )
-            agents_steps[step.paw]['steps'].append(step_report)
-        report['steps'] = agents_steps
-        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
-        if redacted:
-            return redact_report(report)
-        else:
-            return report
-
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
                  max_time=300, group=None):
@@ -212,6 +181,35 @@ class Operation(BaseObject):
             if agent.last_seen > self.start:
                 active.append(agent)
         return active
+
+    def report(self, output=False, redacted=False):
+        report = dict(name=self.name, host_group=[a.display for a in self.agents],
+                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
+                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
+        agents_steps = {a.paw: {'steps': []} for a in self.agents}
+        for step in self.chain:
+            step_report = dict(ability_id=step.ability.ability_id,
+                               command=step.command,
+                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                               run=step.finish,
+                               status=step.status,
+                               platform=step.ability.platform,
+                               executor=step.ability.executor,
+                               pid=step.pid,
+                               description=step.ability.description,
+                               name=step.ability.name,
+                               attack=dict(tactic=step.ability.tactic,
+                                           technique_name=step.ability.technique_name,
+                                           technique_id=step.ability.technique_id))
+            if output:
+                step_report['output'] = step.output
+            agents_steps[step.paw]['steps'].append(step_report)
+        report['steps'] = agents_steps
+        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+        if redacted:
+            return redact_report(report)
+        return report
 
     """ PRIVATE """
 
