@@ -23,7 +23,7 @@ class ContactService(BaseService):
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege, c2, exe_name):
+                               pid, ppid, sleep, privilege, c2, exe_name, c2Proxy=None):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw:
@@ -39,6 +39,9 @@ class ContactService(BaseService):
         :param ppid:
         :param sleep:
         :param privilege:
+        :param c2:
+        :param exe_name:
+        :param c2Proxy:
         :return: the agent object from explode
         """
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
