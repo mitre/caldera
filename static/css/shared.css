@@ -216,7 +216,8 @@ p[onclick] {
 .advanced {
     background-color: #0d0d0d;
 }
-.section-profile {}
+.section-profile {
+}
 .section-border {
     border-right: .5px var(--font-color) solid;
 }
@@ -368,4 +369,10 @@ p[onclick] {
 .obfuscation-table img {
     height: 30px;
     margin: 5px;
+}
+.watermark {
+    z-index: -10;
+    position: fixed;
+    top: 15%;
+    left: 25%;
 }

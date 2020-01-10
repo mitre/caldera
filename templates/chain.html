@@ -56,17 +56,17 @@
     <div id="atomic-blocks" class="row-canvas">
       <center>
 
-        <div id="intro" class="home-box">
-            <div class="topleft duk-icon"><img onclick="removeSection('intro')" src="/gui/img/x.png"></div>
-            <div class="topright duk-icon"><img onclick="openDukHelp()" src="/gui/img/duk.png"></div>
+        <div id="intro" class="home-box watermark">
             <h1 id="big-head" class="big-head">CALDERA</h1>
-            <hr>
+            <hr style="width:70%">
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
-            <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+            <div style="opacity:0.5">
+                <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ tactics|length }} tactics&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ payloads|length }} payloads&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ adversaries|length }} adversaries&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ agents|length }} agents</span>
+            </div>
         </div>
 
         <!-- agents -->
