@@ -1154,6 +1154,7 @@ function uploadPayload() {
 }
 $('#uploadPayloadFile').on('change', function (event){
     if(event.currentTarget) {
+        let filename = event.currentTarget.files[0].name;
         if(filename){
             uploadPayload();
         }
