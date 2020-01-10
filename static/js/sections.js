@@ -435,6 +435,7 @@ function buildOperationObject() {
         "autonomous":document.getElementById("queueAuto").value,
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "obfuscator":document.getElementById("queueObfuscated").value,
+        "auto_close": document.getElementById("queueAutoClose").value,
         "jitter":jitter,
         "max_time": document.getElementById("queueMaxTime").value || 1800,
         "source":document.getElementById("queueSource").value,
