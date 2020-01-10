@@ -73,8 +73,8 @@ class Operation(BaseObject):
                     OUT_OF_TIME='out_of_time',
                     FINISHED='finished')
 
-    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None, max_time=300,
+    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator='plain-text', max_time=300,
                  group=None, auto_close=True):
         super().__init__()
         self.id = id

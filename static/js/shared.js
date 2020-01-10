@@ -46,3 +46,8 @@ function flashy(elem, message) {
     });
     flash.find('#message').text(message);
 }
+
+function showHide(show, hide) {
+    $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
+    $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
+}

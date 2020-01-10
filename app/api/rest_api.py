@@ -134,8 +134,9 @@ class RestApi:
                     result=lambda d: self.rest_svc.display_result(d),
                 )
             )
-            output = await options[request.method][index](data)
-            return output
+            if index not in options[request.method]:
+                return await self.rest_svc.display_objects(index, data)
+            return await options[request.method][index](data)
         except Exception:
             traceback.print_exc()
 
