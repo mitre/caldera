@@ -3,6 +3,7 @@ import asyncio
 import copy
 import os
 import traceback
+import uuid
 from datetime import datetime, date
 from importlib import import_module
 
@@ -165,7 +166,7 @@ class AppService(BaseService):
 
     async def _save_new_source(self, operation):
         data = dict(
-            id=str(operation.id),
+            id=str(uuid.uuid4()),
             name=operation.name,
             facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
         )
