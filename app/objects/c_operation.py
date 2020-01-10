@@ -74,8 +74,8 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
-                 max_time=300, group=None):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None, max_time=300,
+                 group=None, auto_close=True):
         super().__init__()
         self.id = id
         self.max_time = max_time
@@ -93,6 +93,7 @@ class Operation(BaseObject):
         self.phases_enabled = phases_enabled
         self.phase = 0
         self.obfuscator = obfuscator
+        self.auto_close = auto_close
         self.chain, self.rules = [], []
         if source:
             self.rules = source.rules
@@ -160,10 +161,13 @@ class Operation(BaseObject):
                 if await self._trust_issues(member):
                     break
 
-    async def closeable(self):
+    async def is_closeable(self):
         running_seconds = (datetime.now() - self.start).total_seconds()
         if running_seconds > self.max_time:
             self.state = self.states['OUT_OF_TIME']
+            return True
+        elif self.auto_close and self.phase == len(self.adversary.phases):
+            self.state = self.states['FINISHED']
             return True
         return False
 

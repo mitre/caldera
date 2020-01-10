@@ -198,7 +198,7 @@ class RestService(BaseService):
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         max_time=int(data.pop('max_time')))
+                         max_time=int(data.pop('max_time')), auto_close=bool(int(data.pop('auto_close'))))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0
@@ -248,7 +248,7 @@ class RestService(BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={'1': []})
+        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
 
     async def _construct_agents_for_group(self, group):
         if group:
