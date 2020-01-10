@@ -1154,7 +1154,6 @@ function uploadPayload() {
 }
 $('#uploadPayloadFile').on('change', function (event){
     if(event.currentTarget) {
-        let filename = event.currentTarget.files[0].name;
         if(filename){
             uploadPayload();
         }
@@ -1236,17 +1235,6 @@ function openDuk7(){
         'local.host.name and a value of domaincontroller.acme. If during the course of an operation an ability '+
         'parsers out a fact that matches the stopping condition, the planner will stop generating links and exit '+
         'the operation. ');
-}
-
-function openDukHelp(){
-    document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').html('<h4>Welcome. Here are a few instructions to get you started:</h4>' +
-        '<ol>' +
-        '<li>Start by deploying an agent on any compromised host. Sandcat (54ndc47) is our default agent.</li>' +
-        '<li>Review the pre-built adversaries and consider building your own</li>' +
-        '<li>Start a new operation, either with an adversary or without. If the latter, select potential links while it is running</li>' +
-        '<li>Review the full documentation via the <i>Docs</i> tab to learn more about any of the many options you see.</li>' +
-        '</ol>');
 }
 
 /** HUMAN-IN-LOOP */

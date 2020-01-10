@@ -1,21 +1,19 @@
 .home-box {
-    position: relative;
     border-radius: 25px;
     padding: 10px;
-    width:75%;
-    margin-top: 50px;
     vertical-align: middle;
-    margin-bottom: 25px;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
 .big-head {
     margin-bottom: -20px;
     font-size:185px;
+    opacity:0.5;
 }
 .small-head {
     color:white;
     font-size: 30px;
+    opacity:0.5;
 }
 .row-toolbar{
     margin: 0px -30px;
