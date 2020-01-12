@@ -31,12 +31,25 @@ def set_logging_state():
     logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
 
+async def build_docs():
+    process = await asyncio.create_subprocess_exec('sphinx-build', '"docs/"', '"docs/_build/html"',
+                                                   stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    stdout, stderr = await process.communicate()
+    if process.returncode != 0:
+        print('Unable to refresh docs')
+        if cfg['debug']:
+            print(stderr)
+    else:
+        print('Successfully rebuilt documentation.')
+
+
 async def start_server(config, services):
     app = services.get('app_svc').application
     await auth_svc.apply(app, config['users'])
 
     app.router.add_route('*', '/file/download', services.get('file_svc').download)
     app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
+    app.router.add_static('/docs/', 'docs/_build/html', append_version=True)
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -49,6 +62,7 @@ def main(services, config):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
+    loop.create_task(build_docs())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
