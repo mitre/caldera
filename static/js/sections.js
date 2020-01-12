@@ -486,7 +486,7 @@ function clearTimeline() {
 let OPERATION = {};
 function operationCallback(data){
     OPERATION = data[0];
-    $("#op-control-state").html(OPERATION.state);
+    $("#op-control-state").html(OPERATION.state + ' | '+ findOpDuration(OPERATION));
     if (OPERATION.autonomous) {
         $("#togBtnHil").prop("checked", true);
     } else {
@@ -541,6 +541,20 @@ function operationCallback(data){
         if(!atomic_interval) {
             atomic_interval = setInterval(refresh, 5000);
         }
+    }
+}
+
+function findOpDuration(operation){
+    function convertSeconds(operationInSeconds){
+        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
+        operationInSeconds -= operationInMinutes * 60;
+        let secondsRemainder = operationInSeconds % 60;
+        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
+    }
+    if(operation.finish) {
+        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
+    } else {
+        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
     }
 }
 
