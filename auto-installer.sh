@@ -2,7 +2,7 @@
 
 SCRIPT=$(readlink -f "$0")
 CALDERA_DIR=$(dirname "$SCRIPT")
-USER=$(who am i | awk '{print $1}')
+USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 
 function install_wrapper() {
     echo "[-] Checking for $1"
@@ -16,6 +16,10 @@ function install_wrapper() {
     fi
 }
 
+function run_uprivileged() {
+  su - "$USER" -c "$1"
+}
+
 function all_install_go_dependencies() {
     echo "[-] Installing on GO dependencies"
     go get "github.com/google/go-github/github"
@@ -24,15 +28,14 @@ function all_install_go_dependencies() {
 }
 
 function all_install_python_requirements() {
-    pip3 install virtualenv
-    virtualenv -p python3 "$CALDERA_DIR/calderaenv"
-    source "$CALDERA_DIR/calderaenv/bin/activate"
-    pip install -r "$CALDERA_DIR/requirements.txt"""
+    run_uprivileged "pip3 -p python3 install virtualenv"
+    run_uprivileged "virtualenv $CALDERA_DIR/calderaenv"
+    run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip install -r $CALDERA_DIR/requirements.txt"
 }
 
 function all_build_documentation() {
   echo "[-] Building documentation"
-  su - $USER -c 'sphinx-build -M html "$CALDERA_DIR/docs" "$CALDERA_DIR/docs/_build"'
+  run_uprivileged "$CALDERA_DIR/calderaenv/bin/sphinx-build -b html $CALDERA_DIR/docs $CALDERA_DIR/docs/_build"
   echo "[+] Finished building documentation."
 }
 
