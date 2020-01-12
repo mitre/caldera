@@ -2,6 +2,7 @@
 
 SCRIPT=$(readlink -f "$0")
 CALDERA_DIR=$(dirname "$SCRIPT")
+USER=$(who am i | awk '{print $1}')
 
 function install_wrapper() {
     echo "[-] Checking for $1"
@@ -31,7 +32,7 @@ function all_install_python_requirements() {
 
 function all_build_documentation() {
   echo "[-] Building documentation"
-  sphinx-build -M html "$CALDERA_DIR/docs" "$CALDERA_DIR/docs/_build"
+  su - $USER -c 'sphinx-build -M html "$CALDERA_DIR/docs" "$CALDERA_DIR/docs/_build"'
   echo "[+] Finished building documentation."
 }
 
