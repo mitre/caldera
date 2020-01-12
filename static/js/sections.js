@@ -485,8 +485,9 @@ function clearTimeline() {
 
 let OPERATION = {};
 function operationCallback(data){
+    function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
     OPERATION = data[0];
-    $("#op-control-state").html(OPERATION.state + ' | '+ findOpDuration(OPERATION));
+    $("#op-control-state").html(OPERATION.state + spacing() + findOpDuration(OPERATION) + spacing() + OPERATION.chain.length + ' decisions');
     if (OPERATION.autonomous) {
         $("#togBtnHil").prop("checked", true);
     } else {
@@ -730,8 +731,12 @@ function downloadOperationReport() {
 }
 
 function changeProgress(percent) {
-    if(percent > 100)
+    if(percent >= 100) {
         percent = 100;
+        if(!OPERATION.finish) {
+            percent = 99;
+        }
+    }
     let elem = document.getElementById("myBar");
     elem.style.width = percent + "%";
     elem.innerHTML = percent + "%";
