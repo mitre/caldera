@@ -485,8 +485,9 @@ function clearTimeline() {
 
 let OPERATION = {};
 function operationCallback(data){
+    function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
     OPERATION = data[0];
-    $("#op-control-state").html(OPERATION.state + ' | '+ findOpDuration(OPERATION));
+    $("#op-control-state").html(OPERATION.state + spacing() + findOpDuration(OPERATION) + spacing() + OPERATION.chain.length + ' decisions');
     if (OPERATION.autonomous) {
         $("#togBtnHil").prop("checked", true);
     } else {
@@ -541,20 +542,6 @@ function operationCallback(data){
         if(!atomic_interval) {
             atomic_interval = setInterval(refresh, 5000);
         }
-    }
-}
-
-function findOpDuration(operation){
-    function convertSeconds(operationInSeconds){
-        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
-        operationInSeconds -= operationInMinutes * 60;
-        let secondsRemainder = operationInSeconds % 60;
-        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
-    }
-    if(operation.finish) {
-        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
-    } else {
-        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
     }
 }
 
@@ -730,8 +717,12 @@ function downloadOperationReport() {
 }
 
 function changeProgress(percent) {
-    if(percent > 100)
+    if(percent >= 100) {
         percent = 100;
+        if(!OPERATION.finish) {
+            percent = 99;
+        }
+    }
     let elem = document.getElementById("myBar");
     elem.style.width = percent + "%";
     elem.innerHTML = percent + "%";
