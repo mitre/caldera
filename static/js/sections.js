@@ -545,6 +545,20 @@ function operationCallback(data){
     }
 }
 
+function findOpDuration(operation){
+    function convertSeconds(operationInSeconds){
+        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
+        operationInSeconds -= operationInMinutes * 60;
+        let secondsRemainder = operationInSeconds % 60;
+        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
+    }
+    if(operation.finish) {
+        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
+    } else {
+        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
+    }
+}
+
 function applyOperationAgents(operation) {
     for(let i=0; i<operation.host_group.length; i++){
         let paw = operation.host_group[i].paw;
