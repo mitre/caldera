@@ -32,8 +32,8 @@ def set_logging_state():
 
 
 async def build_docs():
-    process = await asyncio.create_subprocess_exec('sphinx-build', '-b', 'html',
-                                                   '"docs/"', '"docs/_build/html"',
+    process = await asyncio.create_subprocess_exec('sphinx-build', 'docs/', 'docs/_build/html',
+                                                   '-b', 'html', '-c', 'docs/',
                                                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
