@@ -28,8 +28,8 @@ function all_install_go_dependencies() {
 }
 
 function all_install_python_requirements() {
-    run_uprivileged "pip3 -p python3 install virtualenv"
-    run_uprivileged "virtualenv $CALDERA_DIR/calderaenv"
+    run_uprivileged "pip3 install virtualenv"
+    run_uprivileged "virtualenv -p python3 $CALDERA_DIR/calderaenv"
     run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip install -r $CALDERA_DIR/requirements.txt"
 }
 
