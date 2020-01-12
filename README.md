@@ -18,10 +18,6 @@ CALDERA works by attaching abilities to an adversary and running the adversary i
 Additionally, this code (the C2 server) is intended to be run on Linux or MacOS. 
 The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
-## Quick start video
-
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
-
 ## Installation
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
@@ -39,6 +35,12 @@ Finally, start the server
 ```
 python server.py
 ```
+
+## Video tutorial
+
+Watch the following video for a brief run through of how to run your first operation. 
+
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
 
 ## Quick start
 
