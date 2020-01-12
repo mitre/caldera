@@ -205,10 +205,12 @@ class DataService(BaseService):
                             self.log.debug('Ability no longer exists on disk, removing: %s' % existing.unique)
                             await self.remove('abilities', match=dict(unique=existing.unique))
                         if existing.payload:
-                            _, path = await self.get_service('file_svc').find_file_path(existing.payload)
-                            if not path:
-                                self.log.error('Payload referenced in %s but not found: %s' %
-                                               (existing.ability_id, existing.payload))
+                            payloads = existing.payload.split(',')
+                            for payload in payloads:
+                                _, path = await self.get_service('file_svc').find_file_path(payload)
+                                if not path:
+                                    self.log.error('Payload referenced in %s but not found: %s' %
+                                                   (existing.ability_id, payload))
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
