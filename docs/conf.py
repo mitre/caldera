@@ -18,6 +18,7 @@ apidoc.main(apidocs_argv)
 project = 'caldera'
 copyright = '2020, The MITRE Corporation'
 author = 'The MITRE Corporation'
+master_doc = 'index'
 
 
 # -- General configuration ---------------------------------------------------
