@@ -39,9 +39,9 @@ async def build_docs():
     if process.returncode != 0:
         logging.warning('Unable to refresh docs')
         if cfg['debug']:
-            logging.warning(stderr)
+            logging.debug(stderr)
     else:
-        logging.debug('Successfully rebuilt documentation.')
+        logging.info('Successfully rebuilt documentation.')
 
 
 async def start_server(config, services):
