@@ -12,12 +12,13 @@ class PlanningService(BasePlanningService):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
+
         :param operation:
         :param phase:
         :param agent:
         :param trim: call trim_links() on list of links before returning
-        :param planner
-        :param stopping_conditions
+        :param planner:
+        :param stopping_conditions:
         :return: a list of links
         """
         if len(stopping_conditions) > 0 and await self._check_stopping_conditions(operation, stopping_conditions):
@@ -40,6 +41,7 @@ class PlanningService(BasePlanningService):
         """
         For a given operation, create all cleanup links.
         If agent is supplied, only return cleanup links for that agent.
+
         :param operation:
         :param agent:
         :return: None
@@ -76,6 +78,7 @@ class PlanningService(BasePlanningService):
         """
         Checks whether an operation has collected the proper facts to trigger this planner's stopping
         conditions
+
         :param operation:
         :param stopping_conditions:
         :return: True if all stopping conditions have been met, False if all stopping conditions have not

@@ -33,6 +33,7 @@ class DataService(BaseService):
     async def destroy():
         """
         Clear out all data
+
         :return:
         """
         if os.path.exists('data/object_store'):
@@ -45,6 +46,7 @@ class DataService(BaseService):
     async def save_state(self):
         """
         Save RAM database to file
+
         :return:
         """
         with open('data/object_store', 'wb') as objects:
@@ -53,6 +55,7 @@ class DataService(BaseService):
     async def restore_state(self):
         """
         Restore the object database
+
         :return:
         """
         if os.path.exists('data/object_store'):
@@ -68,6 +71,7 @@ class DataService(BaseService):
     async def apply(self, collection):
         """
         Add a new collection to RAM
+
         :param collection:
         :return:
         """
@@ -77,6 +81,7 @@ class DataService(BaseService):
     async def load_data(self, directory):
         """
         Read all the data sources to populate the object store
+
         :param directory:
         :return: None
         """
@@ -88,6 +93,7 @@ class DataService(BaseService):
     async def store(self, c_object):
         """
         Accept any c_object type and store it (create/update) in RAM
+
         :param c_object:
         :return: a single c_object
         """
@@ -99,6 +105,7 @@ class DataService(BaseService):
     async def locate(self, object_name, match=None):
         """
         Find all c_objects which match a search. Return all c_objects if no match.
+
         :param object_name:
         :param match: dict()
         :return: a list of c_object types
@@ -111,6 +118,7 @@ class DataService(BaseService):
     async def remove(self, object_name, match):
         """
         Remove any c_objects which match a search
+
         :param object_name:
         :param match: dict()
         :return:

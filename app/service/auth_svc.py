@@ -36,6 +36,7 @@ class AuthService(BaseService):
     async def apply(self, app, users):
         """
         Set up security on server boot
+
         :param app:
         :param users:
         :return: None
@@ -54,6 +55,7 @@ class AuthService(BaseService):
     async def logout_user(request):
         """
         Log the user out
+
         :param request:
         :return: None
         """
@@ -63,6 +65,7 @@ class AuthService(BaseService):
     async def login_user(self, request):
         """
         Log a user in and save the session
+
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
@@ -78,6 +81,7 @@ class AuthService(BaseService):
     async def check_permissions(self, request):
         """
         Check if a request is allowed based on the user permissions
+
         :param request:
         :return: None
         """

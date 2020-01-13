@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT=$(readlink -f "$0")
+CALDERA_DIR=$(dirname "$SCRIPT")
+USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
+
 function install_wrapper() {
     echo "[-] Checking for $1"
     which $2
@@ -12,6 +16,10 @@ function install_wrapper() {
     fi
 }
 
+function run_uprivileged() {
+  su - "$USER" -c "$1"
+}
+
 function all_install_go_dependencies() {
     echo "[-] Installing on GO dependencies"
     go get "github.com/google/go-github/github"
@@ -20,10 +28,15 @@ function all_install_go_dependencies() {
 }
 
 function all_install_python_requirements() {
-    pip3 install virtualenv
-    virtualenv -p python3 calderaenv
-    source calderaenv/bin/activate
-    pip3 install -r ./requirements.txt
+    run_uprivileged "pip3 install virtualenv"
+    run_uprivileged "virtualenv -p python3 $CALDERA_DIR/calderaenv"
+    run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip install -r $CALDERA_DIR/requirements.txt"
+}
+
+function all_build_documentation() {
+  echo "[-] Building documentation"
+  run_uprivileged "$CALDERA_DIR/calderaenv/bin/sphinx-build -b html $CALDERA_DIR/docs $CALDERA_DIR/docs/_build"
+  echo "[+] Finished building documentation."
 }
 
 function darwin_install_homebrew() {
@@ -89,6 +102,7 @@ function darwin() {
     darwin_install_python
     all_install_go_dependencies
     all_install_python_requirements
+    all_build_documentation
     display_welcome_msg
 }
 
@@ -100,6 +114,7 @@ function ubuntu() {
     ubuntu_install_python
     all_install_go_dependencies
     all_install_python_requirements
+    all_build_documentation
     display_welcome_msg
 }
 
@@ -111,6 +126,7 @@ function centos() {
     centos_install_python
     all_install_go_dependencies
     all_install_python_requirements
+    all_build_documentation
     display_welcome_msg
 }
 
@@ -119,5 +135,7 @@ if [[ "$(uname)" == *"Darwin"* ]]; then
 elif [[ "$(lsb_release -d)" == *"Ubuntu"* ]]; then
   ubuntu
 elif [[ "$(lsb_release -d)" == *"CentOS"* ]]; then
+  centos
+elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
 fi

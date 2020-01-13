@@ -18,6 +18,7 @@ class FileSvc(BaseService):
     async def download(self, request):
         """
         Accept a request with a required header, file, and an optional header, platform, and download the file.
+
         :param request:
         :return: a multipart file via HTTP
         """
@@ -40,6 +41,7 @@ class FileSvc(BaseService):
     async def save_multipart_file_upload(self, request, target_dir):
         """
         Accept a multipart file via HTTP and save it to the server
+
         :param request:
         :param target_dir: The path of the directory to save the uploaded file to.
         """
@@ -64,6 +66,7 @@ class FileSvc(BaseService):
     async def find_file_path(self, name, location=''):
         """
         Find the location on disk of a file by name.
+
         :param name:
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
@@ -81,6 +84,7 @@ class FileSvc(BaseService):
     async def read_file(self, name, location='payloads'):
         """
         Open a file and read the contents
+
         :param name:
         :param location:
         :return: a tuple (file_path, contents)
@@ -96,6 +100,7 @@ class FileSvc(BaseService):
     async def add_special_payload(self, name, func):
         """
         Call a special function when specific payloads are downloaded
+
         :param name:
         :param func:
         :return:
@@ -106,6 +111,7 @@ class FileSvc(BaseService):
     async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode=''):
         """
         Dynamically compile a go file
+
         :param platform:
         :param output:
         :param src_fle:
