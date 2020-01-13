@@ -97,7 +97,6 @@ class AppService(BaseService):
 
             for phase in operation.adversary.phases:
                 if not await operation.is_closeable():
-                    await self._update_operation(operation)
                     await planner.execute(phase)
                     if planner.stopping_condition_met:
                         break
@@ -176,10 +175,3 @@ class AppService(BaseService):
             facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
         )
         await self.get_service('rest_svc').persist_source(data)
-
-    async def _update_operation(self, operation):
-        if operation.group:
-            updated_agents = await self.get_service('data_svc').locate('agents', match=dict(group=operation.group))
-        else:
-            updated_agents = await self.get_service('data_svc').locate('agents')
-        operation.agents = updated_agents
