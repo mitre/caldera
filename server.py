@@ -37,11 +37,11 @@ async def build_docs():
                                                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     stdout, stderr = await process.communicate()
     if process.returncode != 0:
-        print('Unable to refresh docs')
+        logging.warning('Unable to refresh docs')
         if cfg['debug']:
-            print(stderr)
+            logging.warning(stderr)
     else:
-        print('Successfully rebuilt documentation.')
+        logging.debug('Successfully rebuilt documentation.')
 
 
 async def start_server(config, services):
