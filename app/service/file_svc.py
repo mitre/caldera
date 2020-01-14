@@ -1,8 +1,6 @@
 import os
 import uuid
 
-from aiohttp import web
-
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file
 
@@ -15,84 +13,32 @@ class FileSvc(BaseService):
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
 
-    async def download(self, request):
-        """
-        Accept a request with a required header, file, and an optional header, platform, and download the file.
-
-        :param request:
-        :return: a multipart file via HTTP
-        """
-        try:
-            payload = display_name = request.headers.get('file')
-            if payload in self.special_payloads:
-                payload, display_name = await self.special_payloads[payload](request.headers)
-            payload, content = await self.read_file(payload)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
-            return web.Response(body=content, headers=headers)
-        except FileNotFoundError:
-            return web.HTTPNotFound(body='File not found')
-        except Exception as e:
-            return web.HTTPNotFound(body=e)
-
-    async def get_file(self, filename, platform):
+    async def get_file(self, payload, platform=None):
         """
         Retrieve file
         :param filename: Request filename
         :param platform: Optional platform
-        :return: File contents
+        :return: File contents and optionally a display_name if the payload is a special payload
         """
-        try:
-            if filename in self.special_payloads:
-                payload, display_name = await self.special_payloads[filename](dict(file=filename, platform=platform))
-            filename, content = await self.read_file(filename)
-            return content
-        except FileNotFoundError:
-            return self.log.error("Unable to find requested file: %s" filename)
-        except Exception as e:
-            self.log.error("Unable to get file: %s" % e)
+        display_name = payload
+        if payload in self.special_payloads:
+            payload, display_name = await self.special_payloads[payload](dict(file=payload, platform=platform))
+        file_path, contents = await self.read_file(payload)
+        return file_path, contents, display_name
 
     async def upload_exfil(self, filename, payload):
         exfil_dir = await self._create_exfil_sub_directory(str(uuid.uuid4()))
         return await self.save_file(filename, payload, exfil_dir)
 
-    async def upload_exfil_http(self, request):
-        dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
-        exfil_dir = await self._create_exfil_sub_directory(dir_name=dir_name)
-        return await self.save_multipart_file_upload(request, exfil_dir)
-
-    async def save_multipart_file_upload(self, request, target_dir):
-        """
-        Accept a multipart file via HTTP and save it to the server
-
-        :param request:
-        :param target_dir: The path of the directory to save the uploaded file to.
-        """
-        try:
-            reader = await request.multipart()
-            while True:
-                field = await reader.next()
-                if not field:
-                    break
-                filename = field.filename
-                with open(os.path.join(target_dir, filename), 'wb') as f:
-                    while True:
-                        chunk = await field.read_chunk()
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                self.log.debug('Uploaded file %s' % filename)
-            return web.Response()
-        except Exception as e:
-            self.log.debug('Exception uploading file %s' % e)
-
     async def save_file(self, filename, payload, target_dir):
         try:
             with open(os.path.join(target_dir, filename), 'wb') as f:
                 f.write(payload)
-            self.log.debug('Uploaded file %s' % filename)
+            self.log.debug('Saved file %s' % filename)
             return True
         except Exception as e:
-            self.log.debug('Exception uploading file %s' %e)
+            self.log.debug('Exception uploading file %s' % e)
+            return False
 
     async def find_file_path(self, name, location=''):
         """
@@ -167,13 +113,6 @@ class FileSvc(BaseService):
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
-
-    # async def _create_exfil_sub_directory(self, headers):
-    #     dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
-    #     path = os.path.join(self.exfil_dir, dir_name)
-    #     if not os.path.exists(path):
-    #         os.makedirs(path)
-    #     return path
 
     async def _create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.exfil_dir, dir_name)
