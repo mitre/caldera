@@ -65,3 +65,7 @@ function findOpDuration(operation){
         return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
     }
 }
+
+$(document).ready(function() {
+    $('.navbar.plugin').html("<a href=\"/\">Home</a><a href=\"/logout\" style=\"float:right\">Logout</a>");
+});
