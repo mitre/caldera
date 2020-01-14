@@ -67,5 +67,16 @@ function findOpDuration(operation){
 }
 
 $(document).ready(function() {
-    $('.navbar.plugin').html("<a href=\"/\">Home</a><a href=\"/logout\" style=\"float:right\">Logout</a>");
+    $('.navbar.plugin').html("<a href=\"/\">Home</a><a href=\"/logout\" style=\"float:right\">Logout</a><a href=\"/docs/index.html\" style=\"float:right\" target=\"_blank\">Docs</a>" +
+        "<div  class=\"subnav-right\">" +
+        "    <button class=\"subnavbtn\">Plugins <i class=\"fa fa-caret-down\"></i></button>" +
+        "    <div id=\"subnav-plugins\" class=\"subnav-content subnav-content-right\"></div></div>");
+
+    restRequest('POST', {"index": "plugins", "enabled": true}, function(data){
+        console.log('worked');
+        console.log(data);
+        $.each(data, function (index, value) {
+            $('#subnav-plugins').append("<a href=" + value['address'] + ">" + value['name'] +"</a>")
+        })
+    });
 });
