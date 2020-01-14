@@ -166,10 +166,7 @@ class RestService(BaseService):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
         if operation.finish:
             return []
-        if paw:
-            agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw))
-        else:
-            agents = operation.agents
+        agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
         return await self._build_potential_links(operation, agents, potential_abilities)
 
