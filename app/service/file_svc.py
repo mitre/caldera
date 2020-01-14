@@ -34,8 +34,30 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload_exfil(self, request):
-        exfil_dir = await self._create_exfil_sub_directory(request.headers)
+    async def get_file(self, filename, platform):
+        """
+        Retrieve file
+        :param filename: Request filename
+        :param platform: Optional platform
+        :return: File contents
+        """
+        try:
+            if filename in self.special_payloads:
+                payload, display_name = await self.special_payloads[filename](dict(file=filename, platform=platform))
+            filename, content = await self.read_file(filename)
+            return content
+        except FileNotFoundError:
+            return self.log.error("Unable to find requested file: %s" filename)
+        except Exception as e:
+            self.log.error("Unable to get file: %s" % e)
+
+    async def upload_exfil(self, filename, payload):
+        exfil_dir = await self._create_exfil_sub_directory(str(uuid.uuid4()))
+        return await self.save_file(filename, payload, exfil_dir)
+
+    async def upload_exfil_http(self, request):
+        dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        exfil_dir = await self._create_exfil_sub_directory(dir_name=dir_name)
         return await self.save_multipart_file_upload(request, exfil_dir)
 
     async def save_multipart_file_upload(self, request, target_dir):
@@ -62,6 +84,15 @@ class FileSvc(BaseService):
             return web.Response()
         except Exception as e:
             self.log.debug('Exception uploading file %s' % e)
+
+    async def save_file(self, filename, payload, target_dir):
+        try:
+            with open(os.path.join(target_dir, filename), 'wb') as f:
+                f.write(payload)
+            self.log.debug('Uploaded file %s' % filename)
+            return True
+        except Exception as e:
+            self.log.debug('Exception uploading file %s' %e)
 
     async def find_file_path(self, name, location=''):
         """
@@ -137,8 +168,14 @@ class FileSvc(BaseService):
                 return os.path.join(root, '%s.xored' % target)
         return None
 
-    async def _create_exfil_sub_directory(self, headers):
-        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
+    # async def _create_exfil_sub_directory(self, headers):
+    #     dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
+    #     path = os.path.join(self.exfil_dir, dir_name)
+    #     if not os.path.exists(path):
+    #         os.makedirs(path)
+    #     return path
+
+    async def _create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
             os.makedirs(path)
