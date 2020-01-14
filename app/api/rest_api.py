@@ -130,6 +130,7 @@ class RestApi:
                     agent=lambda d: self.rest_svc.display_objects('agents', d),
                     operation=lambda d: self.rest_svc.display_objects('operations', d),
                     source=lambda d: self.rest_svc.display_objects('sources', d),
+                    plugins=lambda d: self.rest_svc.display_objects('plugins', d),
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                 )
