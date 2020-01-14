@@ -73,10 +73,12 @@ $(document).ready(function() {
         "    <div id=\"subnav-plugins\" class=\"subnav-content subnav-content-right\"></div></div>");
 
     restRequest('POST', {"index": "plugins", "enabled": true}, function(data){
-        console.log('worked');
-        console.log(data);
         $.each(data, function (index, value) {
-            $('#subnav-plugins').append("<a href=" + value['address'] + ">" + value['name'] +"</a>")
+            if (value['address']) {
+                $('#subnav-plugins').append("<a href=" + value['address'] + ">" + value['name'] + "</a>")
+            } else {
+                $('#subnav-plugins').append("<a onclick=\"alert('No GUI component to this plugin')\">" + value['name'] + "</a>")
+            }
         })
     });
 });
