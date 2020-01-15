@@ -45,7 +45,7 @@ When deploying a 54ndc47 agent, there are optional parameters you can use when y
 
 ### Customizing Default Options & Execution Without CLI Options
 
-It's possible to customize the default values of these options when pulling sandcat from the caldera server.  This is useful if your method of executing sandcat isn't friendly towards including the required options on the command line. The option to change and new values can be specified by adding HTTP headers to the web request: 
+It's possible to customize the default values of these options when pulling sandcat from the CALDERA server.  This is useful if your method of executing sandcat isn't friendly towards including the required options on the command line. The option to change and new values can be specified by adding HTTP headers to the web request: 
 
 * defaultGroup: specify a new default group.
 * defaultSleep: specify a new default sleep interval.

@@ -1,13 +1,13 @@
-Customizing caldera's configuration
+Customizing CALDERA's configuration
 ============================
 
-Caldera's configuration file is located in the `conf/` directory. By default, caldera will use the `default.yml` file that is included with caldera, but this can be overridden by taking by creating your own `local.yml` file and saving it in the `conf/` directory. The name of the config file to use can also be specified with the `-E` flag when starting the server.
+Caldera's configuration file is located in the `conf/` directory. By default, CALDERA will use the `default.yml` file that is included with CALDERA, but this can be overridden by taking by creating your own `local.yml` file and saving it in the `conf/` directory. The name of the config file to use can also be specified with the `-E` flag when starting the server.
 
 Caldera will choose the configuration file to use in the following order:
 
-1. A config specified with the `-E` or `--environment` command-line options.  For instance, if caldera is started with `python caldera.py -E foo`, caldera will load it's configuration from `conf/foo.yml`. 
+1. A config specified with the `-E` or `--environment` command-line options.  For instance, if started with `python caldera.py -E foo`, CALDERA will load it's configuration from `conf/foo.yml`.
 2. `conf/local.yml`: Caldera will prefer the local configuration file if no other options are specified.
-3. `conf/default.yml`: If no config is specified with the `-E` option and it cannot find a `conf/local.yml` configuration file, caldera will use its default configuration options.
+3. `conf/default.yml`: If no config is specified with the `-E` option and it cannot find a `conf/local.yml` configuration file, CALDERA will use its default configuration options.
 
 The YAML configuration file contains all the configuration CALDERA requires to boot up. An example configuration file is below:
 

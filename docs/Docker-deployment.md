@@ -8,7 +8,7 @@ If you wish to run CALDERA from a Docker container, execute the commands below.
 docker build . -t caldera:server
 ```
 
-2. Run the docker caldera server
+2. Run the docker CALDERA server
 ```
 docker run -p 8888:8888 caldera:server
 ```

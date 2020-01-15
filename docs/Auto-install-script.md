@@ -12,7 +12,7 @@ This installer will additionally install:
 
 ## A Python virtual environment
 
-A new virtualenv for Python will be created at the root of the project, called calderaenv. All PIP requirements will be installed here instead of the host machine directly. 
+A new virtualenv for Python will be created at the root of the project, called calderaenv. All PIP requirements will be installed here instead of the host machine directly.
 
 ## GoLang
 
@@ -20,4 +20,4 @@ This is used to dynamically compile the 54ndc47 agent every time it is requested
 > If GoLang is installed, you can dynamically compile any Go payload per request by simply utilizing the file_svc:compile_go function. You'll see examples of this in the sandcat and terminal plugins.
 
 ## MinGW
-MinGW enables gcc compiling support for windows platforms. Caldera uses MinGW to build C-Shared library (DLLs) versions of Sandcat.
+MinGW enables gcc compiling support for windows platforms. CALDERA uses MinGW to build C-Shared library (DLLs) versions of Sandcat.

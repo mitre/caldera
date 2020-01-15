@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to caldera's documentation!
+Welcome to CALDERA's documentation!
 ===================================
 
-This docsite contains usage information and manual documentation for caldera.
+This docsite contains usage information and manual documentation for CALDERA.
 
-If you're new to caldera, this is a good place to start.
+If you're new to CALDERA, this is a good place to start.
 
 .. toctree::
    :maxdepth: 3
@@ -17,7 +17,7 @@ If you're new to caldera, this is a good place to start.
    Auto-install-script.md
    CALDERA-2.0.md
    Common-problems.md
-   Customizing-caldera-configuration.md
+   Customizing-CALDERA-configuration.md
    Docker-deployment.md
    File-upload-and-download.md
    How-CALDERA-makes-decisions.md
@@ -44,8 +44,8 @@ If you're new to caldera, this is a good place to start.
 
 
 The following section contains information intended to help developers
-understand the inner workings of the caldera adversary emulation tool, caldera
-plugins, or new tools that interface with the caldera server.
+understand the inner workings of the CALDERA adversary emulation tool, CALDERA
+plugins, or new tools that interface with the CALDERA server.
 
 .. toctree::
    :maxdepth: 3

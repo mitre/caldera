@@ -34,4 +34,4 @@ Rules can also match against subnets.
     fact: my.host.ip
     match: 10.245.112.0/24
 ```
-In this example, the rules would permit caldera to only operate within the 10.245.112.1 to 10.245.112.254 range
+In this example, the rules would permit CALDERA to only operate within the 10.245.112.1 to 10.245.112.254 range
