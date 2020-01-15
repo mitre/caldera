@@ -8,28 +8,28 @@
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/). It is currently an active research project at MITRE.
 
-CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki).
+CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki). Developer documentation can be found at https://caldera.readthedocs.io/en/latest/, as well as by clicking on the `Docs` tab within the C2 UI.
 
 ## Requirements
 
 * Python 3.6.1+
 * Google Chrome is our only supported/tested browser
 
-Additionally, this code (the C2 server) is intended to be run on Linux or MacOS. 
+Additionally, this code (the C2 server) is intended to be run on Linux or MacOS.
 The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin). 
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://github.com/mitre/caldera/wiki/What-is-a-plugin).
 ```
-git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
+git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x
 ```
 
 Next install the PIP requirements
 ```
 pip install -r requirements.txt
 ```
-> Instead of running the step above, you could run the [auto-installer.sh](https://github.com/mitre/caldera/wiki/Auto-install-script) script to automatically configure CALDERA in our recommended way. 
+> Instead of running the step above, you could run the [auto-installer.sh](https://github.com/mitre/caldera/wiki/Auto-install-script) script to automatically configure CALDERA in our recommended way.
 
 Finally, start the server
 ```
@@ -38,31 +38,31 @@ python server.py
 
 ## Video tutorial
 
-Watch the following video for a brief run through of how to run your first operation. 
+Watch the following video for a brief run through of how to run your first operation.
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
 
 ## Quick start
 
-To understand CALDERA, it helps to run an operation. Below are pre-built missions you can execute to understand 
+To understand CALDERA, it helps to run an operation. Below are pre-built missions you can execute to understand
 the system. The missions assume CALDERA is running locally.
 
 ### Mission #1: Nosy Neighbor
 
-> Perform reconnaissance on a compromised laptop. Your employer needs a list of the laptop user’s preferred WIFI 
-networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in 
-less than 60 seconds. 
+> Perform reconnaissance on a compromised laptop. Your employer needs a list of the laptop user’s preferred WIFI
+networks. Grab this list, collecting anything else along the way, then knock the user offline. Finally, get out. Quickly. Leave no trace. There is one caveat: the laptop’s AV scans the machine in full every minute. You must complete this mission in
+less than 60 seconds.
 
 Start a [54ndc47 agent](https://github.com/mitre/caldera/wiki/Plugins-sandcat) on the same computer as CALDERA. Do this by opening a terminal and pasting in the correct
 delivery command for your operating system. You should be welcomed by a log message indicating the agent has sent
 a "beacon" to CALDERA.
 
-Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin. 
-Click into campaigns and use the "Operations" section to fire off an operation using the "nosy neighbor" 
+Move to a browser, at 127.0.0.1:8888, logging in with the credentials admin:admin.
+Click into campaigns and use the "Operations" section to fire off an operation using the "nosy neighbor"
 adversary and the my_group group. Fill in an operation name but leave all other fields at their defaults.
 
 Once the operation is complete, compare the execution time of the first and last commands. Was
-the mission a success? Did the adversary run without a trace? Can you figure out why the 
+the mission a success? Did the adversary run without a trace? Can you figure out why the
 abilities are being run in the order they are?
 
 ### Mission #2: File Hunter
@@ -70,7 +70,7 @@ abilities are being run in the order they are?
 > A laptop containing secret, sensitive files has been compromised. Scan the computer for files which match
 the file extensions (.txt and .yml) the sensitive files are known to have. Then steal the files.
 
-Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA. 
+Similar to mission #1, start a 54ndc47 agent and confirm it "beacons" back to CALDERA.
 
 Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> operations section and start a new operation, choosing the hunter adversary and the group my_group.
 
@@ -88,14 +88,14 @@ Can you figure out how to deploy the reverse-shell by running a regular CALDERA 
 
 ## Developers
 
-We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge 
+We use the basic feature branch GIT flow. Create a feature branch off of master and when ready, submit a merge
 request. Make branch names and commits descriptive. A merge request should solve one problem,
-not many. 
+not many.
 
 ## Licensing
 
-In addition to CALDERA's open source capabilities, MITRE maintains several in-house CALDERA plugins that offer 
-more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
+In addition to CALDERA's open source capabilities, MITRE maintains several in-house CALDERA plugins that offer
+more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
 caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
 
 ## Related MITRE Work
