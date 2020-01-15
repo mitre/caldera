@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to caldera's developer documentation!
+Welcome to CALDERA's developer documentation!
 =============================================
 
 .. warning:: These are developer docs. For usage and manual documentation
@@ -11,10 +11,10 @@ Welcome to caldera's developer documentation!
 
 This docsite contains information intended to help developers
 understand the inner workings of the caldera adversary emulation
-tool, caldera plugins, or new tools that interface with the
+tool, CALDERA plugins, or new tools that interface with the
 caldera server.
 
-If you're new to caldera, you'll likely want to checkout the introduction
+If you're new to CALDERA, you'll likely want to checkout the introduction
 and usage information on our `GitHub wiki <https://github.com/mitre/caldera/wiki>`_.
 
 .. toctree::
