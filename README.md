@@ -8,7 +8,7 @@
 
 CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/). It is currently an active research project at MITRE.
 
-CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki). Developer documentation can be found at https://caldera.readthedocs.io/en/latest/, as well as by clicking on the `Docs` tab within the C2 UI.
+CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found in [the wiki](https://github.com/mitre/caldera/wiki). Developer documentation is available at [Read the Docs](https://caldera.readthedocs.io/en/latest/), as well as by clicking on the `Docs` tab within the C2 UI.
 
 ## Requirements
 
