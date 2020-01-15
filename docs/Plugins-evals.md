@@ -3,7 +3,7 @@ Plugin: evals
 
 ## APT3 DIY ATT&CK Evaluation Round 1
 
-ATT&CK Evaluations use an Operational Flow to describe the logical ordering to which procedures take place during the evaluation. Round 1's Operational Flow is found [here](https://attackEval.mitre.org/methodology/round1/operational-flow.html).
+ATT&CK Evaluations use an Operational Flow to describe the logical ordering to which procedures take place during the evaluation. Round 1's Operational Flow is found [here](https://attackevals.mitre.org/methodology/round1/operational-flow.html).
 
 #### Step 1 - Initial Compromise
 
@@ -83,7 +83,7 @@ Step 3 tested the following techniques:
 ##### 3.A.1 - Bypass User Account Control (T1088) via Access Token Manipulation (T1134)
 This Eval plugin ability uses [Empire's Invoke-BypassUACTokenManipulation.ps1](https://github.com/EmpireProject/Empire/blob/master/data/module_source/privesc/Invoke-BypassUACTokenManipulation.ps1) script to steal the token of an existing high-integrity process and launch a new, high-integrity CALDERA RAT with limited functionality.
 
-\*Note if a high integrity process is not running the script will attempt to spawn TaskMgr.exe with the RunAs flag. If there is no high integrity process running or TaskMgr.exe fails to spawn as admin the script will fail. We recommend spawning cmd.exe as the high integrity process prior to starting the DIY Eval. Read more about the lab setup [here]()
+\*Note if a high integrity process is not running the script will attempt to spawn TaskMgr.exe with the RunAs flag. If there is no high integrity process running or TaskMgr.exe fails to spawn as admin the script will fail. We recommend spawning cmd.exe as the high integrity process prior to starting the DIY Eval. Read more about the lab setup [here](https://attackevals.mitre.org/methodology/round1/environment.html).
 
 ### Adversary Profile 2 - ATTACK Eval APT 3 Scenario 1 Step 3B-3C
 
@@ -98,7 +98,7 @@ The limited functionality high-integrity RAT injects malicious base64 encoded Po
 
 This Eval plugin ability uses [Empire's Invoke-PSInject](https://github.com/EmpireProject/PSInject/blob/master/Invoke-PSInject.ps1) to perform the injection. This  ability added the [EnumProcesses function from Empire's Invoke-BypassUACTokenManipulation.ps1](https://github.com/EmpireProject/Empire/blob/master/data/module_source/privesc/Invoke-BypassUACTokenManipulation.ps1#L876) script in, as it now allows CALDERA to find a high integrity process to inject in to on the fly.
 
-\*Note like Step 3.A if there is no high integrity process running and owned by the current user the script will fail. We recommend spawning cmd.exe as the high integrity process prior to starting the DIY Eval. Read more about the lab setup [here]()
+\*Note like Step 3.A if there is no high integrity process running and owned by the current user the script will fail. We recommend spawning cmd.exe as the high integrity process prior to starting the DIY Eval. Read more about the lab setup [here](https://attackevals.mitre.org/methodology/round1/environment.html).
 
 ### Adversary Profile 3 - ATTACK Eval APT 3 Scenario 1 Step 4-5A
 
