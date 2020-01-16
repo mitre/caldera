@@ -162,11 +162,11 @@ class RestService(BaseService):
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
-    async def get_potential_links(self, op_id, paw):
+    async def get_potential_links(self, op_id, paw=None):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
         if operation.finish:
             return []
-        agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw))
+        agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
         return await self._build_potential_links(operation, agents, potential_abilities)
 
