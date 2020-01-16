@@ -1,6 +1,9 @@
 import logging
 import traceback
+import json
 
+from datetime import datetime
+from urllib.parse import urlparse
 from aiohttp import web
 from aiohttp_jinja2 import template
 
@@ -32,6 +35,9 @@ class RestApi:
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
+        self.app_svc.application.router.add_route('POST', '/ping', self._ping)
+        self.app_svc.application.router.add_route('POST', '/instructions', self._instructions)
+        self.app_svc.application.router.add_route('POST', '/results', self._results)
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -177,3 +183,25 @@ class RestApi:
         data = dict(await request.json())
         resp = await options[request.headers.get('property')](data)
         return web.json_response(resp)
+
+    """ PRIVATE """
+
+    async def _ping(self, request):
+        return web.Response(text=self.contact_svc.encode_string('pong'))
+
+    async def _instructions(self, request):
+        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
+        url = urlparse(data['server'])
+        port = '443' if url.scheme == 'https' else 80
+        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        data['c2'] = 'http'
+        agent = await self.contact_svc.handle_heartbeat(**data)
+        instructions = await self.contact_svc.get_instructions(data['paw'])
+        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+        return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
+
+    async def _results(self, request):
+        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
+        data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        status = await self.contact_svc.save_results(data['id'], data['output'], data['status'], data['pid'])
+        return web.Response(text=self.contact_svc.encode_string(status))
