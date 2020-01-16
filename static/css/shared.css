@@ -372,7 +372,6 @@ p[onclick] {
 }
 .watermark {
     z-index: -10;
-    position: fixed;
+    position: center;
     top: 15%;
-    left: 25%;
 }
