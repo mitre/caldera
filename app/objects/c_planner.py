@@ -13,7 +13,8 @@ class Planner(BaseObject):
         return dict(name=self.name, module=self.module, params=self.params, description=self.description,
                     stopping_conditions=[fact.display for fact in self.stopping_conditions])
 
-    def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None):
+    def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None,
+                 ignore_enforcement_modules=()):
         super().__init__()
         self.planner_id = planner_id
         self.name = name
@@ -21,6 +22,7 @@ class Planner(BaseObject):
         self.params = params
         self.description = description
         self.stopping_conditions = self._set_stopping_conditions(stopping_conditions)
+        self.ignore_enforcement_modules = ignore_enforcement_modules
 
     def store(self, ram):
         existing = self.retrieve(ram['planners'], self.unique)
