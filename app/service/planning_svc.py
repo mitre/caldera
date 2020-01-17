@@ -142,7 +142,3 @@ class PlanningService(BasePlanningService):
                     l.visibility.score += adjustment.offset
                     self.log.debug('%s visibility now %s for %s=%s' %
                                    (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
-
-
-
-
