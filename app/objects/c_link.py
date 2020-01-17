@@ -70,7 +70,7 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
-        self.detection = copy.deepcopy(ability.detection)
+        self.visibility = copy.deepcopy(ability.visibility)
         self._pin = pin
 
     async def parse(self, operation):

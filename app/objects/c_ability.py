@@ -49,7 +49,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.detection = None
+        self.visibility = None
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -70,5 +70,5 @@ class Ability(BaseObject):
         existing.update('timeout', self.timeout)
         return existing
 
-    def apply_detection(self, d):
-        self.detection = d
+    def apply_visibility(self, v):
+        self.visibility = v
