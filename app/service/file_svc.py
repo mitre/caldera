@@ -46,6 +46,16 @@ class FileSvc(BaseService):
         file_path, contents = await self.read_file(payload)
         return file_path, contents, display_name
 
+    async def save_file(self, filename, payload, target_dir):
+        try:
+            with open(os.path.join(target_dir, filename), 'wb') as f:
+                f.write(payload)
+            self.log.debug('Saved file %s' % filename)
+            return True
+        except Exception as e:
+            self.log.debug('Exception uploading file %s' % e)
+            return False
+
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
