@@ -17,18 +17,15 @@ from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 
 
-def set_logging_state():
-    logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
-    logging.getLogger('asyncio').setLevel(logging.FATAL)
-    if cfg['debug']:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
-        logging.getLogger('asyncio').setLevel(logging.DEBUG)
-    logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
-    logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
-    logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
+def setup_logger(config):
+    if config.get('debug'):
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+    imported_loggers = [name for name in logging.root.manager.loggerDict]
+    for logger in imported_loggers:
+        logging.debug('disabling logger: %s' % logger)
+        logging.getLogger(logger).setLevel(100)
 
 
 async def build_docs():
@@ -67,11 +64,11 @@ def main(services, config):
     loop.create_task(app_svc.run_scheduler())
     loop.run_until_complete(start_server(config, services))
     try:
-        print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
+        logging.info('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(services.get('data_svc').save_state())
-        logging.debug('[!] shutting down server...good-bye')
+        logging.info('[!] shutting down server...good-bye')
 
 
 if __name__ == '__main__':
@@ -84,7 +81,10 @@ if __name__ == '__main__':
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
-        set_logging_state()
+        setup_logger(cfg)
+        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
+        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
+        logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()
         contact_svc = ContactService()
