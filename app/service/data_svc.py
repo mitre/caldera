@@ -238,7 +238,8 @@ class DataService(BaseService):
                 await self.store(
                     Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
                             params=json.dumps(planner.get('params')), description=planner.get('description'),
-                            stopping_conditions=planner.get('stopping_conditions'))
+                            stopping_conditions=planner.get('stopping_conditions'),
+                            ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )
 
     @staticmethod
