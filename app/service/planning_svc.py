@@ -141,5 +141,3 @@ class PlanningService(BasePlanningService):
             for adjustment in l.detection.adjustments:
                 pass
 
-
-
