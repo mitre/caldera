@@ -17,7 +17,8 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'])
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'],
+                   visibility=json['visibility'])
 
     @property
     def display(self):
@@ -27,10 +28,12 @@ class Ability(BaseObject):
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
-                               requirements=[r.display for r in self.requirements], privilege=self.privilege, timeout=self.timeout))
+                               requirements=[r.display for r in self.requirements], privilege=self.privilege,
+                               timeout=self.timeout, visibility=self.visibility))
 
-    def __init__(self, ability_id, tactic, technique_id, technique, name, test, description, cleanup, executor,
-                 platform, payload, parsers, requirements, privilege, timeout=60):
+    def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
+                 description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
+                 requirements=None, privilege=None, timeout=60, visibility=0):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -47,6 +50,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
+        self.visibility = visibility
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -65,4 +69,5 @@ class Ability(BaseObject):
         existing.update('payload', self.payload)
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
+        existing.update('visibility', self.visibility)
         return existing
