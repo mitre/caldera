@@ -1,3 +1,4 @@
+import copy
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
@@ -69,6 +70,7 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
+        self.visibility = copy.deepcopy(ability.visibility)
         self._pin = pin
 
     async def parse(self, operation):

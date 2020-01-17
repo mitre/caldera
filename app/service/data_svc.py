@@ -130,7 +130,8 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _add_phase_abilities(self, phase_dict, phase, phase_entries):
+    @staticmethod
+    async def _add_phase_abilities(phase_dict, phase, phase_entries):
         for ability in phase_entries:
             phase_dict[phase].append(ability)
         return phase_dict
@@ -287,4 +288,7 @@ class DataService(BaseService):
             for sections in self.strip_yml(factors_file):
                 for ability in sections:
                     for i, options in ability.items():
-                        await self.store(Ability(ability_id=i, visibility=options.get('visibility')))
+                        ability = (await self.locate('abilities', dict(ability_id=i)))[0]
+                        ability.apply_visibility(
+                            score=options.get('score'), adjustments=options.get('adjustments', [])
+                        )
