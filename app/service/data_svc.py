@@ -130,7 +130,8 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _add_phase_abilities(self, phase_dict, phase, phase_entries):
+    @staticmethod
+    async def _add_phase_abilities(phase_dict, phase, phase_entries):
         for ability in phase_entries:
             phase_dict[phase].append(ability)
         return phase_dict
