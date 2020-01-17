@@ -50,7 +50,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.visibility = Visibility(score=0)
+        self.visibility = Visibility()
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
