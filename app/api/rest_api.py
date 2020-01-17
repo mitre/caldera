@@ -1,6 +1,10 @@
 import logging
 import traceback
+import json
+import uuid
 
+from datetime import datetime
+from urllib.parse import urlparse
 from aiohttp import web
 from aiohttp_jinja2 import template
 
@@ -32,6 +36,11 @@ class RestApi:
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
+        self.app_svc.application.router.add_route('POST', '/ping', self._ping)
+        self.app_svc.application.router.add_route('POST', '/instructions', self._instructions)
+        self.app_svc.application.router.add_route('POST', '/results', self._results)
+        self.app_svc.application.router.add_route('*', '/file/download', self.download)
+        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -177,3 +186,49 @@ class RestApi:
         data = dict(await request.json())
         resp = await options[request.headers.get('property')](data)
         return web.json_response(resp)
+
+    async def upload_exfil_http(self, request):
+        dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        exfil_dir = await self.file_svc.create_exfil_sub_directory(dir_name=dir_name)
+        return await self.file_svc.save_multipart_file_upload(request, exfil_dir)
+
+    async def download(self, request):
+        """
+        Accept a request with a required header, file, and an optional header, platform, and download the file.
+        :param request:
+        :return: a multipart file via HTTP
+        """
+        try:
+            payload = display_name = request.headers.get('file')
+            payload, content, display_name = await self.file_svc.get_file(payload, request.headers.get('platform'))
+
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
+            return web.Response(body=content, headers=headers)
+
+        except FileNotFoundError:
+            return web.HTTPNotFound(body='File not found')
+
+        except Exception as e:
+            return web.HTTPNotFound(body=str(e))
+
+    """ PRIVATE """
+
+    async def _ping(self, request):
+        return web.Response(text=self.contact_svc.encode_string('pong'))
+
+    async def _instructions(self, request):
+        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
+        url = urlparse(data['server'])
+        port = '443' if url.scheme == 'https' else 80
+        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        data['c2'] = 'http'
+        agent = await self.contact_svc.handle_heartbeat(**data)
+        instructions = await self.contact_svc.get_instructions(data['paw'])
+        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+        return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
+
+    async def _results(self, request):
+        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
+        data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        status = await self.contact_svc.save_results(data['id'], data['output'], data['status'], data['pid'])
+        return web.Response(text=self.contact_svc.encode_string(status))
