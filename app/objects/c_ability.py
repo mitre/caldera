@@ -1,7 +1,12 @@
+from collections import namedtuple
+
 from app.objects.c_parser import Parser
 from app.objects.c_requirement import Requirement
-from app.objects.c_visibility import Visibility
 from app.utility.base_object import BaseObject
+
+
+Visibility = namedtuple('Visibility', 'score adjustments')
+Adjustment = namedtuple('Adjustment', 'fact value offset')
 
 
 class Ability(BaseObject):
@@ -50,7 +55,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.visibility = Visibility(score=0)
+        self.visibility = Visibility(0, ())
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -71,5 +76,5 @@ class Ability(BaseObject):
         existing.update('timeout', self.timeout)
         return existing
 
-    def apply_visibility(self, v):
-        self.visibility = v
+    def apply_visibility(self, score, adjustments):
+        self.visibility = Visibility(score, adjustments)

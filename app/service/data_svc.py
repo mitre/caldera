@@ -9,7 +9,6 @@ from collections import defaultdict
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
-from app.objects.c_visibility import Visibility
 from app.objects.c_fact import Fact
 from app.objects.c_parser import Parser
 from app.objects.c_parserconfig import ParserConfig
@@ -290,5 +289,5 @@ class DataService(BaseService):
                     for i, options in ability.items():
                         ability = (await self.locate('abilities', dict(ability_id=i)))[0]
                         ability.apply_visibility(
-                            Visibility(score=options.get('score'), adjustments=options.get('adjustments', []))
+                            score=options.get('score'), adjustments=options.get('adjustments', [])
                         )
