@@ -48,8 +48,6 @@ async def start_server(config, services):
     app = services.get('app_svc').application
     await auth_svc.apply(app, config['users'])
 
-    app.router.add_route('*', '/file/download', services.get('file_svc').download)
-    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
     app.router.add_static('/docs/', 'docs/_build/html', append_version=True)
 
     runner = web.AppRunner(app)

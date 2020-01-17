@@ -34,9 +34,24 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload_exfil(self, request):
-        exfil_dir = await self._create_exfil_sub_directory(request.headers)
-        return await self.save_multipart_file_upload(request, exfil_dir)
+    async def get_file(self, payload, platform=None):
+        """
+        Retrieve file
+        :param filename: Request filename
+        :param platform: Optional platform
+        :return: File contents and optionally a display_name if the payload is a special payload
+        """
+        display_name = payload
+        if payload in self.special_payloads:
+            payload, display_name = await self.special_payloads[payload](dict(file=payload, platform=platform))
+        file_path, contents = await self.read_file(payload)
+        return file_path, contents, display_name
+
+    async def create_exfil_sub_directory(self, dir_name):
+        path = os.path.join(self.exfil_dir, dir_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
     async def save_multipart_file_upload(self, request, target_dir):
         """
@@ -137,9 +152,3 @@ class FileSvc(BaseService):
                 return os.path.join(root, '%s.xored' % target)
         return None
 
-    async def _create_exfil_sub_directory(self, headers):
-        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
-        path = os.path.join(self.exfil_dir, dir_name)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path
