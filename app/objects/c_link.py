@@ -2,6 +2,7 @@ from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
+from app.utility.base_service import BaseService
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
 from app.objects.secondclass.c_visibility import Visibility
@@ -49,9 +50,8 @@ class Link(BaseObject):
     @property
     def output(self):
         try:
-            with open('data/results/%s' % self.unique, 'r') as fle:
-                return fle.read()
-        except Exception:
+            return BaseService.get_service('file_svc').read_result_file(self.unique)
+        except FileNotFoundError:
             return None
 
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):

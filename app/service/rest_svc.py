@@ -114,7 +114,7 @@ class RestService(BaseService):
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
-                _, content = await self.get_service('file_svc').read_file(name='%s' % link_id, location='data/results')
+                content = self.get_service('file_svc').read_result_file('%s' % link_id)
                 return dict(link=link.display, output=content.decode('utf-8'))
             except FileNotFoundError:
                 return ''
