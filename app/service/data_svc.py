@@ -220,7 +220,7 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
-        #await self._apply_visibility('%s/visibility.yml' % directory)
+        await self._apply_visibility('%s/visibility.yml' % directory)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
