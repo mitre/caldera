@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from aiohttp import web
 
@@ -151,4 +150,3 @@ class FileSvc(BaseService):
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
-
