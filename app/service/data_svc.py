@@ -287,4 +287,3 @@ class DataService(BaseService):
                 for ability in sections:
                     for i, options in ability.items():
                         await self.store(Ability(ability_id=i, visibility=options.get('visibility')))
-
