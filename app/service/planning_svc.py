@@ -138,6 +138,6 @@ class PlanningService(BasePlanningService):
     @staticmethod
     async def _apply_visibility(operation, links):
         for l in links:
-            for adjustment in l.detection.adjustments:
+            for adjustment in l.visibility.adjustments:
                 pass
 

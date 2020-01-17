@@ -1,5 +1,6 @@
 from app.objects.c_parser import Parser
 from app.objects.c_requirement import Requirement
+from app.objects.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
 
@@ -49,7 +50,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.visibility = None
+        self.visibility = Visibility(score=0)
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
