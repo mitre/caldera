@@ -9,6 +9,7 @@ from collections import defaultdict
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_detection import Detection
 from app.objects.c_fact import Fact
 from app.objects.c_parser import Parser
 from app.objects.c_parserconfig import ParserConfig
@@ -287,4 +288,7 @@ class DataService(BaseService):
             for sections in self.strip_yml(factors_file):
                 for ability in sections:
                     for i, options in ability.items():
-                        await self.store(Ability(ability_id=i, visibility=options.get('visibility')))
+                        ability = (await self.locate('abilities', dict(ability_id=i)))[0]
+                        ability.apply_detection(
+                            Detection(visibility=options.get('visibility'), adjustments=options.get('adjustments', []))
+                        )

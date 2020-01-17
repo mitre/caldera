@@ -17,8 +17,7 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'],
-                   visibility=json['visibility'])
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'])
 
     @property
     def display(self):
@@ -29,11 +28,11 @@ class Ability(BaseObject):
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout, visibility=self.visibility))
+                               timeout=self.timeout))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, visibility=0):
+                 requirements=None, privilege=None, timeout=60):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -50,7 +49,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.visibility = visibility
+        self.detection = None
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -69,5 +68,7 @@ class Ability(BaseObject):
         existing.update('payload', self.payload)
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
-        existing.update('visibility', self.visibility)
         return existing
+
+    def apply_detection(self, d):
+        self.detection = d
