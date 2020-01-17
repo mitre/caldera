@@ -22,8 +22,7 @@ def setup_logger(config):
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-    imported_loggers = [name for name in logging.root.manager.loggerDict]
-    for logger in imported_loggers:
+    for logger in [name for name in logging.root.manager.loggerDict]:
         logging.debug('disabling logger: %s' % logger)
         logging.getLogger(logger).setLevel(100)
 
