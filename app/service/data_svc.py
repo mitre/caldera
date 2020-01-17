@@ -219,7 +219,7 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
-        await self._apply_visibility_factors('%s/visibility_factors.yml' % directory)
+        await self._apply_visibility('%s/visibility.yml' % directory)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -281,7 +281,7 @@ class DataService(BaseService):
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
 
-    async def _apply_visibility_factors(self, factors_file):
+    async def _apply_visibility(self, factors_file):
         if os.path.isfile(factors_file):
             for sections in self.strip_yml(factors_file):
                 for ability in sections:
