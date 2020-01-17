@@ -181,7 +181,7 @@ class DataService(BaseService):
                     )
 
     async def _load_abilities(self, directory):
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/*/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     saved = set()
@@ -219,6 +219,7 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
+        await self._apply_visibility_factors('%s/visibility_factors.yml' % directory)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -279,3 +280,11 @@ class DataService(BaseService):
         await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
+
+    async def _apply_visibility_factors(self, factors_file):
+        if os.path.isfile(factors_file):
+            for sections in self.strip_yml(factors_file):
+                for ability in sections:
+                    for i, options in ability.items():
+                        await self.store(Ability(ability_id=i, visibility=options.get('visibility')))
+
