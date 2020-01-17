@@ -137,7 +137,7 @@ class BasePlanningService(BaseService):
         enforce any defined requirements on the link
         """
         for req_inst in link.ability.requirements:
-            if req_inst.module not in operation.ignore_enforcement_modules:
+            if req_inst.module not in operation.planner.ignore_enforcement_modules:
                 requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
                 requirement = await self.load_module('Requirement', requirements_info)
                 if not await requirement.enforce(link, operation):

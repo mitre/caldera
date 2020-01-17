@@ -145,9 +145,7 @@ class AppService(BaseService):
         planner_params = ast.literal_eval(operation.planner.params)
         return getattr(planning_module, 'LogicalPlanner')(operation,
                                                           self.get_service('planning_svc'), **planner_params,
-                                                          stopping_conditions=operation.planner.stopping_conditions,
-                                                          ignore_enforcement_modules=
-                                                          operation.planner.ignore_enforcement_modules)
+                                                          stopping_conditions=operation.planner.stopping_conditions)
 
     async def _cleanup_operation(self, operation):
         for member in operation.agents:
