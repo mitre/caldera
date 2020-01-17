@@ -117,6 +117,12 @@ class Operation(BaseObject):
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
 
+    def has_fact(self, trait, value):
+        for f in self.all_facts():
+            if f.trait == trait and f.value == value:
+                return True
+        return False
+
     def all_relationships(self):
         return [r for lnk in self.chain for r in lnk.relationships]
 

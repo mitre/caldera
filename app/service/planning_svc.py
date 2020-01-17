@@ -35,6 +35,7 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+        await self._apply_visibility(operation, links)
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -133,3 +134,11 @@ class PlanningService(BasePlanningService):
                 links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
+
+    async def _apply_visibility(self, operation, links):
+        for l in links:
+            for adjustment in l.visibility.adjustments:
+                if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
+                    l.visibility.score += adjustment.offset
+                    self.log.debug('%s visibility now %s for %s=%s' %
+                                   (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
