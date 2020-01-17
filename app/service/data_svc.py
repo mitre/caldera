@@ -288,7 +288,5 @@ class DataService(BaseService):
             for sections in self.strip_yml(factors_file):
                 for ability in sections:
                     for i, options in ability.items():
-                        ability = (await self.locate('abilities', dict(ability_id=i)))[0]
-                        ability.apply_visibility(
-                            score=options.get('score'), adjustments=options.get('adjustments', [])
-                        )
+                        for a in await self.locate('abilities', dict(ability_id=i)):
+                            a.apply_visibility(options.get('score'), options.get('adjustments', []))
