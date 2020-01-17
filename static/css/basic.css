@@ -340,6 +340,12 @@
 .ability-remove {
     cursor: pointer;
 }
+.pack-add {
+    float: right;
+    font-size: 13px;
+    margin-right: 20px;
+    cursor: pointer;
+}
 .advGoal {
     font-size:36px;
     color: var(--font-color);

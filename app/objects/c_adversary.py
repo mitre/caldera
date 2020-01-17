@@ -12,20 +12,22 @@ class Adversary(BaseObject):
         phases = dict()
         for k, v in self.phases.items():
             phases[k] = [val.display for val in v]
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=phases)
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=phases, is_pack=self.is_pack)
 
-    def __init__(self, adversary_id, name, description, phases):
+    def __init__(self, adversary_id, name, description, phases, is_pack):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.phases = phases
+        self.is_pack = is_pack
 
     def store(self, ram):
-        existing = self.retrieve(ram['adversaries'], self.unique)
+        key = 'packs' if self.is_pack else 'adversaries'
+        existing = self.retrieve(ram[key], self.unique)
         if not existing:
-            ram['adversaries'].append(self)
-            return self.retrieve(ram['adversaries'], self.unique)
+            ram[key].append(self)
+            return self.retrieve(ram[key], self.unique)
         existing.update('name', self.name)
         existing.update('description', self.description)
         existing.update('phases', self.phases)

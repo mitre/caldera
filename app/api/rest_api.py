@@ -63,6 +63,7 @@ class RestApi:
             hosts = [h.display for h in await self.data_svc.locate('agents')]
             groups = list(set(([h['group'] for h in hosts])))
             adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
+            packs = [p.display for p in await self.data_svc.locate('packs')]
             operations = [o.display for o in await self.data_svc.locate('operations')]
             sources = [s.display for s in await self.data_svc.locate('sources')]
             planners = [p.display for p in await self.data_svc.locate('planners')]
@@ -71,7 +72,7 @@ class RestApi:
             contacts = [c.display for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators, contacts=contacts)
+                        plugins=plugins, obfuscators=obfuscators, contacts=contacts, packs=packs)
         except web.HTTPFound as e:
             raise e
         except Exception as e:
@@ -135,6 +136,7 @@ class RestApi:
                 POST=dict(
                     ability=lambda d: self.rest_svc.display_objects('abilities', d),
                     adversary=lambda d: self.rest_svc.display_objects('adversaries', d),
+                    pack=lambda d: self.rest_svc.display_objects('packs', d),
                     planners=lambda d: self.rest_svc.display_objects('planners', d),
                     agent=lambda d: self.rest_svc.display_objects('agents', d),
                     operation=lambda d: self.rest_svc.display_objects('operations', d),

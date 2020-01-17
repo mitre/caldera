@@ -26,7 +26,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[])
+                           schedules=[], plugins=[], obfuscators=[], packs=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -166,20 +166,22 @@ class DataService(BaseService):
         return dict(pp)
 
     async def _load_adversaries(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
+                if not adv.get('visible', True):
+                    continue
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
                     adv_pack = await self._add_adversary_packs(p)
                     if adv_pack:
                         await self._merge_phases(phases, adv_pack)
-                if adv.get('visible', True):
-                    sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                    phases = await self._add_phases(sorted_phases, adv)
-                    await self.store(
-                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                  phases=phases)
-                    )
+                sorted_phases = [phases[x] for x in sorted(phases.keys())]
+                phases = await self._add_phases(sorted_phases, adv)
+                is_pack = '/packs/' in filename
+                await self.store(
+                    Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
+                              phases=phases, is_pack=is_pack)
+                )
 
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/*/*.yml' % directory, recursive=True):
