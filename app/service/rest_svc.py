@@ -200,7 +200,8 @@ class RestService(BaseService):
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
                          allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         max_time=int(data.pop('max_time')), auto_close=bool(int(data.pop('auto_close'))))
+                         max_time=int(data.pop('max_time')), auto_close=bool(int(data.pop('auto_close'))),
+                         visibility=int(data.pop('visibility')))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0

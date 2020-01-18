@@ -75,7 +75,7 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator='plain-text', max_time=300,
-                 group=None, auto_close=True):
+                 group=None, auto_close=True, visibility=51):
         super().__init__()
         self.id = id
         self.max_time = max_time
@@ -94,6 +94,7 @@ class Operation(BaseObject):
         self.phase = 0
         self.obfuscator = obfuscator
         self.auto_close = auto_close
+        self.visibility = visibility
         self.chain, self.rules = [], []
         if source:
             self.rules = source.rules

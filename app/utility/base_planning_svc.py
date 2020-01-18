@@ -25,6 +25,7 @@ class BasePlanningService(BaseService):
         links[:] = await self.add_test_variants(links, agent, operation)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_missing_requirements(links, operation)
+        links = await self.remove_links_above_visibility(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
@@ -90,6 +91,11 @@ class BasePlanningService(BaseService):
 
     async def remove_links_missing_requirements(self, links, operation):
         links[:] = [l for l in links if await self._do_enforcements(l, operation)]
+        return links
+
+    @staticmethod
+    async def remove_links_above_visibility(links, operation):
+        links[:] = [l for l in links if operation.visibility > l.visibility.score]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
