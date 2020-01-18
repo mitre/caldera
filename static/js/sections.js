@@ -444,7 +444,6 @@ function buildOperationObject() {
         "obfuscator":document.getElementById("queueObfuscated").value,
         "auto_close": document.getElementById("queueAutoClose").value,
         "jitter":jitter,
-        "max_time": document.getElementById("queueMaxTime").value || 1800,
         "source":document.getElementById("queueSource").value,
         "allow_untrusted":document.getElementById("queueUntrusted").value,
         "visibility": document.getElementById("queueVisibility").value

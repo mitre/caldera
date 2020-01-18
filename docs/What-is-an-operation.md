@@ -16,5 +16,4 @@ An operation can be started with a number of optional configurations:
 * **Auto-close**: Automatically close the operation when there is nothing left to do. Alternatively, keep the operation for the max_time duration.
 * **Obfuscators**: Select an obfuscator to encode each command with, before they are sent to the agents.
 * **Jitter**: Agents normally check in with CALDERA every 60 seconds. Once they realize they are part of an active operation, agents will start checking in according to the jitter time, which is by default 2/8. This fraction tells the agents that they should pause between 2 and 8 seconds (picked at random each time an agent checks in) before using the next ability. 
-* **Max time**: The max time to keep the operation open when there are no immediate actions. This defaults to 300 seconds.
 * **Visibility**: How visible should the operation be to the defense. Defaults to 51 because each ability defaults to a visibility of 50. Abilities with a higher visibility than the operation visibility will be skipped.
