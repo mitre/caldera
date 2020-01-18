@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/gui/jquery/jquery.dataTables.min.css">
   <link rel="stylesheet" href="/gui/css/basic.css">
   <link rel="stylesheet" href="/gui/css/timeline.css">
+  <link rel="stylesheet" href="/gui/css/range.css">
   <link rel="stylesheet" href="/gui/css/reports.css">
 </head>
 <body style="margin-bottom: 100px">
@@ -410,6 +411,9 @@
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
                       <input name="maxTime" id="queueMaxTime" class="queueOption" placeholder="Max run time (sec)" style="opacity:0.5;" disabled="true"/>
+                      <p style="margin-bottom:-20px">Visibility factor</p>
+                      <input id="queueVisibility" class="queueOption" type="range" value="51">
+                      <div id="h4-container"><div id="h4-subcontainer"><h4 id="visibility-label">0<span></span></h4></div></div>
                   </div>
 
                   <div id="schedules" class="column sidebar-cutout">
