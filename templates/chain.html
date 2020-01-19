@@ -382,10 +382,6 @@
                         <option id="qstate-run" value="running">Run immediately</option>
                         <option id="qstate-paused" value="paused">Pause on start</option>
                       </select>
-                      <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="0">Block untrusted agents</option>
-                        <option value="1" selected>Allow untrusted agents</option>
-                      </select>
                   </div>
 
                   <div id="autonomous" class="column sidebar-cutout sidebar-header">
@@ -726,34 +722,6 @@
             <div id="inner-contents">
               <div id="decision-card" class="decision-card">
                 <table style="border-spacing:15px;">
-                  <tr>
-                    <td>Description:</td>
-                    <td><p id="link-description" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Technique:</td>
-                    <td><div class="tooltip" id="link-technique"></div></td>
-                  </tr>
-                  <tr>
-                    <td>Collected:</td>
-                    <td><p id="link-collect" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Finished:</td>
-                    <td><p id="link-finish" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Command:</td>
-                    <td><p id="time-action" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Executor:</td>
-                    <td><p id="time-executor" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Paw</td>
-                    <td><p id="paw-id" class="member-result"></p></td>
-                  </tr>
                 </table>
               </div>
             </div>

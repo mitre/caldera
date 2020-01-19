@@ -59,7 +59,7 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+        if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             if trim:
                 await self._apply_adjustments(operation, agent_links)
@@ -102,18 +102,11 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_cleanup_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                      msg='no cleanup-link created'):
+        if agent.trusted:
             agent_cleanup_links = await self._generate_cleanup_links(operation=operation,
                                                                      agent=agent,
                                                                      link_status=operation.link_status())
         return agent_cleanup_links
-
-    async def _check_untrusted_agents_allowed(self, agent, operation, msg):
-        if (not agent.trusted) and (not operation.allow_untrusted):
-            self.log.debug('Agent %s untrusted: %s' % (agent.paw, msg))
-            return False
-        return True
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
