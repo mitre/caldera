@@ -589,7 +589,7 @@ function potentialLinksCallback(data){
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
         template.find('#potential-score').html(link.score);
-        template.find('#potential-visibility').html(link.visibility);
+        template.find('#potential-visibility').html(link.visibility.score);
         template.data('link', link);
         template.show();
         if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
