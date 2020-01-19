@@ -1,15 +1,3 @@
-$(function() {
-    let range = $('#queueVisibility');
-	let visibility = range.val();
-	let header = $('#visibility-label');
-	range.on('change input', function() {
-		visibility = range.val();
-		header.html(visibility+'<span></span>');
-		$('[type="range"], h4>span').css('filter', 'hue-rotate(-' + visibility + 'deg)');
-		header.css({'transform': 'translateX(-50%)', 'left': visibility+'%'});
-	});
-});
-
 /** SECTIONS **/
 
 function viewSection(identifier){
