@@ -58,7 +58,6 @@ class RestApi:
     async def landing(self, request):
         try:
             abilities = await self.data_svc.locate('abilities')
-            x = [a for a in abilities if a.visibility.score > 50]
             tactics = set([a.tactic.lower() for a in abilities])
             payloads = await self.rest_svc.list_payloads()
             hosts = [h.display for h in await self.data_svc.locate('agents')]
