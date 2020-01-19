@@ -74,11 +74,10 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator='plain-text', max_time=300,
-                 group=None, auto_close=True, visibility=51):
+                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None,
+                 auto_close=True, visibility=51):
         super().__init__()
         self.id = id
-        self.max_time = max_time
         self.start, self.finish = None, None
         self.name = name
         self.group = group
@@ -169,11 +168,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        running_seconds = (datetime.now() - self.start).total_seconds()
-        if running_seconds > self.max_time:
-            self.state = self.states['OUT_OF_TIME']
-            return True
-        elif self.auto_close and self.phase == len(self.adversary.phases):
+        if self.auto_close and self.phase == len(self.adversary.phases):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -261,9 +256,6 @@ class Operation(BaseObject):
                                flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
-        elif self.state == self.states['OUT_OF_TIME']:
-            return dict(reason='Operation ran out of time', reason_id=self.Reason.OUT_OF_TIME.value,
-                        ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
@@ -296,4 +288,3 @@ class Operation(BaseObject):
         PRIVILEGE = 3
         OP_RUNNING = 4
         UNTRUSTED = 5
-        OUT_OF_TIME = 6

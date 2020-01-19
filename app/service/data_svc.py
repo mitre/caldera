@@ -182,7 +182,7 @@ class DataService(BaseService):
                     )
 
     async def _load_abilities(self, directory):
-        for filename in glob.iglob('%s/*/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     saved = set()
@@ -206,8 +206,8 @@ class DataService(BaseService):
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
-                                                               privilege=ab[
-                                                                   'privilege'] if 'privilege' in ab.keys() else None)
+                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None,
+                                                               visibility=info.get('visibility'))
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -220,7 +220,6 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
-        await self._apply_visibility('%s/visibility.yml' % directory)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -259,7 +258,7 @@ class DataService(BaseService):
             return adv.get('phases')
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
-                              executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
+                              executor, platform, visibility=None, cleanup=None, payload=None, parsers=None, requirements=None,
                               privilege=None, timeout=60):
         ps = []
         for module in parsers:
@@ -275,18 +274,10 @@ class DataService(BaseService):
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                                        privilege=privilege, timeout=timeout))
+                                        privilege=privilege, timeout=timeout, visibility=visibility))
 
     async def _load_data(self, directory):
         await self._load_abilities(directory='%s/abilities' % directory)
         await self._load_adversaries(directory='%s/adversaries' % directory)
         await self._load_sources(directory='%s/facts' % directory)
         await self._load_planners(directory='%s/planners' % directory)
-
-    async def _apply_visibility(self, factors_file):
-        if os.path.isfile(factors_file):
-            for sections in self.strip_yml(factors_file):
-                for ability in sections:
-                    for i, options in ability.items():
-                        for a in await self.locate('abilities', dict(ability_id=i)):
-                            a.apply_visibility(options.get('score'), options.get('adjustments', []))

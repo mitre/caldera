@@ -17,13 +17,9 @@ from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 
 
-def setup_logger(config):
-    if config.get('debug'):
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+def setup_logger(co):
+    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO)
     for logger in [name for name in logging.root.manager.loggerDict]:
-        logging.debug('disabling logger: %s' % logger)
         logging.getLogger(logger).setLevel(100)
 
 

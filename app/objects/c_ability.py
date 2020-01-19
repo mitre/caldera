@@ -33,7 +33,7 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60):
+                 requirements=None, privilege=None, timeout=60, visibility=None):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -51,6 +51,9 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.visibility = Visibility()
+        if visibility:
+            self.visibility.score = visibility.get('score')
+            self.visibility.adjustments = visibility.get('adjustments', ())
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
@@ -70,6 +73,3 @@ class Ability(BaseObject):
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
         return existing
-
-    def apply_visibility(self, score, adjustments):
-        self.visibility = Visibility(score=score, adjustments=adjustments)
