@@ -139,6 +139,6 @@ class PlanningService(BasePlanningService):
         for l in links:
             for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility += adjustment.offset
+                    l.visibility.apply(adjustment)
                     self.log.debug('%s visibility now %s for %s=%s' %
-                                   (l.ability.ability_id, l.visibility, adjustment.trait, adjustment.value))
+                                   (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
