@@ -128,10 +128,9 @@ class PlanningService(BasePlanningService):
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
 
-    async def _apply_adjustments(self, operation, links):
+    @staticmethod
+    async def _apply_adjustments(operation, links):
         for l in links:
             for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
                     l.visibility.apply(adjustment)
-                    self.log.debug('%s visibility now %s for %s=%s' %
-                                   (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
