@@ -13,7 +13,7 @@ An operation can be started with a number of optional configurations:
 * **Trust**: Run against trusted agents only - or trusted and untrusted agents.
 * **Autonomous**: Run autonomously or manually. Manual mode will ask the operator to approve or discard each command.
 * **Phases**: Run the adversary normally, abiding by phases, or smash all phases into a single one.
-* **Auto-close**: Automatically close the operation when there is nothing left to do. Alternatively, keep the operation for the max_time duration.
+* **Auto-close**: Automatically close the operation when there is nothing left to do. Alternatively, keep the operation forever.
 * **Obfuscators**: Select an obfuscator to encode each command with, before they are sent to the agents.
 * **Jitter**: Agents normally check in with CALDERA every 60 seconds. Once they realize they are part of an active operation, agents will start checking in according to the jitter time, which is by default 2/8. This fraction tells the agents that they should pause between 2 and 8 seconds (picked at random each time an agent checks in) before using the next ability. 
 * **Visibility**: How visible should the operation be to the defense. Defaults to 51 because each ability defaults to a visibility of 50. Abilities with a higher visibility than the operation visibility will be skipped.
