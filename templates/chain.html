@@ -389,7 +389,7 @@
                   </div>
 
                   <div id="autonomous" class="column sidebar-cutout sidebar-header">
-                      <h5>AUTONOMY</h5>
+                      <h5>AUTONOMOUS</h5>
                   </div>
                   <div id="autonomous-options" class="column sidebar-cutout" style="display: none;">
                       <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
@@ -422,7 +422,7 @@
                           {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
-                      <p style="margin-bottom:-10px">Visibility threshold</p>
+                      <p style="margin-bottom:-10px">adjust visibility</p>
                       <input id="queueVisibility" class="queueOption" type="range" value="5" min="0" max="10">
                   </div>
 
@@ -710,6 +710,10 @@
                         <tr>
                             <td style="width:10%"><b>score:</b></td>
                             <td><p contenteditable="false" id="potential-score"></p></td>
+                        </tr>
+                        <tr>
+                            <td style="width:10%"><b>visibility:</b></td>
+                            <td><p contenteditable="false" id="potential-visibility"></p></td>
                         </tr>
                     </table>
                 </div>

@@ -4,8 +4,9 @@ import glob
 import json
 import os.path
 import pickle
+import traceback
 from base64 import b64encode
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -18,6 +19,8 @@ from app.objects.c_requirement import Requirement
 from app.objects.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
+
+Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class DataService(BaseService):
@@ -227,6 +230,7 @@ class DataService(BaseService):
                     identifier=src['id'],
                     name=src['name'],
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
                 await self.store(source)
@@ -240,6 +244,16 @@ class DataService(BaseService):
                             stopping_conditions=planner.get('stopping_conditions'),
                             ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )
+
+    @staticmethod
+    async def _create_adjustments(raw_adjustments):
+        x = []
+        if raw_adjustments:
+            for ability_id, adjustments in raw_adjustments.items():
+                for trait, block in adjustments.items():
+                    for change in block:
+                        x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
+        return x
 
     @staticmethod
     async def _merge_phases(phases, new_phases):
@@ -276,7 +290,10 @@ class DataService(BaseService):
                                         privilege=privilege, timeout=timeout))
 
     async def _load_data(self, directory):
-        await self._load_abilities(directory='%s/abilities' % directory)
-        await self._load_adversaries(directory='%s/adversaries' % directory)
-        await self._load_sources(directory='%s/facts' % directory)
-        await self._load_planners(directory='%s/planners' % directory)
+        try:
+            await self._load_abilities(directory='%s/abilities' % directory)
+            await self._load_adversaries(directory='%s/adversaries' % directory)
+            await self._load_sources(directory='%s/facts' % directory)
+            await self._load_planners(directory='%s/planners' % directory)
+        except Exception:
+            self.log.error(traceback.print_exc())

@@ -62,7 +62,7 @@ class PlanningService(BasePlanningService):
         if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             if trim:
-                await self._apply_visibility(operation, agent_links)
+                await self._apply_adjustments(operation, agent_links)
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
 
@@ -135,10 +135,10 @@ class PlanningService(BasePlanningService):
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
 
-    async def _apply_visibility(self, operation, links):
+    async def _apply_adjustments(self, operation, links):
         for l in links:
-            for adjustment in l.visibility.adjustments:
+            for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility.score = adjustment.score
+                    l.visibility += adjustment.offset
                     self.log.debug('%s visibility now %s for %s=%s' %
-                                   (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
+                                   (l.ability.ability_id, l.visibility, adjustment.trait, adjustment.value))
