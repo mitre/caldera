@@ -10,7 +10,6 @@ An operation can be started with a number of optional configurations:
 * **Run immediately**: Run the operation immediately or start in a paused state
 * **Planner**: You can select which logic library - or [planner](What-is-a-planner.md) - you would like to use.
 * **Fact source**: You can attach a [source of facts](What-is-a-fact.md) to an operation. This means the operation will start with "pre-knowledge" of the facts, which it can use to fill in variables inside the abilities. 
-* **Trust**: Run against trusted agents only - or trusted and untrusted agents.
 * **Autonomous**: Run autonomously or manually. Manual mode will ask the operator to approve or discard each command.
 * **Phases**: Run the adversary normally, abiding by phases, or smash all phases into a single one.
 * **Auto-close**: Automatically close the operation when there is nothing left to do. Alternatively, keep the operation forever.

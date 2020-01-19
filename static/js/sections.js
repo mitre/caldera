@@ -433,7 +433,6 @@ function buildOperationObject() {
         "auto_close": document.getElementById("queueAutoClose").value,
         "jitter":jitter,
         "source":document.getElementById("queueSource").value,
-        "allow_untrusted":document.getElementById("queueUntrusted").value,
         "visibility": document.getElementById("queueVisibility").value
     };
 }
@@ -505,14 +504,11 @@ function operationCallback(data){
             return;
         } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
             let template = $("#link-template").clone();
-            let ability = OPERATION.abilities.filter(item => item.unique === OPERATION.chain[i].ability.unique)[0];
-            template.find('#link-description').html(OPERATION.chain[i].ability.description);
             let title = OPERATION.chain[i].ability.name;
             if(OPERATION.chain[i].cleanup) {
                 title = title + " (CLEANUP)"
             }
             let agentPaw = OPERATION.chain[i].paw;
-            template.find('#link-technique').html(ability.technique_id + '<span class="tooltiptext">' + ability.technique_name + '</span>');
             template.attr("id", "op_id_" + OPERATION.chain[i].id);
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
@@ -522,9 +518,6 @@ function operationCallback(data){
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right" onclick="discard(OPERATION.chain['+i+'].unique)">&#x274C;</span></div>');
-            template.find('#time-action').html(atob(OPERATION.chain[i].command));
-            template.find('#time-executor').html(OPERATION.chain[i].executor);
-            template.find('#paw-id').html(OPERATION.chain[i].paw);
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -654,14 +647,12 @@ function discard(linkId) {
 }
 
 function refreshUpdatableFields(chain, div){
-    if(chain.collect) {
+    if(chain.collect || chain.status === -4) {
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-collect').html(chain.collect.split('.')[0]);
     }
     if(chain.finish) {
         div.find('#'+chain.id+'-rs').css('display', 'block');
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-finish').html(chain.finish.split('.')[0]);
     }
     if(chain.status === 0) {
         applyTimelineColor(div, 'success');
@@ -1221,9 +1212,9 @@ function openDuk2(){
 
 function openDuk3(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... You can double-click on any row to show the details of the executed step. Click the ' +
-        'star icon to view the standard output and error from the command that was executed. Highlighted text indicates ' +
-        'facts which were learned from executing the step. Click the X to stop the ability from running.');
+    $('#duk-text').text('Did you know... You can click the ' +
+        'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
+        'facts which were learned from executing the step.');
 }
 
 function openDuk4(){

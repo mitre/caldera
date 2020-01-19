@@ -62,7 +62,7 @@ class Operation(BaseObject):
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, phase=self.phase, obfuscator=self.obfuscator,
-                               allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
+                               autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
     @property
@@ -74,8 +74,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None,
-                 auto_close=True, visibility=50):
+                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -87,7 +86,6 @@ class Operation(BaseObject):
         self.source = source
         self.planner = planner
         self.state = state
-        self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
         self.phases_enabled = phases_enabled
         self.phase = 0
@@ -144,13 +142,13 @@ class Operation(BaseObject):
 
     async def wait_for_phase_completion(self):
         for member in self.agents:
-            if (not member.trusted) and (not self.allow_untrusted):
+            if not member.trusted:
                 for link in await self._unfinished_links_for_agent(member.paw):
                     link.status = link.states['UNTRUSTED']
                 continue
             while len(await self._unfinished_links_for_agent(member.paw)) > 0:
                 await asyncio.sleep(3)
-                if await self._trust_issues(member):
+                if not member.trusted:
                     break
 
     async def wait_for_links_completion(self, link_ids):
@@ -164,7 +162,7 @@ class Operation(BaseObject):
             member = [member for member in self.agents if member.paw == link.paw][0]
             while not link.finish and not link.status == link.states['DISCARD']:
                 await asyncio.sleep(5)
-                if await self._trust_issues(member):
+                if not member.trusted:
                     break
 
     async def is_closeable(self):
@@ -221,11 +219,6 @@ class Operation(BaseObject):
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
-
-    async def _trust_issues(self, agent):
-        if not self.allow_untrusted:
-            return not agent.trusted
-        return False
 
     def _get_skipped_abilities_by_agent(self):
         abilities_by_agent = self._get_all_possible_abilities_by_agent()

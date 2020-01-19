@@ -198,7 +198,7 @@ class RestService(BaseService):
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
+                         autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
 
