@@ -4,6 +4,7 @@ from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
+from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
 
@@ -13,7 +14,7 @@ class Link(BaseObject):
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
         return cls(id=json['id'], pin=json['pin'], operation=json['operation'], command=json['command'],
-                   paw=json['paw'], ability=ability, visibility=json['visibility'])
+                   paw=json['paw'], ability=ability)
 
     @property
     def unique(self):
@@ -27,7 +28,7 @@ class Link(BaseObject):
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
-                               visibility=self.visibility))
+                               visibility=self.visibility.display))
 
     @property
     def pin(self):
@@ -52,8 +53,7 @@ class Link(BaseObject):
         except Exception:
             return None
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
-                 visibility=5):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):
         super().__init__()
         self.id = id
         self.command = command
@@ -71,7 +71,7 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
-        self.visibility = visibility
+        self.visibility = Visibility()
         self._pin = pin
 
     async def parse(self, operation):
