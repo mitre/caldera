@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="/gui/jquery/jquery.dataTables.min.css">
   <link rel="stylesheet" href="/gui/css/basic.css">
   <link rel="stylesheet" href="/gui/css/timeline.css">
-  <link rel="stylesheet" href="/gui/css/range.css">
   <link rel="stylesheet" href="/gui/css/reports.css">
 </head>
 <body style="margin-bottom: 100px">
@@ -356,10 +355,11 @@
                 <hr>
                 <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
+
               <div id="addOperation" style="display: none;">
                   <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
-                  <div id="optional" class="column sidebar-cutout">
-                      <h5>OPTIONAL &#8595;</h5>
+                  <div id="optional" class="column sidebar-cutout sidebar-header">
+                      <h5>BASIC OPTIONS</h5>
                   </div>
                   <div id="optional-options" class="column sidebar-cutout" style="display: none">
                       <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
@@ -374,9 +374,27 @@
                           <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
                         {% endfor %}
                       </select>
+                      <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1">Auto close operation</option>
+                        <option value="0" selected>Keep open forever</option>
+                      </select>
                       <select name="state" id="queueState" class="queueOption" style="opacity:0.5" disabled="false">
                         <option id="qstate-run" value="running">Run immediately</option>
                         <option id="qstate-paused" value="paused">Pause on start</option>
+                      </select>
+                      <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="0">Block untrusted agents</option>
+                        <option value="1" selected>Allow untrusted agents</option>
+                      </select>
+                  </div>
+
+                  <div id="autonomous" class="column sidebar-cutout sidebar-header">
+                      <h5>AUTONOMY</h5>
+                  </div>
+                  <div id="autonomous-options" class="column sidebar-cutout" style="display: none;">
+                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1" selected>Run autonomously</option>
+                        <option value="0">Require manual approval</option>
                       </select>
                       <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5" disabled="true">
                         {% for p in planners %}
@@ -388,40 +406,30 @@
                             <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                         {% endfor %}
                       </select>
-                      <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="0">Block untrusted agents</option>
-                        <option value="1" selected>Allow untrusted agents</option>
-                      </select>
-                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="1" selected>Run autonomously</option>
-                        <option value="0">Require manual approval</option>
-                      </select>
                       <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Enable Phases</option>
                         <option value="0">Disable Phases</option>
                       </select>
-                      <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="1" selected>Auto close operation</option>
-                        <option value="0">Keep open for max time</option>
-                      </select>
+                  </div>
+
+                  <div id="stealth" class="column sidebar-cutout sidebar-header">
+                      <h5>STEALTH</h5>
+                  </div>
+                  <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
                       <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                           {% for o in obfuscators %}
                             <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
                           {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
-                      <p style="margin-bottom:-20px">Visibility factor</p>
-                      <input id="queueVisibility" class="queueOption" type="range" value="51">
-                      <div id="h4-container"><div id="h4-subcontainer"><h4 id="visibility-label">0<span></span></h4></div></div>
+                      <p style="margin-bottom:-10px">Visibility threshold</p>
+                      <input id="queueVisibility" class="queueOption" type="range" value="5" min="0" max="10">
                   </div>
 
-                  <div id="schedules" class="column sidebar-cutout">
-                      <h5>SCHEDULE &#8595;</h5>
+                  <div id="schedules" class="column sidebar-cutout sidebar-header">
+                      <h5>SCHEDULE</h5>
                   </div>
                   <div id="schedules-options" class="column sidebar-cutout" style="display: none;">
-                      <p>
-                          You can schedule this operation to run daily at the same time:
-                      </p>
                       <select id="schedule-hour" class="avoid-alphabetizing" onchange="checkOpformValid()">
                           <option selected disabled>Select hour</option>
                           {% for n in range(23) %}
@@ -441,6 +449,7 @@
                           <span id="message"></span>
                       </div>
                   </div>
+
                   <br>
                   <button id="opBtn" type="button" style="opacity:0.5" disabled="true"
                       class="button-notready atomic-button" onclick="handleStartAction()">Start

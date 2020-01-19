@@ -16,7 +16,7 @@ class Visibility(BaseObject):
     def adjustments(self, a):
         self._adjustments = [Adjustment(k, adj.get('value'), adj.get('score')) for k, v in a.items() for adj in v]
 
-    def __init__(self, score=50):
+    def __init__(self, score=5):
         super().__init__()
         self.score = int(score)
         self._adjustments = []
