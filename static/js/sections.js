@@ -758,10 +758,14 @@ $(document).ready(function(){
   $("#optional").click(function(){
     $("#optional-options").slideToggle("slow");
   });
-});
-$(document).ready(function(){
   $("#schedules").click(function(){
     $("#schedules-options").slideToggle("slow");
+  });
+  $("#stealth").click(function(){
+    $("#stealth-options").slideToggle("slow");
+  });
+  $("#autonomous").click(function(){
+    $("#autonomous-options").slideToggle("slow");
   });
 });
 

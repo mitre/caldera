@@ -1,6 +1,5 @@
 from app.objects.c_parser import Parser
 from app.objects.c_requirement import Requirement
-from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
 
@@ -33,7 +32,7 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, visibility=None):
+                 requirements=None, privilege=None, timeout=60):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -50,10 +49,6 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
-        self.visibility = Visibility()
-        if visibility:
-            self.visibility.score = visibility.get('score')
-            self.visibility.adjustments = visibility.get('adjustments', ())
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)

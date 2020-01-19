@@ -1,10 +1,10 @@
-import copy
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
+from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
 
@@ -70,7 +70,7 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
-        self.visibility = copy.deepcopy(ability.visibility)
+        self.visibility = Visibility()
         self._pin = pin
 
     async def parse(self, operation):

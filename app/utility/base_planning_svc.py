@@ -95,7 +95,7 @@ class BasePlanningService(BaseService):
 
     @staticmethod
     async def remove_links_above_visibility(links, operation):
-        links[:] = [l for l in links if operation.visibility > l.visibility.score]
+        links[:] = [l for l in links if operation.visibility >= l.visibility.score]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):

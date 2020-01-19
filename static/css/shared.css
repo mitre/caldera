@@ -280,8 +280,7 @@ p[onclick] {
     padding: 10px 25px;
     text-align: left;
 }
-#optional,
-#schedules {
+.sidebar-header {
     border-bottom: 1px solid white;
     cursor: pointer;
 }
