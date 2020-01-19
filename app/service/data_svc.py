@@ -293,7 +293,7 @@ class DataService(BaseService):
         try:
             await self._load_abilities(directory='%s/abilities' % directory)
             await self._load_adversaries(directory='%s/adversaries' % directory)
-            await self._load_sources(directory='%s/facts' % directory)
+            await self._load_sources(directory='%s/sources' % directory)
             await self._load_planners(directory='%s/planners' % directory)
         except Exception:
             self.log.error(traceback.print_exc())
