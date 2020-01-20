@@ -517,7 +517,8 @@ function operationCallback(data){
                 title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right" onclick="discard(OPERATION.chain['+i+'].unique)">&#x274C;</span></div>');
+                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
+                '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -640,13 +641,10 @@ function updatePotentialLinkCount(){
     $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
-function discard(linkId) {
-    let operation = $('#operation-list option:selected').attr('value');
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': -2};
-    restRequest('PUT', data, doNothing);
-}
-
 function refreshUpdatableFields(chain, div){
+    if(chain.status !== -5) {
+        div.find('#'+chain.id+'-add').remove();
+    }
     if(chain.collect || chain.status <= -4) {
         div.find('#'+chain.id+'-rm').remove();
     }
@@ -677,6 +675,7 @@ function refreshUpdatableFields(chain, div){
 function applyTimelineColor(div, color) {
     div.removeClass('collected');
     div.removeClass('queued');
+    div.removeClass('visibility');
     div.addClass(color);
 }
 
@@ -1255,14 +1254,18 @@ function openDuk7(){
 
 function submitHilChanges(status){
     document.getElementById("loop-modal").style.display = "none";
-    let linkId = $('#hil-linkId').html();
     let command = $('#hil-command').val();
-    let operation = $('#operation-list option:selected').attr('value');
-
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': status, 'command': btoa(command)};
-    restRequest('PUT', data, doNothing);
+    updateLinkStatus($('#hil-linkId').html(), status, btoa(command));
     refresh();
     return false;
+}
+
+function updateLinkStatus(linkId, status, command='') {
+    let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    if(command) {
+        data['command'] = command;
+    }
+    restRequest('PUT', data, doNothing);
 }
 
 function toggleHil(){
