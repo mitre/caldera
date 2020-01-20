@@ -186,6 +186,11 @@ class RestService(BaseService):
             return link.pin
         return 0
 
+    async def construct_agents_for_group(self, group):
+        if group:
+            return await self.get_service('data_svc').locate('agents', match=dict(group=group))
+        return await self.get_service('data_svc').locate('agents')
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):
@@ -193,7 +198,7 @@ class RestService(BaseService):
         group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
-        agents = await self._construct_agents_for_group(group)
+        agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
@@ -251,8 +256,3 @@ class RestService(BaseService):
         if adv:
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
-
-    async def _construct_agents_for_group(self, group):
-        if group:
-            return await self.get_service('data_svc').locate('agents', match=dict(group=group))
-        return await self.get_service('data_svc').locate('agents')

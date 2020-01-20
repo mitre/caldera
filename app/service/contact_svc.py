@@ -47,13 +47,11 @@ class ContactService(BaseService):
                       exe_name=exe_name)
         if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             new_agent = await self.get_service('data_svc').store(agent)
-            await self._add_agent_to_operation(new_agent)
             return new_agent
         agent.sleep_min = agent.sleep_max = sleep
         agent.group = group
         agent.trusted = True
         new_agent = await self.get_service('data_svc').store(agent)
-        await self._add_agent_to_operation(new_agent)
         return new_agent
 
     async def get_instructions(self, paw):
@@ -106,19 +104,7 @@ class ContactService(BaseService):
 
     """ PRIVATE """
 
-    async def _add_agent_to_operation(self, agent):
-        ops = await self.get_service('data_svc').locate('operations', match=dict(group=agent.group, finish=None))
-        for operation in ops:
-            await self._update_operation(operation)
-
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()
         loop.create_task(contact.start())
         self.contacts.append(contact)
-
-    async def _update_operation(self, operation):
-        if operation.group:
-            updated_agents = await self.get_service('data_svc').locate('agents', match=dict(group=operation.group))
-        else:
-            updated_agents = await self.get_service('data_svc').locate('agents')
-        operation.agents = updated_agents
