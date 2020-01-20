@@ -97,6 +97,7 @@ class AppService(BaseService):
 
             for phase in operation.adversary.phases:
                 if not await operation.is_closeable():
+                    await self._update_operation(operation)
                     await planner.execute(phase)
                     if planner.stopping_condition_met:
                         break
@@ -105,6 +106,7 @@ class AppService(BaseService):
             await self._cleanup_operation(operation)
             while not await operation.is_closeable():
                 await asyncio.sleep(5)
+                await self._update_operation(operation)
             await operation.close()
             await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
@@ -175,3 +177,6 @@ class AppService(BaseService):
             facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
         )
         await self.get_service('rest_svc').persist_source(data)
+
+    async def _update_operation(self, operation):
+        operation.agents = await self.get_service('rest_svc').construct_agents_for_group(operation.group)
