@@ -40,7 +40,8 @@ class Link(BaseObject):
 
     @property
     def states(self):
-        return dict(UNTRUSTED=-4,
+        return dict(HIGH_VIZ=-5,
+                    UNTRUSTED=-4,
                     EXECUTE=-3,
                     DISCARD=-2,
                     PAUSE=-1)
@@ -87,6 +88,9 @@ class Link(BaseObject):
 
     def apply_id(self):
         self.id = self.generate_number()
+
+    def can_ignore(self):
+        return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]
 
     """ PRIVATE """
 

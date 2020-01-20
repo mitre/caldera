@@ -25,7 +25,6 @@ class BasePlanningService(BaseService):
         links[:] = await self.add_test_variants(links, agent, operation)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_missing_requirements(links, operation)
-        links = await self.remove_links_above_visibility(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
@@ -74,7 +73,7 @@ class BasePlanningService(BaseService):
         :return: updated list of links
         """
         completed_links = [l.command for l in operation.chain
-                           if l.paw == agent.paw and (l.finish or l.status == l.states['DISCARD'])]
+                           if l.paw == agent.paw and (l.finish or l.can_ignore())]
         return [l for l in links if l.command not in completed_links]
 
     @staticmethod

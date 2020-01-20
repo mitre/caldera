@@ -160,7 +160,7 @@ class Operation(BaseObject):
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish and not link.status == link.states['DISCARD']:
+            while not link.finish or link.can_ignore():
                 await asyncio.sleep(5)
                 if not member.trusted:
                     break
@@ -218,7 +218,7 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _unfinished_links_for_agent(self, paw):
-        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
+        return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
     def _get_skipped_abilities_by_agent(self):
         abilities_by_agent = self._get_all_possible_abilities_by_agent()

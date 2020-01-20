@@ -647,7 +647,7 @@ function discard(linkId) {
 }
 
 function refreshUpdatableFields(chain, div){
-    if(chain.collect || chain.status === -4) {
+    if(chain.collect || chain.status <= -4) {
         div.find('#'+chain.id+'-rm').remove();
     }
     if(chain.finish) {
@@ -667,6 +667,8 @@ function refreshUpdatableFields(chain, div){
         applyTimelineColor(div, 'collected');
     } else if (chain.status === -4) {
         applyTimelineColor(div, 'untrusted');
+    } else if (chain.status === -5) {
+        applyTimelineColor(div, 'visibility');
     } else {
         applyTimelineColor(div, 'queued');
     }

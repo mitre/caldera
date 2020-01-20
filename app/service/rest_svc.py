@@ -83,7 +83,7 @@ class RestService(BaseService):
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/facts/%s.yml' % data.get('id')
+            file_path = 'data/sources/%s.yml' % data.get('id')
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
