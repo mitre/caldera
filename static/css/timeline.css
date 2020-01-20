@@ -86,6 +86,9 @@ a:hover {
 .timeline .untrusted:after {
   box-shadow: 0 0 0 0.2em white;
 }
+.timeline .visibility:after {
+  box-shadow: 0 0 0 0.2em #F012BE;
+}
 .timeline .discarded:after {}
 
 .timeline .event .member-location,

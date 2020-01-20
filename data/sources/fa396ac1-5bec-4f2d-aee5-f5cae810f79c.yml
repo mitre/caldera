@@ -1,0 +1,6 @@
+facts:
+- score: 1
+  trait: host.installed.av
+  value: symantec
+id: fa396ac1-5bec-4f2d-aee5-f5cae810f79c
+name: x1
