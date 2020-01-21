@@ -32,7 +32,7 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60):
+                 requirements=None, privilege=None, timeout=60, limits=()):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic
@@ -49,6 +49,7 @@ class Ability(BaseObject):
         self.requirements = requirements
         self.privilege = privilege
         self.timeout = timeout
+        self.limits = limits
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)

@@ -1,6 +1,7 @@
 import copy
 import itertools
 import logging
+import random
 import re
 from base64 import b64decode
 
@@ -38,13 +39,15 @@ class BasePlanningService(BaseService):
         :param operation:
         :return: updated list of links
         """
+        random.shuffle(links)
         group = agent.group
         for link in links:
             decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
             variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)
-                valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
+                good_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
+                valid_facts = await self._trim_by_limit(link, good_facts)
                 for combo in list(itertools.product(*valid_facts)):
                     try:
                         copy_test = copy.copy(decoded_test)
@@ -148,3 +151,15 @@ class BasePlanningService(BaseService):
                 if not await requirement.enforce(link, operation):
                     return False
         return True
+
+    @staticmethod
+    async def _trim_by_limit(link, facts):
+        limited_facts = []
+        for limit in link.ability.limits:
+            limited = sorted([f for f in copy.deepcopy(facts[0]) if f.trait == limit.trait], key=lambda k: (-k.score))[:limit.count]
+            if limited:
+                limited_facts.append(limited)
+        if limited_facts:
+            return limited_facts
+        return facts
+
