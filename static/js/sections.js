@@ -1231,7 +1231,7 @@ function addAbilityToPhase() {
 }
 
 function addPackToPhase() {
-    restRequest('POST', {'index':'pack', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
     document.getElementById('pack-modal').style.display='none';
 }
 

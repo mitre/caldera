@@ -26,7 +26,7 @@ class DataService(BaseService):
         self.log = self.add_service('data_svc', self)
         self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], packs=[])
+                           schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -177,10 +177,9 @@ class DataService(BaseService):
                         await self._merge_phases(phases, adv_pack)
                 sorted_phases = [phases[x] for x in sorted(phases.keys())]
                 phases = await self._add_phases(sorted_phases, adv)
-                is_pack = '/packs/' in filename
                 await self.store(
                     Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                              phases=phases, is_pack=is_pack)
+                              phases=phases)
                 )
 
     async def _load_abilities(self, directory):

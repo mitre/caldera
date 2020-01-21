@@ -596,7 +596,7 @@
                     <div class="column" style="flex:100%;">
                         <select id="adv-pack-filter">
                             <option disabled selected>Choose an adversary pack</option>
-                            {% for pack in packs %}
+                            {% for pack in adversaries %}
                                 <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
                             {% endfor %}}
                         </select></br>
