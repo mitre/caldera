@@ -1,7 +1,6 @@
 import copy
 import itertools
 import logging
-import random
 import re
 from base64 import b64decode
 
@@ -39,7 +38,6 @@ class BasePlanningService(BaseService):
         :param operation:
         :return: updated list of links
         """
-        random.shuffle(links)
         group = agent.group
         for link in links:
             decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
