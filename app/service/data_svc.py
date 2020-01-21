@@ -21,7 +21,6 @@ from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
-Limit = namedtuple('Limit', 'trait count')
 
 
 class DataService(BaseService):
@@ -196,7 +195,6 @@ class DataService(BaseService):
                         for name, info in executors.items():
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                limits = await self._create_limits(info.get('limits', []))
                                 a = await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                                technique_name=ab['technique']['name'],
                                                                technique_id=ab['technique']['attack_id'],
@@ -211,8 +209,7 @@ class DataService(BaseService):
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
-                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None,
-                                                               limits=limits)
+                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None)
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -259,14 +256,6 @@ class DataService(BaseService):
         return x
 
     @staticmethod
-    async def _create_limits(raw_limits):
-        limits = []
-        for limit in raw_limits:
-            for k, v in limit.items():
-                limits.append(Limit(k, v))
-        return limits
-
-    @staticmethod
     async def _merge_phases(phases, new_phases):
         for phase, ids in new_phases.items():
             if phase in phases:
@@ -283,7 +272,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60, limits=()):
+                              privilege=None, timeout=60):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -298,7 +287,7 @@ class DataService(BaseService):
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
                                         cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                                        privilege=privilege, timeout=timeout, limits=limits))
+                                        privilege=privilege, timeout=timeout))
 
     async def _load_data(self, directory):
         try:

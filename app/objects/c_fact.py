@@ -11,9 +11,13 @@ class Fact(BaseObject):
     def display(self):
         return dict(unique=self.unique, trait=self.trait, value=self.value, score=self.score)
 
+    @property
+    def trait(self):
+        return self._trait.split('[')[0]
+
     def __init__(self, trait, value, score=1, collected_by=None):
         super().__init__()
-        self.trait = trait
+        self._trait = trait
         self.value = value
         self.score = score
         self.collected_by = collected_by
