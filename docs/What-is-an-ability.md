@@ -44,6 +44,8 @@ Each platform block consists of a:
 * payload (optional)
 * cleanup (optional)
 * parsers (optional)
+* limits (optional)
+* requirements (optional)
 
 **Command**: A command can be 1-line or many and should contain the code you would like the ability to execute. The command can (optionally) contain variables, which are identified as #{variable}. In the example above, there is one variable used, #{files}. A variable means that you are letting CALDERA fill in the actual contents. CALDERA has 3 global variables: 
 
@@ -71,3 +73,17 @@ Cleanup is not needed for abilities, like above, which download files through th
 **Parsers**: A list of parsing modules which can parse the output of the command into new facts. Interested in this topic? Check out [how CALDERA makes decisions](How-CALDERA-makes-decisions.md) which goes into detail about parsers. 
 
 Abilities can also make use of two CALDERA REST API endpoints, [file upload and file download](File-upload-and-download.md).
+
+**Limits**: A list of fact traits and their allowed counts. See the below example, which ensures that the command
+can only use a single host.dir.staged fact. If you do not use limits, CALDERA will create as many possible combinations
+of this command, based on how many matching facts it has collected.
+```
+    darwin:
+      sh:
+        command: |
+          cp "#{host.file.sensitive}" #{host.dir.staged}
+        limits:
+          - host.dir.staged: 1
+```
+
+**Requirements**: Required relationships of facts that need to be established before this ability can be used.

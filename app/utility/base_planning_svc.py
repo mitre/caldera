@@ -162,4 +162,3 @@ class BasePlanningService(BaseService):
         if limited_facts:
             return limited_facts
         return facts
-

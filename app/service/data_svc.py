@@ -262,7 +262,7 @@ class DataService(BaseService):
     async def _create_limits(raw_limits):
         limits = []
         for limit in raw_limits:
-            for k,v in limit.items():
+            for k, v in limit.items():
                 limits.append(Limit(k, v))
         return limits
 
