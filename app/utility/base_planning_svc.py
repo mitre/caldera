@@ -11,7 +11,7 @@ from app.utility.rule_set import RuleSet
 class BasePlanningService(BaseService):
 
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
-    re_limited = re.compile(r'#{.*?\[*\]}')
+    re_limited = re.compile(r'#{.*\[*\]}')
     re_trait = re.compile(r'(?<=\{).+?(?=\[)')
     re_count = re.compile(r'(?<=\[).+?(?=\])')
 
@@ -121,7 +121,8 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            copy_test = copy_test.replace('#{%s}' % var.trait, str(var.value).strip())
+            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+            copy_test = re.sub(re_variable, str(var.value).strip(), copy_test)
         return copy_test, score, used
 
     @staticmethod
