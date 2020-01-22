@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from aiohttp import web
 
@@ -24,6 +23,7 @@ class FileSvc(BaseService):
         """
         try:
             payload = display_name = request.headers.get('file')
+            self.log.debug(request.headers)
             if payload in self.special_payloads:
                 payload, display_name = await self.special_payloads[payload](request.headers)
             payload, content = await self.read_file(payload)
@@ -34,9 +34,27 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def upload_exfil(self, request):
-        exfil_dir = await self._create_exfil_sub_directory(request.headers)
-        return await self.save_multipart_file_upload(request, exfil_dir)
+    async def get_file(self, **kwargs):
+        """
+        Retrieve file
+        :param kwargs: Keyword arguments. The `file` key is REQUIRED.
+        :return: File contents and optionally a display_name if the payload is a special payload
+        """
+        if 'file' not in kwargs:
+            raise FileNotFoundError('File key was not provided')
+
+        display_name = payload = kwargs.get('file')
+        self.log.info(kwargs)
+        if payload in self.special_payloads:
+            payload, display_name = await self.special_payloads[payload](kwargs)
+        file_path, contents = await self.read_file(payload)
+        return file_path, contents, display_name
+
+    async def create_exfil_sub_directory(self, dir_name):
+        path = os.path.join(self.exfil_dir, dir_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
     async def save_multipart_file_upload(self, request, target_dir):
         """
@@ -136,10 +154,3 @@ class FileSvc(BaseService):
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
-
-    async def _create_exfil_sub_directory(self, headers):
-        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
-        path = os.path.join(self.exfil_dir, dir_name)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path

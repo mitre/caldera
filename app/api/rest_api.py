@@ -39,8 +39,8 @@ class RestApi:
         self.app_svc.application.router.add_route('POST', '/ping', self._ping)
         self.app_svc.application.router.add_route('POST', '/instructions', self._instructions)
         self.app_svc.application.router.add_route('POST', '/results', self._results)
-        self.app_svc.application.router.add_route('*', '/file/download', self.file_svc.download)
-        self.app_svc.application.router.add_route('POST', '/file/upload', self.file_svc.upload_exfil)
+        self.app_svc.application.router.add_route('*', '/file/download', self.download)
+        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -200,7 +200,7 @@ class RestApi:
         """
         try:
             payload = display_name = request.headers.get('file')
-            payload, content, display_name = await self.file_svc.read(payload, request.headers.get('platform'))
+            payload, content, display_name = await self.file_svc.get_file(**request.headers)
 
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
             return web.Response(body=content, headers=headers)
