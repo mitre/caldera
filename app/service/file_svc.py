@@ -1,5 +1,4 @@
 import os
-import uuid
 
 from aiohttp import web
 
@@ -15,28 +14,29 @@ class FileSvc(BaseService):
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
 
-    async def download(self, request):
+    async def get_file(self, request):
         """
-        Accept a request with a required header, file, and an optional header, platform, and download the file.
-
-        :param request:
-        :return: a multipart file via HTTP
+        Retrieve file
+        :param request: Request dictionary. The `file` key is REQUIRED.
+        :type request: dict or dict-equivalent
+        :return: File contents and optionally a display_name if the payload is a special payload
+        :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found
         """
-        try:
-            payload = display_name = request.headers.get('file')
-            if payload in self.special_payloads:
-                payload, display_name = await self.special_payloads[payload](request.headers)
-            payload, content = await self.read_file(payload)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
-            return web.Response(body=content, headers=headers)
-        except FileNotFoundError:
-            return web.HTTPNotFound(body='File not found')
-        except Exception as e:
-            return web.HTTPNotFound(body=e)
+        if 'file' not in request:
+            raise KeyError('File key was not provided')
 
-    async def upload_exfil(self, request):
-        exfil_dir = await self._create_exfil_sub_directory(request.headers)
-        return await self.save_multipart_file_upload(request, exfil_dir)
+        display_name = payload = request.get('file')
+        self.log.info(request)
+        if payload in self.special_payloads:
+            payload, display_name = await self.special_payloads[payload](request)
+        file_path, contents = await self.read_file(payload)
+        return file_path, contents, display_name
+
+    async def create_exfil_sub_directory(self, dir_name):
+        path = os.path.join(self.exfil_dir, dir_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
 
     async def save_multipart_file_upload(self, request, target_dir):
         """
@@ -136,10 +136,3 @@ class FileSvc(BaseService):
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
-
-    async def _create_exfil_sub_directory(self, headers):
-        dir_name = '{}'.format(headers.get('X-Request-ID', str(uuid.uuid4())))
-        path = os.path.join(self.exfil_dir, dir_name)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path
