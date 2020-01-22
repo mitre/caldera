@@ -34,19 +34,19 @@ class FileSvc(BaseService):
         except Exception as e:
             return web.HTTPNotFound(body=e)
 
-    async def get_file(self, **kwargs):
+    async def get_file(self, request):
         """
         Retrieve file
         :param kwargs: Keyword arguments. The `file` key is REQUIRED.
         :return: File contents and optionally a display_name if the payload is a special payload
         """
-        if 'file' not in kwargs:
+        if 'file' not in request:
             raise FileNotFoundError('File key was not provided')
 
-        display_name = payload = kwargs.get('file')
-        self.log.info(kwargs)
+        display_name = payload = request.get('file')
+        self.log.info(request)
         if payload in self.special_payloads:
-            payload, display_name = await self.special_payloads[payload](kwargs)
+            payload, display_name = await self.special_payloads[payload](request)
         file_path, contents = await self.read_file(payload)
         return file_path, contents, display_name
 
