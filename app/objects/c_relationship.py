@@ -21,4 +21,3 @@ class Relationship(BaseObject):
         self.edge = edge
         self.target = target
         self.score = score
-
