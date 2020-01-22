@@ -19,3 +19,6 @@
 [submodule "plugins/compass"]
 	path = plugins/compass
 	url = https://github.com/mitre/compass.git
+[submodule "plugins/blue"]
+	path = plugins/blue
+	url = https://gitlab.mitre.org/caldera/blue-plugin.git

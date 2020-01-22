@@ -517,6 +517,7 @@ function operationCallback(data){
                 title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
+                '<span id="'+OPERATION.chain[i].id+'-detector" onclick="findDetectorResults(this)">&#9432;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
             refreshUpdatableFields(OPERATION.chain[i], template);
@@ -641,6 +642,12 @@ function updatePotentialLinkCount(){
     $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
+function resetDetectorModal(){
+    let modal = $('#detector-modal');
+    modal.hide();
+    modal.find('#eventId').text('');
+}
+
 function refreshUpdatableFields(chain, div){
     if(chain.status !== -5) {
         div.find('#'+chain.id+'-add').remove();
@@ -703,6 +710,12 @@ function loadResults(data){
         });
         $('#resultView').html(res);
     }
+}
+
+function findDetectorResults(elem) {
+    document.getElementById('detector-modal').style.display = 'block';
+    $('#eventId').html('sample event id');
+    //restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
 }
 
 function downloadOperationReport() {
