@@ -159,10 +159,17 @@ class FileSvc(BaseService):
         :param buildmode: GO compiler buildmode flag
         :return:
         """
-        os.system(
-            'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
+        if os.name == 'nt':
+            os.system(
+                'set GOARCH=%s set GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags,
+                                                                                       buildmode, output, ldflags,
+                                                                                       src_fle)
+            )
+        else:
+            os.system(
+                'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
                                                                            ldflags, src_fle)
-        )
+            )
 
     """ PRIVATE """
 
