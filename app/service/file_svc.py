@@ -14,34 +14,16 @@ class FileSvc(BaseService):
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
 
-    async def download(self, request):
-        """
-        Accept a request with a required header, file, and an optional header, platform, and download the file.
-
-        :param request:
-        :return: a multipart file via HTTP
-        """
-        try:
-            payload = display_name = request.headers.get('file')
-            self.log.debug(request.headers)
-            if payload in self.special_payloads:
-                payload, display_name = await self.special_payloads[payload](request.headers)
-            payload, content = await self.read_file(payload)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
-            return web.Response(body=content, headers=headers)
-        except FileNotFoundError:
-            return web.HTTPNotFound(body='File not found')
-        except Exception as e:
-            return web.HTTPNotFound(body=e)
-
     async def get_file(self, request):
         """
         Retrieve file
-        :param kwargs: Keyword arguments. The `file` key is REQUIRED.
+        :param request: Request dictionary. The `file` key is REQUIRED.
+        :type request: dict or dict-equivalent
         :return: File contents and optionally a display_name if the payload is a special payload
+        :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found 
         """
         if 'file' not in request:
-            raise FileNotFoundError('File key was not provided')
+            raise KeyError('File key was not provided')
 
         display_name = payload = request.get('file')
         self.log.info(request)
