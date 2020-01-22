@@ -20,7 +20,7 @@ class FileSvc(BaseService):
         :param request: Request dictionary. The `file` key is REQUIRED.
         :type request: dict or dict-equivalent
         :return: File contents and optionally a display_name if the payload is a special payload
-        :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found 
+        :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found
         """
         if 'file' not in request:
             raise KeyError('File key was not provided')
