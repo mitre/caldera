@@ -1172,6 +1172,37 @@ function showAbility(parentId, exploits) {
     });
 }
 
+function showPack() {
+    $('#pack-phases').empty();
+
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+}
+
+function showPackCallback(data) {
+    Object.keys(data[0].phases).forEach(function(phaseID) {
+        let phaseTemplate = $("#pack-phase-template").clone();
+        phaseTemplate.attr('id', 'pack-phase' + phaseID);
+
+        let abilities = addPlatforms(data[0].phases[phaseID]);
+        abilities.forEach(function(ability) {
+            let template = $("#pack-ability-template").clone();
+            template.find('.ability-identifier').text(ability.ability_id);
+            template.find('.ability-name').text(ability.name);
+            template.find('.ability-description').text(ability.description);
+            template.find('.ability-tactic').text(ability.tactic);
+            template.find('.ability-tech-id').text(ability.technique_id);
+            template.find('.ability-tech-name').text(ability.technique_name);
+            template.find('.ability-platforms').text(ability.platform.join(', '));
+            template.show();
+            phaseTemplate.append(template);
+        });
+
+        phaseTemplate.show();
+        $('#pack-phases').append("<h4>Phase " + phaseID + "</h4>");
+        $('#pack-phases').append(phaseTemplate);
+    });
+}
+
 function addExecutorBlock(){
     let template = $("#ttp-template").clone();
     template.show();
