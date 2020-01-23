@@ -15,7 +15,8 @@ class Agent(BaseObject):
                     server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
-                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host)
+                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
+                    watchdog=self.watchdog)
 
     @property
     def display_name(self):
@@ -63,6 +64,7 @@ class Agent(BaseObject):
             existing.update('executors', self.executors)
             existing.update('sleep_min', self.sleep_min)
             existing.update('sleep_max', self.sleep_max)
+            existing.update('watchdog', self.watchdog)
             existing.update('group', self.group)
             existing.update('privilege', self.privilege)
             existing.update('c2', self.c2)

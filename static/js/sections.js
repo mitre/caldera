@@ -130,19 +130,26 @@ $(document).ready(function () {
             {
                 targets: 7,
                 data: null,
-                render: {
-                    _:'pid'
+                render: function ( data, type, row, meta ) {
+                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
                 targets: 8,
                 data: null,
                 render: {
-                    _:'privilege'
+                    _:'pid'
                 }
             },
             {
                 targets: 9,
+                data: null,
+                render: {
+                    _:'privilege'
+                }
+            },
+            {
+                targets: 10,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -152,7 +159,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -190,7 +197,8 @@ function saveGroups(){
         let group = document.getElementById(value['paw']+'-group').value;
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status};
+        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
+        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];

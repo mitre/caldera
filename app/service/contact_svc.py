@@ -49,6 +49,7 @@ class ContactService(BaseService):
             new_agent = await self.get_service('data_svc').store(agent)
             return new_agent
         agent.sleep_min = agent.sleep_max = sleep
+        agent.watchdog = watchdog
         agent.group = group
         agent.trusted = True
         new_agent = await self.get_service('data_svc').store(agent)
