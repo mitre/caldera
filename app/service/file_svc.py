@@ -187,4 +187,3 @@ class FileSvc(BaseService):
                                    iterations=2 ** 20,
                                    backend=default_backend())
         return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(api_key, 'utf-8'))))
-
