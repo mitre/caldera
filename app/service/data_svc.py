@@ -168,8 +168,6 @@ class DataService(BaseService):
     async def _load_adversaries(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
-                if not adv.get('visible', True):
-                    continue
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
                     adv_pack = await self._add_adversary_packs(p)
