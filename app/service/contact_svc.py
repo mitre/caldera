@@ -95,6 +95,7 @@ class ContactService(BaseService):
                     link.finish = self.get_service('data_svc').get_current_timestamp()
                     link.status = int(status)
                     if output:
+                        link.output = output
                         file_svc.write_result_file(id, output)
                         loop.create_task(link.parse(op))
                     await self.get_service('data_svc').store(Agent(paw=link.paw))
