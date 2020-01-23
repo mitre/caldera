@@ -127,8 +127,8 @@ class FileSvc(BaseService):
         with open('%s/%s' % (location, link_id), 'rb') as fle:
             buf = fle.read()
         if self.encryptor and buf.startswith(bytes(self._encryption_flag, encoding='utf-8')):
-            buf = self.encryptor.decrypt(buf[len(self._encryption_flag):]).decode()
-        return buf
+            buf = self.encryptor.decrypt(buf[len(self._encryption_flag):])
+        return buf.decode('utf-8')
 
     def write_result_file(self, link_id, output, location='data/results'):
         """

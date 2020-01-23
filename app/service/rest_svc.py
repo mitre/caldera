@@ -115,7 +115,7 @@ class RestService(BaseService):
         if link:
             try:
                 content = self.get_service('file_svc').read_result_file('%s' % link_id)
-                return dict(link=link.display, output=content.decode('utf-8'))
+                return dict(link=link.display, output=content)
             except FileNotFoundError:
                 return ''
         return ''
