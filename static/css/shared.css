@@ -375,3 +375,47 @@ p[onclick] {
     top: 15%;
     left: 25%;
 }
+.simple-plugin-intro h1 {
+    margin-bottom: -15px;
+}
+.simple-plugin-intro hr {
+    width: 33%;
+    margin-bottom: -15px;
+}
+.column-simple p {
+    padding: 25px;
+    text-align: left;
+    font-size: 14px;
+}
+.column-simple h3 {
+    text-transform: none;
+}
+.column-simple h4 {
+    margin-top: 20px;
+    margin-bottom: -20px;
+    line-height: normal;
+}
+.column-simple .inner-box {
+    text-align: left;
+    background-color:var(--primary-background);
+    padding:15px;
+    border-radius:25px;
+    margin:10%;
+}
+.column-simple .inner-box table tr {
+    color: white;
+}
+.column-simple .inner-box table tr td input[type=checkbox] {
+    border-spacing: 0;
+    margin-top: 15px;
+}
+.column-simple .inner-box table tr td input {
+    width: 100%;
+}
+.column-simple .inner-box table tr td select {
+    width: 100%;
+}
+.column-simple .inner-box table tr td p {
+    padding: 0;
+    margin: 0;
+}
