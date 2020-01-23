@@ -20,7 +20,7 @@ class FileSvc(BaseService):
         self.special_payloads = dict()
 
         if file_encryption and not (api_key and crypt_salt):
-            self.log.error('File encryption requires setting api_key and crypt_salt int he config file.')
+            self.log.error('File encryption requires setting api_key and crypt_salt in the config file.')
         elif file_encryption:
             generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),
                                        length=32,
