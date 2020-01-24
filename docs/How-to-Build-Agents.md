@@ -1,7 +1,7 @@
 How to Build Agents
 ================
 
-Building your own agent is a way to create a unique - or non-detectable - footprint on compromised machines. Our
+Building your own agent is a way to create a unique - or undetectable - footprint on compromised machines. Our
 default agent, 54ndc47, is a full representation of what an agent can do. This agent is written in GoLang and offers
 an extensible collection of command-and-control (C2) protocols, such as communicating over HTTP or GitHub Gist. You can
 extend 54ndc47 by adding your own C2 protocols in place or you can follow this guide to create your own agent 
