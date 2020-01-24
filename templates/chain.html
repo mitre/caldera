@@ -96,6 +96,7 @@
                   <th>Executors</th>
                   <th>Last Seen</th>
                   <th>Sleep (Min/Max)</th>
+                  <th>Watchdog Timer (minutes)</th>
                   <th>PID</th>
                   <th>Privilege</th>
                   <th>Group</th>
@@ -355,10 +356,11 @@
                 <hr>
                 <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
+
               <div id="addOperation" style="display: none;">
                   <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
-                  <div id="optional" class="column sidebar-cutout">
-                      <h5>OPTIONAL &#8595;</h5>
+                  <div id="optional" class="column sidebar-cutout sidebar-header">
+                      <h5>BASIC OPTIONS</h5>
                   </div>
                   <div id="optional-options" class="column sidebar-cutout" style="display: none">
                       <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
@@ -373,9 +375,23 @@
                           <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
                         {% endfor %}
                       </select>
+                      <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1">Auto close operation</option>
+                        <option value="0" selected>Keep open forever</option>
+                      </select>
                       <select name="state" id="queueState" class="queueOption" style="opacity:0.5" disabled="false">
                         <option id="qstate-run" value="running">Run immediately</option>
                         <option id="qstate-paused" value="paused">Pause on start</option>
+                      </select>
+                  </div>
+
+                  <div id="autonomous" class="column sidebar-cutout sidebar-header">
+                      <h5>AUTONOMOUS</h5>
+                  </div>
+                  <div id="autonomous-options" class="column sidebar-cutout" style="display: none;">
+                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1" selected>Run autonomously</option>
+                        <option value="0">Require manual approval</option>
                       </select>
                       <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5" disabled="true">
                         {% for p in planners %}
@@ -387,38 +403,30 @@
                             <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                         {% endfor %}
                       </select>
-                      <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="0">Block untrusted agents</option>
-                        <option value="1" selected>Allow untrusted agents</option>
-                      </select>
-                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="1" selected>Run autonomously</option>
-                        <option value="0">Require manual approval</option>
-                      </select>
                       <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Enable Phases</option>
                         <option value="0">Disable Phases</option>
                       </select>
-                      <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="1" selected>Auto close operation</option>
-                        <option value="0">Keep open for max time</option>
-                      </select>
+                  </div>
+
+                  <div id="stealth" class="column sidebar-cutout sidebar-header">
+                      <h5>STEALTH</h5>
+                  </div>
+                  <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
                       <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                           {% for o in obfuscators %}
                             <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
                           {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
-                      <input name="maxTime" id="queueMaxTime" class="queueOption" placeholder="Max run time (sec)" style="opacity:0.5;" disabled="true"/>
+                      <p style="margin-bottom:-10px">adjust visibility: </p>
+                      <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100">
                   </div>
 
-                  <div id="schedules" class="column sidebar-cutout">
-                      <h5>SCHEDULE &#8595;</h5>
+                  <div id="schedules" class="column sidebar-cutout sidebar-header">
+                      <h5>SCHEDULE</h5>
                   </div>
                   <div id="schedules-options" class="column sidebar-cutout" style="display: none;">
-                      <p>
-                          You can schedule this operation to run daily at the same time:
-                      </p>
                       <select id="schedule-hour" class="avoid-alphabetizing" onchange="checkOpformValid()">
                           <option selected disabled>Select hour</option>
                           {% for n in range(23) %}
@@ -438,6 +446,7 @@
                           <span id="message"></span>
                       </div>
                   </div>
+
                   <br>
                   <button id="opBtn" type="button" style="opacity:0.5" disabled="true"
                       class="button-notready atomic-button" onclick="handleStartAction()">Start
@@ -455,7 +464,7 @@
                         <br>
                         <div class="toggle">
                             <label class="switch"><input type="checkbox" id="togBtnHil" onchange="toggleHil()">
-                                <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual Approval</span></div>
+                                <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual</span></div>
                             </label>
                         </div>
                     </div>
@@ -475,6 +484,7 @@
                           <td class="timeout">timeout</td>
                           <td class="discarded">discarded</td>
                           <td class="untrusted">untrusted</td>
+                          <td class="visibility">visible</td>
                       </tr>
                     </table>
                 </center>
@@ -726,6 +736,10 @@
                             <td style="width:10%"><b>score:</b></td>
                             <td><p contenteditable="false" id="potential-score"></p></td>
                         </tr>
+                        <tr>
+                            <td style="width:10%"><b>visibility:</b></td>
+                            <td><p contenteditable="false" id="potential-visibility"></p></td>
+                        </tr>
                     </table>
                 </div>
             </div>
@@ -737,34 +751,6 @@
             <div id="inner-contents">
               <div id="decision-card" class="decision-card">
                 <table style="border-spacing:15px;">
-                  <tr>
-                    <td>Description:</td>
-                    <td><p id="link-description" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Technique:</td>
-                    <td><div class="tooltip" id="link-technique"></div></td>
-                  </tr>
-                  <tr>
-                    <td>Collected:</td>
-                    <td><p id="link-collect" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Finished:</td>
-                    <td><p id="link-finish" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Command:</td>
-                    <td><p id="time-action" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Executor:</td>
-                    <td><p id="time-executor" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Paw</td>
-                    <td><p id="paw-id" class="member-result"></p></td>
-                  </tr>
                 </table>
               </div>
             </div>
@@ -909,11 +895,11 @@
 <script src="/gui/jquery/jquery-ui.js"></script>
 <script src="/gui/jquery/jquery.dataTables.min.js"></script>
 <script src="/gui/jquery/jquery.dataTables.select.min.js"></script>
-<script src="/gui/js/sections.js"></script>
-<script src="/gui/js/shared.js"></script>
+<script src="/gui/js/sections.js?v=2.5.0"></script>
+<script src="/gui/js/shared.js?v=2.5.0"></script>
 
 <!-- Scripts and CSS file to support ColVis in DataTables -->
 <script src="/gui/js/buttons.colVis.min.js"></script>
 <script src="/gui/js/dataTables.buttons.min.js"></script>
-<link rel="stylesheet" href="/gui/js/buttons.dataTables.css">
+<link rel="stylesheet" href="/gui/css/buttons.dataTables.css">
 </html>

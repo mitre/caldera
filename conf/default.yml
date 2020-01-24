@@ -12,3 +12,5 @@ debug: True
 api_key: ADMIN123
 users:
   admin: admin
+file_encryption: True
+crypt_salt: REPLACE_WITH_RANDOM_VALUE

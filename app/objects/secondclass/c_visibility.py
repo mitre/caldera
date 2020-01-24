@@ -1,14 +1,28 @@
-from collections import namedtuple
-
 from app.utility.base_object import BaseObject
-
-
-Adjustment = namedtuple('Adjustment', 'trait value offset')
 
 
 class Visibility(BaseObject):
 
-    def __init__(self, score=50, adjustments=()):
+    MIN_SCORE = 1
+    MAX_SCORE = 100
+
+    @property
+    def display(self):
+        return self.clean(dict(score=self.score))
+
+    @property
+    def score(self):
+        total_score = self._score + sum([a.offset for a in self.adjustments])
+        if total_score > self.MAX_SCORE:
+            return self.MAX_SCORE
+        elif total_score < self.MIN_SCORE:
+            return self.MIN_SCORE
+        return total_score
+
+    def __init__(self):
         super().__init__()
-        self.score = score
-        self.adjustments = [Adjustment(k, v.get('value'), v.get('offset')) for a in adjustments for k, v in a.items()]
+        self._score = 50
+        self.adjustments = []
+
+    def apply(self, adjustment):
+        self.adjustments.append(adjustment)

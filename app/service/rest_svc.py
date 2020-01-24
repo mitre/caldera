@@ -83,7 +83,7 @@ class RestService(BaseService):
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/facts/%s.yml' % data.get('id')
+            file_path = 'data/sources/%s.yml' % data.get('id')
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
@@ -114,8 +114,8 @@ class RestService(BaseService):
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
-                _, content = await self.get_service('file_svc').read_file(name='%s' % link_id, location='data/results')
-                return dict(link=link.display, output=content.decode('utf-8'))
+                content = self.get_service('file_svc').read_result_file('%s' % link_id)
+                return dict(link=link.display, output=content)
             except FileNotFoundError:
                 return ''
         return ''
@@ -129,7 +129,8 @@ class RestService(BaseService):
         agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),
                                                                trusted=data.get('trusted'),
                                                                sleep_min=data.get('sleep_min'),
-                                                               sleep_max=data.get('sleep_max')))
+                                                               sleep_max=data.get('sleep_max'),
+                                                               watchdog=data.get('watchdog')))
         return agent.display
 
     async def update_chain_data(self, data):
@@ -186,6 +187,11 @@ class RestService(BaseService):
             return link.pin
         return 0
 
+    async def construct_agents_for_group(self, group):
+        if group:
+            return await self.get_service('data_svc').locate('agents', match=dict(group=group))
+        return await self.get_service('data_svc').locate('agents')
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):
@@ -193,14 +199,14 @@ class RestService(BaseService):
         group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
-        agents = await self._construct_agents_for_group(group)
+        agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         allow_untrusted=int(data.pop('allow_untrusted')), autonomous=int(data.pop('autonomous')),
+                         autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         max_time=int(data.pop('max_time')), auto_close=bool(int(data.pop('auto_close'))))
+                         auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
 
     async def _poll_for_data(self, collection, search):
         coll, checks = 0, 0
@@ -251,8 +257,3 @@ class RestService(BaseService):
         if adv:
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
-
-    async def _construct_agents_for_group(self, group):
-        if group:
-            return await self.get_service('data_svc').locate('agents', match=dict(group=group))
-        return await self.get_service('data_svc').locate('agents')

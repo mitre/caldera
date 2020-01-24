@@ -4,8 +4,9 @@ import glob
 import json
 import os.path
 import pickle
+import traceback
 from base64 import b64encode
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -18,6 +19,8 @@ from app.objects.c_requirement import Requirement
 from app.objects.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
+
+Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class DataService(BaseService):
@@ -181,7 +184,7 @@ class DataService(BaseService):
                 )
 
     async def _load_abilities(self, directory):
-        for filename in glob.iglob('%s/*/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     saved = set()
@@ -205,8 +208,7 @@ class DataService(BaseService):
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
-                                                               privilege=ab[
-                                                                   'privilege'] if 'privilege' in ab.keys() else None)
+                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None)
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -219,7 +221,6 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
-        await self._apply_visibility('%s/visibility.yml' % directory)
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -228,6 +229,7 @@ class DataService(BaseService):
                     identifier=src['id'],
                     name=src['name'],
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
                 await self.store(source)
@@ -241,6 +243,16 @@ class DataService(BaseService):
                             stopping_conditions=planner.get('stopping_conditions'),
                             ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )
+
+    @staticmethod
+    async def _create_adjustments(raw_adjustments):
+        x = []
+        if raw_adjustments:
+            for ability_id, adjustments in raw_adjustments.items():
+                for trait, block in adjustments.items():
+                    for change in block:
+                        x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
+        return x
 
     @staticmethod
     async def _merge_phases(phases, new_phases):
@@ -277,15 +289,10 @@ class DataService(BaseService):
                                         privilege=privilege, timeout=timeout))
 
     async def _load_data(self, directory):
-        await self._load_abilities(directory='%s/abilities' % directory)
-        await self._load_adversaries(directory='%s/adversaries' % directory)
-        await self._load_sources(directory='%s/facts' % directory)
-        await self._load_planners(directory='%s/planners' % directory)
-
-    async def _apply_visibility(self, factors_file):
-        if os.path.isfile(factors_file):
-            for sections in self.strip_yml(factors_file):
-                for ability in sections:
-                    for i, options in ability.items():
-                        for a in await self.locate('abilities', dict(ability_id=i)):
-                            a.apply_visibility(options.get('score'), options.get('adjustments', []))
+        try:
+            await self._load_abilities(directory='%s/abilities' % directory)
+            await self._load_adversaries(directory='%s/adversaries' % directory)
+            await self._load_sources(directory='%s/sources' % directory)
+            await self._load_planners(directory='%s/planners' % directory)
+        except Exception:
+            self.log.error(traceback.print_exc())

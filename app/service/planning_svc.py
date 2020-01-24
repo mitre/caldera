@@ -35,7 +35,6 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
-        await self._apply_visibility(operation, links)
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -60,8 +59,9 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+        if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
+            await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
@@ -102,18 +102,11 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_cleanup_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                      msg='no cleanup-link created'):
+        if agent.trusted:
             agent_cleanup_links = await self._generate_cleanup_links(operation=operation,
                                                                      agent=agent,
                                                                      link_status=operation.link_status())
         return agent_cleanup_links
-
-    async def _check_untrusted_agents_allowed(self, agent, operation, msg):
-        if (not agent.trusted) and (not operation.allow_untrusted):
-            self.log.debug('Agent %s untrusted: %s' % (agent.paw, msg))
-            return False
-        return True
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
@@ -135,10 +128,10 @@ class PlanningService(BasePlanningService):
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
 
-    async def _apply_visibility(self, operation, links):
+    @staticmethod
+    async def _apply_adjustments(operation, links):
         for l in links:
-            for adjustment in l.visibility.adjustments:
+            for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility.score += adjustment.offset
-                    self.log.debug('%s visibility now %s for %s=%s' %
-                                   (l.ability.ability_id, l.visibility.score, adjustment.trait, adjustment.value))
+                    l.visibility.apply(adjustment)
+                    l.status = l.states['HIGH_VIZ']

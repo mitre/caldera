@@ -130,19 +130,26 @@ $(document).ready(function () {
             {
                 targets: 7,
                 data: null,
-                render: {
-                    _:'pid'
+                render: function ( data, type, row, meta ) {
+                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
                 targets: 8,
                 data: null,
                 render: {
-                    _:'privilege'
+                    _:'pid'
                 }
             },
             {
                 targets: 9,
+                data: null,
+                render: {
+                    _:'privilege'
+                }
+            },
+            {
+                targets: 10,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -152,7 +159,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -190,7 +197,8 @@ function saveGroups(){
         let group = document.getElementById(value['paw']+'-group').value;
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status};
+        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
+        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];
@@ -432,9 +440,8 @@ function buildOperationObject() {
         "obfuscator":document.getElementById("queueObfuscated").value,
         "auto_close": document.getElementById("queueAutoClose").value,
         "jitter":jitter,
-        "max_time": document.getElementById("queueMaxTime").value || 1800,
         "source":document.getElementById("queueSource").value,
-        "allow_untrusted":document.getElementById("queueUntrusted").value
+        "visibility": document.getElementById("queueVisibility").value
     };
 }
 
@@ -505,14 +512,11 @@ function operationCallback(data){
             return;
         } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
             let template = $("#link-template").clone();
-            let ability = OPERATION.abilities.filter(item => item.unique === OPERATION.chain[i].ability.unique)[0];
-            template.find('#link-description').html(OPERATION.chain[i].ability.description);
             let title = OPERATION.chain[i].ability.name;
             if(OPERATION.chain[i].cleanup) {
                 title = title + " (CLEANUP)"
             }
             let agentPaw = OPERATION.chain[i].paw;
-            template.find('#link-technique').html(ability.technique_id + '<span class="tooltiptext">' + ability.technique_name + '</span>');
             template.attr("id", "op_id_" + OPERATION.chain[i].id);
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
@@ -521,10 +525,8 @@ function operationCallback(data){
                 title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right" onclick="discard(OPERATION.chain['+i+'].unique)">&#x274C;</span></div>');
-            template.find('#time-action').html(atob(OPERATION.chain[i].command));
-            template.find('#time-executor').html(OPERATION.chain[i].executor);
-            template.find('#paw-id').html(OPERATION.chain[i].paw);
+                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
+                '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -596,6 +598,7 @@ function potentialLinksCallback(data){
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
         template.find('#potential-score').html(link.score);
+        template.find('#potential-visibility').html(link.visibility.score);
         template.data('link', link);
         template.show();
         if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
@@ -646,21 +649,16 @@ function updatePotentialLinkCount(){
     $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
-function discard(linkId) {
-    let operation = $('#operation-list option:selected').attr('value');
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': -2};
-    restRequest('PUT', data, doNothing);
-}
-
 function refreshUpdatableFields(chain, div){
-    if(chain.collect) {
+    if(chain.status !== -5) {
+        div.find('#'+chain.id+'-add').remove();
+    }
+    if(chain.collect || chain.status <= -4) {
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-collect').html(chain.collect.split('.')[0]);
     }
     if(chain.finish) {
         div.find('#'+chain.id+'-rs').css('display', 'block');
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-finish').html(chain.finish.split('.')[0]);
     }
     if(chain.status === 0) {
         applyTimelineColor(div, 'success');
@@ -675,6 +673,8 @@ function refreshUpdatableFields(chain, div){
         applyTimelineColor(div, 'collected');
     } else if (chain.status === -4) {
         applyTimelineColor(div, 'untrusted');
+    } else if (chain.status === -5) {
+        applyTimelineColor(div, 'visibility');
     } else {
         applyTimelineColor(div, 'queued');
     }
@@ -683,6 +683,7 @@ function refreshUpdatableFields(chain, div){
 function applyTimelineColor(div, color) {
     div.removeClass('collected');
     div.removeClass('queued');
+    div.removeClass('visibility');
     div.addClass(color);
 }
 
@@ -746,10 +747,14 @@ $(document).ready(function(){
   $("#optional").click(function(){
     $("#optional-options").slideToggle("slow");
   });
-});
-$(document).ready(function(){
   $("#schedules").click(function(){
     $("#schedules-options").slideToggle("slow");
+  });
+  $("#stealth").click(function(){
+    $("#stealth-options").slideToggle("slow");
+  });
+  $("#autonomous").click(function(){
+    $("#autonomous-options").slideToggle("slow");
   });
 });
 
@@ -1297,9 +1302,9 @@ function openDuk2(){
 
 function openDuk3(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... You can double-click on any row to show the details of the executed step. Click the ' +
-        'star icon to view the standard output and error from the command that was executed. Highlighted text indicates ' +
-        'facts which were learned from executing the step. Click the X to stop the ability from running.');
+    $('#duk-text').text('Did you know... You can click the ' +
+        'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
+        'facts which were learned from executing the step.');
 }
 
 function openDuk4(){
@@ -1338,14 +1343,18 @@ function openDuk7(){
 
 function submitHilChanges(status){
     document.getElementById("loop-modal").style.display = "none";
-    let linkId = $('#hil-linkId').html();
     let command = $('#hil-command').val();
-    let operation = $('#operation-list option:selected').attr('value');
-
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': status, 'command': btoa(command)};
-    restRequest('PUT', data, doNothing);
+    updateLinkStatus($('#hil-linkId').html(), status, btoa(command));
     refresh();
     return false;
+}
+
+function updateLinkStatus(linkId, status, command='') {
+    let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    if(command) {
+        data['command'] = command;
+    }
+    restRequest('PUT', data, doNothing);
 }
 
 function toggleHil(){

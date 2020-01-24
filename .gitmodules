@@ -19,3 +19,6 @@
 [submodule "plugins/compass"]
 	path = plugins/compass
 	url = https://github.com/mitre/compass.git
+[submodule "plugins/access"]
+	path = plugins/access
+	url = https://github.com/mitre/access.git

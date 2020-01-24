@@ -535,6 +535,10 @@ table.dataTable input[type=text] {
     background-color: white;
     color: black;
 }
+.legend .visibility {
+    background-color: #F012BE;
+    color: white;
+}
 .legend .discarded {
     background-color: var(--primary-background);
 }

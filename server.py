@@ -17,13 +17,9 @@ from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 
 
-def setup_logger(config):
-    if config.get('debug'):
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+def setup_logger(co):
+    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO)
     for logger in [name for name in logging.root.manager.loggerDict]:
-        logging.debug('disabling logger: %s' % logger)
         logging.getLogger(logger).setLevel(100)
 
 
@@ -90,7 +86,11 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
-        file_svc = FileSvc(cfg['exfil_dir'])
+        file_svc = FileSvc(cfg['exfil_dir'],
+                           file_encryption=cfg['file_encryption'],
+                           api_key=cfg['api_key'],
+                           crypt_salt=cfg['crypt_salt']
+                           )
         app_svc = AppService(application=web.Application(), config=cfg)
 
         if args.fresh:
