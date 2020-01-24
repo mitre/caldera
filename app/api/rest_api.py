@@ -224,7 +224,7 @@ class RestApi:
         data['c2'] = 'http'
         agent = await self.contact_svc.handle_heartbeat(**data)
         instructions = await self.contact_svc.get_instructions(data['paw'])
-        response = dict(sleep=await agent.calculate_sleep(), instructions=instructions)
+        response = dict(sleep=await agent.calculate_sleep(), watchdog=int(agent.watchdog), instructions=instructions)
         return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
 
     async def _results(self, request):

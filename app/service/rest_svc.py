@@ -129,7 +129,8 @@ class RestService(BaseService):
         agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),
                                                                trusted=data.get('trusted'),
                                                                sleep_min=data.get('sleep_min'),
-                                                               sleep_max=data.get('sleep_max')))
+                                                               sleep_max=data.get('sleep_max'),
+                                                               watchdog=data.get('watchdog')))
         return agent.display
 
     async def update_chain_data(self, data):

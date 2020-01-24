@@ -23,7 +23,7 @@ class ContactService(BaseService):
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
     async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege, c2, exe_name):
+                               pid, ppid, sleep, privilege, c2, exe_name, watchdog, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
 
@@ -44,11 +44,12 @@ class ContactService(BaseService):
         """
         agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
                       executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2,
-                      exe_name=exe_name)
+                      exe_name=exe_name, watchdog=watchdog)
         if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             new_agent = await self.get_service('data_svc').store(agent)
             return new_agent
         agent.sleep_min = agent.sleep_max = sleep
+        agent.watchdog = watchdog
         agent.group = group
         agent.trusted = True
         new_agent = await self.get_service('data_svc').store(agent)
