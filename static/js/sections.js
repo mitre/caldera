@@ -1383,11 +1383,16 @@ function hilApproveAll(){
 
 $(document).ready(function() {
     $('#plugins-table').DataTable({
-          columnDefs: [
+        columnDefs: [
             {
                 targets: 0,
                 className: 'dt-body-left'
+            },
+            {
+                targets: 1,
+                className: 'dt-body-left'
             }
-          ]
+        ],
+        "order": [[ 2, "desc" ]]
     })
 });
