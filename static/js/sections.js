@@ -513,11 +513,12 @@ function operationCallback(data){
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
             template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
+                'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' + title + 
+                '<span id="' + OPERATION.chain[i].id + '-detector" class="tactic-find-result" ' +
+                'onclick="findDetectorResults(this, OPERATION.chain[' + i + '].unique)" alt="Blue team analytics">&#128309;</span>' +
+                '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
-                'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-detector" onclick="findDetectorResults(this)">&#9432;</span>' +
+                'data-encoded-cmd="'+OPERATION.chain[i].command+'" alt="Command output">&#9733;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
                 '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
             refreshUpdatableFields(OPERATION.chain[i], template);
@@ -657,6 +658,7 @@ function refreshUpdatableFields(chain, div){
     }
     if(chain.finish) {
         div.find('#'+chain.id+'-rs').css('display', 'block');
+        div.find('#' + chain.id + '-detector').css('display', 'block');
         div.find('#'+chain.id+'-rm').remove();
     }
     if(chain.status === 0) {
@@ -712,10 +714,10 @@ function loadResults(data){
     }
 }
 
-function findDetectorResults(elem) {
+function findDetectorResults(elem, link_id) {
     document.getElementById('detector-modal').style.display = 'block';
     $('#eventId').html('sample event id');
-    //restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
+    restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
 }
 
 function downloadOperationReport() {
