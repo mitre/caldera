@@ -29,11 +29,14 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        agent = Agent(paw=paw, **kwargs)
-        if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
-            new_agent = await self.get_service('data_svc').store(agent)
-            return new_agent
-        return await self.get_service('data_svc').store(agent)
+        try:
+            agent = Agent(paw=paw, **kwargs)
+            if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
+                new_agent = await self.get_service('data_svc').store(agent)
+                return new_agent
+            return await self.get_service('data_svc').store(agent)
+        except Exception as e:
+            print(e)
 
     async def get_instructions(self, paw):
         """

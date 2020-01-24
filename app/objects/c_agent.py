@@ -23,8 +23,8 @@ class Agent(BaseObject):
         return '{}${}'.format(self.host, self.username)
 
     def __init__(self, paw, platform=None, server=None, host='unknown', username='unknown', architecture='unknown',
-                 group='default', location='unknown', pid=0, ppid=0, trusted=True, sleep_min=55,
-                 sleep_max=65, executors=(), privilege='User', c2='HTTP', exe_name='unknown', watchdog=0):
+                 group='default', location='unknown', pid=0, ppid=0, trusted=True, sleep=60, executors=(),
+                 privilege='User', c2='HTTP', exe_name='unknown', watchdog=0):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -40,8 +40,8 @@ class Agent(BaseObject):
         self.created = datetime.now()
         self.last_seen = self.created
         self.last_trusted_seen = self.created
-        self.sleep_min = sleep_min
-        self.sleep_max = sleep_max
+        self.sleep_min = sleep - 1
+        self.sleep_max = sleep + 1
         self.executors = executors
         self.privilege = privilege
         self.c2 = c2
