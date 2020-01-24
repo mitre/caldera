@@ -1,4 +1,5 @@
 [![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
+[![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=latest)](http://caldera.readthedocs.io/?badge=latest)
 
 **[Caldera](https://github.com/mitre/caldera)**|**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Terminal](https://github.com/mitre/terminal)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Caltack](https://github.com/mitre/caltack)**|**[Compass](https://github.com/mitre/compass)**|**[Access](https://github.com/mitre/access)**
 :-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
