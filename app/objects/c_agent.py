@@ -22,9 +22,9 @@ class Agent(BaseObject):
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
-    def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
-                 location=None, pid=None, ppid=None, trusted=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None, c2='HTTP', exe_name=None, watchdog=None):
+    def __init__(self, paw, platform=None, server=None, host='unknown', username='unknown', architecture='unknown',
+                 group='default', location='unknown', pid=0, ppid=0, trusted=True, sleep_min=55,
+                 sleep_max=65, executors='unknown', privilege='User', c2='HTTP', exe_name='unknown', watchdog=0):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -71,7 +71,7 @@ class Agent(BaseObject):
         return existing
 
     async def calculate_sleep(self):
-        return self.jitter('{}/{}'.format(self.sleep_min, self.sleep_max))
+        return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
     async def capabilities(self, ability_set):
         abilities = []

@@ -22,38 +22,18 @@ class ContactService(BaseService):
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
-    async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege, c2, exe_name, watchdog, **kwargs):
+    async def handle_heartbeat(self, paw, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-
-        :param paw:
-        :param platform:
-        :param server:
-        :param group:
-        :param host:
-        :param username:
-        :param executors:
-        :param architecture:
-        :param location:
-        :param pid:
-        :param ppid:
-        :param sleep:
-        :param privilege:
+        :param paw: the unique identifier for the calling agent
+        :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
-                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2,
-                      exe_name=exe_name, watchdog=watchdog)
+        agent = Agent(paw=paw, **kwargs)
         if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             new_agent = await self.get_service('data_svc').store(agent)
             return new_agent
-        agent.sleep_min = agent.sleep_max = sleep
-        agent.watchdog = watchdog
-        agent.group = group
-        agent.trusted = True
-        new_agent = await self.get_service('data_svc').store(agent)
-        return new_agent
+        return await self.get_service('data_svc').store(agent)
 
     async def get_instructions(self, paw):
         """

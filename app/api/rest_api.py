@@ -221,10 +221,9 @@ class RestApi:
         url = urlparse(data['server'])
         port = '443' if url.scheme == 'https' else 80
         data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
-        data['c2'] = 'http'
         agent = await self.contact_svc.handle_heartbeat(**data)
         instructions = await self.contact_svc.get_instructions(data['paw'])
-        response = dict(sleep=await agent.calculate_sleep(), watchdog=int(agent.watchdog), instructions=instructions)
+        response = dict(sleep=await agent.calculate_sleep(), watchdog=agent.watchdog, instructions=instructions)
         return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
 
     async def _results(self, request):
