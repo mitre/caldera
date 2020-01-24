@@ -40,13 +40,13 @@ class Agent(BaseObject):
         self.created = datetime.now()
         self.last_seen = self.created
         self.last_trusted_seen = self.created
-        self.sleep_min = sleep - 1
-        self.sleep_max = sleep + 1
+        self.sleep_min = sleep
+        self.sleep_max = sleep
         self.executors = executors
         self.privilege = privilege
         self.c2 = c2
         self.exe_name = exe_name
-        self.watchdog = watchdog
+        self.watchdog = int(watchdog)
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
