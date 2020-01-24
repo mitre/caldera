@@ -1385,3 +1385,14 @@ function hilApproveAll(){
     refresh();
     return false;
 }
+
+$(document).ready(function() {
+    $('#plugins-table').DataTable({
+          columnDefs: [
+            {
+                targets: 0,
+                className: 'dt-body-left'
+            }
+          ]
+    })
+});
