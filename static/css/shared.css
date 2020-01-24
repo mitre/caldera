@@ -407,6 +407,7 @@ p[onclick] {
     padding:15px;
     border-radius:25px;
     margin:10%;
+    margin-top: 0;
 }
 .column-simple .inner-box table tr {
     color: white;
