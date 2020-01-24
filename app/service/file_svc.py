@@ -35,7 +35,6 @@ class FileSvc(BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = request.get('file')
-        self.log.info(request)
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](request)
         file_path, contents = await self.read_file(payload)
