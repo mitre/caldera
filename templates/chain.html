@@ -38,10 +38,12 @@
     <button class="subnavbtn" onclick="viewSection('plugins')" style="cursor:pointer;">Plugins <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content subnav-content-right">
         {% for plugin in plugins %}
-          {% if plugin.address %}
-              <a href="{{ plugin.address }}">{{ plugin.name }}</a>
-          {% else %}
-              <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
+          {% if plugin.enabled %}
+              {% if plugin.address %}
+                  <a href="{{ plugin.address }}">{{ plugin.name }}</a>
+              {% else %}
+                  <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
+              {% endif %}
           {% endif %}
         {% endfor %}
     </div>
@@ -724,35 +726,20 @@
         <!-- plugin manager -->
         <div id="plugins" class="section-profile planners" style="display: none">
           <div class="advanced row">
-            <div class="topright duk-icon"><img onclick="openDuk7()" src="/gui/img/duk.png"></div>
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
+            <div class="topleft duk-icon"><img onclick="removeSection('plugins')" src="/gui/img/x.png"></div>
             <div id="plugins-sidebar" class="column section-border" style="flex:25%">
               <img src="/gui/img/plugin.png">
               <h4>Plugins</h4>
               <p class="section-description">
                   A plugin is a way to easily increase functionality
               </p>
-<!--              <br>-->
-<!--              <div id="viewPlugins">-->
-<!--                  <select id="plugin-select" style="margin-top:-15px" onchange="loadPlanner()">-->
-<!--                    <option value="" disabled selected>Select an existing planner</option>-->
-<!--                    {% for p in plugin %}-->
-<!--                      <option value="{{ p.name }}">{{ p.name }} planner</option>-->
-<!--                    {% endfor %}-->
-<!--                  </select>-->
-<!--              </div>-->
             </div>
-
-            <div id="plugins-info" class="column planner-header" style="flex:75%;text-align: left">
-              <h3 id="plugins-title"></h3>
-              <p id="plugins-description"></p>
-              <table id="plugin-table" class="dataTable">
+            <div id="plugins-info" class="column" style="flex:75%;text-align: left">
+              <table id="plugins-table" class="dataTable">
                 <thead>
                     <tr>
                         <th>Name</th>
                         <th>Address</th>
-                        <th>Install</th>
                         <th>Enabled</th>
                     </tr>
                 </thead>
@@ -765,7 +752,6 @@
                           {% else %}
                               <td><a onclick="alert('No GUI component to this plugin')">No GUI</a></td>
                           {% endif %}
-                            <td></td>
                             <td>{{ plugin.enabled }}</td>
                         </tr>
                     {% endfor %}
