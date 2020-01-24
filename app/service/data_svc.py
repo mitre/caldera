@@ -169,20 +169,19 @@ class DataService(BaseService):
         return dict(pp)
 
     async def _load_adversaries(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
                     adv_pack = await self._add_adversary_packs(p)
                     if adv_pack:
                         await self._merge_phases(phases, adv_pack)
-                if adv.get('visible', True):
-                    sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                    phases = await self._add_phases(sorted_phases, adv)
-                    await self.store(
-                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                  phases=phases)
-                    )
+                sorted_phases = [phases[x] for x in sorted(phases.keys())]
+                phases = await self._add_phases(sorted_phases, adv)
+                await self.store(
+                    Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
+                              phases=phases)
+                )
 
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
