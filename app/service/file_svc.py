@@ -1,18 +1,27 @@
 import os
+import base64
 
 from aiohttp import web
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
 
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file
 
 
+FILE_ENCRYPTION_FLAG = '%encrypted%'
+
+
 class FileSvc(BaseService):
 
-    def __init__(self, exfil_dir):
+    def __init__(self, exfil_dir, file_encryption=True, api_key=None, crypt_salt=None):
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
+        self.encryptor = self._get_encryptor(api_key, crypt_salt) if file_encryption else None
 
     async def get_file(self, request):
         """
@@ -97,6 +106,36 @@ class FileSvc(BaseService):
                 return name, file_stream.read()
         raise FileNotFoundError
 
+    def read_result_file(self, link_id, location='data/results'):
+        """
+        Read a result file. If file encryption is enabled, this method will return the plaintext
+        content.
+
+        :param link_id: The id of the link to return results from.
+        :param location: The path to results directory.
+        :return:
+        """
+        with open('%s/%s' % (location, link_id), 'rb') as fle:
+            buf = fle.read()
+        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
+            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
+        return buf.decode('utf-8')
+
+    def write_result_file(self, link_id, output, location='data/results'):
+        """
+        Writes the results of a link execution to disk. If file encryption is enabled,
+        the results file will contain ciphertext.
+
+        :param link_id: The link id of the result being written.
+        :param output: The content of the link's output.
+        :param location: The path to the results directory.
+        :return:
+        """
+        if self.encryptor:
+            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(bytes(output, encoding='utf-8'))
+        with open('%s/%s' % (location, link_id), 'wb') as fle:
+            fle.write(output)
+
     async def add_special_payload(self, name, func):
         """
         Call a special function when specific payloads are downloaded
@@ -136,3 +175,15 @@ class FileSvc(BaseService):
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    def _get_encryptor(self, api_key, crypt_salt):
+        if not (api_key and crypt_salt):
+            self.log.error('File encryption requires setting api_key and crypt_salt in the config file.')
+            return None
+
+        generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),
+                                   length=32,
+                                   salt=bytes(crypt_salt, 'utf-8'),
+                                   iterations=2 ** 20,
+                                   backend=default_backend())
+        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(api_key, 'utf-8'))))

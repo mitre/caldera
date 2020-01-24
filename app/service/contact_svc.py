@@ -86,6 +86,7 @@ class ContactService(BaseService):
         :param pid:
         :return: a JSON status message
         """
+        file_svc = self.get_service('file_svc')
         try:
             loop = asyncio.get_event_loop()
             for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
@@ -95,8 +96,8 @@ class ContactService(BaseService):
                     link.finish = self.get_service('data_svc').get_current_timestamp()
                     link.status = int(status)
                     if output:
-                        with open('data/results/%s' % id, 'w') as out:
-                            out.write(output)
+                        link.output = output
+                        file_svc.write_result_file(id, output)
                         loop.create_task(link.parse(op))
                     await self.get_service('data_svc').store(Agent(paw=link.paw))
                     return json.dumps(dict(status=True))

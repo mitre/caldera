@@ -86,7 +86,11 @@ if __name__ == '__main__':
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
-        file_svc = FileSvc(cfg['exfil_dir'])
+        file_svc = FileSvc(cfg['exfil_dir'],
+                           file_encryption=cfg['file_encryption'],
+                           api_key=cfg['api_key'],
+                           crypt_salt=cfg['crypt_salt']
+                           )
         app_svc = AppService(application=web.Application(), config=cfg)
 
         if args.fresh:
