@@ -32,6 +32,11 @@ class FileSvc(BaseService):
         file_path, contents = await self.read_file(payload)
         return file_path, contents, display_name
 
+    async def save_file(self, filename, payload, target_dir):
+        with open(os.path.join(target_dir, filename), 'wb') as f:
+            f.write(payload)
+        self.log.debug('Saved file %s' % filename)
+
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.exfil_dir, dir_name)
         if not os.path.exists(path):
@@ -52,16 +57,11 @@ class FileSvc(BaseService):
                 if not field:
                     break
                 filename = field.filename
-                with open(os.path.join(target_dir, filename), 'wb') as f:
-                    while True:
-                        chunk = await field.read_chunk()
-                        if not chunk:
-                            break
-                        f.write(chunk)
-                self.log.debug('Uploaded file %s' % filename)
+                await self.save_file(filename, await field.read(), target_dir)
+                self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
         except Exception as e:
-            self.log.debug('Exception uploading file %s' % e)
+            self.log.debug('Exception uploading file: %s' % e)
 
     async def find_file_path(self, name, location=''):
         """
