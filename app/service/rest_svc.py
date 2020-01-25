@@ -260,4 +260,3 @@ class RestService(BaseService):
         contact_svc.sleep_min = sleep_min
         contact_svc.sleep_max = sleep_max
         contact_svc.watchdog = watchdog
-

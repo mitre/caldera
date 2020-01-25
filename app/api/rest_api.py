@@ -2,7 +2,6 @@ import json
 import logging
 import traceback
 import uuid
-from datetime import datetime
 
 from aiohttp import web
 from aiohttp_jinja2 import template
