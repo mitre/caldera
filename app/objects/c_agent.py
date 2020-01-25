@@ -24,8 +24,8 @@ class Agent(BaseObject):
         return '{}${}'.format(self.host, self.username)
 
     def __init__(self, paw, platform=None, server=None, host='unknown', username='unknown', architecture='unknown',
-                 group='default', location='unknown', pid=0, ppid=0, trusted=True, sleep=60, executors=(),
-                 privilege='User', c2='HTTP', exe_name='unknown', watchdog=0):
+                 group='default', location='unknown', pid=0, ppid=0, trusted=True, executors=(), privilege='User',
+                 c2='HTTP', exe_name='unknown'):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -42,13 +42,13 @@ class Agent(BaseObject):
         self.created = datetime.now()
         self.last_seen = self.created
         self.last_trusted_seen = self.created
-        self.sleep_min = sleep
-        self.sleep_max = sleep
+        self.sleep_min = 55
+        self.sleep_max = 65
         self.executors = executors
         self.privilege = privilege
         self.c2 = c2
         self.exe_name = exe_name
-        self.watchdog = int(watchdog)
+        self.watchdog = 0
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
