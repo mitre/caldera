@@ -216,8 +216,8 @@ class RestApi(BaseWorld):
     async def _ping(self, request):
         profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
         profile['paw'] = self.generate_name(size=6)
-        await self.contact_svc.handle_heartbeat(**profile)
-        return web.Response(text=self.contact_svc.encode_string(profile['paw']))
+        agent = await self.contact_svc.handle_heartbeat(**profile)
+        return web.Response(text=self.contact_svc.encode_string(agent.paw))
 
     async def _instructions(self, request):
         profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
@@ -229,5 +229,5 @@ class RestApi(BaseWorld):
     async def _results(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
         data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        status = await self.contact_svc.save_results(data['id'], data['output'], data['status'], data['pid'])
-        return web.Response(text=self.contact_svc.encode_string(status))
+        await self.contact_svc.save_results(**data)
+        return web.Response()

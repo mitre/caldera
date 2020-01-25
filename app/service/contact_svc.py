@@ -86,7 +86,6 @@ class ContactService(BaseService):
                         loop.create_task(link.parse(op))
                     for a in await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)):
                         await a.update()
-                    return json.dumps(dict(status=True))
         except Exception:
             pass
 
