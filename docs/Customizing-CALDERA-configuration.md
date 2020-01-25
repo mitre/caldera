@@ -15,12 +15,21 @@ The YAML configuration file contains all the configuration CALDERA requires to b
 host: 127.0.0.1
 port: 8888
 exfil_dir: /tmp
-enabled_plugins:
+plugins:
   - stockpile
   - sandcat
 api_key: ADMIN123
 users:
   admin: admin
+file_encryption: True
+crypt_salt: REPLACE_WITH_RANDOM_VALUE
+agent_config:
+  untrusted_timer: 60
+  sleep_min: 30
+  sleep_max: 60
+  watchdog: 0
+  api_beacon: /beacon
+  api_result: /result
 ```
 
 A few key things to note:
@@ -28,6 +37,6 @@ A few key things to note:
 * **Host**: the IP address CALDERA is available at. You may need to change this to 0.0.0.0 to serve CALDERA on all interfaces, if you anticipate remote machines directly connecting to it.
 * **Port**: the port you serve CALDERA on
 * **Exfil_dir**: the directory to use when an ability exfiltrates files from the agent, sending them back to CALDERA. Any file(s) posted to the /file/upload endpoint will end up in this directory.
-* **Enabled_plugins**: the list of all loaded [plugins](What-is-a-plugin.md). A plugin must be in this list to be available when CALDERA is running. Adding a plugin to this list will result in that plugin's hook.py file getting called when CALDERA boots up.
+* **Plugins**: the list of all loaded [plugins](What-is-a-plugin.md). A plugin must be in this list to be available when CALDERA is running. Adding a plugin to this list will result in that plugin's hook.py file getting called when CALDERA boots up.
 * **API_KEY**: A password to use when accessing CALDERA programmatically.
 * **Users**: the username/password credentials of all accounts you want to access the CALDERA login page

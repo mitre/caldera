@@ -12,7 +12,8 @@ from app.utility.base_world import BaseWorld
 
 class RestApi(BaseWorld):
 
-    def __init__(self, services):
+    def __init__(self, config, services):
+        self.config = config
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
@@ -38,8 +39,8 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
         # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
-        self.app_svc.application.router.add_route('POST', '/beacon', self._beacon)
-        self.app_svc.application.router.add_route('POST', '/results', self._results)
+        self.app_svc.application.router.add_route('POST', self.config['agent_config']['api_beacon'], self._beacon)
+        self.app_svc.application.router.add_route('POST', self.config['agent_config']['api_result'], self._results)
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
@@ -216,7 +217,10 @@ class RestApi(BaseWorld):
         profile['paw'] = profile.get('paw', self.generate_name(size=6))
         agent = await self.contact_svc.handle_heartbeat(**profile)
         instructions = await self.contact_svc.get_instructions(agent.paw)
-        response = dict(paw=profile['paw'], sleep=await agent.calculate_sleep(), watchdog=agent.watchdog, instructions=instructions)
+        response = dict(paw=profile['paw'],
+                        sleep=await agent.calculate_sleep(),
+                        watchdog=agent.watchdog,
+                        instructions=instructions)
         return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
 
     async def _results(self, request):
