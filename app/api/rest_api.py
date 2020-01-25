@@ -9,9 +9,10 @@ from aiohttp import web
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import check_authorization
+from app.utility.base_world import BaseWorld
 
 
-class RestApi:
+class RestApi(BaseWorld):
 
     def __init__(self, services):
         self.data_svc = services.get('data_svc')
@@ -35,6 +36,7 @@ class RestApi:
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
+        # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
         self.app_svc.application.router.add_route('POST', '/ping', self._ping)
         self.app_svc.application.router.add_route('POST', '/instructions', self._instructions)
@@ -218,8 +220,9 @@ class RestApi:
         url = urlparse(data['server'])
         port = '443' if url.scheme == 'https' else 80
         data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        data['paw'] = self.generate_name(size=6)
         await self.contact_svc.handle_heartbeat(**data)
-        return web.Response(text=self.contact_svc.encode_string('pong'))
+        return web.Response(text=self.contact_svc.encode_string(data['paw']))
 
     async def _instructions(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
