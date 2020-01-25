@@ -29,10 +29,7 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        try:
-            return await self.get_service('data_svc').store(Agent(paw=paw, **kwargs))
-        except Exception as e:
-            print(e)
+        return await self.get_service('data_svc').store(Agent(paw=paw, **kwargs))
 
     async def get_instructions(self, paw):
         """
