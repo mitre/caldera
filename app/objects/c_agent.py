@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import urlparse
 
 from app.utility.base_object import BaseObject
 
@@ -22,9 +23,9 @@ class Agent(BaseObject):
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
-    def __init__(self, paw, host=None, username=None, architecture=None, platform=None, server=None, group=None,
-                 location=None, pid=None, ppid=None, trusted=None, sleep_min=None,
-                 sleep_max=None, executors=None, privilege=None, c2='HTTP', exe_name=None, watchdog=None):
+    def __init__(self, paw, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+                 username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
+                 trusted=True, executors=(), privilege='User', c2='HTTP', exe_name='unknown'):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -32,7 +33,8 @@ class Agent(BaseObject):
         self.group = group
         self.architecture = architecture
         self.platform = platform
-        self.server = server
+        url = urlparse(server)
+        self.server = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         self.location = location
         self.pid = pid
         self.ppid = ppid
@@ -40,38 +42,23 @@ class Agent(BaseObject):
         self.created = datetime.now()
         self.last_seen = self.created
         self.last_trusted_seen = self.created
-        self.sleep_min = sleep_min
-        self.sleep_max = sleep_max
         self.executors = executors
         self.privilege = privilege
         self.c2 = c2
         self.exe_name = exe_name
-        self.watchdog = watchdog
+        self.sleep_min = int(sleep_min)
+        self.sleep_max = int(sleep_max)
+        self.watchdog = int(watchdog)
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
         if not existing:
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
-        else:
-            now = datetime.now()
-            existing.update('trusted', self.trusted)
-            if existing.trusted:
-                existing.update('last_trusted_seen', now)
-            existing.update('last_seen', now)
-            existing.update('pid', self.pid)
-            existing.update('ppid', self.ppid)
-            existing.update('executors', self.executors)
-            existing.update('sleep_min', self.sleep_min)
-            existing.update('sleep_max', self.sleep_max)
-            existing.update('watchdog', self.watchdog)
-            existing.update('group', self.group)
-            existing.update('privilege', self.privilege)
-            existing.update('c2', self.c2)
         return existing
 
     async def calculate_sleep(self):
-        return self.jitter('{}/{}'.format(self.sleep_min, self.sleep_max))
+        return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
     async def capabilities(self, ability_set):
         abilities = []
@@ -85,3 +72,28 @@ class Agent(BaseObject):
                 if val.privilege and val.privilege == self.privilege or not val.privilege:
                     abilities.append(val)
         return abilities
+
+    async def heartbeat_modification(self, **kwargs):
+        now = datetime.now()
+        self.last_seen = now
+        if self.trusted:
+            self.last_trusted_seen = now
+        self.update('pid', kwargs.get('pid'))
+        self.update('ppid', kwargs.get('ppid'))
+        self.update('server', kwargs.get('server'))
+        self.update('exe_name', kwargs.get('exe_name'))
+        self.update('location', kwargs.get('location'))
+        self.update('privilege', kwargs.get('privilege'))
+        self.update('host', kwargs.get('host'))
+        self.update('username', kwargs.get('username'))
+        self.update('architecture', kwargs.get('architecture'))
+        self.update('platform', kwargs.get('platform'))
+        self.update('executors', kwargs.get('executors'))
+        self.update('c2', kwargs.get('c2'))
+
+    async def gui_modification(self, **kwargs):
+        self.update('group', kwargs.get('group'))
+        self.update('trusted', kwargs.get('trusted'))
+        self.update('sleep_min', int(kwargs.get('sleep_min')))
+        self.update('sleep_max', int(kwargs.get('sleep_max')))
+        self.update('watchdog', int(kwargs.get('watchdog')))
