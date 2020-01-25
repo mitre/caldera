@@ -95,14 +95,14 @@ as keys. Add values which correlate to the host your agent will be running on.
 | host          | The hostname of the machine | |
 | username      | The username running the agent | |
 | architecture  | The architecture of the host. | |
-| location      | The location of the agent on disk | |
 | sleep         | The number of seconds to wait between beacons | |
-| pid           | The process identifier of the agent | |
 | executors     | A comma-separated string of executors allowed on the host | Executors are evaluated against the executor block of each ability. Currently, you can use sh, cmd, psh and pwsh |
 | privilege     | The privilege level of the agent process, either User or Elevated | Privilege is evaluated against the optional privilege block of each ability file |
-| exe_name      | The name of the agent binary file | |
 | c2            | The C2-communication name | The c2 determines how to send instructions back to the agent. You should use "http" |
 | watchdog      | The number of minutes to wait after a beacon cannot connect to the server before the agent kills itself | |
+| pid           | The process identifier of the agent | |
+| location      | The location of the agent on disk | |
+| exe_name      | The name of the agent binary file | |
 
 At this point, you're ready to make a POST request with the profile to the /instructions endpoint. You should get back
 1) The recommended number of seconds to sleep before sending the next beacon

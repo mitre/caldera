@@ -126,12 +126,13 @@ class RestService(BaseService):
         return op.report(output=data.get('agent_output'))
 
     async def update_agent_data(self, data):
-        agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),
-                                                               trusted=data.get('trusted'),
-                                                               watchdog=data.get('watchdog')))
-        agent.sleep_min = int(data.get('sleep_min'))
-        agent.sleep_max = int(data.get('sleep_max'))
-        return agent.display
+        for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.pop('paw'))):
+            agent.trusted = data.get('trusted')
+            agent.group = data.get('group')
+            agent.watchdog = int(data.get('watchdog'))
+            agent.sleep_min = int(data.get('sleep_min'))
+            agent.sleep_max = int(data.get('sleep_max'))
+            return agent.display
 
     async def update_chain_data(self, data):
         link = await self.get_service('app_svc').find_link(data.pop('link_id'))

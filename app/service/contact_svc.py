@@ -29,6 +29,15 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
+        for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
+            agent.pid = kwargs.get('pid')
+            agent.ppid = kwargs.get('ppid')
+            agent.server = kwargs.get('server')
+            agent.exe_name = kwargs.get('exe_name')
+            agent.location = kwargs.get('location')
+            agent.privilege = kwargs.get('privilege')
+            await agent.update()
+            return agent
         return await self.get_service('data_svc').store(Agent(paw=paw, **kwargs))
 
     async def get_instructions(self, paw):
@@ -75,7 +84,8 @@ class ContactService(BaseService):
                         link.output = output
                         file_svc.write_result_file(id, output)
                         loop.create_task(link.parse(op))
-                    await self.get_service('data_svc').store(Agent(paw=link.paw))
+                    for a in await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)):
+                        await a.update()
                     return json.dumps(dict(status=True))
         except Exception:
             pass

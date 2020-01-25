@@ -53,21 +53,6 @@ class Agent(BaseObject):
         if not existing:
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
-        else:
-            now = datetime.now()
-            existing.update('trusted', self.trusted)
-            if existing.trusted:
-                existing.update('last_trusted_seen', now)
-            existing.update('last_seen', now)
-            existing.update('pid', self.pid)
-            existing.update('ppid', self.ppid)
-            existing.update('executors', self.executors)
-            existing.update('sleep_min', self.sleep_min)
-            existing.update('sleep_max', self.sleep_max)
-            existing.update('watchdog', self.watchdog)
-            existing.update('group', self.group)
-            existing.update('privilege', self.privilege)
-            existing.update('c2', self.c2)
         return existing
 
     async def calculate_sleep(self):
@@ -85,3 +70,10 @@ class Agent(BaseObject):
                 if val.privilege and val.privilege == self.privilege or not val.privilege:
                     abilities.append(val)
         return abilities
+
+    async def update(self):
+        now = datetime.now()
+        self.last_seen = now
+        if self.trusted:
+            self.last_trusted_seen = now
+

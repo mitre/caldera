@@ -214,6 +214,11 @@ class RestApi:
     """ PRIVATE """
 
     async def _ping(self, request):
+        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
+        url = urlparse(data['server'])
+        port = '443' if url.scheme == 'https' else 80
+        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        await self.contact_svc.handle_heartbeat(**data)
         return web.Response(text=self.contact_svc.encode_string('pong'))
 
     async def _instructions(self, request):
