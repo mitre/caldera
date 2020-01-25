@@ -222,5 +222,4 @@ class RestApi(BaseWorld):
 
     async def _results(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await self.contact_svc.save_results(**data)

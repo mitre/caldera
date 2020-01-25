@@ -23,9 +23,9 @@ class Agent(BaseObject):
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
-    def __init__(self, paw, platform=None, server=None, host='unknown', username='unknown', architecture='unknown',
-                 group='default', location='unknown', pid=0, ppid=0, trusted=True, executors=(), privilege='User',
-                 c2='HTTP', exe_name='unknown'):
+    def __init__(self, paw, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+                 username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
+                 trusted=True, executors=(), privilege='User', c2='HTTP', exe_name='unknown'):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -42,13 +42,13 @@ class Agent(BaseObject):
         self.created = datetime.now()
         self.last_seen = self.created
         self.last_trusted_seen = self.created
-        self.sleep_min = 55
-        self.sleep_max = 65
         self.executors = executors
         self.privilege = privilege
         self.c2 = c2
         self.exe_name = exe_name
-        self.watchdog = 0
+        self.sleep_min = int(sleep_min)
+        self.sleep_max = int(sleep_max)
+        self.watchdog = int(watchdog)
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -73,9 +73,27 @@ class Agent(BaseObject):
                     abilities.append(val)
         return abilities
 
-    async def update(self):
+    async def heartbeat_modification(self, **kwargs):
         now = datetime.now()
         self.last_seen = now
         if self.trusted:
             self.last_trusted_seen = now
+        self.update('pid', kwargs.get('pid'))
+        self.update('ppid', kwargs.get('ppid'))
+        self.update('server', kwargs.get('server'))
+        self.update('exe_name', kwargs.get('exe_name'))
+        self.update('location', kwargs.get('location'))
+        self.update('privilege', kwargs.get('privilege'))
+        self.update('host', kwargs.get('host'))
+        self.update('username', kwargs.get('username'))
+        self.update('architecture', kwargs.get('architecture'))
+        self.update('platform', kwargs.get('platform'))
+        self.update('executors', kwargs.get('executors'))
+        self.update('c2', kwargs.get('c2'))
 
+    async def gui_modification(self, **kwargs):
+        self.update('group', kwargs.get('group'))
+        self.update('trusted', kwargs.get('trusted'))
+        self.update('sleep_min', int(kwargs.get('sleep_min')))
+        self.update('sleep_max', int(kwargs.get('sleep_max')))
+        self.update('watchdog', int(kwargs.get('watchdog')))

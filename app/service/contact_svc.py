@@ -8,8 +8,38 @@ from app.utility.base_service import BaseService
 
 class ContactService(BaseService):
 
+    @property
+    def sleep_min(self):
+        return self._sleep_min
+
+    @sleep_min.setter
+    def sleep_min(self, v):
+        if v and v != self.sleep_min:
+            self._sleep_min = v
+
+    @property
+    def sleep_max(self):
+        return self._sleep_max
+
+    @sleep_max.setter
+    def sleep_max(self, v):
+        if v and v != self._sleep_max:
+            self._sleep_max = v
+
+    @property
+    def watchdog(self):
+        return self._watchdog
+
+    @watchdog.setter
+    def watchdog(self, v):
+        if v and v != self.watchdog:
+            self._watchdog = v
+
     def __init__(self):
         self.log = self.add_service('contact_svc', self)
+        self._sleep_min = 30
+        self._sleep_max = 60
+        self._watchdog = 0
         self.contacts = []
 
     async def register(self, contact):
@@ -22,23 +52,19 @@ class ContactService(BaseService):
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
-    async def handle_heartbeat(self, paw, **kwargs):
+    async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw: the unique identifier for the calling agent
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
-            agent.pid = kwargs.get('pid')
-            agent.ppid = kwargs.get('ppid')
-            agent.server = kwargs.get('server')
-            agent.exe_name = kwargs.get('exe_name')
-            agent.location = kwargs.get('location')
-            agent.privilege = kwargs.get('privilege')
-            await agent.update()
+        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw'))):
+            await agent.heartbeat_modification(**kwargs)
             return agent
-        return await self.get_service('data_svc').store(Agent(paw=paw, **kwargs))
+        return await self.get_service('data_svc').store(Agent(
+            sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
+        )
 
     async def get_instructions(self, paw):
         """
@@ -84,8 +110,8 @@ class ContactService(BaseService):
                         link.output = output
                         file_svc.write_result_file(id, output)
                         loop.create_task(link.parse(op))
-                    for a in await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)):
-                        await a.update()
+                    agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
+                    await agent.heartbeat_modification()
         except Exception:
             pass
 
