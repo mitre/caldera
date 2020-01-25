@@ -16,6 +16,7 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.utility.base_world import BaseWorld
 
 
 def setup_logger(co):
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         setup_logger(cfg)
+        cfg['secrets'] = BaseWorld.strip_yml('conf/secrets.yml')
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()
