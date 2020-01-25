@@ -218,8 +218,7 @@ class RestApi(BaseWorld):
     async def _ping(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
         url = urlparse(data['server'])
-        port = '443' if url.scheme == 'https' else 80
-        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         data['paw'] = self.generate_name(size=6)
         await self.contact_svc.handle_heartbeat(**data)
         return web.Response(text=self.contact_svc.encode_string(data['paw']))
@@ -227,8 +226,7 @@ class RestApi(BaseWorld):
     async def _instructions(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
         url = urlparse(data['server'])
-        port = '443' if url.scheme == 'https' else 80
-        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port if url.port else port)
+        data['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         agent = await self.contact_svc.handle_heartbeat(**data)
         instructions = await self.contact_svc.get_instructions(data['paw'])
         response = dict(sleep=await agent.calculate_sleep(), watchdog=agent.watchdog, instructions=instructions)
