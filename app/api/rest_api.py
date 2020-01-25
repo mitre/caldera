@@ -1,10 +1,9 @@
+import json
 import logging
 import traceback
-import json
 import uuid
-
 from datetime import datetime
-from urllib.parse import urlparse
+
 from aiohttp import web
 from aiohttp_jinja2 import template
 
@@ -205,13 +204,10 @@ class RestApi(BaseWorld):
         try:
             payload = display_name = request.headers.get('file')
             payload, content, display_name = await self.file_svc.get_file(request.headers)
-
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
             return web.Response(body=content, headers=headers)
-
         except FileNotFoundError:
             return web.HTTPNotFound(body='File not found')
-
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
 
@@ -219,16 +215,12 @@ class RestApi(BaseWorld):
 
     async def _ping(self, request):
         profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        url = urlparse(profile['server'])
-        profile['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         profile['paw'] = self.generate_name(size=6)
         await self.contact_svc.handle_heartbeat(**profile)
         return web.Response(text=self.contact_svc.encode_string(profile['paw']))
 
     async def _instructions(self, request):
         profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        url = urlparse(profile['server'])
-        profile['server'] = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         agent = await self.contact_svc.handle_heartbeat(**profile)
         instructions = await self.contact_svc.get_instructions(profile['paw'])
         response = dict(sleep=await agent.calculate_sleep(), watchdog=agent.watchdog, instructions=instructions)

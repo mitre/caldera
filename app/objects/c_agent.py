@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import urlparse
 
 from app.utility.base_object import BaseObject
 
@@ -32,7 +33,8 @@ class Agent(BaseObject):
         self.group = group
         self.architecture = architecture
         self.platform = platform
-        self.server = server
+        url = urlparse(server)
+        self.server = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         self.location = location
         self.pid = pid
         self.ppid = ppid
