@@ -35,22 +35,12 @@ class ContactService(BaseService):
         if v and v != self.watchdog:
             self._watchdog = v
 
-    @property
-    def api_beacon(self):
-        return self._api_beacon
-
-    @property
-    def api_result(self):
-        return self._api_result
-
     def __init__(self, agent_config):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
         self._sleep_min = agent_config['sleep_min']
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
-        self._api_beacon = agent_config['api_beacon']
-        self._api_result = agent_config['api_result']
 
     async def register(self, contact):
         try:
