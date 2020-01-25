@@ -8,6 +8,7 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
+from app.contacts.http import Http
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -53,6 +54,7 @@ def main(services, config):
     loop.run_until_complete(RestApi(config, services).enable())
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
+    loop.create_task(contact_svc.register(Http(services)))
     loop.create_task(build_docs())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())

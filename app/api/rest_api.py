@@ -1,4 +1,3 @@
-import json
 import logging
 import traceback
 import uuid
@@ -39,8 +38,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
         # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
-        self.app_svc.application.router.add_route('POST', self.config['agent_config']['api_beacon'], self._beacon)
-        self.app_svc.application.router.add_route('POST', self.config['agent_config']['api_result'], self._results)
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
@@ -209,20 +206,3 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
-
-    """ PRIVATE """
-
-    async def _beacon(self, request):
-        profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        profile['paw'] = profile.get('paw', self.generate_name(size=6))
-        agent = await self.contact_svc.handle_heartbeat(**profile)
-        instructions = await self.contact_svc.get_instructions(agent.paw)
-        response = dict(paw=profile['paw'],
-                        sleep=await agent.calculate_sleep(),
-                        watchdog=agent.watchdog,
-                        instructions=instructions)
-        return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
-
-    async def _results(self, request):
-        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        await self.contact_svc.save_results(**data)
