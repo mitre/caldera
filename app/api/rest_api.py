@@ -30,10 +30,10 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/', self.landing)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
-        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
+        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
+        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
@@ -224,4 +224,3 @@ class RestApi(BaseWorld):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
         data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         await self.contact_svc.save_results(**data)
-        return web.Response()
