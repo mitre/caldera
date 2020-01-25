@@ -47,7 +47,7 @@ class ContactService(BaseService):
             await self._start_c2_channel(contact=contact)
             self.log.debug('Started %s command and control channel' % contact.__class__.__name__)
         except Exception as e:
-            self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
+            self.log.error('Failed to start %s command and control channel: %s' % (contact.__class__.__name__, e))
 
     async def handle_heartbeat(self, **kwargs):
         """
