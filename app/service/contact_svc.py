@@ -30,11 +30,7 @@ class ContactService(BaseService):
         :return: the agent object from explode
         """
         try:
-            agent = Agent(paw=paw, **kwargs)
-            if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
-                new_agent = await self.get_service('data_svc').store(agent)
-                return new_agent
-            return await self.get_service('data_svc').store(agent)
+            return await self.get_service('data_svc').store(Agent(paw=paw, **kwargs))
         except Exception as e:
             print(e)
 
