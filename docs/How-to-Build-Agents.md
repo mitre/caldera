@@ -76,7 +76,7 @@ curl -s -X POST -d $profile localhost:8888/beacon | base64 --decode
 ]"}
 ```
 
-You should get a full list of instructions, each containingn:
+You should get a full list of instructions, each containing:
 
 * **id**: The link ID associated to the ability
 * **sleep**: A recommended pause to take after running this instruction
