@@ -16,6 +16,10 @@ class Http(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/beacon', self._beacon)
         self.app_svc.application.router.add_route('POST', '/result', self._results)
 
+    @staticmethod
+    def valid_config():
+        return True
+
     """ PRIVATE """
 
     async def _beacon(self, request):
