@@ -11,9 +11,8 @@ from scratch.
 
 There are 2 unique types of agents. Determining which one you want is your first step:
 
-1) Direct - a direct communication between agent-and-server. HTTP communication is an example.
-2) Indirect - an indirect communication between agent-and-server. Using a trusted 3rd party, like GitHub Gists, 
-is an example.
+1) Direct communication between agent-and-server. HTTP communication is an example.
+2) Indirect communication between agent-and-server. Using a trusted 3rd party, like GitHub Gists, is an example.
 
 ## Building a direct agent
 
@@ -39,7 +38,6 @@ optional - but you should aim to cover as many as you can.
 | architecture  | The architecture of the host. | |
 | executors     | A list of executors allowed on the host | Executors are evaluated against the executor block of each ability. Currently, you can use sh, cmd, psh and pwsh |
 | privilege     | The privilege level of the agent process, either User or Elevated | Privilege is evaluated against the optional privilege block of each ability file |
-| c2            | The C2-communication name | The c2 determines how to send instructions back to the agent. You should use "http" |
 | pid           | The process identifier of the agent | |
 | location      | The location of the agent on disk | |
 | exe_name      | The name of the agent binary file | |
