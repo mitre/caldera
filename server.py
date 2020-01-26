@@ -53,9 +53,9 @@ def main(services, config):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(config, services).enable())
+    loop.run_until_complete(contact_svc.register(Http(services)))
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
-    loop.create_task(contact_svc.register(Http(services)))
     loop.create_task(build_docs())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         setup_logger(cfg)
-        cfg['secrets'] = BaseWorld.strip_yml('conf/secrets.yml')
+        cfg['secrets']['core'] = BaseWorld.strip_yml('conf/secrets.yml')
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()

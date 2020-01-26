@@ -8,6 +8,7 @@ from app.utility.base_world import BaseWorld
 class Http(BaseWorld):
 
     def __init__(self, services):
+        self.name = 'http'
         self.app_svc = services.get('app_svc')
         self.contact_svc = services.get('contact_svc')
 
