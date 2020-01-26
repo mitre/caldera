@@ -86,10 +86,11 @@ You should get a full list of instructions, each containing:
 * **payload**: A payload file name which must be downloaded before running the command, if applicable
 
 Now, you'll want to revise your agent to loop through all the instructions, executing each command
-and POSTing the shell response to the /result endpoint. 
+and POSTing the shell response to the /result endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
 ```
 data=$(echo '{"id":$id, "output":$output, "status": $status, "pid":$pid}' | base64)
 curl -s -X POST -d $data localhost:8888/result
+sleep $instruction_sleep
 ```
 
 The POST details are as follows:
