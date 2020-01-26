@@ -18,3 +18,4 @@ agent_config:
   sleep_min: 30
   sleep_max: 60
   watchdog: 0
+secrets: {}

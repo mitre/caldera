@@ -67,10 +67,9 @@ class RestApi(BaseWorld):
             planners = [p.display for p in await self.data_svc.locate('planners')]
             obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            contacts = [c.display for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators, contacts=contacts)
+                        plugins=plugins, obfuscators=obfuscators)
         except web.HTTPFound as e:
             raise e
         except Exception as e:

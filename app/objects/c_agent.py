@@ -25,7 +25,7 @@ class Agent(BaseObject):
 
     def __init__(self, paw, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', c2='HTTP', exe_name='unknown'):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown'):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -44,7 +44,6 @@ class Agent(BaseObject):
         self.last_trusted_seen = self.created
         self.executors = executors
         self.privilege = privilege
-        self.c2 = c2
         self.exe_name = exe_name
         self.sleep_min = int(sleep_min)
         self.sleep_max = int(sleep_max)
