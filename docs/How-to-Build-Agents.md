@@ -53,7 +53,7 @@ curl -s -X POST -d $profile localhost:8888/beacon | base64 --decode
 ...{"paw": "dcoify", sleep": 59, "watchdog": 0, "instructions": "[]"}
 ```
 
-> The paw property returned back from the server. This represents a unique identifier for your new agent. Each
+> The paw property returned back from the server represents a unique identifier for your new agent. Each
 time you call the /beacon endpoint without this paw, a new agent will be created on the server - so you should ensure
 that future beacons include it.
 
