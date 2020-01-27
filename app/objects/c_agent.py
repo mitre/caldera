@@ -99,7 +99,7 @@ class Agent(BaseObject):
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
         
-    async def add_child(self, child_paw, child_name):
+    def add_child(self, child_paw, child_name):
         new_child = (child_paw, child_name)
         if new_child not in self.child:
-            self.child.append(new_child)
+            self.update('child', self.child.append(new_child))
