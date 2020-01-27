@@ -1,4 +1,3 @@
-<script src="/gui/js/shared.js"></script>
 <html>
 <head>
   <title>Home | Dashboard</title>
@@ -11,7 +10,6 @@
   <link rel="stylesheet" href="/gui/css/basic.css">
   <link rel="stylesheet" href="/gui/css/timeline.css">
   <link rel="stylesheet" href="/gui/css/reports.css">
-  <meta http-equiv="Pragma" content="no-cache">
 </head>
 <body style="margin-bottom: 100px">
 
@@ -23,17 +21,15 @@
       <a onclick="viewSection('agents')">agents</a>
       <a onclick="viewSection('adversaries')">adversaries</a>
       <a onclick="viewSection('operations')">operations</a>
-      <a onclick="viewSection('reports')">reports</a>
     </div>
   </div>
   <a href="/logout" style="float:right">Logout</a>
-  <a href="https://github.com/mitre/caldera/wiki" style="float:right" target="_blank">Docs</a>
+  <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
   <div class="subnav-right">
     <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content subnav-content-right">
         <a onclick="viewSection('sources')">sources</a>
         <a onclick="viewSection('planners')">planners</a>
-        <a onclick="viewSection('c2')">c2</a>
         <a onclick="viewSection('obfuscators')">obfuscators</a>
     </div>
   </div>
@@ -58,17 +54,17 @@
     <div id="atomic-blocks" class="row-canvas">
       <center>
 
-        <div id="intro" class="home-box">
-            <div class="topleft duk-icon"><img onclick="removeSection('intro')" src="/gui/img/x.png"></div>
-            <div class="topright duk-icon"><img onclick="openDukHelp()" src="/gui/img/duk.png"></div>
+        <div id="intro" class="home-box watermark">
             <h1 id="big-head" class="big-head">CALDERA</h1>
-            <hr>
+            <hr style="width:70%">
             <h3 id="sub-head" class="small-head" style="margin-bottom: 20px;margin-top:0;">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
-            <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
+            <div style="opacity:0.5">
+                <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ tactics|length }} tactics&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ payloads|length }} payloads&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ adversaries|length }} adversaries&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
                 <span>{{ agents|length }} agents</span>
+            </div>
         </div>
 
         <!-- agents -->
@@ -85,6 +81,15 @@
                   Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
                   least 1 agent in order to run an operation.
               </p>
+              <hr>
+              <br>
+              <div>
+                  <h4>Global settings for new agents</h4>
+                  <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
+                  <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
+                  <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
+              </div>
+              <br>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -99,6 +104,7 @@
                   <th>Executors</th>
                   <th>Last Seen</th>
                   <th>Sleep (Min/Max)</th>
+                  <th>Watchdog Timer (minutes)</th>
                   <th>PID</th>
                   <th>Privilege</th>
                   <th>Group</th>
@@ -270,36 +276,6 @@
           </div>
         </div>
 
-        <div id="c2" class="section-profile" style="display: none">
-          <div class="advanced row">
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('c2-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
-
-            <div id="c2-sidebar" class="column section-border" style="flex:25%">
-              <img src="/gui/img/group.png">
-              <h4>C2</h4>
-              <p class="section-description">
-                  A C2 is a command-and-control mechanism for agent-to-server communication. There are various
-                  types of communication protocols that can be used - and within this system - you can flexibly
-                  create and select how you want your agents to call back.
-              </p>
-              <br>
-              <div id="viewC2">
-                  <select id="C2-select" onchange="showC2( {{ contacts }} )" style="margin-top:-15px">
-                    <option value="" disabled selected>Select an existing C2</option>
-                    {% for c in contacts %}
-                      <option value="{{ c.name }}">{{ c.name }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-            </div>
-            <div class="column planner-header" style="flex:75%;text-align: left">
-              <h3 id="c2-name"></h3>
-              <p id="c2-description"></p>
-            </div>
-          </div>
-        </div>
-
         <div id="obfuscators" class="section-profile" style="display: none">
           <div class="advanced row">
             <div class="topleft duk-icon"><img onclick="removeSection('obfuscators')" src="/gui/img/x.png"></div>
@@ -337,7 +313,7 @@
                 Start a new operation or review previous ones here.
               </p>
               <div id="viewOperation">
-                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpDeleteBtn()">
+                <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpBtns()">
                   <option id="operationDefault" value="" disabled selected>Operations</option>
                   {% for op in operations %}
                         {%  if op.start|length%}
@@ -346,12 +322,23 @@
                   {% endfor %}
                 </select>
                 <br>
+                <center>
+                <table>
+                    <tr>
+                        <td><input id="agent-output" type="checkbox"></td>
+                        <td><label for="agent-output"><p>&nbsp;&nbsp;include agent output</p></label></td>
+                    </tr>
+                </table>
+                </center>
+                <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download report</button>
+                <hr>
                 <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
               </div>
+
               <div id="addOperation" style="display: none;">
                   <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
-                  <div id="optional" class="column sidebar-cutout" style="border-bottom: 1px solid white">
-                      <h5>OPTIONAL &#8595;</h5>
+                  <div id="optional" class="column sidebar-cutout sidebar-header">
+                      <h5>BASIC OPTIONS</h5>
                   </div>
                   <div id="optional-options" class="column sidebar-cutout" style="display: none">
                       <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
@@ -366,9 +353,23 @@
                           <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
                         {% endfor %}
                       </select>
+                      <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1">Auto close operation</option>
+                        <option value="0" selected>Keep open forever</option>
+                      </select>
                       <select name="state" id="queueState" class="queueOption" style="opacity:0.5" disabled="false">
                         <option id="qstate-run" value="running">Run immediately</option>
                         <option id="qstate-paused" value="paused">Pause on start</option>
+                      </select>
+                  </div>
+
+                  <div id="autonomous" class="column sidebar-cutout sidebar-header">
+                      <h5>AUTONOMOUS</h5>
+                  </div>
+                  <div id="autonomous-options" class="column sidebar-cutout" style="display: none;">
+                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
+                        <option value="1" selected>Run autonomously</option>
+                        <option value="0">Require manual approval</option>
                       </select>
                       <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5" disabled="true">
                         {% for p in planners %}
@@ -380,34 +381,30 @@
                             <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                         {% endfor %}
                       </select>
-                      <select name="untrusted" id="queueUntrusted" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="0">Block untrusted agents</option>
-                        <option value="1" selected>Allow untrusted agents</option>
-                      </select>
-                      <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
-                        <option value="1" selected>Run autonomously</option>
-                        <option value="0">Require manual approval</option>
-                      </select>
                       <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
                         <option value="1" selected>Enable Phases</option>
                         <option value="0">Disable Phases</option>
                       </select>
+                  </div>
+
+                  <div id="stealth" class="column sidebar-cutout sidebar-header">
+                      <h5>STEALTH</h5>
+                  </div>
+                  <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
                       <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                           {% for o in obfuscators %}
                             <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
                           {% endfor %}
                       </select>
                       <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
-                      <input name="maxTime" id="queueMaxTime" class="queueOption" placeholder="Max run time (sec)" style="opacity:0.5;" disabled="true"/>
+                      <p style="margin-bottom:-10px">adjust visibility: </p>
+                      <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100">
                   </div>
 
-                  <div id="schedules" class="column sidebar-cutout" style="border-bottom: 1px solid white">
-                      <h5>SCHEDULE &#8595;</h5>
+                  <div id="schedules" class="column sidebar-cutout sidebar-header">
+                      <h5>SCHEDULE</h5>
                   </div>
                   <div id="schedules-options" class="column sidebar-cutout" style="display: none;">
-                      <p>
-                          You can schedule this operation to run daily at the same time:
-                      </p>
                       <select id="schedule-hour" class="avoid-alphabetizing" onchange="checkOpformValid()">
                           <option selected disabled>Select hour</option>
                           {% for n in range(23) %}
@@ -427,6 +424,7 @@
                           <span id="message"></span>
                       </div>
                   </div>
+
                   <br>
                   <button id="opBtn" type="button" style="opacity:0.5" disabled="true"
                       class="button-notready atomic-button" onclick="handleStartAction()">Start
@@ -444,7 +442,7 @@
                         <br>
                         <div class="toggle">
                             <label class="switch"><input type="checkbox" id="togBtnHil" onchange="toggleHil()">
-                                <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual Approval</span></div>
+                                <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual</span></div>
                             </label>
                         </div>
                     </div>
@@ -464,132 +462,18 @@
                           <td class="timeout">timeout</td>
                           <td class="discarded">discarded</td>
                           <td class="untrusted">untrusted</td>
+                          <td class="visibility">visible</td>
                       </tr>
                     </table>
                 </center>
               </div>
               <div id="content">
-                  <span style="float:right;font-size:13px;margin-right:5%;" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
+                  <span class="op-potential-links" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
                   <br>
                   <ul id="timeline" class="timeline">
                       <li id="time-start">
                   </ul>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- reports -->
-
-        <div id="reports" class="section-profile" style="display: none">
-          <div class="row">
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('reports-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('reports')" src="/gui/img/x.png"></div>
-            <div id="reports-sidebar" class="column section-border" style="flex:25%;">
-              <img src="/gui/img/reports.png">
-              <h4 style="margin-bottom:-5px">Reports</h4>
-              <p class="section-description">
-                  View a detailed report for any started operation.
-              </p>
-              <select id="report-list" style="margin-bottom: 15px;" onchange="showReports()">
-                  <option id="reportDefault" value="" disabled selected>Operations</option>
-                  {% for op in operations %}
-                      {%  if op.start|length%}
-                        <option class="operationOption" id="{{ op.name }}" value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
-                      {% endif %}
-                  {% endfor %}
-               </select>
-              <select id="report-output" style="">
-                  <option value="0" selected>Exclude Agent Output</option>
-                  <option value="1">Include Agent Output</option>
-               </select>
-               <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download</button>
-            </div>
-            <div class="column" style="flex:75%">
-                <div class="reports-dash">
-                    <div class="row">
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">name</p>
-                            <h4 id="report-name"></h4>
-                            <p id="report-name-duration"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">adversary</p>
-                            <h4 id="report-adversary"></h4>
-                            <p id="report-adversary-desc"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">group</p>
-                            <h4 id="report-group"></h4>
-                            <p id="report-group-cnt"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">steps</p>
-                            <h4 id="report-steps"></h4>
-                            <p id="report-steps-attack"></p>
-                        </div>
-                        <div class="column report-box" style="flex:20%;">
-                            <p class="reports-dash-header">planner</p>
-                            <h4 id="report-planner"></h4>
-                            <p id="report-planner-desc"></p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:100%;">
-                            <p class="reports-dash-header">att&ck</p>
-                            <table id="reports-dash-attack" align="center" border=1 frame=void rules=rows>
-                                <th>worked / failed</th>
-                                <th>Tactic</th>
-                                <th>Technique ID</th>
-                                <th>Technique name</th>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:100%;">
-                            <p class="reports-dash-header">skipped abilities</p>
-                            <ul id="reports-skipped-abilities" class="skipped-abilities-list">
-                                <li id="skipped-start">
-                            </ul>
-                            <li id="reports-dash-skipped-template" class="agent-skipped reports-dash" style="display: none;">
-                                <div class="reports-skipped-container">
-                                    <div class="column-left">
-                                        <div class="skipped-box">
-                                            <p class="reports-dash-header">agent</p>
-                                            <h4 id="skipped-host-name">Agent</h4>
-                                        </div>
-                                        <div class="skipped-box">
-                                            <p class="reports-dash-header">total skipped</p>
-                                            <h4 id="skipped-host-total"></h4>
-                                        </div>
-                                    </div>
-                                    <div class="column-right">
-                                        <table id="skipped-host-abilities" align="center" border=1 frame=void rules=rows>
-                                            <thead>
-                                                <th>ability</th>
-                                                <th>reason</th>
-                                            </thead>
-                                        </table>
-                                    </div>
-                                </div>
-                            </li>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column report-box" style="flex:40%;">
-                            <p class="reports-dash-header">facts</p>
-                            <table id="reports-dash-facts" align="center" border=1 frame=void rules=rows>
-                                <th>Property</th>
-                                <th>Count</th>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                        <div class="column report-box" style="flex:60%;">
-
-                        </div>
-                    </div>
-                </div>
             </div>
           </div>
         </div>
@@ -606,7 +490,7 @@
                     <hr>
                     <pre id="resultView" style="text-align: left;max-width:800px;"></pre>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="phase-modal" class="modal">
@@ -681,7 +565,7 @@
                         <ul id="ttp-tests"></ul>
                         <div style="float:right;">
                             <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
-                            <button type="button" class="button-success atomic-button" onclick="addToPhase()">Add to phase</button>
+                            <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to phase</button>
                             <div id="ability-flashy-holder">
                                 <span id="message"></span>
                             </div>
@@ -691,7 +575,34 @@
                         <span onclick="document.getElementById('phase-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                     </div>
                 </div>
-             </form>
+            </form>
+        </div>
+
+        <div id="pack-modal" class="modal">
+            <form class="modal-content">
+                <div class="container section-profile row ability-viewer modal-box">
+                    <div class="column" style="flex:100%;">
+                        <p>Include the phases and abilities of another adversary in this one. These phases can be inserted as new phases (default) or merged into the current adversary's existing phases.
+                        </p>
+                        <select id="adv-pack-filter" onchange="showPack();">
+                            <option disabled selected>Choose an adversary</option>
+                            {% for pack in adversaries %}
+                                <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
+                            {% endfor %}}
+                        </select></br>
+                        <input type="checkbox" id="adv-pack-merge" name="adv-pack-merge">
+                        <label for="adv-pack-merge">Merge into existing phases?</label><br>
+                        <div id="pack-phases"></div>
+                        <br><br>
+                        <div style="float:right;width:30%;">
+                            <button type="button" class="button-success atomic-button" onclick="addPackToPhase()">Add to phase</button>
+                        </div>
+                    </div>
+                    <div class="imgcontainer">
+                        <span onclick="document.getElementById('pack-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <div id="potential-modal" class="modal">
@@ -717,7 +628,7 @@
                         <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="duk-modal" class="modal">
@@ -733,7 +644,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="loop-modal" class="modal section-profile">
@@ -753,7 +664,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="source-modal" class="modal">
@@ -772,7 +683,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <!-- templates -->
@@ -803,6 +714,10 @@
                             <td style="width:10%"><b>score:</b></td>
                             <td><p contenteditable="false" id="potential-score"></p></td>
                         </tr>
+                        <tr>
+                            <td style="width:10%"><b>visibility:</b></td>
+                            <td><p contenteditable="false" id="potential-visibility"></p></td>
+                        </tr>
                     </table>
                 </div>
             </div>
@@ -814,34 +729,6 @@
             <div id="inner-contents">
               <div id="decision-card" class="decision-card">
                 <table style="border-spacing:15px;">
-                  <tr>
-                    <td>Description:</td>
-                    <td><p id="link-description" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Technique:</td>
-                    <td><div class="tooltip" id="link-technique"></div></td>
-                  </tr>
-                  <tr>
-                    <td>Collected:</td>
-                    <td><p id="link-collect" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Finished:</td>
-                    <td><p id="link-finish" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Command:</td>
-                    <td><p id="time-action" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Executor:</td>
-                    <td><p id="time-executor" class="member-result"></p></td>
-                  </tr>
-                  <tr>
-                    <td>Paw</td>
-                    <td><p id="paw-id" class="member-result"></p></td>
-                  </tr>
                 </table>
               </div>
             </div>
@@ -939,6 +826,43 @@
             <br>
         </li>
 
+        <ul id="pack-phase-template" style="display: none;"></ul>
+
+        <li id="pack-ability-template" class="pack-ability-template" style="display: none">
+            <div class="column" style="flex:60%">
+                <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                    <tr>
+                        <td style="width:10%"><b>id:</b></td>
+                        <td class="ability-identifier">Unique identifier</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>name:</b></td>
+                        <td class="ability-name">Name</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>description:</b></td>
+                        <td class="ability-description">Description</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>tactic:</b></td>
+                        <td class="ability-tactic">ATT&CK tactic</td>
+                    <tr>
+                    <tr>
+                        <td style="width:10%"><b>technique:</b></td>
+                        <td class="ability-tech-id">ATT&CK technique ID</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>technique:</b></td>
+                        <td class="ability-tech-name">ATT&CK technique name</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>platforms:</b></td>
+                        <td class="ability-platforms">Platforms</td>
+                    </tr>
+                </table>
+            </div>
+        </li>
+
       </center>
     </div>
     <div id="atomic-canvas-end"></div>
@@ -949,10 +873,11 @@
 <script src="/gui/jquery/jquery-ui.js"></script>
 <script src="/gui/jquery/jquery.dataTables.min.js"></script>
 <script src="/gui/jquery/jquery.dataTables.select.min.js"></script>
-<script src="/gui/js/sections.js"></script>
+<script src="/gui/js/sections.js?v=2.5.0"></script>
+<script src="/gui/js/shared.js?v=2.5.0"></script>
 
 <!-- Scripts and CSS file to support ColVis in DataTables -->
 <script src="/gui/js/buttons.colVis.min.js"></script>
 <script src="/gui/js/dataTables.buttons.min.js"></script>
-<link rel="stylesheet" href="/gui/js/buttons.dataTables.css">
+<link rel="stylesheet" href="/gui/css/buttons.dataTables.css">
 </html>

@@ -48,6 +48,7 @@
   float: left;
   color: white;
   text-decoration: none;
+  cursor: pointer;
 }
 .subnav-content a:hover {
   background-color: white;

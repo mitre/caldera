@@ -9,7 +9,6 @@
 }
 body {
     background-color: var(--primary-background);
-    background-image: url('/gui/img/background.png');
     background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;
@@ -119,6 +118,7 @@ select {
     height: 25px;
     border: none;
     margin: 5px;
+    cursor: pointer;
 }
 .button-success {
     background-color: green;
@@ -135,6 +135,9 @@ select {
 .button-warn {
     background-color: darkred;
     pointer-events: auto;
+    cursor: pointer;
+}
+p[onclick] {
     cursor: pointer;
 }
 
@@ -213,7 +216,8 @@ select {
 .advanced {
     background-color: #0d0d0d;
 }
-.section-profile {}
+.section-profile {
+}
 .section-border {
     border-right: .5px var(--font-color) solid;
 }
@@ -264,6 +268,12 @@ select {
     width: 75%;
     margin:5px;
 }
+.section-profile input[type=checkbox] {
+    width: auto;
+    vertical-align: middle;
+    position: relative;
+    bottom: 1px;
+}
 .section-profile select {
     height: 30px;
     width: 75%;
@@ -275,6 +285,10 @@ select {
 .section-description {
     padding: 10px 25px;
     text-align: left;
+}
+.sidebar-header {
+    border-bottom: 1px solid white;
+    cursor: pointer;
 }
 
 /* notice bar */
@@ -308,6 +322,7 @@ select {
     background-color: white;
     border-radius: 50%;
     border: black 1px solid;
+    cursor: pointer;
 }
 .duk-modal {
     background-color: black;
@@ -359,4 +374,55 @@ select {
 .obfuscation-table img {
     height: 30px;
     margin: 5px;
+}
+.watermark {
+    z-index: -10;
+    position: fixed;
+    top: 15%;
+    left: 25%;
+}
+.simple-plugin-intro h1 {
+    margin-bottom: -15px;
+}
+.simple-plugin-intro hr {
+    width: 33%;
+    margin-bottom: -15px;
+}
+.column-simple p {
+    padding: 25px;
+    text-align: left;
+    font-size: 14px;
+}
+.column-simple h3 {
+    text-transform: none;
+}
+.column-simple h4 {
+    margin-top: 20px;
+    margin-bottom: -20px;
+    line-height: normal;
+}
+.column-simple .inner-box {
+    text-align: left;
+    background-color:var(--primary-background);
+    padding:15px;
+    border-radius:25px;
+    margin:10%;
+    margin-top: 0;
+}
+.column-simple .inner-box table tr {
+    color: white;
+}
+.column-simple .inner-box table tr td input[type=checkbox] {
+    border-spacing: 0;
+    margin-top: 15px;
+}
+.column-simple .inner-box table tr td input {
+    width: 100%;
+}
+.column-simple .inner-box table tr td select {
+    width: 100%;
+}
+.column-simple .inner-box table tr td p {
+    padding: 0;
+    margin: 0;
 }

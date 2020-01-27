@@ -4,6 +4,7 @@ from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_fact import Fact
+from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
 
@@ -12,7 +13,8 @@ class Link(BaseObject):
     @classmethod
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
-        return cls(operation=json['operation'], command=json['command'], paw=json['paw'], ability=ability)
+        return cls(id=json['id'], pin=json['pin'], operation=json['operation'], command=json['command'],
+                   paw=json['paw'], ability=ability)
 
     @property
     def unique(self):
@@ -22,31 +24,29 @@ class Link(BaseObject):
     def display(self):
         return self.clean(dict(id=self.id, operation=self.operation, paw=self.paw, command=self.command,
                                executor=self.ability.executor, status=self.status, score=self.score,
-                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), pin=self.pin,
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
-                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup))
+                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
+                               visibility=self.visibility.display))
 
     @property
     def pin(self):
-        return self.decide
+        return self._pin
+
+    @pin.setter
+    def pin(self, p):
+        self._pin = p
 
     @property
     def states(self):
-        return dict(UNTRUSTED=-4,
+        return dict(HIGH_VIZ=-5,
+                    UNTRUSTED=-4,
                     EXECUTE=-3,
                     DISCARD=-2,
                     PAUSE=-1)
 
-    @property
-    def output(self):
-        try:
-            with open('data/results/%s' % self.unique, 'r') as fle:
-                return fle.read()
-        except Exception:
-            return None
-
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):
         super().__init__()
         self.id = id
         self.command = command
@@ -64,6 +64,9 @@ class Link(BaseObject):
         self.facts = []
         self.relationships = []
         self.used = []
+        self.visibility = Visibility()
+        self._pin = pin
+        self.output = None
 
     async def parse(self, operation):
         try:
@@ -74,10 +77,13 @@ class Link(BaseObject):
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
-            print(e)
+            print('parse exception: %s' % e)
 
     def apply_id(self):
         self.id = self.generate_number()
+
+    def can_ignore(self):
+        return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]
 
     """ PRIVATE """
 
@@ -97,13 +103,13 @@ class Link(BaseObject):
 
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
-            await self._save_fact(operation, relationship.source)
-            await self._save_fact(operation, relationship.target)
+            await self._save_fact(operation, relationship.source, relationship.score)
+            await self._save_fact(operation, relationship.target, relationship.score)
             self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, trait):
+    async def _save_fact(self, operation, trait, score):
         if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=1))
+            self.facts.append(Fact(trait=trait[0], value=trait[1], score=score, collected_by=self.paw))
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:

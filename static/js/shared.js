@@ -46,3 +46,39 @@ function flashy(elem, message) {
     });
     flash.find('#message').text(message);
 }
+
+function showHide(show, hide) {
+    $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
+    $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
+}
+
+function findOpDuration(operation){
+    function convertSeconds(operationInSeconds){
+        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
+        operationInSeconds -= operationInMinutes * 60;
+        let secondsRemainder = operationInSeconds % 60;
+        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
+    }
+    if(operation.finish) {
+        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
+    } else {
+        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
+    }
+}
+
+$(document).ready(function() {
+    $('.navbar.plugin').html("<a href=\"/\">Home</a><a href=\"/logout\" style=\"float:right\">Logout</a><a href=\"/docs/index.html\" style=\"float:right\" target=\"_blank\">Docs</a>" +
+        "<div  class=\"subnav-right\">" +
+        "    <button class=\"subnavbtn\">Plugins <i class=\"fa fa-caret-down\"></i></button>" +
+        "    <div id=\"subnav-plugins\" class=\"subnav-content subnav-content-right\"></div></div>");
+
+    restRequest('POST', {"index": "plugins", "enabled": true}, function(data){
+        $.each(data, function (index, value) {
+            if (value['address']) {
+                $('#subnav-plugins').append("<a href=" + value['address'] + ">" + value['name'] + "</a>")
+            } else {
+                $('#subnav-plugins').append("<a onclick=\"alert('No GUI component to this plugin')\">" + value['name'] + "</a>")
+            }
+        })
+    });
+});

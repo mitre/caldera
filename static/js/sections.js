@@ -1,7 +1,3 @@
-$.ajaxSetup({
-    cache: false
-});
-
 /** SECTIONS **/
 
 function viewSection(identifier){
@@ -9,11 +5,6 @@ function viewSection(identifier){
     $(parent).insertBefore($('#atomic-blocks-end'));
     $(parent).css('display', 'block');
     window.location.hash='#'+identifier;
-}
-
-function showHide(show, hide) {
-    $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
-    $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
 }
 
 function removeSection(identifier){
@@ -139,19 +130,26 @@ $(document).ready(function () {
             {
                 targets: 7,
                 data: null,
-                render: {
-                    _:'pid'
+                render: function ( data, type, row, meta ) {
+                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
                 targets: 8,
                 data: null,
                 render: {
-                    _:'privilege'
+                    _:'pid'
                 }
             },
             {
                 targets: 9,
+                data: null,
+                render: {
+                    _:'privilege'
+                }
+            },
+            {
+                targets: 10,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -161,7 +159,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -199,7 +197,8 @@ function saveGroups(){
         let group = document.getElementById(value['paw']+'-group').value;
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status};
+        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
+        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];
@@ -207,6 +206,11 @@ function saveGroups(){
         }
         restRequest('PUT', update, doNothing);
     });
+    let globalMinsleep = $('#globalSleepMin').val();
+    let globalMaxsleep = $('#globalSleepMax').val();
+    let globalWatchdog = $('#watchdog').val();
+    let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+    restRequest('PUT', d, doNothing);
 }
 
 function saveGroupsCallback(data) {
@@ -391,8 +395,9 @@ function handleStartAction(){
     restRequest('PUT', op, handleStartActionCallback);
 }
 
-function checkOpDeleteBtn(){
+function checkOpBtns(){
     validateFormState(($('#operation-list').val()), '#opDelete');
+    validateFormState(($('#operation-list').val()), '#reportBtn');
 }
 
 function deleteOperation(){
@@ -438,10 +443,10 @@ function buildOperationObject() {
         "autonomous":document.getElementById("queueAuto").value,
         "phases_enabled":document.getElementById("queuePhasesEnabled").value,
         "obfuscator":document.getElementById("queueObfuscated").value,
+        "auto_close": document.getElementById("queueAutoClose").value,
         "jitter":jitter,
-        "max_time": document.getElementById("queueMaxTime").value || 1800,
         "source":document.getElementById("queueSource").value,
-        "allow_untrusted":document.getElementById("queueUntrusted").value
+        "visibility": document.getElementById("queueVisibility").value
     };
 }
 
@@ -492,8 +497,9 @@ function clearTimeline() {
 
 let OPERATION = {};
 function operationCallback(data){
+    function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
     OPERATION = data[0];
-    $("#op-control-state").html(OPERATION.state);
+    $("#op-control-state").html(OPERATION.state + spacing() + findOpDuration(OPERATION) + spacing() + OPERATION.chain.length + ' decisions');
     if (OPERATION.autonomous) {
         $("#togBtnHil").prop("checked", true);
     } else {
@@ -511,26 +517,21 @@ function operationCallback(data){
             return;
         } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
             let template = $("#link-template").clone();
-            let ability = OPERATION.abilities.filter(item => item.unique === OPERATION.chain[i].ability.unique)[0];
-            template.find('#link-description').html(OPERATION.chain[i].ability.description);
             let title = OPERATION.chain[i].ability.name;
             if(OPERATION.chain[i].cleanup) {
                 title = title + " (CLEANUP)"
             }
             let agentPaw = OPERATION.chain[i].paw;
-            template.find('#link-technique').html(ability.technique_id + '<span class="tooltiptext">' + ability.technique_name + '</span>');
             template.attr("id", "op_id_" + OPERATION.chain[i].id);
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
             template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                 'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                title + '<span id="'+OPERATION.chain[i].id+'-rs" style="font-size:14px;float:right;display:none" ' +
+                title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                 'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
                 'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right" onclick="discard(OPERATION.chain['+i+'].unique)">&#x274C;</span></div>');
-            template.find('#time-action').html(atob(OPERATION.chain[i].command));
-            template.find('#time-executor').html(OPERATION.chain[i].executor);
-            template.find('#paw-id').html(OPERATION.chain[i].paw);
+                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
+                '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -548,6 +549,20 @@ function operationCallback(data){
         if(!atomic_interval) {
             atomic_interval = setInterval(refresh, 5000);
         }
+    }
+}
+
+function findOpDuration(operation){
+    function convertSeconds(operationInSeconds){
+        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
+        operationInSeconds -= operationInMinutes * 60;
+        let secondsRemainder = operationInSeconds % 60;
+        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
+    }
+    if(operation.finish) {
+        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
+    } else {
+        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
     }
 }
 
@@ -588,6 +603,7 @@ function potentialLinksCallback(data){
         template.find('#potential-description').html(link.ability.description);
         template.find('#potential-command').html(atob(link.command));
         template.find('#potential-score').html(link.score);
+        template.find('#potential-visibility').html(link.visibility.score);
         template.data('link', link);
         template.show();
         if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
@@ -638,21 +654,16 @@ function updatePotentialLinkCount(){
     $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
-function discard(linkId) {
-    let operation = $('#operation-list option:selected').attr('value');
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': -2};
-    restRequest('PUT', data, doNothing);
-}
-
 function refreshUpdatableFields(chain, div){
-    if(chain.collect) {
+    if(chain.status !== -5) {
+        div.find('#'+chain.id+'-add').remove();
+    }
+    if(chain.collect || chain.status <= -4) {
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-collect').html(chain.collect.split('.')[0]);
     }
     if(chain.finish) {
         div.find('#'+chain.id+'-rs').css('display', 'block');
         div.find('#'+chain.id+'-rm').remove();
-        div.find('#link-finish').html(chain.finish.split('.')[0]);
     }
     if(chain.status === 0) {
         applyTimelineColor(div, 'success');
@@ -667,6 +678,8 @@ function refreshUpdatableFields(chain, div){
         applyTimelineColor(div, 'collected');
     } else if (chain.status === -4) {
         applyTimelineColor(div, 'untrusted');
+    } else if (chain.status === -5) {
+        applyTimelineColor(div, 'visibility');
     } else {
         applyTimelineColor(div, 'queued');
     }
@@ -675,6 +688,7 @@ function refreshUpdatableFields(chain, div){
 function applyTimelineColor(div, color) {
     div.removeClass('collected');
     div.removeClass('queued');
+    div.removeClass('visibility');
     div.addClass(color);
 }
 
@@ -716,16 +730,19 @@ function downloadOperationReport() {
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     }
-
-    let selectedOperationId = $('#report-list option:selected').attr('value');
-    let selectedOpOutput = parseInt($('#report-output option:selected').attr('value'), 10);
-    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': selectedOpOutput} : null;
+    let selectedOperationId = $('#operation-list option:selected').attr('value');
+    let agentOutput = $('#agent-output').prop("checked");
+    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
     restRequest('POST', postData, downloadObjectAsJson, '/plugin/chain/rest');
 }
 
 function changeProgress(percent) {
-    if(percent > 100)
+    if(percent >= 100) {
         percent = 100;
+        if(!OPERATION.finish) {
+            percent = 99;
+        }
+    }
     let elem = document.getElementById("myBar");
     elem.style.width = percent + "%";
     elem.innerHTML = percent + "%";
@@ -735,10 +752,14 @@ $(document).ready(function(){
   $("#optional").click(function(){
     $("#optional-options").slideToggle("slow");
   });
-});
-$(document).ready(function(){
   $("#schedules").click(function(){
     $("#schedules-options").slideToggle("slow");
+  });
+  $("#stealth").click(function(){
+    $("#stealth-options").slideToggle("slow");
+  });
+  $("#autonomous").click(function(){
+    $("#autonomous-options").slideToggle("slow");
   });
 });
 
@@ -761,10 +782,14 @@ function addPhase(number) {
     }
     template.attr("id", "tempPhase" + number);
     template.addClass("tempPhase");
-    template.insertBefore('#dummy');
+    if(number == 1) {
+        template.insertBefore('#dummy');
+    } else {
+        template.insertAfter('#tempPhase' + (number-1));
+    }
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span style="float:right;font-size:13px;" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
-    phaseHeader.insertBefore("#tempPhase" + number);
+    let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
+    $('#tempPhase' + number).prepend(phaseHeader);
     phaseHeader.show();
     return template;
 }
@@ -875,14 +900,50 @@ function loadAdversaryCallback(data) {
 
     $('.tempPhase').remove();
     $('.phase-headers').remove();
-    $.each(data[0].phases, function(phase, abilities) {
-        let template = addPhase(phase);
+    $.each(data[0].phases, loadAdversaryPhase);
+}
 
-        abilities = addPlatforms(abilities);
-        abilities.forEach(function(a) {
-            let abilityBox = buildAbility(a, phase);
-            template.find('#profile-tests').append(abilityBox);
-        });
+function loadAdversaryPhase(phase, abilities) {
+    let template = $("#tempPhase" + phase);
+    if (!template.length) {
+        template = addPhase(phase);
+    }
+
+    abilities = addPlatforms(abilities);
+    abilities.forEach(function(a) {
+        let abilityBox = buildAbility(a, phase);
+        template.find('#profile-tests').append(abilityBox);
+    });
+}
+
+function loadPackCallback(data) {
+    let packPhases = data[0]['phases'];
+    let phaseKeys = Object.keys(packPhases);
+    let curPhase = $('#pack-modal').data('phase');
+    let mergePhase = $('#adv-pack-merge').is(':checked');
+    let phaseMod = 0;
+
+    if (!mergePhase) {
+        shiftPhasesDown(curPhase, phaseKeys.length);
+        phaseMod = curPhase;
+    }
+    phaseKeys.forEach(function(key) {
+        loadAdversaryPhase(parseInt(key) + phaseMod, packPhases[key]);
+    });
+}
+
+function shiftPhasesDown(after, number) {
+    $('.tempPhase').each(function(idx, phaseDiv) {
+        let i = idx + 1;
+        if (i <= after) {
+            return;
+        }
+        let newi = i + number;
+        $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
+        $(phaseDiv).find('.phase-title').text('Phase ' + newi);
+        $(phaseDiv).find('.ability-box').data('phase', newi);
+        $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
+        $(phaseDiv).find('.pack-add').attr('onclick', 'showPackModal('+newi+')');
     });
 }
 
@@ -947,17 +1008,6 @@ function savePlannerCallback(data) {
     location.reload();
 }
 
-function showC2(contacts) {
-    let c2Name = $('#C2-select option:selected').attr('value');
-    contacts.forEach(function(c) {
-        if(c.name == c2Name) {
-            $('#c2-name').text(c.name);
-            $('#c2-description').text(c.description);
-            return;
-        }
-    });
-}
-
 function addPlatforms(abilities) {
     let ab = [];
     abilities.forEach(function(a) {
@@ -1003,8 +1053,8 @@ function buildAbility(ability, phase){
     if(ability.payload.length > 0) {
        template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
     }
-    template.find('#ability-rm').html('<div id="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
-    template.find('#ability-remove').click(function() {
+    template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
+    template.find('.ability-remove').click(function() {
         removeAbility(ability.ability_id);
     });
 
@@ -1121,6 +1171,37 @@ function showAbility(parentId, exploits) {
     });
 }
 
+function showPack() {
+    $('#pack-phases').empty();
+
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+}
+
+function showPackCallback(data) {
+    Object.keys(data[0].phases).forEach(function(phaseID) {
+        let phaseTemplate = $("#pack-phase-template").clone();
+        phaseTemplate.attr('id', 'pack-phase' + phaseID);
+
+        let abilities = addPlatforms(data[0].phases[phaseID]);
+        abilities.forEach(function(ability) {
+            let template = $("#pack-ability-template").clone();
+            template.find('.ability-identifier').text(ability.ability_id);
+            template.find('.ability-name').text(ability.name);
+            template.find('.ability-description').text(ability.description);
+            template.find('.ability-tactic').text(ability.tactic);
+            template.find('.ability-tech-id').text(ability.technique_id);
+            template.find('.ability-tech-name').text(ability.technique_name);
+            template.find('.ability-platforms').text(ability.platform.join(', '));
+            template.show();
+            phaseTemplate.append(template);
+        });
+
+        phaseTemplate.show();
+        $('#pack-phases').append("<h4>Phase " + phaseID + "</h4>");
+        $('#pack-phases').append(phaseTemplate);
+    });
+}
+
 function addExecutorBlock(){
     let template = $("#ttp-template").clone();
     template.show();
@@ -1131,6 +1212,11 @@ function showPhaseModal(phase) {
     $('#phase-modal').data("phase", phase);
     $('#ability-identifier').text(uuidv4());
     document.getElementById("phase-modal").style.display="block";
+}
+
+function showPackModal(phase) {
+    $('#pack-modal').data("phase", phase);
+    document.getElementById("pack-modal").style.display="block";
 }
 
 function freshId(){
@@ -1165,13 +1251,18 @@ $('#uploadPayloadFile').on('change', function (event){
     }
 });
 
-function addToPhase() {
+function addAbilityToPhase() {
     let parent = $('#phase-modal');
     let phase = $(parent).data('phase');
     let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
     let abilityBox = buildAbility(ability, phase);
     $('#tempPhase' + phase).find('#profile-tests').append(abilityBox);
     document.getElementById('phase-modal').style.display='none';
+}
+
+function addPackToPhase() {
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+    document.getElementById('pack-modal').style.display='none';
 }
 
 function checkOpformValid(){
@@ -1194,136 +1285,6 @@ function resetMoreModal() {
     modal.find('#resultView').text('');
 }
 
-/** REPORTS **/
-
-function showReports(){
-    validateFormState(($('#report-list').prop('selectedIndex') !== 0), '#reportBtn');
-    let selectedOperationId = $('#report-list option:selected').attr('value');
-    let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId} : null;
-    restRequest('POST', postData, displayReport, '/plugin/chain/rest');
-}
-
-function displayReport(data) {
-    $('#report-name').html(data.name);
-    $('#report-name-duration').html("The operation lasted " + reportDuration(data) + " with a random "+data.jitter + " second pause between steps");
-    $('#report-adversary').html(data.adversary.name);
-    $('#report-adversary-desc').html(data.adversary.description);
-    $('#report-group').html(data.host_group[0]['group']);
-    $('#report-group-cnt').html(data.host_group.length + ' agents were included');
-    $('#report-steps').html(reportStepLength(data.steps));
-    $('#report-steps-attack').html(data.adversary.name + " was " + reportScore(data.steps) + " successful in the attack");
-    $('#report-planner').html(data.planner.name);
-    $('#report-planner-desc').html(data.adversary.name + " collected " + data.facts.length + " facts and used them to make decisions");
-    addAttackBreakdown(data.adversary.phases, data.steps);
-    addFacts(data.facts);
-    addSkippedAbilities(data.skipped_abilities);
-}
-
-function reportDuration(data) {
-    if(data.finish) {
-        let operationInSeconds = Math.abs(new Date(data.finish) - new Date(data.start)) / 1000;
-        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
-        operationInSeconds -= operationInMinutes * 60;
-        let secondsRemainder = operationInSeconds % 60;
-        return operationInMinutes + 'min ' + secondsRemainder + 'sec';
-    }
-    return "(not finished yet))"
-}
-
-function reportStepLength(steps) {
-    let step_len = 0;
-    for ( let agent in steps ){
-        step_len += steps[agent].steps.length;
-    }
-    return step_len;
-}
-
-function reportScore(steps) {
-    let failed = 0;
-    for ( let agent in steps ) {
-        steps[agent].steps.forEach(s => {
-        if(s.status > 0) {
-            failed += 1;
-        }
-    });
-    }
-    return parseInt(100 - (failed/reportStepLength(steps) * 100)) + '%';
-}
-
-function addAttackBreakdown(phases, steps) {
-    $("#reports-dash-attack").find("tr:gt(0)").remove();
-    let plans = [];
-    $.each(phases, function (k, v) {
-        v.forEach(plannedStep => {
-            if(!plans.some(e => e.tactic == plannedStep.tactic) || !plans.some(e => e.technique_id == plannedStep.technique_id) || !plans.some(e => e.technique_name == plannedStep.technique_name)) {
-                plans.push({'tactic': plannedStep.tactic, 'technique_id': plannedStep.technique_id, 'technique_name': plannedStep.technique_name, "success": 0, "failure": 0});
-            }
-        });
-    });
-    plans.forEach(p => {
-        for ( let agent in steps ) {
-            steps[agent].steps.forEach(s => {
-                if (p.tactic == s.attack.tactic && p.technique_id == s.attack.technique_id && p.technique_name == s.attack.technique_name) {
-                    if (s.status > 0) {
-                        p['failure'] += 1;
-                    } else {
-                        p['success'] += 1;
-                    }
-                }
-            });
-        }
-    });
-    plans.forEach(p => {
-        $("#reports-dash-attack").append("<tr><td><span style='color:green'>"+p.success+"</span> / <span style='color:red'>"+p.failure+"</span></td><td>"+p.tactic+"</td><td>"+p.technique_id+"</td><td>"+p.technique_name+"</td></tr>");
-    });
-}
-
-function addFacts(facts){
-    $("#reports-dash-facts").find("tr:gt(0)").remove();
-    let unique = [];
-    facts.forEach(f => {
-        let found = false;
-        for(let i in unique){
-            if(unique[i].trait == f.trait) {
-                unique[i].count += 1;
-                found = true;
-                break;
-            }
-        }
-        if(!found) {
-            unique.push({'trait':f.trait, 'count':1});
-        }
-    });
-    unique.forEach(u => {
-        $("#reports-dash-facts").append("<tr><td>"+u.trait+"</td><td>"+u.count+"</td></tr>");
-    });
-}
-
-function addSkippedAbilities(skipped_abilities) {
-    clearSkippedAbilities();
-    skipped_abilities.forEach(s => {
-        for ( let agent in s ) {
-            let template = $("#reports-dash-skipped-template").clone();
-            template.attr('id', 'agent_'+agent);
-            template.find('#skipped-host-name').text(agent);
-            template.find('#skipped-host-total').text(s[agent].length);
-            let skip_table = template.find("#skipped-host-abilities");
-            s[agent].forEach(skipped => {
-                skip_table.append("<tr id='skipped-"+skipped.ability_id+"'><td>"+skipped.ability_name+"</td><td>"+skipped.reason+"</td></tr>");
-            });
-            template.insertBefore("#skipped-start");
-            template.show();
-        }
-    });
-}
-
-function clearSkippedAbilities() {
-    let skipped = $('#reports-skipped-abilities');
-    skipped.find('.agent-skipped').each(function() {
-        $(this).remove();
-    });
-}
-
 /** DUK MODALS */
 
 function openDuk2(){
@@ -1335,9 +1296,9 @@ function openDuk2(){
 
 function openDuk3(){
     document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... You can double-click on any row to show the details of the executed step. Click the ' +
-        'star icon to view the standard output and error from the command that was executed. Highlighted text indicates ' +
-        'facts which were learned from executing the step. Click the X to stop the ability from running.');
+    $('#duk-text').text('Did you know... You can click the ' +
+        'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
+        'facts which were learned from executing the step.');
 }
 
 function openDuk4(){
@@ -1372,29 +1333,22 @@ function openDuk7(){
         'the operation. ');
 }
 
-function openDukHelp(){
-    document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').html('<h4>Welcome. Here are a few instructions to get you started:</h4>' +
-        '<ol>' +
-        '<li>Start by deploying an agent on any compromised host. Sandcat (54ndc47) is our default agent.</li>' +
-        '<li>Review the pre-built adversaries and consider building your own</li>' +
-        '<li>Start a new operation, either with an adversary or without. If the latter, select potential links while it is running</li>' +
-        '<li>Review the full documentation via the <i>Docs</i> tab to learn more about any of the many options you see.</li>' +
-        '</ol>');
-}
-
 /** HUMAN-IN-LOOP */
 
 function submitHilChanges(status){
     document.getElementById("loop-modal").style.display = "none";
-    let linkId = $('#hil-linkId').html();
     let command = $('#hil-command').val();
-    let operation = $('#operation-list option:selected').attr('value');
-
-    let data = {'index':'chain', 'operation': operation, 'link_id': linkId, 'status': status, 'command': btoa(command)};
-    restRequest('PUT', data, doNothing);
+    updateLinkStatus($('#hil-linkId').html(), status, btoa(command));
     refresh();
     return false;
+}
+
+function updateLinkStatus(linkId, status, command='') {
+    let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    if(command) {
+        data['command'] = command;
+    }
+    restRequest('PUT', data, doNothing);
 }
 
 function toggleHil(){

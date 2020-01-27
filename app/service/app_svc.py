@@ -3,6 +3,7 @@ import asyncio
 import copy
 import os
 import traceback
+import uuid
 from datetime import datetime, date
 from importlib import import_module
 
@@ -25,6 +26,7 @@ class AppService(BaseService):
     async def start_sniffer_untrusted_agents(self):
         """
         Cyclic function that repeatedly checks if there are agents to be marked as untrusted
+
         :return: None
         """
         next_check = self.config['untrusted_timer']
@@ -32,14 +34,14 @@ class AppService(BaseService):
             while True:
                 await asyncio.sleep(next_check + 1)
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
-                next_check = self.config['untrusted_timer']
+                next_check = self.config['agent_config']['untrusted_timer']
                 for a in trusted_agents:
                     silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
-                    if silence_time > (self.config['untrusted_timer'] + int(a.sleep_max)):
+                    if silence_time > (self.config['agent_config']['untrusted_timer'] + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
                     else:
-                        trust_time_left = self.config['untrusted_timer'] - silence_time
+                        trust_time_left = self.config['agent_config']['untrusted_timer'] - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
@@ -49,6 +51,7 @@ class AppService(BaseService):
     async def find_link(self, unique):
         """
         Locate a given link by its unique property
+
         :param unique:
         :return:
         """
@@ -60,6 +63,7 @@ class AppService(BaseService):
     async def run_scheduler(self):
         """
         Kick off all scheduled jobs, as their schedule determines
+
         :return:
         """
         while True:
@@ -78,6 +82,7 @@ class AppService(BaseService):
     async def resume_operations(self):
         """
         Resume all unfinished operations
+
         :return: None
         """
         await asyncio.sleep(10)
@@ -91,7 +96,7 @@ class AppService(BaseService):
             operation.adversary = await self._adjust_adversary_phases(operation)
 
             for phase in operation.adversary.phases:
-                if not await operation.closeable():
+                if not await operation.is_closeable():
                     await self._update_operation(operation)
                     await planner.execute(phase)
                     if planner.stopping_condition_met:
@@ -99,8 +104,9 @@ class AppService(BaseService):
                     await operation.wait_for_phase_completion()
                 operation.phase = phase
             await self._cleanup_operation(operation)
-            while not await operation.closeable():
+            while not await operation.is_closeable():
                 await asyncio.sleep(5)
+                await self._update_operation(operation)
             await operation.close()
             await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
@@ -110,6 +116,7 @@ class AppService(BaseService):
     async def load_plugins(self):
         """
         Store all plugins in the data store
+
         :return:
         """
         for plug in os.listdir('plugins'):
@@ -165,15 +172,11 @@ class AppService(BaseService):
 
     async def _save_new_source(self, operation):
         data = dict(
-            id=str(operation.id),
+            id=str(uuid.uuid4()),
             name=operation.name,
             facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
         )
         await self.get_service('rest_svc').persist_source(data)
 
     async def _update_operation(self, operation):
-        if operation.group:
-            updated_agents = await self.get_service('data_svc').locate('agents', match=dict(group=operation.group))
-        else:
-            updated_agents = await self.get_service('data_svc').locate('agents')
-        operation.agents = updated_agents
+        operation.agents = await self.get_service('rest_svc').construct_agents_for_group(operation.group)

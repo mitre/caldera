@@ -1,13 +1,18 @@
 import logging
 import traceback
+import uuid
 
 from aiohttp import web
 from aiohttp_jinja2 import template
 
+from app.service.auth_svc import check_authorization
+from app.utility.base_world import BaseWorld
 
-class RestApi:
 
-    def __init__(self, services):
+class RestApi(BaseWorld):
+
+    def __init__(self, config, services):
+        self.config = config
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
@@ -18,18 +23,23 @@ class RestApi:
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
-        self.app_svc.application.router.add_route('*', '/', self.landing)
+        # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
-        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
+        # authorized API endpoints
+        self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
+        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
+        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
+        # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
+        self.app_svc.application.router.add_route('*', '/file/download', self.download)
+        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -43,9 +53,9 @@ class RestApi:
         return await self.auth_svc.login_user(request)
 
     @template('chain.html')
+    @check_authorization
     async def landing(self, request):
         try:
-            await self.auth_svc.check_permissions(request)
             abilities = await self.data_svc.locate('abilities')
             tactics = set([a.tactic.lower() for a in abilities])
             payloads = await self.rest_svc.list_payloads()
@@ -57,10 +67,9 @@ class RestApi:
             planners = [p.display for p in await self.data_svc.locate('planners')]
             obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            contacts = [c.display for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators, contacts=contacts)
+                        plugins=plugins, obfuscators=obfuscators)
         except web.HTTPFound as e:
             raise e
         except Exception as e:
@@ -69,14 +78,14 @@ class RestApi:
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
+    @check_authorization
     async def find_potential_links(self, request):
-        await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
         links = await self.rest_svc.get_potential_links(**data)
         return web.json_response(dict(links=[l.display for l in links]))
 
+    @check_authorization
     async def add_potential_link(self, request):
-        await self.auth_svc.check_permissions(request)
         data = dict(await request.json())
         await self.rest_svc.apply_potential_link(data)
         return web.json_response(dict())
@@ -96,6 +105,7 @@ class RestApi:
         except Exception:
             pass
 
+    @check_authorization
     async def rest_core(self, request):
         """
         This function is under construction until all objects have been converted from SQL tables
@@ -103,7 +113,6 @@ class RestApi:
         :return:
         """
         try:
-            await self.auth_svc.check_permissions(request)
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(
@@ -128,12 +137,14 @@ class RestApi:
                     agent=lambda d: self.rest_svc.display_objects('agents', d),
                     operation=lambda d: self.rest_svc.display_objects('operations', d),
                     source=lambda d: self.rest_svc.display_objects('sources', d),
+                    plugins=lambda d: self.rest_svc.display_objects('plugins', d),
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                 )
             )
-            output = await options[request.method][index](data)
-            return output
+            if index not in options[request.method]:
+                return await self.rest_svc.display_objects(index, data)
+            return await options[request.method][index](data)
         except Exception:
             traceback.print_exc()
 
@@ -173,3 +184,24 @@ class RestApi:
         data = dict(await request.json())
         resp = await options[request.headers.get('property')](data)
         return web.json_response(resp)
+
+    async def upload_exfil_http(self, request):
+        dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        exfil_dir = await self.file_svc.create_exfil_sub_directory(dir_name=dir_name)
+        return await self.file_svc.save_multipart_file_upload(request, exfil_dir)
+
+    async def download(self, request):
+        """
+        Accept a request with a required header, file, and an optional header, platform, and download the file.
+        :param request:
+        :return: a multipart file via HTTP
+        """
+        try:
+            payload = display_name = request.headers.get('file')
+            payload, content, display_name = await self.file_svc.get_file(request.headers)
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
+            return web.Response(body=content, headers=headers)
+        except FileNotFoundError:
+            return web.HTTPNotFound(body='File not found')
+        except Exception as e:
+            return web.HTTPNotFound(body=str(e))

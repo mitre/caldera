@@ -62,7 +62,7 @@ class Operation(BaseObject):
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, phase=self.phase, obfuscator=self.obfuscator,
-                               allow_untrusted=self.allow_untrusted, autonomous=self.autonomous, finish=self.finish,
+                               autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
     @property
@@ -73,43 +73,10 @@ class Operation(BaseObject):
                     OUT_OF_TIME='out_of_time',
                     FINISHED='finished')
 
-    @property
-    def report(self, redacted=False):
-        report = dict(name=self.name, host_group=[a.display for a in self.agents],
-                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
-                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
-                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
-        agents_steps = {a.paw: {'steps': []} for a in self.agents}
-        for step in self.chain:
-            step_report = dict(ability_id=step.ability.ability_id,
-                               command=step.command,
-                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
-                               run=step.finish,
-                               status=step.status,
-                               platform=step.ability.platform,
-                               executor=step.ability.executor,
-                               pid=step.pid,
-                               description=step.ability.description,
-                               name=step.ability.name,
-                               attack=dict(tactic=step.ability.tactic,
-                                           technique_name=step.ability.technique_name,
-                                           technique_id=step.ability.technique_id),
-                               output=step.output
-                               )
-            agents_steps[step.paw]['steps'].append(step_report)
-        report['steps'] = agents_steps
-        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
-        if redacted:
-            return redact_report(report)
-        else:
-            return report
-
-    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state=None,
-                 allow_untrusted=False, autonomous=True, phases_enabled=True, obfuscator=None,
-                 max_time=300, group=None):
+    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
+                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50):
         super().__init__()
         self.id = id
-        self.max_time = max_time
         self.start, self.finish = None, None
         self.name = name
         self.group = group
@@ -119,11 +86,12 @@ class Operation(BaseObject):
         self.source = source
         self.planner = planner
         self.state = state
-        self.allow_untrusted = allow_untrusted
         self.autonomous = autonomous
         self.phases_enabled = phases_enabled
         self.phase = 0
         self.obfuscator = obfuscator
+        self.auto_close = auto_close
+        self.visibility = visibility
         self.chain, self.rules = [], []
         if source:
             self.rules = source.rules
@@ -147,6 +115,12 @@ class Operation(BaseObject):
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
 
+    def has_fact(self, trait, value):
+        for f in self.all_facts():
+            if f.trait == trait and f.value == value:
+                return True
+        return False
+
     def all_relationships(self):
         return [r for lnk in self.chain for r in lnk.relationships]
 
@@ -168,13 +142,13 @@ class Operation(BaseObject):
 
     async def wait_for_phase_completion(self):
         for member in self.agents:
-            if (not member.trusted) and (not self.allow_untrusted):
+            if not member.trusted:
                 for link in await self._unfinished_links_for_agent(member.paw):
                     link.status = link.states['UNTRUSTED']
                 continue
             while len(await self._unfinished_links_for_agent(member.paw)) > 0:
                 await asyncio.sleep(3)
-                if await self._trust_issues(member):
+                if not member.trusted:
                     break
 
     async def wait_for_links_completion(self, link_ids):
@@ -186,15 +160,14 @@ class Operation(BaseObject):
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish and not link.status == link.states['DISCARD']:
+            while not link.finish or link.can_ignore():
                 await asyncio.sleep(5)
-                if await self._trust_issues(member):
+                if not member.trusted:
                     break
 
-    async def closeable(self):
-        running_seconds = (datetime.now() - self.start).total_seconds()
-        if running_seconds > self.max_time:
-            self.state = self.states['OUT_OF_TIME']
+    async def is_closeable(self):
+        if self.auto_close and self.phase == len(self.adversary.phases):
+            self.state = self.states['FINISHED']
             return True
         return False
 
@@ -206,22 +179,46 @@ class Operation(BaseObject):
     def link_status(self):
         return -3 if self.autonomous else -1
 
-    """ PRIVATE """
-
-    async def _unfinished_links_for_agent(self, paw):
-        return [l for l in self.chain if l.paw == paw and not l.finish and not l.status == l.states['DISCARD']]
-
-    async def _active_agents(self):
+    async def active_agents(self):
         active = []
         for agent in self.agents:
             if agent.last_seen > self.start:
                 active.append(agent)
         return active
 
-    async def _trust_issues(self, agent):
-        if not self.allow_untrusted:
-            return not agent.trusted
-        return False
+    def report(self, output=False, redacted=False):
+        report = dict(name=self.name, host_group=[a.display for a in self.agents],
+                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
+                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
+        agents_steps = {a.paw: {'steps': []} for a in self.agents}
+        for step in self.chain:
+            step_report = dict(ability_id=step.ability.ability_id,
+                               command=step.command,
+                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                               run=step.finish,
+                               status=step.status,
+                               platform=step.ability.platform,
+                               executor=step.ability.executor,
+                               pid=step.pid,
+                               description=step.ability.description,
+                               name=step.ability.name,
+                               attack=dict(tactic=step.ability.tactic,
+                                           technique_name=step.ability.technique_name,
+                                           technique_id=step.ability.technique_id))
+            if output:
+                step_report['output'] = step.output
+            agents_steps[step.paw]['steps'].append(step_report)
+        report['steps'] = agents_steps
+        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+        if redacted:
+            return redact_report(report)
+        return report
+
+    """ PRIVATE """
+
+    async def _unfinished_links_for_agent(self, paw):
+        return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
     def _get_skipped_abilities_by_agent(self):
         abilities_by_agent = self._get_all_possible_abilities_by_agent()
@@ -252,9 +249,6 @@ class Operation(BaseObject):
                                flags=re.DOTALL)
         if ability.ability_id in agent_ran:
             return
-        elif self.state == self.states['OUT_OF_TIME']:
-            return dict(reason='Operation ran out of time', reason_id=self.Reason.OUT_OF_TIME.value,
-                        ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
@@ -287,4 +281,3 @@ class Operation(BaseObject):
         PRIVILEGE = 3
         OP_RUNNING = 4
         UNTRUSTED = 5
-        OUT_OF_TIME = 6

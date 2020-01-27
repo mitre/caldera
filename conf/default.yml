@@ -3,7 +3,6 @@
 host: 0.0.0.0
 port: 8888
 exfil_dir: /tmp
-untrusted_timer: 60
 plugins:
   - sandcat
   - stockpile
@@ -12,3 +11,11 @@ debug: True
 api_key: ADMIN123
 users:
   admin: admin
+file_encryption: True
+crypt_salt: REPLACE_WITH_RANDOM_VALUE
+agent_config:
+  untrusted_timer: 60
+  sleep_min: 30
+  sleep_max: 60
+  watchdog: 0
+secrets: {}

@@ -4,8 +4,9 @@ import glob
 import json
 import os.path
 import pickle
+import traceback
 from base64 import b64encode
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -18,6 +19,8 @@ from app.objects.c_requirement import Requirement
 from app.objects.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
+
+Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class DataService(BaseService):
@@ -33,11 +36,12 @@ class DataService(BaseService):
     async def destroy():
         """
         Clear out all data
+
         :return:
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     os.remove(f)
@@ -45,6 +49,7 @@ class DataService(BaseService):
     async def save_state(self):
         """
         Save RAM database to file
+
         :return:
         """
         with open('data/object_store', 'wb') as objects:
@@ -53,29 +58,33 @@ class DataService(BaseService):
     async def restore_state(self):
         """
         Restore the object database
+
         :return:
         """
         if os.path.exists('data/object_store'):
             with open('data/object_store', 'rb') as objects:
                 ram = pickle.load(objects)
                 for key in ram.keys():
-                    if key in self.schema:
-                        for c_object in ram[key]:
-                            await self.store(c_object)
+                    self.ram[key] = []
+                    for c_object in ram[key]:
+                        await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
         """
         Add a new collection to RAM
+
         :param collection:
         :return:
         """
-        self.ram[collection] = []
+        if collection not in self.ram:
+            self.ram[collection] = []
 
     async def load_data(self, directory):
         """
         Read all the data sources to populate the object store
+
         :param directory:
         :return: None
         """
@@ -87,6 +96,7 @@ class DataService(BaseService):
     async def store(self, c_object):
         """
         Accept any c_object type and store it (create/update) in RAM
+
         :param c_object:
         :return: a single c_object
         """
@@ -98,6 +108,7 @@ class DataService(BaseService):
     async def locate(self, object_name, match=None):
         """
         Find all c_objects which match a search. Return all c_objects if no match.
+
         :param object_name:
         :param match: dict()
         :return: a list of c_object types
@@ -110,6 +121,7 @@ class DataService(BaseService):
     async def remove(self, object_name, match):
         """
         Remove any c_objects which match a search
+
         :param object_name:
         :param match: dict()
         :return:
@@ -121,7 +133,8 @@ class DataService(BaseService):
 
     """ PRIVATE """
 
-    async def _add_phase_abilities(self, phase_dict, phase, phase_entries):
+    @staticmethod
+    async def _add_phase_abilities(phase_dict, phase, phase_entries):
         for ability in phase_entries:
             phase_dict[phase].append(ability)
         return phase_dict
@@ -156,20 +169,19 @@ class DataService(BaseService):
         return dict(pp)
 
     async def _load_adversaries(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=True):
+        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
                     adv_pack = await self._add_adversary_packs(p)
                     if adv_pack:
                         await self._merge_phases(phases, adv_pack)
-                if adv.get('visible', True):
-                    sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                    phases = await self._add_phases(sorted_phases, adv)
-                    await self.store(
-                        Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                  phases=phases)
-                    )
+                sorted_phases = [phases[x] for x in sorted(phases.keys())]
+                phases = await self._add_phases(sorted_phases, adv)
+                await self.store(
+                    Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
+                              phases=phases)
+                )
 
     async def _load_abilities(self, directory):
         for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
@@ -196,18 +208,19 @@ class DataService(BaseService):
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
-                                                               privilege=ab[
-                                                                   'privilege'] if 'privilege' in ab.keys() else None)
+                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None)
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
                             self.log.debug('Ability no longer exists on disk, removing: %s' % existing.unique)
                             await self.remove('abilities', match=dict(unique=existing.unique))
                         if existing.payload:
-                            _, path = await self.get_service('file_svc').find_file_path(existing.payload)
-                            if not path:
-                                self.log.error('Payload referenced in %s but not found: %s' %
-                                               (existing.ability_id, existing.payload))
+                            payloads = existing.payload.split(',')
+                            for payload in payloads:
+                                _, path = await self.get_service('file_svc').find_file_path(payload)
+                                if not path:
+                                    self.log.error('Payload referenced in %s but not found: %s' %
+                                                   (existing.ability_id, payload))
 
     async def _load_sources(self, directory):
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -216,6 +229,7 @@ class DataService(BaseService):
                     identifier=src['id'],
                     name=src['name'],
                     facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
                 await self.store(source)
@@ -226,8 +240,19 @@ class DataService(BaseService):
                 await self.store(
                     Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
                             params=json.dumps(planner.get('params')), description=planner.get('description'),
-                            stopping_conditions=planner.get('stopping_conditions'))
+                            stopping_conditions=planner.get('stopping_conditions'),
+                            ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )
+
+    @staticmethod
+    async def _create_adjustments(raw_adjustments):
+        x = []
+        if raw_adjustments:
+            for ability_id, adjustments in raw_adjustments.items():
+                for trait, block in adjustments.items():
+                    for change in block:
+                        x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
+        return x
 
     @staticmethod
     async def _merge_phases(phases, new_phases):
@@ -252,10 +277,11 @@ class DataService(BaseService):
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
             ps.append(Parser(module=module, parserconfigs=pcs))
         rs = []
-        for module in requirements:
-            relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
-                        requirements[module]]
-            rs.append(Requirement(module=module, relationships=relation))
+        for requirement in requirements:
+            for module in requirement:
+                relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
+                            requirement[module]]
+                rs.append(Requirement(module=module, relationships=relation))
         return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                                         technique_id=technique_id, technique=technique_name,
                                         executor=executor, platform=platform, description=description,
@@ -263,7 +289,10 @@ class DataService(BaseService):
                                         privilege=privilege, timeout=timeout))
 
     async def _load_data(self, directory):
-        await self._load_abilities(directory='%s/abilities' % directory)
-        await self._load_adversaries(directory='%s/adversaries' % directory)
-        await self._load_sources(directory='%s/facts' % directory)
-        await self._load_planners(directory='%s/planners' % directory)
+        try:
+            await self._load_abilities(directory='%s/abilities' % directory)
+            await self._load_adversaries(directory='%s/adversaries' % directory)
+            await self._load_sources(directory='%s/sources' % directory)
+            await self._load_planners(directory='%s/planners' % directory)
+        except Exception:
+            self.log.error(traceback.print_exc())

@@ -14,9 +14,12 @@ logs/*
 core.db
 .venv/
 venv/
+calderaenv/
 .env
 conf/*.yml
 !conf/default.yml
+docs/_build
+docs/_generated
 data/object_store
 data/results/*
 !data/results/.gitkeep

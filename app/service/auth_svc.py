@@ -13,6 +13,17 @@ from cryptography import fernet
 from app.utility.base_service import BaseService
 
 
+def check_authorization(func):
+    async def process(func, *args, **params):
+        return await func(*args, **params)
+
+    async def helper(*args, **params):
+        await args[0].auth_svc.check_permissions(args[1])
+        result = await process(func, *args, **params)
+        return result
+    return helper
+
+
 class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
@@ -25,6 +36,7 @@ class AuthService(BaseService):
     async def apply(self, app, users):
         """
         Set up security on server boot
+
         :param app:
         :param users:
         :return: None
@@ -43,6 +55,7 @@ class AuthService(BaseService):
     async def logout_user(request):
         """
         Log the user out
+
         :param request:
         :return: None
         """
@@ -52,6 +65,7 @@ class AuthService(BaseService):
     async def login_user(self, request):
         """
         Log a user in and save the session
+
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
@@ -67,6 +81,7 @@ class AuthService(BaseService):
     async def check_permissions(self, request):
         """
         Check if a request is allowed based on the user permissions
+
         :param request:
         :return: None
         """

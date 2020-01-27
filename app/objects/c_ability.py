@@ -27,10 +27,12 @@ class Ability(BaseObject):
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
-                               requirements=[r.display for r in self.requirements], privilege=self.privilege, timeout=self.timeout))
+                               requirements=[r.display for r in self.requirements], privilege=self.privilege,
+                               timeout=self.timeout))
 
-    def __init__(self, ability_id, tactic, technique_id, technique, name, test, description, cleanup, executor,
-                 platform, payload, parsers, requirements, privilege, timeout=60):
+    def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
+                 description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
+                 requirements=None, privilege=None, timeout=60):
         super().__init__()
         self.ability_id = ability_id
         self.tactic = tactic

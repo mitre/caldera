@@ -12,12 +12,13 @@ class PlanningService(BasePlanningService):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
+
         :param operation:
         :param phase:
         :param agent:
         :param trim: call trim_links() on list of links before returning
-        :param planner
-        :param stopping_conditions
+        :param planner:
+        :param stopping_conditions:
         :return: a list of links
         """
         if len(stopping_conditions) > 0 and await self._check_stopping_conditions(operation, stopping_conditions):
@@ -40,6 +41,7 @@ class PlanningService(BasePlanningService):
         """
         For a given operation, create all cleanup links.
         If agent is supplied, only return cleanup links for that agent.
+
         :param operation:
         :param agent:
         :return: None
@@ -57,8 +59,9 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation, msg='no link created'):
+        if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
+            await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
@@ -76,6 +79,7 @@ class PlanningService(BasePlanningService):
         """
         Checks whether an operation has collected the proper facts to trigger this planner's stopping
         conditions
+
         :param operation:
         :param stopping_conditions:
         :return: True if all stopping conditions have been met, False if all stopping conditions have not
@@ -98,18 +102,11 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_cleanup_links = []
-        if await self._check_untrusted_agents_allowed(agent=agent, operation=operation,
-                                                      msg='no cleanup-link created'):
+        if agent.trusted:
             agent_cleanup_links = await self._generate_cleanup_links(operation=operation,
                                                                      agent=agent,
                                                                      link_status=operation.link_status())
         return agent_cleanup_links
-
-    async def _check_untrusted_agents_allowed(self, agent, operation, msg):
-        if (not agent.trusted) and (not operation.allow_untrusted):
-            self.log.debug('Agent %s untrusted: %s' % (agent.paw, msg))
-            return False
-        return True
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
@@ -130,3 +127,11 @@ class PlanningService(BasePlanningService):
                 links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
         return links
+
+    @staticmethod
+    async def _apply_adjustments(operation, links):
+        for l in links:
+            for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
+                if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
+                    l.visibility.apply(adjustment)
+                    l.status = l.states['HIGH_VIZ']
