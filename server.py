@@ -8,6 +8,7 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
+from app.contacts.http import Http
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -15,6 +16,7 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.utility.base_world import BaseWorld
 
 
 def setup_logger(co):
@@ -50,7 +52,8 @@ async def start_server(config, services):
 def main(services, config):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(data_svc.restore_state())
-    loop.run_until_complete(RestApi(services).enable())
+    loop.run_until_complete(RestApi(config, services).enable())
+    loop.run_until_complete(contact_svc.register(Http(services)))
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
     loop.create_task(build_docs())
@@ -77,20 +80,18 @@ if __name__ == '__main__':
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         setup_logger(cfg)
-        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
-        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
+        cfg['secrets']['core'] = BaseWorld.strip_yml('conf/secrets.yml')
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()
-        contact_svc = ContactService()
+        contact_svc = ContactService(cfg['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc(cfg['exfil_dir'],
                            file_encryption=cfg['file_encryption'],
                            api_key=cfg['api_key'],
-                           crypt_salt=cfg['crypt_salt']
-                           )
+                           crypt_salt=cfg['crypt_salt'])
         app_svc = AppService(application=web.Application(), config=cfg)
 
         if args.fresh:

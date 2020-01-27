@@ -30,7 +30,6 @@
     <div class="subnav-content subnav-content-right">
         <a onclick="viewSection('sources')">sources</a>
         <a onclick="viewSection('planners')">planners</a>
-        <a onclick="viewSection('c2')">c2</a>
         <a onclick="viewSection('obfuscators')">obfuscators</a>
     </div>
   </div>
@@ -82,6 +81,15 @@
                   Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
                   least 1 agent in order to run an operation.
               </p>
+              <hr>
+              <br>
+              <div>
+                  <h4>Global settings for new agents</h4>
+                  <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
+                  <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
+                  <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
+              </div>
+              <br>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -264,36 +272,6 @@
                     'Enter trait', 'Enter value','<p onclick=removeStopConditionRow($(this))>&#x274C;</p>'])">
                     &#10010;&nbsp;add row
                 </p>
-            </div>
-          </div>
-        </div>
-
-        <div id="c2" class="section-profile" style="display: none">
-          <div class="advanced row">
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('c2-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
-
-            <div id="c2-sidebar" class="column section-border" style="flex:25%">
-              <img src="/gui/img/group.png">
-              <h4>C2</h4>
-              <p class="section-description">
-                  A C2 is a command-and-control mechanism for agent-to-server communication. There are various
-                  types of communication protocols that can be used - and within this system - you can flexibly
-                  create and select how you want your agents to call back.
-              </p>
-              <br>
-              <div id="viewC2">
-                  <select id="C2-select" onchange="showC2( {{ contacts }} )" style="margin-top:-15px">
-                    <option value="" disabled selected>Select an existing C2</option>
-                    {% for c in contacts %}
-                      <option value="{{ c.name }}">{{ c.name }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-            </div>
-            <div class="column planner-header" style="flex:75%;text-align: left">
-              <h3 id="c2-name"></h3>
-              <p id="c2-description"></p>
             </div>
           </div>
         </div>

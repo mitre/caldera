@@ -206,6 +206,11 @@ function saveGroups(){
         }
         restRequest('PUT', update, doNothing);
     });
+    let globalMinsleep = $('#globalSleepMin').val();
+    let globalMaxsleep = $('#globalSleepMax').val();
+    let globalWatchdog = $('#watchdog').val();
+    let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+    restRequest('PUT', d, doNothing);
 }
 
 function saveGroupsCallback(data) {
@@ -1016,17 +1021,6 @@ function savePlanner(){
 
 function savePlannerCallback(data) {
     location.reload();
-}
-
-function showC2(contacts) {
-    let c2Name = $('#C2-select option:selected').attr('value');
-    contacts.forEach(function(c) {
-        if(c.name == c2Name) {
-            $('#c2-name').text(c.name);
-            $('#c2-description').text(c.description);
-            return;
-        }
-    });
 }
 
 function addPlatforms(abilities) {
