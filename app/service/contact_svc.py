@@ -115,6 +115,13 @@ class ContactService(BaseService):
         except Exception:
             pass
 
+    async def load_c2_config(self, directory):
+        c2_configs = {}
+        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+            for c2 in self.data_svc.strip_yml(filename):
+                c2_configs[c2['name']] = c2
+        return c2_configs
+
     """ PRIVATE """
 
     async def _start_c2_channel(self, contact):
