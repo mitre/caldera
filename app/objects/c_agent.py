@@ -17,17 +17,17 @@ class Agent(BaseObject):
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog)
+                    watchdog=self.watchdog, contact=self.contact)
 
     @property
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
-    def __init__(self, paw, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown'):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown'):
         super().__init__()
-        self.paw = paw
+        self.paw = self.generate_name(size=6)
         self.host = host
         self.username = username
         self.group = group
@@ -48,6 +48,7 @@ class Agent(BaseObject):
         self.sleep_min = int(sleep_min)
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
+        self.contact = contact
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -88,7 +89,6 @@ class Agent(BaseObject):
         self.update('architecture', kwargs.get('architecture'))
         self.update('platform', kwargs.get('platform'))
         self.update('executors', kwargs.get('executors'))
-        self.update('c2', kwargs.get('c2'))
 
     async def gui_modification(self, **kwargs):
         self.update('group', kwargs.get('group'))

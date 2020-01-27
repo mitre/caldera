@@ -61,7 +61,7 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw'))):
+        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.pop('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             return agent
         return await self.get_service('data_svc').store(Agent(
