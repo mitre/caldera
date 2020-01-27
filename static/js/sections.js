@@ -130,19 +130,26 @@ $(document).ready(function () {
             {
                 targets: 7,
                 data: null,
-                render: {
-                    _:'pid'
+                render: function ( data, type, row, meta ) {
+                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
                 targets: 8,
                 data: null,
                 render: {
-                    _:'privilege'
+                    _:'pid'
                 }
             },
             {
                 targets: 9,
+                data: null,
+                render: {
+                    _:'privilege'
+                }
+            },
+            {
+                targets: 10,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -152,7 +159,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -190,7 +197,8 @@ function saveGroups(){
         let group = document.getElementById(value['paw']+'-group').value;
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status};
+        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
+        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];
@@ -784,10 +792,14 @@ function addPhase(number) {
     }
     template.attr("id", "tempPhase" + number);
     template.addClass("tempPhase");
-    template.insertBefore('#dummy');
+    if(number == 1) {
+        template.insertBefore('#dummy');
+    } else {
+        template.insertAfter('#tempPhase' + (number-1));
+    }
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers">Phase ' + number +'&nbsp&nbsp&nbsp;<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
-    phaseHeader.insertBefore("#tempPhase" + number);
+    let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
+    $('#tempPhase' + number).prepend(phaseHeader);
     phaseHeader.show();
     return template;
 }
@@ -898,14 +910,50 @@ function loadAdversaryCallback(data) {
 
     $('.tempPhase').remove();
     $('.phase-headers').remove();
-    $.each(data[0].phases, function(phase, abilities) {
-        let template = addPhase(phase);
+    $.each(data[0].phases, loadAdversaryPhase);
+}
 
-        abilities = addPlatforms(abilities);
-        abilities.forEach(function(a) {
-            let abilityBox = buildAbility(a, phase);
-            template.find('#profile-tests').append(abilityBox);
-        });
+function loadAdversaryPhase(phase, abilities) {
+    let template = $("#tempPhase" + phase);
+    if (!template.length) {
+        template = addPhase(phase);
+    }
+
+    abilities = addPlatforms(abilities);
+    abilities.forEach(function(a) {
+        let abilityBox = buildAbility(a, phase);
+        template.find('#profile-tests').append(abilityBox);
+    });
+}
+
+function loadPackCallback(data) {
+    let packPhases = data[0]['phases'];
+    let phaseKeys = Object.keys(packPhases);
+    let curPhase = $('#pack-modal').data('phase');
+    let mergePhase = $('#adv-pack-merge').is(':checked');
+    let phaseMod = 0;
+
+    if (!mergePhase) {
+        shiftPhasesDown(curPhase, phaseKeys.length);
+        phaseMod = curPhase;
+    }
+    phaseKeys.forEach(function(key) {
+        loadAdversaryPhase(parseInt(key) + phaseMod, packPhases[key]);
+    });
+}
+
+function shiftPhasesDown(after, number) {
+    $('.tempPhase').each(function(idx, phaseDiv) {
+        let i = idx + 1;
+        if (i <= after) {
+            return;
+        }
+        let newi = i + number;
+        $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
+        $(phaseDiv).find('.phase-title').text('Phase ' + newi);
+        $(phaseDiv).find('.ability-box').data('phase', newi);
+        $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
+        $(phaseDiv).find('.pack-add').attr('onclick', 'showPackModal('+newi+')');
     });
 }
 
@@ -1144,6 +1192,37 @@ function showAbility(parentId, exploits) {
     });
 }
 
+function showPack() {
+    $('#pack-phases').empty();
+
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+}
+
+function showPackCallback(data) {
+    Object.keys(data[0].phases).forEach(function(phaseID) {
+        let phaseTemplate = $("#pack-phase-template").clone();
+        phaseTemplate.attr('id', 'pack-phase' + phaseID);
+
+        let abilities = addPlatforms(data[0].phases[phaseID]);
+        abilities.forEach(function(ability) {
+            let template = $("#pack-ability-template").clone();
+            template.find('.ability-identifier').text(ability.ability_id);
+            template.find('.ability-name').text(ability.name);
+            template.find('.ability-description').text(ability.description);
+            template.find('.ability-tactic').text(ability.tactic);
+            template.find('.ability-tech-id').text(ability.technique_id);
+            template.find('.ability-tech-name').text(ability.technique_name);
+            template.find('.ability-platforms').text(ability.platform.join(', '));
+            template.show();
+            phaseTemplate.append(template);
+        });
+
+        phaseTemplate.show();
+        $('#pack-phases').append("<h4>Phase " + phaseID + "</h4>");
+        $('#pack-phases').append(phaseTemplate);
+    });
+}
+
 function addExecutorBlock(){
     let template = $("#ttp-template").clone();
     template.show();
@@ -1154,6 +1233,11 @@ function showPhaseModal(phase) {
     $('#phase-modal').data("phase", phase);
     $('#ability-identifier').text(uuidv4());
     document.getElementById("phase-modal").style.display="block";
+}
+
+function showPackModal(phase) {
+    $('#pack-modal').data("phase", phase);
+    document.getElementById("pack-modal").style.display="block";
 }
 
 function freshId(){
@@ -1188,13 +1272,18 @@ $('#uploadPayloadFile').on('change', function (event){
     }
 });
 
-function addToPhase() {
+function addAbilityToPhase() {
     let parent = $('#phase-modal');
     let phase = $(parent).data('phase');
     let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
     let abilityBox = buildAbility(ability, phase);
     $('#tempPhase' + phase).find('#profile-tests').append(abilityBox);
     document.getElementById('phase-modal').style.display='none';
+}
+
+function addPackToPhase() {
+    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+    document.getElementById('pack-modal').style.display='none';
 }
 
 function checkOpformValid(){

@@ -96,6 +96,7 @@
                   <th>Executors</th>
                   <th>Last Seen</th>
                   <th>Sleep (Min/Max)</th>
+                  <th>Watchdog Timer (minutes)</th>
                   <th>PID</th>
                   <th>Privilege</th>
                   <th>Group</th>
@@ -511,7 +512,7 @@
                     <hr>
                     <pre id="resultView" style="text-align: left;max-width:800px;"></pre>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="detector-modal" class="modal">
@@ -597,7 +598,7 @@
                         <ul id="ttp-tests"></ul>
                         <div style="float:right;">
                             <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
-                            <button type="button" class="button-success atomic-button" onclick="addToPhase()">Add to phase</button>
+                            <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to phase</button>
                             <div id="ability-flashy-holder">
                                 <span id="message"></span>
                             </div>
@@ -607,7 +608,34 @@
                         <span onclick="document.getElementById('phase-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                     </div>
                 </div>
-             </form>
+            </form>
+        </div>
+
+        <div id="pack-modal" class="modal">
+            <form class="modal-content">
+                <div class="container section-profile row ability-viewer modal-box">
+                    <div class="column" style="flex:100%;">
+                        <p>Include the phases and abilities of another adversary in this one. These phases can be inserted as new phases (default) or merged into the current adversary's existing phases.
+                        </p>
+                        <select id="adv-pack-filter" onchange="showPack();">
+                            <option disabled selected>Choose an adversary</option>
+                            {% for pack in adversaries %}
+                                <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
+                            {% endfor %}}
+                        </select></br>
+                        <input type="checkbox" id="adv-pack-merge" name="adv-pack-merge">
+                        <label for="adv-pack-merge">Merge into existing phases?</label><br>
+                        <div id="pack-phases"></div>
+                        <br><br>
+                        <div style="float:right;width:30%;">
+                            <button type="button" class="button-success atomic-button" onclick="addPackToPhase()">Add to phase</button>
+                        </div>
+                    </div>
+                    <div class="imgcontainer">
+                        <span onclick="document.getElementById('pack-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <div id="potential-modal" class="modal">
@@ -633,7 +661,7 @@
                         <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="duk-modal" class="modal">
@@ -649,7 +677,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="loop-modal" class="modal section-profile">
@@ -669,7 +697,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <div id="source-modal" class="modal">
@@ -688,7 +716,7 @@
                         </div>
                     </div>
                 </div>
-             </form>
+            </form>
         </div>
 
         <!-- templates -->
@@ -829,6 +857,43 @@
                 </tr>
             </table>
             <br>
+        </li>
+
+        <ul id="pack-phase-template" style="display: none;"></ul>
+
+        <li id="pack-ability-template" class="pack-ability-template" style="display: none">
+            <div class="column" style="flex:60%">
+                <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                    <tr>
+                        <td style="width:10%"><b>id:</b></td>
+                        <td class="ability-identifier">Unique identifier</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>name:</b></td>
+                        <td class="ability-name">Name</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>description:</b></td>
+                        <td class="ability-description">Description</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>tactic:</b></td>
+                        <td class="ability-tactic">ATT&CK tactic</td>
+                    <tr>
+                    <tr>
+                        <td style="width:10%"><b>technique:</b></td>
+                        <td class="ability-tech-id">ATT&CK technique ID</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>technique:</b></td>
+                        <td class="ability-tech-name">ATT&CK technique name</td>
+                    </tr>
+                    <tr>
+                        <td style="width:10%"><b>platforms:</b></td>
+                        <td class="ability-platforms">Platforms</td>
+                    </tr>
+                </table>
+            </div>
         </li>
 
       </center>

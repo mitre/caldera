@@ -114,8 +114,8 @@ class RestService(BaseService):
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
-                _, content = await self.get_service('file_svc').read_file(name='%s' % link_id, location='data/results')
-                return dict(link=link.display, output=content.decode('utf-8'))
+                content = self.get_service('file_svc').read_result_file('%s' % link_id)
+                return dict(link=link.display, output=content)
             except FileNotFoundError:
                 return ''
         return ''
@@ -129,7 +129,8 @@ class RestService(BaseService):
         agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),
                                                                trusted=data.get('trusted'),
                                                                sleep_min=data.get('sleep_min'),
-                                                               sleep_max=data.get('sleep_max')))
+                                                               sleep_max=data.get('sleep_max'),
+                                                               watchdog=data.get('watchdog')))
         return agent.display
 
     async def update_chain_data(self, data):

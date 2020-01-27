@@ -46,14 +46,6 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    @property
-    def output(self):
-        try:
-            with open('data/results/%s' % self.unique, 'r') as fle:
-                return fle.read()
-        except Exception:
-            return None
-
     def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):
         super().__init__()
         self.id = id
@@ -74,6 +66,7 @@ class Link(BaseObject):
         self.used = []
         self.visibility = Visibility()
         self._pin = pin
+        self.output = None
 
     async def parse(self, operation):
         try:
