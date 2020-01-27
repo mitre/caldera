@@ -118,8 +118,9 @@ class ContactService(BaseService):
 
     async def load_c2_config(self, directory):
         c2_configs = {}
+        data_svc = self.get_service('data_svc')
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
-            for c2 in self.data_svc.strip_yml(filename):
+            for c2 in data_svc.strip_yml(filename):
                 c2_configs[c2['name']] = c2
         return c2_configs
 
