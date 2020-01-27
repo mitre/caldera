@@ -62,9 +62,18 @@ class ContactService(BaseService):
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw'))):
             await agent.heartbeat_modification(**kwargs)
             return agent
-        return await self.get_service('data_svc').store(Agent(
-            sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
-        )
+        father_paw = kwargs.pop('father_paw', None)
+        agent = Agent(sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
+        if father_paw:
+            father_agents = await self.get_service('data_svc').locate('agents', dict(paw=father_paw))
+            if father_agents:
+                father_agent = father_agents[0]
+                await father_agent.add_child(agent.paw, agent.display_name)
+                agent.father = (father_paw, father_agent.display_name)
+                agent.child = []
+            else:
+                self.log.debug('Father agent not set: no agent with paw = %s' % father)
+        return await self.get_service('data_svc').store(agent)
 
     async def get_instructions(self, paw):
         """
