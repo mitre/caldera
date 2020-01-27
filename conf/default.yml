@@ -38,9 +38,6 @@ agent_config:
       - winlogon
       - taskmgr
     darwin:
-      - Documents
-      - Downloads
-      - Desktop
       - asl.conf
       - hosts
       - chrome
