@@ -516,6 +516,7 @@ function operationCallback(data){
     applyOperationAgents(OPERATION);
     changeProgress(parseInt((OPERATION.phase / Object.keys(OPERATION.adversary.phases).length) * 100));
     clearTimeline();
+    agents_family_tree(OPERATION.host_group);
     for(let i=0; i<OPERATION.chain.length; i++){
         if(OPERATION.chain[i].status === -1) {
             $('#hil-linkId').html(OPERATION.chain[i].unique);
@@ -770,6 +771,45 @@ $(document).ready(function(){
     $("#autonomous-options").slideToggle("slow");
   });
 });
+
+function rec_agents_tree_txt(agents, child, deep) {
+    let text = "";
+    for (let i = 0; i < child.length; i++) {
+        let existing = agents.filter(function( obj ) {
+            return obj.paw === child[i][0];
+        });
+        if (existing.length > 0) {
+            let space = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            text += space.repeat(deep);
+            text += "&nbsp;&nbsp;--->" + existing[0].display_name + '-' + existing[0].paw + ":<br>";
+            text += rec_agents_tree_txt(agents, existing[0].child, deep+1);
+        }
+    }
+    return text;
+}
+
+function agents_family_tree(agents) {
+    let text = "";
+    for(let i=0; i<agents.length; i++){
+        let father_paw = agents[i].father[0];
+
+        let fathers = agents.filter(function( obj ) {
+            return obj.paw === father_paw;
+        });
+
+        if (fathers.length == 0) {
+            text += "&nbsp;&nbsp;--->" + agents[i].display_name + '-' + agents[i].paw + ":<br>";
+            text += rec_agents_tree_txt(agents, agents[i].child, 1);
+        }
+    }
+    $('#family').remove();
+    let templateFamily = $("#agent-map-template").clone();
+    templateFamily.attr('id', 'family');
+    templateFamily.find('#header').html('<b>AGENTS FAMILY TREE:</b>');
+    templateFamily.find('#content').html(text);
+    templateFamily.show();
+    $("#profile-agent-map").append(templateFamily);
+}
 
 /** ADVERSARIES **/
 
