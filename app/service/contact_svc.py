@@ -68,7 +68,7 @@ class ContactService(BaseService):
             father_agents = await self.get_service('data_svc').locate('agents', dict(paw=father_paw))
             if father_agents:
                 father_agent = father_agents[0]
-                await father_agent.add_child(agent.paw, agent.display_name)
+                father_agent.add_child(agent.paw, agent.display_name)
                 agent.father = (father_paw, father_agent.display_name)
                 agent.child = []
             else:
