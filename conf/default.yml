@@ -59,4 +59,3 @@ agent_config:
       - ps
       - pstree
       - rc.common
-secrets: {}
