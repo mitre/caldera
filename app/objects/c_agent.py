@@ -17,7 +17,7 @@ class Agent(BaseObject):
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog)
+                    watchdog=self.watchdog, father=self.father, child=self.child)
 
     @property
     def display_name(self):
@@ -25,7 +25,7 @@ class Agent(BaseObject):
 
     def __init__(self, paw, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown'):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', father=('unknown','unknown'), child=[]):
         super().__init__()
         self.paw = paw
         self.host = host
@@ -48,6 +48,8 @@ class Agent(BaseObject):
         self.sleep_min = int(sleep_min)
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
+        self.father = father
+        self.child = child
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -96,3 +98,8 @@ class Agent(BaseObject):
         self.update('sleep_min', int(kwargs.get('sleep_min')))
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
+        
+    async def add_child(self, child_paw, child_name):
+        new_child = (child_paw, child_name)
+        if new_child not in self.child:
+            self.child.append(new_child)
