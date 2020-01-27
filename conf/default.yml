@@ -46,6 +46,13 @@ agent_config:
       - cron
       - timed
       - securityd
+      - .gitignore
+      - .sshd
+      - .bashprofile
+      - .npmr
+      - .history
+      - .known_hosts
+      - .id_rsa.pub
     linux:
       - hosts
       - ntp.conf
@@ -59,4 +66,11 @@ agent_config:
       - ps
       - pstree
       - rc.common
+      - .gitignore
+      - .sshd
+      - .bashprofile
+      - .npmr
+      - .history
+      - .known_hosts
+      - .id_rsa.pub
 secrets: {}
