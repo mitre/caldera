@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/gui/css/basic.css">
   <link rel="stylesheet" href="/gui/css/timeline.css">
   <link rel="stylesheet" href="/gui/css/reports.css">
+  <link rel="stylesheet" href="/gui/css/agentmap.css">
 </head>
 <body style="margin-bottom: 100px">
 
@@ -474,6 +475,7 @@
                   <ul id="timeline" class="timeline">
                       <li id="time-start">
                   </ul>
+                  <ul id="profile-agent-map" class="profile-agent-map"></ul>
               </div>
             </div>
           </div>
@@ -863,7 +865,12 @@
                 </table>
             </div>
         </li>
-
+        
+        <li id="agent-map-template" class="agent-map-box" style="display: none">
+            <h4 id="header"></h4>
+            <p id="content" style="margin-top: 0px;text-align: left;"></p>
+        </li>
+      
       </center>
     </div>
     <div id="atomic-canvas-end"></div>
