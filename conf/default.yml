@@ -7,7 +7,6 @@ plugins:
   - sandcat
   - stockpile
   - compass
-  - terminal
 debug: True
 api_key: ADMIN123
 users:
