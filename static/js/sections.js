@@ -130,8 +130,8 @@ $(document).ready(function () {
             {
                 targets: 7,
                 data: null,
-                render: function ( data, type, row, meta ) {
-                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
+                render: function (data, type, row, meta) {
+                    return "<input id=\"" + data['paw'] + "-watchdog\" type=\"text\" value=\"" + data['watchdog'] + "\">";
                 }
             },
             {
@@ -197,8 +197,8 @@ function saveGroups(){
         let group = document.getElementById(value['paw']+'-group').value;
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
+        let watchdog = document.getElementById(value['paw'] + '-watchdog').value;
+        let update = { "index": "agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog };
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];
@@ -209,7 +209,7 @@ function saveGroups(){
     let globalMinsleep = $('#globalSleepMin').val();
     let globalMaxsleep = $('#globalSleepMax').val();
     let globalWatchdog = $('#watchdog').val();
-    let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+    let d = { "index": "agent", "sleep_min": parseInt(globalMinsleep), "sleep_max": parseInt(globalMaxsleep), "watchdog": parseInt(globalWatchdog) };
     restRequest('PUT', d, doNothing);
 }
 
@@ -521,19 +521,10 @@ function operationCallback(data){
             if(OPERATION.chain[i].cleanup) {
                 title = title + " (CLEANUP)"
             }
-            let agentPaw = OPERATION.chain[i].paw;
             template.attr("id", "op_id_" + OPERATION.chain[i].id);
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-            template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' + title + 
-                '<span id="' + OPERATION.chain[i].id + '-detector" class="tactic-find-result" ' +
-                'onclick="findDetectorResults(this, OPERATION.chain[' + i + '].unique)" alt="Blue team analytics">&#128309;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
-                'data-encoded-cmd="'+OPERATION.chain[i].command+'" alt="Command output">&#9733;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
-                '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
+            addAbilityIcons(OPERATION, title);
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -552,6 +543,18 @@ function operationCallback(data){
             atomic_interval = setInterval(refresh, 5000);
         }
     }
+}
+
+function addAbilityIcons(OPERATION, title){
+    template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
+        'ondblclick="rollup(' + OPERATION.chain[i].id + ')">agent#' + OPERATION.chain[i].paw + '... ' + title +
+        '<span id="' + OPERATION.chain[i].id + '-info" class="tactic-find-result" ' +
+        'onclick="findExtraInfoResults(this, OPERATION.chain[' + i + '].unique)" event_ids="' + OPERATION.chain[i].command + '"  alt="Additional info">&#9432;</span>' +
+        '<span id="' + OPERATION.chain[i].id + '-rs" class="tactic-find-result" ' +
+        'onclick="findResults(this, OPERATION.chain[' + i + '].unique)"' +
+        'data-encoded-cmd="' + OPERATION.chain[i].command + '" alt="Command output">&#9733;</span>' +
+        '<span id="' + OPERATION.chain[i].id + '-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain[' + i + '].unique, -2)">&#x274C;</span>' +
+        '<span id="' + OPERATION.chain[i].id + '-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain[' + i + '].unique, -3)">&#x002B;</span></div>');
 }
 
 function findOpDuration(operation){
@@ -656,10 +659,10 @@ function updatePotentialLinkCount(){
     $('#potential-links-count').html($('#potential-links li').length + ' potential links');
 }
 
-function resetDetectorModal(){
-    let modal = $('#detector-modal');
+function resetInfoModal(){
+    let modal = $('#info-modal');
     modal.hide();
-    modal.find('#eventId').text('');
+    modal.find('#extra-info').text('');
 }
 
 function refreshUpdatableFields(chain, div){
@@ -671,7 +674,7 @@ function refreshUpdatableFields(chain, div){
     }
     if(chain.finish) {
         div.find('#'+chain.id+'-rs').css('display', 'block');
-        div.find('#' + chain.id + '-detector').css('display', 'block');
+        div.find('#' + chain.id + '-info').css('display', 'block');
         div.find('#'+chain.id+'-rm').remove();
     }
     if(chain.status === 0) {
@@ -727,10 +730,10 @@ function loadResults(data){
     }
 }
 
-function findDetectorResults(elem, link_id) {
-    document.getElementById('detector-modal').style.display = 'block';
-    $('#eventId').html('sample event id');
-    restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
+function findExtraInfoResults(elem, link_id) {
+    document.getElementById('info-modal').style.display = 'block';
+    $('#extra-info').html('sample event id');
+    //restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
 }
 
 function downloadOperationReport() {
@@ -797,13 +800,13 @@ function addPhase(number) {
     }
     template.attr("id", "tempPhase" + number);
     template.addClass("tempPhase");
-    if(number == 1) {
+    if (number == 1) {
         template.insertBefore('#dummy');
     } else {
-        template.insertAfter('#tempPhase' + (number-1));
+        template.insertAfter('#tempPhase' + (number - 1));
     }
     template.show();
-    let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
+    let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number + '</span><span class="ability-add" onclick="showPhaseModal(' + number + ')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal(' + number + ')">&#10010; add pack</span><hr></h4>');
     $('#tempPhase' + number).prepend(phaseHeader);
     phaseHeader.show();
     return template;
@@ -924,11 +927,11 @@ function loadAdversaryPhase(phase, abilities) {
         template = addPhase(phase);
     }
 
-    abilities = addPlatforms(abilities);
-    abilities.forEach(function(a) {
-        let abilityBox = buildAbility(a, phase);
-        template.find('#profile-tests').append(abilityBox);
-    });
+        abilities = addPlatforms(abilities);
+        abilities.forEach(function(a) {
+            let abilityBox = buildAbility(a, phase);
+            template.find('#profile-tests').append(abilityBox);
+        });
 }
 
 function loadPackCallback(data) {
@@ -942,13 +945,13 @@ function loadPackCallback(data) {
         shiftPhasesDown(curPhase, phaseKeys.length);
         phaseMod = curPhase;
     }
-    phaseKeys.forEach(function(key) {
+    phaseKeys.forEach(function (key) {
         loadAdversaryPhase(parseInt(key) + phaseMod, packPhases[key]);
     });
 }
 
 function shiftPhasesDown(after, number) {
-    $('.tempPhase').each(function(idx, phaseDiv) {
+    $('.tempPhase').each(function (idx, phaseDiv) {
         let i = idx + 1;
         if (i <= after) {
             return;
@@ -957,8 +960,8 @@ function shiftPhasesDown(after, number) {
         $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
         $(phaseDiv).find('.phase-title').text('Phase ' + newi);
         $(phaseDiv).find('.ability-box').data('phase', newi);
-        $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
-        $(phaseDiv).find('.pack-add').attr('onclick', 'showPackModal('+newi+')');
+        $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal(' + newi + ')');
+        $(phaseDiv).find('.pack-add').attr('onclick', 'showPackModal(' + newi + ')');
     });
 }
 
@@ -1189,16 +1192,16 @@ function showAbility(parentId, exploits) {
 function showPack() {
     $('#pack-phases').empty();
 
-    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+    restRequest('POST', { 'index': 'adversary', 'adversary_id': $('#adv-pack-filter').val() }, showPackCallback);
 }
 
 function showPackCallback(data) {
-    Object.keys(data[0].phases).forEach(function(phaseID) {
+    Object.keys(data[0].phases).forEach(function (phaseID) {
         let phaseTemplate = $("#pack-phase-template").clone();
         phaseTemplate.attr('id', 'pack-phase' + phaseID);
 
         let abilities = addPlatforms(data[0].phases[phaseID]);
-        abilities.forEach(function(ability) {
+        abilities.forEach(function (ability) {
             let template = $("#pack-ability-template").clone();
             template.find('.ability-identifier').text(ability.ability_id);
             template.find('.ability-name').text(ability.name);
@@ -1231,7 +1234,7 @@ function showPhaseModal(phase) {
 
 function showPackModal(phase) {
     $('#pack-modal').data("phase", phase);
-    document.getElementById("pack-modal").style.display="block";
+    document.getElementById("pack-modal").style.display = "block";
 }
 
 function freshId(){
@@ -1276,8 +1279,8 @@ function addAbilityToPhase() {
 }
 
 function addPackToPhase() {
-    restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
-    document.getElementById('pack-modal').style.display='none';
+    restRequest('POST', { 'index': 'adversary', 'adversary_id': $('#adv-pack-filter').val() }, loadPackCallback);
+    document.getElementById('pack-modal').style.display = 'none';
 }
 
 function checkOpformValid(){
