@@ -84,9 +84,9 @@ Did the operation find the sensitive files? How many? Can you determine how it d
 
 Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file and restart the server.
 
-Once confirmed, move to a browser at 127.0.0.1 and click into the plugins -> terminal section and deploy a terminal agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
+Once confirmed, move to a browser at 127.0.0.1 and click into the plugins -> terminal section and deploy a Manx agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
 
-Can you figure out how to deploy the reverse-shell by running a regular CALDERA operation?
+Did you know you can run a normal CALDERA operation using Manx agents? Give it a try.
 
 ## Developers
 

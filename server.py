@@ -8,7 +8,7 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
-from app.contacts.http import Http
+from app.contacts.contact_http import Http
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService

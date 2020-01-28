@@ -113,43 +113,51 @@ $(document).ready(function () {
                     return str;
                 }
             },
+
             {
                 targets: 5,
+                data: null,
+                render: {
+                    _:'contact'
+                }
+            },
+            {
+                targets: 6,
                 data: null,
                 render: {
                     _:'last_seen'
                 }
             },
             {
-                targets: 6,
+                targets: 7,
                 data: null,
                 render: function ( data, type, row, meta ){
                     return "<input id=\""+data['paw']+"-sleep\" type=\"text\" value=\""+data['sleep_min']+"/"+data['sleep_max']+"\">";
                 }
             },
             {
-                targets: 7,
+                targets: 8,
                 data: null,
                 render: function (data, type, row, meta) {
                     return "<input id=\"" + data['paw'] + "-watchdog\" type=\"text\" value=\"" + data['watchdog'] + "\">";
                 }
             },
             {
-                targets: 8,
+                targets: 9,
                 data: null,
                 render: {
                     _:'pid'
                 }
             },
             {
-                targets: 9,
+                targets: 10,
                 data: null,
                 render: {
                     _:'privilege'
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -159,7 +167,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 11,
+                targets: 12,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');

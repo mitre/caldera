@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from datetime import datetime
 
 from app.objects.c_agent import Agent
@@ -41,6 +42,7 @@ class ContactService(BaseService):
         self._sleep_min = agent_config['sleep_min']
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
+        self._file_names = agent_config['names']
 
     async def register(self, contact):
         try:
@@ -59,7 +61,7 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object from explode
         """
-        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw'))):
+        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.pop('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             return agent
         return await self.get_service('data_svc').store(Agent(
@@ -114,6 +116,9 @@ class ContactService(BaseService):
                     await agent.heartbeat_modification()
         except Exception:
             pass
+
+    async def build_filename(self, platform):
+        return random.choice(self._file_names.get(platform))
 
     """ PRIVATE """
 
