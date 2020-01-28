@@ -25,9 +25,9 @@ class Agent(BaseObject):
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown'):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
         super().__init__()
-        self.paw = self.generate_name(size=6)
+        self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
         self.username = username
         self.group = group
