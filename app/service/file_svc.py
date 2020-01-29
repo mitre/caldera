@@ -160,16 +160,10 @@ class FileSvc(BaseService):
         :return:
         """
         if os.name == 'nt':
-            os.system(
-                'set GOARCH=%s set GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags,
-                                                                                       buildmode, output, ldflags,
-                                                                                       src_fle)
-            )
+            env_var = 'set GOARCH=%s set GOOS=%s' % (arch, platform)
         else:
-            os.system(
-                'GOARCH=%s GOOS=%s %s go build %s -o %s -ldflags=\'%s\' %s' % (arch, platform, cflags, buildmode, output,
-                                                                           ldflags, src_fle)
-            )
+            env_var = 'GOARCH=%s GOOS=%s' % (arch, platform)
+        os.system('%s %s go build %s -o %s -ldflags=\'%s\' %s' % (env_var, cflags, buildmode, output, ldflags, src_fle))
 
     """ PRIVATE """
 
