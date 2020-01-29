@@ -7,70 +7,11 @@ plugins:
   - sandcat
   - stockpile
   - compass
+  - terminal
 debug: True
 api_key: ADMIN123
 users:
   admin: admin
 file_encryption: True
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-agent_config:
-  untrusted_timer: 60
-  sleep_min: 30
-  sleep_max: 60
-  watchdog: 0
-  names:
-    windows:
-      - smss
-      - csrss
-      - wininit
-      - services
-      - lsass
-      - svchost
-      - lsm
-      - iexplore
-      - acrotray
-      - ccSetMgr
-      - ctfmon
-      - explorer
-      - savscan
-      - realsched
-      - winword
-      - winlogon
-      - taskmgr
-    darwin:
-      - asl.conf
-      - hosts
-      - chrome
-      - libexec
-      - trustd
-      - cron
-      - timed
-      - securityd
-      - .gitignore
-      - .sshd
-      - .bashprofile
-      - .npmr
-      - .history
-      - .known_hosts
-      - .id_rsa.pub
-    linux:
-      - hosts
-      - ntp.conf
-      - mnt
-      - resolv.conf
-      - renice
-      - kill
-      - pgrep
-      - top
-      - htop
-      - ps
-      - pstree
-      - rc.common
-      - .gitignore
-      - .sshd
-      - .bashprofile
-      - .npmr
-      - .history
-      - .known_hosts
-      - .id_rsa.pub
 secrets: {}
