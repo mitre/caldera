@@ -20,7 +20,9 @@ from app.utility.base_world import BaseWorld
 
 
 def setup_logger(co):
-    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     for logger in [name for name in logging.root.manager.loggerDict]:
         logging.getLogger(logger).setLevel(100)
 
