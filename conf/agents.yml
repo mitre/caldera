@@ -4,6 +4,8 @@ agent_config:
   sleep_min: 30
   sleep_max: 60
   watchdog: 0
+  connection_abilities:
+    - 43b3754c-def4-4699-a673-1d85648fda6a
   names:
     windows:
       - smss

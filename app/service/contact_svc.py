@@ -43,6 +43,7 @@ class ContactService(BaseService):
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
         self._file_names = agent_config['names']
+        self._connection_abilities = agent_config['connection_abilities']
 
     async def register(self, contact):
         try:
@@ -59,35 +60,17 @@ class ContactService(BaseService):
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :param paw: the unique identifier for the calling agent
         :param kwargs: key/value pairs
-        :return: the agent object from explode
+        :return: the agent object, instructions to execute
         """
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
-            return agent
-        return await self.get_service('data_svc').store(Agent(
+            self.log.debug('Incoming beacon from %s' % agent.paw)
+            return agent, await self._get_instructions(agent.paw)
+        agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
         )
-
-    async def get_instructions(self, paw):
-        """
-        Get next set of instructions to execute
-
-        :param paw:
-        :return: a list of links in JSON format
-        """
-        ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
-        instructions = []
-        for link in [c for op in ops for c in op.chain
-                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
-            link.collect = datetime.now()
-            payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(json.dumps(dict(id=link.unique,
-                                                sleep=link.jitter,
-                                                command=link.command,
-                                                executor=link.ability.executor,
-                                                timeout=link.ability.timeout,
-                                                payload=payload)))
-        return json.dumps(instructions)
+        self.log.debug('First time beacon from %s' % agent.paw)
+        return agent, await self._get_instructions(agent.paw)
 
     async def save_results(self, id, output, status, pid):
         """
@@ -126,3 +109,18 @@ class ContactService(BaseService):
         loop = asyncio.get_event_loop()
         loop.create_task(contact.start())
         self.contacts.append(contact)
+
+    async def _get_instructions(self, paw):
+        ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
+        instructions = []
+        for link in [c for op in ops for c in op.chain
+                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
+            link.collect = datetime.now()
+            payload = link.ability.payload if link.ability.payload else ''
+            instructions.append(json.dumps(dict(id=link.unique,
+                                                sleep=link.jitter,
+                                                command=link.command,
+                                                executor=link.ability.executor,
+                                                timeout=link.ability.timeout,
+                                                payload=payload)))
+        return json.dumps(instructions)
