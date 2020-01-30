@@ -53,6 +53,11 @@ class Plugin(BaseObject):
         except Exception as e:
             logging.error('Error enabling plugin=%s, %s' % (self.name, e))
 
+    async def destroy(self):
+        destroyable = getattr(self._load_module(), 'destroy', None)
+        if destroyable:
+            await destroyable()
+
     """ PRIVATE """
 
     def _load_module(self):

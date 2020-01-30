@@ -65,6 +65,7 @@ def main(services, config):
         logging.info('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
+        loop.run_until_complete(services.get('app_svc').destroy_plugins())
         loop.run_until_complete(services.get('data_svc').save_state())
         logging.info('[!] shutting down server...good-bye')
 
