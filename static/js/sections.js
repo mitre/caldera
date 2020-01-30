@@ -532,7 +532,16 @@ function operationCallback(data){
             template.attr("id", "op_id_" + OPERATION.chain[i].id);
             template.attr("operation", OPERATION.id);
             template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-            addAbilityIcons(OPERATION, title);
+            template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
+                'ondblclick="rollup(' + OPERATION.chain[i].id + ')">agent#' + OPERATION.chain[i].paw + '... ' + title +
+                '<span id="' + OPERATION.chain[i].id + '-info" class="tactic-find-result" ' +
+                'onclick="findExtraInfoResults(this, OPERATION.chain['+i+'].unique)" alt="Additional info">&#9432;</span>' +
+                '<span id="' + OPERATION.chain[i].id + '-rs" class="tactic-find-result" ' +
+                'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
+                'data-encoded-cmd="' + OPERATION.chain[i].command + '" alt="Command output">&#9733;</span>' +
+                '<span id="' + OPERATION.chain[i].id + '-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
+                '<span id="' + OPERATION.chain[i].id + '-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
+
             refreshUpdatableFields(OPERATION.chain[i], template);
 
             template.insertAfter("#time-start");
@@ -551,18 +560,6 @@ function operationCallback(data){
             atomic_interval = setInterval(refresh, 5000);
         }
     }
-}
-
-function addAbilityIcons(OPERATION, title){
-    template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-        'ondblclick="rollup(' + OPERATION.chain[i].id + ')">agent#' + OPERATION.chain[i].paw + '... ' + title +
-        '<span id="' + OPERATION.chain[i].id + '-info" class="tactic-find-result" ' +
-        'onclick="findExtraInfoResults(this, OPERATION.chain[' + i + '].unique)" event_ids="' + OPERATION.chain[i].command + '"  alt="Additional info">&#9432;</span>' +
-        '<span id="' + OPERATION.chain[i].id + '-rs" class="tactic-find-result" ' +
-        'onclick="findResults(this, OPERATION.chain[' + i + '].unique)"' +
-        'data-encoded-cmd="' + OPERATION.chain[i].command + '" alt="Command output">&#9733;</span>' +
-        '<span id="' + OPERATION.chain[i].id + '-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain[' + i + '].unique, -2)">&#x274C;</span>' +
-        '<span id="' + OPERATION.chain[i].id + '-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain[' + i + '].unique, -3)">&#x002B;</span></div>');
 }
 
 function findOpDuration(operation){

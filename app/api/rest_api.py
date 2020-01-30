@@ -179,11 +179,12 @@ class RestApi(BaseWorld):
 
     async def internals(self, request):
         options = dict(
-            pin=lambda d: self.rest_svc.get_link_pin(d)
+            pin=lambda d: self.rest_svc.get_link_pin(d),
+            extra_info=lambda d: self.rest_svc.add_extra_info(**d)
         )
         data = dict(await request.json())
-        resp = await options[request.headers.get('property')](data)
-        return web.json_response(resp)
+        await options[request.headers.get('property')](data)
+        return web.Response()
 
     async def upload_exfil_http(self, request):
         dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
