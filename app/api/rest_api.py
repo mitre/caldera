@@ -197,7 +197,6 @@ class RestApi(BaseWorld):
         :return: a multipart file via HTTP
         """
         try:
-            payload = display_name = request.headers.get('file')
             payload, content, display_name = await self.file_svc.get_file(request.headers)
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
             return web.Response(body=content, headers=headers)
