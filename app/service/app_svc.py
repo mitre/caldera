@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import copy
+import hashlib
 import os
 import traceback
 import uuid
@@ -139,6 +140,13 @@ class AppService(BaseService):
                      for p in await self.get_service('data_svc').locate('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
+
+    async def retrieve_compiled_file(self, name, platform):
+        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
+        signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        display_name = await self._services.get('contact_svc').build_filename(platform)
+        self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
+        return '%s-%s' % (name, platform), display_name
 
     """ PRIVATE """
 

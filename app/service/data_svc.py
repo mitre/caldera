@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import glob
-import json
 import os.path
 import pickle
 import traceback
@@ -239,7 +238,7 @@ class DataService(BaseService):
             for planner in self.strip_yml(filename):
                 await self.store(
                     Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
-                            params=json.dumps(planner.get('params')), description=planner.get('description'),
+                            params=str(planner.get('params')), description=planner.get('description'),
                             stopping_conditions=planner.get('stopping_conditions'),
                             ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )
