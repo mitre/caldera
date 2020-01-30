@@ -101,6 +101,9 @@ class ContactService(BaseService):
                         loop.create_task(link.parse(op))
                     agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
                     await agent.heartbeat_modification()
+            else:
+                if output:
+                    file_svc.write_result_file(id, output)
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 
@@ -135,5 +138,5 @@ class ContactService(BaseService):
         for i in self._bootstrap_instructions:
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
-        return [Instruction(command=i.test, link_id='bootstrap', executor=i.executor)
-                for i in await agent.capabilities(abilities)]
+        x = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
+        return [Instruction(command=i.test, link_id=x, executor=i.executor) for i in await agent.capabilities(abilities)]
