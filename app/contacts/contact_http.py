@@ -30,7 +30,7 @@ class Http(BaseWorld):
         response = dict(paw=agent.paw,
                         sleep=await agent.calculate_sleep(),
                         watchdog=agent.watchdog,
-                        instructions=instructions)
+                        instructions=json.dumps([json.dumps(i.display) for i in instructions]))
         return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
 
     async def _results(self, request):

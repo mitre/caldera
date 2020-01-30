@@ -4,6 +4,7 @@ import random
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_instruction import Instruction
 from app.utility.base_service import BaseService
 
 
@@ -64,12 +65,12 @@ class ContactService(BaseService):
         """
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
-            self.log.debug('Incoming beacon from %s' % agent.paw)
+            self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
         )
-        self.log.debug('First time beacon from %s' % agent.paw)
+        self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         return agent, await self._get_instructions(agent.paw)
 
     async def save_results(self, id, output, status, pid):
@@ -117,10 +118,10 @@ class ContactService(BaseService):
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(json.dumps(dict(id=link.unique,
-                                                sleep=link.jitter,
-                                                command=link.command,
-                                                executor=link.ability.executor,
-                                                timeout=link.ability.timeout,
-                                                payload=payload)))
-        return json.dumps(instructions)
+            instructions.append(Instruction(link_id=link.unique,
+                                            sleep=link.jitter,
+                                            command=link.command,
+                                            executor=link.ability.executor,
+                                            timeout=link.ability.timeout,
+                                            payload=payload))
+        return instructions
