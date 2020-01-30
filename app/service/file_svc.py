@@ -130,8 +130,9 @@ class FileSvc(BaseService):
         :param location: The path to the results directory.
         :return:
         """
+        output = bytes(output, encoding='utf-8')
         if self.encryptor:
-            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(bytes(output, encoding='utf-8'))
+            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(output)
         with open('%s/%s' % (location, link_id), 'wb') as fle:
             fle.write(output)
 
