@@ -1,5 +1,4 @@
 import asyncio
-import json
 import random
 from datetime import datetime
 
