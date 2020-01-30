@@ -38,6 +38,8 @@ class FileSvc(BaseService):
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](request)
         file_path, contents = await self.read_file(payload)
+        if request.get('name'):
+            display_name = request.get('name')
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir):
