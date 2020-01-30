@@ -141,6 +141,10 @@ class AppService(BaseService):
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
+    async def destroy_plugins(self):
+        for plugin in await self._services.get('data_svc').locate('plugins'):
+            await plugin.destroy()
+
     async def retrieve_compiled_file(self, name, platform):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
         signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
