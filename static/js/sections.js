@@ -737,9 +737,20 @@ function loadResults(data){
 
 function findExtraInfoResults(elem, link_id) {
     document.getElementById('info-modal').style.display = 'block';
-    $('#extra-info').html('sample event id');
-    //restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadResults);
+    restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadExtraInfoResults);
 }
+
+function loadExtraInfoResults(data){
+    if (data) {
+        for (let key in data.link.visibility.extra_info){
+            if (data.link.visibility.extra_info.hasOwnProperty(key)){
+                $('#extra-info').html(key)
+                $('#extra-info-values').html(data.link.visibility.extra_info[key].toString())
+            }
+        }
+    }
+}
+
 
 function downloadOperationReport() {
     function downloadObjectAsJson(data){
