@@ -22,3 +22,6 @@
 [submodule "plugins/access"]
 	path = plugins/access
 	url = https://github.com/mitre/access.git
+[submodule "plugins/atomic"]
+	path = plugins/atomic
+	url = https://github.com/mitre/atomic.git
