@@ -372,8 +372,15 @@ p[onclick] {
     border-spacing: 15px;
 }
 .obfuscation-table img {
-    height: 30px;
+    height: 18px;
     margin: 5px;
+}
+.obfuscation-table button {
+    background-color: green;
+    height: 40px;
+    width: 50%;
+    color: white;
+    margin: 10px;
 }
 .watermark {
     z-index: -10;
