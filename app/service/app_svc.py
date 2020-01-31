@@ -3,6 +3,7 @@ import asyncio
 import copy
 import hashlib
 import os
+import json
 import traceback
 import uuid
 from datetime import datetime, date
@@ -148,7 +149,25 @@ class AppService(BaseService):
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
         return '%s-%s' % (name, platform), display_name
 
+    async def teardown(self):
+        await self._destroy_plugins()
+        await self._services.get('data_svc').save_state()
+        await self._write_reports()
+        self.log.debug('[!] shutting down server...good-bye')
+
     """ PRIVATE """
+
+    async def _destroy_plugins(self):
+        for plugin in await self._services.get('data_svc').locate('plugins'):
+            await plugin.destroy(self.get_services())
+
+    async def _write_reports(self):
+        file_svc = self.get_service('file_svc')
+        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config['reports_dir'])
+        report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
+        await file_svc.save_file('contact_reports', report, r_dir)
+        for op in await self.get_service('data_svc').locate('operations'):
+            await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
 
     async def _get_planning_module(self, operation):
         planning_module = import_module(operation.planner.module)

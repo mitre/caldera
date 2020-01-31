@@ -1,4 +1,4 @@
-from app.objects.c_link import Link
+from app.objects.secondclass.c_link import Link
 from app.utility.base_planning_svc import BasePlanningService
 
 

@@ -1,10 +1,20 @@
 import asyncio
-import json
 import random
+from collections import defaultdict
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_instruction import Instruction
 from app.utility.base_service import BaseService
+
+
+def report(func):
+    async def wrapper(*args, **kwargs):
+        agent, instructions = await func(*args, **kwargs)
+        log = dict(paw=agent.paw, instructions=len(instructions), date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        args[0].report[agent.contact].append(log)
+        return agent, instructions
+    return wrapper
 
 
 class ContactService(BaseService):
@@ -36,14 +46,19 @@ class ContactService(BaseService):
         if v and v != self.watchdog:
             self._watchdog = v
 
+    @property
+    def bootstrap_instructions(self):
+        return self._bootstrap_instructions
+
     def __init__(self, agent_config):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
+        self.report = defaultdict(list)
         self._sleep_min = agent_config['sleep_min']
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
         self._file_names = agent_config['names']
-        self._connection_abilities = agent_config['connection_abilities']
+        self._bootstrap_instructions = agent_config['bootstrap_abilities']
 
     async def register(self, contact):
         try:
@@ -55,6 +70,7 @@ class ContactService(BaseService):
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
+    @report
     async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
@@ -64,13 +80,13 @@ class ContactService(BaseService):
         """
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
-            self.log.debug('Incoming beacon from %s' % agent.paw)
+            self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
         )
-        self.log.debug('First time beacon from %s' % agent.paw)
-        return agent, await self._get_instructions(agent.paw)
+        self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
+        return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
     async def save_results(self, id, output, status, pid):
         """
@@ -97,8 +113,11 @@ class ContactService(BaseService):
                         loop.create_task(link.parse(op))
                     agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
                     await agent.heartbeat_modification()
-        except Exception:
-            pass
+            else:
+                if output:
+                    file_svc.write_result_file(id, output)
+        except Exception as e:
+            self.log.debug('save_results exception: %s' % e)
 
     async def build_filename(self, platform):
         return random.choice(self._file_names.get(platform))
@@ -117,10 +136,19 @@ class ContactService(BaseService):
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(json.dumps(dict(id=link.unique,
-                                                sleep=link.jitter,
-                                                command=link.command,
-                                                executor=link.ability.executor,
-                                                timeout=link.ability.timeout,
-                                                payload=payload)))
-        return json.dumps(instructions)
+            instructions.append(Instruction(link_id=link.unique,
+                                            sleep=link.jitter,
+                                            command=link.command,
+                                            executor=link.ability.executor,
+                                            timeout=link.ability.timeout,
+                                            payload=payload))
+        return instructions
+
+    async def _get_bootstrap_instructions(self, agent):
+        data_svc = self._services.get('data_svc')
+        abilities = []
+        for i in self._bootstrap_instructions:
+            for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
+                abilities.append(a)
+        x = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
+        return [Instruction(command=i.test, link_id=x, executor=i.executor) for i in await agent.capabilities(abilities)]

@@ -20,7 +20,9 @@ from app.utility.base_world import BaseWorld
 
 
 def setup_logger(co):
-    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     for logger in [name for name in logging.root.manager.loggerDict]:
         logging.getLogger(logger).setLevel(100)
 
@@ -65,8 +67,7 @@ def main(services, config):
         logging.info('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('data_svc').save_state())
-        logging.info('[!] shutting down server...good-bye')
+        loop.run_until_complete(services.get('app_svc').teardown())
 
 
 if __name__ == '__main__':

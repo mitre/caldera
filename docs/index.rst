@@ -31,7 +31,6 @@ If you're new to CALDERA, this is a good place to start.
    Plugins-ssl.md
    Plugins-stockpile.md
    Plugins-terminal.md
-   What-is-a-C2.md
    What-is-a-fact.md
    What-is-a-group.md
    What-is-a-planner.md

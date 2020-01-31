@@ -9,13 +9,13 @@ from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
-from app.objects.c_fact import Fact
-from app.objects.c_parser import Parser
-from app.objects.c_parserconfig import ParserConfig
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_parser import Parser
+from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
-from app.objects.c_relationship import Relationship
-from app.objects.c_requirement import Requirement
-from app.objects.c_rule import Rule
+from app.objects.secondclass.c_relationship import Relationship
+from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
@@ -87,7 +87,6 @@ class DataService(BaseService):
         :param directory:
         :return: None
         """
-        self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
         loop.create_task(self._load_data(directory))
         self.data_dirs.add(directory)

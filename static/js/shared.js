@@ -31,6 +31,20 @@ function validateFormState(conditions, selector){
         updateButtonState(selector, 'invalid');
 }
 
+// download report
+function downloadReport(endpoint, filename, data={}) {
+    function downloadObjectAsJson(data){
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        let downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", filename + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+    restRequest('POST', data, downloadObjectAsJson, endpoint);
+}
+
 function updateButtonState(selector, state) {
     (state === 'valid') ?
         $(selector).attr('class','button-success atomic-button') :
@@ -50,20 +64,6 @@ function flashy(elem, message) {
 function showHide(show, hide) {
     $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
-}
-
-function findOpDuration(operation){
-    function convertSeconds(operationInSeconds){
-        let operationInMinutes = Math.floor(operationInSeconds / 60) % 60;
-        operationInSeconds -= operationInMinutes * 60;
-        let secondsRemainder = operationInSeconds % 60;
-        return operationInMinutes + ' min ' + Math.round(secondsRemainder) + ' sec';
-    }
-    if(operation.finish) {
-        return convertSeconds(Math.abs(new Date(operation.finish) - new Date(operation.start)) / 1000);
-    } else {
-        return convertSeconds(Math.abs(new Date() - new Date(operation.start)) / 1000);
-    }
 }
 
 $(document).ready(function() {

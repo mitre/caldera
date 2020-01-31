@@ -3,10 +3,12 @@
 host: 0.0.0.0
 port: 8888
 exfil_dir: /tmp
+reports_dir: /tmp
 plugins:
   - sandcat
   - stockpile
   - compass
+  - terminal
 debug: True
 api_key: ADMIN123
 users:
