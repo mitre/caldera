@@ -87,7 +87,6 @@ class DataService(BaseService):
         :param directory:
         :return: None
         """
-        self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
         loop.create_task(self._load_data(directory))
         self.data_dirs.add(directory)

@@ -1,10 +1,20 @@
 import asyncio
 import random
+from collections import defaultdict
 from datetime import datetime
 
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.utility.base_service import BaseService
+
+
+def report(func):
+    async def wrapper(*args, **kwargs):
+        agent, instructions = await func(*args, **kwargs)
+        log = dict(paw=agent.paw, instructions=len(instructions), date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        args[0].report[agent.contact].append(log)
+        return agent, instructions
+    return wrapper
 
 
 class ContactService(BaseService):
@@ -43,6 +53,7 @@ class ContactService(BaseService):
     def __init__(self, agent_config):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
+        self.report = defaultdict(list)
         self._sleep_min = agent_config['sleep_min']
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
@@ -59,6 +70,7 @@ class ContactService(BaseService):
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 
+    @report
     async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
