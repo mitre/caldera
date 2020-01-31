@@ -125,7 +125,7 @@ class RestService(BaseService):
         return op.report(output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
-        return dict()
+        return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
         await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
