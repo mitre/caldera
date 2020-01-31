@@ -138,4 +138,6 @@ elif [[ "$(lsb_release -d)" == *"CentOS"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
+elif [[ "$(lsb_release -d)" == "Kali" ]]; then
+  ubuntu
 fi
