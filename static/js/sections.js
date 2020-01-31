@@ -727,21 +727,10 @@ function loadResults(data){
 }
 
 function downloadOperationReport() {
-    function downloadObjectAsJson(data){
-        let operationName = data['name'];
-        let exportName = 'operation_report_' + operationName;
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        let downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", exportName + ".json");
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    }
     let selectedOperationId = $('#operation-list option:selected').attr('value');
     let agentOutput = $('#agent-output').prop("checked");
     let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-    restRequest('POST', postData, downloadObjectAsJson, '/plugin/chain/rest');
+    downloadReport('/plugin/chain/rest', 'operation_report', postData);
 }
 
 function changeProgress(percent) {
