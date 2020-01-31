@@ -14,11 +14,12 @@ class Obfuscator(BaseObject):
     def display(self):
         return dict(name=self.name, description=self.description)
 
-    def __init__(self, name, description, module):
+    def __init__(self, name, description, module, hidden=False):
         super().__init__()
         self.name = name
         self.description = description
         self.module = module
+        self.hidden = hidden
 
     def store(self, ram):
         existing = self.retrieve(ram['obfuscators'], self.unique)

@@ -21,6 +21,7 @@ class RestService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('rest_svc', self)
+        self.special_operation_modifiers = dict()
         self.loop = asyncio.get_event_loop()
 
     async def persist_adversary(self, data):
@@ -139,6 +140,8 @@ class RestService(BaseService):
 
     async def create_operation(self, data):
         operation = await self._build_operation_object(data)
+        for mod in self.special_operation_modifiers:
+            mod(operation)
         operation.set_start_details()
         await self.get_service('data_svc').store(operation)
         self.loop.create_task(self.get_service('app_svc').run_operation(operation))
@@ -188,6 +191,16 @@ class RestService(BaseService):
         if group:
             return await self.get_service('data_svc').locate('agents', match=dict(group=group))
         return await self.get_service('data_svc').locate('agents')
+
+    async def add_special_operation_modifier(self, name, func):
+        """
+        Call a special function when a new operation is created
+
+        :param name:
+        :param func:
+        :return:
+        """
+        self.special_operation_modifiers[name] = func
 
     """ PRIVATE """
 
