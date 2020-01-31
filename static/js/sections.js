@@ -733,6 +733,10 @@ function downloadOperationReport() {
     downloadReport('/plugin/chain/rest', 'operation_report', postData);
 }
 
+function downloadContactReport(contact) {
+    downloadReport('/plugin/chain/rest', contact + '_report', {"index":"contact", "contact":contact});
+}
+
 function changeProgress(percent) {
     if(percent >= 100) {
         percent = 100;

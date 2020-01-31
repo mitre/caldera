@@ -124,6 +124,9 @@ class RestService(BaseService):
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
         return op.report(output=data.get('agent_output'))
 
+    async def download_contact_report(self, contact):
+        return dict(x='y')
+
     async def update_agent_data(self, data):
         await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
