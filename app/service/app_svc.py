@@ -159,7 +159,7 @@ class AppService(BaseService):
 
     async def _destroy_plugins(self):
         for plugin in await self._services.get('data_svc').locate('plugins'):
-            await plugin.destroy()
+            await plugin.destroy(self.get_services())
 
     async def _write_reports(self):
         file_svc = self.get_service('file_svc')
