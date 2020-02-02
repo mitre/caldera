@@ -1,5 +1,5 @@
-from app.objects.c_parser import Parser
-from app.objects.c_requirement import Requirement
+from app.objects.secondclass.c_parser import Parser
+from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_object import BaseObject
 
 

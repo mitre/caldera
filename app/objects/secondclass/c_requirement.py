@@ -1,4 +1,4 @@
-from app.objects.c_relationship import Relationship
+from app.objects.secondclass.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 
 

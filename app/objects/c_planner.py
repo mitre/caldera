@@ -1,5 +1,5 @@
 from app.utility.base_object import BaseObject
-from app.objects.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact
 
 
 class Planner(BaseObject):

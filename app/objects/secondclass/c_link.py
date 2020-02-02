@@ -3,7 +3,7 @@ from datetime import datetime
 from importlib import import_module
 
 from app.objects.c_ability import Ability
-from app.objects.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 

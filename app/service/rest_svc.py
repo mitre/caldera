@@ -10,8 +10,8 @@ from datetime import time
 import yaml
 
 from app.objects.c_adversary import Adversary
-from app.objects.c_fact import Fact
-from app.objects.c_link import Link
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService
@@ -123,6 +123,9 @@ class RestService(BaseService):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
         return op.report(output=data.get('agent_output'))
+
+    async def download_contact_report(self, contact):
+        return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
         await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
