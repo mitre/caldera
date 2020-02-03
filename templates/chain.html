@@ -747,12 +747,19 @@
                     {% for plugin in plugins %}
                         <tr>
                             <td>{{ plugin.name }}</td>
+
                           {% if plugin.address and plugin.enabled %}
                               <td><a href="{{ plugin.address }}">{{ plugin.address }}</a></td>
                           {% else %}
                               <td><a onclick="alert('No GUI component to this plugin')"></a></td>
                           {% endif %}
-                            <td>{{ plugin.enabled }}</td>
+
+                          {% if not plugin.enabled %}
+                              <td><button type="button" class="button-success atomic-button" onclick="enablePlugin('{{ plugin.name }}')">Enable</button></td>
+                          {% else %}
+                            <td></td>
+                          {% endif %}
+
                         </tr>
                     {% endfor %}
                 </tbody>

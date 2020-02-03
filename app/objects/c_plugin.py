@@ -43,6 +43,10 @@ class Plugin(BaseObject):
             return True
 
     async def enable(self, services):
+        app = services.get('app_svc').application
+        freeze_state = app.router._frozen
+        if freeze_state:
+            app.router._frozen = False
         try:
             optional_secrets = 'plugins/%s/conf/secrets.yml' % self.name.lower()
             if os.path.isfile(optional_secrets):
@@ -52,6 +56,7 @@ class Plugin(BaseObject):
             self.enabled = True
         except Exception as e:
             logging.error('Error enabling plugin=%s, %s' % (self.name, e))
+        app.router._frozen = freeze_state
 
     async def destroy(self, services):
         destroyable = getattr(self._load_module(), 'destroy', None)

@@ -29,6 +29,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/', self.landing)
+        self.app_svc.application.router.add_route('POST', '/plugin/enable', self.enable_plugin)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
@@ -96,6 +97,12 @@ class RestApi(BaseWorld):
     async def add_potential_link(self, request):
         data = dict(await request.json())
         await self.rest_svc.apply_potential_link(data)
+        return web.json_response(dict())
+
+    @check_authorization
+    async def enable_plugin(self, request):
+        data = dict(await request.json())
+        await self.app_svc.enable_plugin(data.get('plugin'))
         return web.json_response(dict())
 
     async def rest_full(self, request):
