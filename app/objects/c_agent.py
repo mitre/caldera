@@ -17,7 +17,7 @@ class Agent(BaseObject):
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog, contact=self.contact)
+                    watchdog=self.watchdog, contact=self.contact, c2=self.c2)
 
     @property
     def display_name(self):
@@ -25,7 +25,7 @@ class Agent(BaseObject):
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None, c2='HTTP'):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -49,6 +49,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
+        self.c2 = c2
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -96,3 +97,4 @@ class Agent(BaseObject):
         self.update('sleep_min', int(kwargs.get('sleep_min')))
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
+        self.update('c2', kwargs.get('c2'))
