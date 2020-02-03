@@ -132,15 +132,18 @@ class AppService(BaseService):
                 await self.get_service('data_svc').store(plugin)
                 if plugin.name in self.config['plugins']:
                     plugin.enabled = True
-        for plugin in self.config['plugins']:
-            plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
-            [await p.enable(self.get_services()) for p in plug]
-            self.log.debug('Enabling %s plugin' % plugin)
 
-        templates = ['plugins/%s/templates' % p.name.lower()
-                     for p in await self.get_service('data_svc').locate('plugins')]
+        for plugin in self.config['plugins']:
+            await self.enable_plugin(plugin)
+
+        templates = ['plugins/%s/templates' % p for p in os.listdir('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
+
+    async def enable_plugin(self, plugin):
+        plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
+        [await p.enable(self.get_services()) for p in plug]
+        self.log.debug('Enabling %s plugin' % plugin)
 
     async def retrieve_compiled_file(self, name, platform):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
