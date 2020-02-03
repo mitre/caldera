@@ -65,7 +65,7 @@ class RestApi(BaseWorld):
             operations = [o.display for o in await self.data_svc.locate('operations')]
             sources = [s.display for s in await self.data_svc.locate('sources')]
             planners = [p.display for p in await self.data_svc.locate('planners')]
-            obfuscators = [o.display for o in await self.data_svc.locate('obfuscators') if o.hidden is False]
+            obfuscators = [o.display for o in await self.data_svc.locate('obfuscators') if not o.hidden]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
             contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
