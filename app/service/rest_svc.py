@@ -10,9 +10,8 @@ from datetime import time
 import yaml
 
 from app.objects.c_adversary import Adversary
-from app.objects.c_agent import Agent
-from app.objects.c_fact import Fact
-from app.objects.c_link import Link
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService
@@ -125,13 +124,14 @@ class RestService(BaseService):
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
         return op.report(output=data.get('agent_output'))
 
+    async def download_contact_report(self, contact):
+        return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
+
     async def update_agent_data(self, data):
-        agent = await self.get_service('data_svc').store(Agent(paw=data.pop('paw'), group=data.get('group'),
-                                                               trusted=data.get('trusted'),
-                                                               sleep_min=data.get('sleep_min'),
-                                                               sleep_max=data.get('sleep_max'),
-                                                               watchdog=data.get('watchdog')))
-        return agent.display
+        await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
+        for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
+            await agent.gui_modification(**data)
+            return agent.display
 
     async def update_chain_data(self, data):
         link = await self.get_service('app_svc').find_link(data.pop('link_id'))
@@ -257,3 +257,9 @@ class RestService(BaseService):
         if adv:
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
+
+    async def _update_global_props(self, sleep_min, sleep_max, watchdog):
+        contact_svc = self.get_service('contact_svc')
+        contact_svc.sleep_min = sleep_min
+        contact_svc.sleep_max = sleep_max
+        contact_svc.watchdog = watchdog

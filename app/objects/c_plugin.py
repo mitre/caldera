@@ -1,7 +1,9 @@
 import logging
+import os
 from importlib import import_module
 
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 
 class Plugin(BaseObject):
@@ -42,11 +44,19 @@ class Plugin(BaseObject):
 
     async def enable(self, services):
         try:
+            optional_secrets = 'plugins/%s/conf/secrets.yml' % self.name.lower()
+            if os.path.isfile(optional_secrets):
+                services.get('app_svc').config['secrets'][self.name] = BaseWorld.strip_yml(optional_secrets)[0]
             plugin = getattr(self._load_module(), 'enable')
             await plugin(services)
             self.enabled = True
         except Exception as e:
             logging.error('Error enabling plugin=%s, %s' % (self.name, e))
+
+    async def destroy(self, services):
+        destroyable = getattr(self._load_module(), 'destroy', None)
+        if destroyable:
+            await destroyable(services)
 
     """ PRIVATE """
 

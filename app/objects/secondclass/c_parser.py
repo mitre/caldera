@@ -1,4 +1,4 @@
-from app.objects.c_parserconfig import ParserConfig
+from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.utility.base_object import BaseObject
 
 

@@ -8,6 +8,7 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
+from app.contacts.contact_http import Http
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -15,10 +16,13 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.utility.base_world import BaseWorld
 
 
 def setup_logger(co):
-    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO,
+                        format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     for logger in [name for name in logging.root.manager.loggerDict]:
         logging.getLogger(logger).setLevel(100)
 
@@ -50,7 +54,8 @@ async def start_server(config, services):
 def main(services, config):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(data_svc.restore_state())
-    loop.run_until_complete(RestApi(services).enable())
+    loop.run_until_complete(RestApi(config, services).enable())
+    loop.run_until_complete(contact_svc.register(Http(services)))
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(data_svc.load_data(directory='data'))
     loop.create_task(build_docs())
@@ -62,8 +67,7 @@ def main(services, config):
         logging.info('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('data_svc').save_state())
-        logging.info('[!] shutting down server...good-bye')
+        loop.run_until_complete(services.get('app_svc').teardown())
 
 
 if __name__ == '__main__':
@@ -77,20 +81,19 @@ if __name__ == '__main__':
     with open('conf/%s.yml' % config) as c:
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         setup_logger(cfg)
-        logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
-        logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
+        cfg['agent_config'] = BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config']
+        cfg['secrets']['core'] = BaseWorld.strip_yml('conf/secrets.yml')
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()
-        contact_svc = ContactService()
+        contact_svc = ContactService(cfg['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService(cfg['api_key'])
         file_svc = FileSvc(cfg['exfil_dir'],
                            file_encryption=cfg['file_encryption'],
                            api_key=cfg['api_key'],
-                           crypt_salt=cfg['crypt_salt']
-                           )
+                           crypt_salt=cfg['crypt_salt'])
         app_svc = AppService(application=web.Application(), config=cfg)
 
         if args.fresh:

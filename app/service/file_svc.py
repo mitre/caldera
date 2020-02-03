@@ -35,10 +35,11 @@ class FileSvc(BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = request.get('file')
-        self.log.info(request)
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](request)
         file_path, contents = await self.read_file(payload)
+        if request.get('name'):
+            display_name = request.get('name')
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir):
@@ -131,8 +132,9 @@ class FileSvc(BaseService):
         :param location: The path to the results directory.
         :return:
         """
+        output = bytes(output, encoding='utf-8')
         if self.encryptor:
-            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(bytes(output, encoding='utf-8'))
+            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(output)
         with open('%s/%s' % (location, link_id), 'wb') as fle:
             fle.write(output)
 

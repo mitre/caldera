@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import glob
-import json
 import os.path
 import pickle
 import traceback
@@ -10,13 +9,13 @@ from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
-from app.objects.c_fact import Fact
-from app.objects.c_parser import Parser
-from app.objects.c_parserconfig import ParserConfig
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_parser import Parser
+from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.c_planner import Planner
-from app.objects.c_relationship import Relationship
-from app.objects.c_requirement import Requirement
-from app.objects.c_rule import Rule
+from app.objects.secondclass.c_relationship import Relationship
+from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_rule import Rule
 from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
@@ -41,7 +40,7 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     os.remove(f)
@@ -88,7 +87,6 @@ class DataService(BaseService):
         :param directory:
         :return: None
         """
-        self.log.debug('Loading data from: %s' % directory)
         loop = asyncio.get_event_loop()
         loop.create_task(self._load_data(directory))
         self.data_dirs.add(directory)
@@ -239,7 +237,7 @@ class DataService(BaseService):
             for planner in self.strip_yml(filename):
                 await self.store(
                     Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
-                            params=json.dumps(planner.get('params')), description=planner.get('description'),
+                            params=str(planner.get('params')), description=planner.get('description'),
                             stopping_conditions=planner.get('stopping_conditions'),
                             ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 )

@@ -1,7 +1,9 @@
 import ast
 import asyncio
 import copy
+import hashlib
 import os
+import json
 import traceback
 import uuid
 from datetime import datetime, date
@@ -34,14 +36,14 @@ class AppService(BaseService):
             while True:
                 await asyncio.sleep(next_check + 1)
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
-                next_check = self.config['untrusted_timer']
+                next_check = self.config['agent_config']['untrusted_timer']
                 for a in trusted_agents:
                     silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
-                    if silence_time > (self.config['untrusted_timer'] + int(a.sleep_max)):
+                    if silence_time > (self.config['agent_config']['untrusted_timer'] + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
                     else:
-                        trust_time_left = self.config['untrusted_timer'] - silence_time
+                        trust_time_left = self.config['agent_config']['untrusted_timer'] - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
@@ -140,7 +142,32 @@ class AppService(BaseService):
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
+    async def retrieve_compiled_file(self, name, platform):
+        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
+        signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        display_name = await self._services.get('contact_svc').build_filename(platform)
+        self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
+        return '%s-%s' % (name, platform), display_name
+
+    async def teardown(self):
+        await self._destroy_plugins()
+        await self._services.get('data_svc').save_state()
+        await self._write_reports()
+        self.log.debug('[!] shutting down server...good-bye')
+
     """ PRIVATE """
+
+    async def _destroy_plugins(self):
+        for plugin in await self._services.get('data_svc').locate('plugins'):
+            await plugin.destroy(self.get_services())
+
+    async def _write_reports(self):
+        file_svc = self.get_service('file_svc')
+        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config['reports_dir'])
+        report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
+        await file_svc.save_file('contact_reports', report, r_dir)
+        for op in await self.get_service('data_svc').locate('operations'):
+            await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
 
     async def _get_planning_module(self, operation):
         planning_module = import_module(operation.planner.module)

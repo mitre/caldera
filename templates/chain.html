@@ -30,7 +30,7 @@
     <div class="subnav-content subnav-content-right">
         <a onclick="viewSection('sources')">sources</a>
         <a onclick="viewSection('planners')">planners</a>
-        <a onclick="viewSection('c2')">c2</a>
+        <a onclick="viewSection('contacts')">contacts</a>
         <a onclick="viewSection('obfuscators')">obfuscators</a>
     </div>
   </div>
@@ -84,6 +84,15 @@
                   Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
                   least 1 agent in order to run an operation.
               </p>
+              <hr>
+              <br>
+              <div>
+                  <h4>Global settings for new agents</h4>
+                  <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
+                  <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
+                  <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
+              </div>
+              <br>
               <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
@@ -96,6 +105,7 @@
                   <th>Status</th>
                   <th>Platform</th>
                   <th>Executors</th>
+                  <th>Contact</th>
                   <th>Last Seen</th>
                   <th>Sleep (Min/Max)</th>
                   <th>Watchdog Timer (minutes)</th>
@@ -270,32 +280,27 @@
           </div>
         </div>
 
-        <div id="c2" class="section-profile" style="display: none">
+        <div id="contacts" class="section-profile" style="display: none">
           <div class="advanced row">
-            <div class="bottomright duk-icon"><img onclick="toggleSidebar('c2-sidebar')" src="/gui/img/expand.png"></div>
-            <div class="topleft duk-icon"><img onclick="removeSection('c2')" src="/gui/img/x.png"></div>
-
-            <div id="c2-sidebar" class="column section-border" style="flex:25%">
-              <img src="/gui/img/group.png">
-              <h4>C2</h4>
-              <p class="section-description">
-                  A C2 is a command-and-control mechanism for agent-to-server communication. There are various
-                  types of communication protocols that can be used - and within this system - you can flexibly
-                  create and select how you want your agents to call back.
-              </p>
-              <br>
-              <div id="viewC2">
-                  <select id="C2-select" onchange="showC2( {{ contacts }} )" style="margin-top:-15px">
-                    <option value="" disabled selected>Select an existing C2</option>
+            <div class="topleft duk-icon"><img onclick="removeSection('contacts')" src="/gui/img/x.png"></div>
+            <div class="column planner-header" style="flex:100%;text-align: left">
+                <h4>Contacts are touch-points for agents</h4>
+                <p style="width:33%">
+                    A contact is a connection point on the server for agents to communicate through. Agents can be
+                    custom written against one (or multiple) contacts. Each contact logs all agent connections - and
+                    all commands it hands out. Download a report for any contact below.
+                </p>
+                <hr><br>
+                <table class="obfuscation-table" border=1 frame=void rules=rows>
                     {% for c in contacts %}
-                      <option value="{{ c.name }}">{{ c.name }}</option>
+                        <tr>
+                            <td><img src="/gui/img/contact.png"/></td>
+                            <td><h4>{{ c.name }}</h4></td>
+                            <td>{{ c.description }}</td>
+                            <td><button onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
+                        </tr>
                     {% endfor %}
-                  </select>
-              </div>
-            </div>
-            <div class="column planner-header" style="flex:75%;text-align: left">
-              <h3 id="c2-name"></h3>
-              <p id="c2-description"></p>
+                </table>
             </div>
           </div>
         </div>
@@ -304,6 +309,14 @@
           <div class="advanced row">
             <div class="topleft duk-icon"><img onclick="removeSection('obfuscators')" src="/gui/img/x.png"></div>
             <div class="column planner-header" style="flex:100%;text-align: left">
+                <h4>Obfuscators are designed for evasion</h4>
+                <p style="width:33%">
+                    When running an operation, you can select an obfuscator. By default, plain-text is
+                    selected. During the operation, before the agent collects an instruction, the server will wrap it
+                    with the obfuscation technique chosen - including instructions for how to unpack it
+                    before execution.
+                </p>
+                <hr><br>
                 <table class="obfuscation-table" border=1 frame=void rules=rows>
                     {% for o in obfuscators %}
                         <tr>

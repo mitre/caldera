@@ -113,43 +113,51 @@ $(document).ready(function () {
                     return str;
                 }
             },
+
             {
                 targets: 5,
+                data: null,
+                render: {
+                    _:'contact'
+                }
+            },
+            {
+                targets: 6,
                 data: null,
                 render: {
                     _:'last_seen'
                 }
             },
             {
-                targets: 6,
+                targets: 7,
                 data: null,
                 render: function ( data, type, row, meta ){
                     return "<input id=\""+data['paw']+"-sleep\" type=\"text\" value=\""+data['sleep_min']+"/"+data['sleep_max']+"\">";
                 }
             },
             {
-                targets: 7,
+                targets: 8,
                 data: null,
                 render: function ( data, type, row, meta ) {
                     return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
-                targets: 8,
+                targets: 9,
                 data: null,
                 render: {
                     _:'pid'
                 }
             },
             {
-                targets: 9,
+                targets: 10,
                 data: null,
                 render: {
                     _:'privilege'
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -159,7 +167,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 11,
+                targets: 12,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -206,6 +214,11 @@ function saveGroups(){
         }
         restRequest('PUT', update, doNothing);
     });
+    let globalMinsleep = $('#globalSleepMin').val();
+    let globalMaxsleep = $('#globalSleepMax').val();
+    let globalWatchdog = $('#watchdog').val();
+    let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+    restRequest('PUT', d, doNothing);
 }
 
 function saveGroupsCallback(data) {
@@ -714,21 +727,14 @@ function loadResults(data){
 }
 
 function downloadOperationReport() {
-    function downloadObjectAsJson(data){
-        let operationName = data['name'];
-        let exportName = 'operation_report_' + operationName;
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        let downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", exportName + ".json");
-        document.body.appendChild(downloadAnchorNode); // required for firefox
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    }
     let selectedOperationId = $('#operation-list option:selected').attr('value');
     let agentOutput = $('#agent-output').prop("checked");
     let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-    restRequest('POST', postData, downloadObjectAsJson, '/plugin/chain/rest');
+    downloadReport('/plugin/chain/rest', 'operation_report', postData);
+}
+
+function downloadContactReport(contact) {
+    downloadReport('/plugin/chain/rest', contact + '_report', {"index":"contact", "contact":contact});
 }
 
 function changeProgress(percent) {
@@ -1001,17 +1007,6 @@ function savePlanner(){
 
 function savePlannerCallback(data) {
     location.reload();
-}
-
-function showC2(contacts) {
-    let c2Name = $('#C2-select option:selected').attr('value');
-    contacts.forEach(function(c) {
-        if(c.name == c2Name) {
-            $('#c2-name').text(c.name);
-            $('#c2-description').text(c.description);
-            return;
-        }
-    });
 }
 
 function addPlatforms(abilities) {
