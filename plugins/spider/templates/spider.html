@@ -1,0 +1,139 @@
+ <html>
+     <head>
+         <title>Spider | View</title>
+         <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+         <link rel="stylesheet" href="/gui/jquery/jquery.dataTables.min.css">
+         <link rel="stylesheet" href="/gui/css/shared.css">
+         <link rel="stylesheet" href="/gui/css/navbar.css">
+         <link rel="stylesheet" href="/gui/css/basic.css">
+         <link rel="stylesheet" href="/gui/css/modal.css">
+     </head>
+     <body>
+     <div class="navbar plugin"></div>
+     <center style="margin-bottom: 100px">
+<!--         <div id="duk-modal-spider" class="modal">-->
+<!--            <form class="modal-content">-->
+<!--                <div class="container">-->
+<!--                    <div class="row duk-modal">-->
+<!--                        <span onclick="document.getElementById('duk-modal-spider').style.display='none'" class="close"-->
+<!--                              title="Close Modal">&times;</span>-->
+<!--                        <div class="column" style="flex:8%">-->
+<!--                            <img src="/gui/img/duk.png"/>-->
+<!--                        </div>-->
+<!--                        <div class="column" style="flex:92%">-->
+<!--                            <p id="duk-text" style="color: white"></p>-->
+<!--                                <div style="background-color: var(&#45;&#45;primary-background);padding: 15px;border-radius: 25px">-->
+<!--                                <h4>Layer Generation</h4>-->
+<!--                                <ol style="text-align: left">-->
+<!--                                    <li>Click 'Generate Layer'</li>-->
+<!--                                    <li>Click '+' to open a new tab in the navigator</li>-->
+<!--                                    <li>Select 'Open Existing Layer'</li>-->
+<!--                                    <li>Select 'Upload from local' and upload the generated layer file</li>-->
+<!--                                </ol>-->
+<!--                            </div>-->
+<!--                            <br>-->
+<!--                            <div style="background-color: var(&#45;&#45;primary-background);padding: 15px;border-radius: 25px">-->
+<!--                                <h4>Adversary Creation</h4>-->
+<!--                                <ol style="text-align: left">-->
+<!--                                    <li>Select Techniques: Right Click and 'add to selection' </li>-->
+<!--                                    <li>Once all techniques are selected, change the score (bar chart under 'technique-->
+<!--                                        controls' to a positive number</li>-->
+<!--                                    <li>Select 'download layer as json' under layer controls</li>-->
+<!--                                    <li>Upload Adversary Layer file. The Adversary will now be available to use in-->
+<!--                                        an operation. The Adversary will be take on the name of the layer tab. The-->
+<!--                                        adversary will be split into phases by tactic</li>-->
+<!--                                </ol>-->
+<!--                            </div>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--             </form>-->
+<!--          </div>-->
+<!--         <div id="create-adversary-modal-spider" class="modal">-->
+<!--            <div class="modal-content">-->
+<!--                <div class="container">-->
+<!--                    <div class="row duk-modal">-->
+<!--                        <span onclick="document.getElementById('create-adversary-modal-spider').style.display='none'" class="close"-->
+<!--                              title="Close Modal">&times;</span>-->
+<!--                        <div class="column" style="flex:92%">-->
+<!--                            <p style="color: white"></p>-->
+<!--                                <div style="background-color: var(&#45;&#45;primary-background);padding: 15px;border-radius: 25px">-->
+<!--                                <h3>Adversary Created</h3>-->
+<!--                                <h2 id="advesary-create-name"></h2>-->
+<!--                                <div id="adversary-create-response"></div>-->
+<!--                                    <br>-->
+<!--                                <div id="missing-abilities" style="align-content:center; display: none;">-->
+<!--                                    <h2 >Missing Abilities</h2>-->
+<!--                                    <table class="display dataTable no-footer compact" id="missing-abilities-table"-->
+<!--                                           align="center" style="width:75%">-->
+<!--                                        <thead>-->
+<!--                                        <tr>-->
+<!--                                            <th id="missing-abilities-tactic">Tactic</th>-->
+<!--                                            <th id="missing-abilities-technique">Technique ID</th>-->
+<!--                                        </tr>-->
+<!--                                        </thead>-->
+<!--                                        <tbody id="missing-abilities-body">-->
+<!--                                        </tbody>-->
+<!--                                    </table>-->
+<!--                                </div>-->
+<!--                                <br>-->
+<!--                            </div>-->
+<!--                            <p style="text-align: center;">An adversary is only as good as its abilities. APT layers will-->
+<!--                                cover the same tactics and techniques. Procedures that accurately represent an APT only-->
+<!--                                come from proper curation of an adversary.</p>-->
+<!--                            <button style="width: 50%"-->
+<!--                                onclick="document.getElementById('create-adversary-modal-spider').style.display='none'">Close</button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--             </div>-->
+<!--         </div>-->
+         <div id="spider" class="row-canvas">
+            <div class="section-profile">
+                    <div class="row">
+                        <div class="topright duk-icon"><img onclick="openHelp()" src="/gui/img/duk.png"></div>
+                        <div class="column section-border" style="flex:37%;text-align:left;padding:15px;">
+                            <h1 style="font-size:70px;margin-top:-20px;">Spider</h1>
+                            <h2 style="margin-top:-50px">see</h2>
+                            <p>Generate a layer file for any adversary, which you can overlay on the matrix below
+                                <b>OR</b> Create an adversary in the matrix, then
+                                upload the layer file to generate an adversary to use in an operation</p>
+                        </div>
+                        <div class="column section-border" style="flex:37%;text-align:left;padding:15px;">
+                            <h2>Generate Layer</h2>
+                            <div id="layerSelectionAdversary">
+                                <select id="layer-selection-adversary" style="margin:0 0 0 0">
+                                  <option value="" selected>Select an Adversary (All)</option>
+                                    {% for adv in adversaries %}
+                                        <option value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                                    {% endfor %}}
+                                </select>
+                            </div>
+                            <button id="generateLayer" type="button" class="button-success"
+                                    style="" onclick="generateLayer()">Generate Layer</button>
+                        </div>
+                        <div class="column" style="flex:37%;text-align:left;padding:15px;">
+                            <h2>Generate Adversary</h2>
+                            <button id="generateAdversary" type="button" class="button-success"
+                                    style="margin-top:-3px" onclick="uploadAdversaryLayerButtonFileUpload()">Upload
+                                Adversary
+                                Layer</button>
+                            <input id='adversaryLayerInput' type='file' hidden/>
+                        </div>
+                    </div>
+
+                <div class="row" style="background-color: inherit;">
+                    <iframe src="https://mitre-attack.github.io/attack-navigator/enterprise/"
+                            style="display:flex;width:100%;border-radius:25px;background-color: white;overflow:auto;height:1500px;border:5px solid black">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+     </center>
+     </body>
+    <script src="/gui/jquery/jquery.js"></script>
+    <script src="/gui/jquery/jquery.dataTables.min.js"></script>
+    <script src="/gui/jquery/jquery.dataTables.select.min.js"></script>
+    <script src="/gui/js/shared.js"></script>
+    <script src="/spider/js/spider.js"></script>
+ </html>
