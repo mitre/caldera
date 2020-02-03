@@ -1382,21 +1382,50 @@ function hilApproveAll(){
 }
 
 function enablePlugin(plugin){
-    restRequest('POST', {'plugin': plugin}, doNothing, '/plugin/enable')
+    restRequest('POST', {'plugin': plugin}, doNothing, '/plugin/enable');
+    $('#plugins-table').DataTable().ajax.reload();
 }
 
 $(document).ready(function() {
     $('#plugins-table').DataTable({
+        ajax: {
+            url: '/plugin/chain/full',
+            type: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            data: function ( d ) {
+                return JSON.stringify({'index':'plugins'});
+            },
+            dataSrc: ''
+        },
+        deferRender: true,
+        rowId: 'name',
         columnDefs: [
             {
                 targets: 0,
-                className: 'dt-body-left'
+                data: null,
+                render: function ( data, type, row, meta ) {
+                    return data['name'];
+                }
             },
             {
                 targets: 1,
-                className: 'dt-body-left'
+                data: null,
+                render: function ( data, type, row, meta ) {
+                    return data['address'];
+                }
+            },
+            {
+                targets: 2,
+                data: null,
+                render: function ( data, type, row, meta ) {
+                    if (data['enabled'])
+                        return "-";
+                    else
+                        return "<button type=\"button\" class=\"button-success atomic-button\" onclick=\"enablePlugin('" + data['name'] + "')\">Enable</button>";
+                }
             }
         ],
-        "order": [[ 2, "desc" ]]
+        "order": [[ 0, "asc" ]]
     })
 });

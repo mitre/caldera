@@ -735,7 +735,7 @@
               </p>
             </div>
             <div id="plugins-info" class="column" style="flex:75%;text-align: left">
-              <table id="plugins-table" class="dataTable">
+              <table id="plugins-table" class="dataTable display" style="width:100%;">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -743,26 +743,6 @@
                         <th>Enabled</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for plugin in plugins %}
-                        <tr>
-                            <td>{{ plugin.name }}</td>
-
-                          {% if plugin.address and plugin.enabled %}
-                              <td><a href="{{ plugin.address }}">{{ plugin.address }}</a></td>
-                          {% else %}
-                              <td><a onclick="alert('No GUI component to this plugin')"></a></td>
-                          {% endif %}
-
-                          {% if not plugin.enabled %}
-                              <td><button type="button" class="button-success atomic-button" onclick="enablePlugin('{{ plugin.name }}')">Enable</button></td>
-                          {% else %}
-                            <td></td>
-                          {% endif %}
-
-                        </tr>
-                    {% endfor %}
-                </tbody>
               </table>
             </div>
           </div>
