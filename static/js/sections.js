@@ -1381,6 +1381,10 @@ function hilApproveAll(){
     return false;
 }
 
+function enablePlugin(plugin){
+    restRequest('POST', {'plugin': plugin}, doNothing, '/plugin/enable')
+}
+
 $(document).ready(function() {
     $('#plugins-table').DataTable({
         columnDefs: [
