@@ -36,6 +36,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
+        self.app_svc.application.router.add_route('POST', '/ability', self.ability_endpoint)
         # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
@@ -78,6 +79,12 @@ class RestApi(BaseWorld):
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
+
+    @check_authorization
+    async def ability_endpoint(self, request):
+        data = dict(await request.json())
+        abilities = await self.rest_svc.find_abilities(**data)
+        return web.json_response(dict(abilities=[a.display for a in abilities]))
 
     @check_authorization
     async def find_potential_links(self, request):
