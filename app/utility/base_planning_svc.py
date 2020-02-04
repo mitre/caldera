@@ -95,7 +95,7 @@ class BasePlanningService(BaseService):
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if await self._do_enforcements(l, operation)]
+        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
         return links
 
     @staticmethod
