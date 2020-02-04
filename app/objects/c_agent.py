@@ -96,7 +96,7 @@ class Agent(BaseObject):
         self.update('sleep_min', int(kwargs.get('sleep_min')))
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
-        
+
     async def kill(self):
         self.update('watchdog', 1)
         self.update('sleep_min', 60 * 2)
