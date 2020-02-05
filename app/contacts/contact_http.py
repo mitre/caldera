@@ -37,3 +37,4 @@ class Http(BaseWorld):
     async def _results(self, request):
         data = json.loads(self.contact_svc.decode_bytes(await request.read()))
         await self.contact_svc.save_results(**data)
+        return web.Response()
