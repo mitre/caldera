@@ -136,7 +136,7 @@ class AppService(BaseService):
         for plugin in self.config['plugins']:
             await self.enable_plugin(plugin)
 
-        templates = ['plugins/%s/templates' % p for p in os.listdir('plugins')]
+        templates = ['plugins/%s/templates' % p.lower() for p in os.listdir('plugins') if os.path.exists('plugins/%s/templates' % p.lower())]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 

@@ -35,7 +35,8 @@
     </div>
   </div>
   <div class="subnav-right">
-    <button class="subnavbtn" onclick="viewSection('plugins')" style="cursor:pointer;">Plugins <i class="fa fa-caret-down"></i></button>
+    <button class="subnavbtn" onclick="viewSection('plugins')" style="cursor:pointer;">
+        Plugins <i class="fa fa-caret-down"></i></button>
     <div class="subnav-content subnav-content-right">
         {% for plugin in plugins %}
           {% if plugin.enabled %}

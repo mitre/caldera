@@ -1422,7 +1422,7 @@ $(document).ready(function() {
                     if (data['enabled'])
                         return "-";
                     else
-                        return "<button type=\"button\" class=\"button-success atomic-button\" onclick=\"enablePlugin('" + data['name'] + "')\">Enable</button>";
+                        return "<button type=\"button\" class=\"button-embedded atomic-button\" onclick=\"this.disabled=true;enablePlugin('" + data['name'] + "')\">Enable</button>";
                 }
             }
         ],
