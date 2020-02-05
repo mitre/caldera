@@ -51,7 +51,7 @@ async def start_server(config, services):
     await web.TCPSite(runner, config['host'], config['port']).start()
 
 
-def main(services, config):
+def run_tasks(services, config):
     loop = asyncio.get_event_loop()
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(config, services).enable())
@@ -98,4 +98,4 @@ if __name__ == '__main__':
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        main(config=cfg, services=app_svc.get_services())
+        run_tasks(config=cfg, services=app_svc.get_services())
