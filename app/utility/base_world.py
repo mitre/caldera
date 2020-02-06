@@ -15,9 +15,6 @@ class BaseWorld:
     A collection of base static functions for service & object module usage
     """
 
-    RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
-                    exe_name='#{exe_name}')
-
     @staticmethod
     def decode_bytes(s):
         return b64decode(s).decode('utf-8', errors='ignore').replace('\n', '')
