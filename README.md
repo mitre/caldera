@@ -82,9 +82,7 @@ Did the operation find the sensitive files? How many? Can you determine how it d
 
 > You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
 
-Inside CALDERA, enable the terminal plugin by updating the conf/default.yml file and restart the server.
-
-Once confirmed, move to a browser at 127.0.0.1 and click into the plugins -> terminal section and deploy a Manx agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
+Click into the plugins -> terminal section and deploy a Manx agent on a compromised host using the 1-line delivery commmands available. Then, refresh and check the sessions drop-down and you should see a new reverse-shell session. Select this session and use the UI to manually interact with the host.
 
 Did you know you can run a normal CALDERA operation using Manx agents? Give it a try.
 
