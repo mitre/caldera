@@ -4,6 +4,7 @@ import glob
 import os.path
 import pickle
 import traceback
+import re
 from base64 import b64encode
 from collections import defaultdict, namedtuple
 
@@ -221,12 +222,14 @@ class DataService(BaseService):
                                                    (existing.ability_id, payload))
 
     async def _load_sources(self, directory):
+        async def _swap_trait(val):
+            return re.sub(re.compile('APP_HOST'), self.get_service('app_svc').config['host'], val)
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
                     identifier=src['id'],
                     name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
+                    facts=[Fact(trait=f['trait'], value=await _swap_trait(str(f['value']))) for f in src.get('facts')],
                     adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
