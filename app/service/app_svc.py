@@ -6,6 +6,7 @@ import os
 import json
 import traceback
 import uuid
+from base64 import b64decode
 from datetime import datetime, date
 from importlib import import_module
 
@@ -154,6 +155,15 @@ class AppService(BaseService):
         await self._services.get('data_svc').save_state()
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
+
+    def decode(self, encoded_cmd, agent):
+        decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['server'], agent.server)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['group'], agent.group)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['agent_paw'], agent.paw)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], agent.location)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['exe_name'], agent.exe_name)
+        return decoded_cmd
 
     """ PRIVATE """
 

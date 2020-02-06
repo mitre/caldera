@@ -150,5 +150,9 @@ class ContactService(BaseService):
         for i in self._bootstrap_instructions:
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
-        x = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
-        return [Instruction(command=i.test, link_id=x, executor=i.executor) for i in await agent.capabilities(abilities)]
+        instructions = []
+        for i in await agent.capabilities(abilities):
+            new_id = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
+            cmd = self.encode_string(self.get_service('app_svc').decode(i.test, agent))
+            instructions.append(Instruction(command=cmd, link_id=new_id, executor=i.executor))
+        return instructions
