@@ -594,3 +594,11 @@ table.dataTable input[type=text] {
     margin: 0;
     line-height: 1px;
 }
+.check {
+  display: inline-block;
+  transform: rotate(45deg);
+  height: 16px;
+  width: 8px;
+  border-bottom: 4px solid #78b13f;
+  border-right: 4px solid #78b13f;
+}

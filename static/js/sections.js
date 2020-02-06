@@ -1420,7 +1420,7 @@ $(document).ready(function() {
                 data: null,
                 render: function ( data, type, row, meta ) {
                     if (data['enabled'])
-                        return "-";
+                        return "<div class=\"check\"></div>";
                     else
                         return "<button type=\"button\" class=\"button-embedded atomic-button\" onclick=\"this.disabled=true;enablePlugin('" + data['name'] + "')\">Enable</button>";
                 }
