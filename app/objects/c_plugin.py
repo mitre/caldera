@@ -47,6 +47,8 @@ class Plugin(BaseObject):
             optional_secrets = 'plugins/%s/conf/secrets.yml' % self.name.lower()
             if os.path.isfile(optional_secrets):
                 services.get('app_svc').config['secrets'][self.name] = BaseWorld.strip_yml(optional_secrets)[0]
+            if os.path.exists('plugins/%s/data' % self.name.lower()):
+                services.get('data_svc').data_dirs.add('plugins/%s/data' % self.name.lower())
             plugin = getattr(self._load_module(), 'enable')
             await plugin(services)
             self.enabled = True
