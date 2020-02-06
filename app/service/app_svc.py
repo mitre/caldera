@@ -3,6 +3,8 @@ import asyncio
 import copy
 import hashlib
 import json
+import re
+import random
 import os
 import traceback
 import uuid
@@ -24,6 +26,10 @@ class AppService(BaseService):
         self.config = config
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
+        self.hot_swap_traits = [
+            lambda v: re.sub(re.compile('APP_POST'), random.choice(self.config['listening_posts']), v),
+            lambda v: re.sub(re.compile('APP_PORT'), str(self.config['port']), v)
+        ]
 
     async def start_sniffer_untrusted_agents(self):
         """
@@ -154,6 +160,9 @@ class AppService(BaseService):
         await self._services.get('data_svc').save_state()
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
+
+    async def apply_hot_swap_traits(self, func):
+        self.hot_swap_traits.append(func)
 
     """ PRIVATE """
 

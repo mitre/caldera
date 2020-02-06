@@ -83,7 +83,6 @@ if __name__ == '__main__':
         cfg = yaml.load(c, Loader=yaml.FullLoader)
         setup_logger(cfg)
         cfg['agent_config'] = BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config']
-        cfg['secrets']['core'] = BaseWorld.strip_yml('conf/secrets.yml')
         logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
 
         data_svc = DataService()
