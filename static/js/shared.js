@@ -6,8 +6,7 @@ if (currentTheme) {
 
 //check browser
 window.onload = function checkBrowser(){
-    let isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-    if(!isChrome) {
+    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
         $('#notice').css('display', 'block');
     }
 };
