@@ -3,6 +3,7 @@ import copy
 import glob
 import os.path
 import pickle
+import random
 import traceback
 import re
 from base64 import b64encode
@@ -223,7 +224,8 @@ class DataService(BaseService):
 
     async def _load_sources(self, directory):
         async def _swap_trait(val):
-            return re.sub(re.compile('APP_HOST'), self.get_service('app_svc').config['host'], val)
+            listening_post = random.choice(self.get_service('app_svc').config['listening_posts'])
+            return re.sub(re.compile('APP_POST'), listening_post, val)
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
