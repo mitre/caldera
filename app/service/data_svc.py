@@ -3,22 +3,20 @@ import copy
 import glob
 import os.path
 import pickle
-import random
 import traceback
-import re
 from base64 import b64encode
 from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_planner import Planner
+from app.objects.c_source import Source
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_parserconfig import ParserConfig
-from app.objects.c_planner import Planner
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_rule import Rule
-from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
@@ -224,8 +222,10 @@ class DataService(BaseService):
 
     async def _load_sources(self, directory):
         async def _hot_swap_traits(val):
-            listening_post = random.choice(self.get_service('app_svc').config['listening_posts'])
-            return re.sub(re.compile('APP_POST'), listening_post, val)
+            for swap in self.get_service('app_svc').hot_swap_traits:
+                val = swap(val)
+            return val
+
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
