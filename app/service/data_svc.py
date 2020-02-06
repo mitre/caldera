@@ -28,7 +28,7 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.data_dirs = set()
+        self.data_dirs = set('data')
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
                            schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
@@ -223,7 +223,7 @@ class DataService(BaseService):
                                                    (existing.ability_id, payload))
 
     async def _load_sources(self, directory):
-        async def _swap_trait(val):
+        async def _hot_swap_traits(val):
             listening_post = random.choice(self.get_service('app_svc').config['listening_posts'])
             return re.sub(re.compile('APP_POST'), listening_post, val)
         for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
@@ -231,7 +231,7 @@ class DataService(BaseService):
                 source = Source(
                     identifier=src['id'],
                     name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=await _swap_trait(str(f['value']))) for f in src.get('facts')],
+                    facts=[Fact(trait=f['trait'], value=await _hot_swap_traits(str(f['value']))) for f in src.get('facts')],
                     adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
