@@ -53,7 +53,7 @@ class RestApi(BaseWorld):
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
 
-    @template('chain.html')
+    @template('home.html')
     @check_authorization
     async def landing(self, request):
         try:
