@@ -7,7 +7,8 @@ from app.utility.base_object import BaseObject
 
 class Agent(BaseObject):
 
-    RESERVED = dict(group='#{group}', agent_paw='#{paw}', location='#{location}', exe_name='#{exe_name}')
+    RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
+                    exe_name='#{exe_name}')
 
     @property
     def unique(self):
@@ -107,6 +108,7 @@ class Agent(BaseObject):
 
     def replace(self, encoded_cmd):
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['server'], self.server)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['group'], self.group)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['agent_paw'], self.paw)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], self.location)
