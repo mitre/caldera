@@ -19,7 +19,6 @@ class RestApi(BaseWorld):
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        self.config = self.app_svc.config
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
