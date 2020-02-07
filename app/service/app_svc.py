@@ -3,8 +3,6 @@ import asyncio
 import copy
 import hashlib
 import json
-import re
-import random
 import os
 import traceback
 import uuid
@@ -26,10 +24,6 @@ class AppService(BaseService):
         self.config = config
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
-        self.hot_swap_traits = [
-            lambda v: re.sub(re.compile('APP_POST'), random.choice(self.config['listening_posts']), v),
-            lambda v: re.sub(re.compile('APP_PORT'), str(self.config['port']), v)
-        ]
 
     async def start_sniffer_untrusted_agents(self):
         """
@@ -37,19 +31,20 @@ class AppService(BaseService):
 
         :return: None
         """
-        next_check = self.config['untrusted_timer']
+        contact_svc = self.get_service('contact_svc')
+        next_check = contact_svc.agent_config.untrusted_timer
         try:
             while True:
                 await asyncio.sleep(next_check + 1)
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
-                next_check = self.config['agent_config']['untrusted_timer']
+                next_check = contact_svc.agent_config.untrusted_timer
                 for a in trusted_agents:
                     silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
-                    if silence_time > (self.config['agent_config']['untrusted_timer'] + int(a.sleep_max)):
+                    if silence_time > (contact_svc.agent_config.untrusted_timer + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
                     else:
-                        trust_time_left = self.config['agent_config']['untrusted_timer'] - silence_time
+                        trust_time_left = contact_svc.agent_config.untrusted_timer - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
@@ -136,9 +131,9 @@ class AppService(BaseService):
             plugin = Plugin(name=plug)
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
-                if plugin.name in self.config['plugins']:
+                if plugin.name in self.config.plugins:
                     plugin.enabled = True
-        for plugin in self.config['plugins']:
+        for plugin in self.config.plugins:
             plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
             [await p.enable(self.get_services()) for p in plug]
             self.log.debug('Enabling %s plugin' % plugin)
@@ -161,9 +156,6 @@ class AppService(BaseService):
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
-    async def apply_hot_swap_traits(self, func):
-        self.hot_swap_traits.append(func)
-
     """ PRIVATE """
 
     async def _destroy_plugins(self):
@@ -172,7 +164,7 @@ class AppService(BaseService):
 
     async def _write_reports(self):
         file_svc = self.get_service('file_svc')
-        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config['reports_dir'])
+        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config.reports_dir)
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):

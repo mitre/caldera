@@ -27,6 +27,6 @@ class Source(BaseObject):
             ram['sources'].append(self)
             return self.retrieve(ram['sources'], self.unique)
         existing.update('name', self.name)
-        existing.facts += self.facts
-        existing.rules += self.rules
+        existing.update('facts', self.facts)
+        existing.update('rules', self.rules)
         return existing

@@ -11,8 +11,7 @@ from app.utility.base_world import BaseWorld
 
 class RestApi(BaseWorld):
 
-    def __init__(self, config, services):
-        self.config = config
+    def __init__(self, services):
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
@@ -20,7 +19,7 @@ class RestApi(BaseWorld):
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-
+c
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
