@@ -125,20 +125,15 @@ class AppService(BaseService):
             if plug.startswith('.'):
                 continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
-                if plugin.name in self.get_config('plugins'):
-                    plugin.enabled = True
-        for plugin in self.get_config('plugins'):
-            plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
-            [await p.enable(self.get_services()) for p in plug]
-            self.log.debug('Enabling %s plugin' % plugin)
-
-        templates = ['plugins/%s/templates' % p.name.lower()
-                     for p in await self.get_service('data_svc').locate('plugins')]
+            if plugin.name in self.get_config('plugins'):
+                await plugin.enable(self.get_services())
+                self.log.debug('Enabled %s plugin' % plugin.name)
+        templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
