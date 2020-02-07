@@ -42,6 +42,7 @@ class FileSvc(BaseService):
 
     async def save_file(self, filename, payload, target_dir):
         self._save(os.path.join(target_dir, filename), payload)
+        self.log.debug('Saved file %s' % os.path.join(target_dir, filename))
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
@@ -142,7 +143,6 @@ class FileSvc(BaseService):
             content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
         with open(filename, 'wb') as f:
             f.write(content)
-        self.log.debug('Saved file %s' % filename)
 
     def _read(self, filename):
         with open(filename, 'rb') as f:

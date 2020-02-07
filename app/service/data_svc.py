@@ -3,7 +3,6 @@ import copy
 import glob
 import os.path
 import pickle
-import traceback
 from base64 import b64encode
 from collections import defaultdict, namedtuple
 
@@ -51,8 +50,7 @@ class DataService(BaseService):
 
         :return:
         """
-        with open('data/object_store', 'wb') as objects:
-            pickle.dump(self.ram, objects)
+        await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
         """
@@ -61,12 +59,12 @@ class DataService(BaseService):
         :return:
         """
         if os.path.exists('data/object_store'):
-            with open('data/object_store', 'rb') as objects:
-                ram = pickle.load(objects)
-                for key in ram.keys():
-                    self.ram[key] = []
-                    for c_object in ram[key]:
-                        await self.store(c_object)
+            _, store = await self.get_service('file_svc').read_file('object_store', 'data')
+            ram = pickle.loads(store)
+            for key in ram.keys():
+                self.ram[key] = []
+                for c_object in ram[key]:
+                    await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
@@ -292,5 +290,5 @@ class DataService(BaseService):
             await self._load_adversaries(directory='%s/adversaries' % directory)
             await self._load_sources(directory='%s/sources' % directory)
             await self._load_planners(directory='%s/planners' % directory)
-        except Exception:
-            self.log.error(traceback.print_exc())
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)

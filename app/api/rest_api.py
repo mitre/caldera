@@ -1,5 +1,4 @@
 import logging
-import traceback
 import uuid
 
 from aiohttp import web
@@ -19,6 +18,7 @@ class RestApi(BaseWorld):
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
+        self.log = logging.getLogger('rest_api')
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -74,7 +74,7 @@ class RestApi(BaseWorld):
         except web.HTTPFound as e:
             raise e
         except Exception as e:
-            logging.error('[!] landing: %s' % e)
+            self.log.error('[!] landing: %s' % e)
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
@@ -154,8 +154,8 @@ class RestApi(BaseWorld):
             if index not in options[request.method]:
                 return await self.rest_svc.display_objects(index, data)
             return await options[request.method][index](data)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
 
     async def rest_update_operation(self, request):
         i = request.match_info['operation_id']
@@ -180,7 +180,7 @@ class RestApi(BaseWorld):
                 elif state == op[0].states['FINISHED']:
                     await op[0].close()
             except Exception as e:
-                print(e)
+                self.log.error(repr(e))
 
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])
