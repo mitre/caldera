@@ -9,7 +9,6 @@ from aiohttp import web
 
 from app.api.rest_api import RestApi
 from app.contacts.contact_http import Http
-from app.objects.secondclass.c_appconfig import AppConfig
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -30,21 +29,15 @@ async def build_docs():
     process = await asyncio.create_subprocess_exec('sphinx-build', 'docs/', 'docs/_build/html',
                                                    '-b', 'html', '-c', 'docs/',
                                                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    stdout, stderr = await process.communicate()
-    if process.returncode != 0:
-        logging.warning('Unable to refresh docs')
-        if cfg['debug']:
-            logging.debug(stderr)
-    else:
-        logging.info('Successfully rebuilt documentation.')
+    await process.communicate()
 
 
 async def start_server():
-    await auth_svc.apply(app_svc.application, app_svc.config.users)
+    await auth_svc.apply(app_svc.application, BaseWorld.get_config('users'))
     app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
     runner = web.AppRunner(app_svc.application)
     await runner.setup()
-    await web.TCPSite(runner, '0.0.0.0', app_svc.config.port).start()
+    await web.TCPSite(runner, '0.0.0.0', BaseWorld.get_config('port')).start()
 
 
 def run_tasks(services):
@@ -77,15 +70,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
-        cfg = AppConfig(**yaml.load(c, Loader=yaml.FullLoader))
+        BaseWorld.apply_config(yaml.load(c, Loader=yaml.FullLoader))
 
         data_svc = DataService()
         contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
-        auth_svc = AuthService(cfg.api_key)
-        file_svc = FileSvc(cfg.exfil_dir, api_key=cfg.api_key, crypt_salt=cfg.crypt_salt)
-        app_svc = AppService(application=web.Application(), config=cfg)
+        auth_svc = AuthService()
+        file_svc = FileSvc()
+        app_svc = AppService(application=web.Application())
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())

@@ -28,8 +28,7 @@ class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
 
@@ -86,7 +85,7 @@ class AuthService(BaseService):
         :return: None
         """
         try:
-            if request.headers.get('API_KEY') == self.api_key:
+            if request.headers.get('API_KEY') == self.get_config('api_key'):
                 return True
             elif 'localhost:' in request.host:
                 return True

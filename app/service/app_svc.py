@@ -19,9 +19,8 @@ from app.utility.base_service import BaseService
 
 class AppService(BaseService):
 
-    def __init__(self, application, config):
+    def __init__(self, application):
         self.application = application
-        self.config = config
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
 
@@ -131,9 +130,9 @@ class AppService(BaseService):
             plugin = Plugin(name=plug)
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
-                if plugin.name in self.config.plugins:
+                if plugin.name in self.get_config('plugins'):
                     plugin.enabled = True
-        for plugin in self.config.plugins:
+        for plugin in self.get_config('plugins'):
             plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
             [await p.enable(self.get_services()) for p in plug]
             self.log.debug('Enabling %s plugin' % plugin)
@@ -164,7 +163,7 @@ class AppService(BaseService):
 
     async def _write_reports(self):
         file_svc = self.get_service('file_svc')
-        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config.reports_dir)
+        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.get_config('reports_dir'))
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):

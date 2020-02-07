@@ -15,12 +15,11 @@ FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 class FileSvc(BaseService):
 
-    def __init__(self, exfil_dir, api_key=None, crypt_salt=None):
-        self.exfil_dir = exfil_dir
+    def __init__(self):
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
-        self.encryptor = self._get_encryptor(api_key, crypt_salt)
+        self.encryptor = self._get_encryptor()
 
     async def get_file(self, request):
         """
@@ -47,7 +46,7 @@ class FileSvc(BaseService):
         self.log.debug('Saved file %s' % filename)
 
     async def create_exfil_sub_directory(self, dir_name):
-        path = os.path.join(self.exfil_dir, dir_name)
+        path = os.path.join(self.get_config('exfil_dir'), dir_name)
         if not os.path.exists(path):
             os.makedirs(path)
         return path
@@ -177,14 +176,10 @@ class FileSvc(BaseService):
                 return os.path.join(root, '%s.xored' % target)
         return None
 
-    def _get_encryptor(self, api_key, crypt_salt):
-        if not (api_key and crypt_salt):
-            self.log.error('File encryption requires setting api_key and crypt_salt in the config file.')
-            return None
-
+    def _get_encryptor(self):
         generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),
                                    length=32,
-                                   salt=bytes(crypt_salt, 'utf-8'),
+                                   salt=bytes(self.get_config('crypt_salt'), 'utf-8'),
                                    iterations=2 ** 20,
                                    backend=default_backend())
-        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(api_key, 'utf-8'))))
+        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('api_key'), 'utf-8'))))

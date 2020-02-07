@@ -15,6 +15,16 @@ class BaseWorld:
     A collection of base static functions for service & object module usage
     """
 
+    _app_configuration = None
+
+    @staticmethod
+    def apply_config(config):
+        BaseWorld._app_configuration = config
+
+    @staticmethod
+    def get_config(prop):
+        return BaseWorld._app_configuration.get(prop)
+
     @staticmethod
     def decode_bytes(s):
         return b64decode(s).decode('utf-8', errors='ignore').replace('\n', '')

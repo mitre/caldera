@@ -1,9 +1,19 @@
+import re
+
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_object import BaseObject
 
 
 class Ability(BaseObject):
+
+    @property
+    def test(self):
+        decoded_test = self.decode_bytes(self._test)
+        for f in self.get_config('facts'):
+            re_variable = re.compile(r'#{(%s.*?)}' % f['trait'], flags=re.DOTALL)
+            decoded_test = re.sub(re_variable, str(f['value']).strip(), decoded_test)
+        return self.encode_string(decoded_test)
 
     @property
     def unique(self):
@@ -34,12 +44,12 @@ class Ability(BaseObject):
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
                  requirements=None, privilege=None, timeout=60):
         super().__init__()
+        self._test = test
         self.ability_id = ability_id
         self.tactic = tactic
         self.technique_name = technique
         self.technique_id = technique_id
         self.name = name
-        self.test = test
         self.description = description
         self.cleanup = cleanup
         self.executor = executor
