@@ -1,21 +1,20 @@
 ---
-
-host: 0.0.0.0
 port: 8888
-listening_posts:
-  - 127.0.0.1
-  - 0.0.0.0
-exfil_dir: /tmp
-reports_dir: /tmp
 plugins:
   - sandcat
   - stockpile
   - compass
   - terminal
-debug: True
-api_key: ADMIN123
 users:
   admin: admin
-file_encryption: True
+api_key: ADMIN123
+exfil_dir: /tmp
+reports_dir: /tmp
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-configs: {}
+facts:
+  - trait: app.http
+    value: http://0.0.0.0:8888
+  - trait: app.tcp
+    value: 0.0.0.0:5678
+  - trait: app.udp
+    value: 0.0.0.0:5679

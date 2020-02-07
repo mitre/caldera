@@ -15,12 +15,12 @@ FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 class FileSvc(BaseService):
 
-    def __init__(self, exfil_dir, file_encryption=True, api_key=None, crypt_salt=None):
+    def __init__(self, exfil_dir, api_key=None, crypt_salt=None):
         self.exfil_dir = exfil_dir
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
-        self.encryptor = self._get_encryptor(api_key, crypt_salt) if file_encryption else None
+        self.encryptor = self._get_encryptor(api_key, crypt_salt)
 
     async def get_file(self, request):
         """

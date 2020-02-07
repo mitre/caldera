@@ -3,7 +3,6 @@ import os
 from importlib import import_module
 
 from app.utility.base_object import BaseObject
-from app.utility.base_world import BaseWorld
 
 
 class Plugin(BaseObject):
@@ -44,9 +43,6 @@ class Plugin(BaseObject):
 
     async def enable(self, services):
         try:
-            optional_configs = 'plugins/%s/conf/default.yml' % self.name.lower()
-            if os.path.isfile(optional_configs):
-                services.get('app_svc').config['configs'][self.name] = BaseWorld.strip_yml(optional_configs)[0]
             if os.path.exists('plugins/%s/data' % self.name.lower()):
                 services.get('data_svc').data_dirs.add('plugins/%s/data' % self.name.lower())
             plugin = getattr(self._load_module(), 'enable')

@@ -47,6 +47,10 @@ class ContactService(BaseService):
             self._watchdog = v
 
     @property
+    def untrusted_timer(self):
+        return self._untrusted_timer
+
+    @property
     def bootstrap_instructions(self):
         return self._bootstrap_instructions
 
@@ -58,6 +62,7 @@ class ContactService(BaseService):
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
         self._file_names = agent_config['names']
+        self._untrusted_timer = agent_config['untrusted_timer']
         self._bootstrap_instructions = agent_config['bootstrap_abilities']
 
     async def register(self, contact):

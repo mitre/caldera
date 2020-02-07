@@ -9,6 +9,7 @@ from aiohttp import web
 
 from app.api.rest_api import RestApi
 from app.contacts.contact_http import Http
+from app.objects.secondclass.c_appconfig import AppConfig
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -19,10 +20,8 @@ from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
 
 
-def setup_logger(co):
-    logging.basicConfig(level=logging.DEBUG if co.get('debug') else logging.INFO,
-                        format='%(asctime)s %(levelname)-8s %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
+def setup_logger():
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     for logger in [name for name in logging.root.manager.loggerDict]:
         logging.getLogger(logger).setLevel(100)
 
@@ -40,32 +39,29 @@ async def build_docs():
         logging.info('Successfully rebuilt documentation.')
 
 
-async def start_server(config, services):
-    app = services.get('app_svc').application
-    await auth_svc.apply(app, config['users'])
-
-    app.router.add_static('/docs/', 'docs/_build/html', append_version=True)
-
-    runner = web.AppRunner(app)
+async def start_server():
+    await auth_svc.apply(app_svc.application, app_svc.config.users)
+    app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
+    runner = web.AppRunner(app_svc.application)
     await runner.setup()
-    await web.TCPSite(runner, config['host'], config['port']).start()
+    await web.TCPSite(runner, '0.0.0.0', app_svc.config.port).start()
 
 
-def run_tasks(services, config):
+def run_tasks(services):
     loop = asyncio.get_event_loop()
+    loop.create_task(build_docs())
     loop.run_until_complete(data_svc.restore_state())
-    loop.run_until_complete(RestApi(config, services).enable())
+    loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(contact_svc.register(Http(services)))
     loop.run_until_complete(app_svc.load_plugins())
     for d in data_svc.data_dirs:
         loop.run_until_complete(data_svc.load_data(d))
-    loop.create_task(build_docs())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
-    loop.run_until_complete(start_server(config, services))
+    loop.run_until_complete(start_server())
     try:
-        logging.info('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
+        logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(services.get('app_svc').teardown())
@@ -73,6 +69,7 @@ def run_tasks(services, config):
 
 if __name__ == '__main__':
     sys.path.append('')
+    setup_logger()
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
@@ -80,22 +77,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
-        cfg = yaml.load(c, Loader=yaml.FullLoader)
-        setup_logger(cfg)
-        cfg['agent_config'] = BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config']
-        logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
+        cfg = AppConfig(**yaml.load(c, Loader=yaml.FullLoader))
 
         data_svc = DataService()
-        contact_svc = ContactService(cfg['agent_config'])
+        contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
-        auth_svc = AuthService(cfg['api_key'])
-        file_svc = FileSvc(cfg['exfil_dir'],
-                           file_encryption=cfg['file_encryption'],
-                           api_key=cfg['api_key'],
-                           crypt_salt=cfg['crypt_salt'])
+        auth_svc = AuthService(cfg.api_key)
+        file_svc = FileSvc(cfg.exfil_dir, api_key=cfg.api_key, crypt_salt=cfg.crypt_salt)
         app_svc = AppService(application=web.Application(), config=cfg)
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        run_tasks(config=cfg, services=app_svc.get_services())
+        run_tasks(services=app_svc.get_services())
