@@ -11,6 +11,15 @@ function removeSection(identifier){
     $('#'+identifier).hide();
 }
 
+function viewPluginSection(name, address) {
+    function display(data) {
+        let plugin = $($.parseHTML(data, keepScripts=true));
+        $('#plugin-container').append('<div id="plugin-'+name+'"></div>');
+        $('#plugin-'+name).html(plugin);
+    }
+    restRequest('GET', null, display, address);
+}
+
 function toggleSidebar(identifier) {
     let sidebar = $('#'+identifier);
     if (sidebar.is(":visible")) {
@@ -162,7 +171,6 @@ $(document).ready(function () {
                 orderDataType: 'dom-text',
                 type: 'string',
                 render: function ( data, type, row, meta ) {
-
                     return "<input value=\""+data['group']+"\" type=\"text\" id=\""+data['paw']+"-group\" name=\""+data['paw']+"-group\"><br>";
                 }
             },
