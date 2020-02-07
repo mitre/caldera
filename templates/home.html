@@ -40,7 +40,7 @@
     <div class="subnav-content subnav-content-right">
         {% for plugin in plugins %}
           {% if plugin.address %}
-              <a href="{{ plugin.address }}">{{ plugin.name }}</a>
+              <a onclick="viewPluginSection('{{ plugin.address }}')">{{ plugin.name }}</a>
           {% else %}
               <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
           {% endif %}
@@ -68,6 +68,8 @@
                 <span>{{ agents|length }} agents</span>
             </div>
         </div>
+
+        <div id="sandcat"></div>
 
         <!-- agents -->
 
@@ -956,4 +958,5 @@
 <script src="/gui/js/buttons.colVis.min.js"></script>
 <script src="/gui/js/dataTables.buttons.min.js"></script>
 <link rel="stylesheet" href="/gui/css/buttons.dataTables.css">
+
 </html>

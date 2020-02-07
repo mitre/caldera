@@ -11,6 +11,14 @@ function removeSection(identifier){
     $('#'+identifier).hide();
 }
 
+function viewPluginSection(address) {
+    function display(data) {
+        let plugin = $($.parseHTML(data));
+        $('#sandcat').html(plugin);
+    }
+    restRequest('GET', null, display, address);
+}
+
 function toggleSidebar(identifier) {
     let sidebar = $('#'+identifier);
     if (sidebar.is(":visible")) {
