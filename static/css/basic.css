@@ -1,7 +1,5 @@
 .home-box {
     border-radius: 25px;
-    padding: 10px;
-    vertical-align: middle;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
 }
@@ -12,7 +10,7 @@
 }
 .small-head {
     color:white;
-    font-size: 30px;
+    font-size: 24px;
     opacity:0.5;
 }
 .row-toolbar{

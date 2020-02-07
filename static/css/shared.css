@@ -389,10 +389,10 @@ p[onclick] {
     margin: 10px;
 }
 .watermark {
-    z-index: -10;
     position: fixed;
-    top: 15%;
-    left: 25%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 .simple-plugin-intro h1 {
     margin-bottom: -15px;
