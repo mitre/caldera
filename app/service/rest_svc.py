@@ -199,6 +199,10 @@ class RestService(BaseService):
             return await self.get_service('data_svc').locate('agents', match=dict(group=group))
         return await self.get_service('data_svc').locate('agents')
 
+    async def update_config(self, data):
+        self.set_config(data.get('prop'), data.get('value'))
+        self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):

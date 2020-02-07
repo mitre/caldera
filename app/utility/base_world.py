@@ -22,8 +22,14 @@ class BaseWorld:
         BaseWorld._app_configuration = config
 
     @staticmethod
-    def get_config(prop):
-        return BaseWorld._app_configuration.get(prop)
+    def get_config(prop=None):
+        if prop:
+            return BaseWorld._app_configuration.get(prop)
+        return BaseWorld._app_configuration
+
+    @staticmethod
+    def set_config(prop, value):
+        BaseWorld._app_configuration[prop] = value
 
     @staticmethod
     def decode_bytes(s):

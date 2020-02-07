@@ -1366,3 +1366,7 @@ function hilApproveAll(){
     refresh();
     return false;
 }
+
+function updateConfig(prop) {
+    restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+}
