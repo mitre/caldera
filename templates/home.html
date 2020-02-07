@@ -32,6 +32,7 @@
         <a onclick="viewSection('planners')">planners</a>
         <a onclick="viewSection('contacts')">contacts</a>
         <a onclick="viewSection('obfuscators')">obfuscators</a>
+        <a onclick="viewSection('configuration')">configuration</a>
     </div>
   </div>
   <div class="subnav-right">
@@ -324,6 +325,46 @@
                         </tr>
                     {% endfor %}
                 </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="configuration" class="section-profile" style="display: none">
+          <div class="advanced row">
+            <div class="topleft duk-icon"><img onclick="removeSection('configuration')" src="/gui/img/x.png"></div>
+            <div class="column planner-header" style="flex:100%;text-align: left">
+                <h3>Configuration</h3>
+                <h4>Global application settings</h4>
+                <hr><br>
+                <div>
+                    <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
+                        <tr>
+                            <td><img src="/gui/img/planners.png"/></td>
+                            <td>reports_dir</td>
+                            <td><input id="reports_dir" type="text" value="{{ config.reports_dir }}"/></td>
+                            <td>reports are saved here</td>
+                            <td><button class="button-row" onclick="updateConfig('reports_dir')">update</button></td>
+                        </tr>
+                        <tr>
+                            <td><img src="/gui/img/planners.png"/></td>
+                            <td>exfil_dir</td>
+                            <td><input id="exfil_dir" type="text" value="{{ config.exfil_dir }}"/></td>
+                            <td>exfiled files are saved here</td>
+                            <td><button class="button-row" onclick="updateConfig('exfil_dir')">update</button></td>
+                        </tr>
+                        {% for k, v in config.items() %}
+                            {% if k.startswith('app.') %}
+                            <tr>
+                                <td><img src="/gui/img/facts.png"/></td>
+                                <td>{{ k}}</td>
+                                <td><input id="{{ k }}" type="text" value="{{ v }}"/></td>
+                                <td>a fact to use in a command</td>
+                                <td><button class="button-row" onclick="updateConfig('{{ k }}')">update</button></td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </table>
+                </div>
             </div>
           </div>
         </div>

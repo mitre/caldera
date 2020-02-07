@@ -70,7 +70,7 @@ class RestApi(BaseWorld):
             contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
             return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
                         operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators, contacts=contacts)
+                        plugins=plugins, obfuscators=obfuscators, contacts=contacts, config=self.get_config())
         except web.HTTPFound as e:
             raise e
         except Exception as e:
@@ -147,7 +147,8 @@ class RestApi(BaseWorld):
                     plugins=lambda d: self.rest_svc.display_objects('plugins', d),
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
-                    contact=lambda d: self.rest_svc.download_contact_report(d)
+                    contact=lambda d: self.rest_svc.download_contact_report(d),
+                    configuration=lambda d: self.rest_svc.update_config(d)
                 )
             )
             if index not in options[request.method]:

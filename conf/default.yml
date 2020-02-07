@@ -11,6 +11,4 @@ api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-facts:
-  - trait: app.http
-    value: http://0.0.0.0:8888
+app.redirect.http: http://0.0.0.0:8888

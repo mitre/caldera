@@ -10,9 +10,10 @@ class Ability(BaseObject):
     @property
     def test(self):
         decoded_test = self.decode_bytes(self._test)
-        for f in self.get_config('facts'):
-            re_variable = re.compile(r'#{(%s.*?)}' % f['trait'], flags=re.DOTALL)
-            decoded_test = re.sub(re_variable, str(f['value']).strip(), decoded_test)
+        for k, v in self.get_config().items():
+            if k.startswith('app.'):
+                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
+                decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
         return self.encode_string(decoded_test)
 
     @property

@@ -103,6 +103,12 @@ select {
     color: var(--font-color);
     margin: 30px;
 }
+.button-row {
+    color: white;
+    border-radius: 4px;
+    background-color: green;
+    margin:0;
+}
 .button-success,
 .button-notready,
 .button-warn {
