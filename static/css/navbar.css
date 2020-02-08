@@ -1,6 +1,15 @@
+.navbar-buffer {
+  position:fixed;
+  width:100%;
+  top:5px;
+  z-index:1001;
+  right:5px;
+  left:5px;
+}
 .navbar {
   overflow: hidden;
-  background-color: #333;
+  background-color: #750b20;
+  border-bottom: 2px solid white;
   width: 100%;
 }
 .navbar a {
@@ -21,7 +30,6 @@
 .navbar a:hover, .subnav-right:hover .subnavbtn {
   background-color: black;
 }
-
 .subnav {
   float: left;
   overflow: hidden;
@@ -40,19 +48,19 @@
   display: none;
   position: absolute;
   left: 0;
-  background-color: black;
+  background-color: white;
   width: 100%;
-  z-index: 1;
+  z-index: 1002;
 }
 .subnav-content a {
   float: left;
-  color: white;
+  color: black;
   text-decoration: none;
   cursor: pointer;
 }
 .subnav-content a:hover {
-  background-color: white;
-  color: black;
+  background-color: black;
+  color: white;
 }
 
 .subnav:hover .subnav-content {
@@ -65,7 +73,7 @@
 }
 .subnav-content-right a {
   float: right;
-  color: white;
+  color: black;
   text-decoration: none;
 }
 .subnav-right:hover .subnav-content {
