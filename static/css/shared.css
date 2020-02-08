@@ -83,6 +83,9 @@ select {
    margin-top: 15px;
    border-radius: 10px;
 }
+span {
+    color: white;
+}
 .row {
     margin-top:50px;
     text-align:center;
@@ -226,8 +229,8 @@ p[onclick] {
 .advanced {
     background-color: #0d0d0d;
 }
-.section-profile {
-}
+.section-profile {}
+
 .section-border {
     border-right: .5px var(--font-color) solid;
 }
