@@ -58,7 +58,7 @@ $(document).ready(function () {
 
 /** GROUPS **/
 
-setInterval(agentRefresh, 5000);
+setInterval(agentRefresh, 15000);
 
 let agentTable = $('#netTbl').DataTable();
 
@@ -77,7 +77,7 @@ function agentRefresh(){
                     '<input id="'+a.paw+'-group" type="text" value="'+a.group+'"/>',
                     ''
                 ]).draw();
-            } 
+            }
         });
     }
     restRequest('POST', {'index':'agents'}, updateTbl)
