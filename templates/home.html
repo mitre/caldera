@@ -76,7 +76,6 @@
         <div id="agents" class="section-profile" style="display: none">
           <div class="row">
             <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
-            <div class="topright duk-icon"><img onclick="openDuk4()" src="/gui/img/duk.png"></div>
             <div class="bottomright duk-icon"><img onclick="toggleSidebar('agents-sidebar')" src="/gui/img/expand.png"></div>
             <div id="agents-sidebar" class="column section-border" style="flex:25%;">
               <img src="/gui/img/group.png">
@@ -94,28 +93,34 @@
                   <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
               </div>
               <br>
-              <button type="button" class="button-embedded atomic-button" onclick="saveGroupsCallback()">Refresh agent table</button>
               <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
             </div>
             <div class="column" style="flex:75%">
-              <table id="netTbl" class="display" style="width:100%;" >
+              <table id="netTbl" class="display obfuscation-table" style="width:100%;table-layout: fixed" >
                 <thead>
                 <tr>
                   <th>PAW</th>
-                  <th>Host</th>
-                  <th>Status</th>
-                  <th>Platform</th>
-                  <th>Executors</th>
-                  <th>Contact</th>
                   <th>Last Seen</th>
-                  <th>Sleep (Min/Max)</th>
-                  <th>Watchdog Timer (minutes)</th>
-                  <th>PID</th>
-                  <th>Privilege</th>
+                  <th>Watchdog</th>
+                  <th>Sleep</th>
                   <th>Group</th>
                   <th></th>
                 </tr>
                 </thead>
+                    {% for a in agents %}
+                        <tr id="row-{{ a.paw }}">
+                            <td>{{ a.paw }}</td>
+                            {% if a.trusted %}
+                                <td><button class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                            {% else %}
+                                <td><button class="button-row" style="background-color:maroon" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                            {% endif %}
+                            <td><input id="{{ a.paw }}-watchdog" type="text" value="{{ a.watchdog }}"/></td>
+                            <td><input id="{{ a.paw }}-sleep" type="text" value="{{ a.sleep_min }} / {{ a.sleep_max }}"/></td>
+                            <td><input id="{{ a.paw }}-group" type="text" value="{{ a.group }}"/></td>
+                            <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
+                        </tr>
+                    {% endfor %}
               </table>
             </div>
 
@@ -298,7 +303,7 @@
                             <td><img src="/gui/img/contact.png"/></td>
                             <td><h4>{{ c.name }}</h4></td>
                             <td>{{ c.description }}</td>
-                            <td><button onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
+                            <td><button class="button-row" onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
                         </tr>
                     {% endfor %}
                 </table>
@@ -558,6 +563,19 @@
 
         <!-- modals-->
 
+        <div id="agent-modal" class="modal">
+            <form class="modal-content">
+                <div class="container section-profile row ability-viewer modal-box">
+                    <div class="column" style="flex:100%;">
+                        <pre id="details" style="background-color: inherit;border:none;text-align:left"></pre>
+                    </div>
+                <div class="imgcontainer">
+                    <span onclick="document.getElementById('agent-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                </div>
+                </div>
+            </form>
+        </div>
+
         <div id="more-modal" class="modal">
             <form class="modal-content ability-viewer">
                 <div class="imgcontainer">
@@ -687,7 +705,7 @@
             <form class="modal-content">
                 <div class="container section-profile row ability-viewer modal-box">
                     <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
-                    <div class="column" style="flex:100%;">
+                    <div class="column control-width" style="flex:100%;">
                         <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
                             <option disabled selected>Choose an agent</option>
                         </select>
