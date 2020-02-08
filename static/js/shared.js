@@ -64,3 +64,63 @@ function showHide(show, hide) {
     $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
 }
+
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function doNothing() {}
+
+function viewSection(name, address){
+    function display(data) {
+        let plugin = $($.parseHTML(data, keepScripts=true));
+        $('#section-container').append('<div id="section-'+name+'"></div>');
+        let newSection = $('#section-'+name);
+        newSection.html(plugin);
+        $('html, body').animate({
+            scrollTop: newSection.offset().top
+        }, 1500);
+    }
+    restRequest('GET', null, display, address);
+}
+
+function removeSection(identifier){
+    $('#'+identifier).hide();
+}
+
+function toggleSidebar(identifier) {
+    let sidebar = $('#'+identifier);
+    if (sidebar.is(":visible")) {
+        sidebar.hide();
+    } else {
+        sidebar.show();
+    }
+}
+
+function alphabetize_dropdown(obj) {
+    let selected_val = $(obj).children("option:selected").val();
+    let disabled = $(obj).find('option:disabled');
+    let opts_list = $(obj).find('option:enabled').clone(true);
+    opts_list.sort(function (a, b) {
+        return a.text.toLowerCase() == b.text.toLowerCase() ? 0 : a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
+    });
+    $(obj).empty().append(opts_list).prepend(disabled);
+    obj.val(selected_val);
+}
+
+$(document).ready(function () {
+    $(document).find("select").each(function () {
+        if(!$(this).hasClass('avoid-alphabetizing')) {
+            alphabetize_dropdown($(this));
+            let observer = new MutationObserver(function (mutations, obs) {
+                obs.disconnect();
+                alphabetize_dropdown($(mutations[0].target));
+                obs.observe(mutations[0].target, {childList: true});
+            });
+            observer.observe(this, {childList: true});
+        }
+    });
+});

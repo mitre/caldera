@@ -1,0 +1,235 @@
+<div id="sources" class="section-profile">
+  <div class="advanced row">
+      <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
+      <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
+      <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
+      <div id="sources-sidebar"  class="column section-border" style="flex:25%">
+      <img src="/gui/img/facts.png">
+      <h4>Sources</h4>
+      <br>
+      <div class="toggle">
+        <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
+          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+        </label>
+      </div>
+      <br>
+      <p class="section-description">
+          Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
+          A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
+      </p>
+      <br>
+      <div id="viewSource">
+          <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
+            <option value="" disabled selected>Select an existing source</option>
+            {% for s in sources %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}}
+          </select>
+          <br><br>
+      </div>
+      <div id="addSource"></div>
+      <button id="sourceBtn" type="button" class="button-success atomic-button"
+              onclick="viewRules()">View rules
+      </button>
+      <button id="saveSourceBtn" type="button" class="button-success atomic-button"
+              onclick="saveSource()">Save
+      </button>
+    </div>
+    <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+        <input id="source-name" type="text" class="advGoal" placeholder="Enter source name"/>
+        <br><br>
+        <table id="factTbl" class="display ttp-template" style="width:100%;text-align:left">
+            <thead>
+                <tr>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow([
+            'Enter trait', 'Enter value','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
+            &#10010;&nbsp;add row
+        </p>
+    </div>
+  </div>
+</div>
+
+<div id="source-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Rules</span>
+                        <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="source-rules"></ul>
+                        <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
+                        <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<li id="rule-template" class="row-simple ttp-template" style="display: none;">
+    <div class="column">
+        <div class="dotted">
+            <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        </div>
+        <table frame=void rules=rows style="border-spacing:20px;width:100%">
+            <tr>
+                <td style="width:20%"><b>trait:</b></td>
+                <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>match:</b></td>
+                <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>action:</b></td>
+                <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+        </table>
+    </div>
+</li>
+
+<script>
+    const createdCell = function(cell) {
+      cell.setAttribute('contenteditable', true);
+      cell.setAttribute('spellcheck', false);
+      cell.addEventListener('blur', function(e) {});
+    };
+    $(document).ready(function () {
+        $('#factTbl').DataTable({
+                columnDefs: [{
+                targets: '_all',
+                createdCell: createdCell
+            }]
+        });
+    });
+
+    function toggleSourceView() {
+        $('#viewSource').toggle();
+        $('#addSource').toggle();
+        clearFactCanvas();
+    }
+
+    function clearFactCanvas(){
+        $('#factTbl').DataTable().clear().draw();
+        let source = $('#source-name');
+        source.data('id', '');
+        source.val('');
+        $("#profile-source-name").val($("#profile-source-name option:first").val());
+        $('#source-rules').empty();
+    }
+
+    function loadSource() {
+        restRequest('POST', {'index':'source', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+    }
+
+    function loadSourceCallback(data) {
+        clearFactCanvas();
+        let source = $('#source-name');
+        data[0].facts.forEach(f => {
+            addFactRow([f.trait, f.value,
+                '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
+        });
+        source.data('id', data[0].id);
+        applyRules(data[0].rules);
+        source.val(data[0].name);
+    }
+
+    function addFactRow(r){
+        $('#factTbl').DataTable().row.add(r).draw();
+    }
+
+    function removeFactRow(r){
+        $('#factTbl').DataTable().row($(r).parents('tr')).remove().draw();
+    }
+
+    function saveSource(){
+        let source = $('#source-name');
+        let name = source.val();
+        let id = source.data('id');
+        if(!name){ alert('Please enter a name!'); return; }
+        if(!id) {
+            id = uuidv4();
+            source.data('id', id);
+        }
+        let data = {};
+        data['index'] = 'source';
+        data['id'] = id;
+        data['name'] = name;
+        data['facts'] = [];
+        data['rules'] = [];
+
+        let table = $('#factTbl').DataTable();
+        table.rows().invalidate('dom').draw();
+        let rows = table.rows().data();
+        rows.each(function (value, index) {
+            data['facts'].push({'trait': value[0], 'value': value[1]});
+        });
+        if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+
+        let invalidRules = 0;
+        $('#source-rules li').each(function() {
+            let trait = $(this).find('#trait').val();
+            let match = $(this).find('#match').val();
+            let action = $(this).find('#action').val();
+            if(trait === undefined || match === undefined || action === undefined){
+                return;
+            }
+            if(action !== 'ALLOW' && action !== 'DENY') {
+                invalidRules += 1;
+            }
+            data['rules'].push({'trait': trait, 'match': match, 'action': action});
+        });
+        if(invalidRules > 0) {
+            alert(invalidRules + ' invalid rules!');
+            return;
+        }
+        restRequest('PUT', data, saveSourceCallback);
+    }
+
+    function saveSourceCallback(data) {
+        clearFactCanvas();
+        appendToSelect('profile-source-name', data[0].id, data[0].name, 'view-'+data[0].id);
+    }
+
+    function viewRules(){
+        document.getElementById("source-modal").style.display = "block";
+        let sourceName = $('#source-name').val();
+        $('#rules-name').text(sourceName);
+    }
+
+    function applyRules(rules){
+        rules.forEach(r => {
+            let template = $("#rule-template").clone();
+            template.find('#trait').val(r.trait);
+            template.find('#match').val(r.match);
+            if(r.action === 0) {
+                template.find('#action').val('DENY');
+            } else if (r.action === 1) {
+                template.find('#action').val('ALLOW');
+            }
+            template.show();
+            $('#source-rules').append(template);
+        });
+    }
+
+    function addRuleBlock(){
+        let template = $("#rule-template").clone();
+        template.show();
+        $('#source-rules').append(template);
+    }
+
+    function openDuk5(){
+        document.getElementById("duk-modal").style.display="block";
+        $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
+            'you to create extensible abilities. Additionally, sources can include rules which can restrict agents from using specific traits.');
+    }
+</script>
