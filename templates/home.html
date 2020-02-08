@@ -9,43 +9,43 @@
       <link rel="stylesheet" href="/gui/css/basic.css">
       <link rel="stylesheet" href="/gui/css/timeline.css">
     </head>
-    <body style="margin-bottom: 100px">
+    <div style="position: fixed;width:100%;top:5px;">
         <div class="navbar">
-          <a href="/">Home</a>
-          <div class="subnav">
-            <button class="subnavbtn">Campaigns <i class="fa fa-caret-down"></i></button>
-            <div class="subnav-content">
-              <a onclick="viewSection('agents', '/section/agents')">agents</a>
-              <a onclick="viewSection('adversaries', '/section/adversaries')">adversaries</a>
-              <a onclick="viewSection('operations', '/section/operations')">operations</a>
+              <a href="/">Home</a>
+              <div class="subnav">
+                <button class="subnavbtn">Campaigns <i class="fa fa-caret-down"></i></button>
+                <div class="subnav-content">
+                  <a onclick="viewSection('agents', '/section/agents')">agents</a>
+                  <a onclick="viewSection('adversaries', '/section/adversaries')">adversaries</a>
+                  <a onclick="viewSection('operations', '/section/operations')">operations</a>
+                </div>
+              </div>
+              <a href="/logout" style="float:right">Logout</a>
+              <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
+              <div class="subnav-right">
+                <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
+                <div class="subnav-content subnav-content-right">
+                    <a onclick="viewSection('sources', '/section/sources')">sources</a>
+                    <a onclick="viewSection('planners', '/section/planners')">planners</a>
+                    <a onclick="viewSection('contacts', '/section/contacts')">contacts</a>
+                    <a onclick="viewSection('obfuscators', '/section/obfuscators')">obfuscators</a>
+                    <a onclick="viewSection('configuration', '/section/configurations')">configuration</a>
+                </div>
+              </div>
+              <div class="subnav-right">
+                <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
+                <div class="subnav-content subnav-content-right">
+                    {% for plugin in plugins %}
+                      {% if plugin.address %}
+                          <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
+                      {% else %}
+                          <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
+                      {% endif %}
+                    {% endfor %}
+                </div>
+              </div>
             </div>
-          </div>
-          <a href="/logout" style="float:right">Logout</a>
-          <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
-          <div class="subnav-right">
-            <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
-            <div class="subnav-content subnav-content-right">
-                <a onclick="viewSection('sources', '/section/sources')">sources</a>
-                <a onclick="viewSection('planners', '/section/planners')">planners</a>
-                <a onclick="viewSection('contacts', '/section/contacts')">contacts</a>
-                <a onclick="viewSection('obfuscators', '/section/obfuscators')">obfuscators</a>
-                <a onclick="viewSection('configuration', '/section/configurations')">configuration</a>
-            </div>
-          </div>
-          <div class="subnav-right">
-            <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
-            <div class="subnav-content subnav-content-right">
-                {% for plugin in plugins %}
-                  {% if plugin.address %}
-                      <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
-                  {% else %}
-                      <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
-                  {% endif %}
-                {% endfor %}
-            </div>
-          </div>
         </div>
-
         <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
 
         <center>
@@ -53,13 +53,6 @@
                 <h1 id="big-head" class="big-head">CALDERA</h1>
                 <hr style="width:70%">
                 <h3 id="sub-head" class="small-head">Cyber Adversary Language and Decision Engine for Red Team Automation</h3>
-                <div style="opacity:0.5">
-                    <span>{{ exploits|length }} abilities&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
-                    <span>{{ tactics|length }} tactics&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
-                    <span>{{ payloads|length }} payloads&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
-                    <span>{{ adversaries|length }} adversaries&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;</span>
-                    <span>{{ agents|length }} agents</span>
-                </div>
             </div>
 
             <div id="section-container"></div>

@@ -15,7 +15,6 @@ class RestApi(BaseWorld):
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
-        self.plugin_svc = services.get('plugin_svc')
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
@@ -50,11 +49,13 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
+    @check_authorization
     @template('agents.html')
     async def section_agent(self, request):
         agents = [h.display for h in await self.data_svc.locate('agents')]
         return dict(agents=agents)
 
+    @check_authorization
     @template('adversaries.html')
     async def section_adversaries(self, request):
         abilities = await self.data_svc.locate('abilities')
@@ -63,9 +64,9 @@ class RestApi(BaseWorld):
         adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
         return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads, tactics=tactics)
 
+    @check_authorization
     @template('operations.html')
     async def section_operations(self, request):
-
         hosts = [h.display for h in await self.data_svc.locate('agents')]
         groups = list(set(([h['group'] for h in hosts])))
         adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
@@ -76,25 +77,30 @@ class RestApi(BaseWorld):
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                     obfuscators=obfuscators)
 
+    @check_authorization
     @template('configurations.html')
     async def section_configurations(self, request):
         return dict(config=self.get_config())
 
+    @check_authorization
     @template('obfuscators.html')
     async def section_obfuscators(self, request):
         obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         return dict(obfuscators=obfuscators)
 
+    @check_authorization
     @template('planners.html')
     async def section_planners(self, request):
         planners = [p.display for p in await self.data_svc.locate('planners')]
         return dict(planners=planners)
 
+    @check_authorization
     @template('contacts.html')
     async def section_contacts(self, request):
         contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
         return dict(contacts=contacts)
 
+    @check_authorization
     @template('sources.html')
     async def section_sources(self, request):
         sources = [s.display for s in await self.data_svc.locate('sources')]
@@ -115,14 +121,8 @@ class RestApi(BaseWorld):
     @check_authorization
     async def landing(self, request):
         try:
-            abilities = await self.data_svc.locate('abilities')
-            tactics = set([a.tactic.lower() for a in abilities])
-            payloads = await self.rest_svc.list_payloads()
-            hosts = [h.display for h in await self.data_svc.locate('agents')]
-            adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
             plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            return dict(exploits=[a.display for a in abilities], adversaries=adversaries, agents=hosts,
-                        tactics=tactics, payloads=payloads, plugins=plugins)
+            return dict(plugins=plugins)
         except web.HTTPFound as e:
             raise e
         except Exception as e:

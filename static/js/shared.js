@@ -74,13 +74,15 @@ function uuidv4() {
 
 function doNothing() {}
 
-/** SECTIONS **/
-
 function viewSection(name, address){
     function display(data) {
         let plugin = $($.parseHTML(data, keepScripts=true));
-        $('#section-container').append('<div id="plugin-'+name+'"></div>');
-        $('#plugin-'+name).html(plugin);
+        $('#section-container').append('<div id="section-'+name+'"></div>');
+        let newSection = $('#section-'+name);
+        newSection.html(plugin);
+        $('html, body').animate({
+            scrollTop: newSection.offset().top
+        }, 1500);
     }
     restRequest('GET', null, display, address);
 }
@@ -97,8 +99,6 @@ function toggleSidebar(identifier) {
         sidebar.show();
     }
 }
-
-/** ALL DROP DOWNS **/
 
 function alphabetize_dropdown(obj) {
     let selected_val = $(obj).children("option:selected").val();
