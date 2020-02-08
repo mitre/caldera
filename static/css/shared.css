@@ -89,6 +89,9 @@ span {
 code {
     color: white;
 }
+pre {
+    color: white;
+}
 .row {
     margin-top:50px;
     text-align:center;
@@ -445,9 +448,6 @@ p[onclick] {
 .column-simple .inner-box table tr td p {
     padding: 0;
     margin: 0;
-}
-.control-width select {
-    max-width: 30%;
 }
 .maroon {
     background-color: maroon;

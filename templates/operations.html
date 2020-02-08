@@ -195,7 +195,7 @@
 </div>
 
 <div id="potential-modal" class="modal">
-    <form class="modal-content">
+    <form class="modal-content" style="width:100%;">
         <div class="container section-profile row ability-viewer modal-box">
             <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
             <div class="column control-width" style="flex:100%;">
@@ -240,32 +240,32 @@
 
 <li id="potential-link-template" class="potential-links" style="display: none;margin-bottom:-50px">
     <div class="row-simple">
-        <div class="column" style="flex:60%">
+        <div class="column">
             <hr>
-            <table frame=void style="border-spacing:5px;border-collapse:separate;width:100%">
+            <table frame=void style="border-spacing:5px;border-collapse:separate;width:100%;">
                 <tr>
-                    <td style="width:10%"><b>name:</b></td>
+                    <td><b>name:</b></td>
                     <td><p id="potential-name"></td>
-                    <td style="width:10%"><button class="button-success potential-button" onclick="addLink($(this))">add</button></td>
+                    <td><button class="button-success potential-button" onclick="addLink($(this))">add</button></td>
                 </tr>
                 <tr>
-                    <td style="width:10%"><b>technique:</b></td>
+                    <td><b>technique:</b></td>
                     <td><p id="potential-technique"></td>
                 </tr>
                 <tr>
-                    <td style="width:10%"><b>description:</b></td>
+                    <td><b>description:</b></td>
                     <td><p id="potential-description"></td>
                 </tr>
                 <tr>
-                    <td style="width:10%"><b>command:</b></td>
+                    <td><b>command:</b></td>
                     <td><code contenteditable="true" id="potential-command"></code></td>
                 </tr>
                 <tr>
-                    <td style="width:10%"><b>score:</b></td>
+                    <td><b>score:</b></td>
                     <td><p contenteditable="false" id="potential-score"></p></td>
                 </tr>
                 <tr>
-                    <td style="width:10%"><b>visibility:</b></td>
+                    <td><b>visibility:</b></td>
                     <td><p contenteditable="false" id="potential-visibility"></p></td>
                 </tr>
             </table>
@@ -433,17 +433,17 @@
                         title = title + " (CLEANUP)"
                     }
                     let agentPaw = OPERATION.chain[i].paw;
-                    let linkId = OPERATION.chain[i].unique;
+                    let lnk = OPERATION.chain[i].id;
                     template.attr("id", "op_id_" + OPERATION.chain[i].id);
                     template.attr("operation", OPERATION.id);
                     template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
                     template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                         'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                        'onclick="findResults(this,'+linkId+')"' +
+                        'onclick="findResults(this,'+lnk+','+OPERATION.id+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus('+linkId+', -2)">&#x274C;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus('+linkId+', -3)">&#x002B;</span></div>');
+                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
                     refreshUpdatableFields(OPERATION.chain[i], template);
 
                     template.insertAfter("#time-start");
@@ -606,7 +606,7 @@
         }
     }
 
-    function findResults(elem, link_id){
+    function findResults(elem, lnk, opId){
         function loadResults(data){
             if (data) {
                 let res = atob(data.output);
@@ -619,6 +619,7 @@
         }
         document.getElementById('more-modal').style.display='block';
         $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
+        let link_id = opId + '-' + lnk;
         restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
     }
 
@@ -656,7 +657,8 @@
         return false;
     }
 
-    function updateLinkStatus(linkId, status, command='') {
+    function updateLinkStatus(lnk, opId, status, command='') {
+        let linkId = opId + '-' + lnk;
         let data = {'index':'chain', 'link_id': linkId, 'status': status};
         if(command) {
             data['command'] = command;
