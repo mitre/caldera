@@ -86,8 +86,6 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        await self.get_service('data_svc').remove('sources', match=dict(id=data.get('id')))
-
         for d in self.get_service('data_svc').data_dirs:
             await self.get_service('data_svc').load_data(d)
         return await self._poll_for_data('sources', dict(id=data.get('id')))
