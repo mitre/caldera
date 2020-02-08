@@ -82,7 +82,7 @@ function viewSection(name, address){
         newSection.html(plugin);
         $('html, body').animate({
             scrollTop: newSection.offset().top
-        }, 1500);
+        }, 1000);
     }
     restRequest('GET', null, display, address);
 }

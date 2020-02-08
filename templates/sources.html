@@ -25,7 +25,10 @@
                 <option value="{{ s.id }}">{{ s.name }}</option>
             {% endfor %}}
           </select>
-          <br><br>
+          <br>
+          <div id="flashy-source">
+            <span id="message"></span>
+          </div>
       </div>
       <div id="addSource"></div>
       <button id="sourceBtn" type="button" class="button-success atomic-button"
@@ -36,20 +39,18 @@
       </button>
     </div>
     <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
-        <input id="source-name" type="text" class="advGoal" placeholder="Enter source name"/>
-        <br><br>
-        <table id="factTbl" class="display ttp-template" style="width:100%;text-align:left">
+        <h4 id="source-name" contenteditable="true" class="advGoal">Sample name</h4>
+        <hr>
+        <table id="factTbl" class="obfuscation-table" border=1 frame=void rules=rows>
             <thead>
                 <tr>
-                  <th></th>
-                  <th></th>
-                  <th></th>
+                    <td><b>trait</b></td>
+                    <td><b>value</b></td>
+                    <td></td>
                 </tr>
             </thead>
-            <tbody></tbody>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow([
-            'Enter trait', 'Enter value','<p onclick=removeFactRow($(this))>&#x274C;</p>'])">
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
             &#10010;&nbsp;add row
         </p>
     </div>
@@ -98,20 +99,6 @@
 </li>
 
 <script>
-    const createdCell = function(cell) {
-      cell.setAttribute('contenteditable', true);
-      cell.setAttribute('spellcheck', false);
-      cell.addEventListener('blur', function(e) {});
-    };
-    $(document).ready(function () {
-        $('#factTbl').DataTable({
-                columnDefs: [{
-                targets: '_all',
-                createdCell: createdCell
-            }]
-        });
-    });
-
     function toggleSourceView() {
         $('#viewSource').toggle();
         $('#addSource').toggle();
@@ -119,41 +106,40 @@
     }
 
     function clearFactCanvas(){
-        $('#factTbl').DataTable().clear().draw();
-        let source = $('#source-name');
-        source.data('id', '');
-        source.val('');
-        $("#profile-source-name").val($("#profile-source-name option:first").val());
+        $('#factTbl').find("tr:gt(0)").remove();
         $('#source-rules').empty();
     }
 
     function loadSource() {
+        function loadSourceCallback(data) {
+            clearFactCanvas();
+            let source = $('#source-name');
+            data[0].facts.forEach(f => {
+                addFactRow(f.trait, f.value);
+            });
+            source.data('id', data[0].id);
+            applyRules(data[0].rules);
+            source.html(data[0].name);
+        }
         restRequest('POST', {'index':'source', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 
-    function loadSourceCallback(data) {
-        clearFactCanvas();
-        let source = $('#source-name');
-        data[0].facts.forEach(f => {
-            addFactRow([f.trait, f.value,
-                '<p onclick="removeFactRow($(this))">&#x274C;</p>']);
-        });
-        source.data('id', data[0].id);
-        applyRules(data[0].rules);
-        source.val(data[0].name);
-    }
-
-    function addFactRow(r){
-        $('#factTbl').DataTable().row.add(r).draw();
-    }
-
-    function removeFactRow(r){
-        $('#factTbl').DataTable().row($(r).parents('tr')).remove().draw();
+    function addFactRow(trait, value){
+        $('#factTbl tr:last').after(
+            '<tr>' +
+                '<td><p contenteditable="true">'+trait+'</p></td>' +
+                '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
     }
 
     function saveSource(){
+        function saveSourceCallback(data) {
+            flashy('flashy-source', 'New fact source saved!');
+        }
         let source = $('#source-name');
-        let name = source.val();
+        let name = source.text();
         let id = source.data('id');
         if(!name){ alert('Please enter a name!'); return; }
         if(!id) {
@@ -167,11 +153,10 @@
         data['facts'] = [];
         data['rules'] = [];
 
-        let table = $('#factTbl').DataTable();
-        table.rows().invalidate('dom').draw();
-        let rows = table.rows().data();
-        rows.each(function (value, index) {
-            data['facts'].push({'trait': value[0], 'value': value[1]});
+        $("#factTbl tr").not(":first").each(function () {
+            let trait = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            data['facts'].push({'trait':trait,'value':value});
         });
         if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
 
@@ -193,11 +178,6 @@
             return;
         }
         restRequest('PUT', data, saveSourceCallback);
-    }
-
-    function saveSourceCallback(data) {
-        clearFactCanvas();
-        appendToSelect('profile-source-name', data[0].id, data[0].name, 'view-'+data[0].id);
     }
 
     function viewRules(){
