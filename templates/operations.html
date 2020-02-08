@@ -229,8 +229,6 @@
                     <h5 id="hil-paw"></h5>
                     <button class="atomic-button button-success approve" type="button" onclick="submitHilChanges(-3)">Approve</button>
                     <button class="atomic-button button-embedded discard" type="button" onclick="submitHilChanges(-2)">Discard</button>
-                    <br><br>
-                    <button class="atomic-button approveall" type="button" onclick="hilApproveAll()">Approve All</button>
                 </div>
                 <div class="column codearea" style="flex:75%">
                     <textarea id="hil-command" spellcheck="false"></textarea>
@@ -287,24 +285,22 @@
   </div>
 </li>
 <script>
-    let OPERATION = {};
+    let atomic_interval = null;
 
     $(document).ready(function(){
-      $("#optional").click(function(){
-        $("#optional-options").slideToggle("slow");
-      });
-      $("#schedules").click(function(){
-        $("#schedules-options").slideToggle("slow");
-      });
-      $("#stealth").click(function(){
-        $("#stealth-options").slideToggle("slow");
-      });
-      $("#autonomous").click(function(){
-        $("#autonomous-options").slideToggle("slow");
-      });
+        $("#optional").click(function(){
+            $("#optional-options").slideToggle("slow");
+        });
+        $("#schedules").click(function(){
+            $("#schedules-options").slideToggle("slow");
+        });
+        $("#stealth").click(function(){
+            $("#stealth-options").slideToggle("slow");
+        });
+        $("#autonomous").click(function(){
+            $("#autonomous-options").slideToggle("slow");
+        });
     });
-
-    let atomic_interval = null;
 
     function toggleOperationView() {
         $('#viewOperation').toggle();
@@ -380,12 +376,8 @@
 
     function changeCurrentOperationState(newState){
         let selectedOperationId = $('#operation-list option:selected').attr('value');
-        if(OPERATION.finish !== ''){
-            alert('This operation has finished.');
-            return;
-        }
         let data = {'name': parseInt(selectedOperationId), 'state': newState};
-        restRequest('PUT', data, function(d){refresh()}, '/plugin/chain/operation/state');
+        restRequest('PUT', data, doNothing, '/plugin/chain/operation/state');
     }
 
     function handleStartActionCallback(data){
@@ -404,15 +396,6 @@
         op_elem.prop('selectedIndex', op_elem.find('option').length-1).change();
     }
 
-    function refresh() {
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
-        if (selectedOperationId != null){
-            $('.op-selected').css('visibility', 'visible');
-        }
-        restRequest('POST', postData, operationCallback, '/plugin/chain/full');
-    }
-
     function clearTimeline() {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         $('.event').each(function() {
@@ -423,60 +406,68 @@
         });
     }
 
-    function operationCallback(data){
-        function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
-        OPERATION = data[0];
-        $("#op-control-state").html(OPERATION.state + spacing() + OPERATION.start + spacing() + OPERATION.chain.length + ' decisions');
-        if (OPERATION.autonomous) {
-            $("#togBtnHil").prop("checked", true);
-        } else {
-            $("#togBtnHil").prop("checked", false);
-        }
-        applyOperationAgents(OPERATION);
-        changeProgress(parseInt((OPERATION.phase / Object.keys(OPERATION.adversary.phases).length) * 100));
-        clearTimeline();
-        for(let i=0; i<OPERATION.chain.length; i++){
-            if(OPERATION.chain[i].status === -1) {
-                $('#hil-linkId').html(OPERATION.chain[i].unique);
-                $('#hil-paw').html(OPERATION.chain[i].paw);
-                $('#hil-command').html(atob(OPERATION.chain[i].command));
-                document.getElementById("loop-modal").style.display = "block";
-                return;
-            } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
-                let template = $("#link-template").clone();
-                let title = OPERATION.chain[i].ability.name;
-                if(OPERATION.chain[i].cleanup) {
-                    title = title + " (CLEANUP)"
-                }
-                let agentPaw = OPERATION.chain[i].paw;
-                template.attr("id", "op_id_" + OPERATION.chain[i].id);
-                template.attr("operation", OPERATION.id);
-                template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-                template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                    'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                    title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                    'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
-                    'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                    '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
-                    '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
-                refreshUpdatableFields(OPERATION.chain[i], template);
-
-                template.insertAfter("#time-start");
-                $(template.find("#inner-contents")).slideUp();
-                template.show();
+    function refresh() {
+        function operationCallback(data){
+            function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
+            let OPERATION = data[0];
+            $("#op-control-state").html(OPERATION.state + spacing() + OPERATION.start + spacing() + OPERATION.chain.length + ' decisions');
+            if (OPERATION.autonomous) {
+                $("#togBtnHil").prop("checked", true);
             } else {
-                let existing = $("#op_id_"+OPERATION.chain[i].id);
-                refreshUpdatableFields(OPERATION.chain[i], existing);
+                $("#togBtnHil").prop("checked", false);
+            }
+            applyOperationAgents(OPERATION);
+            changeProgress(OPERATION.finish, parseInt((OPERATION.phase / Object.keys(OPERATION.adversary.phases).length) * 100));
+            clearTimeline();
+            for(let i=0; i<OPERATION.chain.length; i++){
+                if(OPERATION.chain[i].status === -1) {
+                    $('#hil-linkId').html(OPERATION.chain[i].unique);
+                    $('#hil-paw').html(OPERATION.chain[i].paw);
+                    $('#hil-command').html(atob(OPERATION.chain[i].command));
+                    document.getElementById("loop-modal").style.display = "block";
+                    return;
+                } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
+                    let template = $("#link-template").clone();
+                    let title = OPERATION.chain[i].ability.name;
+                    if(OPERATION.chain[i].cleanup) {
+                        title = title + " (CLEANUP)"
+                    }
+                    let agentPaw = OPERATION.chain[i].paw;
+                    template.attr("id", "op_id_" + OPERATION.chain[i].id);
+                    template.attr("operation", OPERATION.id);
+                    template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
+                    template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
+                        'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
+                        title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
+                        'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
+                        'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
+                    refreshUpdatableFields(OPERATION.chain[i], template);
+
+                    template.insertAfter("#time-start");
+                    $(template.find("#inner-contents")).slideUp();
+                    template.show();
+                } else {
+                    let existing = $("#op_id_"+OPERATION.chain[i].id);
+                    refreshUpdatableFields(OPERATION.chain[i], existing);
+                }
+            }
+            if(OPERATION.finish !== '') {
+                clearInterval(atomic_interval);
+                atomic_interval = null;
+            } else {
+                if(!atomic_interval) {
+                    atomic_interval = setInterval(refresh, 5000);
+                }
             }
         }
-        if(OPERATION.finish !== '') {
-            clearInterval(atomic_interval);
-            atomic_interval = null;
-        } else {
-            if(!atomic_interval) {
-                atomic_interval = setInterval(refresh, 5000);
-            }
+        let selectedOperationId = $('#operation-list option:selected').attr('value');
+        let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
+        if (selectedOperationId != null){
+            $('.op-selected').css('visibility', 'visible');
         }
+        restRequest('POST', postData, operationCallback, '/plugin/chain/full');
     }
 
     function applyOperationAgents(operation) {
@@ -638,10 +629,10 @@
         downloadReport('/plugin/chain/rest', 'operation_report', postData);
     }
 
-    function changeProgress(percent) {
+    function changeProgress(finish, percent) {
         if(percent >= 100) {
             percent = 100;
-            if(!OPERATION.finish) {
+            if(!finish) {
                 percent = 99;
             }
         }
@@ -673,33 +664,15 @@
         restRequest('PUT', data, doNothing);
     }
 
-    function toggleHil(){
+    function toggleHil(autonomous){
         let op_id = $('#operation-list option:selected').attr('value');
         let data = {};
-        if(OPERATION.autonomous){
+        if(autonomous){
             data['autonomous'] = 0;
         } else{
             data['autonomous'] = 1;
         }
         restRequest('PUT', data, function(d){refresh()}, `/plugin/chain/operation/${op_id}`);
-    }
-
-    function hilApproveAll(){
-        document.getElementById("loop-modal").style.display = "none";
-        let currentLinkUnique = $('#hil-linkId').html();
-        let currentLinkId = currentLinkUnique.split('-')[1];
-        for(let i=0; i<OPERATION.chain.length; i++){
-            let nextLink = OPERATION.chain[i];
-            if (nextLink.id >= currentLinkId){
-                let data = {'index':'chain','link_id': nextLink.unique, 'status': -3};
-                restRequest('PUT', data, doNothing);
-            }
-        }
-        if (!OPERATION.autonomous){
-            toggleHil();
-        }
-        refresh();
-        return false;
     }
 
     function checkOpformValid(){
