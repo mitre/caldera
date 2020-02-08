@@ -142,6 +142,9 @@ function showAgentInfo(paw){
         let parent = $('#agent-modal');
         let agent = data[0];
         parent.find('#modal-paw').html(agent['paw']);
+        parent.find('#modal-contact').html(agent['contact']);
+        parent.find('#modal-host').html(agent['host']);
+        parent.find('#modal-privilege').html(agent['privilege']);
         parent.find('#modal-last_seen').html(agent['last_seen']);
         parent.find('#modal-exe_name').html(agent['exe_name']);
         parent.find('#modal-group').val(agent['group']);
@@ -150,6 +153,7 @@ function showAgentInfo(paw){
         parent.find('#modal-architecture').html(agent['architecture']);
         parent.find('#modal-platform').html(agent['platform']);
         parent.find('#modal-location').html(agent['location']);
+        parent.find('#modal-pid').html(agent['pid']);
         parent.find('#modal-ppid').html(agent['ppid']);
         parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
         parent.find('#modal-watchdog').html(agent['watchdog']);
