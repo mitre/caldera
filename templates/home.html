@@ -100,6 +100,7 @@
                 <thead>
                 <tr>
                   <th>PAW</th>
+                  <th>Host</th>
                   <th>Last Seen</th>
                   <th>Watchdog</th>
                   <th>Sleep</th>
@@ -110,10 +111,11 @@
                     {% for a in agents %}
                         <tr id="row-{{ a.paw }}">
                             <td>{{ a.paw }}</td>
+                            <td><p id="{{ a.paw }}-host">{{ a.host }}</p></td>
                             {% if a.trusted %}
-                                <td><button class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                                <td><button id="{{ a.paw }}-lastseen" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
                             {% else %}
-                                <td><button class="button-row" style="background-color:maroon" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                                <td><button id="{{ a.paw }}-lastseen" class="button-row maroon" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
                             {% endif %}
                             <td><input id="{{ a.paw }}-watchdog" type="text" value="{{ a.watchdog }}"/></td>
                             <td><input id="{{ a.paw }}-sleep" type="text" value="{{ a.sleep_min }} / {{ a.sleep_max }}"/></td>

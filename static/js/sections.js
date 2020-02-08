@@ -64,20 +64,32 @@ let agentTable = $('#netTbl').DataTable();
 
 function agentRefresh(){
     function updateTbl(data){
-        let found = [];
         let existing = agentTable.rows().data();
-        existing.each(function (value, index) { found.push(value[0]); });
         data.forEach(function(a) {
-            if(!found.includes(a.paw)) {
+            let found = false;
+            existing.each(function (value, index) {
+                let paw = value[0];
+                if(a.paw === paw) {
+                    //update existing row
+                    let lastSeen = $('#'+paw+'-lastseen');
+                    lastSeen.text(a.last_seen);
+                    if(!a.trusted) { lastSeen.addClass('maroon');}
+                    found = true;
+                }
+            });
+            if(!found) {
+                //add new row
                 agentTable.row.add([
                     a.paw,
-                    '<button class="button-row" onclick="showAgentInfo(\''+a.paw+'\')">'+a.last_seen+'</button>',
-                    '<input id="'+a.paw+'-watchdog" type="text" value="'+a.watchdog+'"/>',
-                    '<input id="'+a.paw+'-sleep" type="text" value="'+a.sleep_min+'/'+a.sleep_max+'"/>',
-                    '<input id="'+a.paw+'-group" type="text" value="'+a.group+'"/>',
-                    ''
-                ]).draw();
+                    '<p>'+a.host+'</p>',
+                    '<button id="' + a.paw + '-lastseen" class="button-row" onclick="showAgentInfo(\'' + a.paw + '\')">' + a.last_seen + '</button>',
+                    '<input id="' + a.paw + '-watchdog" type="text" value="' + a.watchdog + '"/>',
+                    '<input id="' + a.paw + '-sleep" type="text" value="' + a.sleep_min + '/' + a.sleep_max + '"/>',
+                    '<input id="' + a.paw + '-group" type="text" value="' + a.group + '"/>',
+                    '<p onclick="deleteAgent(\'' + a.paw + '\')">&#x274C;</p>'
+                ]).node().id = 'row-'+a.paw;
             }
+            agentTable.draw();
         });
     }
     restRequest('POST', {'index':'agents'}, updateTbl)

@@ -443,3 +443,6 @@ p[onclick] {
 .control-width select {
     max-width: 30%;
 }
+.maroon {
+    background-color: maroon;
+}
