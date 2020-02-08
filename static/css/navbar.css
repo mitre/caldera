@@ -14,10 +14,10 @@
 }
 .navbar a {
   float: left;
-  font-size: 16px;
+  font-size: 14px;
   color: white;
   text-align: center;
-  padding: 14px 16px;
+  padding: 10px 12px;
   text-decoration: none;
 }
 .navbar a:hover {
@@ -35,11 +35,11 @@
   overflow: hidden;
 }
 .subnavbtn {
-  font-size: 16px;
+  font-size: 14px;
   border: none;
   outline: none;
   color: white;
-  padding: 14px 16px;
+  padding: 10px 12px;
   background-color: inherit;
   font-family: inherit;
   margin: 0;
