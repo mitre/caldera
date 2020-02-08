@@ -71,9 +71,7 @@ function agentRefresh(){
                 let paw = value[0];
                 if(a.paw === paw) {
                     //update existing row
-                    let lastSeen = $('#'+paw+'-lastseen');
-                    lastSeen.text(a.last_seen);
-                    if(!a.trusted) { lastSeen.addClass('maroon');}
+                    if(!a.trusted) { $('#'+paw+'-pid').addClass('maroon');}
                     found = true;
                 }
             });
@@ -82,10 +80,9 @@ function agentRefresh(){
                 agentTable.row.add([
                     a.paw,
                     '<p>'+a.host+'</p>',
-                    '<button id="' + a.paw + '-lastseen" class="button-row" onclick="showAgentInfo(\'' + a.paw + '\')">' + a.last_seen + '</button>',
-                    '<input id="' + a.paw + '-watchdog" type="text" value="' + a.watchdog + '"/>',
-                    '<input id="' + a.paw + '-sleep" type="text" value="' + a.sleep_min + '/' + a.sleep_max + '"/>',
-                    '<input id="' + a.paw + '-group" type="text" value="' + a.group + '"/>',
+                    '<p>'+a.contact+'</p>',
+                    '<button id="' + a.paw + '-pid" class="button-row" onclick="showAgentInfo(\'' + a.paw + '\')">' + a.pid + '</button>',
+                    '<p>'+a.privilege+'</p>',
                     '<p onclick="deleteAgent(\'' + a.paw + '\')">&#x274C;</p>'
                 ]).node().id = 'row-'+a.paw;
             }
@@ -102,21 +99,25 @@ function deleteAgent(paw){
     restRequest('DELETE', {"index": "agent", "paw": paw}, deleteAgentCallback);
 }
 
-function saveGroups(){
-    let data = agentTable.rows().data();
-    data.each(function (value, index) {
-        let paw = value[0];
-        let group = document.getElementById(paw+'-group').value;
-        let sleep = document.getElementById(paw+'-sleep').value;
-        let watchdog = parseInt(document.getElementById(paw+'-watchdog').value);
-        let update = {"index":"agent", "paw": paw, "group": group, "watchdog": watchdog};
-        let sleepArr = parseSleep(sleep.replace(/\s/g, ""));
-        if (sleepArr.length !== 0) {
-            update["sleep_min"] = parseInt(sleepArr[0]);
-            update["sleep_max"] = parseInt(sleepArr[1]);
-        }
-        restRequest('PUT', update, doNothing);
-    });
+function updateAgent(){
+    function closeAgentModal(){
+        document.getElementById("agent-modal").style.display = "none";
+    }
+    let sleepArr = parseSleep($('#modal-sleep').val().replace(/\s/g, ""));
+    let data = {
+        'index': 'agent',
+        'paw': $('#modal-paw').text(),
+        'group': $('#modal-group').val(),
+        'watchdog': parseInt($('#modal-watchdog').val())
+    };
+    if (sleepArr.length !== 0) {
+        data["sleep_min"] = parseInt(sleepArr[0]);
+        data["sleep_max"] = parseInt(sleepArr[1]);
+    }
+    restRequest('PUT', data, closeAgentModal);
+}
+
+function saveGlobalAgent(){
     let globalMinsleep = $('#globalSleepMin').val();
     let globalMaxsleep = $('#globalSleepMax').val();
     let globalWatchdog = $('#globalWatchdog').val();
@@ -139,7 +140,19 @@ function parseSleep(sleep){
 function showAgentInfo(paw){
     function agentInfoCallback(data){
         let parent = $('#agent-modal');
-        parent.find('#details').text(JSON.stringify(data[0], null, 4));
+        let agent = data[0];
+        parent.find('#modal-paw').html(agent['paw']);
+        parent.find('#modal-last_seen').html(agent['last_seen']);
+        parent.find('#modal-exe_name').html(agent['exe_name']);
+        parent.find('#modal-group').val(agent['group']);
+        parent.find('#modal-sleep').val(agent['sleep_min']+'/'+agent['sleep_max']);
+        parent.find('#modal-watchdog').val(agent['watchdog']);
+        parent.find('#modal-architecture').html(agent['architecture']);
+        parent.find('#modal-platform').html(agent['platform']);
+        parent.find('#modal-location').html(agent['location']);
+        parent.find('#modal-ppid').html(agent['ppid']);
+        parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
+        parent.find('#modal-watchdog').html(agent['watchdog']);
         parent.show();
     }
     restRequest('POST', {'index':'agent','paw':paw}, agentInfoCallback)
