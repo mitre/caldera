@@ -58,191 +58,58 @@ $(document).ready(function () {
 
 /** GROUPS **/
 
-$(document).ready(function () {
-    $('#netTbl').DataTable({
-        ajax: {
-            url: '/plugin/chain/rest',
-            type: 'POST',
-            contentType: 'application/json',
-            dataType: 'json',
-            data: function ( d ) {
-                return JSON.stringify({'index':'agent'});
-            },
-            dataSrc: ''
-        },
-        deferRender: true,
-        rowId: 'paw',
-        stateSave: true,
-        columnDefs: [
-            {
-                targets: 0,
-                data: null,
-                render: function ( data, type, row, meta ) {
-                    return data['paw'];
-                }
-            },
-            {
-                targets: 1,
-                data: null,
-                render: function ( data, type, row, meta ) {
-                    return data['host'];
-                }
-            },
-            {
-                targets: 2,
-                data: null,
-                render: function ( data, type, row, meta ){
-                    let str = "<select id=\""+data['paw']+"-status\">";
-                    if ( data['trusted'] == 1 ){
-                        str += "<option value=\"1\" selected=\"selected\">trusted</option>\n" +
-                               "<option value=\"0\">untrusted</option>\n";
-                    } else {
-                        str += "<option value=\"1\">trusted</option>\n" +
-                               "<option value=\"0\" selected=\"selected\">untrusted</option>";
-                    }
-                    str += "</select>";
-                    return str;
-                }
-            },
-            {
-                targets: 3,
-                data: null,
-                render: {
-                    _:'platform'
-                }
-            },
-            {
-                targets: 4,
-                data: null,
-                render: function ( data, type, row, meta ) {
-                    let str = "";
-                    data['executors'].forEach(function(e) {
-                        str += e + "<br/>"
-                    });
-                    return str;
-                }
-            },
+setInterval(agentRefresh, 5000);
 
-            {
-                targets: 5,
-                data: null,
-                render: {
-                    _:'contact'
-                }
-            },
-            {
-                targets: 6,
-                data: null,
-                render: {
-                    _:'last_seen'
-                }
-            },
-            {
-                targets: 7,
-                data: null,
-                render: function ( data, type, row, meta ){
-                    return "<input id=\""+data['paw']+"-sleep\" type=\"text\" value=\""+data['sleep_min']+"/"+data['sleep_max']+"\">";
-                }
-            },
-            {
-                targets: 8,
-                data: null,
-                render: function ( data, type, row, meta ) {
-                    return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
-                }
-            },
-            {
-                targets: 9,
-                data: null,
-                render: {
-                    _:'pid'
-                }
-            },
-            {
-                targets: 10,
-                data: null,
-                render: {
-                    _:'privilege'
-                }
-            },
-            {
-                targets: 11,
-                data: null,
-                orderDataType: 'dom-text',
-                type: 'string',
-                render: function ( data, type, row, meta ) {
-                    return "<input value=\""+data['group']+"\" type=\"text\" id=\""+data['paw']+"-group\" name=\""+data['paw']+"-group\"><br>";
-                }
-            },
-            {
-                targets: 12,
-                data: null,
-                fnCreatedCell: function (td, cellData, rowData, row , col) {
-                    $(td).addClass('delete-agent');
-                    $(td).attr('paw', rowData['paw']);
-                },
-                defaultContent: "&#x274C;"
-            }
-        ],
-        errMode: 'throw',
-        buttons: [ // Add the column selection button using ColVis.
-            {
-                extend: 'colvis',
-                text: 'Filter Columns', // Button text.
-                columns: ':not(:last-child)' // Keep last column (the remove agent column) as is.
-            }
-        ],
-        // Button, length-changer, pRocessing display element, filtering, table,
-        // table Info summary, pagination control
-        dom: 'Blrftip'
-    });
+let agentTable = $('#netTbl').DataTable();
 
+function agentRefresh(){
+    function updateTbl(data){
+        let found = [];
+        let existing = agentTable.rows().data();
+        existing.each(function (value, index) { found.push(value[0]); });
+        data.forEach(function(a) {
+            if(!found.includes(a.paw)) {
+                agentTable.row.add([
+                    a.paw,
+                    '<button class="button-row" onclick="showAgentInfo(\''+a.paw+'\')">'+a.last_seen+'</button>',
+                    '<input id="'+a.paw+'-watchdog" type="text" value="'+a.watchdog+'"/>',
+                    '<input id="'+a.paw+'-sleep" type="text" value="'+a.sleep_min+'/'+a.sleep_max+'"/>',
+                    '<input id="'+a.paw+'-group" type="text" value="'+a.group+'"/>',
+                    ''
+                ]).draw();
+            } 
+        });
+    }
+    restRequest('POST', {'index':'agents'}, updateTbl)
+}
 
-    $('#netTbl tbody').on('click', 'td.delete-agent', function (e) {
-        restRequest('DELETE', {"index": "agent", "paw": $(this).attr('paw')}, saveGroupsCallback);
-    } );
-});
-
-function agent_table_refresh(){
-    $('#netTbl').DataTable().ajax.reload();
+function deleteAgent(paw){
+    function deleteAgentCallback(data){
+        agentTable.row('#row-'+paw).remove().draw();
+    }
+    restRequest('DELETE', {"index": "agent", "paw": paw}, deleteAgentCallback);
 }
 
 function saveGroups(){
-    let data = $('#netTbl').DataTable().rows().data();
+    let data = agentTable.rows().data();
     data.each(function (value, index) {
-        let group = document.getElementById(value['paw']+'-group').value;
-        let status = document.getElementById(value['paw']+'-status').value;
-        let sleep = document.getElementById(value['paw']+'-sleep').value;
-        let watchdog = document.getElementById(value['paw']+'-watchdog').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
-        let sleepArr = parseSleep(sleep);
+        let paw = value[0];
+        let group = document.getElementById(paw+'-group').value;
+        let sleep = document.getElementById(paw+'-sleep').value;
+        let watchdog = parseInt(document.getElementById(paw+'-watchdog').value);
+        let update = {"index":"agent", "paw": paw, "group": group, "watchdog": watchdog};
+        let sleepArr = parseSleep(sleep.replace(/\s/g, ""));
         if (sleepArr.length !== 0) {
-            update["sleep_min"] = sleepArr[0];
-            update["sleep_max"] = sleepArr[1];
+            update["sleep_min"] = parseInt(sleepArr[0]);
+            update["sleep_max"] = parseInt(sleepArr[1]);
         }
         restRequest('PUT', update, doNothing);
     });
     let globalMinsleep = $('#globalSleepMin').val();
     let globalMaxsleep = $('#globalSleepMax').val();
-    let globalWatchdog = $('#watchdog').val();
+    let globalWatchdog = $('#globalWatchdog').val();
     let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
     restRequest('PUT', d, doNothing);
-}
-
-function saveGroupsCallback(data) {
-    restRequest('POST', {"index":"agent"}, reloadGroupElements);
-    agent_table_refresh();
-}
-
-function reloadGroupElements(data) {
-    let gp_elem = $("#queueGroup");
-    gp_elem.empty();
-    gp_elem.append("<option value=\"\" disabled selected>Group</option>");
-    $.each(data, function(index, agent) {
-        if(!gp_elem.find('option[value="'+ agent['group'] +'"]').length > 0) {
-            gp_elem.append("<option id='qgroup-" + agent['group'] + "' value='" + agent['group'] + "'>" + agent['group'] + "</option>");
-        }
-    });
 }
 
 function parseSleep(sleep){
@@ -255,6 +122,15 @@ function parseSleep(sleep){
         return result.reverse();
     }
     return [];
+}
+
+function showAgentInfo(paw){
+    function agentInfoCallback(data){
+        let parent = $('#agent-modal');
+        parent.find('#details').text(JSON.stringify(data[0], null, 4));
+        parent.show();
+    }
+    restRequest('POST', {'index':'agent','paw':paw}, agentInfoCallback)
 }
 
 function doNothing() {}
@@ -1294,13 +1170,6 @@ function openDuk3(){
     $('#duk-text').text('Did you know... You can click the ' +
         'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
         'facts which were learned from executing the step.');
-}
-
-function openDuk4(){
-    document.getElementById("duk-modal").style.display="block";
-    $('#duk-text').text('Did you know... The default agent is ' +
-        'called 54ndc47 (sandcat) and can be found in the plugins section. 54ndc47 is a multi-platform agent which ' +
-        'can be deployed by just pasting a 1-line command into a terminal.');
 }
 
 function openDuk5(){

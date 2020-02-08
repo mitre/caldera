@@ -106,7 +106,7 @@ select {
 .button-row {
     color: white;
     border-radius: 4px;
-    background-color: green;
+    background-color: darkgreen;
     margin:0;
 }
 .button-success,
@@ -125,6 +125,10 @@ select {
     border: none;
     margin: 5px;
     cursor: pointer;
+}
+.button-orange {
+    background-color: orange;
+    margin: 5px;
 }
 .button-success {
     background-color: green;
@@ -375,18 +379,15 @@ p[onclick] {
 .obfuscation-table {
     color: white;
     width: 100%;
-    border-spacing: 15px;
+    border-spacing: 5px;
 }
 .obfuscation-table img {
     height: 18px;
     margin: 5px;
 }
-.obfuscation-table button {
-    background-color: green;
-    height: 40px;
-    width: 50%;
+.obfuscation-table input {
+    background-color: inherit;
     color: white;
-    margin: 10px;
 }
 .watermark {
     position: fixed;
@@ -438,4 +439,7 @@ p[onclick] {
 .column-simple .inner-box table tr td p {
     padding: 0;
     margin: 0;
+}
+.control-width select {
+    max-width: 30%;
 }
