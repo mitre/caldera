@@ -86,6 +86,9 @@ select {
 span {
     color: white;
 }
+code {
+    color: white;
+}
 .row {
     margin-top:50px;
     text-align:center;

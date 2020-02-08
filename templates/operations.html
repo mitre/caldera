@@ -433,16 +433,17 @@
                         title = title + " (CLEANUP)"
                     }
                     let agentPaw = OPERATION.chain[i].paw;
+                    let linkId = OPERATION.chain[i].unique;
                     template.attr("id", "op_id_" + OPERATION.chain[i].id);
                     template.attr("operation", OPERATION.id);
                     template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
                     template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                         'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                        'onclick="findResults(this, OPERATION.chain['+i+'].unique)"' +
+                        'onclick="findResults(this,'+linkId+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -2)">&#x274C;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus(OPERATION.chain['+i+'].unique, -3)">&#x002B;</span></div>');
+                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus('+linkId+', -2)">&#x274C;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus('+linkId+', -3)">&#x002B;</span></div>');
                     refreshUpdatableFields(OPERATION.chain[i], template);
 
                     template.insertAfter("#time-start");
@@ -606,20 +607,19 @@
     }
 
     function findResults(elem, link_id){
+        function loadResults(data){
+            if (data) {
+                let res = atob(data.output);
+                $.each(data.link.facts, function (k, v) {
+                    let regex = new RegExp(v.value, "g");
+                    res = res.replace(regex, "<span class='highlight'>" + v.value + "</span>");
+                });
+                $('#resultView').html(res);
+            }
+        }
         document.getElementById('more-modal').style.display='block';
         $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
         restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
-    }
-
-    function loadResults(data){
-        if (data) {
-            let res = atob(data.output);
-            $.each(data.link.facts, function (k, v) {
-                let regex = new RegExp(v.value, "g");
-                res = res.replace(regex, "<span class='highlight'>" + v.value + "</span>");
-            });
-            $('#resultView').html(res);
-        }
     }
 
     function downloadOperationReport() {
