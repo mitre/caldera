@@ -93,7 +93,7 @@
                   <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
               </div>
               <br>
-              <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGroups()">Save changes</button>
+              <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
             </div>
             <div class="column" style="flex:75%">
               <table id="netTbl" class="display obfuscation-table" style="width:100%;table-layout: fixed" >
@@ -101,10 +101,9 @@
                 <tr>
                   <th>PAW</th>
                   <th>Host</th>
-                  <th>Last Seen</th>
-                  <th>Watchdog</th>
-                  <th>Sleep</th>
-                  <th>Group</th>
+                  <th>Contact</th>
+                  <th>PID</th>
+                  <th>Privilege</th>
                   <th></th>
                 </tr>
                 </thead>
@@ -112,14 +111,13 @@
                         <tr id="row-{{ a.paw }}">
                             <td>{{ a.paw }}</td>
                             <td><p id="{{ a.paw }}-host">{{ a.host }}</p></td>
+                            <td><p>{{ a.contact }}</p></td>
                             {% if a.trusted %}
-                                <td><button id="{{ a.paw }}-lastseen" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                                <td><button id="{{ a.paw }}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.pid }}</button></td>
                             {% else %}
-                                <td><button id="{{ a.paw }}-lastseen" class="button-row maroon" onclick="showAgentInfo('{{ a.paw }}')">{{ a.last_seen }}</button></td>
+                                <td><button id="{{ a.paw }}-pid" class="button-row maroon" onclick="showAgentInfo('{{ a.paw }}')">{{ a.pid }}</button></td>
                             {% endif %}
-                            <td><input id="{{ a.paw }}-watchdog" type="text" value="{{ a.watchdog }}"/></td>
-                            <td><input id="{{ a.paw }}-sleep" type="text" value="{{ a.sleep_min }} / {{ a.sleep_max }}"/></td>
-                            <td><input id="{{ a.paw }}-group" type="text" value="{{ a.group }}"/></td>
+                            <td><p>{{ a.privilege }}</p></td>
                             <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
                         </tr>
                     {% endfor %}
@@ -569,7 +567,69 @@
             <form class="modal-content">
                 <div class="container section-profile row ability-viewer modal-box">
                     <div class="column" style="flex:100%;">
-                        <pre id="details" style="background-color: inherit;border:none;text-align:left"></pre>
+                        <h3 id="modal-paw"></h3>
+                        <p style="font-size: 11px">* Property can be updated</p>
+                        <hr>
+                        <table class="obfuscation-table" border=1 frame=void rules=rows>
+                            <tr>
+                                <td>Contact</td>
+                                <td><p id="modal-contact"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Host</td>
+                                <td><p id="modal-host"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Privilege</td>
+                                <td><p id="modal-privilege"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Last seen</td>
+                                <td><p id="modal-last_seen"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Group *</td>
+                                <td><input id="modal-group" style="text-align: left"/></td>
+                            </tr>
+                            <tr>
+                                <td>Sleep *</td>
+                                <td><input id="modal-sleep" style="text-align: left"/></td>
+                            </tr>
+                            <tr>
+                                <td>Watchdog *</td>
+                                <td><input id="modal-watchdog" style="text-align: left"/></td>
+                            </tr>
+                            <tr>
+                                <td>Architecture</td>
+                                <td><p id="modal-architecture"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Platform</td>
+                                <td><p id="modal-platform"></p></td>
+                            </tr>
+                            <tr>
+                                <td>PID</td>
+                                <td><p id="modal-pid"></p></td>
+                            </tr>
+                            <tr>
+                                <td>PPID</td>
+                                <td><p id="modal-ppid"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Executable name</td>
+                                <td><p id="modal-exe_name"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Location</td>
+                                <td><p id="modal-location"></p></td>
+                            </tr>
+                            <tr>
+                                <td>Executors</td>
+                                <td><p id="modal-executors"></p></td>
+                            </tr>
+                        </table>
+                        <br>
+                        <button class="button-row" onclick="updateAgent()">Save</button>
                     </div>
                 <div class="imgcontainer">
                     <span onclick="document.getElementById('agent-modal').style.display='none'" class="close" title="Close Modal">&times;</span>

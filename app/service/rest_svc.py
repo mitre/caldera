@@ -130,10 +130,11 @@ class RestService(BaseService):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
-        await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
             await agent.gui_modification(**data)
             return agent.display
+        else:
+            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
 
     async def update_chain_data(self, data):
         link = await self.get_service('app_svc').find_link(data.pop('link_id'))
