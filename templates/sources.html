@@ -99,6 +99,30 @@
 </li>
 
 <script>
+    let refresher = setInterval(refresh, 15000);
+    console.log('sources refresh on');
+    $('.section-profile').bind('destroyed', function() {
+        console.log('sources refresh off');
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function sourceCallback(data){
+            data.forEach(function(s) {
+                let found = false;
+                $("#profile-source-name > option").each(function() {
+                    if($(this).val() === s.id) {
+                        found = true;
+                    }
+                });
+                if(!found){
+                    $('#profile-source-name').append('<option value="'+s.id+'">'+s.name+'</option>');
+                }
+            });
+        }
+        restRequest('POST', {'index':'source'}, sourceCallback, '/plugin/chain/full');
+    }
+
     function toggleSourceView() {
         $('#viewSource').toggle();
         $('#addSource').toggle();

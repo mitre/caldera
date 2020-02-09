@@ -84,6 +84,10 @@ function doNothing() {}
   }
 })(jQuery);
 
+function stream(msg){
+    $('#streamer').text(msg);
+}
+
 function viewSection(name, address){
     function display(data) {
         let plugin = $($.parseHTML(data, keepScripts=true));

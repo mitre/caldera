@@ -79,3 +79,16 @@
 .subnav-right:hover .subnav-content {
   display: block;
 }
+.footer {
+   position: fixed;
+   left: 0;
+   bottom: 0;
+   width: 100%;
+   background-color: #750b20;
+   color: white;
+   text-align: center;
+}
+.footer p {
+  font-size:14px;
+  margin:5px;
+}
