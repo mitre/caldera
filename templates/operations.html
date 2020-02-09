@@ -123,9 +123,6 @@
               <button id="scheduleBtn" type="button" style="opacity:0.5;width:40%;border-radius:0;" disabled="true"
               class="button-notready atomic-button" onclick="handleScheduleAction()">Schedule
                 </button>
-              <div id="operation-flash">
-                  <span id="message"></span>
-              </div>
           </div>
 
           <br>
@@ -286,9 +283,7 @@
 </li>
 <script>
     let refresher = setInterval(refresh, 10000);
-    console.log('operation refresh on');
     $('.section-profile').bind('destroyed', function() {
-        console.log('operation refresh off');
         clearInterval(refresher);
     });
 
@@ -339,7 +334,7 @@
         let hour = parseInt(document.getElementById("schedule-hour").value);
         let minute = parseInt(document.getElementById("schedule-minute").value);
         restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule': {'hour': hour, 'minute': minute}}, doNothing);
-        flashy('operation-flash', 'Operation scheduled!');
+        stream('New operation scheduled!');
     }
 
     function buildOperationObject() {

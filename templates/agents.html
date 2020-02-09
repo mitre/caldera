@@ -127,12 +127,10 @@
 
 <script>
     let refresher = setInterval(refresh, 10000);
-    console.log('agent refresh on');
     $('.section-profile').bind('destroyed', function() {
-        console.log('agent refresh off');
         clearInterval(refresher);
     });
-    
+
     function refresh(){
         function updateTbl(data){
             $('#agent-cnt').text(data.length);
@@ -142,7 +140,9 @@
                     let paw = $(this).attr('id');
                     if(a.paw === paw) {
                         //update existing row
-                        if(!a.trusted) { $('#'+paw+'-pid').addClass('maroon');}
+                        if(!a.trusted) {
+                            $('#'+paw+'-pid').addClass('maroon');
+                        }
                         found = true;
                     }
                 });

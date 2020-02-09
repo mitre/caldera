@@ -25,10 +25,6 @@
                 <option value="{{ s.id }}">{{ s.name }}</option>
             {% endfor %}}
           </select>
-          <br>
-          <div id="flashy-source">
-            <span id="message"></span>
-          </div>
       </div>
       <div id="addSource"></div>
       <button id="sourceBtn" type="button" class="button-success atomic-button"
@@ -160,7 +156,7 @@
 
     function saveSource(){
         function saveSourceCallback(data) {
-            flashy('flashy-source', 'New fact source saved!');
+            stream('New fact source saved!');
         }
         let source = $('#source-name');
         let name = source.text();
