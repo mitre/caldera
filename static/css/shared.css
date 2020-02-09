@@ -1,4 +1,15 @@
+:root {
+    --default-font: 'Veranda', sans-serif;
+    --theme-color: white;
+    --primary-background: #1e1e1e;
+    --secondary-background: #666;
+    --section-background: #333;
+    --font-color: white;
+    --invert-percentage: 100%;
+}
 body {
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;
     transition: 0.7s opacity;
@@ -84,7 +95,7 @@ pre {
 .row {
     margin-top:50px;
     text-align:center;
-    background-color: var(--navbar-background);
+    background-color: var(--section-background);
     padding:25px;
     border-radius:25px;
     width: 95%;
