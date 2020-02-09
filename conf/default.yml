@@ -6,7 +6,10 @@ plugins:
   - compass
   - terminal
 users:
-  admin: admin
+  red:
+    admin: admin
+  blue:
+    blue: admin
 api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp

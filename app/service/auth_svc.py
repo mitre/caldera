@@ -18,7 +18,29 @@ def check_authorization(func):
         return await func(*args, **params)
 
     async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions(args[1])
+        await args[0].auth_svc.check_permissions('admin', args[1])
+        result = await process(func, *args, **params)
+        return result
+    return helper
+
+
+def red_authorization(func):
+    async def process(func, *args, **params):
+        return await func(*args, **params)
+
+    async def helper(*args, **params):
+        await args[0].auth_svc.check_permissions('red', args[1])
+        result = await process(func, *args, **params)
+        return result
+    return helper
+
+
+def blue_authorization(func):
+    async def process(func, *args, **params):
+        return await func(*args, **params)
+
+    async def helper(*args, **params):
+        await args[0].auth_svc.check_permissions('blue', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
@@ -35,13 +57,14 @@ class AuthService(BaseService):
     async def apply(self, app, users):
         """
         Set up security on server boot
-
         :param app:
         :param users:
         :return: None
         """
-        for k, v in users.items():
-            self.user_map[k] = self.User(k, v, ('admin', 'user'),)
+        for group, u in users.items():
+            for k, v in u.items():
+                self.user_map[k] = self.User(k, v, (group, 'admin'), )
+        self.log.debug('Created %d authentication groups' % len(users))
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
@@ -54,7 +77,6 @@ class AuthService(BaseService):
     async def logout_user(request):
         """
         Log the user out
-
         :param request:
         :return: None
         """
@@ -64,7 +86,6 @@ class AuthService(BaseService):
     async def login_user(self, request):
         """
         Log a user in and save the session
-
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
@@ -77,10 +98,9 @@ class AuthService(BaseService):
             return response
         raise web.HTTPFound('/login')
 
-    async def check_permissions(self, request):
+    async def check_permissions(self, group, request):
         """
         Check if a request is allowed based on the user permissions
-
         :param request:
         :return: None
         """
@@ -89,7 +109,7 @@ class AuthService(BaseService):
                 return True
             elif 'localhost:' in request.host:
                 return True
-            await check_permission(request, 'admin')
+            await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
 
