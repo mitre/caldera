@@ -1,7 +1,5 @@
 .home-box {
     border-radius: 25px;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
 }
 .big-head {
     margin-bottom: -20px;
