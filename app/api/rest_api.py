@@ -54,8 +54,8 @@ class RestApi(BaseWorld):
     @red_authorization
     async def red_landing(self, request):
         try:
-            plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            return dict(plugins=plugins)
+            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
+            return dict(plugins=[p.display for p in plugins])
         except web.HTTPFound as e:
             raise e
         except Exception as e:
@@ -65,7 +65,8 @@ class RestApi(BaseWorld):
     @blue_authorization
     async def blue_landing(self, request):
         try:
-            return dict()
+            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('blue', 'app')))
+            return dict(plugins=[p.display for p in plugins])
         except web.HTTPFound as e:
             raise e
         except Exception as e:
