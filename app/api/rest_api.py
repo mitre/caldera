@@ -167,7 +167,6 @@ class RestApi(BaseWorld):
     @check_authorization
     async def rest_core(self, request):
         """
-        This function is under construction until all objects have been converted from SQL tables
         :param request:
         :return:
         """

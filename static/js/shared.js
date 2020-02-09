@@ -74,21 +74,29 @@ function uuidv4() {
 
 function doNothing() {}
 
+(function($){
+  $.event.special.destroyed = {
+    remove: function(o) {
+      if (o.handler) {
+        o.handler()
+      }
+    }
+  }
+})(jQuery);
+
 function viewSection(name, address){
     function display(data) {
         let plugin = $($.parseHTML(data, keepScripts=true));
         $('#section-container').append('<div id="section-'+name+'"></div>');
         let newSection = $('#section-'+name);
         newSection.html(plugin);
-        $('html, body').animate({
-            scrollTop: newSection.offset().top
-        }, 1000);
+        $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
     }
     restRequest('GET', null, display, address);
 }
 
 function removeSection(identifier){
-    $('#'+identifier).hide();
+    $('#'+identifier).remove();
 }
 
 function toggleSidebar(identifier) {

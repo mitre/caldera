@@ -8,7 +8,8 @@
   --invert-percentage: 100%;
 }
 body {
-    background-color: var(--primary-background);
+    background-image: url('/gui/img/background.jpg');
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;

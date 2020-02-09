@@ -1,7 +1,7 @@
 .navbar-buffer {
   position:fixed;
   width:100%;
-  top:5px;
+  top:0;
   z-index:1001;
   right:5px;
   left:5px;
