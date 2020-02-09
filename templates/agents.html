@@ -135,7 +135,7 @@
     
     function refresh(){
         function updateTbl(data){
-            $('#agent-cnt').val(data.length);
+            $('#agent-cnt').text(data.length);
             data.forEach(function(a) {
                 let found = false;
                 $("#agent-table tr").each(function () {
@@ -147,7 +147,7 @@
                     }
                 });
                 if(!found) {
-                    //add new row
+                    stream('new agent beacon: '+a.paw);
                     $('#agent-table tr:last').after(
                         '<tr id="'+a.paw+'">' +
                             '<td><p>'+a.paw+'</p></td>' +
