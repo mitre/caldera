@@ -160,7 +160,7 @@ class ContactService(BaseService):
                 abilities.append(a)
         instructions = []
         for i in await agent.capabilities(abilities):
-            new_id = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
+            new_id = 'boot-%s-%s' % (agent.paw, self.generate_name(size=4))
             cmd = self.encode_string(agent.replace(i.test))
             instructions.append(Instruction(command=cmd, link_id=new_id, executor=i.executor))
         return instructions

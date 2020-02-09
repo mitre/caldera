@@ -1,17 +1,5 @@
-// check user prefs
-const currentTheme = localStorage.getItem('theme') ? localStorage.getItem('theme') : null;
-if (currentTheme) {
-    document.documentElement.setAttribute('data-theme', currentTheme);
-}
+/* HELPFUL functions to call */
 
-//check browser
-window.onload = function checkBrowser(){
-    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
-        $('#notice').css('display', 'block');
-    }
-};
-
-// AJAX caller
 function restRequest(type, data, callback, endpoint='/plugin/chain/rest') {
     $.ajax({
        url: endpoint,
@@ -23,16 +11,15 @@ function restRequest(type, data, callback, endpoint='/plugin/chain/rest') {
     });
 }
 
-// form validation
 function validateFormState(conditions, selector){
     (conditions) ?
         updateButtonState(selector, 'valid') :
         updateButtonState(selector, 'invalid');
 }
 
-// download report
 function downloadReport(endpoint, filename, data={}) {
     function downloadObjectAsJson(data){
+        stream('Downloading report: '+filename);
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         let downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
@@ -50,16 +37,6 @@ function updateButtonState(selector, state) {
         $(selector).attr('class','button-notready atomic-button');
 }
 
-// flashy function
-function flashy(elem, message) {
-    let flash = $('#'+elem);
-    flash.find('#message').text(message);
-    flash.delay(100).fadeIn('normal', function() {
-        $(this).delay(3000).fadeOut();
-    });
-    flash.find('#message').text(message);
-}
-
 function showHide(show, hide) {
     $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
@@ -72,24 +49,20 @@ function uuidv4() {
   });
 }
 
+function stream(msg){
+    //$('#streamer').text(msg);
+    $("#streamer").fadeOut(function() {
+      $(this).text(msg).fadeIn(1000);
+    });
+}
+
 function doNothing() {}
 
-(function($){
-  $.event.special.destroyed = {
-    remove: function(o) {
-      if (o.handler) {
-        o.handler()
-      }
-    }
-  }
-})(jQuery);
-
-function stream(msg){
-    $('#streamer').text(msg);
-}
+/* SECTIONS */
 
 function viewSection(name, address){
     function display(data) {
+        stream('Auto-refresh ON for '+name+' section');
         let plugin = $($.parseHTML(data, keepScripts=true));
         $('#section-container').append('<div id="section-'+name+'"></div>');
         let newSection = $('#section-'+name);
@@ -100,6 +73,7 @@ function viewSection(name, address){
 }
 
 function removeSection(identifier){
+    stream('Auto-refresh OFF for '+identifier+' section');
     $('#'+identifier).remove();
 }
 
@@ -111,17 +85,7 @@ function toggleSidebar(identifier) {
         sidebar.show();
     }
 }
-
-function alphabetize_dropdown(obj) {
-    let selected_val = $(obj).children("option:selected").val();
-    let disabled = $(obj).find('option:disabled');
-    let opts_list = $(obj).find('option:enabled').clone(true);
-    opts_list.sort(function (a, b) {
-        return a.text.toLowerCase() == b.text.toLowerCase() ? 0 : a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
-    });
-    $(obj).empty().append(opts_list).prepend(disabled);
-    obj.val(selected_val);
-}
+/* AUTOMATIC functions for all pages */
 
 $(document).ready(function () {
     $(document).find("select").each(function () {
@@ -136,3 +100,35 @@ $(document).ready(function () {
         }
     });
 });
+
+function alphabetize_dropdown(obj) {
+    let selected_val = $(obj).children("option:selected").val();
+    let disabled = $(obj).find('option:disabled');
+    let opts_list = $(obj).find('option:enabled').clone(true);
+    opts_list.sort(function (a, b) {
+        return a.text.toLowerCase() == b.text.toLowerCase() ? 0 : a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
+    });
+    $(obj).empty().append(opts_list).prepend(disabled);
+    obj.val(selected_val);
+}
+
+(function($){
+  $.event.special.destroyed = {
+    remove: function(o) {
+      if (o.handler) {
+        o.handler()
+      }
+    }
+  }
+})(jQuery);
+
+window.onload = function checkBrowser(){
+    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
+        $('#notice').css('display', 'block');
+    }
+};
+
+const currentTheme = localStorage.getItem('theme') ? localStorage.getItem('theme') : null;
+if (currentTheme) {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+}

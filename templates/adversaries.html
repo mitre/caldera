@@ -28,9 +28,6 @@
           <button class="button-embedded" onclick="addPhase(null)">Add phase</button>
       </div>
       <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
-      <div id="adv-flashy-holder">
-        <span id="message"></span>
-      </div>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
         <input id="profile-goal" type="text" placeholder="enter an adversary name">
@@ -306,7 +303,7 @@
     }
 
     function saveAdversaryCallback(data) {
-        flashy('adv-flashy-holder', 'Adversary saved!');
+        stream('Adversary saved!');
         appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'view-'+data[0].adversary_id);
         appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
     }
@@ -354,7 +351,7 @@
     }
 
     function saveAbilityCallback(data) {
-        flashy('ability-flashy-holder', 'Ability saved!');
+        stream('Ability saved!');
         let options = $('#phase-modal').find('#ability-ability-filter');
         let ability = options.find(":selected").data('ability');
         if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
