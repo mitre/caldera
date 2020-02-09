@@ -31,6 +31,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/section/obfuscators', self.section_obfuscators)
         self.app_svc.application.router.add_route('GET', '/section/configurations', self.section_configurations)
         # unauthorized GUI endpoints
+        self.app_svc.application.router.add_route('*', '/', self.check_landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
@@ -49,6 +50,19 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
+
+    async def check_landing(self, request):
+        try:
+            await self.red_landing(request)
+            return web.HTTPFound(location='/red')
+        except web.HTTPFound:
+            try:
+                await self.blue_landing(request)
+                return web.HTTPFound(location='/blue')
+            except web.HTTPFound as e:
+                raise e
+        except Exception as e:
+            logging.error('[!] landing: %s' % e)
 
     @template('red.html')
     @red_authorization
