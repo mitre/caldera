@@ -6,8 +6,12 @@ function restRequest(type, data, callback, endpoint='/plugin/chain/rest') {
        type: type,
        contentType: 'application/json',
        data: JSON.stringify(data),
-       success: function(data, status, options) { callback(data); },
-       error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
+       success: function(data, status, options) {
+           callback(data);
+       },
+       error: function (xhr, ajaxOptions, thrownError) {
+           stream(thrownError);
+       }
     });
 }
 
@@ -50,7 +54,6 @@ function uuidv4() {
 }
 
 function stream(msg){
-    //$('#streamer').text(msg);
     $("#streamer").fadeOut(function() {
       $(this).text(msg).fadeIn(1000);
     });
