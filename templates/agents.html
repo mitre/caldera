@@ -126,10 +126,14 @@
 </div>
 
 <script>
-
-    setInterval(agentRefresh, 5000);
-
-    function agentRefresh(){
+    let refresher = setInterval(refresh, 10000);
+    console.log('agent refresh on');
+    $('.section-profile').bind('destroyed', function() {
+        console.log('agent refresh off');
+        clearInterval(refresher);
+    });
+    
+    function refresh(){
         function updateTbl(data){
             $('#agent-cnt').val(data.length);
             data.forEach(function(a) {

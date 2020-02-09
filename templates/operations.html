@@ -285,7 +285,12 @@
   </div>
 </li>
 <script>
-    let atomic_interval = null;
+    let refresher = setInterval(refresh, 10000);
+    console.log('operation refresh on');
+    $('.section-profile').bind('destroyed', function() {
+        console.log('operation refresh off');
+        clearInterval(refresher);
+    });
 
     $(document).ready(function(){
         $("#optional").click(function(){
@@ -454,21 +459,15 @@
                     refreshUpdatableFields(OPERATION.chain[i], existing);
                 }
             }
-            if(OPERATION.finish !== '') {
-                clearInterval(atomic_interval);
-                atomic_interval = null;
-            } else {
-                if(!atomic_interval) {
-                    atomic_interval = setInterval(refresh, 5000);
-                }
-            }
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
-        if (selectedOperationId != null){
-            $('.op-selected').css('visibility', 'visible');
+        if(selectedOperationId !== '') {
+            let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
+            if (selectedOperationId != null){
+                $('.op-selected').css('visibility', 'visible');
+            }
+            restRequest('POST', postData, operationCallback, '/plugin/chain/full');
         }
-        restRequest('POST', postData, operationCallback, '/plugin/chain/full');
     }
 
     function applyOperationAgents(operation) {
