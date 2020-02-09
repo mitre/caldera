@@ -8,7 +8,7 @@
 }
 .navbar {
   overflow: hidden;
-  background-color: #750b20;
+  background-color: var(--navbar-color);
   border-bottom: 2px solid white;
   width: 100%;
 }
@@ -84,7 +84,7 @@
    left: 0;
    bottom: 0;
    width: 100%;
-   background-color: #750b20;
+   background-color: var(--navbar-color);
    color: white;
    text-align: center;
 }

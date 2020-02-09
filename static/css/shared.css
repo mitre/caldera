@@ -1,14 +1,13 @@
 :root {
-  --default-font: 'Veranda', sans-serif;
-  --theme-color: white;
-  --primary-background: #1e1e1e;
-  --secondary-background: #666;
-  --navbar-background: #333;
-  --font-color: white;
-  --invert-percentage: 100%;
+    --default-font: 'Veranda', sans-serif;
+    --theme-color: white;
+    --primary-background: #1e1e1e;
+    --secondary-background: #666;
+    --section-background: #333;
+    --font-color: white;
+    --invert-percentage: 100%;
 }
 body {
-    background-image: url('/gui/img/background.jpg');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     font-family: var(--default-font);
@@ -96,7 +95,7 @@ pre {
 .row {
     margin-top:50px;
     text-align:center;
-    background-color: var(--navbar-background);
+    background-color: var(--section-background);
     padding:25px;
     border-radius:25px;
     width: 95%;
@@ -236,7 +235,8 @@ p[onclick] {
 .advanced {
     background-color: #0d0d0d;
 }
-.section-profile {}
+.section-profile {
+}
 
 .section-border {
     border-right: .5px var(--font-color) solid;
