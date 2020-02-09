@@ -1,11 +1,12 @@
 import binascii
 import string
+import os
+import yaml
+
 from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
 from random import randint, choice
-
-import yaml
 
 from app.utility.logger import Logger
 
@@ -86,3 +87,12 @@ class BaseWorld:
             return True
         except binascii.Error:
             return False
+
+    @staticmethod
+    async def walk_file_path(path, target):
+        for root, dirs, files in os.walk(path):
+            if target in files:
+                return os.path.join(root, target)
+            if '%s.xored' % target in files:
+                return os.path.join(root, '%s.xored' % target)
+        return None
