@@ -18,7 +18,7 @@ def check_authorization(func):
         return await func(*args, **params)
 
     async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('admin', args[1])
+        await args[0].auth_svc.check_permissions('app', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
@@ -63,7 +63,7 @@ class AuthService(BaseService):
         """
         for group, u in users.items():
             for k, v in u.items():
-                self.user_map[k] = self.User(k, v, (group, 'admin'), )
+                self.user_map[k] = self.User(k, v, (group, 'app'), )
         self.log.debug('Created %d authentication groups' % len(users))
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
@@ -90,9 +90,9 @@ class AuthService(BaseService):
         :return: the response/location of where the user is trying to navigate
         """
         data = await request.post()
-        response = web.HTTPFound('/')
-        verified = await self._check_credentials(
+        verified, redirect = await self._check_credentials(
             request.app.user_map, data.get('username'), data.get('password'))
+        response = web.HTTPFound('/%s' % redirect)
         if verified:
             await remember(request, response, data.get('username'))
             return response
@@ -120,7 +120,7 @@ class AuthService(BaseService):
         user = user_map.get(username)
         if not user:
             return False
-        return user.password == password
+        return user.password == password, user.permissions[0]
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):

@@ -5,7 +5,7 @@ import uuid
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.service.auth_svc import check_authorization
+from app.service.auth_svc import check_authorization, blue_authorization, red_authorization
 from app.utility.base_world import BaseWorld
 
 
@@ -23,7 +23,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # authorized sections
         self.app_svc.application.router.add_route('GET', '/section/agents', self.section_agent)
-        self.app_svc.application.router.add_route('GET', '/section/adversaries', self.section_adversaries)
+        self.app_svc.application.router.add_route('GET', '/section/profiles', self.section_profiles)
         self.app_svc.application.router.add_route('GET', '/section/operations', self.section_operations)
         self.app_svc.application.router.add_route('GET', '/section/sources', self.section_sources)
         self.app_svc.application.router.add_route('GET', '/section/planners', self.section_planners)
@@ -35,7 +35,8 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/', self.landing)
+        self.app_svc.application.router.add_route('*', '/red', self.red_landing)
+        self.app_svc.application.router.add_route('*', '/blue', self.blue_landing)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
@@ -49,6 +50,27 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
+    @template('red.html')
+    @red_authorization
+    async def red_landing(self, request):
+        try:
+            plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
+            return dict(plugins=plugins)
+        except web.HTTPFound as e:
+            raise e
+        except Exception as e:
+            logging.error('[!] landing: %s' % e)
+
+    @template('blue.html')
+    @blue_authorization
+    async def blue_landing(self, request):
+        try:
+            return dict()
+        except web.HTTPFound as e:
+            raise e
+        except Exception as e:
+            logging.error('[!] landing: %s' % e)
+
     @check_authorization
     @template('agents.html')
     async def section_agent(self, request):
@@ -56,8 +78,8 @@ class RestApi(BaseWorld):
         return dict(agents=agents)
 
     @check_authorization
-    @template('adversaries.html')
-    async def section_adversaries(self, request):
+    @template('profiles.html')
+    async def section_profiles(self, request):
         abilities = await self.data_svc.locate('abilities')
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
@@ -116,17 +138,6 @@ class RestApi(BaseWorld):
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
-
-    @template('home.html')
-    @check_authorization
-    async def landing(self, request):
-        try:
-            plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            return dict(plugins=plugins)
-        except web.HTTPFound as e:
-            raise e
-        except Exception as e:
-            logging.error('[!] landing: %s' % e)
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
