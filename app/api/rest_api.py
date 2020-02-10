@@ -1,4 +1,3 @@
-import logging
 import traceback
 import uuid
 
@@ -31,13 +30,11 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/section/obfuscators', self.section_obfuscators)
         self.app_svc.application.router.add_route('GET', '/section/configurations', self.section_configurations)
         # unauthorized GUI endpoints
-        self.app_svc.application.router.add_route('*', '/', self.check_landing)
+        self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/red', self.red_landing)
-        self.app_svc.application.router.add_route('*', '/blue', self.blue_landing)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
@@ -51,40 +48,22 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
-    async def check_landing(self, request):
-        try:
-            await self.red_landing(request)
-            return web.HTTPFound(location='/red')
-        except web.HTTPFound:
-            try:
-                await self.blue_landing(request)
-                return web.HTTPFound(location='/blue')
-            except web.HTTPFound as e:
-                raise e
-        except Exception as e:
-            logging.error('[!] landing: %s' % e)
-
-    @template('red.html')
-    @red_authorization
-    async def red_landing(self, request):
-        try:
-            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
-            return dict(plugins=[p.display for p in plugins])
-        except web.HTTPFound as e:
-            raise e
-        except Exception as e:
-            logging.error('[!] landing: %s' % e)
-
-    @template('blue.html')
-    @blue_authorization
-    async def blue_landing(self, request):
-        try:
+    async def landing(self, request):
+        @blue_authorization
+        @template('blue.html')
+        async def blue(s, r):
             plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('blue', 'app')))
             return dict(plugins=[p.display for p in plugins])
-        except web.HTTPFound as e:
-            raise e
-        except Exception as e:
-            logging.error('[!] landing: %s' % e)
+
+        @red_authorization
+        @template('red.html')
+        async def red(s, r):
+            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
+            return dict(plugins=[p.display for p in plugins])
+        try:
+            return await red(self, request)
+        except web.HTTPFound:
+            return await blue(self, request)
 
     @check_authorization
     @template('agents.html')

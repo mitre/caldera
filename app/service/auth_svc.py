@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
-from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
+from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget, permits
 from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
@@ -90,9 +90,8 @@ class AuthService(BaseService):
         :return: the response/location of where the user is trying to navigate
         """
         data = await request.post()
-        verified, redirect = await self._check_credentials(
-            request.app.user_map, data.get('username'), data.get('password'))
-        response = web.HTTPFound('/%s' % redirect)
+        verified = await self._check_credentials(request.app.user_map, data.get('username'), data.get('password'))
+        response = web.HTTPFound('/')
         if verified:
             await remember(request, response, data.get('username'))
             return response
@@ -113,6 +112,10 @@ class AuthService(BaseService):
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
 
+    @staticmethod
+    async def red(request):
+        return await permits(request, 'red')
+
     """ PRIVATE """
 
     async def _check_credentials(self, user_map, username, password):
@@ -120,7 +123,7 @@ class AuthService(BaseService):
         user = user_map.get(username)
         if not user:
             return False
-        return user.password == password, user.permissions[0]
+        return user.password == password
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
