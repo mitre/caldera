@@ -56,21 +56,22 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
-    @check_authorization
-    async def landing(self, request):
+    async def get_endpoint_by_access(self, request, endpoint):
         allowed = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
         for a in allowed:
             try:
-                return await self.modules[a]['landing'](self, request)
+                return await self.modules[a][endpoint](self, request)
             except Exception as e:
                 self.log.debug(e)
         return await self.login(request)
 
     @check_authorization
-    @template('agents.html')
+    async def landing(self, request):
+        return await self.get_endpoint_by_access(request, 'landing')
+
+    @check_authorization
     async def section_agent(self, request):
-        agents = [h.display for h in await self.data_svc.locate('agents')]
-        return dict(agents=agents)
+        return await self.get_endpoint_by_access(request, 'section_agent')
 
     @check_authorization
     @template('profiles.html')
