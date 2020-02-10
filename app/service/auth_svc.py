@@ -90,9 +90,8 @@ class AuthService(BaseService):
         :return: the response/location of where the user is trying to navigate
         """
         data = await request.post()
-        verified, redirect = await self._check_credentials(
-            request.app.user_map, data.get('username'), data.get('password'))
-        response = web.HTTPFound('/%s' % redirect)
+        verified = await self._check_credentials(request.app.user_map, data.get('username'), data.get('password'))
+        response = web.HTTPFound('/')
         if verified:
             await remember(request, response, data.get('username'))
             return response
@@ -120,7 +119,7 @@ class AuthService(BaseService):
         user = user_map.get(username)
         if not user:
             return False
-        return user.password == password, user.permissions[0]
+        return user.password == password
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
