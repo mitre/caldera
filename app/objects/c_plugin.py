@@ -21,6 +21,7 @@ class Plugin(BaseObject):
         self.description = None
         self.address = None
         self.enabled = False
+        self.authentication = None
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -36,6 +37,7 @@ class Plugin(BaseObject):
             plugin = self._load_module()
             self.description = plugin.description
             self.address = plugin.address
+            self.authentication = getattr(self._load_module(), 'authentication', 'app')
             return True
         except Exception as e:
             logging.error('Error loading plugin=%s, %s' % (self.name, e))

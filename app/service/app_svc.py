@@ -30,19 +30,19 @@ class AppService(BaseService):
         :return: None
         """
         contact_svc = self.get_service('contact_svc')
-        next_check = contact_svc.agent_config.untrusted_timer
+        next_check = contact_svc.untrusted_timer
         try:
             while True:
                 await asyncio.sleep(next_check + 1)
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
-                next_check = contact_svc.agent_config.untrusted_timer
+                next_check = contact_svc.untrusted_timer
                 for a in trusted_agents:
                     silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
-                    if silence_time > (contact_svc.agent_config.untrusted_timer + int(a.sleep_max)):
+                    if silence_time > (contact_svc.untrusted_timer + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
                     else:
-                        trust_time_left = contact_svc.agent_config.untrusted_timer - silence_time
+                        trust_time_left = contact_svc.untrusted_timer - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)

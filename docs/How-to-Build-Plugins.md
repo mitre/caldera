@@ -34,43 +34,19 @@ Core services can be found in the app/services directory.
 
 ## Plugin examples
 
-Before we write our own plugin, let's look at a few initialize examples from existing plugins:
-
-### Stockpile
-```python 
-async def enable(services):
-    app = services.get('app_svc').application
-    file_svc = services.get('file_svc')
-    await file_svc.add_special_payload('mission.go', StockpileService(file_svc).dynamically_compile)
-
-    stockpile_api = StockpileApi(services)
-    data_svc = services.get('data_svc')
-    app.router.add_route('POST', '/stockpile/ability', stockpile_api.load_ability)
-    await data_svc.load_data(directory='plugins/stockpile/data')
-```
-
-The Stockpile plugin uses the data service to call load_database, passing a directory containing data to load.
+Before we write our own plugin, let's look at an example from an existing plugin:
 
 ### 54ndc47
 ```python
 async def enable(services):
     app = services.get('app_svc').application
     file_svc = services.get('file_svc')
-    await file_svc.add_special_payload('sandcat.go', SandService(file_svc).dynamically_compile)
-
-    cat_api = SandApi(services=services)
+    sand_svc = SandService(services)
+    await file_svc.add_special_payload('sandcat.go', sand_svc.dynamically_compile_executable)
+    await file_svc.add_special_payload('shared.go', sand_svc.dynamically_compile_library)
     cat_gui_api = SandGuiApi(services=services)
-    app.router.add_static('/sandcat', 'plugins/sandcat/static/', append_version=True)
-    app.router.add_static('/malicious', 'plugins/sandcat/static/malicious', append_version=True)
-    # cat
-    app.router.add_route('POST', '/sand/ping', cat_api.ping)
-    app.router.add_route('POST', '/sand/instructions', cat_api.instructions)
-    app.router.add_route('POST', '/sand/results', cat_api.results)
-    # gui
     app.router.add_route('GET', '/plugin/sandcat/gui', cat_gui_api.splash)
-    app.router.add_route('GET', '/plugin/sandcat/clone', cat_gui_api.clone_new_site)
-    app.router.add_route('GET', '/plugin/sandcat/malicious', cat_gui_api.malicious)
-
+    await sand_svc.install_gocat_extensions()
 ```
 
 The 54ndc47 plugin creates a new instance of a SandApi class (which is defined elsewhere in the plugin). It then attaches new REST API endpoints to the app parameter. These are the two endpoints that the agent itself uses to interact with CALDERA, the first one to beacon in on schedule, the second one to post results after running an ability. 
@@ -110,32 +86,23 @@ Now we have a usable plugin, but we want to make it more visually appealing.
 
 Start by creating a "templates" directory inside your plugin directory (abilities). Inside the templates directory, create a new file called abilities.html. Ensure the content looks like:
 ```html
-<html>
-<head>
-  <title>Abilities | Dashboard</title>
-  <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-  <link rel="stylesheet" href="/gui/css/shared.css">
-  <link rel="stylesheet" href="/gui/css/navbar.css">
-</head>
-<body>
-    <div class="topnav">
-      <a href="/">Home</a>
-      <a class="active" href="/plugin/abilities/gui">Abilities</a>
-      <div class="topnav-right">
-        <a href="/logout">Logout</a>
-      </div>
+<div id="abilities-new-section" class="section-profile">
+    <div class="row">
+        <div class="topleft duk-icon"><img onclick="removeSection('abilities-new-section')" src="/gui/img/x.png"></div>
+        <div class="column section-border" style="flex:25%;text-align:left;padding:15px;">
+            <h1 style="font-size:70px;margin-top:-20px;">Abilities</h1>
+        </div>
+        <div class="column" style="flex:75%;padding:15px;text-align: left">
+            <div>
+                {% for a in abilities %}
+                    <pre style="color:white">{{ a }}</pre>
+                    <hr>
+                {% endfor %}
+            </div>
+        </div>
     </div>
-    <div>
-        {% for a in abilities %}
-            <pre style="color:white">{{ a }}</pre>
-            <hr>
-        {% endfor %}
-    </div>
-</body>
-</html>
+</div>
 ```
-
-Note how the header includes the shared CSS files from the GUI plugin. 
 
 Then, back in your hook.py file, let's fill in the address variable and ensure we return the new abilities.html page when a user requests 127.0.0.1/get/abilities. Here is the full hook.py:
 

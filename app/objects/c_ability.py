@@ -1,4 +1,5 @@
 import re
+import os
 
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -79,3 +80,9 @@ class Ability(BaseObject):
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
         return existing
+
+    async def which_plugin(self):
+        for plugin in os.listdir('plugins'):
+            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.ability_id):
+                return plugin
+        return None

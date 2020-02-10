@@ -6,7 +6,16 @@ class BaseObject(BaseWorld):
     def match(self, criteria):
         if not criteria:
             return self
-        criteria_matches = [True for k, v in criteria.items() if self.__getattribute__(k) == v]
+        criteria_matches = []
+        for k, v in criteria.items():
+            if type(v) is tuple:
+                for val in v:
+                    if self.__getattribute__(k) == val:
+                        criteria_matches.append(True)
+                        continue
+            else:
+                if self.__getattribute__(k) == v:
+                    criteria_matches.append(True)
         if len(criteria_matches) == len(criteria) and all(criteria_matches):
             return self
 

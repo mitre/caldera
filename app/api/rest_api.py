@@ -4,7 +4,7 @@ import uuid
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.service.auth_svc import check_authorization
+from app.service.auth_svc import check_authorization, blue_authorization, red_authorization
 from app.utility.base_world import BaseWorld
 
 
@@ -14,7 +14,6 @@ class RestApi(BaseWorld):
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
-        self.plugin_svc = services.get('plugin_svc')
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
@@ -22,12 +21,21 @@ class RestApi(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
+        # authorized sections
+        self.app_svc.application.router.add_route('GET', '/section/agents', self.section_agent)
+        self.app_svc.application.router.add_route('GET', '/section/profiles', self.section_profiles)
+        self.app_svc.application.router.add_route('GET', '/section/operations', self.section_operations)
+        self.app_svc.application.router.add_route('GET', '/section/sources', self.section_sources)
+        self.app_svc.application.router.add_route('GET', '/section/planners', self.section_planners)
+        self.app_svc.application.router.add_route('GET', '/section/contacts', self.section_contacts)
+        self.app_svc.application.router.add_route('GET', '/section/obfuscators', self.section_obfuscators)
+        self.app_svc.application.router.add_route('GET', '/section/configurations', self.section_configurations)
         # unauthorized GUI endpoints
+        self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
         self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
         self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
@@ -41,6 +49,80 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
+    async def landing(self, request):
+        @blue_authorization
+        @template('blue.html')
+        async def blue(s, r):
+            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('blue', 'app')))
+            return dict(plugins=[p.display for p in plugins])
+
+        @red_authorization
+        @template('red.html')
+        async def red(s, r):
+            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
+            return dict(plugins=[p.display for p in plugins])
+        try:
+            return await red(self, request)
+        except web.HTTPFound:
+            return await blue(self, request)
+
+    @check_authorization
+    @template('agents.html')
+    async def section_agent(self, request):
+        agents = [h.display for h in await self.data_svc.locate('agents')]
+        return dict(agents=agents)
+
+    @check_authorization
+    @template('profiles.html')
+    async def section_profiles(self, request):
+        abilities = await self.data_svc.locate('abilities')
+        tactics = set([a.tactic.lower() for a in abilities])
+        payloads = await self.rest_svc.list_payloads()
+        adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
+        return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads, tactics=tactics)
+
+    @check_authorization
+    @template('operations.html')
+    async def section_operations(self, request):
+        hosts = [h.display for h in await self.data_svc.locate('agents')]
+        groups = list(set(([h['group'] for h in hosts])))
+        adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
+        sources = [s.display for s in await self.data_svc.locate('sources')]
+        planners = [p.display for p in await self.data_svc.locate('planners')]
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+        operations = [o.display for o in await self.data_svc.locate('operations')]
+        return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
+                    obfuscators=obfuscators)
+
+    @check_authorization
+    @template('configurations.html')
+    async def section_configurations(self, request):
+        return dict(config=self.get_config())
+
+    @check_authorization
+    @template('obfuscators.html')
+    async def section_obfuscators(self, request):
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+        return dict(obfuscators=obfuscators)
+
+    @check_authorization
+    @template('planners.html')
+    async def section_planners(self, request):
+        planners = [p.display for p in await self.data_svc.locate('planners')]
+        return dict(planners=planners)
+
+    @check_authorization
+    @template('contacts.html')
+    async def section_contacts(self, request):
+        contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
+        return dict(contacts=contacts)
+
+    @check_authorization
+    @template('sources.html')
+    async def section_sources(self, request):
+        sources = [s.display for s in await self.data_svc.locate('sources')]
+        return dict(sources=sources)
+
     @template('login.html', status=401)
     async def login(self, request):
         return dict()
@@ -51,30 +133,6 @@ class RestApi(BaseWorld):
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
-
-    @template('home.html')
-    @check_authorization
-    async def landing(self, request):
-        try:
-            abilities = await self.data_svc.locate('abilities')
-            tactics = set([a.tactic.lower() for a in abilities])
-            payloads = await self.rest_svc.list_payloads()
-            hosts = [h.display for h in await self.data_svc.locate('agents')]
-            groups = list(set(([h['group'] for h in hosts])))
-            adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
-            operations = [o.display for o in await self.data_svc.locate('operations')]
-            sources = [s.display for s in await self.data_svc.locate('sources')]
-            planners = [p.display for p in await self.data_svc.locate('planners')]
-            obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
-            plugins = [p.display for p in await self.data_svc.locate('plugins', match=dict(enabled=True))]
-            contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
-            return dict(exploits=[a.display for a in abilities], groups=groups, adversaries=adversaries, agents=hosts,
-                        operations=operations, tactics=tactics, sources=sources, planners=planners, payloads=payloads,
-                        plugins=plugins, obfuscators=obfuscators, contacts=contacts, config=self.get_config())
-        except web.HTTPFound as e:
-            raise e
-        except Exception as e:
-            self.log.error('[!] landing: %s' % e)
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
@@ -115,7 +173,6 @@ class RestApi(BaseWorld):
     @check_authorization
     async def rest_core(self, request):
         """
-        This function is under construction until all objects have been converted from SQL tables
         :param request:
         :return:
         """

@@ -1,38 +1,29 @@
-// check user prefs
-const currentTheme = localStorage.getItem('theme') ? localStorage.getItem('theme') : null;
-if (currentTheme) {
-    document.documentElement.setAttribute('data-theme', currentTheme);
-}
+/* HELPFUL functions to call */
 
-//check browser
-window.onload = function checkBrowser(){
-    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
-        $('#notice').css('display', 'block');
-    }
-};
-
-// AJAX caller
 function restRequest(type, data, callback, endpoint='/plugin/chain/rest') {
     $.ajax({
        url: endpoint,
        type: type,
        contentType: 'application/json',
        data: JSON.stringify(data),
-       success: function(data, status, options) { callback(data); },
-       error: function (xhr, ajaxOptions, thrownError) { console.log(thrownError) }
+       success: function(data, status, options) {
+           callback(data);
+       },
+       error: function (xhr, ajaxOptions, thrownError) {
+           stream(thrownError);
+       }
     });
 }
 
-// form validation
 function validateFormState(conditions, selector){
     (conditions) ?
         updateButtonState(selector, 'valid') :
         updateButtonState(selector, 'invalid');
 }
 
-// download report
 function downloadReport(endpoint, filename, data={}) {
     function downloadObjectAsJson(data){
+        stream('Downloading report: '+filename);
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         let downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
@@ -50,36 +41,92 @@ function updateButtonState(selector, state) {
         $(selector).attr('class','button-notready atomic-button');
 }
 
-// flashy function
-function flashy(elem, message) {
-    let flash = $('#'+elem);
-    flash.find('#message').text(message);
-    flash.delay(100).fadeIn('normal', function() {
-        $(this).delay(3000).fadeOut();
-    });
-    flash.find('#message').text(message);
-}
-
 function showHide(show, hide) {
     $(show).each(function(){$(this).prop('disabled', false).css('opacity', 1.0)});
     $(hide).each(function(){$(this).prop('disabled', true).css('opacity', 0.5)});
 }
 
-$(document).ready(function() {
-    $('.navbar.plugin').html("<a href=\"/\">Home</a><a href=\"/logout\" style=\"float:right\">Logout</a><a href=\"/docs/index.html\" style=\"float:right\" target=\"_blank\">Docs</a>" +
-        "<div  class=\"subnav-right\">" +
-        "    <button class=\"subnavbtn\">Plugins <i class=\"fa fa-caret-down\"></i></button>" +
-        "    <div id=\"subnav-plugins\" class=\"subnav-content subnav-content-right\"></div></div>");
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
-    restRequest('POST', {"index": "plugins", "enabled": true}, function(data){
-        $.each(data, function (index, value) {
-            if (value['address']) {
-                $('#subnav-plugins').append("<a href=" + value['address'] + ">" + value['name'] + "</a>")
-            } else {
-                $('#subnav-plugins').append("<a onclick=\"alert('No GUI component to this plugin')\">" + value['name'] + "</a>")
-            }
-        })
+function stream(msg){
+    $("#streamer").fadeOut(function() {
+      $(this).text(msg).fadeIn(1000);
+    });
+}
+
+function doNothing() {}
+
+/* SECTIONS */
+
+function viewSection(name, address){
+    function display(data) {
+        stream('Auto-refresh ON for '+name+' section');
+        let plugin = $($.parseHTML(data, keepScripts=true));
+        $('#section-container').append('<div id="section-'+name+'"></div>');
+        let newSection = $('#section-'+name);
+        newSection.html(plugin);
+        $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
+    }
+    restRequest('GET', null, display, address);
+}
+
+function removeSection(identifier){
+    stream('Auto-refresh OFF for '+identifier+' section');
+    $('#'+identifier).remove();
+}
+
+function toggleSidebar(identifier) {
+    let sidebar = $('#'+identifier);
+    if (sidebar.is(":visible")) {
+        sidebar.hide();
+    } else {
+        sidebar.show();
+    }
+}
+/* AUTOMATIC functions for all pages */
+
+$(document).ready(function () {
+    $(document).find("select").each(function () {
+        if(!$(this).hasClass('avoid-alphabetizing')) {
+            alphabetize_dropdown($(this));
+            let observer = new MutationObserver(function (mutations, obs) {
+                obs.disconnect();
+                alphabetize_dropdown($(mutations[0].target));
+                obs.observe(mutations[0].target, {childList: true});
+            });
+            observer.observe(this, {childList: true});
+        }
     });
 });
 
-function doNothing() {}
+function alphabetize_dropdown(obj) {
+    let selected_val = $(obj).children("option:selected").val();
+    let disabled = $(obj).find('option:disabled');
+    let opts_list = $(obj).find('option:enabled').clone(true);
+    opts_list.sort(function (a, b) {
+        return a.text.toLowerCase() == b.text.toLowerCase() ? 0 : a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
+    });
+    $(obj).empty().append(opts_list).prepend(disabled);
+    obj.val(selected_val);
+}
+
+(function($){
+  $.event.special.destroyed = {
+    remove: function(o) {
+      if (o.handler) {
+        o.handler()
+      }
+    }
+  }
+})(jQuery);
+
+window.onload = function checkBrowser(){
+    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
+        $('#notice').css('display', 'block');
+    }
+};

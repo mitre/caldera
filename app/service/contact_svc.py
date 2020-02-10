@@ -26,6 +26,7 @@ class ContactService(BaseService):
     @sleep_min.setter
     def sleep_min(self, v):
         if v and v != self.sleep_min:
+            self.log.debug('Agent sleep_min now = %d' % v)
             self._sleep_min = v
 
     @property
@@ -35,6 +36,7 @@ class ContactService(BaseService):
     @sleep_max.setter
     def sleep_max(self, v):
         if v and v != self._sleep_max:
+            self.log.debug('Agent sleep_max now = %d' % v)
             self._sleep_max = v
 
     @property
@@ -44,6 +46,7 @@ class ContactService(BaseService):
     @watchdog.setter
     def watchdog(self, v):
         if v and v != self.watchdog:
+            self.log.debug('Agent watchdog now = %d' % v)
             self._watchdog = v
 
     @property
@@ -157,7 +160,7 @@ class ContactService(BaseService):
                 abilities.append(a)
         instructions = []
         for i in await agent.capabilities(abilities):
-            new_id = 'bootstrap-%s-%s' % (agent.paw, self.generate_name(size=4))
+            new_id = 'boot-%s-%s' % (agent.paw, self.generate_name(size=4))
             cmd = self.encode_string(agent.replace(i.test))
             instructions.append(Instruction(command=cmd, link_id=new_id, executor=i.executor))
         return instructions

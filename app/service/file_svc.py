@@ -80,13 +80,13 @@ class FileSvc(BaseService):
         """
         for plugin in await self.data_svc.locate('plugins', match=dict(enabled=True)):
             for subd in ['', 'data']:
-                file_path = await self._walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
+                file_path = await self.walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
                 if file_path:
                     return plugin.name, file_path
-        file_path = await self._walk_file_path(os.path.join('data'), name)
+        file_path = await self.walk_file_path(os.path.join('data'), name)
         if file_path:
             return None, file_path
-        return None, await self._walk_file_path('%s' % location, name)
+        return None, await self.walk_file_path('%s' % location, name)
 
     async def read_file(self, name, location='payloads'):
         """
@@ -171,15 +171,6 @@ class FileSvc(BaseService):
         )
 
     """ PRIVATE """
-
-    @staticmethod
-    async def _walk_file_path(path, target):
-        for root, dirs, files in os.walk(path):
-            if target in files:
-                return os.path.join(root, target)
-            if '%s.xored' % target in files:
-                return os.path.join(root, '%s.xored' % target)
-        return None
 
     def _get_encryptor(self):
         generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),
