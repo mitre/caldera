@@ -3,6 +3,9 @@ from app.utility.base_world import BaseWorld
 
 class BaseObject(BaseWorld):
 
+    def __init__(self):
+        self._access = None
+
     def match(self, criteria):
         if not criteria:
             return self
@@ -37,3 +40,11 @@ class BaseObject(BaseWorld):
             if v is None:
                 d[k] = ''
         return d
+
+    @property
+    def access(self):
+        return self._access
+
+    @access.setter
+    def access(self, value):
+        self._access = value

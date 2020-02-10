@@ -149,6 +149,9 @@ class AppService(BaseService):
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
+    async def add_app_plugin(self):
+        await self._services.get('data_svc').store(Plugin(name='app', data_dir='data'))
+
     """ PRIVATE """
 
     async def _destroy_plugins(self):
