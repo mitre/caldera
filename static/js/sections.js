@@ -113,51 +113,66 @@ $(document).ready(function () {
                     return str;
                 }
             },
-
             {
                 targets: 5,
                 data: null,
-                render: {
-                    _:'contact'
+                render: function ( data, type, row, meta ){
+                    let str = "<select id=\""+data['paw']+"-c2\">";
+                    if ( data['c2'] == "HTTP" ){
+                        str += "<option value=\"HTTP\" selected=\"selected\">HTTP</option>\n" +
+                               "<option value=\"GIST\">GIST</option>\n";
+                    } else {
+                        str += "<option value=\"HTTP\">HTTP</option>\n" +
+                               "<option value=\"GIST\" selected=\"selected\">GIST</option>";
+                    }
+                    str += "</select>";
+                    return str;
                 }
             },
             {
                 targets: 6,
                 data: null,
                 render: {
-                    _:'last_seen'
+                    _:'contact'
                 }
             },
             {
                 targets: 7,
+                data: null,
+                render: {
+                    _:'last_seen'
+                }
+            },
+            {
+                targets: 8,
                 data: null,
                 render: function ( data, type, row, meta ){
                     return "<input id=\""+data['paw']+"-sleep\" type=\"text\" value=\""+data['sleep_min']+"/"+data['sleep_max']+"\">";
                 }
             },
             {
-                targets: 8,
+                targets: 9,
                 data: null,
                 render: function ( data, type, row, meta ) {
                     return "<input id=\""+data['paw']+"-watchdog\" type=\"text\" value=\""+data['watchdog']+"\">";
                 }
             },
             {
-                targets: 9,
+                targets: 10,
                 data: null,
                 render: {
                     _:'pid'
                 }
             },
             {
-                targets: 10,
+                targets: 11,
                 data: null,
                 render: {
                     _:'privilege'
                 }
             },
             {
-                targets: 11,
+                targets: 12,
                 data: null,
                 orderDataType: 'dom-text',
                 type: 'string',
@@ -167,7 +182,7 @@ $(document).ready(function () {
                 }
             },
             {
-                targets: 12,
+                targets: 13,
                 data: null,
                 fnCreatedCell: function (td, cellData, rowData, row , col) {
                     $(td).addClass('delete-agent');
@@ -206,7 +221,8 @@ function saveGroups(){
         let status = document.getElementById(value['paw']+'-status').value;
         let sleep = document.getElementById(value['paw']+'-sleep').value;
         let watchdog = document.getElementById(value['paw']+'-watchdog').value;
-        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog};
+        let c2 = document.getElementById(value['paw']+'-c2').value;
+        let update = {"index":"agent", "paw": value['paw'], "group": group, "trusted": status, "watchdog": watchdog, "c2": c2};
         let sleepArr = parseSleep(sleep);
         if (sleepArr.length !== 0) {
             update["sleep_min"] = sleepArr[0];
