@@ -47,8 +47,8 @@ def run_tasks(services):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(contact_svc.register(Http(services)))
     loop.run_until_complete(app_svc.load_plugins())
-    for d in data_svc.data_dirs:
-        loop.run_until_complete(data_svc.load_data(d))
+    loop.run_until_complete(app_svc.add_app_plugin())
+    loop.run_until_complete(data_svc.load_data())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())

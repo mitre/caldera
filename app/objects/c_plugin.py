@@ -15,13 +15,14 @@ class Plugin(BaseObject):
     def display(self):
         return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
 
-    def __init__(self, name):
+    def __init__(self, name, description=None, address=None, enabled=False, data_dir=None, access=None):
         super().__init__()
         self.name = name
-        self.description = None
-        self.address = None
-        self.enabled = False
-        self.access = None
+        self.description = description
+        self.address = address
+        self.enabled = enabled
+        self.data_dir = data_dir
+        self.access = access
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -46,7 +47,7 @@ class Plugin(BaseObject):
     async def enable(self, services):
         try:
             if os.path.exists('plugins/%s/data' % self.name.lower()):
-                services.get('data_svc').data_dirs.add('plugins/%s/data' % self.name.lower())
+                self.data_dir = 'plugins/%s/data' % self.name.lower()
             plugin = getattr(self._load_module(), 'enable')
             await plugin(services)
             self.enabled = True
