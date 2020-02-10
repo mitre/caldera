@@ -127,7 +127,7 @@ class PlanningService(BasePlanningService):
                 decoded_cmd = self.decode(ability.cleanup, agent, agent.group, operation.RESERVED)
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
                 links.append(Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                  ability=ability, score=0, jitter=0, status=link_status))
+                                  ability=ability, status=link_status))
         return links
 
     @staticmethod
