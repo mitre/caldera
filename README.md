@@ -79,6 +79,7 @@ Once confirmed, move to a browser at 127.0.0.1 and click into the campaigns -> o
 Did the operation find the sensitive files? How many? Can you determine how it determines which files are sensitive? Hint: you may want to read about [facts](https://caldera.readthedocs.io/en/latest/What-is-a-fact.html).
 
 ### Mission #3: Terminal
+TEST
 
 > You need to navigate through a compromised host but you fear an autonomous agent may draw too much attention. You need to use a traditional reverse-shell to gain manual shell access.
 
