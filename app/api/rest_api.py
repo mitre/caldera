@@ -52,13 +52,15 @@ class RestApi(BaseWorld):
         @blue_authorization
         @template('blue.html')
         async def blue(s, r):
-            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('blue', 'app')))
+            search = dict(enabled=True, access=(self.Access.BLUE, self.Access.APP))
+            plugins = await self.data_svc.locate('plugins', search)
             return dict(plugins=[p.display for p in plugins])
 
         @red_authorization
         @template('red.html')
         async def red(s, r):
-            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
+            search = dict(enabled=True, access=(self.Access.RED, self.Access.APP))
+            plugins = await self.data_svc.locate('plugins', search)
             return dict(plugins=[p.display for p in plugins])
         try:
             return await red(self, request)
