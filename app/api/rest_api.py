@@ -65,11 +65,9 @@ class RestApi(BaseWorld):
                 self.log.debug(e)
         return await self.login(request)
 
-    @check_authorization
     async def landing(self, request):
         return await self.get_endpoint_by_access(request, 'landing')
 
-    @check_authorization
     async def section_agent(self, request):
         return await self.get_endpoint_by_access(request, 'section_agent')
 
