@@ -57,10 +57,10 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
     async def get_endpoint_by_access(self, request, endpoint):
-        allowed = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
-        for a in allowed:
+        access = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
+        for module in access:
             try:
-                return await self.modules[a][endpoint](self, request)
+                return await self.modules[module][endpoint](self, request)
             except Exception as e:
                 self.log.debug(e)
         return await self.login(request)

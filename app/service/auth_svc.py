@@ -53,6 +53,7 @@ class AuthService(BaseService):
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
+        self.bypass = 'localhost:'
 
     async def apply(self, app, users):
         """
@@ -106,7 +107,7 @@ class AuthService(BaseService):
         try:
             if request.headers.get('API_KEY') == self.get_config('api_key'):
                 return True
-            elif 'localhost:' in request.host:
+            elif self.bypass in request.host:
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
@@ -117,7 +118,7 @@ class AuthService(BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return self.user_map[identity].permissions
-        elif 'localhost:' in request.host:
+        elif self.bypass in request.host:
             return ('red', 'app')
         return ()
 
