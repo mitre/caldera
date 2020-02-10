@@ -211,7 +211,7 @@ class RestApi(BaseWorld):
                 return await self.rest_svc.display_objects(index, data)
             return await options[request.method][index](data)
         except Exception as e:
-            self.log.debug('Exception encountered: %s' % e, exc_info=True)
+            self.log.error(repr(e), exc_info=True)
 
     async def rest_update_operation(self, request):
         i = request.match_info['operation_id']
@@ -236,7 +236,7 @@ class RestApi(BaseWorld):
                 elif state == op[0].states['FINISHED']:
                     await op[0].close()
             except Exception as e:
-                self.log.debug(e)
+                self.log.error(repr(e))
 
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])

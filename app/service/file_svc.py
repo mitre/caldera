@@ -41,9 +41,8 @@ class FileSvc(BaseService):
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir):
-        with open(os.path.join(target_dir, filename), 'wb') as f:
-            f.write(payload)
-        self.log.debug('Saved file %s' % filename)
+        self._save(os.path.join(target_dir, filename), payload)
+        self.log.debug('Saved file %s' % os.path.join(target_dir, filename))
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
@@ -65,7 +64,7 @@ class FileSvc(BaseService):
                 if not field:
                     break
                 filename = field.filename
-                await self.save_file(filename, await field.read(), target_dir)
+                await self.save_file(filename, bytes(await field.read()), target_dir)
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
         except Exception as e:
@@ -99,10 +98,9 @@ class FileSvc(BaseService):
         """
         _, file_name = await self.find_file_path(name, location=location)
         if file_name:
-            with open(file_name, 'rb') as file_stream:
-                if file_name.endswith('.xored'):
-                    return name, xor_file(file_name)
-                return name, file_stream.read()
+            if file_name.endswith('.xored'):
+                return name, xor_file(file_name)
+            return name, self._read(file_name)
         raise FileNotFoundError
 
     def read_result_file(self, link_id, location='data/results'):
@@ -114,10 +112,7 @@ class FileSvc(BaseService):
         :param location: The path to results directory.
         :return:
         """
-        with open('%s/%s' % (location, link_id), 'rb') as fle:
-            buf = fle.read()
-        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
-            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
+        buf = self._read(os.path.join(location, link_id))
         return buf.decode('utf-8')
 
     def write_result_file(self, link_id, output, location='data/results'):
@@ -131,10 +126,7 @@ class FileSvc(BaseService):
         :return:
         """
         output = bytes(output, encoding='utf-8')
-        if self.encryptor:
-            output = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(output)
-        with open('%s/%s' % (location, link_id), 'wb') as fle:
-            fle.write(output)
+        self._save(os.path.join(location, link_id), output)
 
     async def add_special_payload(self, name, func):
         """
@@ -145,6 +137,19 @@ class FileSvc(BaseService):
         :return:
         """
         self.special_payloads[name] = func
+
+    def _save(self, filename, content):
+        if self.encryptor:
+            content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
+        with open(filename, 'wb') as f:
+            f.write(content)
+
+    def _read(self, filename):
+        with open(filename, 'rb') as f:
+            buf = f.read()
+        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
+            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
+        return buf
 
     @staticmethod
     async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode=''):

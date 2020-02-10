@@ -4,7 +4,6 @@ import copy
 import hashlib
 import json
 import os
-import traceback
 import uuid
 from datetime import datetime, date
 from importlib import import_module
@@ -47,8 +46,8 @@ class AppService(BaseService):
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
 
     async def find_link(self, unique):
         """
@@ -112,8 +111,8 @@ class AppService(BaseService):
             await operation.close()
             await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
 
     async def load_plugins(self):
         """

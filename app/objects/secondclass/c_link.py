@@ -1,3 +1,4 @@
+import logging
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
@@ -77,7 +78,7 @@ class Link(BaseObject):
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
-            print('parse exception: %s' % e)
+            logging.getLogger('link').debug('parse exception: %s' % e)
 
     def apply_id(self):
         self.id = self.generate_number()
