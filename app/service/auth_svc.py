@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from aiohttp import web
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
-from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget, permits
+from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
 from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
@@ -111,10 +111,6 @@ class AuthService(BaseService):
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
-
-    @staticmethod
-    async def red(request):
-        return await permits(request, 'red')
 
     """ PRIVATE """
 
