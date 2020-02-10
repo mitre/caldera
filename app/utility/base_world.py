@@ -7,6 +7,7 @@ from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
 from random import randint, choice
+from enum import Enum
 
 from app.utility.logger import Logger
 
@@ -96,3 +97,8 @@ class BaseWorld:
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    class Access(Enum):
+        APP = 0
+        RED = 1
+        BLUE = 2
