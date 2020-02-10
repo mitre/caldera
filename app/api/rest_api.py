@@ -1,4 +1,3 @@
-import traceback
 import logging
 import inspect
 import uuid
@@ -8,7 +7,7 @@ from aiohttp_jinja2 import template
 
 import app.api.blue as blue
 import app.api.red as red
-from app.service.auth_svc import check_authorization, blue_authorization, red_authorization
+from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
 
@@ -65,7 +64,7 @@ class RestApi(BaseWorld):
                 return await self.modules[a]['landing'](self, request)
             except Exception as e:
                 self.log.debug(e)
-        return dict(plugins=[])
+        return await self.login(request)
 
     @check_authorization
     @template('agents.html')

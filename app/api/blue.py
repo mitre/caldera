@@ -2,11 +2,10 @@ import logging
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.service.auth_svc import blue_authorization, check_authorization
+from app.service.auth_svc import blue_authorization
 
 
 @template('blue.html')
-# @check_authorization
 @blue_authorization
 async def landing(self, request):
     try:

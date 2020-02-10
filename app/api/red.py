@@ -2,11 +2,10 @@ import logging
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.service.auth_svc import red_authorization, check_authorization
+from app.service.auth_svc import red_authorization
 
 
 @template('red.html')
-# @check_authorization
 @red_authorization
 async def landing(self, request):
     try:
