@@ -1,9 +1,13 @@
 import traceback
+import logging
+import inspect
 import uuid
 
 from aiohttp import web
 from aiohttp_jinja2 import template
 
+import app.api.blue as blue
+import app.api.red as red
 from app.service.auth_svc import check_authorization, blue_authorization, red_authorization
 from app.utility.base_world import BaseWorld
 
@@ -17,6 +21,11 @@ class RestApi(BaseWorld):
         self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
+        self.log = logging.getLogger('rest_api')
+        self.modules = {
+            'red': {f[0]: f[1] for f in inspect.getmembers(red, inspect.isfunction)},
+            'blue': {f[0]: f[1] for f in inspect.getmembers(blue, inspect.isfunction)}
+        }
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -48,24 +57,15 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
+    @check_authorization
     async def landing(self, request):
-        @blue_authorization
-        @template('blue.html')
-        async def blue(s, r):
-            search = dict(enabled=True, access=(self.Access.BLUE, self.Access.APP))
-            plugins = await self.data_svc.locate('plugins', search)
-            return dict(plugins=[p.display for p in plugins])
-
-        @red_authorization
-        @template('red.html')
-        async def red(s, r):
-            search = dict(enabled=True, access=(self.Access.RED, self.Access.APP))
-            plugins = await self.data_svc.locate('plugins', search)
-            return dict(plugins=[p.display for p in plugins])
-        try:
-            return await red(self, request)
-        except web.HTTPFound:
-            return await blue(self, request)
+        allowed = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
+        for a in allowed:
+            try:
+                return await self.modules[a]['landing'](self, request)
+            except Exception as e:
+                self.log.debug(e)
+        return dict(plugins=[])
 
     @check_authorization
     @template('agents.html')
@@ -212,8 +212,8 @@ class RestApi(BaseWorld):
             if index not in options[request.method]:
                 return await self.rest_svc.display_objects(index, data)
             return await options[request.method][index](data)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.debug('Exception encountered: %s' % e, exc_info=True)
 
     async def rest_update_operation(self, request):
         i = request.match_info['operation_id']
@@ -238,7 +238,7 @@ class RestApi(BaseWorld):
                 elif state == op[0].states['FINISHED']:
                     await op[0].close()
             except Exception as e:
-                print(e)
+                self.log.debug(e)
 
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])

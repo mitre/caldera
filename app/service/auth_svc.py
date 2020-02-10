@@ -112,6 +112,15 @@ class AuthService(BaseService):
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
 
+    async def get_permissions(self, request):
+        identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
+        identity = await identity_policy.identify(request)
+        if identity in self.user_map:
+            return self.user_map[identity].permissions
+        elif 'localhost:' in request.host:
+            return ('red', 'app')
+        return ()
+
     """ PRIVATE """
 
     async def _check_credentials(self, user_map, username, password):
