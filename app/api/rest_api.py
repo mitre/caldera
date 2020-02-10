@@ -1,10 +1,13 @@
 import logging
+import inspect
 import uuid
 
 from aiohttp import web
 from aiohttp_jinja2 import template
 
-from app.service.auth_svc import check_authorization, blue_authorization, red_authorization
+import app.api.blue as blue
+import app.api.red as red
+from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
 
@@ -18,6 +21,10 @@ class RestApi(BaseWorld):
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
         self.log = logging.getLogger('rest_api')
+        self.modules = {
+            'red': {f[0]: f[1] for f in inspect.getmembers(red, inspect.isfunction)},
+            'blue': {f[0]: f[1] for f in inspect.getmembers(blue, inspect.isfunction)}
+        }
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -49,28 +56,20 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
 
+    async def get_endpoint_by_access(self, request, endpoint):
+        access = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
+        for module in access:
+            try:
+                return await self.modules[module][endpoint](self, request)
+            except Exception as e:
+                self.log.debug(e)
+        return await self.login(request)
+
     async def landing(self, request):
-        @blue_authorization
-        @template('blue.html')
-        async def blue(s, r):
-            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('blue', 'app')))
-            return dict(plugins=[p.display for p in plugins])
+        return await self.get_endpoint_by_access(request, 'landing')
 
-        @red_authorization
-        @template('red.html')
-        async def red(s, r):
-            plugins = await self.data_svc.locate('plugins', match=dict(enabled=True, authentication=('red', 'app')))
-            return dict(plugins=[p.display for p in plugins])
-        try:
-            return await red(self, request)
-        except web.HTTPFound:
-            return await blue(self, request)
-
-    @check_authorization
-    @template('agents.html')
     async def section_agent(self, request):
-        agents = [h.display for h in await self.data_svc.locate('agents')]
-        return dict(agents=agents)
+        return await self.get_endpoint_by_access(request, 'section_agent')
 
     @check_authorization
     @template('profiles.html')
