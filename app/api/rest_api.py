@@ -95,12 +95,6 @@ class RestApi(BaseWorld):
     async def section_sources(self, request):
         return await self.get_endpoint_by_access(request, 'section_sources')
 
-    async def section_contacts(self, request):
-        return await self.get_endpoint_by_access(request, 'section_contacts')
-
-    async def section_obfuscators(self, request):
-        return await self.get_endpoint_by_access(request, 'section_obfuscators')
-
     """ SHARED SECTIONS """
 
     @check_authorization
