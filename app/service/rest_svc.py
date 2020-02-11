@@ -44,7 +44,7 @@ class RestService(BaseService):
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
         await self._services.get('data_svc').reload_data()
-        return await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))
+        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
         """
@@ -75,7 +75,7 @@ class RestService(BaseService):
             f.seek(0)
             f.write(yaml.dump([data]))
         await self._services.get('data_svc').reload_data()
-        return await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))
+        return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -85,7 +85,7 @@ class RestService(BaseService):
             f.seek(0)
             f.write(yaml.dump(data))
         await self._services.get('data_svc').reload_data()
-        return await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))
+        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
