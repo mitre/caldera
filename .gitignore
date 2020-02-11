@@ -27,3 +27,4 @@ data/payloads/*
 !data/payloads/.gitkeep
 data/facts/*yml
 !data/facts/.gitkeep
+conf/default.yml
