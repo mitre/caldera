@@ -65,44 +65,37 @@ class RestApi(BaseWorld):
                 self.log.debug(e)
         return await self.login(request)
 
+    """ BOILERPLATE SECTIONS """
+
+    @template('login.html', status=401)
+    async def login(self, request):
+        return dict()
+
+    async def validate_login(self, request):
+        return await self.auth_svc.login_user(request)
+
+    @template('login.html')
+    async def logout(self, request):
+        await self.auth_svc.logout_user(request)
+
+    """ SPLIT SECTIONS """
+
     async def landing(self, request):
         return await self.get_endpoint_by_access(request, 'landing')
 
     async def section_agent(self, request):
         return await self.get_endpoint_by_access(request, 'section_agent')
 
-    @check_authorization
-    @template('profiles.html')
     async def section_profiles(self, request):
-        abilities = await self.data_svc.locate('abilities')
-        tactics = set([a.tactic.lower() for a in abilities])
-        payloads = await self.rest_svc.list_payloads()
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
-        return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads, tactics=tactics)
+        return await self.get_endpoint_by_access(request, 'section_profiles')
 
-    @check_authorization
-    @template('operations.html')
     async def section_operations(self, request):
-        hosts = [h.display for h in await self.data_svc.locate('agents')]
-        groups = list(set(([h['group'] for h in hosts])))
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
-        sources = [s.display for s in await self.data_svc.locate('sources')]
-        planners = [p.display for p in await self.data_svc.locate('planners')]
-        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
-        operations = [o.display for o in await self.data_svc.locate('operations')]
-        return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
-                    obfuscators=obfuscators)
+        return await self.get_endpoint_by_access(request, 'section_operations')
 
-    @check_authorization
-    @template('configurations.html')
-    async def section_configurations(self, request):
-        return dict(config=self.get_config())
+    async def section_sources(self, request):
+        return await self.get_endpoint_by_access(request, 'section_sources')
 
-    @check_authorization
-    @template('obfuscators.html')
-    async def section_obfuscators(self, request):
-        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
-        return dict(obfuscators=obfuscators)
+    """ SHARED SECTIONS """
 
     @check_authorization
     @template('planners.html')
@@ -117,24 +110,17 @@ class RestApi(BaseWorld):
         return dict(contacts=contacts)
 
     @check_authorization
-    @template('sources.html')
-    async def section_sources(self, request):
-        sources = [s.display for s in await self.data_svc.locate('sources')]
-        return dict(sources=sources)
+    @template('obfuscators.html')
+    async def section_obfuscators(self, request):
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+        return dict(obfuscators=obfuscators)
 
-    @template('login.html', status=401)
-    async def login(self, request):
-        return dict()
+    @check_authorization
+    @template('configurations.html')
+    async def section_configurations(self, request):
+        return dict(config=self.get_config())
 
-    @template('login.html')
-    async def logout(self, request):
-        await self.auth_svc.logout_user(request)
-
-    async def validate_login(self, request):
-        return await self.auth_svc.login_user(request)
-
-    async def upload_payload(self, request):
-        return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
+    """ API ENDPOINTS """
 
     @check_authorization
     async def ability_endpoint(self, request):
@@ -153,6 +139,9 @@ class RestApi(BaseWorld):
         data = dict(await request.json())
         await self.rest_svc.apply_potential_link(data)
         return web.json_response(dict())
+
+    async def upload_payload(self, request):
+        return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
 
     async def rest_full(self, request):
         try:

@@ -3,14 +3,17 @@ from aiohttp import web
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import blue_authorization
+from app.utility.base_world import BaseWorld
+
+search = dict(access=(BaseWorld.Access.BLUE, BaseWorld.Access.APP))
 
 
 @blue_authorization
 @template('blue.html')
 async def landing(self, request):
     try:
-        search = dict(enabled=True, access=(self.Access.BLUE, self.Access.APP))
-        plugins = await self.data_svc.locate('plugins', search)
+        s = {**search, **dict(enabled=True)}
+        plugins = await self.data_svc.locate('plugins', s)
         return dict(plugins=[p.display for p in plugins])
     except web.HTTPFound as e:
         raise e
@@ -23,3 +26,34 @@ async def landing(self, request):
 async def section_agent(self, request):
     agents = [h.display for h in await self.data_svc.locate('agents')]
     return dict(agents=agents)
+
+
+@blue_authorization
+@template('profiles.html')
+async def section_profiles(self, request):
+    abilities = await self.data_svc.locate('abilities', match=search)
+    tactics = set([a.tactic.lower() for a in abilities])
+    payloads = await self.rest_svc.list_payloads()
+    adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=search)]
+    return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads, tactics=tactics)
+
+
+@blue_authorization
+@template('sources.html')
+async def section_sources(self, request):
+    sources = [s.display for s in await self.data_svc.locate('sources', match=search)]
+    return dict(sources=sources)
+
+
+@blue_authorization
+@template('operations.html')
+async def section_operations(self, request):
+    hosts = [h.display for h in await self.data_svc.locate('agents')]
+    groups = list(set(([h['group'] for h in hosts])))
+    adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
+    sources = [s.display for s in await self.data_svc.locate('sources')]
+    planners = [p.display for p in await self.data_svc.locate('planners')]
+    obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+    operations = [o.display for o in await self.data_svc.locate('operations')]
+    return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
+                obfuscators=obfuscators)
