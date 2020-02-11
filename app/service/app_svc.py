@@ -150,7 +150,7 @@ class AppService(BaseService):
         self.log.debug('[!] shutting down server...good-bye')
 
     async def add_app_plugin(self):
-        await self._services.get('data_svc').store(Plugin(name='app', data_dir='data'))
+        await self._services.get('data_svc').store(Plugin(name='app', data_dir='data', access=self.Access.APP))
 
     """ PRIVATE """
 

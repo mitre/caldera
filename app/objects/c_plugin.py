@@ -55,9 +55,10 @@ class Plugin(BaseObject):
             logging.error('Error enabling plugin=%s, %s' % (self.name, e))
 
     async def destroy(self, services):
-        destroyable = getattr(self._load_module(), 'destroy', None)
-        if destroyable:
-            await destroyable(services)
+        if self.enabled:
+            destroyable = getattr(self._load_module(), 'destroy', None)
+            if destroyable:
+                await destroyable(services)
 
     """ PRIVATE """
 
