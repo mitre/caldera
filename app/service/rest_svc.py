@@ -4,16 +4,16 @@ import glob
 import os
 import pathlib
 import uuid
+import yaml
+
 from collections import defaultdict
 from datetime import time
 
-import yaml
-
 from app.objects.c_adversary import Adversary
-from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
@@ -43,9 +43,7 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('adversaries', dict(adversary_id=i))
+        await self._services.get('data_svc').load_data()
 
     async def update_planner(self, data):
         """
@@ -75,9 +73,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('abilities', dict(ability_id=data.get('id')))
+        await self._services.get('data_svc').load_data()
 
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -86,9 +82,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('sources', dict(id=data.get('id')))
+        await self._services.get('data_svc').load_data()
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
@@ -217,14 +211,6 @@ class RestService(BaseService):
                          autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
-
-    async def _poll_for_data(self, collection, search):
-        coll, checks = 0, 0
-        while not coll or checks == 5:
-            coll = await self.get_service('data_svc').locate(collection, match=search)
-            await asyncio.sleep(1)
-            checks += 1
-        return [c.display for c in coll]
 
     @staticmethod
     async def _read_from_yaml(file_path):
