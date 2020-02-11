@@ -215,14 +215,6 @@ class RestService(BaseService):
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
 
-    async def _poll_for_data(self, collection, search):
-        coll, checks = 0, 0
-        while not coll or checks == 5:
-            coll = await self.get_service('data_svc').locate(collection, match=search)
-            await asyncio.sleep(1)
-            checks += 1
-        return [c.display for c in coll]
-
     @staticmethod
     async def _read_from_yaml(file_path):
         with open(file_path, 'r') as f:
