@@ -28,7 +28,7 @@ class Agent(BaseObject):
         return '{}${}'.format(self.host, self.username)
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
-                 username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
+                 username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
@@ -53,6 +53,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
+        self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
