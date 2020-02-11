@@ -326,13 +326,6 @@ p[onclick] {
   width: 100%;
 }
 
-.fixed {
-    position: fixed;
-    top:30; left:0;
-    z-index: 20;
-    width: 100%;
-}
-
 /* The close button */
 
 .closebtn {
