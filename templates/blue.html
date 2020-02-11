@@ -16,7 +16,9 @@
                   <div class="subnav">
                     <button class="subnavbtn">Campaigns <i class="fa fa-caret-down"></i></button>
                     <div class="subnav-content">
-                      <a onclick="viewSection('agents', '/section/agents')">agents</a>
+                        <a onclick="viewSection('agents', '/section/agents')">agents</a>
+                        <a onclick="viewSection('adversaries', '/section/profiles')">adversaries</a>
+                        <a onclick="viewSection('operations', '/section/operations')">operations</a>
                     </div>
                   </div>
                   <a href="/logout" style="float:right">Logout</a>
@@ -33,6 +35,13 @@
                             {% endfor %}
                         </div>
                   </div>
+              <div class="subnav-right">
+                <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
+                <div class="subnav-content subnav-content-right">
+                    <a onclick="viewSection('sources', '/section/sources')">sources</a>
+                    <a onclick="viewSection('planners', '/section/planners')">planners</a>
+                </div>
+              </div>
             </div>
         </div>
         <div style="margin-bottom:75px"></div>
