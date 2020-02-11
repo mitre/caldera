@@ -24,7 +24,7 @@ async def landing(self, request):
 @red_authorization
 @template('agents.html')
 async def section_agent(self, request):
-    agents = [h.display for h in await self.data_svc.locate('agents')]
+    agents = [h.display for h in await self.data_svc.locate('agents', match=search)]
     return dict(agents=agents)
 
 
