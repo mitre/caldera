@@ -320,6 +320,17 @@ p[onclick] {
   height: 17px;
   font-size: 14px;
   text-align: center;
+  position: fixed;
+  top:43; left:5; bottom: auto;
+  z-index: 20;
+  width: 100%;
+}
+
+.fixed {
+    position: fixed;
+    top:30; left:0;
+    z-index: 20;
+    width: 100%;
 }
 
 /* The close button */
