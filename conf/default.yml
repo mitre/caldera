@@ -1,5 +1,5 @@
 ---
-port: 8888
+port: 9888 
 plugins:
   - sandcat
   - stockpile
@@ -14,4 +14,4 @@ api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-app.redirect.http: http://0.0.0.0:8888
+app.redirect.http: http://0.0.0.0:9888
