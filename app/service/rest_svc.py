@@ -3,11 +3,14 @@ import copy
 import glob
 import os
 import pathlib
+import pptx
 import uuid
 import yaml
 
 from collections import defaultdict
 from datetime import time
+
+from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
@@ -120,7 +123,7 @@ class RestService(BaseService):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
         if data.pop('version') == 'ppt':
-            return await self._generate_ppt_report(op)
+            return await self._generate_ppt_report(op=op, output=data.get('agent_output'))
         return op.report(output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
@@ -265,5 +268,16 @@ class RestService(BaseService):
         contact_svc.sleep_max = sleep_max
         contact_svc.watchdog = watchdog
 
-    async def _generate_ppt_report(self, op):
-        pass
+    async def _generate_ppt_report(self, op, output):
+        pres = pptx.Presentation(os.path.join('data', 'reports', 'caldera.pptx'))
+        title_slide_layout = pres.slide_layouts[0]
+        slide = pres.slides.add_slide(title_slide_layout)
+        title = slide.shapes.title
+        subtitle = slide.placeholders[1]
+        title.text = 'Operation: {}'.format(op.name)
+        subtitle.text = 'Start: {}\nStop: {}'.format(op.start, op.finish)
+        pres_path = os.path.join('data', 'reports', '{}-{}.pptx'.format(op.id, op.name))
+        pres.save(pres_path)
+        file_path, contents = await self._services.get('file_svc').read_file('{}-{}.pptx'.format(op.id, op.name), location='reports')
+        headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % (str(op.id)+"-"+op.name+".pptx"))])
+        return web.Response(body=contents, headers=headers)

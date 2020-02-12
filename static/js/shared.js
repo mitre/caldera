@@ -23,15 +23,15 @@ function validateFormState(conditions, selector){
 
 function downloadReport(endpoint, report_name, data={}, version='json') {
     function downloadObjectAsJson(data){
-        completeDownload("text/json", "json", data);
+        completeDownload("text/json;charset=utf-8,", "json", JSON.stringify(data, null, 2));
     }
     function downloadObjectAsPpt(data){
-        completeDownload("application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx", data);
+        completeDownload("application/vnd.openxmlformats-officedocument.presentationml.presentation;charset=UTF-8,", "pptx", data);
     }
-    function completeDownload(type, extension, data) {
+    function completeDownload(type, extension, uriData) {
         stream('Downloading report: '+report_name+' in '+version);
         let downloadAnchorNode = document.createElement('a');
-        let dataStr = "data:"+type+";charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        let dataStr = "data:"+type+"" + encodeURIComponent(uriData);
         downloadAnchorNode.setAttribute("href", dataStr);
         downloadAnchorNode.setAttribute("download", report_name + "."+ extension);
         document.body.appendChild(downloadAnchorNode);
