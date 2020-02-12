@@ -3,6 +3,7 @@ import json
 import socket
 import time
 
+from app.objects.secondclass.c_result import Result
 from app.utility.base_world import BaseWorld
 from plugins.terminal.app.c_session import Session
 
@@ -30,7 +31,8 @@ class Tcp(BaseWorld):
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
                         status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
-                        await self.contact_svc.save_results(id=instruction.id, output=self.encode_string(response), status=status, pid=0)
+                        result = Result(id=instruction.id, output=self.encode_string(response), status=status)
+                        await self.contact_svc.handle_heartbeat(paw=session.paw, result=result)
                         await asyncio.sleep(instruction.sleep)
                     except Exception as e:
                         self.log.debug('[-] operation exception: %s' % e)
