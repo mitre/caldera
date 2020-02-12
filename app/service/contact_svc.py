@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
+from app.objects.secondclass.c_result import Result
 from app.utility.base_service import BaseService
 
 
@@ -89,6 +90,7 @@ class ContactService(BaseService):
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
+            await self._save_result(kwargs.get('result'))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
@@ -96,41 +98,35 @@ class ContactService(BaseService):
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
-    async def save_results(self, id, output, status=0, pid=0):
-        """
-        Save the results from a single executed link
-
-        :param id:
-        :param output:
-        :param status:
-        :param pid:
-        :return: a JSON status message
-        """
-        file_svc = self.get_service('file_svc')
-        try:
-            loop = asyncio.get_event_loop()
-            for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
-                link = next((l for l in op.chain if l.unique == id), None)
-                if link:
-                    link.pid = int(pid)
-                    link.finish = self.get_service('data_svc').get_current_timestamp()
-                    link.status = int(status)
-                    if output:
-                        link.output = output
-                        file_svc.write_result_file(id, output)
-                        loop.create_task(link.parse(op))
-                    agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
-                    await agent.heartbeat_modification()
-            else:
-                if output:
-                    file_svc.write_result_file(id, output)
-        except Exception as e:
-            self.log.debug('save_results exception: %s' % e)
-
     async def build_filename(self, platform):
         return random.choice(self._file_names.get(platform))
 
     """ PRIVATE """
+
+    async def _save_result(self, result):
+        if not result:
+            return
+        res = Result(**result)
+        file_svc = self.get_service('file_svc')
+        try:
+            loop = asyncio.get_event_loop()
+            for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
+                link = next((l for l in op.chain if l.unique == res.id), None)
+                if link:
+                    link.pid = int(res.pid)
+                    link.finish = self.get_service('data_svc').get_current_timestamp()
+                    link.status = int(res.status)
+                    if res.output:
+                        link.output = res.output
+                        file_svc.write_result_file(res.id, res.output)
+                        loop.create_task(link.parse(op))
+                    agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
+                    await agent.heartbeat_modification()
+            else:
+                if res.output:
+                    file_svc.write_result_file(res.id, res.output)
+        except Exception as e:
+            self.log.debug('save_results exception: %s' % e)
 
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()
