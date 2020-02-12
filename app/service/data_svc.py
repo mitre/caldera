@@ -79,21 +79,20 @@ class DataService(BaseService):
 
     async def load_data(self):
         """
-        Read all the data sources to populate the object store
+        Non-blocking read all the data sources to populate the object store
 
         :return: None
         """
-        async def load():
-            try:
-                for plug in [p for p in await self.locate('plugins') if p.data_dir]:
-                    await self._load_abilities(plug)
-                    await self._load_adversaries(plug)
-                    await self._load_sources(plug)
-                    await self._load_planners(plug)
-            except Exception as e:
-                self.log.debug(repr(e), exc_info=True)
         loop = asyncio.get_event_loop()
-        loop.create_task(load())
+        loop.create_task(self._load())
+
+    async def reload_data(self):
+        """
+        Blocking read all the data sources to populate the object store
+
+        :return: None
+        """
+        await self._load()
 
     async def store(self, c_object):
         """
@@ -168,8 +167,17 @@ class DataService(BaseService):
                         phases.insert(last_phase + 1, [phases[phase_id][idx]])
                         del phases[phase_id][idx + 1:]
             phase_id += 1
-
         return dict(pp)
+
+    async def _load(self):
+        try:
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
+                await self._load_abilities(plug)
+                await self._load_adversaries(plug)
+                await self._load_sources(plug)
+                await self._load_planners(plug)
+        except Exception as e:
+            self.log.debug(repr(e), exc_info=True)
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
