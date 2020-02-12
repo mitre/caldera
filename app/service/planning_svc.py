@@ -124,7 +124,7 @@ class PlanningService(BasePlanningService):
             ability = (await self.get_service('data_svc').locate('abilities',
                                                                  match=dict(unique=link.ability.unique)))[0]
             if ability.cleanup and link.status >= 0:
-                decoded_cmd = self.decode(ability.cleanup, agent, agent.group, operation.RESERVED)
+                decoded_cmd = agent.replace(ability.cleanup)
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
                 links.append(Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                                   ability=ability, status=link_status))
