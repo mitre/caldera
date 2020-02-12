@@ -3,20 +3,19 @@ import copy
 import glob
 import os.path
 import pickle
-import traceback
 from base64 import b64encode
 from collections import defaultdict, namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_planner import Planner
+from app.objects.c_source import Source
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_parserconfig import ParserConfig
-from app.objects.c_planner import Planner
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_rule import Rule
-from app.objects.c_source import Source
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
@@ -26,7 +25,6 @@ class DataService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.data_dirs = set()
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
                            schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
@@ -51,8 +49,7 @@ class DataService(BaseService):
 
         :return:
         """
-        with open('data/object_store', 'wb') as objects:
-            pickle.dump(self.ram, objects)
+        await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
         """
@@ -61,12 +58,12 @@ class DataService(BaseService):
         :return:
         """
         if os.path.exists('data/object_store'):
-            with open('data/object_store', 'rb') as objects:
-                ram = pickle.load(objects)
-                for key in ram.keys():
-                    self.ram[key] = []
-                    for c_object in ram[key]:
-                        await self.store(c_object)
+            _, store = await self.get_service('file_svc').read_file('object_store', 'data')
+            ram = pickle.loads(store)
+            for key in ram.keys():
+                self.ram[key] = []
+                for c_object in ram[key]:
+                    await self.store(c_object)
             self.log.debug('Restored objects from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
@@ -80,16 +77,22 @@ class DataService(BaseService):
         if collection not in self.ram:
             self.ram[collection] = []
 
-    async def load_data(self, directory):
+    async def load_data(self):
         """
-        Read all the data sources to populate the object store
+        Non-blocking read all the data sources to populate the object store
 
-        :param directory:
         :return: None
         """
         loop = asyncio.get_event_loop()
-        loop.create_task(self._load_data(directory))
-        self.data_dirs.add(directory)
+        loop.create_task(self._load())
+
+    async def reload_data(self):
+        """
+        Blocking read all the data sources to populate the object store
+
+        :return: None
+        """
+        await self._load()
 
     async def store(self, c_object):
         """
@@ -144,7 +147,8 @@ class DataService(BaseService):
                 phases.insert(current_phase + i, phase)
             return current_phase + i
         else:
-            self.log.error('Missing ability or pack (%s) for adversary: %s (%s)' % (pack, adversary['name'], adversary['id']))
+            self.log.error(
+                'Missing ability or pack (%s) for adversary: %s (%s)' % (pack, adversary['name'], adversary['id']))
             return 0
 
     async def _add_phases(self, phases, adversary):
@@ -154,20 +158,29 @@ class DataService(BaseService):
             for idx, step in enumerate(phases[phase_id]):
                 abilities = await self.locate('abilities', match=dict(ability_id=step))
                 if abilities:
-                    await self._add_phase_abilities(pp, phase_id+1, abilities)
+                    await self._add_phase_abilities(pp, phase_id + 1, abilities)
                 else:
                     # insert this phase and shift down later abilities to new phase
                     del phases[phase_id][idx]
                     last_phase = await self._insert_pack_phases(step, phases, phase_id, adversary)
                     if last_phase and idx < len(phases[phase_id]):
                         phases.insert(last_phase + 1, [phases[phase_id][idx]])
-                        del phases[phase_id][idx+1:]
+                        del phases[phase_id][idx + 1:]
             phase_id += 1
-
         return dict(pp)
 
-    async def _load_adversaries(self, directory):
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+    async def _load(self):
+        try:
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
+                await self._load_abilities(plug)
+                await self._load_adversaries(plug)
+                await self._load_sources(plug)
+                await self._load_planners(plug)
+        except Exception as e:
+            self.log.debug(repr(e), exc_info=True)
+
+    async def _load_adversaries(self, plugin):
+        for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
@@ -176,13 +189,13 @@ class DataService(BaseService):
                         await self._merge_phases(phases, adv_pack)
                 sorted_phases = [phases[x] for x in sorted(phases.keys())]
                 phases = await self._add_phases(sorted_phases, adv)
-                await self.store(
-                    Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                              phases=phases)
-                )
+                adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
+                                      phases=phases)
+                adversary.access = plugin.access
+                await self.store(adversary)
 
-    async def _load_abilities(self, directory):
-        for filename in glob.iglob('%s/**/*.yml' % directory, recursive=True):
+    async def _load_abilities(self, plugin):
+        for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     saved = set()
@@ -206,7 +219,9 @@ class DataService(BaseService):
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
-                                                               privilege=ab['privilege'] if 'privilege' in ab.keys() else None)
+                                                               privilege=ab[
+                                                                   'privilege'] if 'privilege' in ab.keys() else None,
+                                                               access=plugin.access)
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -220,8 +235,8 @@ class DataService(BaseService):
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
 
-    async def _load_sources(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+    async def _load_sources(self, plugin):
+        for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
             for src in self.strip_yml(filename):
                 source = Source(
                     identifier=src['id'],
@@ -230,17 +245,18 @@ class DataService(BaseService):
                     adjustments=await self._create_adjustments(src.get('adjustments')),
                     rules=[Rule(**r) for r in src.get('rules', [])]
                 )
+                source.access = plugin.access
                 await self.store(source)
 
-    async def _load_planners(self, directory):
-        for filename in glob.iglob('%s/*.yml' % directory, recursive=False):
+    async def _load_planners(self, plugin):
+        for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
             for planner in self.strip_yml(filename):
-                await self.store(
-                    Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
-                            params=str(planner.get('params')), description=planner.get('description'),
-                            stopping_conditions=planner.get('stopping_conditions'),
-                            ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
-                )
+                planner = Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
+                                  params=str(planner.get('params')), description=planner.get('description'),
+                                  stopping_conditions=planner.get('stopping_conditions'),
+                                  ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
+                planner.access = plugin.access
+                await self.store(planner)
 
     @staticmethod
     async def _create_adjustments(raw_adjustments):
@@ -261,7 +277,8 @@ class DataService(BaseService):
                 phases[phase] = ids
 
     async def _add_adversary_packs(self, pack):
-        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack, location=os.path.join('data', 'adversaries'))
+        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack,
+                                                                        location=os.path.join('data', 'adversaries'))
         if filename is None:
             return {}
         for adv in self.strip_yml(filename):
@@ -269,7 +286,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60):
+                              privilege=None, timeout=60, access=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -280,17 +297,10 @@ class DataService(BaseService):
                 relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
                             requirement[module]]
                 rs.append(Requirement(module=module, relationships=relation))
-        return await self.store(Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                                        technique_id=technique_id, technique=technique_name,
-                                        executor=executor, platform=platform, description=description,
-                                        cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                                        privilege=privilege, timeout=timeout))
-
-    async def _load_data(self, directory):
-        try:
-            await self._load_abilities(directory='%s/abilities' % directory)
-            await self._load_adversaries(directory='%s/adversaries' % directory)
-            await self._load_sources(directory='%s/sources' % directory)
-            await self._load_planners(directory='%s/planners' % directory)
-        except Exception:
-            self.log.error(traceback.print_exc())
+        ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
+                          technique_id=technique_id, technique=technique_name,
+                          executor=executor, platform=platform, description=description,
+                          cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
+                          privilege=privilege, timeout=timeout)
+        ability.access = access
+        return await self.store(ability)

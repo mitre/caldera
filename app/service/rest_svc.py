@@ -4,16 +4,16 @@ import glob
 import os
 import pathlib
 import uuid
+import yaml
+
 from collections import defaultdict
 from datetime import time
 
-import yaml
-
 from app.objects.c_adversary import Adversary
-from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
@@ -44,9 +44,8 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('adversaries', dict(adversary_id=i))
+        await self._services.get('data_svc').reload_data()
+        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
         """
@@ -76,9 +75,8 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('abilities', dict(ability_id=data.get('id')))
+        await self._services.get('data_svc').reload_data()
+        return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -87,9 +85,8 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('sources', dict(id=data.get('id')))
+        await self._services.get('data_svc').reload_data()
+        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
@@ -129,10 +126,11 @@ class RestService(BaseService):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
-        await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
             await agent.gui_modification(**data)
             return agent.display
+        else:
+            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
 
     async def update_chain_data(self, data):
         link = await self.get_service('app_svc').find_link(data.pop('link_id'))
@@ -165,6 +163,11 @@ class RestService(BaseService):
                             for plugin in await self.get_service('data_svc').locate('plugins'))
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
+
+    async def find_abilities(self, paw):
+        data_svc = self.get_service('data_svc')
+        agent = (await data_svc.locate('agents', match=dict(paw=paw)))[0]
+        return await agent.capabilities(await self.get_service('data_svc').locate('abilities'))
 
     async def get_potential_links(self, op_id, paw=None):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
@@ -205,6 +208,10 @@ class RestService(BaseService):
         """
         self.special_operation_modifiers[name] = func
 
+    async def update_config(self, data):
+        self.set_config(data.get('prop'), data.get('value'))
+        self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
+
     """ PRIVATE """
 
     async def _build_operation_object(self, data):
@@ -220,14 +227,6 @@ class RestService(BaseService):
                          autonomous=int(data.pop('autonomous')),
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
-
-    async def _poll_for_data(self, collection, search):
-        coll, checks = 0, 0
-        while not coll or checks == 5:
-            coll = await self.get_service('data_svc').locate(collection, match=search)
-            await asyncio.sleep(1)
-            checks += 1
-        return [c.display for c in coll]
 
     @staticmethod
     async def _read_from_yaml(file_path):

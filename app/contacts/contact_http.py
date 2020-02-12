@@ -15,7 +15,6 @@ class Http(BaseWorld):
 
     async def start(self):
         self.app_svc.application.router.add_route('POST', '/beacon', self._beacon)
-        self.app_svc.application.router.add_route('POST', '/result', self._results)
 
     @staticmethod
     def valid_config():
@@ -33,7 +32,3 @@ class Http(BaseWorld):
                         watchdog=agent.watchdog,
                         instructions=json.dumps([json.dumps(i.display) for i in instructions]))
         return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
-
-    async def _results(self, request):
-        data = json.loads(self.contact_svc.decode_bytes(await request.read()))
-        await self.contact_svc.save_results(**data)

@@ -43,9 +43,8 @@ class BasePlanningService(BaseService):
         :param operation:
         :return: updated list of links
         """
-        group = agent.group
         for link in links:
-            decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
+            decoded_test = agent.replace(link.command)
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)
@@ -95,7 +94,7 @@ class BasePlanningService(BaseService):
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if await self._do_enforcements(l, operation)]
+        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
         return links
 
     @staticmethod

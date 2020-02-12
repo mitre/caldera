@@ -2,9 +2,8 @@ import ast
 import asyncio
 import copy
 import hashlib
-import os
 import json
-import traceback
+import os
 import uuid
 from datetime import datetime, date
 from importlib import import_module
@@ -19,9 +18,8 @@ from app.utility.base_service import BaseService
 
 class AppService(BaseService):
 
-    def __init__(self, application, config):
+    def __init__(self, application):
         self.application = application
-        self.config = config
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
 
@@ -31,24 +29,25 @@ class AppService(BaseService):
 
         :return: None
         """
-        next_check = self.config['untrusted_timer']
+        contact_svc = self.get_service('contact_svc')
+        next_check = contact_svc.untrusted_timer
         try:
             while True:
                 await asyncio.sleep(next_check + 1)
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
-                next_check = self.config['agent_config']['untrusted_timer']
+                next_check = contact_svc.untrusted_timer
                 for a in trusted_agents:
                     silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
-                    if silence_time > (self.config['agent_config']['untrusted_timer'] + int(a.sleep_max)):
+                    if silence_time > (contact_svc.untrusted_timer + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
                     else:
-                        trust_time_left = self.config['agent_config']['untrusted_timer'] - silence_time
+                        trust_time_left = contact_svc.untrusted_timer - silence_time
                         if trust_time_left < next_check:
                             next_check = trust_time_left
                 await asyncio.sleep(15)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
 
     async def find_link(self, unique):
         """
@@ -112,8 +111,8 @@ class AppService(BaseService):
             await operation.close()
             await self._save_new_source(operation)
             self.log.debug('Completed operation: %s' % operation.name)
-        except Exception:
-            traceback.print_exc()
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
 
     async def load_plugins(self):
         """
@@ -125,20 +124,15 @@ class AppService(BaseService):
             if plug.startswith('.'):
                 continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem locating the "%s" plugin. Ensure CALDERA was cloned recursively.' % plug)
+                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
-                if plugin.name in self.config['plugins']:
-                    plugin.enabled = True
-        for plugin in self.config['plugins']:
-            plug = await self._services.get('data_svc').locate('plugins', match=dict(name=plugin))
-            [await p.enable(self.get_services()) for p in plug]
-            self.log.debug('Enabling %s plugin' % plugin)
-
-        templates = ['plugins/%s/templates' % p.name.lower()
-                     for p in await self.get_service('data_svc').locate('plugins')]
+            if plugin.name in self.get_config('plugins'):
+                await plugin.enable(self.get_services())
+                self.log.debug('Enabled %s plugin' % plugin.name)
+        templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
@@ -155,6 +149,9 @@ class AppService(BaseService):
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
+    async def add_app_plugin(self):
+        await self._services.get('data_svc').store(Plugin(name='app', data_dir='data', access=self.Access.APP))
+
     """ PRIVATE """
 
     async def _destroy_plugins(self):
@@ -163,7 +160,7 @@ class AppService(BaseService):
 
     async def _write_reports(self):
         file_svc = self.get_service('file_svc')
-        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.config['reports_dir'])
+        r_dir = await file_svc.create_exfil_sub_directory('%s/reports' % self.get_config('reports_dir'))
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):

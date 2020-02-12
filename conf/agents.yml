@@ -46,7 +46,6 @@ agent_config:
       - htop
       - mediaremoted
       - vpnagentd
-      - SafariSafeBrowsing.framework/com.apple.Safari.SafeBrowsing.Service
       - coreservicesd
       - authd
       - splunkd

@@ -3,7 +3,6 @@ import os
 from importlib import import_module
 
 from app.utility.base_object import BaseObject
-from app.utility.base_world import BaseWorld
 
 
 class Plugin(BaseObject):
@@ -16,12 +15,14 @@ class Plugin(BaseObject):
     def display(self):
         return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
 
-    def __init__(self, name):
+    def __init__(self, name, description=None, address=None, enabled=False, data_dir=None, access=None):
         super().__init__()
         self.name = name
-        self.description = None
-        self.address = None
-        self.enabled = False
+        self.description = description
+        self.address = address
+        self.enabled = enabled
+        self.data_dir = data_dir
+        self.access = access
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -37,6 +38,7 @@ class Plugin(BaseObject):
             plugin = self._load_module()
             self.description = plugin.description
             self.address = plugin.address
+            self.access = getattr(self._load_module(), 'access', self.Access.APP)
             return True
         except Exception as e:
             logging.error('Error loading plugin=%s, %s' % (self.name, e))
@@ -44,9 +46,8 @@ class Plugin(BaseObject):
 
     async def enable(self, services):
         try:
-            optional_secrets = 'plugins/%s/conf/secrets.yml' % self.name.lower()
-            if os.path.isfile(optional_secrets):
-                services.get('app_svc').config['secrets'][self.name] = BaseWorld.strip_yml(optional_secrets)[0]
+            if os.path.exists('plugins/%s/data' % self.name.lower()):
+                self.data_dir = 'plugins/%s/data' % self.name.lower()
             plugin = getattr(self._load_module(), 'enable')
             await plugin(services)
             self.enabled = True
@@ -54,9 +55,10 @@ class Plugin(BaseObject):
             logging.error('Error enabling plugin=%s, %s' % (self.name, e))
 
     async def destroy(self, services):
-        destroyable = getattr(self._load_module(), 'destroy', None)
-        if destroyable:
-            await destroyable(services)
+        if self.enabled:
+            destroyable = getattr(self._load_module(), 'destroy', None)
+            if destroyable:
+                await destroyable(services)
 
     """ PRIVATE """
 

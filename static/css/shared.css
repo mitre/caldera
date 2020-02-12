@@ -1,14 +1,14 @@
 :root {
-  --default-font: 'Veranda', sans-serif;
-  --theme-color: white;
-  --primary-background: #1e1e1e;
-  --secondary-background: #666;
-  --navbar-background: #333;
-  --font-color: white;
-  --invert-percentage: 100%;
+    --default-font: 'Veranda', sans-serif;
+    --theme-color: white;
+    --primary-background: #1e1e1e;
+    --secondary-background: #666;
+    --section-background: #333;
+    --font-color: white;
+    --invert-percentage: 100%;
 }
 body {
-    background-color: var(--primary-background);
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     font-family: var(--default-font);
     opacity: 1;
@@ -83,10 +83,19 @@ select {
    margin-top: 15px;
    border-radius: 10px;
 }
+span {
+    color: white;
+}
+code {
+    color: white;
+}
+pre {
+    color: white;
+}
 .row {
     margin-top:50px;
     text-align:center;
-    background-color: var(--navbar-background);
+    background-color: var(--section-background);
     padding:25px;
     border-radius:25px;
     width: 95%;
@@ -102,6 +111,12 @@ select {
     flex: 50%;
     color: var(--font-color);
     margin: 30px;
+}
+.button-row {
+    color: white;
+    border-radius: 4px;
+    background-color: darkgreen;
+    margin:0;
 }
 .button-success,
 .button-notready,
@@ -119,6 +134,10 @@ select {
     border: none;
     margin: 5px;
     cursor: pointer;
+}
+.button-orange {
+    background-color: orange;
+    margin: 5px;
 }
 .button-success {
     background-color: green;
@@ -218,6 +237,7 @@ p[onclick] {
 }
 .section-profile {
 }
+
 .section-border {
     border-right: .5px var(--font-color) solid;
 }
@@ -300,6 +320,10 @@ p[onclick] {
   height: 17px;
   font-size: 14px;
   text-align: center;
+  position: fixed;
+  top:43; left:5; bottom: auto;
+  z-index: 20;
+  width: 100%;
 }
 
 /* The close button */
@@ -369,24 +393,21 @@ p[onclick] {
 .obfuscation-table {
     color: white;
     width: 100%;
-    border-spacing: 15px;
+    border-spacing: 5px;
 }
 .obfuscation-table img {
     height: 18px;
     margin: 5px;
 }
-.obfuscation-table button {
-    background-color: green;
-    height: 40px;
-    width: 50%;
+.obfuscation-table input {
+    background-color: inherit;
     color: white;
-    margin: 10px;
 }
 .watermark {
-    z-index: -10;
     position: fixed;
-    top: 15%;
-    left: 25%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 .simple-plugin-intro h1 {
     margin-bottom: -15px;
@@ -432,4 +453,7 @@ p[onclick] {
 .column-simple .inner-box table tr td p {
     padding: 0;
     margin: 0;
+}
+.maroon {
+    background-color: maroon;
 }

@@ -1,3 +1,4 @@
+from base64 import b64decode
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -5,6 +6,9 @@ from app.utility.base_object import BaseObject
 
 
 class Agent(BaseObject):
+
+    RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
+                    exe_name='#{exe_name}')
 
     @property
     def unique(self):
@@ -24,7 +28,7 @@ class Agent(BaseObject):
         return '{}${}'.format(self.host, self.username)
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
-                 username='unknown', architecture='unknown', group='my_group', location='unknown', pid=0, ppid=0,
+                 username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
@@ -49,6 +53,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
+        self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -96,3 +101,17 @@ class Agent(BaseObject):
         self.update('sleep_min', int(kwargs.get('sleep_min')))
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
+
+    async def kill(self):
+        self.update('watchdog', 1)
+        self.update('sleep_min', 60 * 2)
+        self.update('sleep_max', 60 * 2)
+
+    def replace(self, encoded_cmd):
+        decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['server'], self.server)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['group'], self.group)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['agent_paw'], self.paw)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], self.location)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['exe_name'], self.exe_name)
+        return decoded_cmd
