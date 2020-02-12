@@ -87,10 +87,12 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object, instructions to execute
         """
+        result = kwargs.pop('result', None)
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
-            await self._save_result(kwargs.get('result'))
+            if result:
+                await self._save_result(result)
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
@@ -104,8 +106,6 @@ class ContactService(BaseService):
     """ PRIVATE """
 
     async def _save_result(self, result):
-        if not result:
-            return
         res = Result(**result)
         file_svc = self.get_service('file_svc')
         try:
