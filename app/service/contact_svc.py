@@ -133,7 +133,7 @@ class ContactService(BaseService):
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(Instruction(link_id=link.unique,
+            instructions.append(Instruction(identifier=link.unique,
                                             sleep=link.jitter,
                                             command=link.command,
                                             executor=link.ability.executor,
@@ -148,8 +148,8 @@ class ContactService(BaseService):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
         instructions = []
-        for i in await agent.capabilities(abilities):
-            new_id = 'boot-%s-%s' % (agent.paw, self.generate_name(size=4))
+        for x, i in enumerate(await agent.capabilities(abilities)):
+            new_id = 'bootstrap-%s-%d' % (agent.paw, x)
             cmd = self.encode_string(agent.replace(i.test))
-            instructions.append(Instruction(command=cmd, link_id=new_id, executor=i.executor))
+            instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
         return instructions
