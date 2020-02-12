@@ -128,5 +128,12 @@ function alphabetize_dropdown(obj) {
 window.onload = function checkBrowser(){
     if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
         $('#notice').css('display', 'block');
+        $(window).scroll(function(){
+            var sticky = $('.notice'),
+                scroll = $(window).scrollTop();
+
+            if (scroll >= 100) sticky.addClass('.notice');
+            else sticky.removeClass('.notice');
+          });
     }
 };
