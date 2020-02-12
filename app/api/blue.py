@@ -53,7 +53,7 @@ async def section_operations(self, request):
     adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
     sources = [s.display for s in await self.data_svc.locate('sources')]
     planners = [p.display for p in await self.data_svc.locate('planners')]
-    obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+    obfuscators = [o.display for o in await self.data_svc.locate('obfuscators') if not o.hidden]
     operations = [o.display for o in await self.data_svc.locate('operations')]
     return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                 obfuscators=obfuscators)
