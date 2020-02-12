@@ -42,7 +42,6 @@ class Planner(BaseObject):
                 return plugin
         return None
 
-
     """ PRIVATE """
 
     @staticmethod
