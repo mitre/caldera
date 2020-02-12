@@ -71,7 +71,7 @@ class Ability(BaseObject):
         existing.update('technique_name', self.technique_name)
         existing.update('technique_id', self.technique_id)
         existing.update('name', self.name)
-        existing.update('test', self.test)
+        existing.update('_test', self.test)
         existing.update('description', self.description)
         existing.update('cleanup', self.cleanup)
         existing.update('executor', self.executor)
