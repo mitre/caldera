@@ -14,6 +14,6 @@ api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-app.redirect.http: http://0.0.0.0:8888
-app.redirect.tcp: 0.0.0.0:5678
-app.redirect.udp: 0.0.0.0:5679
+app.contact.http: http://0.0.0.0:8888
+app.contact.tcp: 0.0.0.0:5678
+app.contact.udp: 0.0.0.0:5679
