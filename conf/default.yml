@@ -5,7 +5,6 @@ plugins:
   - stockpile
   - compass
   - terminal
-  - response
 users:
   red:
     admin: admin
