@@ -38,7 +38,7 @@ class UdpSessionHandler(asyncio.DatagramProtocol):
                 callback = profile.pop('callback', None)
                 profile['executors'] = [e for e in profile.get('executors', '').split(',') if e]
                 profile['contact'] = 'udp'
-                agent, _ = await self.contact_svc.handle_heartbeat(**profile)
+                await self.contact_svc.handle_heartbeat(**profile)
 
                 # send confirmation
                 if callback:
