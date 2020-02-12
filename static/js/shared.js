@@ -23,30 +23,25 @@ function validateFormState(conditions, selector){
 
 function downloadReport(endpoint, report_name, data={}, version='json') {
     function downloadObjectAsJson(data){
-        stream('Downloading report: '+report_name);
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-        let downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", report_name + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        completeDownload("text/json", "json", data);
     }
     function downloadObjectAsPpt(data){
-        stream('Downloading report: '+report_name);
-        let dataStr = "data:application/vnd.openxmlformats-officedocument.presentationml.presentation;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        completeDownload("application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx", data);
+    }
+    function completeDownload(type, extension, data) {
+        stream('Downloading report: '+report_name+' in '+version);
         let downloadAnchorNode = document.createElement('a');
+        let dataStr = "data:"+type+";charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", report_name + ".pptx");
+        downloadAnchorNode.setAttribute("download", report_name + "."+ extension);
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     }
+    data['version'] = version;
     if (version === 'ppt') {
-        data['index'] = 'operation_report_ppt';
         restRequest('POST', data, downloadObjectAsPpt, endpoint);
     } else {
-        data['index'] = 'operation_report';
         restRequest('POST', data, downloadObjectAsJson, endpoint);
     }
 }

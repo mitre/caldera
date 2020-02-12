@@ -191,7 +191,6 @@ class RestApi(BaseWorld):
                     source=lambda d: self.rest_svc.display_objects('sources', d),
                     plugins=lambda d: self.rest_svc.display_objects('plugins', d),
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
-                    operation_report_ppt=lambda d: self.rest_svc.display_operation_report_ppt(d),
                     result=lambda d: self.rest_svc.display_result(d),
                     contact=lambda d: self.rest_svc.download_contact_report(d),
                     configuration=lambda d: self.rest_svc.update_config(d)

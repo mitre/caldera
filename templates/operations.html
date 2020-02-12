@@ -621,8 +621,8 @@
     function downloadOperationReport(version) {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
-        let postData = selectedOperationId ? {'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-        downloadReport('/plugin/chain/rest', postData, version);
+        let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
+        downloadReport('/plugin/chain/rest', 'operation_report', postData, version);
     }
 
     function changeProgress(finish, percent) {

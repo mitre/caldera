@@ -119,6 +119,8 @@ class RestService(BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
+        if data.pop('version') == 'ppt':
+            return await self._generate_ppt_report(op)
         return op.report(output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
@@ -262,3 +264,6 @@ class RestService(BaseService):
         contact_svc.sleep_min = sleep_min
         contact_svc.sleep_max = sleep_max
         contact_svc.watchdog = watchdog
+
+    async def _generate_ppt_report(self, op):
+        pass
