@@ -1,3 +1,5 @@
+import os
+
 from app.utility.base_object import BaseObject
 from app.objects.secondclass.c_fact import Fact
 
