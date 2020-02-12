@@ -83,7 +83,6 @@ class ContactService(BaseService):
     async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-        :param paw: the unique identifier for the calling agent
         :param kwargs: key/value pairs
         :return: the agent object, instructions to execute
         """
