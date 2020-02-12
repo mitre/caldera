@@ -33,7 +33,8 @@
             </tr>
         </table>
         </center>
-        <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download report</button>
+        <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport('json')">Download report (JSON)</button>
+        <button id="reportBtnPpt" type="button" class="button-notready atomic-button" onclick="downloadOperationReport('ppt')">Download report (PPT)</button>
         <hr>
         <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
       </div>
@@ -617,11 +618,11 @@
         restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
     }
 
-    function downloadOperationReport() {
+    function downloadOperationReport(version) {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
-        let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-        downloadReport('/plugin/chain/rest', 'operation_report', postData);
+        let postData = selectedOperationId ? {'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
+        downloadReport('/plugin/chain/rest', postData, version);
     }
 
     function changeProgress(finish, percent) {

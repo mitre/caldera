@@ -21,18 +21,34 @@ function validateFormState(conditions, selector){
         updateButtonState(selector, 'invalid');
 }
 
-function downloadReport(endpoint, filename, data={}) {
+function downloadReport(endpoint, report_name, data={}, version='json') {
     function downloadObjectAsJson(data){
-        stream('Downloading report: '+filename);
+        stream('Downloading report: '+report_name);
         let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         let downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", filename + ".json");
+        downloadAnchorNode.setAttribute("download", report_name + ".json");
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     }
-    restRequest('POST', data, downloadObjectAsJson, endpoint);
+    function downloadObjectAsPpt(data){
+        stream('Downloading report: '+report_name);
+        let dataStr = "data:application/vnd.openxmlformats-officedocument.presentationml.presentation;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        let downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", report_name + ".pptx");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+    if (version === 'ppt') {
+        data['index'] = 'operation_report_ppt';
+        restRequest('POST', data, downloadObjectAsPpt, endpoint);
+    } else {
+        data['index'] = 'operation_report';
+        restRequest('POST', data, downloadObjectAsJson, endpoint);
+    }
 }
 
 function updateButtonState(selector, state) {
