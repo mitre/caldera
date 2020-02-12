@@ -96,7 +96,7 @@ class ContactService(BaseService):
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
-    async def save_results(self, id, output, status, pid):
+    async def save_results(self, id, output, status=0, pid=0):
         """
         Save the results from a single executed link
 
