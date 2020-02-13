@@ -268,16 +268,34 @@ class RestService(BaseService):
         contact_svc.sleep_max = sleep_max
         contact_svc.watchdog = watchdog
 
-    async def _generate_ppt_report(self, op, output):
+    async def _generate_ppt_report(self, operation, agent_output):
+
+        TITLE_SLIDE = 0
+        HEADER_NO_BODY_SLIDE = 5
+
+        async def _generate_title_slide(pres, op):
+            slide = pres.slides.add_slide(pres.slide_layouts[TITLE_SLIDE])
+            title = slide.shapes.title
+            subtitle = slide.placeholders[1]
+            title.text = 'Operation: {}'.format(op.name)
+            subtitle.text = 'Start: {}\nStop: {}'.format(op.start, op.finish)
+
+        async def _generate_overview_slide(pres, op):
+            slide = pres.slides.add_slide(pres.slide_layouts[HEADER_NO_BODY_SLIDE])
+
+        async def _generate_ttp_slides(pres, op):
+            pass
+
+        async def _generate_agent_slides(pres, op, agent_output):
+            pass
+
         pres = pptx.Presentation(os.path.join('data', 'reports', 'caldera.pptx'))
-        title_slide_layout = pres.slide_layouts[0]
-        slide = pres.slides.add_slide(title_slide_layout)
-        title = slide.shapes.title
-        subtitle = slide.placeholders[1]
-        title.text = 'Operation: {}'.format(op.name)
-        subtitle.text = 'Start: {}\nStop: {}'.format(op.start, op.finish)
-        pres_path = os.path.join('data', 'reports', '{}-{}.pptx'.format(op.id, op.name))
+        filename = '{}-{}.pptx'.format(operation.id, operation.name)
+        await _generate_title_slide(pres, operation)
+        await _generate_overview_slide(pres, operation)
+        await _generate_ttp_slides(pres, operation)
+        if agent_output:
+            await _generate_agent_slides(pres, operation, agent_output)
+        pres_path = os.path.join('data', 'reports', filename)
         pres.save(pres_path)
-        file_path, contents = await self._services.get('file_svc').read_file('{}-{}.pptx'.format(op.id, op.name), location='reports')
-        headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % (str(op.id)+"-"+op.name+".pptx"))])
-        return web.Response(body=contents, headers=headers)
+        return filename
