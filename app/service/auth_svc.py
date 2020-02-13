@@ -117,9 +117,9 @@ class AuthService(BaseService):
         identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
-            return self.user_map[identity].permissions
+            return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
         elif self.bypass in request.host:
-            return ('red', 'app')
+            return self.Access.RED, self.Access.APP
         return ()
 
     """ PRIVATE """
