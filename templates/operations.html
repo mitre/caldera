@@ -51,7 +51,7 @@
                 {% endfor %}
               </select>
               <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="" disabled selected>No adversary chosen</option>
+                <option value="" disabled selected>No profile chosen</option>
                 {% for adv in adversaries %}
                   <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
                 {% endfor %}
@@ -687,7 +687,7 @@
     function openDuk6(){
         document.getElementById("duk-modal").style.display="block";
         $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
-            'the planner, utilizing the abilities contained inside the chosen adversary profile. This list shows, per agent, ' +
+            'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
             'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
     }
 </script>
