@@ -4,6 +4,8 @@ import uuid
 from aiohttp import web
 from aiohttp_jinja2 import template, render_template
 
+from app.api.packs.advanced import AdvancedPack
+from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
@@ -18,6 +20,10 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
+        self.gui_packs = [
+            CampaignPack(services),
+            AdvancedPack(services)
+        ]
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -37,7 +43,10 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
 
-    """ BOILERPLATE SECTIONS """
+    async def add_gui_pack(self, pack):
+        self.gui_packs.append(pack)
+
+    """ BOILERPLATE """
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -55,8 +64,10 @@ class RestApi(BaseWorld):
         if not access:
             return render_template('login.html', request, {})
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        #gui_packs =
-        data = dict(plugins=[p.display for p in plugins])
+        data = dict(
+            plugins=[p.display for p in plugins],
+            gui_packs={p.display_name: p.endpoints for p in self.gui_packs}
+        )
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
@@ -93,10 +104,6 @@ class RestApi(BaseWorld):
 
     @check_authorization
     async def rest_core(self, request):
-        """
-        :param request:
-        :return:
-        """
         try:
             data = dict(await request.json())
             index = data.pop('index')
@@ -170,11 +177,6 @@ class RestApi(BaseWorld):
         return await self.file_svc.save_multipart_file_upload(request, exfil_dir)
 
     async def download(self, request):
-        """
-        Accept a request with a required header, file, and an optional header, platform, and download the file.
-        :param request:
-        :return: a multipart file via HTTP
-        """
         try:
             payload, content, display_name = await self.file_svc.get_file(request.headers)
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])

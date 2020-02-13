@@ -72,6 +72,7 @@ function viewSection(name, address){
         newSection.html(plugin);
         $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
     }
+    console.log(address);
     restRequest('GET', null, display, address);
 }
 
