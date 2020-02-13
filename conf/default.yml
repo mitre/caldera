@@ -8,6 +8,7 @@ plugins:
 users:
   red:
     admin: admin
+    red: admin
   blue:
     blue: admin
 api_key: ADMIN123

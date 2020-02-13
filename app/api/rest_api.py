@@ -1,12 +1,9 @@
 import logging
-import inspect
 import uuid
 
 from aiohttp import web
-from aiohttp_jinja2 import template
+from aiohttp_jinja2 import template, render_template
 
-import app.api.blue as blue
-import app.api.red as red
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
@@ -15,34 +12,23 @@ from app.utility.base_world import BaseWorld
 class RestApi(BaseWorld):
 
     def __init__(self, services):
+        self.log = logging.getLogger('rest_api')
         self.data_svc = services.get('data_svc')
         self.app_svc = services.get('app_svc')
         self.auth_svc = services.get('auth_svc')
-        self.contact_svc = services.get('contact_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        self.log = logging.getLogger('rest_api')
-        self.modules = {
-            'red': {f[0]: f[1] for f in inspect.getmembers(red, inspect.isfunction)},
-            'blue': {f[0]: f[1] for f in inspect.getmembers(blue, inspect.isfunction)}
-        }
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
-        # authorized sections
-        self.app_svc.application.router.add_route('GET', '/section/agents', self.section_agent)
-        self.app_svc.application.router.add_route('GET', '/section/profiles', self.section_profiles)
-        self.app_svc.application.router.add_route('GET', '/section/operations', self.section_operations)
-        self.app_svc.application.router.add_route('GET', '/section/sources', self.section_sources)
-        self.app_svc.application.router.add_route('GET', '/section/planners', self.section_planners)
-        self.app_svc.application.router.add_route('GET', '/section/contacts', self.section_contacts)
-        self.app_svc.application.router.add_route('GET', '/section/obfuscators', self.section_obfuscators)
-        self.app_svc.application.router.add_route('GET', '/section/configurations', self.section_configurations)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        # unauthorized API endpoints
+        self.app_svc.application.router.add_route('*', '/file/download', self.download)
+        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/api/payload', self.upload_payload)
@@ -50,19 +36,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/potential-links', self.handle_potential_links)
         self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
-        # unauthorized agent endpoints
-        self.app_svc.application.router.add_route('POST', '/internals', self.internals)
-        self.app_svc.application.router.add_route('*', '/file/download', self.download)
-        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
-
-    async def get_endpoint_by_access(self, request, endpoint):
-        access = [p for p in await self.auth_svc.get_permissions(request) if p in self.modules]
-        for module in access:
-            try:
-                return await self.modules[module][endpoint](self, request)
-            except Exception as e:
-                self.log.debug(e)
-        return await self.login(request)
 
     """ BOILERPLATE SECTIONS """
 
@@ -77,52 +50,22 @@ class RestApi(BaseWorld):
     async def logout(self, request):
         await self.auth_svc.logout_user(request)
 
-    """ SPLIT SECTIONS """
-
     async def landing(self, request):
-        return await self.get_endpoint_by_access(request, 'landing')
-
-    async def section_agent(self, request):
-        return await self.get_endpoint_by_access(request, 'section_agent')
-
-    async def section_profiles(self, request):
-        return await self.get_endpoint_by_access(request, 'section_profiles')
-
-    async def section_operations(self, request):
-        return await self.get_endpoint_by_access(request, 'section_operations')
-
-    async def section_sources(self, request):
-        return await self.get_endpoint_by_access(request, 'section_sources')
-
-    async def get_abilities(self, request):
-        return await self.get_endpoint_by_access(request, 'get_abilities')
-
-    """ SHARED SECTIONS """
-
-    @check_authorization
-    @template('planners.html')
-    async def section_planners(self, request):
-        planners = [p.display for p in await self.data_svc.locate('planners')]
-        return dict(planners=planners)
-
-    @check_authorization
-    @template('contacts.html')
-    async def section_contacts(self, request):
-        contacts = [dict(name=c.name, description=c.description) for c in self.contact_svc.contacts]
-        return dict(contacts=contacts)
-
-    @check_authorization
-    @template('obfuscators.html')
-    async def section_obfuscators(self, request):
-        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
-        return dict(obfuscators=obfuscators)
-
-    @check_authorization
-    @template('configurations.html')
-    async def section_configurations(self, request):
-        return dict(config=self.get_config())
+        access = [p for p in await self.auth_svc.get_permissions(request)]
+        if not access:
+            return render_template('login.html', request, {})
+        plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
+        #gui_packs =
+        data = dict(plugins=[p.display for p in plugins])
+        return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
+
+    @check_authorization
+    async def get_abilities(self, request):
+        data = dict(await request.json())
+        abilities = await self.rest_svc.find_abilities(paw=data['paw'])
+        return web.json_response(dict(abilities=[a.display for a in abilities]))
 
     @check_authorization
     async def handle_potential_links(self, request):
@@ -220,14 +163,6 @@ class RestApi(BaseWorld):
         await _validate_request()
         await self.rest_svc.change_operation_state(body['name'], body['state'])
         return web.Response()
-
-    async def internals(self, request):
-        options = dict(
-            pin=lambda d: self.rest_svc.get_link_pin(d)
-        )
-        data = dict(await request.json())
-        resp = await options[request.headers.get('property')](data)
-        return web.json_response(resp)
 
     async def upload_exfil_http(self, request):
         dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
