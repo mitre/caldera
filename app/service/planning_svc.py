@@ -126,8 +126,10 @@ class PlanningService(BasePlanningService):
             if ability.cleanup and link.status >= 0:
                 decoded_cmd = agent.replace(ability.cleanup)
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
-                links.append(Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                  ability=ability, status=link_status))
+                lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                           ability=ability, score=0, jitter=0, status=link_status)
+                lnk.apply_id()
+                links.append(lnk)
         return links
 
     @staticmethod
