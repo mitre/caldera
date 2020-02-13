@@ -4,16 +4,15 @@ import glob
 import os
 import pathlib
 import uuid
-import yaml
-
 from collections import defaultdict
 from datetime import time
+
+import yaml
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
