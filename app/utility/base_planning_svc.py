@@ -54,7 +54,7 @@ class BasePlanningService(BaseService):
                     try:
                         copy_test = copy.copy(decoded_test)
                         copy_link = copy.deepcopy(link)
-                        variant, score, used = await self._build_single_test_variant(copy_test, combo)
+                        variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
@@ -112,7 +112,7 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    async def _build_single_test_variant(copy_test, combo):
+    async def _build_single_test_variant(copy_test, combo, executor):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
@@ -121,7 +121,7 @@ class BasePlanningService(BaseService):
             score += (score + var.score)
             used.append(var)
             re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.value).strip(), copy_test)
+            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip(), copy_test)
         return copy_test, score, used
 
     @staticmethod
