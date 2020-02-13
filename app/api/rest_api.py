@@ -37,7 +37,6 @@ class RestApi(BaseWorld):
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_api)
         self.app_svc.application.router.add_route('POST', '/api/payload', self.upload_payload)
-        self.app_svc.application.router.add_route('POST', '/api/ability', self.get_abilities)
         self.app_svc.application.router.add_route('*', '/api/potential-links', self.handle_potential_links)
         self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
@@ -64,12 +63,6 @@ class RestApi(BaseWorld):
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
-
-    @check_authorization
-    async def get_abilities(self, request):
-        data = dict(await request.json())
-        abilities = await self.rest_svc.find_abilities(paw=data['paw'])
-        return web.json_response(dict(abilities=[a.display for a in abilities]))
 
     @check_authorization
     async def handle_potential_links(self, request):
