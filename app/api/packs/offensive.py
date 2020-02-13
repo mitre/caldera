@@ -4,19 +4,19 @@ from app.service.auth_svc import red_authorization
 from app.utility.base_world import BaseWorld
 
 
-class CampaignPack(BaseWorld):
+class OffensivePack(BaseWorld):
 
     def __init__(self, services):
+        self._search = dict(access=(self.Access.RED, self.Access.APP))
+        self.auth_svc = services.get('auth_svc')
         self.app_svc = services.get('app_svc')
         self.data_svc = services.get('data_svc')
-        self.auth_svc = services.get('auth_svc')
         self.rest_svc = services.get('rest_svc')
-        self._search = dict(access=(self.Access.RED, self.Access.APP))
 
     async def enable(self):
-        self.app_svc.application.router.add_route('GET', '/campaign/agents', self._section_agent)
-        self.app_svc.application.router.add_route('GET', '/campaign/profiles', self._section_profiles)
-        self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
+        self.app_svc.application.router.add_route('GET', '/offense/agents', self._section_agent)
+        self.app_svc.application.router.add_route('GET', '/offense/profiles', self._section_profiles)
+        self.app_svc.application.router.add_route('GET', '/offense/operations', self._section_operations)
 
     """ PRIVATE """
 

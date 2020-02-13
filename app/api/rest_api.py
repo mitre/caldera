@@ -6,7 +6,8 @@ from aiohttp import web
 from aiohttp_jinja2 import template, render_template
 
 from app.api.packs.advanced import AdvancedPack
-from app.api.packs.campaign import CampaignPack
+from app.api.packs.offensive import OffensivePack
+from app.api.packs.defensive import DefensivePack
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
@@ -21,7 +22,8 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        asyncio.get_event_loop().create_task(CampaignPack(services).enable())
+        asyncio.get_event_loop().create_task(OffensivePack(services).enable())
+        asyncio.get_event_loop().create_task(DefensivePack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
