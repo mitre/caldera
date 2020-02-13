@@ -48,5 +48,5 @@ class AdvancedPack(BaseWorld):
     @check_authorization
     @template('sources.html')
     async def _section_sources(self, request):
-        access = [p for p in await self.auth_svc.get_permissions(request)]
+        access = await self.auth_svc.get_permissions(request)
         return dict(sources=[s.display for s in await self.data_svc.locate('sources', match=dict(access=tuple(access)))])
