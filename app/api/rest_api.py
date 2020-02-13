@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 
@@ -20,10 +21,8 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        self.gui_packs = [
-            CampaignPack(services),
-            AdvancedPack(services)
-        ]
+        asyncio.get_event_loop().create_task(CampaignPack(services).enable())
+        asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -43,9 +42,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
         self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
 
-    async def add_gui_pack(self, pack):
-        self.gui_packs.append(pack)
-
     """ BOILERPLATE """
 
     @template('login.html', status=401)
@@ -64,10 +60,7 @@ class RestApi(BaseWorld):
         if not access:
             return render_template('login.html', request, {})
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(
-            plugins=[p.display for p in plugins],
-            gui_packs={p.display_name: p.endpoints for p in self.gui_packs}
-        )
+        data = dict(plugins=[p.display for p in plugins])
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """

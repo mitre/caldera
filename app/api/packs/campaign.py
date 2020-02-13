@@ -1,5 +1,3 @@
-import asyncio
-
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import red_authorization
@@ -9,23 +7,16 @@ from app.utility.base_world import BaseWorld
 class CampaignPack(BaseWorld):
 
     def __init__(self, services):
-        self.display_name = 'campaigns'
-        self.access = self.Access.RED
-        self.endpoints = dict(
-            agents='/%s/agents' % self.display_name,
-            profiles='/%s/profiles' % self.display_name,
-            operations='/%s/operations' % self.display_name
-        )
         self.app_svc = services.get('app_svc')
         self.data_svc = services.get('data_svc')
+        self.auth_svc = services.get('auth_svc')
         self.rest_svc = services.get('rest_svc')
         self._search = dict(access=(self.Access.RED, self.Access.APP))
-        asyncio.get_event_loop().create_task(self.enable)
 
     async def enable(self):
-        self.app_svc.application.router.add_route('GET', self.endpoints['agents'], self._section_agent)
-        self.app_svc.application.router.add_route('GET', self.endpoints['profiles'], self._section_profiles)
-        self.app_svc.application.router.add_route('GET', self.endpoints['operations'], self._section_operations)
+        self.app_svc.application.router.add_route('GET', '/campaign/agents', self._section_agent)
+        self.app_svc.application.router.add_route('GET', '/campaign/profiles', self._section_profiles)
+        self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
 
     """ PRIVATE """
 
