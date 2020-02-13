@@ -353,6 +353,16 @@ p[onclick] {
 .duk-modal p {
     text-align: left;
 }
+.duk-home {
+    margin-left: 0;
+    flex:37%;
+    border-right: solid white 1px;
+    line-height: 10px;
+    padding-right: 30;
+}
+.duk-home:last-child {
+    border-right: 0;
+}
 .mode {
     font-size:14px;
     margin-top:8px;
