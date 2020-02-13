@@ -161,10 +161,10 @@ class RestService(BaseService):
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
-    async def find_abilities(self, paw):
+    async def find_abilities(self, paw, search):
         data_svc = self.get_service('data_svc')
         agent = (await data_svc.locate('agents', match=dict(paw=paw)))[0]
-        return await agent.capabilities(await self.get_service('data_svc').locate('abilities'))
+        return await agent.capabilities(await self.get_service('data_svc').locate('abilities', match=search))
 
     async def get_potential_links(self, op_id, paw=None):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
@@ -172,12 +172,12 @@ class RestService(BaseService):
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        return await self._build_potential_links(operation, agents, potential_abilities)
+        links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in links])
 
-    async def apply_potential_link(self, l):
-        link = Link.from_json(l)
+    async def apply_potential_link(self, link):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
-        await operation.apply(link)
+        return await operation.apply(link)
 
     async def change_operation_state(self, op_id, state):
         operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
