@@ -377,7 +377,7 @@
     function changeCurrentOperationState(newState){
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let data = {'name': parseInt(selectedOperationId), 'state': newState};
-        restRequest('PUT', data, doNothing, '/plugin/chain/operation/state');
+        restRequest('PUT', data, doNothing, '/api/operation/state');
     }
 
     function handleStartActionCallback(data){
@@ -461,7 +461,7 @@
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
-            restRequest('POST', postData, operationCallback, '/plugin/chain/full');
+            restRequest('POST', postData, operationCallback, '/api/rest');
         }
     }
 
@@ -482,7 +482,7 @@
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
         let postData = {"op_id": parseInt(selectedOperationId), "paw": paw};
-        restRequest('POST', postData, potentialLinksCallback, '/plugin/chain/potential-links');
+        restRequest('POST', postData, potentialLinksCallback, '/api/potential-links');
     }
 
     function potentialLinksCallback(data){
@@ -546,7 +546,7 @@
         link.command = btoa(linkDiv.find('#potential-command').html());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
-        restRequest('PUT', link, doNothing, '/plugin/chain/potential-links');
+        restRequest('PUT', link, doNothing, '/api/potential-links');
     }
 
     function updatePotentialLinkCount(){
@@ -621,7 +621,7 @@
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
         let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-        downloadReport('/plugin/chain/rest', 'operation_report', postData);
+        downloadReport('/api/rest', 'operation_report', postData);
     }
 
     function changeProgress(finish, percent) {
@@ -668,7 +668,7 @@
         } else{
             data['autonomous'] = 1;
         }
-        restRequest('PUT', data, function(d){refresh()}, `/plugin/chain/operation/${op_id}`);
+        restRequest('PUT', data, function(d){refresh()}, `/api/operation/${op_id}`);
     }
 
     function checkOpformValid(){

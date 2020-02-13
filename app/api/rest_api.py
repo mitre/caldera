@@ -7,6 +7,7 @@ from aiohttp_jinja2 import template
 
 import app.api.blue as blue
 import app.api.red as red
+from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
@@ -43,14 +44,12 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/plugin/chain/full', self.rest_full)
-        self.app_svc.application.router.add_route('*', '/plugin/chain/rest', self.rest_api)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/potential-links', self.add_potential_link)
-        self.app_svc.application.router.add_route('POST', '/plugin/chain/potential-links', self.find_potential_links)
-        self.app_svc.application.router.add_route('POST', '/plugin/chain/payload', self.upload_payload)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/state', self.rest_state_control)
-        self.app_svc.application.router.add_route('PUT', '/plugin/chain/operation/{operation_id}', self.rest_update_operation)
-        self.app_svc.application.router.add_route('POST', '/ability', self.ability_endpoint)
+        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_api)
+        self.app_svc.application.router.add_route('POST', '/api/payload', self.upload_payload)
+        self.app_svc.application.router.add_route('POST', '/api/ability', self.get_abilities)
+        self.app_svc.application.router.add_route('*', '/api/potential-links', self.handle_potential_links)
+        self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
+        self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
         # unauthorized agent endpoints
         self.app_svc.application.router.add_route('POST', '/internals', self.internals)
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
@@ -95,6 +94,9 @@ class RestApi(BaseWorld):
     async def section_sources(self, request):
         return await self.get_endpoint_by_access(request, 'section_sources')
 
+    async def get_abilities(self, request):
+        return await self.get_endpoint_by_access(request, 'get_abilities')
+
     """ SHARED SECTIONS """
 
     @check_authorization
@@ -123,33 +125,21 @@ class RestApi(BaseWorld):
     """ API ENDPOINTS """
 
     @check_authorization
-    async def ability_endpoint(self, request):
+    async def handle_potential_links(self, request):
         data = dict(await request.json())
-        abilities = await self.rest_svc.find_abilities(**data)
-        return web.json_response(dict(abilities=[a.display for a in abilities]))
-
-    @check_authorization
-    async def find_potential_links(self, request):
-        data = dict(await request.json())
-        links = await self.rest_svc.get_potential_links(**data)
-        return web.json_response(dict(links=[l.display for l in links]))
-
-    @check_authorization
-    async def add_potential_link(self, request):
-        data = dict(await request.json())
-        await self.rest_svc.apply_potential_link(data)
-        return web.json_response(dict())
+        options = dict(
+            PUT=dict(
+                func=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d))
+            ),
+            POST=dict(
+                func=lambda d: self.rest_svc.get_potential_links(**d)
+            )
+        )
+        resp = await options[request.method]['func'](data)
+        return web.json_response(resp)
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
-
-    async def rest_full(self, request):
-        try:
-            base = await self.rest_core(request)
-            base[0]['abilities'] = [a.display for a in await self.data_svc.locate('abilities')]
-            return web.json_response(base)
-        except Exception:
-            pass
 
     async def rest_api(self, request):
         try:

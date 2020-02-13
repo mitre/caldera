@@ -48,12 +48,19 @@ async def section_sources(self, request):
 @red_authorization
 @template('operations.html')
 async def section_operations(self, request):
-    hosts = [h.display for h in await self.data_svc.locate('agents')]
+    hosts = [h.display for h in await self.data_svc.locate('agents', match=search)]
     groups = list(set(([h['group'] for h in hosts])))
-    adversaries = [a.display for a in await self.data_svc.locate('adversaries')]
-    sources = [s.display for s in await self.data_svc.locate('sources')]
+    adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=search)]
+    sources = [s.display for s in await self.data_svc.locate('sources', match=search)]
     planners = [p.display for p in await self.data_svc.locate('planners')]
     obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
     operations = [o.display for o in await self.data_svc.locate('operations')]
     return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                 obfuscators=obfuscators)
+
+
+@red_authorization
+async def get_abilities(self, request):
+    data = dict(await request.json())
+    abilities = await self.rest_svc.find_abilities(paw=data['paw'], search=search)
+    return web.json_response(dict(abilities=[a.display for a in abilities]))
