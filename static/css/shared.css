@@ -1,9 +1,9 @@
 :root {
     --default-font: 'Veranda', sans-serif;
     --theme-color: white;
-    --primary-background: #1e1e1e;
-    --secondary-background: #666;
-    --section-background: #333;
+    --primary-background: black;
+    --secondary-background: #1e1e1e;
+    --section-background: #1e1e1e;
     --font-color: white;
     --invert-percentage: 100%;
 }
@@ -101,6 +101,7 @@ pre {
     width: 95%;
     display: flex;
     position: relative;
+    border: 2px solid var(--navbar-color);
 }
 .row-simple {
     width: 95%;
@@ -232,12 +233,7 @@ p[onclick] {
 .select-info {
     padding-left: 10px;
 }
-.advanced {
-    background-color: #0d0d0d;
-}
-.section-profile {
-}
-
+.advanced {}
 .section-border {
     border-right: .5px var(--font-color) solid;
 }

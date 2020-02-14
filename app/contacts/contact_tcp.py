@@ -12,7 +12,7 @@ class Tcp(BaseWorld):
 
     def __init__(self, services):
         self.name = 'tcp'
-        self.description = 'Communication occurs through a raw TCP socket'
+        self.description = 'Accept beacons through a raw TCP socket'
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = services.get('contact_svc')
         self.tcp_handler = TcpSessionHandler(services, self.log)
