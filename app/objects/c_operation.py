@@ -93,7 +93,6 @@ class Operation(BaseObject):
         self.auto_close = auto_close
         self.visibility = visibility
         self.chain, self.rules = [], []
-        self.queue = asyncio.Queue()
         if source:
             self.rules = source.rules
 
