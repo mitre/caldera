@@ -1,15 +1,15 @@
 import asyncio
 import json
-import socket
 
+from app.contacts.handlers.handlers import Handler
 from app.utility.base_world import BaseWorld
 
 
 class Udp(BaseWorld):
 
     def __init__(self, services):
-        self.name = 'udp'
-        self.description = 'Accept beacons through a raw UDP socket'
+        self.name = 'stream'
+        self.description = 'Accept streaming messages via UDP'
         self.log = self.create_logger('contact_udp')
         self.contact_svc = services.get('contact_svc')
         self.udp_handler = UdpSessionHandler(services)
@@ -28,23 +28,14 @@ class UdpSessionHandler(asyncio.DatagramProtocol):
 
     def __init__(self, services):
         super().__init__()
+        self.services = services
         self.log = BaseWorld.create_logger('udp_session')
-        self.contact_svc = services.get('contact_svc')
 
     def datagram_received(self, data, addr):
-        async def handle_beacon():
+        async def handle_msg():
             try:
-                # save beacon
-                profile = json.loads(data.decode())
-                callback = profile.pop('callback', None)
-                profile['executors'] = [e for e in profile.get('executors', '').split(',') if e]
-                profile['contact'] = 'udp'
-                await self.contact_svc.handle_heartbeat(**profile)
-
-                # send confirmation
-                if callback:
-                    sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-                    sock.sendto('roger'.encode(), (addr[0], int(callback)))
+                message = json.loads(data.decode())
+                await Handler(message.pop('tag')).handle(message, self.services, addr[0])
             except Exception as e:
                 self.log.debug(e)
-        asyncio.get_event_loop().create_task(handle_beacon())
+        asyncio.get_event_loop().create_task(handle_msg())
