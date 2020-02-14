@@ -14,3 +14,14 @@ myMessage.keyup(function(e){
         myMessage.val('');
     }
 });
+
+function pollSocket(msg){
+    let socket = new WebSocket('ws://'+location.hostname+':7001/chat');
+    socket.onopen = function () {
+        socket.send(msg);
+    };
+    socket.onmessage = function (s) {
+        console.log(s.data);
+    };
+}
+
