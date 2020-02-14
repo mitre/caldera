@@ -15,7 +15,6 @@ from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
-from app.service.streamer_svc import StreamerService
 from app.utility.base_world import BaseWorld
 
 
@@ -78,7 +77,6 @@ if __name__ == '__main__':
         rest_svc = RestService()
         auth_svc = AuthService()
         file_svc = FileSvc()
-        streamer_svc = StreamerService()
         app_svc = AppService(application=web.Application())
 
         if args.fresh:
