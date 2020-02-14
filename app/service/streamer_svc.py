@@ -15,8 +15,8 @@ class StreamerService(BaseService):
     def turn_on(self):
         self.log.debug('Turning on streamer socket')
         loop = asyncio.get_event_loop()
-        self.udp_handler = UdpSessionHandler()
-        loop.create_task(loop.create_datagram_endpoint(lambda: self.udp_handler, local_addr=('0.0.0.0', 5999)))
+        udp = self.get_config('app.stream.udp')
+        loop.create_task(loop.create_datagram_endpoint(lambda: self.udp_handler, local_addr=('0.0.0.0', udp.split(':')[1])))
 
     def turn_off(self):
         self.log.debug('Turning off streamer socket')
