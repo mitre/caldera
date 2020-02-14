@@ -36,5 +36,5 @@ async def chat_handler(socket, path, services):
     socket_port = BaseWorld.get_config('app.contact.websocket').split(':')[1]
     msg = await socket.recv()
     for ip in BaseWorld.get_config('teammates'):
-        async with websockets.connect('ws://%s:%s' % (ip, socket_port)) as sock:
+        async with websockets.connect('ws://%s:%d/chat' % (ip, int(socket_port))) as sock:
             await sock.send(msg)

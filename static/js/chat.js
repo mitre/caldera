@@ -1,14 +1,5 @@
-let refresher = setInterval(refresh, 3000);
-$('.section-profile').bind('destroyed', function() {
-    clearInterval(refresher);
-});
-
-function refresh(){
-
-}
-
 function send(message) {
-    let socket = new WebSocket('ws://'+location.hostname+':7001/chat');
+    let socket = new WebSocket('ws://0.0.0.0:7001/chat');
     socket.onopen = function () {
         socket.send(message);
     };
@@ -16,8 +7,6 @@ function send(message) {
         console.log(s.data);
     };
 }
-
-document.getElementById("myForm").style.display = "block";
 
 function closeForm(){
     document.getElementById("myForm").style.display = "none";
