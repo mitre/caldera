@@ -649,9 +649,9 @@
         return false;
     }
 
-    function updateLinkStatus(lnk, opId, status, command='') {
-        let linkId = opId + '-' + lnk;
-        let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    function updateLinkStatus(lnk, status, command='') {
+        console.log(lnk, status);
+        let data = {'index':'chain', 'link_id': lnk, 'status': status};
         if(command) {
             data['command'] = command;
         }

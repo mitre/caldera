@@ -101,7 +101,7 @@ class RestApi(BaseWorld):
 
     async def rest_update_operation(self, request):
         operation = await self.data_svc.locate('operations', match=dict(id=int(request.match_info['operation_id'])))
-        operation[0].autonomous = 0 if operation.autonomous else 1
+        operation[0].autonomous = 0 if operation[0].autonomous else 1
         return web.Response()
 
     @check_authorization
