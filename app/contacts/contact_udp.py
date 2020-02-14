@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from app.contacts.handlers.handlers import Handler
+from app.contacts.handlers.h_udp import Handler
 from app.utility.base_world import BaseWorld
 
 

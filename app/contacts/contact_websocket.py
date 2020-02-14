@@ -1,9 +1,8 @@
 import asyncio
-import json
+
 import websockets
 
-from datetime import datetime
-
+from app.contacts.handlers.h_websocket import Handler
 from app.utility.base_world import BaseWorld
 
 
@@ -33,14 +32,6 @@ class SocketHandler:
 
     async def handle(self, socket, path):
         try:
-            session_id = path.split('/')[2]
-            cmd = await socket.recv()
-            handler = self.services.get('term_svc').socket_conn.tcp_handler
-            paw = next(i.paw for i in handler.sessions if i.id == int(session_id))
-            self.services.get('term_svc').reverse_report[paw].append(
-                dict(date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), cmd=cmd)
-            )
-            status, pwd, reply = await handler.send(session_id, cmd)
-            await socket.send(json.dumps(dict(response=reply.strip(), pwd=pwd)))
+            await Handler(path.split('/')[1]).handle(socket, path, self.services)
         except Exception as e:
             self.log.debug(e)
