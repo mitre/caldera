@@ -40,6 +40,6 @@
 
 <script>
     function updateConfig(prop) {
-        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+        restRequest('POST', {'index': 'configurations', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
     }
 </script>

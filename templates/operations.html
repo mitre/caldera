@@ -325,7 +325,7 @@
     }
 
     function deleteOperation(){
-        let data = {'index': 'operation', 'id': parseInt($('#operation-list option:selected').attr('value'))};
+        let data = {'index': 'operations', 'id': parseInt($('#operation-list option:selected').attr('value'))};
         restRequest('DELETE', data, window.location.reload());
     }
 
@@ -382,7 +382,7 @@
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
-        restRequest('POST', {'index':'operation'}, reloadOperationsElements);
+        restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
     function reloadOperationsElements(data){
@@ -457,7 +457,7 @@
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
+            let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
