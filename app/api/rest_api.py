@@ -6,8 +6,7 @@ from aiohttp import web
 from aiohttp_jinja2 import template, render_template
 
 from app.api.packs.advanced import AdvancedPack
-from app.api.packs.offensive import OffensivePack
-from app.api.packs.defensive import DefensivePack
+from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
@@ -22,8 +21,7 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        asyncio.get_event_loop().create_task(OffensivePack(services).enable())
-        asyncio.get_event_loop().create_task(DefensivePack(services).enable())
+        asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
@@ -37,7 +35,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_api)
+        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('POST', '/api/payload', self.upload_payload)
         self.app_svc.application.router.add_route('*', '/api/potential-links', self.handle_potential_links)
         self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
@@ -67,6 +65,46 @@ class RestApi(BaseWorld):
     """ API ENDPOINTS """
 
     @check_authorization
+    async def rest_core(self, request):
+        try:
+            access = dict(access=(await self.auth_svc.get_permissions(request)))
+            data = dict(await request.json())
+            index = data.pop('index')
+            options = dict(
+                DELETE=dict(
+                    agents=lambda d: self.rest_svc.delete_agent(d),
+                    operations=lambda d: self.rest_svc.delete_operation(d)
+                ),
+                PUT=dict(
+                    adversaries=lambda d: self.rest_svc.persist_adversary(d),
+                    abilities=lambda d: self.rest_svc.persist_ability(d),
+                    sources=lambda d: self.rest_svc.persist_source(d),
+                    planners=lambda d: self.rest_svc.update_planner(d),
+                    agents=lambda d: self.rest_svc.update_agent_data(d),
+                    chain=lambda d: self.rest_svc.update_chain_data(d),
+                    operations=lambda d: self.rest_svc.create_operation(d),
+                    schedule=lambda d: self.rest_svc.create_schedule(d),
+                ),
+                POST=dict(
+                    operation_report=lambda d: self.rest_svc.display_operation_report(d),
+                    result=lambda d: self.rest_svc.display_result(d),
+                    contact=lambda d: self.rest_svc.download_contact_report(d),
+                    configuration=lambda d: self.rest_svc.update_config(d)
+                )
+            )
+            if index not in options[request.method]:
+                search = {**data, **access}
+                return web.json_response(await self.rest_svc.display_objects(index, search))
+            return web.json_response(await options[request.method][index](data))
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
+
+    async def rest_update_operation(self, request):
+        operation = await self.data_svc.locate('operations', match=dict(id=int(request.match_info['operation_id'])))
+        operation[0].autonomous = 0 if operation[0].autonomous else 1
+        return web.Response()
+
+    @check_authorization
     async def handle_potential_links(self, request):
         data = dict(await request.json())
         options = dict(
@@ -82,60 +120,6 @@ class RestApi(BaseWorld):
 
     async def upload_payload(self, request):
         return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
-
-    async def rest_api(self, request):
-        try:
-            base = await self.rest_core(request)
-            return web.json_response(base)
-        except Exception:
-            pass
-
-    @check_authorization
-    async def rest_core(self, request):
-        try:
-            data = dict(await request.json())
-            index = data.pop('index')
-            options = dict(
-                DELETE=dict(
-                    agent=lambda d: self.rest_svc.delete_agent(d),
-                    operation=lambda d: self.rest_svc.delete_operation(d)
-                ),
-                PUT=dict(
-                    adversary=lambda d: self.rest_svc.persist_adversary(d),
-                    ability=lambda d: self.rest_svc.persist_ability(d),
-                    source=lambda d: self.rest_svc.persist_source(d),
-                    planner=lambda d: self.rest_svc.update_planner(d),
-                    agent=lambda d: self.rest_svc.update_agent_data(d),
-                    chain=lambda d: self.rest_svc.update_chain_data(d),
-                    operation=lambda d: self.rest_svc.create_operation(d),
-                    schedule=lambda d: self.rest_svc.create_schedule(d),
-                ),
-                POST=dict(
-                    ability=lambda d: self.rest_svc.display_objects('abilities', d),
-                    adversary=lambda d: self.rest_svc.display_objects('adversaries', d),
-                    planners=lambda d: self.rest_svc.display_objects('planners', d),
-                    agent=lambda d: self.rest_svc.display_objects('agents', d),
-                    operation=lambda d: self.rest_svc.display_objects('operations', d),
-                    source=lambda d: self.rest_svc.display_objects('sources', d),
-                    plugins=lambda d: self.rest_svc.display_objects('plugins', d),
-                    operation_report=lambda d: self.rest_svc.display_operation_report(d),
-                    result=lambda d: self.rest_svc.display_result(d),
-                    contact=lambda d: self.rest_svc.download_contact_report(d),
-                    configuration=lambda d: self.rest_svc.update_config(d)
-                )
-            )
-            if index not in options[request.method]:
-                return await self.rest_svc.display_objects(index, data)
-            return await options[request.method][index](data)
-        except Exception as e:
-            self.log.error(repr(e), exc_info=True)
-
-    async def rest_update_operation(self, request):
-        i = request.match_info['operation_id']
-        data = await request.json()
-        operation = await self.data_svc.locate('operations', match=dict(id=int(i)))
-        operation[0].autonomous = data.get('autonomous')
-        return web.Response()
 
     async def rest_state_control(self, request):
         body = await request.json()

@@ -314,9 +314,7 @@
     }
 
     function handleStartAction(){
-        let op = buildOperationObject();
-        op['index'] = 'operation';
-        restRequest('PUT', op, handleStartActionCallback);
+        restRequest('PUT', buildOperationObject(), handleStartActionCallback);
     }
 
     function checkOpBtns(){
@@ -325,7 +323,7 @@
     }
 
     function deleteOperation(){
-        let data = {'index': 'operation', 'id': parseInt($('#operation-list option:selected').attr('value'))};
+        let data = {'index': 'operations', 'id': parseInt($('#operation-list option:selected').attr('value'))};
         restRequest('DELETE', data, window.location.reload());
     }
 
@@ -358,7 +356,7 @@
             return;
         }
         return {
-            "index": "operation",
+            "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
@@ -382,7 +380,7 @@
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
-        restRequest('POST', {'index':'operation'}, reloadOperationsElements);
+        restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
     function reloadOperationsElements(data){
@@ -457,7 +455,7 @@
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
+            let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
@@ -651,24 +649,18 @@
         return false;
     }
 
-    function updateLinkStatus(lnk, opId, status, command='') {
-        let linkId = opId + '-' + lnk;
-        let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    function updateLinkStatus(lnk, status, command='') {
+        console.log(lnk, status);
+        let data = {'index':'chain', 'link_id': lnk, 'status': status};
         if(command) {
             data['command'] = command;
         }
         restRequest('PUT', data, doNothing);
     }
 
-    function toggleHil(autonomous){
+    function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        let data = {};
-        if(autonomous){
-            data['autonomous'] = 0;
-        } else{
-            data['autonomous'] = 1;
-        }
-        restRequest('PUT', data, function(d){refresh()}, `/api/operation/${op_id}`);
+        restRequest('PUT', {'op_id': parseInt(op_id)}, doNothing, `/api/operation/${op_id}`);
     }
 
     function checkOpformValid(){

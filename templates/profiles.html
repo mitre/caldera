@@ -299,7 +299,7 @@
         $('#profile-tests li').each(function() {
             abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
         });
-        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversary", 'i': identifier}, saveAdversaryCallback);
+        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -382,7 +382,7 @@
     }
 
     function loadAdversary() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
     }
 
     function loadAdversaryCallback(data) {
@@ -603,8 +603,7 @@
 
     function showPack() {
         $('#pack-phases').empty();
-
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
     }
 
     function showPackCallback(data) {
@@ -691,7 +690,7 @@
     }
 
     function addPackToPhase() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
         document.getElementById('pack-modal').style.display='none';
     }
 

@@ -93,6 +93,7 @@ class Operation(BaseObject):
         self.auto_close = auto_close
         self.visibility = visibility
         self.chain, self.rules = [], []
+        self.access = self.Access.RED
         if source:
             self.rules = source.rules
 
