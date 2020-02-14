@@ -9,7 +9,7 @@ class Udp(BaseWorld):
 
     def __init__(self, services):
         self.name = 'udp'
-        self.description = 'Communication occurs through a raw UDP socket'
+        self.description = 'Accept beacons through a raw UDP socket'
         self.log = self.create_logger('contact_udp')
         self.contact_svc = services.get('contact_svc')
         self.udp_handler = UdpSessionHandler(services)

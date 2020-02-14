@@ -9,6 +9,7 @@ import aiohttp_jinja2
 import jinja2
 
 from app.contacts.contact_http import Http
+from app.contacts.contact_stream import Stream
 from app.contacts.contact_tcp import Tcp
 from app.contacts.contact_udp import Udp
 from app.objects.c_plugin import Plugin
@@ -132,6 +133,7 @@ class AppService(BaseService):
         await contact_svc.register(Http(self.get_services()))
         await contact_svc.register(Udp(self.get_services()))
         await contact_svc.register(Tcp(self.get_services()))
+        await contact_svc.register(Stream(self.get_services()))
 
     """ PRIVATE """
 
