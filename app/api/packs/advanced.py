@@ -37,7 +37,7 @@ class AdvancedPack(BaseWorld):
     @check_authorization
     @template('obfuscators.html')
     async def _section_obfuscators(self, request):
-        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators') if not o.hidden]
         return dict(obfuscators=obfuscators)
 
     @check_authorization
