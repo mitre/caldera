@@ -13,7 +13,6 @@ class WebSocket(BaseWorld):
         self.name = 'web socket'
         self.description = 'Accept data through web sockets'
         self.log = self.create_logger('contact_websocket')
-        self.contact_svc = services.get('contact_svc')
         self.socket_handler = SocketHandler(services)
 
     async def start(self):
