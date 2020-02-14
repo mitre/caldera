@@ -2,11 +2,14 @@ import json
 
 from datetime import datetime
 
+from app.utility.base_world import BaseWorld
+
 
 class Handler:
 
     TAGS = dict(
-        terminal=lambda s, p, svc: terminal_handler(s, p, svc)
+        terminal=lambda s, p, svc: terminal_handler(s, p, svc),
+        chat=lambda s, p, svc: chat_handler(s, p, svc)
     )
 
     def __init__(self, tag):
@@ -26,3 +29,9 @@ async def terminal_handler(socket, path, services):
     )
     status, pwd, reply = await handler.send(session_id, cmd)
     await socket.send(json.dumps(dict(response=reply.strip(), pwd=pwd)))
+
+
+async def chat_handler(socket, path, services):
+    msg = await socket.recv()
+    for ip in BaseWorld.get_config('teammates'):
+        print('sharing message with: %s' % ip)
