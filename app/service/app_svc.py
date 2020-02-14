@@ -8,6 +8,9 @@ from datetime import datetime, date
 import aiohttp_jinja2
 import jinja2
 
+from app.contacts.contact_http import Http
+from app.contacts.contact_tcp import Tcp
+from app.contacts.contact_udp import Udp
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -123,6 +126,12 @@ class AppService(BaseService):
 
     async def add_app_plugin(self):
         await self._services.get('data_svc').store(Plugin(name='app', data_dir='data', access=self.Access.APP))
+
+    async def register_contacts(self):
+        contact_svc = self.get_service('contact_svc')
+        await contact_svc.register(Http(self.get_services()))
+        await contact_svc.register(Udp(self.get_services()))
+        await contact_svc.register(Tcp(self.get_services()))
 
     """ PRIVATE """
 

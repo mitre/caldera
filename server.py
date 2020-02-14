@@ -8,9 +8,6 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
-from app.contacts.contact_http import Http
-from app.contacts.contact_tcp import Tcp
-from app.contacts.contact_udp import Udp
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -48,9 +45,7 @@ def run_tasks(services):
     loop.create_task(build_docs())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
-    loop.run_until_complete(contact_svc.register(Http(services)))
-    loop.run_until_complete(contact_svc.register(Udp(services)))
-    loop.run_until_complete(contact_svc.register(Tcp(services)))
+    loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins())
     loop.run_until_complete(app_svc.add_app_plugin())
     loop.run_until_complete(data_svc.load_data())
