@@ -1,0 +1,18 @@
+.chat-popup {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    right: 15px;
+    border: 3px solid #f1f1f1;
+    z-index: 9;
+}
+.form-container {
+    max-width: 300px;
+    padding: 10px;
+    background-color: var(--primary-background);
+    color: white;
+}
+#chat-history {
+    min-height: 200px;
+    overflow-y:scroll;
+}

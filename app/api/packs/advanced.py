@@ -19,6 +19,7 @@ class AdvancedPack(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/advanced/contacts', self._section_contacts)
         self.app_svc.application.router.add_route('GET', '/advanced/obfuscators', self._section_obfuscators)
         self.app_svc.application.router.add_route('GET', '/advanced/configurations', self._section_configurations)
+        self.app_svc.application.router.add_route('GET', '/advanced/chat', self._section_chat)
 
     """ PRIVATE """
 
@@ -50,3 +51,8 @@ class AdvancedPack(BaseWorld):
     async def _section_sources(self, request):
         access = await self.auth_svc.get_permissions(request)
         return dict(sources=[s.display for s in await self.data_svc.locate('sources', match=dict(access=tuple(access)))])
+
+    @check_authorization
+    @template('chat.html')
+    async def _section_chat(self, request):
+        return dict(config=self.get_config())
