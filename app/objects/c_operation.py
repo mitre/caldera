@@ -97,7 +97,7 @@ class Operation(BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.chain, self.rules = [], []
+        self.chain, self.rules, self.hanging_facts = [], [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
@@ -119,7 +119,7 @@ class Operation(BaseObject):
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
-        return seeded_facts + learned_facts
+        return seeded_facts + learned_facts + self.hanging_facts
 
     def has_fact(self, trait, value):
         for f in self.all_facts():
@@ -225,25 +225,30 @@ class Operation(BaseObject):
         try:
             planner = await self._get_planning_module(services)
             self.adversary = await self._adjust_adversary_phases()
+            await self._run_phases(services, planner)
 
-            for phase in self.adversary.phases:
-                if not await self.is_closeable():
-                    await self._update_operation(services)
-                    await planner.execute(phase)
-                    if planner.stopping_condition_met:
-                        break
-                    await self.wait_for_phase_completion()
-                self.phase = phase
-            await self._cleanup_operation(services)
+            self.phases_enabled = False
             while not await self.is_closeable():
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
                 await self._update_operation(services)
+                await self._run_phases(services, planner)
+            await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
         except Exception:
             pass
 
     """ PRIVATE """
+
+    async def _run_phases(self, services, planner):
+        for phase in self.adversary.phases:
+            if not await self.is_closeable():
+                await self._update_operation(services)
+                await planner.execute(phase)
+                if planner.stopping_condition_met:
+                    break
+                await self.wait_for_phase_completion()
+            self.phase = phase
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
