@@ -16,7 +16,8 @@ class Udp(BaseWorld):
 
     async def start(self):
         loop = asyncio.get_event_loop()
-        loop.create_task(loop.create_datagram_endpoint(lambda: self.udp_handler, local_addr=('0.0.0.0', 5679)))
+        udp = self.get_config('app.contact.udp')
+        loop.create_task(loop.create_datagram_endpoint(lambda: self.udp_handler, local_addr=('0.0.0.0', udp.split(':')[1])))
 
     @staticmethod
     def valid_config():
