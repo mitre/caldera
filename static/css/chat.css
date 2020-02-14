@@ -13,6 +13,7 @@
     color: white;
 }
 #chat-history {
-    min-height: 200px;
-    overflow-y:scroll;
+    height: 300px;
+    position: relative;
+    overflow: auto;
 }

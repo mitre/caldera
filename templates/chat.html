@@ -18,13 +18,15 @@
     function closeForm(){
         document.getElementById("myForm").style.display = "none";
     }
-    $('#mymsg').keyup(function(e){
+    let myMessage = $('#mymsg');
+    let chatHistory = $('#chat-history');
+    myMessage.keyup(function(e){
         if(e.keyCode === 13) {
             let line = $("#chat-line").clone();
             line.find('#chat-line-text').html($('#mymsg').val());
             line.show();
             $('#chatter').append(line);
-            $('#mymsg').val('');
+            myMessage.val('');
         }
     });
 </script>
