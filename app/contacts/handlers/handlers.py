@@ -1,5 +1,7 @@
 import socket
 
+from app.objects.secondclass.c_fact import Fact
+
 
 class Handler:
 
@@ -16,7 +18,11 @@ class Handler:
 
 
 async def process_handler(message, services, caller):
-    print('Received: %s' % message)
+    process = message['result']['name'].lower()
+    op = (await services.get('data_svc').locate('operations'))[0]
+    for fact in op.source.facts:
+        if fact.trait == 'host.process.unauthorized' and fact.value == process:
+            op.hanging_facts.append(Fact(trait='host.process.unauthorized', value=process['pid']))
 
 
 async def beacon_handler(message, services, caller):

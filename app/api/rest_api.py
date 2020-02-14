@@ -67,7 +67,7 @@ class RestApi(BaseWorld):
     @check_authorization
     async def rest_core(self, request):
         try:
-            access = dict(access=(await self.auth_svc.get_permissions(request)))
+            access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(

@@ -207,7 +207,7 @@ class RestService(BaseService):
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
-        allowed = self.Access.BLUE if self.Access.BLUE in access else self.Access.RED
+        allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
