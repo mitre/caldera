@@ -11,6 +11,7 @@ import jinja2
 from app.contacts.contact_http import Http
 from app.contacts.contact_tcp import Tcp
 from app.contacts.contact_udp import Udp
+from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -132,6 +133,7 @@ class AppService(BaseService):
         await contact_svc.register(Http(self.get_services()))
         await contact_svc.register(Udp(self.get_services()))
         await contact_svc.register(Tcp(self.get_services()))
+        await contact_svc.register(WebSocket(self.get_services()))
 
     """ PRIVATE """
 
