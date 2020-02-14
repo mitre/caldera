@@ -83,14 +83,15 @@ class ContactService(BaseService):
     async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-        :param paw: the unique identifier for the calling agent
         :param kwargs: key/value pairs
         :return: the agent object, instructions to execute
         """
+        result = kwargs.pop('result', dict())
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
-            await self._save_result(kwargs.get('result'))
+            if result:
+                await self._save(Result(**result))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
@@ -103,28 +104,19 @@ class ContactService(BaseService):
 
     """ PRIVATE """
 
-    async def _save_result(self, result):
-        if not result:
-            return
-        res = Result(**result)
-        file_svc = self.get_service('file_svc')
+    async def _save(self, result):
         try:
             loop = asyncio.get_event_loop()
-            for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
-                link = next((l for l in op.chain if l.unique == res.id), None)
-                if link:
-                    link.pid = int(res.pid)
-                    link.finish = self.get_service('data_svc').get_current_timestamp()
-                    link.status = int(res.status)
-                    if res.output:
-                        link.output = res.output
-                        file_svc.write_result_file(res.id, res.output)
-                        loop.create_task(link.parse(op))
-                    agent = (await self.get_service('data_svc').locate('agents', match=dict(paw=link.paw)))[0]
-                    await agent.heartbeat_modification()
-            else:
-                if res.output:
-                    file_svc.write_result_file(res.id, res.output)
+            link = await self.get_service('app_svc').find_link(result.id)
+            if link:
+                link.pid = int(result.pid)
+                link.finish = self.get_service('data_svc').get_current_timestamp()
+                link.status = int(result.status)
+                if result.output:
+                    link.output = result.output
+                    self.get_service('file_svc').write_result_file(result.id, result.output)
+                    operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
+                    loop.create_task(link.parse(operation[0]))
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 
@@ -140,7 +132,7 @@ class ContactService(BaseService):
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
             payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(Instruction(link_id=link.unique,
+            instructions.append(Instruction(identifier=link.unique,
                                             sleep=link.jitter,
                                             command=link.command,
                                             executor=link.ability.executor,
@@ -155,8 +147,8 @@ class ContactService(BaseService):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
         instructions = []
-        for i in await agent.capabilities(abilities):
-            new_id = 'boot-%s-%s' % (agent.paw, self.generate_name(size=4))
+        for x, i in enumerate(await agent.capabilities(abilities)):
+            new_id = 'bootstrap-%s-%d' % (agent.paw, x)
             cmd = self.encode_string(agent.replace(i.test))
-            instructions.append(Instruction(command=cmd, link_id=new_id, executor=i.executor))
+            instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
         return instructions

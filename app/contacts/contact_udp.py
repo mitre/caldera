@@ -35,14 +35,15 @@ class UdpSessionHandler(asyncio.DatagramProtocol):
             try:
                 # save beacon
                 profile = json.loads(data.decode())
-                callback = profile.pop('callback')
-                profile['executors'] = [e for e in profile['executors'].split(',') if e]
+                callback = profile.pop('callback', None)
+                profile['executors'] = [e for e in profile.get('executors', '').split(',') if e]
                 profile['contact'] = 'udp'
-                agent, _ = await self.contact_svc.handle_heartbeat(**profile)
+                await self.contact_svc.handle_heartbeat(**profile)
 
                 # send confirmation
-                sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-                sock.sendto('roger'.encode(), (addr[0], int(callback)))
+                if callback:
+                    sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+                    sock.sendto('roger'.encode(), (addr[0], int(callback)))
             except Exception as e:
                 self.log.debug(e)
         asyncio.get_event_loop().create_task(handle_beacon())

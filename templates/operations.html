@@ -51,7 +51,7 @@
                 {% endfor %}
               </select>
               <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="" disabled selected>No adversary chosen</option>
+                <option value="" disabled selected>No profile chosen</option>
                 {% for adv in adversaries %}
                   <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
                 {% endfor %}
@@ -314,9 +314,7 @@
     }
 
     function handleStartAction(){
-        let op = buildOperationObject();
-        op['index'] = 'operation';
-        restRequest('PUT', op, handleStartActionCallback);
+        restRequest('PUT', buildOperationObject(), handleStartActionCallback);
     }
 
     function checkOpBtns(){
@@ -325,7 +323,7 @@
     }
 
     function deleteOperation(){
-        let data = {'index': 'operation', 'id': parseInt($('#operation-list option:selected').attr('value'))};
+        let data = {'index': 'operations', 'id': parseInt($('#operation-list option:selected').attr('value'))};
         restRequest('DELETE', data, window.location.reload());
     }
 
@@ -358,7 +356,7 @@
             return;
         }
         return {
-            "index": "operation",
+            "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
@@ -377,12 +375,12 @@
     function changeCurrentOperationState(newState){
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let data = {'name': parseInt(selectedOperationId), 'state': newState};
-        restRequest('PUT', data, doNothing, '/plugin/chain/operation/state');
+        restRequest('PUT', data, doNothing, '/api/operation/state');
     }
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
-        restRequest('POST', {'index':'operation'}, reloadOperationsElements);
+        restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
     function reloadOperationsElements(data){
@@ -457,11 +455,11 @@
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operation','id': parseInt(selectedOperationId)} : null;
+            let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
-            restRequest('POST', postData, operationCallback, '/plugin/chain/full');
+            restRequest('POST', postData, operationCallback, '/api/rest');
         }
     }
 
@@ -482,7 +480,7 @@
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
         let postData = {"op_id": parseInt(selectedOperationId), "paw": paw};
-        restRequest('POST', postData, potentialLinksCallback, '/plugin/chain/potential-links');
+        restRequest('POST', postData, potentialLinksCallback, '/api/potential-links');
     }
 
     function potentialLinksCallback(data){
@@ -546,7 +544,7 @@
         link.command = btoa(linkDiv.find('#potential-command').html());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
-        restRequest('PUT', link, doNothing, '/plugin/chain/potential-links');
+        restRequest('PUT', link, doNothing, '/api/potential-links');
     }
 
     function updatePotentialLinkCount(){
@@ -621,7 +619,7 @@
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
         let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-        downloadReport('/plugin/chain/rest', 'operation_report', postData);
+        downloadReport('/api/rest', 'operation_report', postData);
     }
 
     function changeProgress(finish, percent) {
@@ -651,24 +649,18 @@
         return false;
     }
 
-    function updateLinkStatus(lnk, opId, status, command='') {
-        let linkId = opId + '-' + lnk;
-        let data = {'index':'chain', 'link_id': linkId, 'status': status};
+    function updateLinkStatus(lnk, status, command='') {
+        console.log(lnk, status);
+        let data = {'index':'chain', 'link_id': lnk, 'status': status};
         if(command) {
             data['command'] = command;
         }
         restRequest('PUT', data, doNothing);
     }
 
-    function toggleHil(autonomous){
+    function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        let data = {};
-        if(autonomous){
-            data['autonomous'] = 0;
-        } else{
-            data['autonomous'] = 1;
-        }
-        restRequest('PUT', data, function(d){refresh()}, `/plugin/chain/operation/${op_id}`);
+        restRequest('PUT', {'op_id': parseInt(op_id)}, doNothing, `/api/operation/${op_id}`);
     }
 
     function checkOpformValid(){
@@ -687,7 +679,7 @@
     function openDuk6(){
         document.getElementById("duk-modal").style.display="block";
         $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
-            'the planner, utilizing the abilities contained inside the chosen adversary profile. This list shows, per agent, ' +
+            'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
             'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
     }
 </script>

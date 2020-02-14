@@ -116,7 +116,7 @@
                 }
             });
         }
-        restRequest('POST', {'index':'source'}, sourceCallback, '/plugin/chain/full');
+        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
     }
 
     function toggleSourceView() {
@@ -141,7 +141,7 @@
             applyRules(data[0].rules);
             source.html(data[0].name);
         }
-        restRequest('POST', {'index':'source', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 
     function addFactRow(trait, value){

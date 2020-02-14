@@ -4,16 +4,15 @@ import glob
 import os
 import pathlib
 import uuid
-import yaml
-
 from collections import defaultdict
 from datetime import time
+
+import yaml
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
@@ -175,12 +174,12 @@ class RestService(BaseService):
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        return await self._build_potential_links(operation, agents, potential_abilities)
+        links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in links])
 
-    async def apply_potential_link(self, l):
-        link = Link.from_json(l)
+    async def apply_potential_link(self, link):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
-        await operation.apply(link)
+        return await operation.apply(link)
 
     async def change_operation_state(self, op_id, state):
         operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))

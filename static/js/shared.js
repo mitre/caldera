@@ -1,6 +1,6 @@
 /* HELPFUL functions to call */
 
-function restRequest(type, data, callback, endpoint='/plugin/chain/rest') {
+function restRequest(type, data, callback, endpoint='/api/rest') {
     $.ajax({
        url: endpoint,
        type: type,
