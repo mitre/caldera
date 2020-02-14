@@ -168,7 +168,7 @@
         function deleteAgentCallback(data){
             $('#'+paw).remove();
         }
-        restRequest('DELETE', {"index": "agent", "paw": paw}, deleteAgentCallback);
+        restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
     }
 
     function updateAgent(){
@@ -193,7 +193,7 @@
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
-        let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
         restRequest('PUT', d, doNothing);
     }
 

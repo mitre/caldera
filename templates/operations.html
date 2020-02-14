@@ -314,9 +314,7 @@
     }
 
     function handleStartAction(){
-        let op = buildOperationObject();
-        op['index'] = 'operation';
-        restRequest('PUT', op, handleStartActionCallback);
+        restRequest('PUT', buildOperationObject(), handleStartActionCallback);
     }
 
     function checkOpBtns(){
@@ -358,7 +356,7 @@
             return;
         }
         return {
-            "index": "operation",
+            "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
@@ -660,15 +658,9 @@
         restRequest('PUT', data, doNothing);
     }
 
-    function toggleHil(autonomous){
+    function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        let data = {};
-        if(autonomous){
-            data['autonomous'] = 0;
-        } else{
-            data['autonomous'] = 1;
-        }
-        restRequest('PUT', data, function(d){refresh()}, `/api/operation/${op_id}`);
+        restRequest('PUT', {'op_id': parseInt(op_id)}, doNothing, `/api/operation/${op_id}`);
     }
 
     function checkOpformValid(){

@@ -299,7 +299,7 @@
         $('#profile-tests li').each(function() {
             abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
         });
-        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversary", 'i': identifier}, saveAdversaryCallback);
+        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -603,7 +603,6 @@
 
     function showPack() {
         $('#pack-phases').empty();
-
         restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
     }
 
