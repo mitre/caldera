@@ -82,7 +82,7 @@ class RestApi(BaseWorld):
                     planners=lambda d: self.rest_svc.update_planner(d),
                     agents=lambda d: self.rest_svc.update_agent_data(d),
                     chain=lambda d: self.rest_svc.update_chain_data(d),
-                    operations=lambda d: self.rest_svc.create_operation(d),
+                    operations=lambda d: self.rest_svc.create_operation(access, d),
                     schedule=lambda d: self.rest_svc.create_schedule(d),
                 ),
                 POST=dict(

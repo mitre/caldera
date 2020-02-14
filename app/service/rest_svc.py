@@ -137,11 +137,11 @@ class RestService(BaseService):
             link.command = data.get('command')
         return ''
 
-    async def create_operation(self, data):
-        operation = await self._build_operation_object(data)
+    async def create_operation(self, access, data):
+        operation = await self._build_operation_object(access, data)
         operation.set_start_details()
         await self.get_service('data_svc').store(operation)
-        self.loop.create_task(self.get_service('app_svc').run_operation(operation))
+        self.loop.create_task(operation.run(self.get_services()))
         return [operation.display]
 
     async def create_schedule(self, data):
@@ -200,17 +200,18 @@ class RestService(BaseService):
 
     """ PRIVATE """
 
-    async def _build_operation_object(self, data):
+    async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
+        allowed = self.Access.BLUE if self.Access.BLUE in access else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         autonomous=int(data.pop('autonomous')),
+                         autonomous=int(data.pop('autonomous')), access=allowed,
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
 
