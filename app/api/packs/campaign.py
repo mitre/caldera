@@ -30,7 +30,7 @@ class CampaignPack(BaseWorld):
     @template('profiles.html')
     async def _section_profiles(self, request):
         access = dict(access=(await self.auth_svc.get_permissions(request)))
-        abilities = await self.data_svc.locate('abilities',match=access)
+        abilities = await self.data_svc.locate('abilities', match=access)
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
         adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
