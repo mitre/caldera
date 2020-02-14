@@ -72,17 +72,17 @@ class RestApi(BaseWorld):
             index = data.pop('index')
             options = dict(
                 DELETE=dict(
-                    agent=lambda d: self.rest_svc.delete_agent(d),
-                    operation=lambda d: self.rest_svc.delete_operation(d)
+                    agents=lambda d: self.rest_svc.delete_agent(d),
+                    operations=lambda d: self.rest_svc.delete_operation(d)
                 ),
                 PUT=dict(
-                    adversary=lambda d: self.rest_svc.persist_adversary(d),
-                    ability=lambda d: self.rest_svc.persist_ability(d),
-                    source=lambda d: self.rest_svc.persist_source(d),
-                    planner=lambda d: self.rest_svc.update_planner(d),
-                    agent=lambda d: self.rest_svc.update_agent_data(d),
+                    adversaries=lambda d: self.rest_svc.persist_adversary(d),
+                    abilities=lambda d: self.rest_svc.persist_ability(d),
+                    sources=lambda d: self.rest_svc.persist_source(d),
+                    planners=lambda d: self.rest_svc.update_planner(d),
+                    agents=lambda d: self.rest_svc.update_agent_data(d),
                     chain=lambda d: self.rest_svc.update_chain_data(d),
-                    operation=lambda d: self.rest_svc.create_operation(d),
+                    operations=lambda d: self.rest_svc.create_operation(d),
                     schedule=lambda d: self.rest_svc.create_schedule(d),
                 ),
                 POST=dict(
