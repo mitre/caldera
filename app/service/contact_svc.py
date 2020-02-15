@@ -7,12 +7,14 @@ from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.objects.secondclass.c_result import Result
 from app.utility.base_service import BaseService
+from app.utility.base_world import BaseWorld
 
 
 def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
-        log = dict(paw=agent.paw, instructions=len(instructions), date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        instructions = [BaseWorld.decode_bytes(i.command) for i in instructions]
+        log = dict(paw=agent.paw, instructions=instructions, date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         args[0].report[agent.contact].append(log)
         return agent, instructions
     return wrapper
