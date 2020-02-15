@@ -71,11 +71,8 @@ class ContactService(BaseService):
 
     async def register(self, contact):
         try:
-            if contact.valid_config():
-                await self._start_c2_channel(contact=contact)
-                self.log.debug('Started %s command and control channel' % contact.name)
-            else:
-                self.log.debug('%s command and control channel not started' % contact.name)
+            await self._start_c2_channel(contact=contact)
+            self.log.debug('Started %s command and control channel' % contact.name)
         except Exception as e:
             self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
 

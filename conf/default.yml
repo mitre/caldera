@@ -18,4 +18,4 @@ crypt_salt: REPLACE_WITH_RANDOM_VALUE
 app.contact.http: http://0.0.0.0:8888
 app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
-app.contact.websocket: 0.0.0.0:7001
+app.contact.websocket: 0.0.0.0:7012
