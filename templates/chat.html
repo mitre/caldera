@@ -15,22 +15,23 @@
 </li>
 
 <script>
+    let sockets = [];
     let config = {{config|safe}};
-    let chatWindow = $('#mymsg');
+    config.teammates.forEach(function(ip) {
+        sockets.push(new WebSocket('ws://'+ip+':7012/chat'));
+    });
 
     let local = new WebSocket('ws://localhost:7012/chat');
     local.onmessage = function (s) {
         writeMessage(s.data);
     };
 
+    let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
         if(e.keyCode === 13) {
             let message = chatWindow.val();
-            config.teammates.forEach(function(ip) {
-                let socket = new WebSocket('ws://'+ip+':7012/chat');
-                socket.onopen = function () {
-                    socket.send(message);
-                };
+            sockets.forEach(function(s) {
+                s.send(message);
             });
             writeMessage(message);
         }
