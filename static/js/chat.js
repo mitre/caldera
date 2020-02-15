@@ -1,11 +1,13 @@
 function send(message) {
-    let socket = new WebSocket('ws://0.0.0.0:7001/chat');
-    socket.onopen = function () {
-        socket.send(message);
-    };
-    socket.onmessage = function (s) {
-        console.log(s.data);
-    };
+    ['127.0.0.1', 'localhost'].forEach(function(ip) {
+        let socket = new WebSocket('ws://'+ip+':7012/chat');
+        socket.onopen = function () {
+            socket.send(message);
+        };
+        socket.onmessage = function (s) {
+            console.log(s.data);
+        };
+    });
 }
 
 function closeForm(){
@@ -24,4 +26,3 @@ myMessage.keyup(function(e){
         send(message);
     }
 });
-

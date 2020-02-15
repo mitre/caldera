@@ -1,9 +1,6 @@
 import json
-import websockets
 
 from datetime import datetime
-
-from app.utility.base_world import BaseWorld
 
 
 class Handler:
@@ -33,8 +30,5 @@ async def terminal_handler(socket, path, services):
 
 
 async def chat_handler(socket, path, services):
-    socket_port = BaseWorld.get_config('app.contact.websocket').split(':')[1]
     msg = await socket.recv()
-    for ip in BaseWorld.get_config('teammates'):
-        async with websockets.connect('ws://%s:%d/chat' % (ip, int(socket_port))) as sock:
-            await sock.send(msg)
+    await socket.send(msg)
