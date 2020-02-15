@@ -117,7 +117,7 @@ class Operation(BaseObject):
         self.chain.append(link)
 
     def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source and self.access == self.Access.RED else []
+        seeded_facts = [f for f in self.source.facts] if self.source else []
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
 
