@@ -118,6 +118,7 @@ pre {
     border-radius: 4px;
     background-color: darkgreen;
     margin:0;
+    cursor: pointer;
 }
 .button-success,
 .button-notready,
