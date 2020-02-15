@@ -14,4 +14,37 @@
     <p id="chat-line-text"></p>
 </li>
 
-<script src="/gui/js/chat.js"></script>
+<script>
+    let config = {{config|safe}};
+    let chatWindow = $('#mymsg');
+
+    let local = new WebSocket('ws://localhost:7012/chat');
+    local.onmessage = function (s) {
+        writeMessage(s.data);
+    };
+
+    chatWindow.keyup(function(e){
+        if(e.keyCode === 13) {
+            let message = chatWindow.val();
+            config.teammates.forEach(function(ip) {
+                let socket = new WebSocket('ws://'+ip+':7012/chat');
+                socket.onopen = function () {
+                    socket.send(message);
+                };
+            });
+            writeMessage(message);
+        }
+    });
+
+    function writeMessage(m) {
+        let line = $("#chat-line").clone();
+        line.find('#chat-line-text').html(m);
+        line.show();
+        $('#chatter').append(line);
+        chatWindow.val('');
+    }
+
+    function closeForm(){
+        document.getElementById("myForm").style.display = "none";
+    }
+</script>
