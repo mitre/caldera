@@ -13,8 +13,8 @@ from app.utility.base_world import BaseWorld
 def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
-        instructions = [BaseWorld.decode_bytes(i.command) for i in instructions]
-        log = dict(paw=agent.paw, instructions=instructions, date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
+                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         args[0].report[agent.contact].append(log)
         return agent, instructions
     return wrapper
