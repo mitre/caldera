@@ -39,10 +39,6 @@ class Tcp(BaseWorld):
                         self.log.debug('[-] operation exception: %s' % e)
             await asyncio.sleep(20)
 
-    @staticmethod
-    def valid_config():
-        return True
-
 
 class TcpSessionHandler(BaseWorld):
 
