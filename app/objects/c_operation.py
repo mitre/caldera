@@ -97,7 +97,7 @@ class Operation(BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.chain, self.rules, self.hanging_facts = [], [], []
+        self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
@@ -117,9 +117,9 @@ class Operation(BaseObject):
         self.chain.append(link)
 
     def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source else []
+        seeded_facts = [f for f in self.source.facts] if self.source and self.access == self.Access.RED else []
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
-        return seeded_facts + learned_facts + self.hanging_facts
+        return seeded_facts + learned_facts
 
     def has_fact(self, trait, value):
         for f in self.all_facts():
