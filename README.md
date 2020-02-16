@@ -51,7 +51,7 @@ python server.py
 
 ## Video tutorial
 
-Watch the following video for a brief run through of how to run your first operation. 
+Watch the following video for a brief run through of how to run your first operation. Alternatively, check out our [documentation](https://caldera.readthedocs.io/en/latest/) to read about the various ways to utilize this framework for offensive and defensive use-cases. 
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
 
