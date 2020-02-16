@@ -9,6 +9,8 @@
 # CALDERA
 ### Cyber Adversary Language and Decision Engine for Red Team Automation
 
+* Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/)*
+
 CALDERA is a cyber security framework designed to easily run autonomous breach-and-simulation exercises. It can also be used to run manual red-team engagements or automated incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
