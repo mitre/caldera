@@ -45,10 +45,11 @@ pip install -r requirements.txt
 > Instead of running the step above, you could run the [auto-installer.sh](https://caldera.readthedocs.io/en/latest/Auto-install-script.html) 
 script to automatically configure CALDERA in our recommended way. 
 
-Finally, start the server
+Finally, start the server. 
 ```
 python server.py
 ```
+You can now navigate to 127.0.0.1:8888 in a browser and log in with either red team (red:admin) or blue team (blue:admin) credentials. 
 
 ## Video tutorial
 
