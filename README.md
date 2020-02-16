@@ -8,21 +8,30 @@
 
 # CALDERA
 
-CALDERA is an automated adversary emulation system, built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/). It is currently an active research project at MITRE.
+CALDERA is a cyber security framework designed to easily run autonomous breach-and-simulation exercises.
 
-CALDERA works by attaching abilities to an adversary and running the adversary in an operation. Full documentation for this system can be found on [ReadTheDocs](https://caldera.readthedocs.io/en/latest/), as well as by clicking on the `Docs` tab within the C2 UI.
+It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
+
+The framework consists of two components:
+
+1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is 
+an asynchronous command-and-control (C2) server with a REST API and a web interface. 
+2) **Plugins**. These are separate repositories that hang off of the core framework, providing additional functionality. 
+Examples include agents, GUI interfaces, collections of TTPs and more. 
 
 ## Requirements
 
-* Python 3.6.1+
-* Google Chrome is our only supported/tested browser
+These requirements are for the computer running the core framework:
 
-Additionally, this code (the C2 server) is intended to be run on Linux or MacOS. 
-The agents - which connect to the C2 - can run on Windows, Linux and MacOS.
+* Any Linux or MacOS
+* Python 3.6.1+
+* Google Chrome or Safari are our only supported browsers
+* Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull all available [plugins](https://caldera.readthedocs.io/en/latest/What-is-a-plugin.html). 
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. 
+This will pull all available [plugins](https://caldera.readthedocs.io/en/latest/What-is-a-plugin.html).
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
@@ -31,7 +40,8 @@ Next install the PIP requirements
 ```
 pip install -r requirements.txt
 ```
-> Instead of running the step above, you could run the [auto-installer.sh](https://caldera.readthedocs.io/en/latest/Auto-install-script.html) script to automatically configure CALDERA in our recommended way. 
+> Instead of running the step above, you could run the [auto-installer.sh](https://caldera.readthedocs.io/en/latest/Auto-install-script.html) 
+script to automatically configure CALDERA in our recommended way. 
 
 Finally, start the server
 ```
