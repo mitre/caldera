@@ -25,6 +25,6 @@
 
 <script>
     function downloadContactReport(contact) {
-        downloadReport('/plugin/chain/rest', contact + '_report', {"index":"contact", "contact":contact});
+        downloadReport('/api/rest', contact + '_report', {"index":"contact", "contact":contact});
     }
 </script>
