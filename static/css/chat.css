@@ -70,6 +70,9 @@
     padding: 0;
     margin: 0;
 }
+#chat-user {
+    font-weight: bold;
+}
 #timestamp {
     font-size: 8px;
     color: #595959;

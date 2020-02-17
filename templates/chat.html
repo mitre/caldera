@@ -15,7 +15,7 @@
 </div>
 
 <li id="chat-line" style="display: none">
-    <p id="chat-line-text"></p>
+    <p id="chat-user"></p><p id="chat-line-text"></p>
     <p id="timestamp"></p>
 </li>
 
@@ -27,12 +27,13 @@
     let team = [];
 
     function testConnectivity(){
-        config.teammates.forEach(function(ip) {
+        Object.keys(config.teammates).forEach(function(user) {
+            let ip = config.teammates[user];
             let websocket = new WebSocket('ws://'+ip+':7012/chat');
             websocket.onopen = function(evt) {
                 console.log('connected on: '+ ip);
                 websocket.addEventListener('message', event => {
-                    writeMessage(event.data, true);
+                    writeMessage(event.data, user);
                 });
                 team.push(websocket);
             };
@@ -54,13 +55,18 @@
         }
     });
 
-    function writeMessage(m, incoming) {
+    function writeMessage(m, user) {
         let line = $("#chat-line").clone();
-        let now = new Date()
+        let now = new Date();
+        if(user) {
+            line.prop('class','incoming');
+            line.find('#chat-user').text(user + ':').html();
+        } else {
+            line.prop('class','outgoing');
+        }
         line.find('#chat-line-text').text(m).html();
         line.find('#timestamp').html(now.toLocaleString());
         line.show();
-        if(incoming) {line.prop('class','incoming')} else {line.prop('class','outgoing')}
         let isScrolled = scrolled();
         $('#chatter').append(line);
         chatWindow.val('');
