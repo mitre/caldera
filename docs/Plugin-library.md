@@ -29,7 +29,7 @@ When deploying a 54ndc47 agent, there are optional parameters you can use when y
 
 * **Server**: This is the location of CALDERA. The agent must have connectivity to this host/port. 
 * **Group**: This is the group name that you would like the agent to join when it starts. The group does not have to exist. A default group of my_group will be used if none is passed in.
-* **v**(new): Use `-v` to see verbose output from sandcat.  Otherwise, sandcat will run silently. 
+* **v**: Use `-v` to see verbose output from sandcat.  Otherwise, sandcat will run silently. 
 
 #### Customizing Default Options & Execution Without CLI Options
 

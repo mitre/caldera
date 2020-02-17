@@ -34,18 +34,16 @@ optional - but you should aim to cover as many as you can.
 > If you don't include a platform and executors then the server will never provide instructions to the agent, as it 
 won't know which ones are valid to send. 
 
-| Key           | Value  | Notes |
-| :------------- |:------------- |:-------------|  
-| server        | The location (IP or FQDN) of the C2 server    | |
-| platform      | The operating system | The platform is evaluated against the platform field of each ability. Currently you can use windows, darwin or linux |
-| host          | The hostname of the machine | |
-| username      | The username running the agent | |
-| architecture  | The architecture of the host. | |
-| executors     | A list of executors allowed on the host | Executors are evaluated against the executor block of each ability. Currently, you can use sh, cmd, psh and pwsh |
-| privilege     | The privilege level of the agent process, either User or Elevated | Privilege is evaluated against the optional privilege block of each ability file |
-| pid           | The process identifier of the agent | |
-| location      | The location of the agent on disk | |
-| exe_name      | The name of the agent binary file | |
+* **server**: The location (IP or FQDN) of the C2 server  
+* **platform**: The operating system
+* **host**: The hostname of the machine
+* **username**: The username running the agent
+* **architecture**: The architecture of the host
+* **executors**: A list of executors allowed on the host
+* **privilege**: The privilege level of the agent process, either User or Elevated
+* **pid**: The process identifier of the agent
+* **location**: The location of the agent on disk
+* **exe_name**: The name of the agent binary file
 
 At this point, you are ready to make a POST request with the profile to the /beacon endpoint. You should get back:
 

@@ -107,7 +107,7 @@ class AppService(BaseService):
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
-                self.log.debug('Enabled %s plugin' % plugin.name)
+                self.log.debug('Enabled plugin: %s' % plugin.name)
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
