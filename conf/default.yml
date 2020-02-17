@@ -12,6 +12,9 @@ users:
     red: admin
   blue:
     blue: admin
+teammates:
+  - 127.0.0.1
+  - localhost
 api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp
