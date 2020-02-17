@@ -24,28 +24,6 @@ def check_authorization(func):
     return helper
 
 
-def red_authorization(func):
-    async def process(func, *args, **params):
-        return await func(*args, **params)
-
-    async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('red', args[1])
-        result = await process(func, *args, **params)
-        return result
-    return helper
-
-
-def blue_authorization(func):
-    async def process(func, *args, **params):
-        return await func(*args, **params)
-
-    async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('blue', args[1])
-        result = await process(func, *args, **params)
-        return result
-    return helper
-
-
 class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
