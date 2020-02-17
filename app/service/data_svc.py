@@ -171,11 +171,15 @@ class DataService(BaseService):
 
     async def _load(self):
         try:
+            # Loads abilities from each plugin first
             for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_abilities(plug)
+            # # Loads adversaries, sources, and planners for each plugin
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
+
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
 
@@ -197,11 +201,14 @@ class DataService(BaseService):
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             for entries in self.strip_yml(filename):
+                # ab is an ability dict
                 for ab in entries:
                     saved = set()
                     if ab['tactic'] not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                    # pl is the platform
                     for pl, executors in ab['platforms'].items():
+                        # name is the executor i.e. sh and info is the command dict
                         for name, info in executors.items():
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
