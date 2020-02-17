@@ -3,35 +3,37 @@ The REST API
 
 All REST API functionality can be viewed in the rest_api.py module in the source code.
 
-## /api/rest
+### /api/rest
 
 You can interact with all parts of CALDERA through the core REST API endpoint /api/rest. 
 
-Here you can execute the following:
+> Any request to this endpoint must include an "index" as part of the request, which routes it to the appropriate object type. 
 
-### DELETE
+Here are the available REST API functions:
 
-### PUT
+#### DELETE
+
+##### Agents
+
+Delete any agent. 
+
+```bash
+curl -X DELETE http://localhost:8888/api/rest -d '{"index":"agents","paw":"$agent_paw"}'
+```
+
+##### Operations
+
+Delete any operation.
+
+```bash
+curl -X DELETE http://localhost:8888/api/rest -d '{"index":"operations","id":"$operation_id"}'
+```
+
+#### PUT
                     
-### POST
-
-## /api/payload
-
-You can upload new payload files, which will be stored in the data/payloads directory. 
-
-## /api/potential-links
-
-You can view or add new potential links on a running operation
-
-## /api/operation/state
-
-You can modify the state of a running operation. 
-
-## /api/operation/{operation_id}
-
-You can toggle a running operation from autonomous to manual mode or vice-versa. 
+#### POST
         
-## /file/upload
+### /file/upload
 
 Files can be uploaded to CALDERA by POST'ing a file to the /file/upload endpoint. Uploaded files will be put in the exfil_dir location specified in the default.yml file.
 
@@ -40,7 +42,7 @@ Files can be uploaded to CALDERA by POST'ing a file to the /file/upload endpoint
 curl -F 'data=@path/to/file' http://localhost:8888/file/upload
 ```
 
-## /file/download
+### /file/download
 
 Files can be dowloaded from CALDERA through the /file/download endpoint. This endpoint requires an HTTP header called "file" with the file name as the value. When a file is requested, CALDERA will look inside each of the payload directories listed in the local.yml file until it finds a file matching the name.
 

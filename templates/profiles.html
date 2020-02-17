@@ -658,7 +658,8 @@
         fd.append('file', file);
         $.ajax({
              type: 'POST',
-             url: '/api/payload',
+             url: '/file/upload',
+             beforeSend: function(xhr){xhr.setRequestHeader('Directory', 'data/payloads/');},
              data: fd,
              processData: false,
              contentType: false

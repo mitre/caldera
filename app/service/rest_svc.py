@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import time
 
 import yaml
+from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
@@ -179,11 +180,6 @@ class RestService(BaseService):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
         return await operation.apply(link)
 
-    async def change_operation_state(self, op_id, state):
-        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
-        operation[0].state = state
-        self.log.debug('changing operation=%s state to %s' % (op_id, state))
-
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
         if link and link.collect and not link.finish:
@@ -198,6 +194,28 @@ class RestService(BaseService):
     async def update_config(self, data):
         self.set_config(data.get('prop'), data.get('value'))
         self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
+
+    async def update_operation(self, op_id, state=None, autonomous=None):
+        async def validate(op):
+            try:
+                if not len(op):
+                    raise web.HTTPNotFound
+                elif await op[0].is_finished():
+                    raise web.HTTPBadRequest(body='This operation has already finished.')
+                elif state not in op[0].states.values():
+                    raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
+                elif state == op[0].states['FINISHED']:
+                    await op[0].close()
+            except Exception as e:
+                self.log.error(repr(e))
+        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
+        if state:
+            await validate(operation)
+            operation[0].state = state
+            self.log.debug('Changing operation=%s state to %s' % (op_id, state))
+        if autonomous:
+            operation[0].autonomous = 0 if operation[0].autonomous else 1
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
 
     """ PRIVATE """
 

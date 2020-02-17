@@ -74,9 +74,9 @@ class ContactService(BaseService):
     async def register(self, contact):
         try:
             await self._start_c2_channel(contact=contact)
-            self.log.debug('Started %s command and control channel' % contact.name)
+            self.log.debug('Registered contact: %s' % contact.name)
         except Exception as e:
-            self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
+            self.log.error('Failed to start %s contact: %s' % (contact.name, e))
 
     @report
     async def handle_heartbeat(self, **kwargs):
