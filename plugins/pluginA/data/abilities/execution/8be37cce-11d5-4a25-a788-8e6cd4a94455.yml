@@ -1,0 +1,18 @@
+---
+
+- id: 8be37cce-11d5-4a25-a788-8e6cd4a94455
+  name: Print Hello World
+  description: Prints hello world to stdout
+  tactic: execution
+  technique:
+    attack_id: T9999
+    name: Print Hello World
+  platforms:
+    darwin:
+      sh:
+        command: |
+          echo "hello world"
+    linux:
+      sh:
+        command: |
+          echo "hello world"

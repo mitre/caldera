@@ -2,9 +2,11 @@
 port: 8888
 plugins:
   - sandcat
-  - stockpile
   - compass
   - terminal
+  - stockpile
+  - pluginA
+  - pluginB
 users:
   red:
     admin: admin

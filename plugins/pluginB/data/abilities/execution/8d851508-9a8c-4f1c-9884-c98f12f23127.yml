@@ -1,0 +1,18 @@
+---
+
+- id: 8d851508-9a8c-4f1c-9884-c98f12f23127
+  name: Print Goodbye
+  description: Prints goobye to stdout
+  tactic: execution
+  technique:
+    attack_id: T9998
+    name: Print Goodbye
+  platforms:
+    darwin:
+      sh:
+        command: |
+          echo "goodbye"
+    linux:
+      sh:
+        command: |
+          echo "goodbye"
