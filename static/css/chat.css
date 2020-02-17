@@ -4,15 +4,76 @@
     right: 15px;
     border: 1px solid var(--navbar-color);
     z-index: 9;
+    border-radius: 10px 10px 0 0;
 }
 .form-container {
-    max-width: 300px;
-    padding: 10px;
+    width: 300px;
+    padding: 0;
     background-color: var(--primary-background);
     color: white;
 }
-#chat-history {
+#chat-header {
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    height: 40px;
+    background-color: var(--navbar-color);
+    z-index: 10;
+    overflow:hidden;
+}
+#chat-header p {
+    transform: translate(0, -50%);
+    font-size: 20px;
+    text-align:center;
+}
+#chat-header img {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    height: 20px;
+    border-radius: 50%;
+    border: black 1px solid;
+    cursor: pointer;
+}
+#chat-body {
     height: 300px;
+    overflow:hidden;
+}
+#chatter {
+    max-height:300px;
+    margin:0;
+    overflow:auto;
+    padding:0;
     position: relative;
-    overflow: auto;
+    bottom:0;
+}
+#chatter li {
+    line-height: 20px;
+    padding: 0 20px;
+    word-wrap: break-word;
+}
+#chatter li.outgoing {
+    background: var(--primary-background);
+    text-align: right;
+    padding-left: 20%;
+}
+#chatter li.incoming {
+    background: #181818;
+    text-align: left;
+    padding-right: 20%;
+}
+#chatter li p {
+    padding: 0;
+    margin: 0;
+}
+#timestamp {
+    font-size: 8px;
+    color: #595959;
+}
+#chat-footer {
+    padding-bottom: 10px;
+    overflow:hidden;
+}
+#mymsg {
+    width: 90%;
+    align-content: center;
 }
