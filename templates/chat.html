@@ -45,7 +45,7 @@
     function writeMessage(m, incoming) {
         let line = $("#chat-line").clone();
         let now = new Date()
-        line.find('#chat-line-text').html(m);
+        line.find('#chat-line-text').text(m).html();
         line.find('#timestamp').html(now.toLocaleString());
         line.show();
         if(incoming) {line.prop('class','incoming')} else {line.prop('class','outgoing')}
