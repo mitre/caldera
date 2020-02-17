@@ -13,21 +13,15 @@ from scratch.
 Agents are processes which are deployed on compromised hosts and connect with the C2 server periodically for instructions.
 An agent connects to the server through a *contact*, which is a specific connection point on the server.
 
-There are two types of contacts available:
-
-1) Active. The server actively polls a location for beacons.
-2) Passive. The server waits for a beacon to come in before acting.
-
 Each contact is defined in an independent Python module and is registered with the contact_svc when the server starts.
 
-There are currently several built-in contacts available: http (passive), tcp (active) and udp (passive). 
+There are currently several built-in contacts available: http, tcp, udp and websocket. 
 
 ## Building an agent: HTTP contact
 
-Start by getting a feel for the HTTP endpoints, which are located in the contacts/contact_http.py module.
+Start by getting a feel for the HTTP endpoint, which are located in the contacts/contact_http.py module.
 ```
 POST  /beacon 
-POST  /result
 ```
 ### Part #1
 
@@ -84,14 +78,14 @@ Looking at the previous response, you can see each instruction contains:
 * **payload**: A payload file name which must be downloaded before running the command, if applicable
 
 Now, you'll want to revise your agent to loop through all the instructions, executing each command
-and POSTing the response to the /result endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
+and POSTing the response back to the /beacon endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
 ```
-data=$(echo '{"id":$id, "output":$output, "status": $status, "pid":$pid}' | base64)
-curl -s -X POST -d $data localhost:8888/result
+data=$(echo '{"result":{"id":$id, "output":$output, "status": $status, "pid":$pid}}' | base64)
+curl -s -X POST -d $data localhost:8888/beacon
 sleep $instruction_sleep
 ```
 
-The POST details are as follows:
+The POST details inside the result are as follows:
 
 * **id**: the ID of the instruction you received
 * **output**: the base64 encoded output from running the instruction
