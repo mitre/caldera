@@ -25,7 +25,7 @@ class PlanningService(BasePlanningService):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
             return []
-        if phase:
+        if phase is not None:
             abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
         else:
             abilities = [i for p, v in operation.adversary.phases.items() for i in v]

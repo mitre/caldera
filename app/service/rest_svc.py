@@ -141,7 +141,7 @@ class RestService(BaseService):
     async def create_operation(self, data):
         operation = await self._build_operation_object(data)
         for mod in self.special_operation_modifiers:
-            mod(operation)
+            self.special_operation_modifiers[mod](operation)
         operation.set_start_details()
         await self.get_service('data_svc').store(operation)
         self.loop.create_task(self.get_service('app_svc').run_operation(operation))

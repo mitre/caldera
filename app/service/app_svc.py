@@ -96,7 +96,7 @@ class AppService(BaseService):
             planner = await self._get_planning_module(operation)
             operation.adversary = await self._adjust_adversary_phases(operation)
 
-            for phase in operation.adversary.phases:
+            for phase in sorted(operation.adversary.phases):
                 if not await operation.is_closeable():
                     await self._update_operation(operation)
                     await planner.execute(phase)
