@@ -1,5 +1,3 @@
-import logging
-
 from app.utility.base_world import BaseWorld
 
 
