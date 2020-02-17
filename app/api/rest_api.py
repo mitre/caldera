@@ -32,14 +32,10 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         # unauthorized API endpoints
-        self.app_svc.application.router.add_route('*', '/file/download', self.download)
-        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_exfil_http)
+        self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
+        self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
-        self.app_svc.application.router.add_route('POST', '/api/payload', self.upload_payload)
-        self.app_svc.application.router.add_route('*', '/api/potential-links', self.handle_potential_links)
-        self.app_svc.application.router.add_route('PUT', '/api/operation/state', self.rest_state_control)
-        self.app_svc.application.router.add_route('PUT', '/api/operation/{operation_id}', self.rest_update_operation)
 
     """ BOILERPLATE """
 
@@ -67,7 +63,7 @@ class RestApi(BaseWorld):
     @check_authorization
     async def rest_core(self, request):
         try:
-            access = dict(access=(await self.auth_svc.get_permissions(request)))
+            access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(
@@ -82,14 +78,17 @@ class RestApi(BaseWorld):
                     planners=lambda d: self.rest_svc.update_planner(d),
                     agents=lambda d: self.rest_svc.update_agent_data(d),
                     chain=lambda d: self.rest_svc.update_chain_data(d),
-                    operations=lambda d: self.rest_svc.create_operation(d),
+                    operations=lambda d: self.rest_svc.create_operation(access, d),
                     schedule=lambda d: self.rest_svc.create_schedule(d),
+                    link=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d))
                 ),
                 POST=dict(
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                     contact=lambda d: self.rest_svc.download_contact_report(d),
-                    configuration=lambda d: self.rest_svc.update_config(d)
+                    configuration=lambda d: self.rest_svc.update_config(d),
+                    link=lambda d: self.rest_svc.get_potential_links(**d),
+                    operation=lambda d: self.rest_svc.update_operation(**d)
                 )
             )
             if index not in options[request.method]:
@@ -99,56 +98,15 @@ class RestApi(BaseWorld):
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
-    async def rest_update_operation(self, request):
-        operation = await self.data_svc.locate('operations', match=dict(id=int(request.match_info['operation_id'])))
-        operation[0].autonomous = 0 if operation[0].autonomous else 1
-        return web.Response()
+    async def upload_file(self, request):
+        dir_name = request.headers.get('Directory', None)
+        if dir_name:
+            return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
+        created_dir = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
+        return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
-    @check_authorization
-    async def handle_potential_links(self, request):
-        data = dict(await request.json())
-        options = dict(
-            PUT=dict(
-                func=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d))
-            ),
-            POST=dict(
-                func=lambda d: self.rest_svc.get_potential_links(**d)
-            )
-        )
-        resp = await options[request.method]['func'](data)
-        return web.json_response(resp)
-
-    async def upload_payload(self, request):
-        return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
-
-    async def rest_state_control(self, request):
-        body = await request.json()
-        state = body.get('state')
-
-        async def _validate_request():
-            try:
-                op = await self.data_svc.locate('operations', dict(id=body['name']))
-                if not len(op):
-                    raise web.HTTPNotFound
-                elif await op[0].is_finished():
-                    raise web.HTTPBadRequest(body='This operation has already finished.')
-                elif state not in op[0].states.values():
-                    raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
-                elif state == op[0].states['FINISHED']:
-                    await op[0].close()
-            except Exception as e:
-                self.log.error(repr(e))
-
-        await _validate_request()
-        await self.rest_svc.change_operation_state(body['name'], body['state'])
-        return web.Response()
-
-    async def upload_exfil_http(self, request):
-        dir_name = request.headers.get('X-Request-ID', str(uuid.uuid4()))
-        exfil_dir = await self.file_svc.create_exfil_sub_directory(dir_name=dir_name)
-        return await self.file_svc.save_multipart_file_upload(request, exfil_dir)
-
-    async def download(self, request):
+    async def download_file(self, request):
         try:
             payload, content, display_name = await self.file_svc.get_file(request.headers)
             headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])

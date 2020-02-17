@@ -22,14 +22,14 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('agents.html')
     async def _section_agent(self, request):
-        access = dict(access=(await self.auth_svc.get_permissions(request)))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         agents = [h.display for h in await self.data_svc.locate('agents', match=access)]
         return dict(agents=agents)
 
     @check_authorization
     @template('profiles.html')
     async def _section_profiles(self, request):
-        access = dict(access=(await self.auth_svc.get_permissions(request)))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=access)
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
@@ -40,7 +40,7 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('operations.html')
     async def _section_operations(self, request):
-        access = dict(access=(await self.auth_svc.get_permissions(request)))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         hosts = [h.display for h in await self.data_svc.locate('agents', match=access)]
         groups = list(set(([h['group'] for h in hosts])))
         adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]

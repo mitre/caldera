@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import time
 
 import yaml
+from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
@@ -125,11 +126,12 @@ class RestService(BaseService):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
+        if 'paw' not in data:
+            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
+
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
             await agent.gui_modification(**data)
             return agent.display
-        else:
-            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
 
     async def update_chain_data(self, data):
         link = await self.get_service('app_svc').find_link(data.pop('link_id'))
@@ -144,7 +146,7 @@ class RestService(BaseService):
             self.special_operation_modifiers[mod](operation)
         operation.set_start_details()
         await self.get_service('data_svc').store(operation)
-        self.loop.create_task(self.get_service('app_svc').run_operation(operation))
+        self.loop.create_task(operation.run(self.get_services()))
         return [operation.display]
 
     async def create_schedule(self, data):
@@ -181,11 +183,6 @@ class RestService(BaseService):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
         return await operation.apply(link)
 
-    async def change_operation_state(self, op_id, state):
-        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
-        operation[0].state = state
-        self.log.debug('changing operation=%s state to %s' % (op_id, state))
-
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
         if link and link.collect and not link.finish:
@@ -211,19 +208,42 @@ class RestService(BaseService):
         self.set_config(data.get('prop'), data.get('value'))
         self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
 
+    async def update_operation(self, op_id, state=None, autonomous=None):
+        async def validate(op):
+            try:
+                if not len(op):
+                    raise web.HTTPNotFound
+                elif await op[0].is_finished():
+                    raise web.HTTPBadRequest(body='This operation has already finished.')
+                elif state not in op[0].states.values():
+                    raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
+                elif state == op[0].states['FINISHED']:
+                    await op[0].close()
+            except Exception as e:
+                self.log.error(repr(e))
+        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
+        if state:
+            await validate(operation)
+            operation[0].state = state
+            self.log.debug('Changing operation=%s state to %s' % (op_id, state))
+        if autonomous:
+            operation[0].autonomous = 0 if operation[0].autonomous else 1
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+
     """ PRIVATE """
 
-    async def _build_operation_object(self, data):
+    async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
+        allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         autonomous=int(data.pop('autonomous')),
+                         autonomous=int(data.pop('autonomous')), access=allowed,
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
 

@@ -373,9 +373,8 @@
     }
 
     function changeCurrentOperationState(newState){
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let data = {'name': parseInt(selectedOperationId), 'state': newState};
-        restRequest('PUT', data, doNothing, '/api/operation/state');
+        let op_id = $('#operation-list option:selected').attr('value');
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
@@ -440,8 +439,8 @@
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                         'onclick="findResults(this,'+lnk+','+OPERATION.id+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
+                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
                     refreshUpdatableFields(OPERATION.chain[i], template);
 
                     template.insertAfter("#time-start");
@@ -479,8 +478,8 @@
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
-        let postData = {"op_id": parseInt(selectedOperationId), "paw": paw};
-        restRequest('POST', postData, potentialLinksCallback, '/api/potential-links');
+        let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
+        restRequest('POST', postData, potentialLinksCallback, '/api/rest');
     }
 
     function potentialLinksCallback(data){
@@ -544,7 +543,8 @@
         link.command = btoa(linkDiv.find('#potential-command').html());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
-        restRequest('PUT', link, doNothing, '/api/potential-links');
+        link["index"] = "link";
+        restRequest('PUT', link, doNothing, '/api/rest');
     }
 
     function updatePotentialLinkCount(){
@@ -649,8 +649,12 @@
         return false;
     }
 
+    function updateLinkStatus2(lnk, op_id, status) {
+        let data = {'index':'chain', 'link_id': op_id+'-'+lnk, 'status': status};
+        restRequest('PUT', data, doNothing);
+    }
+
     function updateLinkStatus(lnk, status, command='') {
-        console.log(lnk, status);
         let data = {'index':'chain', 'link_id': lnk, 'status': status};
         if(command) {
             data['command'] = command;
@@ -660,7 +664,7 @@
 
     function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        restRequest('PUT', {'op_id': parseInt(op_id)}, doNothing, `/api/operation/${op_id}`);
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id),'autonomous':'toggleMe'}, doNothing, `/api/rest`);
     }
 
     function checkOpformValid(){

@@ -1,17 +1,17 @@
-import ast
 import asyncio
 import copy
 import hashlib
 import json
 import os
-import uuid
 from datetime import datetime, date
-from importlib import import_module
 
 import aiohttp_jinja2
 import jinja2
 
-from app.objects.c_adversary import Adversary
+from app.contacts.contact_http import Http
+from app.contacts.contact_tcp import Tcp
+from app.contacts.contact_udp import Udp
+from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -77,7 +77,7 @@ class AppService(BaseService):
                     sop = copy.deepcopy(s.task)
                     sop.set_start_details()
                     await self._services.get('data_svc').store(sop)
-                    self.loop.create_task(self.run_operation(sop))
+                    self.loop.create_task(sop.run(self.get_services()))
             await asyncio.sleep(interval)
 
     async def resume_operations(self):
@@ -88,31 +88,7 @@ class AppService(BaseService):
         """
         await asyncio.sleep(10)
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
-            self.loop.create_task(self.run_operation(op))
-
-    async def run_operation(self, operation):
-        try:
-            self.log.debug('Starting operation: %s' % operation.name)
-            planner = await self._get_planning_module(operation)
-            operation.adversary = await self._adjust_adversary_phases(operation)
-
-            for phase in sorted(operation.adversary.phases):
-                if not await operation.is_closeable():
-                    await self._update_operation(operation)
-                    await planner.execute(phase)
-                    if planner.stopping_condition_met:
-                        break
-                    await operation.wait_for_phase_completion()
-                operation.phase = phase
-            await self._cleanup_operation(operation)
-            while not await operation.is_closeable():
-                await asyncio.sleep(5)
-                await self._update_operation(operation)
-            await operation.close()
-            await self._save_new_source(operation)
-            self.log.debug('Completed operation: %s' % operation.name)
-        except Exception as e:
-            self.log.error(repr(e), exc_info=True)
+            self.loop.create_task(op.run(self.get_services()))
 
     async def load_plugins(self):
         """
@@ -131,7 +107,7 @@ class AppService(BaseService):
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
-                self.log.debug('Enabled %s plugin' % plugin.name)
+                self.log.debug('Enabled plugin: %s' % plugin.name)
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
@@ -152,6 +128,13 @@ class AppService(BaseService):
     async def add_app_plugin(self):
         await self._services.get('data_svc').store(Plugin(name='app', data_dir='data', access=self.Access.APP))
 
+    async def register_contacts(self):
+        contact_svc = self.get_service('contact_svc')
+        await contact_svc.register(Http(self.get_services()))
+        await contact_svc.register(Udp(self.get_services()))
+        await contact_svc.register(Tcp(self.get_services()))
+        await contact_svc.register(WebSocket(self.get_services()))
+
     """ PRIVATE """
 
     async def _destroy_plugins(self):
@@ -165,42 +148,3 @@ class AppService(BaseService):
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
             await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
-
-    async def _get_planning_module(self, operation):
-        planning_module = import_module(operation.planner.module)
-        planner_params = ast.literal_eval(operation.planner.params)
-        return getattr(planning_module, 'LogicalPlanner')(operation,
-                                                          self.get_service('planning_svc'), **planner_params,
-                                                          stopping_conditions=operation.planner.stopping_conditions)
-
-    async def _cleanup_operation(self, operation):
-        for member in operation.agents:
-            for link in await self.get_service('planning_svc').get_cleanup_links(operation, member):
-                operation.add_link(link)
-        await operation.wait_for_phase_completion()
-
-    @staticmethod
-    async def _adjust_adversary_phases(operation):
-        """If an operation has phases disabled, replace operation
-        adversary with new adversary whose phases are collapsed.
-        Modified adversary is temporary and not stored, just used
-        for the operation.
-        """
-        if not operation.phases_enabled:
-            return Adversary(adversary_id=(operation.adversary.adversary_id + "_phases_disabled"),
-                             name=(operation.adversary.name + " - with phases disabled"),
-                             description=(operation.adversary.name + " with phases disabled"),
-                             phases={1: [i for phase, ab in operation.adversary.phases.items() for i in ab]})
-        else:
-            return operation.adversary
-
-    async def _save_new_source(self, operation):
-        data = dict(
-            id=str(uuid.uuid4()),
-            name=operation.name,
-            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in operation.chain for f in link.facts]
-        )
-        await self.get_service('rest_svc').persist_source(data)
-
-    async def _update_operation(self, operation):
-        operation.agents = await self.get_service('rest_svc').construct_agents_for_group(operation.group)

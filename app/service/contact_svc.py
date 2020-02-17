@@ -7,12 +7,14 @@ from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.objects.secondclass.c_result import Result
 from app.utility.base_service import BaseService
+from app.utility.base_world import BaseWorld
 
 
 def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
-        log = dict(paw=agent.paw, instructions=len(instructions), date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
+                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         args[0].report[agent.contact].append(log)
         return agent, instructions
     return wrapper
@@ -71,13 +73,10 @@ class ContactService(BaseService):
 
     async def register(self, contact):
         try:
-            if contact.valid_config():
-                await self._start_c2_channel(contact=contact)
-                self.log.debug('Started %s command and control channel' % contact.name)
-            else:
-                self.log.debug('%s command and control channel not started' % contact.name)
+            await self._start_c2_channel(contact=contact)
+            self.log.debug('Registered contact: %s' % contact.name)
         except Exception as e:
-            self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
+            self.log.error('Failed to start %s contact: %s' % (contact.name, e))
 
     @report
     async def handle_heartbeat(self, **kwargs):

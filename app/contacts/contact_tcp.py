@@ -12,14 +12,15 @@ class Tcp(BaseWorld):
 
     def __init__(self, services):
         self.name = 'tcp'
-        self.description = 'Communication occurs through a raw TCP socket'
+        self.description = 'Accept beacons through a raw TCP socket'
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = services.get('contact_svc')
         self.tcp_handler = TcpSessionHandler(services, self.log)
 
     async def start(self):
         loop = asyncio.get_event_loop()
-        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', 5678, loop=loop))
+        tcp = self.get_config('app.contact.tcp')
+        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', tcp.split(':')[1], loop=loop))
         loop.create_task(self.operation_loop())
 
     async def operation_loop(self):
@@ -37,10 +38,6 @@ class Tcp(BaseWorld):
                     except Exception as e:
                         self.log.debug('[-] operation exception: %s' % e)
             await asyncio.sleep(20)
-
-    @staticmethod
-    def valid_config():
-        return True
 
 
 class TcpSessionHandler(BaseWorld):

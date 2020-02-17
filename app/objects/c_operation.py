@@ -1,11 +1,15 @@
+import ast
 import asyncio
 import copy
 import re
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
+from importlib import import_module
 from random import randint
 
+from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
 
 
@@ -74,7 +78,8 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50):
+                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True,
+                 visibility=50, access=None):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -93,7 +98,7 @@ class Operation(BaseObject):
         self.auto_close = auto_close
         self.visibility = visibility
         self.chain, self.rules = [], []
-        self.access = self.Access.RED
+        self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
 
@@ -216,7 +221,66 @@ class Operation(BaseObject):
             return redact_report(report)
         return report
 
+    async def run(self, services):
+        try:
+            planner = await self._get_planning_module(services)
+            self.adversary = await self._adjust_adversary_phases()
+            await self._run_phases(services, planner)
+
+            self.phases_enabled = False
+            while not await self.is_closeable():
+                await asyncio.sleep(10)
+                await self._update_operation(services)
+                await self._run_phases(services, planner)
+            await self._cleanup_operation(services)
+            await self.close()
+            await self._save_new_source(services)
+        except Exception:
+            pass
+
     """ PRIVATE """
+
+    async def _run_phases(self, services, planner):
+        for phase in self.adversary.phases:
+            if not await self.is_closeable():
+                await self._update_operation(services)
+                await planner.execute(phase)
+                if planner.stopping_condition_met:
+                    break
+                await self.wait_for_phase_completion()
+            self.phase = phase
+
+    async def _cleanup_operation(self, services):
+        for member in self.agents:
+            for link in await services.get('planning_svc').get_cleanup_links(self, member):
+                self.add_link(link)
+        await self.wait_for_phase_completion()
+
+    async def _get_planning_module(self, services):
+        planning_module = import_module(self.planner.module)
+        planner_params = ast.literal_eval(self.planner.params)
+        return getattr(planning_module, 'LogicalPlanner')(self, services.get('planning_svc'), **planner_params,
+                                                          stopping_conditions=self.planner.stopping_conditions)
+
+    async def _adjust_adversary_phases(self):
+        if not self.phases_enabled:
+            return Adversary(adversary_id=(self.adversary.adversary_id + "_phases_disabled"),
+                             name=(self.adversary.name + " - with phases disabled"),
+                             description=(self.adversary.name + " with phases disabled"),
+                             phases={1: [i for phase, ab in self.adversary.phases.items() for i in ab]})
+        else:
+            return self.adversary
+
+    async def _save_new_source(self, services):
+        data = dict(
+            id=str(uuid.uuid4()),
+            name=self.name,
+            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in self.chain for f in link.facts]
+        )
+        await services.get('rest_svc').persist_source(data)
+
+    async def _update_operation(self, services):
+        self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
