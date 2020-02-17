@@ -9,7 +9,7 @@ class BaseService(BaseWorld):
 
     def add_service(self, name, svc):
         self.__class__._services[name] = svc
-        return logging.getLogger(name)
+        return self.create_logger(name)
 
     @classmethod
     def get_service(cls, name):
