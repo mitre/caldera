@@ -180,7 +180,7 @@ class DataService(BaseService):
             self.log.debug(repr(e), exc_info=True)
 
     async def _load_adversaries(self, plugin):
-        for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
+        for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
