@@ -24,11 +24,17 @@
     testConnectivity();
     toggleChat();
 
+    let team = [];
+
     function testConnectivity(){
         config.teammates.forEach(function(ip) {
             let websocket = new WebSocket('ws://'+ip+':7012/chat');
             websocket.onopen = function(evt) {
                 console.log('connected on: '+ ip);
+                websocket.addEventListener('message', event => {
+                    writeMessage(event.data, true);
+                });
+                team.push(websocket);
             };
             websocket.onerror = function(evt) {
                 console.log('error on: '+ ip);
@@ -37,32 +43,16 @@
         });
     }
 
-    let local = new WebSocket('ws://127.0.0.1:7012/chat');
-    local.onmessage = function (s) {
-        writeMessage(s.data, true);
-    };
-
     let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
         if(e.keyCode === 13 && chatWindow.val()) {
             let message = chatWindow.val();
-            config.teammates.forEach(function(ip) {
-                openSocket(ip, message);
+            team.forEach(function(socket) {
+                socket.send(message);
             });
-            writeMessage(message, false);
+            chatWindow.val('');
         }
     });
-
-    function openSocket(ip, msg) {
-        let websocket = new WebSocket('ws://'+ip+':7012/chat');
-        websocket.onopen = function(evt) {
-            console.log('opened socket to: '+ ip);
-            websocket.send(msg);
-        };
-        websocket.onclose = function(evt) { console.log('closed socket to: '+ ip); };
-        websocket.onmessage = function(evt) { console.log('sending msg to: '+ ip);};
-        websocket.onerror = function(evt) { console.log('error on: '+ ip); };
-    }
 
     function writeMessage(m, incoming) {
         let line = $("#chat-line").clone();
@@ -73,7 +63,6 @@
         if(incoming) {line.prop('class','incoming')} else {line.prop('class','outgoing')}
         let isScrolled = scrolled();
         $('#chatter').append(line);
-        chatWindow.val('');
         if(!isScrolled){scrollBottom();}
         if($('#chat-body').is(":hidden")){$('#chat-header-text').html('*unread messages*')}
     }
