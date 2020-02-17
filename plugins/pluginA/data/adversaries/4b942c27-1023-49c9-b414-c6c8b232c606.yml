@@ -1,9 +1,0 @@
----
-
-id: 4b942c27-1023-49c9-b414-c6c8b232c606
-name: Echo Goodbye
-description: Prints goodye
-phases:
-  1:
-    - 8be37cce-11d5-4a25-a788-8e6cd4a94455
-    - 8d851508-9a8c-4f1c-9884-c98f12f23127 #Echo goodbye

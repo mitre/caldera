@@ -1,9 +1,0 @@
----
-
-id: 71e03abb-6440-4377-b829-c5a394885b89
-name: Echo Hello World
-description: Prints Hello World
-phases:
-  1:
-    - 8d851508-9a8c-4f1c-9884-c98f12f23127
-    - 8be37cce-11d5-4a25-a788-8e6cd4a94455 #Echo hello world
