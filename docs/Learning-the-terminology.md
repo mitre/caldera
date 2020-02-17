@@ -159,7 +159,10 @@ Facts are composed of a:
 
 As hinted above, when CALDERA runs abilities, it scans the command and cleanup instructions for variables. When it finds one, it then looks at the facts it has and sees if it can replace the variables with matching facts (based on the property). It will then create new variants of each command/cleanup instruction for each possible combination of facts it has collected. Each variant will be scored based on the cumulative score of all facts inside the command. The highest scored variants will be executed first. 
 
-A fact source is a collection of facts that you have grouped together. A fact source can be applied to an operation when you start it, which gives the operation facts to fill in variables with. 
+## What is a source?
+
+A source is a collection of facts that you have grouped together. A fact source can be applied to an operation when you start it, 
+which gives the operation facts to fill in variables with. 
 
 ## What is a rule?
 
