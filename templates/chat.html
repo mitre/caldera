@@ -20,27 +20,27 @@
 </li>
 
 <script>
-    let sockets = [];
     let config = {{config|safe}};
-    config.teammates.forEach(function(ip) {
-        sockets.push(new WebSocket('ws://'+ip+':7012/chat'));
-    });
-
-    let local = new WebSocket('ws://localhost:7012/chat');
-    local.onmessage = function (s) {
-        writeMessage(s.data, true);
-    };
 
     let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
         if(e.keyCode === 13 && chatWindow.val()) {
             let message = chatWindow.val();
-            sockets.forEach(function(s) {
-                s.send(message);
+            config.teammates.forEach(function(ip) {
+                openSocket(ip, message);
             });
             writeMessage(message, false);
         }
     });
+
+    function openSocket(ip, msg) {
+        console.log('sending to: '+ip);
+        let websocket = new WebSocket('ws://'+ip+':7012/chat');
+        websocket.onopen = function(evt) { console.log('opened socket to: '+ ip); };
+        websocket.onclose = function(evt) { console.log('closed socket to: '+ ip); };
+        websocket.onmessage = function(evt) { console.log('sending msg to: '+ ip);websocket.send(msg); };
+        websocket.onerror = function(evt) { console.log('error on: '+ ip); };
+    }
 
     function writeMessage(m, incoming) {
         let line = $("#chat-line").clone();
