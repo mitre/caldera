@@ -103,6 +103,9 @@ pre {
     position: relative;
     border: 2px solid var(--navbar-color);
 }
+.inner-row {
+    border: none;
+}
 .row-simple {
     width: 95%;
     display: flex;
