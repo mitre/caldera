@@ -20,7 +20,28 @@
 </li>
 
 <script>
+    let team = [];
     let config = {{config|safe}};
+    let refresher = setInterval(refresh, 30000);
+    refresh();
+    $('.section-profile').bind('destroyed', function() {
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        team = [];
+        config.teammates.forEach(function(ip) {
+            let websocket = new WebSocket('ws://'+ip+':7012/chat');
+            websocket.onopen = function(evt) {
+                console.log('connected on: '+ ip);
+                team.push(ip);
+            };
+            websocket.onerror = function(evt) {
+                console.log('error on: '+ ip);
+                writeMessage(ip+' is offline', false);
+            };
+        });
+    }
 
     let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
