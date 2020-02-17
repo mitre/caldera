@@ -49,6 +49,7 @@ class DataService(BaseService):
 
         :return:
         """
+        await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
@@ -311,3 +312,7 @@ class DataService(BaseService):
                           privilege=privilege, timeout=timeout)
         ability.access = access
         return await self.store(ability)
+
+    async def _prune_non_critical_data(self):
+        self.ram.pop('plugins')
+        self.ram.pop('obfuscators')

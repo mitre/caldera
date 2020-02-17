@@ -5,7 +5,7 @@
     <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
     <div id="adversaries-sidebar" class="column section-border" style="flex:25%;">
       <img src="/gui/img/hacker.png">
-      <h4>Adversaries</h4>
+      <h4>Profiles</h4>
       <br>
       <div class="toggle">
         <label class="switch"><input type="checkbox" id="togBtnAdv" onchange="toggleAdversaryView()">
@@ -14,13 +14,13 @@
       </div>
       <br>
       <p class="section-description">
-          Adversaries are collections of ATT&CK TTPs, designed to test specific threats. Build or review
-          existing adversaries here.
+          Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network. Profiles
+          can be used for offensive or defensive use cases.
       </p>
         <br>
       <div id="viewAdversary">
           <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
-            <option value="" disabled selected>Select an existing adversary</option>
+            <option value="" disabled selected>Select an existing profile</option>
             {% for adv in adversaries %}
                 <option value="{{ adv.adversary_id }}">{{ adv.name }}</option>
             {% endfor %}}
@@ -30,8 +30,8 @@
       <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
-        <input id="profile-goal" type="text" placeholder="enter an adversary name">
-        <input id="profile-description" type="text" placeholder="enter an adversary description">
+        <input id="profile-goal" type="text" placeholder="enter a profile name">
+        <input id="profile-description" type="text" placeholder="enter a profile description">
         <br><br>
         <div id="dummy"></div>
     </div>
@@ -127,10 +127,10 @@
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
             <div class="column" style="flex:100%;">
-                <p>Include the phases and abilities of another adversary in this one. These phases can be inserted as new phases (default) or merged into the current adversary's existing phases.
+                <p>Include the phases and abilities of another profile in this one. These phases can be inserted as new phases (default) or merged into the current profile's existing phases.
                 </p>
                 <select id="adv-pack-filter" onchange="showPack();">
-                    <option disabled selected>Choose an adversary</option>
+                    <option disabled selected>Choose a profile</option>
                     {% for pack in adversaries %}
                         <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
                     {% endfor %}}
@@ -291,7 +291,7 @@
             identifier = uuidv4();
         }
         let name = $('#profile-goal').val();
-        if(!name){ alert('Please enter an adversary name!'); return; }
+        if(!name){ alert('Please enter a profile name!'); return; }
         let description = $('#profile-description').val();
         if(!description){ alert('Please enter a description!'); return; }
 
@@ -299,7 +299,7 @@
         $('#profile-tests li').each(function() {
             abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
         });
-        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversary", 'i': identifier}, saveAdversaryCallback);
+        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -382,7 +382,7 @@
     }
 
     function loadAdversary() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
     }
 
     function loadAdversaryCallback(data) {
@@ -603,8 +603,7 @@
 
     function showPack() {
         $('#pack-phases').empty();
-
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
     }
 
     function showPackCallback(data) {
@@ -659,7 +658,8 @@
         fd.append('file', file);
         $.ajax({
              type: 'POST',
-             url: '/plugin/chain/payload',
+             url: '/file/upload',
+             beforeSend: function(xhr){xhr.setRequestHeader('Directory', 'data/payloads/');},
              data: fd,
              processData: false,
              contentType: false
@@ -691,7 +691,7 @@
     }
 
     function addPackToPhase() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
         document.getElementById('pack-modal').style.display='none';
     }
 

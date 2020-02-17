@@ -2,16 +2,26 @@
 port: 8888
 plugins:
   - sandcat
-  - stockpile
   - compass
   - terminal
+<<<<<<< HEAD
+  - stockpile
+  - pluginA
+  - pluginB
+=======
+  - response
+>>>>>>> 8ab85bc5d22790a82330459b474f0fafbb1fec52
 users:
   red:
     admin: admin
+    red: admin
   blue:
     blue: admin
 api_key: ADMIN123
 exfil_dir: /tmp
 reports_dir: /tmp
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
-app.redirect.http: http://0.0.0.0:8888
+app.contact.http: http://0.0.0.0:8888
+app.contact.tcp: 0.0.0.0:7010
+app.contact.udp: 0.0.0.0:7011
+app.contact.websocket: 0.0.0.0:7012

@@ -1,3 +1,5 @@
+import os
+
 from app.utility.base_object import BaseObject
 from app.objects.secondclass.c_fact import Fact
 
@@ -33,6 +35,12 @@ class Planner(BaseObject):
             existing.update('stopping_conditions', self.stopping_conditions)
             existing.update('params', self.params)
         return existing
+
+    async def which_plugin(self):
+        for plugin in os.listdir('plugins'):
+            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.planner_id):
+                return plugin
+        return None
 
     """ PRIVATE """
 

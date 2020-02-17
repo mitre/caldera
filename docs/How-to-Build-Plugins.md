@@ -32,25 +32,6 @@ The enable function is what gets hooked into CALDERA at boot time. This function
 
 Core services can be found in the app/services directory.
 
-## Plugin examples
-
-Before we write our own plugin, let's look at an example from an existing plugin:
-
-### 54ndc47
-```python
-async def enable(services):
-    app = services.get('app_svc').application
-    file_svc = services.get('file_svc')
-    sand_svc = SandService(services)
-    await file_svc.add_special_payload('sandcat.go', sand_svc.dynamically_compile_executable)
-    await file_svc.add_special_payload('shared.go', sand_svc.dynamically_compile_library)
-    cat_gui_api = SandGuiApi(services=services)
-    app.router.add_route('GET', '/plugin/sandcat/gui', cat_gui_api.splash)
-    await sand_svc.install_gocat_extensions()
-```
-
-The 54ndc47 plugin creates a new instance of a SandApi class (which is defined elsewhere in the plugin). It then attaches new REST API endpoints to the app parameter. These are the two endpoints that the agent itself uses to interact with CALDERA, the first one to beacon in on schedule, the second one to post results after running an ability. 
-
 ## Writing the code
 
 Now it's time to fill in your own enable function. Let's start by appending a new REST API endpoint to the server. When this endpoint is hit, we will direct the request to a new class (AbilityFetcher) and function (get_abilities). The full hook.py file now looks like:

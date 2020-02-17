@@ -1,7 +1,7 @@
 import asyncio
 import json
-import socket
 
+from app.contacts.handles.h_beacon import Handle
 from app.utility.base_world import BaseWorld
 
 
@@ -9,40 +9,33 @@ class Udp(BaseWorld):
 
     def __init__(self, services):
         self.name = 'udp'
-        self.description = 'Communication occurs through a raw UDP socket'
+        self.description = 'Accept streaming messages via UDP'
         self.log = self.create_logger('contact_udp')
         self.contact_svc = services.get('contact_svc')
-        self.udp_handler = UdpSessionHandler(services)
+        self.handler = Handler(services)
 
     async def start(self):
         loop = asyncio.get_event_loop()
-        loop.create_task(loop.create_datagram_endpoint(lambda: self.udp_handler, local_addr=('0.0.0.0', 5679)))
-
-    @staticmethod
-    def valid_config():
-        return True
+        udp = self.get_config('app.contact.udp')
+        loop.create_task(loop.create_datagram_endpoint(lambda: self.handler, local_addr=('0.0.0.0', udp.split(':')[1])))
 
 
-class UdpSessionHandler(asyncio.DatagramProtocol):
+class Handler(asyncio.DatagramProtocol):
 
     def __init__(self, services):
         super().__init__()
-        self.log = BaseWorld.create_logger('udp_session')
-        self.contact_svc = services.get('contact_svc')
+        self.services = services
+        self.handles = [
+            Handle(tag='beacon')
+        ]
+        self.log = BaseWorld.create_logger('udp_handler')
 
     def datagram_received(self, data, addr):
-        async def handle_beacon():
+        async def handle_msg():
             try:
-                # save beacon
-                profile = json.loads(data.decode())
-                callback = profile.pop('callback')
-                profile['executors'] = [e for e in profile['executors'].split(',') if e]
-                profile['contact'] = 'udp'
-                agent, _ = await self.contact_svc.handle_heartbeat(**profile)
-
-                # send confirmation
-                sock = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-                sock.sendto('roger'.encode(), (addr[0], int(callback)))
+                message = json.loads(data.decode())
+                for handle in [h for h in self.handles if h.tag == message.pop('tag')]:
+                    await handle.run(message, self.services, addr[0])
             except Exception as e:
                 self.log.debug(e)
-        asyncio.get_event_loop().create_task(handle_beacon())
+        asyncio.get_event_loop().create_task(handle_msg())

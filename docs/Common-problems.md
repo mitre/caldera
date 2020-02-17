@@ -4,7 +4,7 @@ Common problems
 ### I'm getting an error starting the application!
 
 1. You likely have a misalignment between the core code and the plugin repositories. This is typically caused by doing a "git pull" on one of the repositories and not the others. If you see this error, you should re-clone the latest stable version of CALDERA (recursively, of course).
-2. Another common reason for this is running CALDERA from < Python 3.5.3.
+2. Another common reason for this is running CALDERA from < Python 3.6.1.
 
 ### I start an agent but cannot see it from the server!
 
@@ -14,7 +14,7 @@ Common problems
 
 ### I'm seeing issues in the browser - things don't seem right!
 
-1. Are you using Google Chrome? This is our only supported/tested browser. All other ones are use-at-your-own-risk.
+1. Are you using Chrome or Safari? These are the only supported/tested browsers. All other ones are use-at-your-own-risk.
 
 ### I see a 404 when I try to download conf.yml!
 

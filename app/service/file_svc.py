@@ -42,7 +42,6 @@ class FileSvc(BaseService):
 
     async def save_file(self, filename, payload, target_dir):
         self._save(os.path.join(target_dir, filename), payload)
-        self.log.debug('Saved file %s' % os.path.join(target_dir, filename))
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
