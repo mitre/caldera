@@ -49,6 +49,7 @@ class DataService(BaseService):
 
         :return:
         """
+        await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
@@ -177,7 +178,7 @@ class DataService(BaseService):
                 await self._load_sources(plug)
                 await self._load_planners(plug)
         except Exception as e:
-            self.log.debug(repr(e), exc_info=True)
+            self.log.debug(repr(e))
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
@@ -304,3 +305,7 @@ class DataService(BaseService):
                           privilege=privilege, timeout=timeout)
         ability.access = access
         return await self.store(ability)
+
+    async def _prune_non_critical_data(self):
+        self.ram.pop('plugins')
+        self.ram.pop('obfuscators')
