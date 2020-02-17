@@ -34,11 +34,13 @@
     });
 
     function openSocket(ip, msg) {
-        console.log('sending to: '+ip);
         let websocket = new WebSocket('ws://'+ip+':7012/chat');
-        websocket.onopen = function(evt) { console.log('opened socket to: '+ ip); };
+        websocket.onopen = function(evt) {
+            console.log('opened socket to: '+ ip);
+            websocket.send(msg);
+        };
         websocket.onclose = function(evt) { console.log('closed socket to: '+ ip); };
-        websocket.onmessage = function(evt) { console.log('sending msg to: '+ ip);websocket.send(msg); };
+        websocket.onmessage = function(evt) { console.log('sending msg to: '+ ip);};
         websocket.onerror = function(evt) { console.log('error on: '+ ip); };
     }
 
