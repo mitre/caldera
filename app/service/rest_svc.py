@@ -140,8 +140,8 @@ class RestService(BaseService):
             link.command = data.get('command')
         return ''
 
-    async def create_operation(self, data):
-        operation = await self._build_operation_object(data)
+    async def create_operation(self, access, data):
+        operation = await self._build_operation_object(access, data)
         for mod in self.special_operation_modifiers:
             self.special_operation_modifiers[mod](operation)
         operation.set_start_details()
