@@ -33,7 +33,7 @@ These requirements are for the computer running the core framework:
 ## Installation
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. 
-This will pull all available [plugins](https://caldera.readthedocs.io/en/latest/What-is-a-plugin.html).
+This will pull in all available plugins.
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
