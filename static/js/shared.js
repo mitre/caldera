@@ -137,3 +137,12 @@ window.onload = function checkBrowser(){
           });
     }
 };
+
+window.onload = function loadChat() {
+    function display(data) {
+        // stream('chat window loaded');
+        let chat = $($.parseHTML(data, keepScripts=true));
+        $('#section-chat').html(chat);
+    }
+    restRequest('GET', null, display, '/advanced/chat');
+};

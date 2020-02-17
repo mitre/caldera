@@ -7,6 +7,7 @@
     border-radius: 10px 10px 0 0;
 }
 .form-container {
+    max-height:90vh;
     width: 300px;
     padding: 0;
     background-color: var(--primary-background);
@@ -15,14 +16,14 @@
 #chat-header {
     width: 100%;
     border-radius: 10px 10px 0 0;
-    height: 40px;
+    height: 30px;
     background-color: var(--navbar-color);
     z-index: 10;
     overflow:hidden;
 }
 #chat-header p {
     transform: translate(0, -50%);
-    font-size: 20px;
+    font-size: 14px;
     text-align:center;
 }
 #chat-header img {
@@ -35,16 +36,20 @@
     cursor: pointer;
 }
 #chat-body {
-    height: 300px;
+    max-height: calc(90vh - 80px);
     overflow:hidden;
+    padding: 0;
+    margin: 0;
 }
 #chatter {
-    max-height:300px;
+    max-height: calc(90vh - 100px);
+    min-height: 30vh;
     margin:0;
     overflow:auto;
     padding:0;
     position: relative;
     bottom:0;
+
 }
 #chatter li {
     line-height: 20px;
@@ -70,6 +75,7 @@
     color: #595959;
 }
 #chat-footer {
+    height: 50px;
     padding-bottom: 10px;
     overflow:hidden;
 }

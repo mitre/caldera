@@ -3,7 +3,7 @@
 <div id="chat" class="section-profile">
     <div class="chat-popup form-container" id="myForm">
         <div id="chat-header" onclick="toggleChat()">
-            <p id="chat-header-text">Conversations</p><img onclick="closeForm()" src="/gui/img/x.png">
+            <p id="chat-header-text">Conversations</p><img id="chat-header-button" src="/gui/img/min.png">
         </div>
         <div id="chat-body">
             <ul id="chatter"></ul>
@@ -22,6 +22,7 @@
 <script>
     let config = {{config|safe}};
     testConnectivity();
+    toggleChat();
 
     function testConnectivity(){
         config.teammates.forEach(function(ip) {
@@ -88,9 +89,18 @@
     }
 
     function toggleChat(){
+        let wasHidden = $('#chat-body').is(":hidden")
         $('#chat-body').slideToggle();
         $('#chat-footer').slideToggle();
-        if(!$('#chat-body').is(":hidden")){$('#chat-header-text').html('Conversations')}
+        if(wasHidden) {
+            $('#chat-header-text').html('Conversations');
+            $('#chat-header').css('background-color', 'var(--navbar-color)');
+            $('#chat-header-button').prop('src', '/gui/img/min.png');
+        }
+        else {
+            $('#chat-header').css('background-color', 'black');
+            $('#chat-header-button').prop('src', '/gui/img/plus2.png');
+        }
     }
 
     function closeForm(){
