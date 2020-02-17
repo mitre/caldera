@@ -178,7 +178,7 @@ class DataService(BaseService):
                 await self._load_sources(plug)
                 await self._load_planners(plug)
         except Exception as e:
-            self.log.debug(repr(e), exc_info=True)
+            self.log.debug(repr(e))
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
