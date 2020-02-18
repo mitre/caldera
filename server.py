@@ -69,8 +69,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
-        config = yaml.load(c, Loader=yaml.FullLoader)
-
         data_svc = DataService()
         contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
@@ -81,4 +79,4 @@ if __name__ == '__main__':
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        run_tasks(config=config, services=app_svc.get_services())
+        run_tasks(config=yaml.load(c, Loader=yaml.FullLoader), services=app_svc.get_services())

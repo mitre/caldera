@@ -98,8 +98,6 @@ class AppService(BaseService):
         :return:
         """
         for plug in os.listdir('plugins'):
-            if plug.startswith('.'):
-                continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
@@ -128,7 +126,12 @@ class AppService(BaseService):
         self.log.debug('[!] shutting down server...good-bye')
 
     async def add_app_plugin(self):
-        await self._services.get('data_svc').store(Plugin(name='app', data_dir='data', access=self.Access.APP))
+        await self._services.get('data_svc').store(Plugin(
+            name='app',
+            description='A plugin designed to hold global application data',
+            data_dir='data',
+            access=self.Access.APP)
+        )
 
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')

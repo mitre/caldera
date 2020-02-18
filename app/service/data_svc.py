@@ -67,9 +67,9 @@ class DataService(BaseService):
                 self.ram[key] = []
                 for c_object in ram[key]:
                     await self.store(c_object)
-            stored_config = (await self.get_service('data_svc').locate('configs'))[0]
-            self.apply_config(stored_config.contents)
-            self.log.debug('Restored objects from persistent storage')
+            stored_config = await self.get_service('data_svc').locate('configs')
+            self.apply_config(stored_config[0].contents)
+            self.log.debug('Restored data from persistent storage')
         else:
             self.apply_config(config)
             self.log.debug('Applied new configuration')
