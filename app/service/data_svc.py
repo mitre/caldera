@@ -65,7 +65,7 @@ class DataService(BaseService):
                 self.ram[key] = []
                 for c_object in ram[key]:
                     await self.store(c_object)
-            self.log.debug('Restored objects from persistent storage')
+            self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
