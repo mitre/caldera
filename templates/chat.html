@@ -21,43 +21,65 @@
 
 <script>
     let config = {{config|safe}};
+    let confPort = config['app.contact.websocket'];
+    confPort = confPort.slice(confPort.lastIndexOf(':')+1)
+
+    let machine = {};
+    $.ajax({
+        url:'/api/rest',
+        type:"POST",
+        data:JSON.stringify({'index':'machine_info'}),
+        success:function(resp){machine=resp;},
+        async: false
+    });
+    let username = (config.chat_username)?config.chat_username:machine.user;
+    let team = {};
+    console.log(username + ' ' + machine.ip)
+
     testConnectivity();
     toggleChat();
 
-    let team = [];
+    function connectToUser(user, ip, port) {
+        let websocket = new WebSocket('ws://'+ip+':'+port+'/chat');
+        websocket.onopen = function(evt) {
+            console.log('connected on: '+ ip + ':' + port);
+            websocket.addEventListener('message', event => {
+                handleIncomingMessage(event.data, user);
+            });
+            team[user] = websocket;
+        };
+        websocket.onerror = function(evt) {
+            console.log('error on: '+ ip);
+            writeMessage(user +' is offline', false, Date.now());
+        };
+    }
 
     function testConnectivity(){
         Object.keys(config.teammates).forEach(function(user) {
             let ip = config.teammates[user];
-            let port = config['app.contact.websocket'];
-            port = port.slice(port.lastIndexOf(':')+1)
-            let websocket = new WebSocket('ws://'+ip+':'+port+'/chat');
-            websocket.onopen = function(evt) {
-                console.log('connected on: '+ ip + ':' + port);
-                websocket.addEventListener('message', event => {
-                    handleIncomingMessage(event.data, user);
-                });
-                team.push(websocket);
-            };
-            websocket.onerror = function(evt) {
-                console.log('error on: '+ ip);
-                writeMessage(ip+' is offline', false, Date.now());
-            };
+            connectToUser(user, ip, confPort)
         });
+        beaconOthers();
+    }
+
+    function beaconOthers() {
+        sendMessage('init', {'ip':machine.ip})
     }
 
     function handleIncomingMessage(message, user) {
         let m = JSON.parse(message);
         switch (m.type) {
-            case 'chat':
-                if(user === '_user') { writeMessage(m.data.text, false, m.data.ts); }
+            case 'chat': //{'type':'chat', 'user': user, 'data':{'text': message, 'ts': ms_timestamp}}
+                if(m.user === username) { writeMessage(m.data.text, false, m.data.ts); }
                 else { writeMessage(m.data.text, user, m.data.ts); }
                 break;
-            case 'init':
+            case 'init': //{'type':'init', 'user': user, 'data':{'ip': ip_address}}
                 //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
+                connectToUser(m.user, m.data.ip, confPort)
                 break;
             case 'sync':
                 //TODO: handle chat history syncing or syncing of other users IPs and data
+                console.log(user + message)
                 break;
             default:
                 console.log('received unhandleable message:' + message);
@@ -66,17 +88,16 @@
 
     function sendMessage(type, data) {
         function sendAll(message) {
-            team.forEach(function(socket) {
-                socket.send(JSON.stringify(message));
+            Object.keys(team).forEach(function(user) {
+                team[user].send(JSON.stringify(message));
             });
         }
+        let message = {'type':type, 'user': username};
         switch (type) {
             case 'chat':
-                sendAll({'type':'chat', 'data': data});
-                break;
             case 'init':
-                //TODO: get local IP address and send it and preferred local username
-                // (need to talk on username standardization or what we want to use as the constant for identity)
+                message.data = data;
+                sendAll(message);
                 break;
             case 'sync':
                 //TODO: figure out how we want to handle chat history and syncing, especially as chat threads get very long

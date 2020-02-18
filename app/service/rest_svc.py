@@ -4,6 +4,9 @@ import glob
 import os
 import pathlib
 import uuid
+import socket
+import platform
+import getpass
 from collections import defaultdict
 from datetime import time
 
@@ -216,6 +219,20 @@ class RestService(BaseService):
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
             self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+
+    async def get_machine_info(self):
+        def get_ip():
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect(('10.255.255.255', 1))
+                ip = s.getsockname()[0]
+            except:
+                ip = '127.0.0.1'
+            finally:
+                s.close()
+            return ip
+
+        return {'user': getpass.getuser(), 'ip': get_ip(), 'platform': platform.system()}
 
     """ PRIVATE """
 
