@@ -205,7 +205,11 @@ class RestService(BaseService):
         self.special_operation_modifiers[name] = func
 
     async def update_config(self, data):
-        self.set_config(data.get('prop'), data.get('value'))
+        if data.get('prop') == 'plugin':
+            enabled_plugins = self.get_config('plugins')
+            enabled_plugins.append(data.get('value'))
+        else:
+            self.set_config(data.get('prop'), data.get('value'))
         self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
 
     async def update_operation(self, op_id, state=None, autonomous=None):

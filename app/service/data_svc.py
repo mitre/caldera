@@ -65,7 +65,7 @@ class DataService(BaseService):
                 self.ram[key] = []
                 for c_object in ram[key]:
                     await self.store(c_object)
-            self.log.debug('Restored objects from persistent storage')
+            self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
@@ -174,6 +174,7 @@ class DataService(BaseService):
         try:
             for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_abilities(plug)
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
@@ -181,7 +182,7 @@ class DataService(BaseService):
             self.log.debug(repr(e))
 
     async def _load_adversaries(self, plugin):
-        for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
+        for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
