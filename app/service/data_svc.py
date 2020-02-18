@@ -6,8 +6,6 @@ import pickle
 from base64 import b64encode
 from collections import defaultdict, namedtuple
 
-import yaml
-
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_planner import Planner
@@ -28,7 +26,7 @@ class DataService(BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], configs=[])
+                           schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -54,7 +52,7 @@ class DataService(BaseService):
         await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
-    async def restore_state(self, config):
+    async def restore_state(self):
         """
         Restore the object database
 
@@ -67,12 +65,7 @@ class DataService(BaseService):
                 self.ram[key] = []
                 for c_object in ram[key]:
                     await self.store(c_object)
-            stored_config = await self.get_service('data_svc').locate('configs')
-            self.apply_config(stored_config[0].contents)
             self.log.debug('Restored data from persistent storage')
-        else:
-            self.apply_config(config)
-            self.log.debug('Applied new configuration')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):

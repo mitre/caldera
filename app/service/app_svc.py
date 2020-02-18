@@ -12,7 +12,6 @@ from app.contacts.contact_http import Http
 from app.contacts.contact_tcp import Tcp
 from app.contacts.contact_udp import Udp
 from app.contacts.contact_websocket import WebSocket
-from app.objects.c_config import Config
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
@@ -143,7 +142,8 @@ class AppService(BaseService):
     """ PRIVATE """
 
     async def _save_configuration(self):
-        await self._services.get('data_svc').store(Config(name='default', contents=self.get_config()))
+        with open('conf/default.yml', 'w') as config:
+            config.write(json.dumps(self.get_config()))
 
     async def _destroy_plugins(self):
         for plugin in await self._services.get('data_svc').locate('plugins'):

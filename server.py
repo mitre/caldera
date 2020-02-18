@@ -39,10 +39,10 @@ async def start_server():
     await web.TCPSite(runner, '0.0.0.0', BaseWorld.get_config('port')).start()
 
 
-def run_tasks(config, services):
+def run_tasks(services):
     loop = asyncio.get_event_loop()
     loop.create_task(build_docs())
-    loop.run_until_complete(data_svc.restore_state(config))
+    loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins())
@@ -69,6 +69,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
+        BaseWorld.apply_config(yaml.load(c, Loader=yaml.FullLoader))
+
         data_svc = DataService()
         contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
@@ -79,4 +81,4 @@ if __name__ == '__main__':
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        run_tasks(config=yaml.load(c, Loader=yaml.FullLoader), services=app_svc.get_services())
+        run_tasks(services=app_svc.get_services())

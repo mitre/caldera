@@ -174,7 +174,7 @@ class FileSvc(BaseService):
     def _get_encryptor(self):
         generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),
                                    length=32,
-                                   salt=bytes('SOME_VALUE', 'utf-8'),
+                                   salt=bytes(self.get_config('crypt_salt'), 'utf-8'),
                                    iterations=2 ** 20,
                                    backend=default_backend())
-        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes('test123', 'utf-8'))))
+        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('api_key'), 'utf-8'))))
