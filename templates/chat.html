@@ -39,7 +39,7 @@
             };
             websocket.onerror = function(evt) {
                 console.log('error on: '+ ip);
-                writeMessage(ip+' is offline', false);
+                writeMessage(ip+' is offline', false, Date.now());
             };
         });
     }
@@ -48,8 +48,8 @@
         let m = JSON.parse(message);
         switch (m.type) {
             case 'chat':
-                if(user === '_user') { writeMessage(m.data, false); }
-                else { writeMessage(m.data, user); }
+                if(user === '_user') { writeMessage(m.data.text, false, m.data.ts); }
+                else { writeMessage(m.data.text, user, m.data.ts); }
                 break;
             case 'init':
                 //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
@@ -87,15 +87,15 @@
     let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
         if(e.keyCode === 13 && chatWindow.val()) {
-            let message = chatWindow.val();
+            let message = {'text': chatWindow.val(), 'ts': Date.now()};
             sendMessage('chat', message);
             chatWindow.val('');
         }
     });
 
-    function writeMessage(m, user) {
+    function writeMessage(m, user, ts) {
         let line = $("#chat-line").clone();
-        let now = new Date();
+        let now = new Date(ts);
         if(user) {
             line.prop('class','incoming');
             line.find('#chat-user').text(user + ':').html();
