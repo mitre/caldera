@@ -1,0 +1,142 @@
+<link rel="stylesheet" href="/gui/css/chat.css">
+
+<div id="chat" class="section-profile">
+    <div class="chat-popup form-container" id="myForm">
+        <div id="chat-header" onclick="toggleChat()">
+            <p id="chat-header-text">Conversations</p><img id="chat-header-button" src="/gui/img/min.png">
+        </div>
+        <div id="chat-body">
+            <ul id="chatter"></ul>
+        </div>
+        <div id="chat-footer">
+            <input id="mymsg" type="text" placeholder="Type message.." name="msg"/>
+        </div>
+    </div>
+</div>
+
+<li id="chat-line" style="display: none">
+    <p id="chat-user"></p><p id="chat-line-text"></p>
+    <p id="timestamp"></p>
+</li>
+
+<script>
+    let config = {{config|safe}};
+    testConnectivity();
+    toggleChat();
+
+    let team = [];
+
+    function testConnectivity(){
+        Object.keys(config.teammates).forEach(function(user) {
+            let ip = config.teammates[user];
+            let websocket = new WebSocket('ws://'+ip+':7012/chat');
+            websocket.onopen = function(evt) {
+                console.log('connected on: '+ ip);
+                websocket.addEventListener('message', event => {
+                    handleIncomingMessage(event.data, user);
+                });
+                team.push(websocket);
+            };
+            websocket.onerror = function(evt) {
+                console.log('error on: '+ ip);
+                writeMessage(ip+' is offline', false);
+            };
+        });
+    }
+
+    function handleIncomingMessage(message, user) {
+        let m = JSON.parse(message);
+        switch (m.type) {
+            case 'chat':
+                if(user === '_user') { writeMessage(m.data, false); }
+                else { writeMessage(m.data, user); }
+                break;
+            case 'init':
+                //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
+                break;
+            case 'sync':
+                //TODO: handle chat history syncing or syncing of other users IPs and data
+                break;
+            default:
+                console.log('received unhandleable message:' + message);
+        }
+    }
+
+    function sendMessage(type, data) {
+        function sendAll(message) {
+            team.forEach(function(socket) {
+                socket.send(JSON.stringify(message));
+            });
+        }
+        switch (type) {
+            case 'chat':
+                sendAll({'type':'chat', 'data': data});
+                break;
+            case 'init':
+                //TODO: get local IP address and send it and preferred local username
+                // (need to talk on username standardization or what we want to use as the constant for identity)
+                break;
+            case 'sync':
+                //TODO: figure out how we want to handle chat history and syncing, especially as chat threads get very long
+                break;
+            default:
+                throw new Error('need to specify a message type');
+        }
+    }
+
+    let chatWindow = $('#mymsg');
+    chatWindow.keyup(function(e){
+        if(e.keyCode === 13 && chatWindow.val()) {
+            let message = chatWindow.val();
+            sendMessage('chat', message);
+            chatWindow.val('');
+        }
+    });
+
+    function writeMessage(m, user) {
+        let line = $("#chat-line").clone();
+        let now = new Date();
+        if(user) {
+            line.prop('class','incoming');
+            line.find('#chat-user').text(user + ':').html();
+        } else {
+            line.prop('class','outgoing');
+        }
+        line.find('#chat-line-text').text(m).html();
+        line.find('#timestamp').html(now.toLocaleString());
+        line.show();
+        let isScrolled = scrolled();
+        $('#chatter').append(line);
+        if(!isScrolled){scrollBottom();}
+        if($('#chat-body').is(":hidden")){$('#chat-header-text').html('*unread messages*')}
+    }
+
+    function scrolled(){
+        let c = $('#chatter');
+        return c.prop('scrollHeight') - c.prop('clientHeight') >= c.prop('scrollTop') + 50
+    }
+
+    function scrollBottom(){
+        let c = $('#chatter');
+        c.prop('scrollTop', c.prop('scrollHeight') - c.prop('clientHeight'));
+    }
+
+    function toggleChat(){
+        let wasHidden = $('#chat-body').is(":hidden");
+        $('#chat-body').slideToggle();
+        $('#chat-footer').slideToggle();
+        if(wasHidden) {
+            $('#chat-header-text').html('Conversations');
+            $('#chat-header').css('background-color', 'var(--navbar-color)');
+            $('#chat-header-button').prop('src', '/gui/img/min.png');
+        }
+        else {
+            $('#chat-header').css('background-color', 'black');
+            $('#chat-header-button').prop('src', '/gui/img/plus2.png');
+        }
+    }
+
+    function closeForm(){
+        document.getElementById("myForm").style.display = "none";
+    }
+</script> 

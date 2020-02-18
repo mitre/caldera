@@ -2,6 +2,7 @@ import asyncio
 
 import websockets
 
+from app.contacts.handles.h_chat import Handle
 from app.utility.base_world import BaseWorld
 
 
@@ -23,7 +24,9 @@ class Handler:
 
     def __init__(self, services):
         self.services = services
-        self.handles = []
+        self.handles = [
+            Handle(tag='chat')
+        ]
         self.log = BaseWorld.create_logger('websocket_handler')
 
     async def handle(self, socket, path):
