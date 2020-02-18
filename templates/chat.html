@@ -29,9 +29,11 @@
     function testConnectivity(){
         Object.keys(config.teammates).forEach(function(user) {
             let ip = config.teammates[user];
-            let websocket = new WebSocket('ws://'+ip+':7012/chat');
+            let port = config['app.contact.websocket'];
+            port = port.slice(port.lastIndexOf(':')+1)
+            let websocket = new WebSocket('ws://'+ip+':'+port+'/chat');
             websocket.onopen = function(evt) {
-                console.log('connected on: '+ ip);
+                console.log('connected on: '+ ip + ':' + port);
                 websocket.addEventListener('message', event => {
                     handleIncomingMessage(event.data, user);
                 });
@@ -135,8 +137,4 @@
             $('#chat-header-button').prop('src', '/gui/img/plus2.png');
         }
     }
-
-    function closeForm(){
-        document.getElementById("myForm").style.display = "none";
-    }
-</script> 
+</script>
