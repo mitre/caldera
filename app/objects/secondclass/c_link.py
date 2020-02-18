@@ -47,7 +47,8 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
+                 preobfuscation=None):
         super().__init__()
         self.id = id
         self.command = command
@@ -68,6 +69,7 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = None
+        self.preobfuscation = preobfuscation
 
     async def parse(self, operation):
         try:
