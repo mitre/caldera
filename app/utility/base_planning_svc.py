@@ -121,7 +121,7 @@ class BasePlanningService(BaseService):
             score += (score + var.score)
             used.append(var)
             re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.value).strip(), copy_test)
+            copy_test = re.sub(re_variable, str(var.value).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
     @staticmethod
