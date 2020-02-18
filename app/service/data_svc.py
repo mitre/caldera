@@ -174,6 +174,7 @@ class DataService(BaseService):
         try:
             for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_abilities(plug)
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
