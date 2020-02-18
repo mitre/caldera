@@ -33,7 +33,7 @@
             websocket.onopen = function(evt) {
                 console.log('connected on: '+ ip);
                 websocket.addEventListener('message', event => {
-                    writeMessage(event.data, user);
+                    handleIncomingMessage(event.data, user);
                 });
                 team.push(websocket);
             };
@@ -44,14 +44,52 @@
         });
     }
 
+    function handleIncomingMessage(message, user) {
+        let m = JSON.parse(message);
+        switch (m.type) {
+            case 'chat':
+                if(user === '_user') { writeMessage(m.data, false); }
+                else { writeMessage(m.data, user); }
+                break;
+            case 'init':
+                //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
+                break;
+            case 'sync':
+                //TODO: handle chat history syncing or syncing of other users IPs and data
+                break;
+            default:
+                console.log('received unhandleable message:' + message);
+        }
+    }
+
+    function sendMessage(type, data) {
+        function sendAll(message) {
+            team.forEach(function(socket) {
+                socket.send(JSON.stringify(message));
+            });
+        }
+        switch (type) {
+            case 'chat':
+                sendAll({'type':'chat', 'data': data});
+                break;
+            case 'init':
+                //TODO: get local IP address and send it and preferred local username
+                // (need to talk on username standardization or what we want to use as the constant for identity)
+                break;
+            case 'sync':
+                //TODO: figure out how we want to handle chat history and syncing, especially as chat threads get very long
+                break;
+            default:
+                throw new Error('need to specify a message type');
+        }
+    }
+
     let chatWindow = $('#mymsg');
     chatWindow.keyup(function(e){
         if(e.keyCode === 13 && chatWindow.val()) {
             let message = chatWindow.val();
-            writeMessage(message, false);
-            team.forEach(function(socket) {
-                socket.send(message);
-            });
+            sendMessage('chat', message);
+            chatWindow.val('');
         }
     });
 
@@ -69,7 +107,6 @@
         line.show();
         let isScrolled = scrolled();
         $('#chatter').append(line);
-        chatWindow.val('');
         if(!isScrolled){scrollBottom();}
         if($('#chat-body').is(":hidden")){$('#chat-header-text').html('*unread messages*')}
     }
@@ -85,7 +122,7 @@
     }
 
     function toggleChat(){
-        let wasHidden = $('#chat-body').is(":hidden")
+        let wasHidden = $('#chat-body').is(":hidden");
         $('#chat-body').slideToggle();
         $('#chat-footer').slideToggle();
         if(wasHidden) {
