@@ -22,7 +22,7 @@
 <script>
     let config = {{config|safe}};
     let confPort = config['app.contact.websocket'];
-    confPort = confPort.slice(confPort.lastIndexOf(':')+1)
+    confPort = confPort.slice(confPort.lastIndexOf(':')+1);
 
     let machine = {};
     $.ajax({
@@ -34,7 +34,7 @@
     });
     let username = (config.chat_username)?config.chat_username:machine.user;
     let team = {};
-    console.log(username + ' ' + machine.ip)
+    console.log(username + ' ' + machine.ip);
 
     testConnectivity();
     toggleChat();
@@ -52,6 +52,9 @@
             console.log('error on: '+ ip);
             writeMessage(user +' is offline', false, Date.now());
         };
+        websocket.onclose = function(evt) {
+            console.log('connection to ' + user + '[' + ip + '] closed')
+        };
     }
 
     function testConnectivity(){
@@ -63,7 +66,7 @@
     }
 
     function beaconOthers() {
-        sendMessage('init', {'ip':machine.ip})
+        sendMessage('init', {'ip':machine.ip});
     }
 
     function handleIncomingMessage(message, user) {
