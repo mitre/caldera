@@ -99,6 +99,7 @@
         let message = {'type':type, 'user': username};
         switch (type) {
             case 'chat':
+                writeMessage(data.text, false, data.ts)
             case 'init':
                 message.data = data;
                 sendAll(message);
