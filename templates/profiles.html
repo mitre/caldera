@@ -1,0 +1,704 @@
+<div id="adversaries" class="section-profile">
+  <div class="row">
+    <div class="bottomright duk-icon"><img onclick="toggleSidebar('adversaries-sidebar')" src="/gui/img/expand.png"></div>
+    <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
+    <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
+    <div id="adversaries-sidebar" class="column section-border" style="flex:25%;">
+      <img src="/gui/img/hacker.png">
+      <h4>Profiles</h4>
+      <br>
+      <div class="toggle">
+        <label class="switch"><input type="checkbox" id="togBtnAdv" onchange="toggleAdversaryView()">
+          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+        </label>
+      </div>
+      <br>
+      <p class="section-description">
+          Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network. Profiles
+          can be used for offensive or defensive use cases.
+      </p>
+        <br>
+      <div id="viewAdversary">
+          <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
+            <option value="" disabled selected>Select an existing profile</option>
+            {% for adv in adversaries %}
+                <option value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+            {% endfor %}}
+          </select>
+          <button class="button-embedded" onclick="addPhase(null)">Add phase</button>
+      </div>
+      <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
+    </div>
+    <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
+        <input id="profile-goal" type="text" placeholder="enter a profile name">
+        <input id="profile-description" type="text" placeholder="enter a profile description">
+        <br><br>
+        <div id="dummy"></div>
+    </div>
+  </div>
+</div>
+
+<div id="phase-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', {{ exploits }});">
+                    <option disabled selected>Choose a tactic</option>
+                    {% for tactic in tactics %}
+                        <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
+                    {% endfor %}}
+                </select>
+                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', {{ exploits }});">
+                    <option disabled selected>Choose a technique</option>
+                </select>
+                <select id="ability-ability-filter" onchange="showAbility('phase-modal',  {{ exploits }})">
+                    <option disabled selected>0 abilities</option>
+                </select>
+                <br><br>
+                <div class="ability-attack row-simple">
+                    <div class="column" style="flex:60%">
+                        <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                            <tr>
+                                <td style="width:10%"><b>id:</b></td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
+                            </tr>
+                            <tr>
+                                <td style="width:10%"><b>name:</b></td>
+                                <td><input type="text" id="ability-name" placeholder="Name"></td>
+                            </tr>
+                            <tr>
+                                <td style="width:10%"><b>description:</b></td>
+                                <td><input type="text" id="ability-description" placeholder="Description"></td>
+                            </tr>
+                            <tr>
+                                <td style="width:10%"><b>tactic:</b></td>
+                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
+                            <tr>
+                            <tr>
+                                <td style="width:10%"><b>technique:</b></td>
+                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
+                            </tr>
+                            <tr>
+                                <td style="width:10%"><b>technique:</b></td>
+                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="column" style="flex:10%">
+                        <div>
+                            <img src="/gui/img/recycle.png">
+                            <p style="color:white;text-align: center;" onclick="freshId()">generate new id</p>
+                        </div>
+                    </div>
+                    <div class="column" style="flex:10%">
+                        <div>
+                            <img src="/gui/img/executor.png">
+                            <p style="color:white;text-align: center;" onclick="addExecutorBlock()">add executor</p>
+                        </div>
+                    </div>
+                    <div class="column" style="flex:10%">
+                        <div>
+                            <img src="/gui/img/payload.png">
+                            <form id="uploadPayloadForm">
+                               <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
+                               <input type="file" id="uploadPayloadFile" style="display: none">
+                            </form>
+                        </div>
+                    </div>
+                    <br><br>
+                </div>
+                <ul id="ttp-tests"></ul>
+                <div style="float:right;">
+                    <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
+                    <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to phase</button>
+                    <div id="ability-flashy-holder">
+                        <span id="message"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('phase-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="pack-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <p>Include the phases and abilities of another profile in this one. These phases can be inserted as new phases (default) or merged into the current profile's existing phases.
+                </p>
+                <select id="adv-pack-filter" onchange="showPack();">
+                    <option disabled selected>Choose a profile</option>
+                    {% for pack in adversaries %}
+                        <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
+                    {% endfor %}}
+                </select></br>
+                <input type="checkbox" id="adv-pack-merge" name="adv-pack-merge">
+                <label for="adv-pack-merge">Merge into existing phases?</label><br>
+                <div id="pack-phases"></div>
+                <br><br>
+                <div style="float:right;width:30%;">
+                    <button type="button" class="button-success atomic-button" onclick="addPackToPhase()">Add to phase</button>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('pack-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="phase-template" style="display: none;">
+    <center>
+        <ul id="profile-tests" class="profile-tests"></ul>
+    </center>
+</div>
+
+<li id="ability-template" class="ability-box" style="display: none">
+    <h4 id="name" style="margin:5px"></h4>
+    <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
+    <center>
+        <p class="topright" id="ability-rm"></p>
+        <table class="bottomright">
+            <tr id="ability-metadata"></tr>
+        </table>
+        <div id="icon-row" class="icon-row"></div>
+    </center>
+</li>
+
+<li id="ttp-template" class="ttp-template" style="display: none">
+    <div class="dotted">
+        <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+    </div>
+    <table frame=void rules=rows style="border-spacing:5px;width:100%">
+        <tr>
+            <td style="width:10%"><b>platform:</b></td>
+            <td>
+              <select id="ability-platform">
+                <option value="" disabled selected>Select a platform</option>
+                    <option value="darwin">darwin</option>
+                    <option value="linux">linux</option>
+                    <option value="windows">windows</option>
+              </select>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10%"><b>executor:</b></td>
+            <td>
+              <select id="ability-executor">
+                <option value="" disabled selected>Select an executor</option>
+                    <option value="sh">sh</option>
+                    <option value="psh">psh</option>
+                    <option value="pwsh">pwsh</option>
+                    <option value="cmd">cmd</option>
+              </select>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10%"><b>payload:</b></td>
+            <td>
+              <select id="ability-payload" class="ability-payload">
+                <option value="" disabled selected>Download a payload before running this ability (optional)</option>
+                {% for p in payloads %}
+                    <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}}
+              </select>
+            </td>
+        </tr>
+        <tr>
+            <td style="width:10%"><b>command:</b></td>
+            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
+        </tr>
+        <tr>
+            <td style="width:10%"><b>cleanup:</b></td>
+            <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
+        </tr>
+    </table>
+    <br>
+</li>
+
+<ul id="pack-phase-template" style="display: none;"></ul>
+
+<li id="pack-ability-template" class="pack-ability-template" style="display: none">
+    <div class="column" style="flex:60%">
+        <table frame=void rules=rows style="border-spacing:2px;width:100%">
+            <tr>
+                <td style="width:10%"><b>id:</b></td>
+                <td class="ability-identifier">Unique identifier</td>
+            </tr>
+            <tr>
+                <td style="width:10%"><b>name:</b></td>
+                <td class="ability-name">Name</td>
+            </tr>
+            <tr>
+                <td style="width:10%"><b>description:</b></td>
+                <td class="ability-description">Description</td>
+            </tr>
+            <tr>
+                <td style="width:10%"><b>tactic:</b></td>
+                <td class="ability-tactic">ATT&CK tactic</td>
+            <tr>
+            <tr>
+                <td style="width:10%"><b>technique:</b></td>
+                <td class="ability-tech-id">ATT&CK technique ID</td>
+            </tr>
+            <tr>
+                <td style="width:10%"><b>technique:</b></td>
+                <td class="ability-tech-name">ATT&CK technique name</td>
+            </tr>
+            <tr>
+                <td style="width:10%"><b>platforms:</b></td>
+                <td class="ability-platforms">Platforms</td>
+            </tr>
+        </table>
+    </div>
+</li>
+
+<script>
+    function toggleAdversaryView() {
+        $('#profile-existing-name option:eq(0)').prop('selected', true);
+        $('#profile-goal').val('');
+        $('#profile-description').val('');
+        $('.tempPhase').remove();
+        $('.phase-headers').remove();
+    }
+
+    function addPhase(number) {
+        let template = $("#phase-template").clone();
+        if(number == null) {
+            let existingPhases = $('.tempPhase').length;
+            number = existingPhases + 1;
+        }
+        template.attr("id", "tempPhase" + number);
+        template.addClass("tempPhase");
+        if(number == 1) {
+            template.insertBefore('#dummy');
+        } else {
+            template.insertAfter('#tempPhase' + (number-1));
+        }
+        template.show();
+        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
+        $('#tempPhase' + number).prepend(phaseHeader);
+        phaseHeader.show();
+        return template;
+    }
+
+    function saveAdversary() {
+        let identifier = $('#profile-existing-name').val();
+        if(!identifier){
+            identifier = uuidv4();
+        }
+        let name = $('#profile-goal').val();
+        if(!name){ alert('Please enter a profile name!'); return; }
+        let description = $('#profile-description').val();
+        if(!description){ alert('Please enter a description!'); return; }
+
+        let abilities = [];
+        $('#profile-tests li').each(function() {
+            abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
+        });
+        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
+    }
+
+    function saveAdversaryCallback(data) {
+        stream('Adversary saved!');
+        appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'view-'+data[0].adversary_id);
+        appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
+    }
+
+    function saveAbility() {
+        let name = $('#ability-name').val();
+        if(!name){ alert('Please enter an ability name!'); return; }
+        let description = $('#ability-description').val();
+        if(!description){ alert('Please enter a description!'); return; }
+
+        let data = {};
+        let platforms = {};
+        $('#ttp-tests li').each(function() {
+            let platform = $(this).find('#ability-platform').val();
+
+            if(platforms[platform] === undefined) {
+                platforms[platform] = {};
+            }
+
+            let executor = $(this).find('#ability-executor').val();
+            let command = $(this).find('#ability-command').val();
+            let payload = $(this).find('#ability-payload').val();
+            let cleanup = $(this).find('#ability-cleanup').val();
+
+            if(!name || !description || !command) {
+                return;
+            }
+            let ex = {'command': command};
+            if(payload) {
+                ex['payload'] = payload;
+            }
+            if(cleanup) {
+                ex['cleanup'] = cleanup;
+            }
+            platforms[platform][executor] = ex;
+        });
+        data['index'] = 'ability';
+        data['id'] = $('#ability-identifier').val();
+        data['name'] = name;
+        data['description'] = description;
+        data['tactic'] = $('#ability-tactic-name').val();
+        data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
+        data['platforms'] = platforms;
+        restRequest('PUT', data, saveAbilityCallback);
+    }
+
+    function saveAbilityCallback(data) {
+        stream('Ability saved!');
+        let options = $('#phase-modal').find('#ability-ability-filter');
+        let ability = options.find(":selected").data('ability');
+        if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
+            let a = addPlatforms([data[0]]);
+            appendAbilityToList('phase-modal', a[0]);
+            options.val(a[0].name);
+        }
+    }
+
+    function removeBlock(element){
+        element.parent().parent().parent().remove();
+    }
+
+    function appendToSelect(field, identifier, value, optionId) {
+        let exists = false;
+        $('#'+field+' option').each(function(){
+            if (this.value === identifier) {
+                exists = true;
+                return false;
+            }
+        });
+        if(!exists) {
+            $("#"+field).append($("<option></option>")
+                .attr("id", optionId)
+                .attr("value", identifier)
+                .text(value));
+        }
+    }
+
+    function loadAdversary() {
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
+    }
+
+    function loadAdversaryCallback(data) {
+        $('#profile-goal').val(data[0].name);
+        $('#profile-description').val(data[0].description);
+
+        $('.tempPhase').remove();
+        $('.phase-headers').remove();
+        $.each(data[0].phases, loadAdversaryPhase);
+    }
+
+    function loadAdversaryPhase(phase, abilities) {
+        let template = $("#tempPhase" + phase);
+        if (!template.length) {
+            template = addPhase(phase);
+        }
+
+        abilities = addPlatforms(abilities);
+        abilities.forEach(function(a) {
+            let abilityBox = buildAbility(a, phase);
+            template.find('#profile-tests').append(abilityBox);
+        });
+    }
+
+    function loadPackCallback(data) {
+        let packPhases = data[0]['phases'];
+        let phaseKeys = Object.keys(packPhases);
+        let curPhase = $('#pack-modal').data('phase');
+        let mergePhase = $('#adv-pack-merge').is(':checked');
+        let phaseMod = 0;
+
+        if (!mergePhase) {
+            shiftPhasesDown(curPhase, phaseKeys.length);
+            phaseMod = curPhase;
+        }
+        phaseKeys.forEach(function(key) {
+            loadAdversaryPhase(parseInt(key) + phaseMod, packPhases[key]);
+        });
+    }
+
+    function shiftPhasesDown(after, number) {
+        $('.tempPhase').each(function(idx, phaseDiv) {
+            let i = idx + 1;
+            if (i <= after) {
+                return;
+            }
+            let newi = i + number;
+            $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
+            $(phaseDiv).find('.phase-title').text('Phase ' + newi);
+            $(phaseDiv).find('.ability-box').data('phase', newi);
+            $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
+            $(phaseDiv).find('.pack-add').attr('onclick', 'showPackModal('+newi+')');
+        });
+    }
+
+    function addPlatforms(abilities) {
+        let ab = [];
+        abilities.forEach(function(a) {
+            let exists = false;
+            for(let i in ab){
+                if(ab[i].ability_id === a.ability_id) {
+                    ab[i]['platform'].push(a.platform);
+                    ab[i]['executor'].push(a.executor);
+                    exists = true;
+                    break;
+                }
+            }
+            if(!exists) {
+                a['platform'] = [a.platform];
+                a['executor'] = [a.executor];
+                ab.push(a);
+            }
+        });
+        return ab;
+    }
+
+    function buildAbility(ability, phase){
+        let requirements = buildRequirements(ability.test);
+        let template = $("#ability-template").clone();
+        template.attr('id', ability.ability_id)
+            .data('parsers', ability.parsers)
+            .data('testId', ability.ability_id)
+            .data('phase', phase)
+            .data('requirements', requirements);
+
+        template.find('#name').html(ability.name);
+        template.find('#ability-attack').html(ability.tactic + ' | '+ ability.technique_name);
+
+        if(requirements.length > 0) {
+            template.find('#ability-metadata').append('<td><div id="ability-padlock"><div class="tooltip"><span class="tooltiptext">This ability has requirements</span>&#128274;</div></div></td>');
+        }
+        if(ability.cleanup) {
+            template.find('#ability-metadata').append('<td><div id="ability-broom"><div class="tooltip"><span class="tooltiptext">This ability can clean itself up</span>&#128465;</div></div></td>');
+        }
+        if(ability.parsers.length > 0) {
+           template.find('#ability-metadata').append('<td><div id="ability-parser"><div class="tooltip"><span class="tooltiptext">This ability unlocks other abilities</span>&#128273;</div></div></td>');
+        }
+        if(ability.payload.length > 0) {
+           template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
+        }
+        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
+        template.find('.ability-remove').click(function() {
+            removeAbility(ability.ability_id);
+        });
+
+        ability.platform.forEach(function(p, index) {
+            let icon = null;
+            let exec = ability.executor[index];
+            if (exec === 'psh'){exec = 'powershell';}
+            else if(exec === 'pwsh') {exec = 'powershell core';}
+            else if(exec === 'sh') {exec = 'shell';}
+            else if(exec === 'cmd') {exec = 'commandline';}
+            if(p === 'windows') {
+                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Windows ('+ exec +')</span><img src="/gui/img/windows.png"/></div>');
+            } else if (p === 'linux') {
+                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Linux ('+ exec +')</span><img src="/gui/img/linux.png"/></div>');
+            } else {
+                icon = $('<div class="tooltip"><span class="tooltiptext">Works on MacOS ('+ exec +')</span><img src="/gui/img/macos.png"/></div>');
+            }
+            icon.appendTo(template.find('#icon-row'));
+        });
+        template.show();
+        return template;
+    }
+
+    function buildRequirements(encodedTest){
+        let matchedRequirements = atob(encodedTest).match(/#{([^}]+)}/g);
+        if(matchedRequirements) {
+            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{server}' });
+            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{group}' });
+            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{location}' });
+            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{paw}' });
+            matchedRequirements = [...new Set(matchedRequirements)];
+            return matchedRequirements.map(function(val){
+               return val.replace(/[#{}]/g, "");
+            });
+        }
+        return [];
+    }
+
+    function removeAbility(ability_id){
+        $('#'+ability_id).remove();
+    }
+
+    function populateTechniques(parentId, exploits){
+        exploits = addPlatforms(exploits);
+        let parent = $('#'+parentId);
+        $(parent).find('#ability-technique-filter').empty().append("<option disabled='disabled' selected>Choose a technique</option>");
+
+        let tactic = $(parent).find('#ability-tactic-filter').find(":selected").data('tactic');
+        let found = [];
+        let showing = [];
+        exploits.forEach(function(ability) {
+            if(ability.tactic.includes(tactic) && !found.includes(ability.technique_id)) {
+                found.push(ability.technique_id);
+                appendTechniqueToList(parentId, tactic, ability);
+                showing += 1;
+            }
+        });
+    }
+
+    function populateAbilities(parentId, exploits){
+        exploits = addPlatforms(exploits);
+        let parent = $('#'+parentId);
+        $(parent).find('#ability-ability-filter').empty();
+
+        let showing = [];
+        let attack_id = $(parent).find('#ability-technique-filter').find(":selected").data('technique');
+        exploits.forEach(function(ability) {
+            if(attack_id === ability.technique_id) {
+                appendAbilityToList(parentId, ability);
+                showing += 1;
+            }
+        });
+        $(parent).find('#ability-ability-filter').prepend("<option disabled='disabled' selected>"+showing.length+" abilities</option>");
+    }
+
+    function appendTechniqueToList(parentId, tactic, value) {
+        $('#'+parentId).find('#ability-technique-filter').append($("<option></option>")
+            .attr("value", value['technique_id'])
+            .data("technique", value['technique_id'])
+            .text(value['technique_id'] + ' | '+ value['technique_name']));
+    }
+
+    function appendAbilityToList(parentId, value) {
+        $('#'+parentId).find('#ability-ability-filter').append($("<option></option>")
+            .attr("value", value['name'])
+            .data("ability", value)
+            .text(value['name']));
+    }
+
+    function showAbility(parentId, exploits) {
+        $('#ability-name').val('');
+        $('#ability-description').val('');
+        $('#ttp-tests').empty();
+
+        let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
+        $('#ability-identifier').val(aid.ability_id);
+        $('#ability-name').val(aid.name);
+        $('#ability-description').val(aid.description);
+        $('#ability-tactic-name').val(aid.tactic);
+        $('#ability-tech-id').val(aid.technique_id);
+        $('#ability-tech-name').val(aid.technique_name);
+
+        exploits.forEach(function(ability) {
+            if(aid.ability_id === ability.ability_id) {
+                let template = $("#ttp-template").clone();
+                template.find('#ability-platform').val(ability.platform);
+                template.find('#ability-executor').val(ability.executor);
+                template.find('#ability-command').val(atob(ability.test));
+                template.find('#ability-cleanup').val(atob(ability.cleanup));
+                template.find('#ability-payload').val(ability.payload);
+                template.show();
+                $('#ttp-tests').append(template);
+            }
+        });
+    }
+
+    function showPack() {
+        $('#pack-phases').empty();
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+    }
+
+    function showPackCallback(data) {
+        Object.keys(data[0].phases).forEach(function(phaseID) {
+            let phaseTemplate = $("#pack-phase-template").clone();
+            phaseTemplate.attr('id', 'pack-phase' + phaseID);
+
+            let abilities = addPlatforms(data[0].phases[phaseID]);
+            abilities.forEach(function(ability) {
+                let template = $("#pack-ability-template").clone();
+                template.find('.ability-identifier').text(ability.ability_id);
+                template.find('.ability-name').text(ability.name);
+                template.find('.ability-description').text(ability.description);
+                template.find('.ability-tactic').text(ability.tactic);
+                template.find('.ability-tech-id').text(ability.technique_id);
+                template.find('.ability-tech-name').text(ability.technique_name);
+                template.find('.ability-platforms').text(ability.platform.join(', '));
+                template.show();
+                phaseTemplate.append(template);
+            });
+
+            phaseTemplate.show();
+            $('#pack-phases').append("<h4>Phase " + phaseID + "</h4>");
+            $('#pack-phases').append(phaseTemplate);
+        });
+    }
+
+    function addExecutorBlock(){
+        let template = $("#ttp-template").clone();
+        template.show();
+        $('#ttp-tests').prepend(template);
+    }
+
+    function showPhaseModal(phase) {
+        $('#phase-modal').data("phase", phase);
+        $('#ability-identifier').text(uuidv4());
+        document.getElementById("phase-modal").style.display="block";
+    }
+
+    function showPackModal(phase) {
+        $('#pack-modal').data("phase", phase);
+        document.getElementById("pack-modal").style.display="block";
+    }
+
+    function freshId(){
+        $('#ability-identifier').val(uuidv4());
+    }
+
+    function uploadPayload() {
+        let file = document.getElementById('uploadPayloadFile').files[0];
+        let fd = new FormData();
+        fd.append('file', file);
+        $.ajax({
+             type: 'POST',
+             url: '/file/upload',
+             beforeSend: function(xhr){xhr.setRequestHeader('Directory', 'data/payloads/');},
+             data: fd,
+             processData: false,
+             contentType: false
+        }).done(function (){
+            let exists = $("#ability-payload option").filter(function (i, o) { return o.value === file.name; }).length > 0;
+            if(!exists) {
+                $('.ability-payload').each(function(i, obj) {
+                    $(this).append(new Option(file.name, file.name));
+                });
+            }
+        })
+    }
+    $('#uploadPayloadFile').on('change', function (event){
+        if(event.currentTarget) {
+            let filename = event.currentTarget.files[0].name;
+            if(filename){
+                uploadPayload();
+            }
+        }
+    });
+
+    function addAbilityToPhase() {
+        let parent = $('#phase-modal');
+        let phase = $(parent).data('phase');
+        let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
+        let abilityBox = buildAbility(ability, phase);
+        $('#tempPhase' + phase).find('#profile-tests').append(abilityBox);
+        document.getElementById('phase-modal').style.display='none';
+    }
+
+    function addPackToPhase() {
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+        document.getElementById('pack-modal').style.display='none';
+    }
+
+    function openDuk2(){
+        document.getElementById("duk-modal").style.display="block";
+        $('#duk-text').text('Did you know... you can link abilities together by matching the output property from an ability\'s ' +
+            'parser to variables inside another ability\'s command. Variables can be identified by looking for ' +
+            '#{variable_name_goes_here} syntax.');
+    }
+</script>

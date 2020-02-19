@@ -1,9 +1,10 @@
+import logging
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
 from app.objects.c_ability import Ability
-from app.objects.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_visibility import Visibility
 from app.utility.base_object import BaseObject
 
@@ -70,14 +71,14 @@ class Link(BaseObject):
 
     async def parse(self, operation):
         try:
+            if self.status != 0:
+                return
             for parser in self.ability.parsers:
-                if self.status != 0:
-                    continue
-                relationships = await self._parse_link_result(self.output, parser)
+                relationships = await self._parse_link_result(self.output, parser, operation.source)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
-            print('parse exception: %s' % e)
+            logging.getLogger('link').debug('parse exception: %s' % e)
 
     def apply_id(self):
         self.id = self.generate_number()
@@ -87,9 +88,9 @@ class Link(BaseObject):
 
     """ PRIVATE """
 
-    async def _parse_link_result(self, result, parser):
+    async def _parse_link_result(self, result, parser, source):
         blob = b64decode(result).decode('utf-8')
-        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs)
+        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs, source=source)
         p_inst = await self._load_module('Parser', parser_info)
         try:
             return p_inst.parse(blob=blob)

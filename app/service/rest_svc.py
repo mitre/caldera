@@ -11,7 +11,7 @@ import yaml
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
-from app.objects.c_link import Link
+from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.utility.base_service import BaseService

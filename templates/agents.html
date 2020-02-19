@@ -1,0 +1,255 @@
+<div id="agents" class="section-profile">
+  <div class="row">
+    <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
+    <div class="bottomright duk-icon"><img onclick="toggleSidebar('agents-sidebar')" src="/gui/img/expand.png"></div>
+    <div id="agents-sidebar" class="column section-border" style="flex:25%;">
+      <img src="/gui/img/group.png">
+      <h4 style="margin-bottom:-5px">Agents</h4>
+      <p class="section-description">
+          Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
+          least 1 agent in order to run an operation.
+      </p>
+      <hr>
+      <br>
+      <div>
+          <h4>Global settings for new agents</h4>
+          <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
+          <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
+          <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
+      </div>
+      <br>
+      <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
+    </div>
+    <div class="column" style="flex:75%">
+        <span style="text-align:left">You have <span id="agent-cnt">{{ agents|length}}</span></span> agents</h4>
+        <hr>
+        <table id="agent-table" class="obfuscation-table" border=1 frame=void rules=rows style="border-spacing:15px;">
+            <thead>
+                <tr>
+                    <td><b>paw</b></td>
+                    <td><b>host</b></td>
+                    <td><b>contact</b></td>
+                    <td><b>pid</b></td>
+                    <td><b>privilege</b></td>
+                    <td></td>
+                </tr>
+            </thead>
+            {% for a in agents %}
+                <tr id="{{ a.paw }}">
+                    <td><p>{{ a.paw }}</p></td>
+                    <td><p>{{ a.host }}</p></td>
+                    <td><p>{{ a.contact }}</p></td>
+                    <td><button id="{{a.paw}}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.pid }}</button></td>
+                    <td><p>{{ a.privilege }}</p></td>
+                    <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="agent-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <h3 id="modal-paw"></h3>
+                <p style="font-size: 11px">* Property can be updated</p>
+                <hr>
+                <table class="obfuscation-table" border=1 frame=void rules=rows>
+                    <tr>
+                        <td>Contact</td>
+                        <td><p id="modal-contact"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Host</td>
+                        <td><p id="modal-host"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Privilege</td>
+                        <td><p id="modal-privilege"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Last seen</td>
+                        <td><p id="modal-last_seen"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Group *</td>
+                        <td><input id="modal-group" style="text-align: left"/></td>
+                    </tr>
+                    <tr>
+                        <td>Sleep *</td>
+                        <td><input id="modal-sleep" style="text-align: left"/></td>
+                    </tr>
+                    <tr>
+                        <td>Watchdog *</td>
+                        <td><input id="modal-watchdog" style="text-align: left"/></td>
+                    </tr>
+                    <tr>
+                        <td>Architecture</td>
+                        <td><p id="modal-architecture"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Platform</td>
+                        <td><p id="modal-platform"></p></td>
+                    </tr>
+                    <tr>
+                        <td>PID</td>
+                        <td><p id="modal-pid"></p></td>
+                    </tr>
+                    <tr>
+                        <td>PPID</td>
+                        <td><p id="modal-ppid"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Executable name</td>
+                        <td><p id="modal-exe_name"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Location</td>
+                        <td><p id="modal-location"></p></td>
+                    </tr>
+                    <tr>
+                        <td>Executors</td>
+                        <td><p id="modal-executors"></p></td>
+                    </tr>
+                </table>
+                <br>
+                <button type="button" class="button-warn" onclick="killAgent()">Kill Agent</button>
+                <button type="button" class="button-row" onclick="updateAgent()">Save</button>
+            </div>
+        <div class="imgcontainer">
+            <span onclick="document.getElementById('agent-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+        </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    let refresher = setInterval(refresh, 10000);
+    $('.section-profile').bind('destroyed', function() {
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function updateTbl(data){
+            $('#agent-cnt').text(data.length);
+            data.forEach(function(a) {
+                let found = false;
+                $("#agent-table tr").each(function () {
+                    let paw = $(this).attr('id');
+                    if(a.paw === paw) {
+                        //update existing row
+                        if(!a.trusted) {
+                            $('#'+paw+'-pid').addClass('maroon');
+                        }
+                        found = true;
+                    }
+                });
+                if(!found) {
+                    stream('new agent beacon: '+a.paw);
+                    $('#agent-table tr:last').after(
+                        '<tr id="'+a.paw+'">' +
+                            '<td><p>'+a.paw+'</p></td>' +
+                            '<td><p>'+a.host+'</p></td>' +
+                            '<td><p>'+a.contact+'</p></td>' +
+                            '<td><button id="' + a.paw + '-pid" class="button-row" onclick="showAgentInfo(\'' + a.paw + '\')">' + a.pid + '</button></td>' +
+                            '<td><p>'+a.privilege+'</p></td>' +
+                            '<td><p onclick="deleteAgent(\'' + a.paw + '\')">&#x274C;</p></td>' +
+                        '</tr>'
+                    )
+                }
+            });
+        }
+        restRequest('POST', {'index':'agents'}, updateTbl)
+    }
+
+    function deleteAgent(paw){
+        function deleteAgentCallback(data){
+            $('#'+paw).remove();
+        }
+        restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
+    }
+
+    function updateAgent(){
+        function closeAgentModal(){
+            document.getElementById('agent-modal').style.display='none';
+        }
+        let sleepArr = parseSleep($('#modal-sleep').val().replace(/\s/g, ""));
+        let data = {
+            'index': 'agents',
+            'paw': $('#modal-paw').text(),
+            'group': $('#modal-group').val(),
+            'watchdog': parseInt($('#modal-watchdog').val())
+        };
+        if (sleepArr.length !== 0) {
+            data["sleep_min"] = parseInt(sleepArr[0]);
+            data["sleep_max"] = parseInt(sleepArr[1]);
+        }
+        restRequest('PUT', data, closeAgentModal);
+    }
+
+    function saveGlobalAgent(){
+        let globalMinsleep = $('#globalSleepMin').val();
+        let globalMaxsleep = $('#globalSleepMax').val();
+        let globalWatchdog = $('#globalWatchdog').val();
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+        restRequest('PUT', d, doNothing);
+    }
+    function killAgent(){
+        /**
+        Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog minutes.
+        **/
+        let data = {
+            'index': 'agents',
+            'paw': $('#modal-paw').text(),
+            'watchdog': 1,
+            'sleep_min': 2*60,
+            'sleep_max': 2*60
+        };
+        if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
+            restRequest('PUT', data, (data) => {
+                document.getElementById('agent-modal').style.display='none';
+                stream(`Agent ${data.paw} will self terminate.`);
+            });
+        }
+    }
+
+    function parseSleep(sleep){
+        let patt = new RegExp("\\d+\\/\\d+");
+        if (patt.test(sleep)){
+            let result = sleep.split("/");
+            if (parseInt(result[0]) <= parseInt(result[1])){
+                return result;
+            }
+            return result.reverse();
+        }
+        return [];
+    }
+
+    function showAgentInfo(paw){
+        function agentInfoCallback(data){
+            let parent = $('#agent-modal');
+            let agent = data[0];
+            parent.find('#modal-paw').html(agent['paw']);
+            parent.find('#modal-contact').html(agent['contact']);
+            parent.find('#modal-host').html(agent['host']);
+            parent.find('#modal-privilege').html(agent['privilege']);
+            parent.find('#modal-last_seen').html(agent['last_seen']);
+            parent.find('#modal-exe_name').html(agent['exe_name']);
+            parent.find('#modal-group').val(agent['group']);
+            parent.find('#modal-sleep').val(agent['sleep_min']+'/'+agent['sleep_max']);
+            parent.find('#modal-watchdog').val(agent['watchdog']);
+            parent.find('#modal-architecture').html(agent['architecture']);
+            parent.find('#modal-platform').html(agent['platform']);
+            parent.find('#modal-location').html(agent['location']);
+            parent.find('#modal-pid').html(agent['pid']);
+            parent.find('#modal-ppid').html(agent['ppid']);
+            parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
+            parent.find('#modal-watchdog').html(agent['watchdog']);
+            parent.show();
+        }
+        restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
+    }
+</script>

@@ -1,0 +1,24 @@
+<div id="obfuscators" class="section-profile">
+  <div class="advanced row">
+    <div class="topleft duk-icon"><img onclick="removeSection('obfuscators')" src="/gui/img/x.png"></div>
+    <div class="column planner-header" style="flex:100%;text-align: left">
+        <h4>Obfuscators are designed for evasion</h4>
+        <p style="width:33%">
+            When running an operation, you can select an obfuscator. By default, plain-text is
+            selected. During the operation, before the agent collects an instruction, the server will wrap it
+            with the obfuscation technique chosen - including instructions for how to unpack it
+            before execution.
+        </p>
+        <hr><br>
+        <table class="obfuscation-table" border=1 frame=void rules=rows>
+            {% for o in obfuscators %}
+                <tr>
+                    <td><img src="/gui/img/obfuscation.png"/></td>
+                    <td><h4>{{ o.name }}</h4></td>
+                    <td>{{ o.description }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+  </div>
+</div>
