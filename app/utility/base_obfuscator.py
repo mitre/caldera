@@ -13,6 +13,6 @@ class BaseObfuscator(BaseWorld):
                 o = self.__getattribute__(link.ability.executor)
                 return o(link, **kwargs)
         except Exception:
-            logging.error("Failed to run BaseObfuscator, retuning default decoded bytes")
+            logging.error('Failed to run BaseObfuscator, returning default decoded bytes')
 
         return self.decode_bytes(link.command)
