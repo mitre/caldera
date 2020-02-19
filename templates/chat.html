@@ -75,7 +75,8 @@
                 break;
             case 'init': //{'type':'init', 'user': user, 'data':{'ip': ip_address}}
                 //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
-                connectToUser(m.user, m.data.ip, confPort)
+                connectToUser(m.user, m.data.ip, confPort);
+                restRequest('PUT', {'index':'chat_users', [m.user]: m.ip}, doNothing);
                 break;
             case 'sync':
                 //TODO: handle chat history syncing or syncing of other users IPs and data
