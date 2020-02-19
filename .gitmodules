@@ -28,3 +28,6 @@
 [submodule "plugins/response"]
 	path = plugins/response
 	url = https://github.com/mitre/response.git
+[submodule "plugins/gameboard"]
+	path = plugins/gameboard
+	url = https://github.com/mitre/gameboard.git
