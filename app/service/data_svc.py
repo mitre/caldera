@@ -223,7 +223,7 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access)
+                                                               access=plugin.access, repeatable=ab.get('repeatable', False))
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -288,7 +288,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60, access=None):
+                              privilege=None, timeout=60, access=None, repeatable=False):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -303,7 +303,7 @@ class DataService(BaseService):
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
                           cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout)
+                          privilege=privilege, timeout=timeout, repeatable=repeatable)
         ability.access = access
         return await self.store(ability)
 
