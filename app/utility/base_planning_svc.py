@@ -58,12 +58,12 @@ class BasePlanningService(BaseService):
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
-                        copy_link.apply_id()
+                        copy_link.apply_id(agent.host)
                         links.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
-                link.apply_id()
+                link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
         return links
 

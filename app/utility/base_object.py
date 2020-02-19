@@ -15,7 +15,6 @@ class BaseObject(BaseWorld):
                 for val in v:
                     if self.__getattribute__(k) == val:
                         criteria_matches.append(True)
-                        continue
             else:
                 if self.__getattribute__(k) == v:
                     criteria_matches.append(True)
