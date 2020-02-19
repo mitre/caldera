@@ -76,8 +76,9 @@
                 <hr>
                 <table class="obfuscation-table" border=1 frame=void rules=rows>
                     <tr>
-                        <td>Contact</td>
-                        <td><p id="modal-contact"></p></td>
+                        <!--TODO:  Dynamically list available contact options-->
+                        <td>Contact *</td>
+                        <td><select id="modal-contact"></select></td>
                     </tr>
                     <tr>
                         <td>Host</td>
@@ -254,7 +255,8 @@
             'index': 'agents',
             'paw': $('#modal-paw').text(),
             'group': $('#modal-group').val(),
-            'watchdog': parseInt($('#modal-watchdog').val())
+            'watchdog': parseInt($('#modal-watchdog').val()),
+            'contact': $('#modal-contact').val()
         };
         if (sleepArr.length !== 0) {
             data["sleep_min"] = parseInt(sleepArr[0]);
@@ -308,12 +310,22 @@
         return [];
     }
 
+    function createContactDropdown(data){
+        let str = `<option selected=\"selected\" value=${data['contact']}>${data['contact']}</option>\n`;
+        data['c2'].forEach(function(contact){
+            if(contact === data['contact']) return;
+            str += `<option>${contact}</option>\n`;
+        });
+        return str;
+    }
+
     function showAgentInfo(paw){
         function agentInfoCallback(data){
             let parent = $('#agent-modal');
             let agent = data[0];
+            let dropdown = createContactDropdown(agent);
             parent.find('#modal-paw').html(agent['paw']);
-            parent.find('#modal-contact').html(agent['contact']);
+            parent.find('#modal-contact').html(dropdown);
             parent.find('#modal-host').html(agent['host']);
             parent.find('#modal-privilege').html(agent['privilege']);
             parent.find('#modal-last_seen').html(agent['last_seen']);

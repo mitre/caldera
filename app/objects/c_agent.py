@@ -6,7 +6,6 @@ from app.utility.base_object import BaseObject
 
 
 class Agent(BaseObject):
-
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
                     exe_name='#{exe_name}')
 
@@ -21,7 +20,7 @@ class Agent(BaseObject):
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog, contact=self.contact)
+                    watchdog=self.watchdog, contact=self.contact, c2=list(self.c2))
 
     @property
     def display_name(self):
@@ -29,7 +28,8 @@ class Agent(BaseObject):
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', c2=['http'],
+                 paw=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -53,6 +53,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
+        self.c2 = c2
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
 
     def store(self, ram):
@@ -95,6 +96,7 @@ class Agent(BaseObject):
         self.update('architecture', kwargs.get('architecture'))
         self.update('platform', kwargs.get('platform'))
         self.update('executors', kwargs.get('executors'))
+        self.update('contact', kwargs.get('contact'))
 
     async def gui_modification(self, **kwargs):
         self.update('group', kwargs.get('group'))
@@ -102,6 +104,7 @@ class Agent(BaseObject):
         self.update('sleep_min', int(kwargs.get('sleep_min')))
         self.update('sleep_max', int(kwargs.get('sleep_max')))
         self.update('watchdog', int(kwargs.get('watchdog')))
+        self.update('contact', kwargs.get('contact'))
 
     async def kill(self):
         self.update('watchdog', 1)
