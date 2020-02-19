@@ -17,7 +17,6 @@ select {
    border-radius: 10px;
 }
 .modal button {
-    background-color: green;
     color: white;
     padding: 14px 20px;
     margin: 8px 0;
@@ -57,15 +56,15 @@ span.psw {
     left: 0;
     top: 0;
     width: 100%; /* Full width */
-    padding-top: 70px;
+    padding-top: 40px;
     overflow-y: scroll;
     height: 100%;
     -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
 }
 .modal-content {
-    margin: 5% auto 15% auto;
-    width: 60%;
+    margin: 5% auto 5% auto;
+    width: 70%;
 }
 .modal p {
     color: #333;

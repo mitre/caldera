@@ -43,9 +43,8 @@ class BasePlanningService(BaseService):
         :param operation:
         :return: updated list of links
         """
-        group = agent.group
         for link in links:
-            decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
+            decoded_test = agent.replace(link.command)
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)
@@ -59,12 +58,12 @@ class BasePlanningService(BaseService):
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
-                        copy_link.apply_id()
+                        copy_link.apply_id(agent.host)
                         links.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
-                link.apply_id()
+                link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
         return links
 
@@ -80,7 +79,7 @@ class BasePlanningService(BaseService):
         """
         completed_links = [l.command for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
-        return [l for l in links if l.command not in completed_links]
+        return [l for l in links if l.ability.repeatable or l.command not in completed_links]
 
     @staticmethod
     async def remove_links_missing_facts(links):
@@ -95,7 +94,7 @@ class BasePlanningService(BaseService):
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if await self._do_enforcements(l, operation)]
+        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
         return links
 
     @staticmethod
@@ -122,7 +121,7 @@ class BasePlanningService(BaseService):
             score += (score + var.score)
             used.append(var)
             re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.value).strip(), copy_test)
+            copy_test = re.sub(re_variable, str(var.value).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
     @staticmethod

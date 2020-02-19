@@ -14,11 +14,15 @@ from app.utility.base_service import BaseService
 
 
 def check_authorization(func):
+    """
+    Authorization Decorator
+    This requires that the calling class have `self.auth_svc` set to the authentication service.
+    """
     async def process(func, *args, **params):
         return await func(*args, **params)
 
     async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions(args[1])
+        await args[0].auth_svc.check_permissions('app', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
@@ -28,21 +32,22 @@ class AuthService(BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
+        self.bypass = 'localhost:'
 
     async def apply(self, app, users):
         """
         Set up security on server boot
-
         :param app:
         :param users:
         :return: None
         """
-        for k, v in users.items():
-            self.user_map[k] = self.User(k, v, ('admin', 'user'),)
+        for group, u in users.items():
+            self.log.debug('Created authentication group: %s' % group)
+            for k, v in u.items():
+                self.user_map[k] = self.User(k, v, (group, 'app'), )
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
@@ -55,7 +60,6 @@ class AuthService(BaseService):
     async def logout_user(request):
         """
         Log the user out
-
         :param request:
         :return: None
         """
@@ -65,34 +69,40 @@ class AuthService(BaseService):
     async def login_user(self, request):
         """
         Log a user in and save the session
-
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
         data = await request.post()
+        verified = await self._check_credentials(request.app.user_map, data.get('username'), data.get('password'))
         response = web.HTTPFound('/')
-        verified = await self._check_credentials(
-            request.app.user_map, data.get('username'), data.get('password'))
         if verified:
             await remember(request, response, data.get('username'))
             return response
         raise web.HTTPFound('/login')
 
-    async def check_permissions(self, request):
+    async def check_permissions(self, group, request):
         """
         Check if a request is allowed based on the user permissions
-
         :param request:
         :return: None
         """
         try:
-            if request.headers.get('API_KEY') == self.api_key:
+            if request.headers.get('API_KEY') == self.get_config('api_key'):
                 return True
-            elif 'localhost:' in request.host:
+            elif self.bypass in request.host:
                 return True
-            await check_permission(request, 'admin')
+            await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
+
+    async def get_permissions(self, request):
+        identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
+        identity = await identity_policy.identify(request)
+        if identity in self.user_map:
+            return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
+        elif self.bypass in request.host:
+            return self.Access.RED, self.Access.APP
+        return ()
 
     """ PRIVATE """
 

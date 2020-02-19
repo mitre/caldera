@@ -52,7 +52,7 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self._check_and_generate_cleanup_links(agent, operation))
-        return reversed(await self.trim_links(operation, links, agent))
+        return reversed(links)
 
     async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
         """
@@ -124,8 +124,12 @@ class PlanningService(BasePlanningService):
             ability = (await self.get_service('data_svc').locate('abilities',
                                                                  match=dict(unique=link.ability.unique)))[0]
             if ability.cleanup and link.status >= 0:
-                links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
-                                  ability=ability, score=0, jitter=0, status=link_status))
+                decoded_cmd = agent.replace(ability.cleanup)
+                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
+                lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                           ability=ability, score=0, jitter=0, status=link_status)
+                lnk.apply_id(agent.host)
+                links.append(lnk)
         return links
 
     @staticmethod

@@ -1,18 +1,14 @@
 .home-box {
     border-radius: 25px;
-    padding: 10px;
-    vertical-align: middle;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
 }
 .big-head {
     margin-bottom: -20px;
-    font-size:185px;
+    font-size:165px;
     opacity:0.5;
 }
 .small-head {
     color:white;
-    font-size: 30px;
+    font-size: 22px;
     opacity:0.5;
 }
 .row-toolbar{

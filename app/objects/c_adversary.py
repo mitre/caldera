@@ -1,3 +1,5 @@
+import os
+
 from app.utility.base_object import BaseObject
 
 
@@ -37,3 +39,9 @@ class Adversary(BaseObject):
                 if ability.unique == a.unique:
                     return True
         return False
+
+    async def which_plugin(self):
+        for plugin in os.listdir('plugins'):
+            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.adversary_id):
+                return plugin
+        return None

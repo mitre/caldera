@@ -8,12 +8,13 @@ from collections import defaultdict
 from datetime import time
 
 import yaml
+from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
+from app.objects.secondclass.c_fact import Fact
 from app.utility.base_service import BaseService
 
 
@@ -43,9 +44,8 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('adversaries', dict(adversary_id=i))
+        await self._services.get('data_svc').reload_data()
+        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
         """
@@ -75,9 +75,8 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('abilities', dict(ability_id=data.get('id')))
+        await self._services.get('data_svc').reload_data()
+        return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -86,9 +85,8 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        for d in self.get_service('data_svc').data_dirs:
-            await self.get_service('data_svc').load_data(d)
-        return await self._poll_for_data('sources', dict(id=data.get('id')))
+        await self._services.get('data_svc').reload_data()
+        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
@@ -124,8 +122,13 @@ class RestService(BaseService):
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
         return op.report(output=data.get('agent_output'))
 
+    async def download_contact_report(self, contact):
+        return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
+
     async def update_agent_data(self, data):
-        await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
+        if 'paw' not in data:
+            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
+
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
             await agent.gui_modification(**data)
             return agent.display
@@ -137,11 +140,11 @@ class RestService(BaseService):
             link.command = data.get('command')
         return ''
 
-    async def create_operation(self, data):
-        operation = await self._build_operation_object(data)
+    async def create_operation(self, access, data):
+        operation = await self._build_operation_object(access, data)
         operation.set_start_details()
         await self.get_service('data_svc').store(operation)
-        self.loop.create_task(self.get_service('app_svc').run_operation(operation))
+        self.loop.create_task(operation.run(self.get_services()))
         return [operation.display]
 
     async def create_schedule(self, data):
@@ -160,23 +163,23 @@ class RestService(BaseService):
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
+    async def find_abilities(self, paw):
+        data_svc = self.get_service('data_svc')
+        agent = (await data_svc.locate('agents', match=dict(paw=paw)))[0]
+        return await agent.capabilities(await self.get_service('data_svc').locate('abilities'))
+
     async def get_potential_links(self, op_id, paw=None):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
         if operation.finish:
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        return await self._build_potential_links(operation, agents, potential_abilities)
+        links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in links])
 
-    async def apply_potential_link(self, l):
-        link = Link.from_json(l)
+    async def apply_potential_link(self, link):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
-        await operation.apply(link)
-
-    async def change_operation_state(self, op_id, state):
-        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
-        operation[0].state = state
-        self.log.debug('changing operation=%s state to %s' % (op_id, state))
+        return await operation.apply(link)
 
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
@@ -196,29 +199,52 @@ class RestService(BaseService):
             return await self.get_service('data_svc').locate('agents', match=dict(group=group))
         return await self.get_service('data_svc').locate('agents')
 
+    async def update_config(self, data):
+        if data.get('prop') == 'plugin':
+            enabled_plugins = self.get_config('plugins')
+            enabled_plugins.append(data.get('value'))
+        else:
+            self.set_config(data.get('prop'), data.get('value'))
+        self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
+
+    async def update_operation(self, op_id, state=None, autonomous=None):
+        async def validate(op):
+            try:
+                if not len(op):
+                    raise web.HTTPNotFound
+                elif await op[0].is_finished():
+                    raise web.HTTPBadRequest(body='This operation has already finished.')
+                elif state not in op[0].states.values():
+                    raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
+                elif state == op[0].states['FINISHED']:
+                    await op[0].close()
+            except Exception as e:
+                self.log.error(repr(e))
+        operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
+        if state:
+            await validate(operation)
+            operation[0].state = state
+            self.log.debug('Changing operation=%s state to %s' % (op_id, state))
+        if autonomous:
+            operation[0].autonomous = 0 if operation[0].autonomous else 1
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+
     """ PRIVATE """
 
-    async def _build_operation_object(self, data):
+    async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group')
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
+        allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         autonomous=int(data.pop('autonomous')),
+                         autonomous=int(data.pop('autonomous')), access=allowed,
                          phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
                          auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
-
-    async def _poll_for_data(self, collection, search):
-        coll, checks = 0, 0
-        while not coll or checks == 5:
-            coll = await self.get_service('data_svc').locate(collection, match=search)
-            await asyncio.sleep(1)
-            checks += 1
-        return [c.display for c in coll]
 
     @staticmethod
     async def _read_from_yaml(file_path):
