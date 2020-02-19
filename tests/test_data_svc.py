@@ -6,7 +6,6 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
-from app.objects.secondclass.c_executor import Executor
 from app.service.data_svc import DataService
 from tests.test_base import TestBase
 
