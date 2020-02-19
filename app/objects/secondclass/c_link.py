@@ -29,7 +29,7 @@ class Link(BaseObject):
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
-                               visibility=self.visibility.display))
+                               visibility=self.visibility.display, host=self.host))
 
     @property
     def pin(self):
@@ -68,6 +68,7 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = None
+        self.host = None
 
     async def parse(self, operation):
         try:
@@ -80,8 +81,9 @@ class Link(BaseObject):
         except Exception as e:
             logging.getLogger('link').debug('parse exception: %s' % e)
 
-    def apply_id(self):
+    def apply_id(self, host):
         self.id = self.generate_number()
+        self.host = host
 
     def can_ignore(self):
         return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]

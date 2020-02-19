@@ -40,7 +40,7 @@ class Ability(BaseObject):
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout))
+                               timeout=self.timeout, access=self.access.value))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
