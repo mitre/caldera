@@ -121,3 +121,8 @@ CALDERA will **only** be available at https://[YOUR_IP]:443 when using this plug
 ## Atomic
 
 The Atomic plugin imports all Red Canary Atomic tests from their open-source GitHub repository.
+
+## GameBoard
+
+The GameBoard plugin allows you to monitor both red-and-blue team operations. The game tracks points for both sides
+and determines which one is "winning". 
