@@ -14,6 +14,10 @@ from app.utility.base_service import BaseService
 
 
 def check_authorization(func):
+    """
+    Authorization Decorator
+    This requires that the calling class have `self.auth_svc` set to the authentication service.
+    """
     async def process(func, *args, **params):
         return await func(*args, **params)
 
