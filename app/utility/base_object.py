@@ -4,7 +4,7 @@ from app.utility.base_world import BaseWorld
 class BaseObject(BaseWorld):
 
     def __init__(self):
-        self._access = None
+        self._access = self.Access.APP
 
     def match(self, criteria):
         if not criteria:
