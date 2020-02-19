@@ -15,7 +15,7 @@ class Link(BaseObject):
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
         return cls(id=json['id'], pin=json['pin'], operation=json['operation'], command=json['command'],
-                   paw=json['paw'], ability=ability)
+                   paw=json['paw'], host=json['host'], ability=ability)
 
     @property
     def unique(self):
@@ -47,7 +47,7 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0, host=None):
         super().__init__()
         self.id = id
         self.command = command
@@ -68,7 +68,7 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = None
-        self.host = None
+        self.host = host
 
     async def parse(self, operation):
         try:
