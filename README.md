@@ -1,4 +1,3 @@
-[![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
 [![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
@@ -32,8 +31,7 @@ These requirements are for the computer running the core framework:
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. 
-This will pull in all available plugins.
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. The latest release is 2.6.0. This will pull in all available plugins.
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
