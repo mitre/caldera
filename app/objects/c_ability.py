@@ -29,7 +29,7 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'])
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'], access=json['access'])
 
     @property
     def display(self):
@@ -44,7 +44,7 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -62,6 +62,8 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
+        if access:
+            self.access = self.Access(access)
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
