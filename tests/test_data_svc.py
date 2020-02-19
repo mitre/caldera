@@ -4,7 +4,6 @@ import unittest
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
-from app.objects.c_executor import Executor
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
 from app.service.data_svc import DataService
@@ -50,12 +49,12 @@ class TestData(TestBase):
     def test_ability(self):
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
-                    test='whoami', description='find active user', cleanup='', executor='sh',
+                    test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
                     platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
         ))
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
-                    test='whoami', description='find active user', cleanup='', executor='sh',
+                    test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
                     platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
         ))
         abilities = self.run_async(self.data_svc.locate('abilities'))
@@ -74,10 +73,6 @@ class TestData(TestBase):
         self.assertEqual(1, len(operations))
         for x in operations:
             json.dumps(x.display)
-
-    def test_executor(self):
-        x = Executor(name='sh', preferred=1)
-        self.assertRaises(Exception, self.run_async(self.data_svc.store(x)))
 
     def test_remove(self):
         self.run_async(self.data_svc.store(Agent(paw='new$test')))
