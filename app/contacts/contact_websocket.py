@@ -16,7 +16,7 @@ class WebSocket(BaseWorld):
     async def start(self):
         loop = asyncio.get_event_loop()
         web_socket = self.get_config('app.contact.websocket')
-        loop.create_task(await websockets.serve(self.handler.handle, '0.0.0.0', web_socket.split(':')[1]))
+        loop.create_task(await websockets.serve(self.handler.handle, '127.0.0.1', web_socket.split(':')[1]))
 
 
 class Handler:

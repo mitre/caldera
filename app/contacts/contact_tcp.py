@@ -20,7 +20,7 @@ class Tcp(BaseWorld):
     async def start(self):
         loop = asyncio.get_event_loop()
         tcp = self.get_config('app.contact.tcp')
-        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', tcp.split(':')[1], loop=loop))
+        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '127.0.0.1', tcp.split(':')[1], loop=loop))
         loop.create_task(self.operation_loop())
 
     async def operation_loop(self):
@@ -73,11 +73,11 @@ class TcpSessionHandler(BaseWorld):
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
             conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(conn, 100)
+            response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
             return response['status'], response["pwd"], response['response']
         except Exception as e:
-            return 1, e
+            return 1, '~$ ', e
 
     """ PRIVATE """
 
@@ -99,7 +99,7 @@ class TcpSessionHandler(BaseWorld):
                     break
             except BlockingIOError as err:
                 if attempts > max_tries:
-                    raise err
+                    return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
                 attempts += 1
                 time.sleep(.1 * attempts)
         return str(data, 'utf-8')
