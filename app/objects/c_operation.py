@@ -230,7 +230,7 @@ class Operation(BaseObject):
             self.phases_enabled = False
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-                await self._update_operation(services)
+                await self.update_operation(services)    # TODO: Call no longer needed if method continues to just have an agent update
                 await self._run_phases(services, planner)
             await self._cleanup_operation(services)
             await self.close()
@@ -243,7 +243,7 @@ class Operation(BaseObject):
     async def _run_phases(self, services, planner):
         for phase in self.adversary.phases:
             if not await self.is_closeable():
-                await self._update_operation(services)
+                await self.update_operation(services)     # TODO: Call no longer needed if method continues to just have an agent update
                 await planner.execute(phase)
                 if planner.stopping_condition_met:
                     break
@@ -279,7 +279,7 @@ class Operation(BaseObject):
         )
         await services.get('rest_svc').persist_source(data)
 
-    async def _update_operation(self, services):
+    async def update_operation(self, services):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):

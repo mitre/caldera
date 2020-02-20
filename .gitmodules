@@ -31,3 +31,9 @@
 [submodule "plugins/gameboard"]
 	path = plugins/gameboard
 	url = https://github.com/mitre/gameboard.git
+[submodule "plugins/research"]
+	path = plugins/research
+	url = git@gitlab.mitre.org:caldera/research.git
+[submodule "plugins/dark"]
+	path = plugins/dark
+	url = git@gitlab.mitre.org:caldera/dark.git
