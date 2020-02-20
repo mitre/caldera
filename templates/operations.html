@@ -450,7 +450,7 @@
                     template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                         'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' + title +
                         '<span id="' + OPERATION.chain[i].id + '-info" class="tactic-find-result" ' +
-                        'onclick="findExtraInfoResults(this, OPERATION.chain['+i+'].unique)" alt="Additional info">&#9432;</span>' +
+                        'onclick="findExtraInfoResults(this,'+lnk+','+OPERATION.id+')" alt="Additional info">&#9432;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                         'onclick="findResults(this,'+lnk+','+OPERATION.id+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
@@ -635,20 +635,20 @@
         restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
     }
 
-    function findExtraInfoResults(elem, link_id) {
-        document.getElementById('info-modal').style.display = 'block';
-        restRequest('POST', { 'index': 'result', 'link_id': link_id }, loadExtraInfoResults);
-    }
-
-    function loadExtraInfoResults(data){
-        if (data) {
-            for (let key in data.link.visibility.extra_info){
-                if (data.link.visibility.extra_info.hasOwnProperty(key)){
-                    $('#extra-info').html(key)
-                    $('#extra-info-values').html(data.link.visibility.extra_info[key].toString())
+    function findExtraInfoResults(elem, lnk, opId) {
+        function loadExtraInfoResults(data){
+            if (data) {
+                for (let key in data.visibility.extra_info){
+                    if (data.visibility.extra_info.hasOwnProperty(key)){
+                        $('#extra-info').html(key)
+                        $('#extra-info-values').html(data.visibility.extra_info[key].toString())
+                    }
                 }
             }
         }
+        document.getElementById('info-modal').style.display = 'block';
+        let link_id = opId + '-' + lnk;
+        restRequest('POST', { 'index':'chain','unique':link_id }, loadExtraInfoResults);
     }
 
     function downloadOperationReport() {
@@ -675,6 +675,12 @@
         modal.hide();
         modal.find('#resultCmd').text('');
         modal.find('#resultView').text('');
+    }
+
+    function resetInfoModal(){
+        let modal = $('#info-modal');
+        modal.hide();
+        modal.find('#extra-info').text('');
     }
 
     function submitHilChanges(status){
@@ -722,4 +728,6 @@
             'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
             'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
     }
+
+    //# sourceURL=operations.js
 </script>

@@ -197,6 +197,13 @@ class RestService(BaseService):
         except Exception as e:
             self.log.debug('Invalid link ID')
 
+    async def find_link(self, unique):
+        try:
+            link = await self.get_service('app_svc').find_link(unique)
+            return link.display
+        except Exception as e:
+            self.log.debug(e)
+
     async def construct_agents_for_group(self, group):
         if group:
             return await self.get_service('data_svc').locate('agents', match=dict(group=group))

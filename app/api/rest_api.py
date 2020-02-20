@@ -88,7 +88,8 @@ class RestApi(BaseWorld):
                     contact=lambda d: self.rest_svc.download_contact_report(d),
                     configuration=lambda d: self.rest_svc.update_config(d),
                     link=lambda d: self.rest_svc.get_potential_links(**d),
-                    operation=lambda d: self.rest_svc.update_operation(**d)
+                    operation=lambda d: self.rest_svc.update_operation(**d),
+                    chain=lambda d: self.rest_svc.find_link(**d)
                 )
             )
             if index not in options[request.method]:
