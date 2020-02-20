@@ -11,7 +11,7 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
-from app.objects.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
