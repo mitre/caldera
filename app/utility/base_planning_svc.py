@@ -77,9 +77,10 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [l.command for l in operation.chain
+        completed_links = [l.preobfuscation if l.preobfuscation is not None else l.command for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
-        return [l for l in links if l.ability.repeatable or l.command not in completed_links]
+        return [l for l in links if l.ability.repeatable or
+                (l.preobfuscation if l.preobfuscation is not None else l.command) not in completed_links]
 
     @staticmethod
     async def remove_links_missing_facts(links):
