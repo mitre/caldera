@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import copy
+import logging
 import re
 import uuid
 from collections import defaultdict
@@ -235,8 +236,8 @@ class Operation(BaseObject):
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(e)
 
     """ PRIVATE """
 
