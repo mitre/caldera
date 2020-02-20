@@ -574,11 +574,13 @@
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.finish) {
-            div.find('#'+chain.id+'-info').css('display', 'block');
             let resultStar = div.find('#'+chain.id+'-rs');
             resultStar.css('display', 'block');
             if(chain.facts.length > 0){
                 resultStar.html('&#11088;');
+            }
+            if(jQuery.isEmptyObject(chain.visibility.extra_info) === false){
+                div.find('#'+chain.id+'-info').css('display', 'block');
             }
             div.find('#'+chain.id+'-rm').remove();
         }
