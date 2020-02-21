@@ -29,7 +29,7 @@ class Link(BaseObject):
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
-                               visibility=self.visibility.display, host=self.host))
+                               visibility=self.visibility.display, host=self.host, output=self.output))
 
     @property
     def pin(self):
@@ -53,6 +53,7 @@ class Link(BaseObject):
         self.command = command
         self.operation = operation
         self.paw = paw
+        self.host = host
         self.cleanup = cleanup
         self.ability = ability
         self.status = status
@@ -67,15 +68,14 @@ class Link(BaseObject):
         self.used = []
         self.visibility = Visibility()
         self._pin = pin
-        self.output = None
-        self.host = host
+        self.output = False
 
-    async def parse(self, operation):
+    async def parse(self, operation, result):
         try:
             if self.status != 0:
                 return
             for parser in self.ability.parsers:
-                relationships = await self._parse_link_result(self.output, parser, operation.source)
+                relationships = await self._parse_link_result(result, parser, operation.source)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:

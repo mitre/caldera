@@ -558,7 +558,7 @@
         if(chain.collect || chain.status <= -4) {
             div.find('#'+chain.id+'-rm').remove();
         }
-        if(chain.finish) {
+        if(chain.finish && chain.output) {
             let resultStar = div.find('#'+chain.id+'-rs');
             resultStar.css('display', 'block');
             if(chain.facts.length > 0){

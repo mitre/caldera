@@ -113,10 +113,10 @@ class ContactService(BaseService):
                 link.finish = self.get_service('data_svc').get_current_timestamp()
                 link.status = int(result.status)
                 if result.output:
-                    link.output = result.output
+                    link.output = True
                     self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
-                    loop.create_task(link.parse(operation[0]))
+                    loop.create_task(link.parse(operation[0], result.output))
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 
