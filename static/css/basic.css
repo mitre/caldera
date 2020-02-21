@@ -179,6 +179,18 @@
     margin-right: 5%;
     cursor: pointer;
 }
+.op-add-adversary {
+    float: right;
+    font-size: 13px;
+    margin-right: 5%;
+    cursor: pointer;
+}
+.add-adversary-button {
+    max-width: 65px;
+    height: 10px;
+    margin: 0;
+    line-height: 1px;
+}
 .profile-tests {
     float: left;
     width: 100%;

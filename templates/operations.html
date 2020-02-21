@@ -169,6 +169,7 @@
       </div>
       <div id="content">
           <span class="op-potential-links" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
+          <span class="op-add-adversary" onclick="document.getElementById('add-adversary-modal').style.display='block';">&#10010; adversary</span>
           <br>
           <ul id="timeline" class="timeline">
               <li id="time-start">
@@ -212,6 +213,26 @@
             </div>
             <div class="imgcontainer">
                 <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="add-adversary-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
+            <div class="column" style="flex:100%;">
+                <select id="add-adversary-filter">
+                    <option value="" disabled selected>No adversary chosen</option>
+                    {% for adv in adversaries %}
+                    <option id="qflow-add-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                    {% endfor %}
+                </select>
+                <button class="button-success add-adversary-button" onclick="addAdversary($(this))">add</button>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="closeAddAdversaryModal()" class="close" title="Close Modal">&times;</span>
             </div>
         </div>
     </form>
@@ -545,6 +566,20 @@
         updatePotentialLinkCount();
         link["index"] = "link";
         restRequest('PUT', link, doNothing, '/api/rest');
+    }
+
+    function closeAddAdversaryModal() {
+        document.getElementById('add-adversary-modal').style.display='none';
+    }
+
+    function addAdversary() {
+        let op = buildOperationObject()
+        let e = document.getElementById('add-adversary-filter');
+        let selected_value = e.options[e.selectedIndex].value;
+        op['index'] = 'add_adversary';
+        op['new_adversary_id'] = selected_value
+        restRequest('PUT', op, reloadOperationsElements);
+        closeAddAdversaryModal();
     }
 
     function updatePotentialLinkCount(){

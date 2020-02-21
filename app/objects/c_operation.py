@@ -67,7 +67,8 @@ class Operation(BaseObject):
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, phase=self.phase, obfuscator=self.obfuscator,
                                autonomous=self.autonomous, finish=self.finish,
-                               chain=[lnk.display for lnk in self.chain]))
+                               chain=[lnk.display for lnk in self.chain],
+                               adversary_queue_length=len(self.adversary_queue)))
 
     @property
     def states(self):
@@ -99,6 +100,7 @@ class Operation(BaseObject):
         self.visibility = visibility
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
+        self.adversary_queue = []
         if source:
             self.rules = source.rules
 
@@ -140,6 +142,9 @@ class Operation(BaseObject):
                 await asyncio.sleep(15)
         self.add_link(link)
         return link.id
+
+    async def append_adversary(self, adversary):
+        self.adversary_queue.append(adversary)
 
     async def close(self):
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
@@ -232,6 +237,9 @@ class Operation(BaseObject):
                 await asyncio.sleep(10)
                 await self._update_operation(services)
                 await self._run_phases(services, planner)
+                if len(self.adversary_queue) > 0:
+                    self.adversary = self.adversary_queue.pop(0)
+                    await self._run_phases(services, planner)
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)

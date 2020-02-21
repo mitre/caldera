@@ -217,6 +217,11 @@ class RestService(BaseService):
             operation[0].autonomous = 0 if operation[0].autonomous else 1
             self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
 
+    async def add_adversary(self, request):
+        new_adversary = (await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=request.get('new_adversary_id'))))[0]
+        operation = (await self.get_service('data_svc').locate('operations', match=dict(name=request.get('name'))))[0]
+        await operation.append_adversary(new_adversary)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):

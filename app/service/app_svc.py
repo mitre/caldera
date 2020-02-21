@@ -147,4 +147,4 @@ class AppService(BaseService):
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
-            await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
+            await file_svc.save_file('operation_%s' % op.id, json.dumps(op.report()).encode(), r_dir)
