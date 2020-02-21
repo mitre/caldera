@@ -173,7 +173,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if self.auto_close and self.phase == len(self.adversary.phases):
+        if await self.is_finished() or (self.auto_close and self.phase >= len(self.adversary.phases)):
             self.state = self.states['FINISHED']
             return True
         return False
