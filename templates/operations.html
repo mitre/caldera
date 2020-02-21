@@ -294,6 +294,7 @@
     </div>
   </div>
 </li>
+
 <script>
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
@@ -642,8 +643,8 @@
             if (data) {
                 for (let key in data.visibility.extra_info){
                     if (data.visibility.extra_info.hasOwnProperty(key)){
-                        $('#extra-info').html(key)
-                        $('#extra-info-values').html(data.visibility.extra_info[key].toString())
+                        $('#extra-info').html('Extra Info')
+                        $('#extra-info-values').html(key.toString() + ': ' + data.visibility.extra_info[key].toString())
                     }
                 }
             }
