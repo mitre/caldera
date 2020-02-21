@@ -68,7 +68,7 @@ class Link(BaseObject):
         self.used = []
         self.visibility = Visibility()
         self._pin = pin
-        self.output = None
+        self.output = False
 
     async def parse(self, operation, result):
         try:
