@@ -77,7 +77,7 @@ if __name__ == '__main__':
         rest_svc = RestService()
         auth_svc = AuthService()
         file_svc = FileSvc()
-        app_svc = AppService(application=web.Application())
+        app_svc = AppService(application=web.Application(), config_name=config)
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())

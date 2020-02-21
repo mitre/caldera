@@ -19,10 +19,11 @@ from app.utility.base_service import BaseService
 
 class AppService(BaseService):
 
-    def __init__(self, application):
+    def __init__(self, application, config_name):
         self.application = application
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
+        self.config_name = config_name
 
     async def start_sniffer_untrusted_agents(self):
         """
@@ -143,8 +144,11 @@ class AppService(BaseService):
     """ PRIVATE """
 
     async def _save_configuration(self):
-        with open('conf/default.yml', 'w') as config:
-            config.write(yaml.dump(self.get_config()))
+        with open('conf/{}.yml'.format(self.config_name), 'w') as config:
+            old_config = yaml.load(config, Loader=yaml.FullLoader)
+        if self.get_config() != old_config:
+            with open('conf/default.yml', 'w') as config:
+                config.write(yaml.dump(self.get_config()))
 
     async def _destroy_plugins(self):
         for plugin in await self._services.get('data_svc').locate('plugins'):
