@@ -165,4 +165,4 @@ class ContactService(BaseService):
         """
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             if op.group == agent.group or op.group is None:
-                op.update_operation(self.get_services())
+                await op.update_operation(self.get_services())
