@@ -1,11 +1,12 @@
-Auto install script
+Install script
 ==============
 
-If you would like to install CALDERA quickly using our recommended approach, you should use the auto-installer.sh script, found at the root of the project. This script can be run on MacOS, Ubuntu and CentOS computers:
+If you would like to install CALDERA quickly using our recommended approach, you should use the install.sh script, found at the root of the project. This script can be run on MacOS, Ubuntu and CentOS computers:
 ```
-./auto-installer.sh --darwin
-./auto-installer.sh --centos
-./auto-installer.sh --ubuntu
+./install.sh --darwin
+./install.sh --centos
+./install.sh --ubuntu
+./install.sh --kali
 ```
 
 This installer will additionally install:
@@ -20,4 +21,5 @@ This is used to dynamically compile the 54ndc47 agent every time it is requested
 > If GoLang is installed, you can dynamically compile any Go payload per request by simply utilizing the file_svc:compile_go function. You'll see examples of this in the sandcat and terminal plugins.
 
 ## MinGW
+
 MinGW enables gcc compiling support for windows platforms. CALDERA uses MinGW to build C-Shared library (DLLs) versions of Sandcat.
