@@ -1,5 +1,3 @@
-import asyncio
-
 import websockets
 
 from app.utility.base_world import BaseWorld
