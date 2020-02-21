@@ -95,6 +95,7 @@ class ContactService(BaseService):
         agent = await self.get_service('data_svc').store(Agent(
             sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
         )
+        await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
@@ -151,3 +152,17 @@ class ContactService(BaseService):
             cmd = self.encode_string(agent.replace(i.test))
             instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
         return instructions
+
+    async def _add_agent_to_operation(self, agent):
+        """Determine which operation(s) incoming agent belongs to and
+        add it to operation.
+
+        Note: Agent is added immediately to operation, as certain planners
+        may execute single links at a time before relinquishing control back
+        to c_operation.run() (when previously the operation was updated with
+        new agents), and during those link executions, new agents may arise
+        which the planner needs to be aware of.
+        """
+        for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
+            if op.group == agent.group or op.group is None:
+                op.update_operation(self.get_services())
