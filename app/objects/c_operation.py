@@ -212,8 +212,9 @@ class Operation(BaseObject):
                                attack=dict(tactic=step.ability.tactic,
                                            technique_name=step.ability.technique_name,
                                            technique_id=step.ability.technique_id))
-            if output:
-                step_report['output'] = step.output
+            if output and step.output:
+                with open('data/results/%s' % step.unique, 'r') as output:
+                    step_report['output'] = output
             agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
         report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
