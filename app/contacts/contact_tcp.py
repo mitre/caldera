@@ -19,7 +19,7 @@ class Tcp(BaseWorld):
     async def start(self):
         loop = asyncio.get_event_loop()
         tcp = self.get_config('app.contact.tcp')
-        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '127.0.0.1', tcp.split(':')[1], loop=loop))
+        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', tcp.split(':')[1], loop=loop))
         loop.create_task(self.operation_loop())
 
     async def operation_loop(self):
