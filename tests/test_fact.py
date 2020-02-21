@@ -11,7 +11,8 @@ class TestFact(unittest.TestCase):
 
     def test_escaped_sh(self):
         test_fact = Fact('test', 'test value| &')
-        self.assertEqual(test_fact.escaped('sh'), 'test\ value\|\ \&')
+        test_dupe = test_fact.escaped('sh').replace('\\', '*')
+        self.assertEqual(test_dupe, 'test* value*|* *&')
         self.assertNotEqual(test_fact.escaped('sh'), 'test value| &')
 
     def test_escaped_psh(self):
