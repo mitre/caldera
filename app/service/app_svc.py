@@ -130,6 +130,7 @@ class AppService(BaseService):
             name='app',
             description='A plugin designed to hold global application data',
             data_dir='data',
+            enabled=True,
             access=self.Access.APP)
         )
 
