@@ -3,7 +3,6 @@ import json
 import socket
 import time
 
-from app.objects.secondclass.c_result import Result
 from app.utility.base_world import BaseWorld
 from plugins.terminal.app.c_session import Session
 
@@ -32,8 +31,8 @@ class Tcp(BaseWorld):
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
                         status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
-                        result = Result(id=instruction.id, output=self.encode_string(response), status=status)
-                        await self.contact_svc.handle_heartbeat(paw=session.paw, result=result)
+                        beacon = dict(paw=session.paw, result=dict(id=instruction.id, output=self.encode_string(response), status=status))
+                        await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
                     except Exception as e:
                         self.log.debug('[-] operation exception: %s' % e)
@@ -73,11 +72,11 @@ class TcpSessionHandler(BaseWorld):
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
             conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(conn, 100)
+            response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
             return response['status'], response["pwd"], response['response']
         except Exception as e:
-            return 1, e
+            return 1, '~$ ', e
 
     """ PRIVATE """
 
@@ -99,7 +98,7 @@ class TcpSessionHandler(BaseWorld):
                     break
             except BlockingIOError as err:
                 if attempts > max_tries:
-                    raise err
+                    return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
                 attempts += 1
                 time.sleep(.1 * attempts)
         return str(data, 'utf-8')

@@ -192,7 +192,11 @@ class RestService(BaseService):
         return await self.get_service('data_svc').locate('agents')
 
     async def update_config(self, data):
-        self.set_config(data.get('prop'), data.get('value'))
+        if data.get('prop') == 'plugin':
+            enabled_plugins = self.get_config('plugins')
+            enabled_plugins.append(data.get('value'))
+        else:
+            self.set_config(data.get('prop'), data.get('value'))
         self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
 
     async def update_operation(self, op_id, state=None, autonomous=None):
@@ -226,18 +230,18 @@ class RestService(BaseService):
 
     async def _build_operation_object(self, access, data):
         name = data.pop('name')
-        group = data.pop('group')
-        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
-        adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
+        group = data.pop('group', '')
+        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner', 'sequential')))
+        adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
-        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
+        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
-                         jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         autonomous=int(data.pop('autonomous')), access=allowed,
-                         phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
+                         jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
+                         state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
+                         phases_enabled=bool(int(data.pop('phases_enabled', 1))), obfuscator=data.pop('obfuscator', 'plain-text'),
+                         auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 
     @staticmethod
     async def _read_from_yaml(file_path):

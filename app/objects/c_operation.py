@@ -2,6 +2,7 @@ import ast
 import asyncio
 import copy
 import re
+import traceback
 import uuid
 from collections import defaultdict
 from datetime import datetime
@@ -11,7 +12,6 @@ from random import randint
 
 from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
-
 
 REDACTED = '**REDACTED**'
 
@@ -177,7 +177,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if self.auto_close and self.phase == len(self.adversary.phases):
+        if await self.is_finished() or (self.auto_close and self.phase >= len(self.adversary.phases)):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -244,7 +244,7 @@ class Operation(BaseObject):
             await self.close()
             await self._save_new_source(services)
         except Exception:
-            pass
+            traceback.print_exc()
 
     """ PRIVATE """
 

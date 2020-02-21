@@ -594,7 +594,11 @@
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.finish) {
-            div.find('#'+chain.id+'-rs').css('display', 'block');
+            let resultStar = div.find('#'+chain.id+'-rs');
+            resultStar.css('display', 'block');
+            if(chain.facts.length > 0){
+                resultStar.html('&#11088;');
+            }
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.status === 0) {
@@ -721,4 +725,6 @@
             'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
             'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
     }
+
+    //# sourceURL=operations.js
 </script>

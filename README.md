@@ -32,18 +32,15 @@ These requirements are for the computer running the core framework:
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. 
-This will pull in all available plugins.
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins.
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next install the PIP requirements
+Next run the install.sh script. Replace "ubuntu" with your operating-system. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
 ```
-pip install -r requirements.txt
+./install.sh --ubuntu
 ```
-> Instead of running the step above, you could run the [auto-installer.sh](https://caldera.readthedocs.io/en/latest/Auto-install-script.html) 
-script to automatically configure CALDERA in our recommended way. 
 
 Finally, start the server. 
 ```

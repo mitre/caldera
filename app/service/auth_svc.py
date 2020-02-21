@@ -14,6 +14,10 @@ from app.utility.base_service import BaseService
 
 
 def check_authorization(func):
+    """
+    Authorization Decorator
+    This requires that the calling class have `self.auth_svc` set to the authentication service.
+    """
     async def process(func, *args, **params):
         return await func(*args, **params)
 
@@ -83,7 +87,7 @@ class AuthService(BaseService):
         :return: None
         """
         try:
-            if request.headers.get('API_KEY') == self.get_config('api_key'):
+            if request.headers.get('KEY') == self.get_config('api_key'):
                 return True
             elif self.bypass in request.host:
                 return True

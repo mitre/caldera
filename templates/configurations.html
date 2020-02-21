@@ -3,7 +3,8 @@
     <div class="topleft duk-icon"><img onclick="removeSection('configuration')" src="/gui/img/x.png"></div>
     <div class="column planner-header" style="flex:100%;text-align: left">
         <h3>Configuration</h3>
-        <h4>Global application settings</h4>
+        <br>
+        <h4>Settings</h4>
         <hr><br>
         <div>
             <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
@@ -33,6 +34,23 @@
                     {% endif %}
                 {% endfor %}
             </table>
+            <br><br>
+            <h4>Plugins</h4>
+            <hr><br>
+            <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
+                {% for plugin in plugins %}
+                    <tr>
+                        <td><img src="/gui/img/operation.png"/></td>
+                        <td>{{ plugin.name }}</td>
+                        <td>{{ plugin.description }}</td>
+                        {% if plugin.enabled %}
+                            <td></td>
+                        {% else %}
+                            <td><button class="button-row" onclick="enablePlugin('{{ plugin.name }}')">enable</button></td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </table>
         </div>
     </div>
   </div>
@@ -40,6 +58,10 @@
 
 <script>
     function updateConfig(prop) {
-        restRequest('POST', {'index': 'configurations', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
     }
+    function enablePlugin(name){
+        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, alert('Plugin will be enabled on the next server restart.'));
+    }
+    //# sourceURL=configurations.js
 </script>
