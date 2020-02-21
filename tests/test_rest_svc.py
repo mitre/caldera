@@ -8,7 +8,7 @@ from tests.test_base import TestBase
 class TestRestSvc(TestBase):
 
     def setUp(self):
-        BaseWorld.apply_config({'app.contact.http': '0.0.0.0'})
+        BaseWorld.apply_config({'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
         self.rest_svc = RestService()
         self.data_svc = DataService()
         self.run_async(self.data_svc.store(
@@ -28,3 +28,9 @@ class TestRestSvc(TestBase):
         post_ability = self.run_async(self.data_svc.locate('abilities', dict(ability_id='123')))
         self.assertEqual('127.0.0.1', BaseWorld.get_config('app.contact.http'))
         self.assertEqual('curl 127.0.0.1', BaseWorld.decode_bytes(post_ability[0].test))
+
+    def test_update_config_plugin(self):
+        # update plugin property
+        self.assertEqual(['sandcat', 'stockpile'], BaseWorld.get_config('plugins'))
+        self.run_async(self.rest_svc.update_config(data=dict(prop='plugin', value='ssl')))
+        self.assertEqual(['sandcat', 'stockpile', 'ssl'], BaseWorld.get_config('plugins'))
