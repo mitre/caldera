@@ -37,7 +37,10 @@ Start by cloning this repository recursively, passing the desired version/releas
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next run the [install.sh script](https://caldera.readthedocs.io/en/latest/Install-script.html) 
+Next run the install.sh script. Replace "ubuntu" with your operating-system. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
+```
+./install.sh --ubuntu
+```
 
 Finally, start the server. 
 ```
