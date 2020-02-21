@@ -3,7 +3,6 @@ import asyncio
 import copy
 import re
 import logging
-import traceback
 import uuid
 from collections import defaultdict
 from datetime import datetime
