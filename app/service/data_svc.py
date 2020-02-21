@@ -49,6 +49,7 @@ class DataService(BaseService):
 
         :return:
         """
+        await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
@@ -64,7 +65,7 @@ class DataService(BaseService):
                 self.ram[key] = []
                 for c_object in ram[key]:
                     await self.store(c_object)
-            self.log.debug('Restored objects from persistent storage')
+            self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
@@ -173,14 +174,15 @@ class DataService(BaseService):
         try:
             for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_abilities(plug)
+            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
         except Exception as e:
-            self.log.debug(repr(e), exc_info=True)
+            self.log.debug(repr(e))
 
     async def _load_adversaries(self, plugin):
-        for filename in glob.iglob('%s/adversaries/*.yml' % plugin.data_dir, recursive=True):
+        for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 phases = adv.get('phases', dict())
                 for p in adv.get('packs', []):
@@ -221,7 +223,7 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access)
+                                                               access=plugin.access, repeatable=ab.get('repeatable', False))
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -286,7 +288,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60, access=None):
+                              privilege=None, timeout=60, access=None, repeatable=False):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -301,6 +303,10 @@ class DataService(BaseService):
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
                           cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout)
+                          privilege=privilege, timeout=timeout, repeatable=repeatable)
         ability.access = access
         return await self.store(ability)
+
+    async def _prune_non_critical_data(self):
+        self.ram.pop('plugins')
+        self.ram.pop('obfuscators')

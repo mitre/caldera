@@ -116,7 +116,8 @@
                     </tr>
                 </table>
                 <br>
-                <button class="button-row" onclick="updateAgent()">Save</button>
+                <button type="button" class="button-warn" onclick="killAgent()">Kill Agent</button>
+                <button type="button" class="button-row" onclick="updateAgent()">Save</button>
             </div>
         <div class="imgcontainer">
             <span onclick="document.getElementById('agent-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
@@ -168,16 +169,16 @@
         function deleteAgentCallback(data){
             $('#'+paw).remove();
         }
-        restRequest('DELETE', {"index": "agent", "paw": paw}, deleteAgentCallback);
+        restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
     }
 
     function updateAgent(){
         function closeAgentModal(){
-            document.getElementById("agent-modal").style.display = "none";
+            document.getElementById('agent-modal').style.display='none';
         }
         let sleepArr = parseSleep($('#modal-sleep').val().replace(/\s/g, ""));
         let data = {
-            'index': 'agent',
+            'index': 'agents',
             'paw': $('#modal-paw').text(),
             'group': $('#modal-group').val(),
             'watchdog': parseInt($('#modal-watchdog').val())
@@ -193,8 +194,26 @@
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
-        let d = {"index": "agent","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
         restRequest('PUT', d, doNothing);
+    }
+    function killAgent(){
+        /**
+        Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog minutes.
+        **/
+        let data = {
+            'index': 'agents',
+            'paw': $('#modal-paw').text(),
+            'watchdog': 1,
+            'sleep_min': 2*60,
+            'sleep_max': 2*60
+        };
+        if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
+            restRequest('PUT', data, (data) => {
+                document.getElementById('agent-modal').style.display='none';
+                stream(`Agent ${data.paw} will self terminate.`);
+            });
+        }
     }
 
     function parseSleep(sleep){
@@ -231,6 +250,8 @@
             parent.find('#modal-watchdog').html(agent['watchdog']);
             parent.show();
         }
-        restRequest('POST', {'index':'agent','paw':paw}, agentInfoCallback)
+        restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
     }
+
+    //# sourceURL=agents.js
 </script>

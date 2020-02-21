@@ -4,7 +4,7 @@ from app.utility.base_world import BaseWorld
 class BaseObject(BaseWorld):
 
     def __init__(self):
-        self._access = None
+        self._access = self.Access.APP
 
     def match(self, criteria):
         if not criteria:
@@ -15,7 +15,6 @@ class BaseObject(BaseWorld):
                 for val in v:
                     if self.__getattribute__(k) == val:
                         criteria_matches.append(True)
-                        continue
             else:
                 if self.__getattribute__(k) == v:
                     criteria_matches.append(True)

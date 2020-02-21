@@ -64,6 +64,7 @@ class PlanningService(BasePlanningService):
             await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
+        self.log.debug('Generated %s links for %s' % (len(agent_links), agent.paw))
         return agent_links
 
     @staticmethod
@@ -115,7 +116,6 @@ class PlanningService(BasePlanningService):
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))
             )
-        self.log.debug('Generated %s links for %s' % (len(links), agent.paw))
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
@@ -128,7 +128,7 @@ class PlanningService(BasePlanningService):
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
                 lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                            ability=ability, score=0, jitter=0, status=link_status)
-                lnk.apply_id()
+                lnk.apply_id(agent.host)
                 links.append(lnk)
         return links
 

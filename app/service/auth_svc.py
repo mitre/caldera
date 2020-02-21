@@ -14,33 +14,15 @@ from app.utility.base_service import BaseService
 
 
 def check_authorization(func):
+    """
+    Authorization Decorator
+    This requires that the calling class have `self.auth_svc` set to the authentication service.
+    """
     async def process(func, *args, **params):
         return await func(*args, **params)
 
     async def helper(*args, **params):
         await args[0].auth_svc.check_permissions('app', args[1])
-        result = await process(func, *args, **params)
-        return result
-    return helper
-
-
-def red_authorization(func):
-    async def process(func, *args, **params):
-        return await func(*args, **params)
-
-    async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('red', args[1])
-        result = await process(func, *args, **params)
-        return result
-    return helper
-
-
-def blue_authorization(func):
-    async def process(func, *args, **params):
-        return await func(*args, **params)
-
-    async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('blue', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
@@ -63,9 +45,9 @@ class AuthService(BaseService):
         :return: None
         """
         for group, u in users.items():
+            self.log.debug('Created authentication group: %s' % group)
             for k, v in u.items():
                 self.user_map[k] = self.User(k, v, (group, 'app'), )
-        self.log.debug('Created %d authentication groups' % len(users))
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)

@@ -13,21 +13,15 @@ from scratch.
 Agents are processes which are deployed on compromised hosts and connect with the C2 server periodically for instructions.
 An agent connects to the server through a *contact*, which is a specific connection point on the server.
 
-There are two types of contacts available:
-
-1) Active. The server actively polls a location for beacons.
-2) Passive. The server waits for a beacon to come in before acting.
-
 Each contact is defined in an independent Python module and is registered with the contact_svc when the server starts.
 
-There are currently several built-in contacts available: http (passive), tcp (active) and udp (passive). 
+There are currently several built-in contacts available: http, tcp, udp and websocket. 
 
 ## Building an agent: HTTP contact
 
-Start by getting a feel for the HTTP endpoints, which are located in the contacts/contact_http.py module.
+Start by getting a feel for the HTTP endpoint, which are located in the contacts/contact_http.py module.
 ```
 POST  /beacon 
-POST  /result
 ```
 ### Part #1
 
@@ -40,18 +34,16 @@ optional - but you should aim to cover as many as you can.
 > If you don't include a platform and executors then the server will never provide instructions to the agent, as it 
 won't know which ones are valid to send. 
 
-| Key           | Value  | Notes |
-| :------------- |:------------- |:-------------|  
-| server        | The location (IP or FQDN) of the C2 server    | |
-| platform      | The operating system | The platform is evaluated against the platform field of each ability. Currently you can use windows, darwin or linux |
-| host          | The hostname of the machine | |
-| username      | The username running the agent | |
-| architecture  | The architecture of the host. | |
-| executors     | A list of executors allowed on the host | Executors are evaluated against the executor block of each ability. Currently, you can use sh, cmd, psh and pwsh |
-| privilege     | The privilege level of the agent process, either User or Elevated | Privilege is evaluated against the optional privilege block of each ability file |
-| pid           | The process identifier of the agent | |
-| location      | The location of the agent on disk | |
-| exe_name      | The name of the agent binary file | |
+* **server**: The location (IP or FQDN) of the C2 server  
+* **platform**: The operating system
+* **host**: The hostname of the machine
+* **username**: The username running the agent
+* **architecture**: The architecture of the host
+* **executors**: A list of executors allowed on the host
+* **privilege**: The privilege level of the agent process, either User or Elevated
+* **pid**: The process identifier of the agent
+* **location**: The location of the agent on disk
+* **exe_name**: The name of the agent binary file
 
 At this point, you are ready to make a POST request with the profile to the /beacon endpoint. You should get back:
 
@@ -84,14 +76,14 @@ Looking at the previous response, you can see each instruction contains:
 * **payload**: A payload file name which must be downloaded before running the command, if applicable
 
 Now, you'll want to revise your agent to loop through all the instructions, executing each command
-and POSTing the response to the /result endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
+and POSTing the response back to the /beacon endpoint. You should pause after running each instruction, using the sleep time provided inside the instruction.
 ```
-data=$(echo '{"id":$id, "output":$output, "status": $status, "pid":$pid}' | base64)
-curl -s -X POST -d $data localhost:8888/result
+data=$(echo '{"result":{"id":$id, "output":$output, "status": $status, "pid":$pid}}' | base64)
+curl -s -X POST -d $data localhost:8888/beacon
 sleep $instruction_sleep
 ```
 
-The POST details are as follows:
+The POST details inside the result are as follows:
 
 * **id**: the ID of the instruction you received
 * **output**: the base64 encoded output from running the instruction

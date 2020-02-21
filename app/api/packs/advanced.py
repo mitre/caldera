@@ -43,7 +43,7 @@ class AdvancedPack(BaseWorld):
     @check_authorization
     @template('configurations.html')
     async def _section_configurations(self, request):
-        return dict(config=self.get_config())
+        return dict(config=self.get_config(), plugins=[p for p in await self.data_svc.locate('plugins')])
 
     @check_authorization
     @template('sources.html')

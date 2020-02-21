@@ -3,7 +3,6 @@ import json
 import socket
 import time
 
-from app.objects.secondclass.c_result import Result
 from app.utility.base_world import BaseWorld
 from plugins.terminal.app.c_session import Session
 
@@ -12,14 +11,15 @@ class Tcp(BaseWorld):
 
     def __init__(self, services):
         self.name = 'tcp'
-        self.description = 'Communication occurs through a raw TCP socket'
+        self.description = 'Accept beacons through a raw TCP socket'
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = services.get('contact_svc')
         self.tcp_handler = TcpSessionHandler(services, self.log)
 
     async def start(self):
         loop = asyncio.get_event_loop()
-        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', 5678, loop=loop))
+        tcp = self.get_config('app.contact.tcp')
+        loop.create_task(asyncio.start_server(self.tcp_handler.accept, '0.0.0.0', tcp.split(':')[1], loop=loop))
         loop.create_task(self.operation_loop())
 
     async def operation_loop(self):
@@ -31,16 +31,12 @@ class Tcp(BaseWorld):
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
                         status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
-                        result = Result(id=instruction.id, output=self.encode_string(response), status=status)
-                        await self.contact_svc.handle_heartbeat(paw=session.paw, result=result)
+                        beacon = dict(paw=session.paw, result=dict(id=instruction.id, output=self.encode_string(response), status=status))
+                        await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
                     except Exception as e:
                         self.log.debug('[-] operation exception: %s' % e)
             await asyncio.sleep(20)
-
-    @staticmethod
-    def valid_config():
-        return True
 
 
 class TcpSessionHandler(BaseWorld):

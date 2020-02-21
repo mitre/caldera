@@ -299,7 +299,7 @@
         $('#profile-tests li').each(function() {
             abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
         });
-        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversary", 'i': identifier}, saveAdversaryCallback);
+        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -340,7 +340,7 @@
             }
             platforms[platform][executor] = ex;
         });
-        data['index'] = 'ability';
+        data['index'] = 'abilities';
         data['id'] = $('#ability-identifier').val();
         data['name'] = name;
         data['description'] = description;
@@ -382,7 +382,7 @@
     }
 
     function loadAdversary() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
     }
 
     function loadAdversaryCallback(data) {
@@ -603,8 +603,7 @@
 
     function showPack() {
         $('#pack-phases').empty();
-
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, showPackCallback);
     }
 
     function showPackCallback(data) {
@@ -659,7 +658,8 @@
         fd.append('file', file);
         $.ajax({
              type: 'POST',
-             url: '/api/payload',
+             url: '/file/upload',
+             beforeSend: function(xhr){xhr.setRequestHeader('Directory', 'data/payloads/');},
              data: fd,
              processData: false,
              contentType: false
@@ -691,7 +691,7 @@
     }
 
     function addPackToPhase() {
-        restRequest('POST', {'index':'adversary', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
         document.getElementById('pack-modal').style.display='none';
     }
 
@@ -701,4 +701,6 @@
             'parser to variables inside another ability\'s command. Variables can be identified by looking for ' +
             '#{variable_name_goes_here} syntax.');
     }
+
+    //# sourceURL=profiles.js
 </script>

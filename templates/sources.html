@@ -116,7 +116,7 @@
                 }
             });
         }
-        restRequest('POST', {'index':'source'}, sourceCallback, '/api/rest');
+        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
     }
 
     function toggleSourceView() {
@@ -141,7 +141,7 @@
             applyRules(data[0].rules);
             source.html(data[0].name);
         }
-        restRequest('POST', {'index':'source', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 
     function addFactRow(trait, value){
@@ -167,7 +167,7 @@
             source.data('id', id);
         }
         let data = {};
-        data['index'] = 'source';
+        data['index'] = 'sources';
         data['id'] = id;
         data['name'] = name;
         data['facts'] = [];
@@ -232,4 +232,6 @@
         $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
             'you to create extensible abilities. Additionally, sources can include rules which can restrict agents from using specific traits.');
     }
+
+    //# sourceURL=sources.js
 </script>

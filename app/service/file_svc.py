@@ -21,28 +21,27 @@ class FileSvc(BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
 
-    async def get_file(self, request):
+    async def get_file(self, headers):
         """
         Retrieve file
-        :param request: Request dictionary. The `file` key is REQUIRED.
-        :type request: dict or dict-equivalent
+        :param headers: headers dictionary. The `file` key is REQUIRED.
+        :type headers: dict or dict-equivalent
         :return: File contents and optionally a display_name if the payload is a special payload
         :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found
         """
-        if 'file' not in request:
+        if 'file' not in headers:
             raise KeyError('File key was not provided')
 
-        display_name = payload = request.get('file')
+        display_name = payload = headers.get('file')
         if payload in self.special_payloads:
-            payload, display_name = await self.special_payloads[payload](request)
+            payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
-        if request.get('name'):
-            display_name = request.get('name')
+        if headers.get('name'):
+            display_name = headers.get('name')
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir):
         self._save(os.path.join(target_dir, filename), payload)
-        self.log.debug('Saved file %s' % os.path.join(target_dir, filename))
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
