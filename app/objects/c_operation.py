@@ -1,11 +1,9 @@
 import ast
 import asyncio
 import copy
-import logging
 import re
-import uuid
 import traceback
-
+import uuid
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
@@ -14,7 +12,6 @@ from random import randint
 
 from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
-
 
 REDACTED = '**REDACTED**'
 
