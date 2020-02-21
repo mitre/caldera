@@ -35,6 +35,7 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+        self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -64,7 +65,6 @@ class PlanningService(BasePlanningService):
             await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
-        self.log.debug('Generated %s links for %s' % (len(agent_links), agent.paw))
         return agent_links
 
     @staticmethod

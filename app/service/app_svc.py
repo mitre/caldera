@@ -7,6 +7,7 @@ from datetime import datetime, date
 
 import aiohttp_jinja2
 import jinja2
+import yaml
 
 from app.contacts.contact_http import Http
 from app.contacts.contact_tcp import Tcp
@@ -143,7 +144,7 @@ class AppService(BaseService):
 
     async def _save_configuration(self):
         with open('conf/default.yml', 'w') as config:
-            config.write(json.dumps(self.get_config()))
+            config.write(yaml.dump(self.get_config()))
 
     async def _destroy_plugins(self):
         for plugin in await self._services.get('data_svc').locate('plugins'):

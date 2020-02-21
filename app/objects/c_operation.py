@@ -1,8 +1,8 @@
 import ast
 import asyncio
 import copy
-import logging
 import re
+import traceback
 import uuid
 from collections import defaultdict
 from datetime import datetime
@@ -12,7 +12,6 @@ from random import randint
 
 from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
-
 
 REDACTED = '**REDACTED**'
 
@@ -236,8 +235,8 @@ class Operation(BaseObject):
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            traceback.print_exc()
 
     """ PRIVATE """
 

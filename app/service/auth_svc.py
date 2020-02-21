@@ -87,7 +87,7 @@ class AuthService(BaseService):
         :return: None
         """
         try:
-            if request.headers.get('API_KEY') == self.get_config('api_key'):
+            if request.headers.get('KEY') == self.get_config('api_key'):
                 return True
             elif self.bypass in request.host:
                 return True
