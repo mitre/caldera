@@ -23,6 +23,7 @@
     let config = {{config|safe}};
     let confPort = config['app.contact.websocket'];
     confPort = confPort.slice(confPort.lastIndexOf(':')+1);
+    console.log(window.location.hostname);
 
     let machine = {};
     $.ajax({
@@ -47,6 +48,7 @@
                 handleIncomingMessage(event.data, user);
             });
             team[user] = websocket;
+            beaconUser(user);
         };
         websocket.onerror = function(evt) {
             console.log('error on: '+ ip);
@@ -62,11 +64,10 @@
             let ip = config.teammates[user];
             connectToUser(user, ip, confPort)
         });
-        beaconOthers();
     }
 
-    function beaconOthers() {
-        sendMessage('init', {'ip':machine.ip});
+    function beaconUser(user) {
+        sendMessage('init', {'ip':machine.ip, 'host':machine.host}, user);
     }
 
     function handleIncomingMessage(message, user) {
@@ -90,19 +91,33 @@
         }
     }
 
-    function sendMessage(type, data) {
+    function sendMessage(type, data, user=undefined) {
+        function send(message) {
+            if(user) {
+                sendUser(message, user);
+            }
+            else {
+                sendAll(message);
+            }
+        }
+
         function sendAll(message) {
             Object.keys(team).forEach(function(user) {
-                team[user].send(JSON.stringify(message));
+                sendUser(message, user);
             });
         }
+
+        function sendUser(message, user) {
+            team[user].send(JSON.stringify(message));
+        }
+
         let message = {'type':type, 'user': username};
         switch (type) {
             case 'chat':
                 writeMessage(data.text, false, data.ts)
             case 'init':
                 message.data = data;
-                sendAll(message);
+                send(message);
                 break;
             case 'sync':
                 //TODO: figure out how we want to handle chat history and syncing, especially as chat threads get very long

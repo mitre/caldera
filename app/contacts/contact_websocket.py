@@ -25,7 +25,7 @@ class Handler:
     def __init__(self, services):
         self.services = services
         self.handles = [
-            Handle(tag='chat')
+            Handle(tag='chat', services=services)
         ]
         self.log = BaseWorld.create_logger('websocket_handler')
         self.users = set()
@@ -34,7 +34,7 @@ class Handler:
         self.users.add(socket)
         try:
             for handle in [h for h in self.handles if h.tag == path.split('/')[1]]:
-                await handle.run(socket, path, self.services, self.users)
+                await handle.run(socket, path, self.users)
         except Exception as e:
             self.log.debug(e)
             self.users.remove(socket)

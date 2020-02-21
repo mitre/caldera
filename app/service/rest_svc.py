@@ -232,7 +232,7 @@ class RestService(BaseService):
                 s.close()
             return ip
 
-        return {'user': getpass.getuser(), 'ip': get_ip(), 'platform': platform.system()}
+        return {'user': getpass.getuser(), 'host': socket.gethostname(), 'ip': get_ip(), 'platform': platform.system()}
 
     async def update_chat_users(self, data):
         config = self.get_config()
