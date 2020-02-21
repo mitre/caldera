@@ -4,6 +4,8 @@ import copy
 import logging
 import re
 import uuid
+import traceback
+
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
@@ -236,8 +238,8 @@ class Operation(BaseObject):
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
-        except Exception as e:
-            logging.error(e)
+        except Exception:
+            traceback.print_exc()
 
     """ PRIVATE """
 
