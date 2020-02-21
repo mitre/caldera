@@ -144,10 +144,10 @@ class AppService(BaseService):
     """ PRIVATE """
 
     async def _save_configuration(self):
-        with open('conf/{}.yml'.format(self.config_name), 'w') as config:
+        with open('conf/{}.yml'.format(self.config_name), 'r') as config:
             old_config = yaml.load(config, Loader=yaml.FullLoader)
         if self.get_config() != old_config:
-            with open('conf/default.yml', 'w') as config:
+            with open('conf/{}.yml'.format(self.config_name), 'w') as config:
                 config.write(yaml.dump(self.get_config()))
 
     async def _destroy_plugins(self):
