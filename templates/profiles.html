@@ -256,6 +256,10 @@
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
+    });
+
     function toggleAdversaryView() {
         $('#profile-existing-name option:eq(0)').prop('selected', true);
         $('#profile-goal').val('');
