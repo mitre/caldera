@@ -131,6 +131,14 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        let agentCnt = ($('#agent-table tr').length-1);
+        if(agentCnt < 1){
+            stream('Whoops - looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
+        } else {
+            stream('Great, looks like you have '+agentCnt+' agents. You can now go to Campaigns -> Operations.')
+        }
+    });
 
     function refresh(){
         function updateTbl(data){

@@ -1,7 +1,6 @@
 <div id="sources" class="section-profile">
   <div class="advanced row">
       <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
-      <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
       <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
       <div id="sources-sidebar"  class="column section-border" style="flex:25%">
       <img src="/gui/img/facts.png">
@@ -225,12 +224,6 @@
         let template = $("#rule-template").clone();
         template.show();
         $('#source-rules').append(template);
-    }
-
-    function openDuk5(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
-            'you to create extensible abilities. Additionally, sources can include rules which can restrict agents from using specific traits.');
     }
 
     //# sourceURL=sources.js
