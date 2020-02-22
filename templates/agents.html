@@ -134,9 +134,9 @@
     $(document).ready(function () {
         let agentCnt = ($('#agent-table tr').length-1);
         if(agentCnt < 1){
-            stream('Whoops - looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
+            stream('Looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
         } else {
-            stream('Great, looks like you have '+agentCnt+' agents. You can now go to Campaigns -> Operations.')
+            stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
     });
 
@@ -177,6 +177,7 @@
         function deleteAgentCallback(data){
             $('#'+paw).remove();
         }
+        stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
         restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
     }
 

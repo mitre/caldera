@@ -290,7 +290,7 @@
 
     $(document).ready(function(){
         $("#optional").click(function(){
-            stream('Basic options are your most likely to modify');
+            stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
             $("#optional-options").slideToggle("slow");
         });
         $("#schedules").click(function(){
@@ -380,12 +380,13 @@
 
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
+        stream('Changing operation state to '+newState);
         restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
-        stream('Notice that you can pause or stop it at any point. Also, toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
+        stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
         restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
@@ -448,12 +449,11 @@
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
-                    refreshUpdatableFields(OPERATION.chain[i], template);
+                    refreshUpdatableFields(OPERATION.chain[i], template, true);
 
                     template.insertAfter("#time-start");
                     $(template.find("#inner-contents")).slideUp();
                     template.show();
-                    stream('Go to Plugins -> GameBoard to see if the blue team can detect your activities.')
                 } else {
                     let existing = $("#op_id_"+OPERATION.chain[i].id);
                     refreshUpdatableFields(OPERATION.chain[i], existing);
@@ -466,6 +466,7 @@
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
+            stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
             restRequest('POST', postData, operationCallback, '/api/rest');
         }
     }
@@ -559,7 +560,7 @@
         $('#potential-links-count').html($('#potential-links li').length + ' potential links');
     }
 
-    function refreshUpdatableFields(chain, div){
+    function refreshUpdatableFields(chain, div, newEntry=false){
         if(chain.status !== -5) {
             div.find('#'+chain.id+'-add').remove();
         }
@@ -567,10 +568,10 @@
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.finish && chain.output) {
-            stream('See a gold or white star? Click it to show the output from a command.');
             let resultStar = div.find('#'+chain.id+'-rs');
             resultStar.css('display', 'block');
             if(chain.facts.length > 0){
+                stream('Click the stars to view command output');
                 resultStar.html('&#11088;');
             }
             div.find('#'+chain.id+'-rm').remove();
