@@ -192,7 +192,7 @@ class Operation(BaseObject):
                 active.append(agent)
         return active
 
-    def report(self, output=False, redacted=False):
+    def report(self, file_svc, output=False, redacted=False):
         report = dict(name=self.name, host_group=[a.display for a in self.agents],
                       start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                       steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
@@ -213,8 +213,7 @@ class Operation(BaseObject):
                                            technique_name=step.ability.technique_name,
                                            technique_id=step.ability.technique_id))
             if output and step.output:
-                with open('data/results/%s' % step.unique, 'r') as output:
-                    step_report['output'] = output
+                step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
             agents_steps[step.paw]['steps'].append(step_report)
         report['steps'] = agents_steps
         report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
