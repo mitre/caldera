@@ -269,6 +269,7 @@
     }
 
     function addPhase(number) {
+        stream('Add abilities to a phase by selecting +add abilities or +add pack. In the former, you can even create new abilities');
         let template = $("#phase-template").clone();
         if(number == null) {
             let existingPhases = $('.tempPhase').length;
