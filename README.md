@@ -65,14 +65,3 @@ Want to contribute to this project? We use the basic feature branch GIT flow. Fo
 In addition to CALDERA's open source capabilities, MITRE maintains several in-house CALDERA plugins that offer 
 more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
 caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
-
-## Related MITRE Work
-
-[BRAWL Game](https://github.com/mitre/brawl-public-game-001) - Data set created by the BRAWL project representing
-one CALDERA operation with data collected by Microsoft Sysmon and other sensors.
-
-[CASCADE](https://github.com/mitre/cascade-server) - Prototype blue team analysis tool to automate investigative work.
-
-## Acknowledgements
-
-[Atomic Red Team](https://github.com/redcanaryco/atomic-red-team)
