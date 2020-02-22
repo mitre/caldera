@@ -94,8 +94,10 @@
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('New sources will be created after each operation, containing the intelligence that was learned.')
+    });
     let refresher = setInterval(refresh, 15000);
-    console.log('sources refresh on');
     $('.section-profile').bind('destroyed', function() {
         console.log('sources refresh off');
         clearInterval(refresher);

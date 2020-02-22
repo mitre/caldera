@@ -58,7 +58,7 @@
 
 <script>
     $(document).ready(function () {
-        stream('Want to change a global configuration? Here is the place.')
+        stream('If you change an app.* property, it will auto update in all ability commands. Go ahead and check the Sandcat plugin delivery commands for confirmation.');
     });
     function updateConfig(prop) {
         restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
