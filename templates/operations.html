@@ -2,7 +2,6 @@
   <div class="row">
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('operations-sidebar')" src="/gui/img/expand.png"></div>
     <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
-    <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
     <div id="operations-sidebar" class="column section-border" style="flex:25%">
       <img src="/gui/img/operation.png">
       <h4>Operations</h4>
@@ -194,7 +193,6 @@
 <div id="potential-modal" class="modal">
     <form class="modal-content" style="width:100%;">
         <div class="container section-profile row ability-viewer modal-box">
-            <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
             <div class="column control-width" style="flex:100%;">
                 <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
                     <option disabled selected>Choose an agent</option>
@@ -286,6 +284,9 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
+    });
 
     $(document).ready(function(){
         $("#optional").click(function(){
@@ -307,6 +308,7 @@
         $('#addOperation').toggle();
 
         if ($('#togBtnOp').is(':checked')) {
+            stream('OK, provide at least a name. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
@@ -379,6 +381,7 @@
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
+        stream('Notice that you can pause or stop it at any point. Also, toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
         restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
@@ -446,6 +449,7 @@
                     template.insertAfter("#time-start");
                     $(template.find("#inner-contents")).slideUp();
                     template.show();
+                    stream('Go to Plugins -> GameBoard to see if the blue team can detect your activities.')
                 } else {
                     let existing = $("#op_id_"+OPERATION.chain[i].id);
                     refreshUpdatableFields(OPERATION.chain[i], existing);
@@ -559,6 +563,7 @@
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.finish && chain.output) {
+            stream('See a gold or white star? Click it to show the output from a command.');
             let resultStar = div.find('#'+chain.id+'-rs');
             resultStar.css('display', 'block');
             if(chain.facts.length > 0){
@@ -676,20 +681,5 @@
         validateFormState(($('#queueName').val()) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
             '#scheduleBtn');
     }
-
-    function openDuk3(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... You can click the ' +
-            'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
-            'facts which were learned from executing the step.');
-    }
-
-    function openDuk6(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
-            'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
-            'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
-    }
-
     //# sourceURL=operations.js
 </script>

@@ -54,9 +54,12 @@ function uuidv4() {
 }
 
 function stream(msg){
-    $("#streamer").fadeOut(function() {
-      $(this).text(msg).fadeIn(1000);
-    });
+    let streamer = $('#streamer');
+    if(streamer.text() !== msg){
+        streamer.fadeOut(function() {
+          $(this).text(msg).fadeIn(1000);
+        });
+    }
 }
 
 function doNothing() {}
@@ -65,7 +68,6 @@ function doNothing() {}
 
 function viewSection(name, address){
     function display(data) {
-        stream('Auto-refresh ON for '+name+' section');
         let plugin = $($.parseHTML(data, keepScripts=true));
         $('#section-container').append('<div id="section-'+name+'"></div>');
         let newSection = $('#section-'+name);
@@ -76,7 +78,6 @@ function viewSection(name, address){
 }
 
 function removeSection(identifier){
-    stream('Auto-refresh OFF for '+identifier+' section');
     $('#'+identifier).remove();
 }
 
@@ -137,3 +138,7 @@ window.onload = function checkBrowser(){
           });
     }
 };
+
+$(document).ready(function () {
+   stream('Time to get started. Go into the Campaigns -> Agents tab to review your deployed agents.');
+});
