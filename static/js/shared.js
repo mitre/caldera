@@ -55,9 +55,9 @@ function uuidv4() {
 
 function stream(msg){
     let streamer = $('#streamer');
-    if(streamer.text() !== msg){
+    if(streamer.text() != msg){
         streamer.fadeOut(function() {
-          $(this).text(msg).fadeIn(1000);
+            $(this).text(msg).fadeIn(1000);
         });
     }
 }
@@ -140,5 +140,5 @@ window.onload = function checkBrowser(){
 };
 
 $(document).ready(function () {
-   stream('Time to get started. Go into the Agents tab to review your deployed agents.');
+   stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
