@@ -1,16 +1,13 @@
 from app.objects.c_ability import Ability
-from app.service.data_svc import DataService
-from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
-from tests.test_base import TestBase
+from tests.base.test_base import TestBase
 
 
 class TestRestSvc(TestBase):
 
     def setUp(self):
+        self.initialize()
         BaseWorld.apply_config({'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
-        self.rest_svc = RestService()
-        self.data_svc = DataService()
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}')))
         )

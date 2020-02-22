@@ -2,17 +2,14 @@ from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
-from app.service.data_svc import DataService
-from app.service.planning_svc import PlanningService
 from app.utility.base_world import BaseWorld
-from tests.test_base import TestBase
+from tests.base.test_base import TestBase
 
 
 class TestPlanningService(TestBase):
 
     def setUp(self):
-        self.planning_svc = PlanningService()
-        self.data_svc = DataService()
+        self.initialize()
         self.ability = Ability(ability_id='123', executor='sh', test=BaseWorld.encode_string('mkdir test'), cleanup=BaseWorld.encode_string('rm -rf test'))
         self.agent = Agent(sleep_min=1, sleep_max=2, watchdog=0)
         self.operation = Operation(name='test1', agents=self.agent, adversary='hunter')
