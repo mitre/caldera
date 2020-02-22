@@ -12,6 +12,7 @@ from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
+from app.objects.c_plugin import Plugin
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_service import BaseService
@@ -43,7 +44,7 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
@@ -74,7 +75,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
@@ -84,7 +85,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):

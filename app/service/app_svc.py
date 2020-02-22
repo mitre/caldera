@@ -125,15 +125,6 @@ class AppService(BaseService):
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
-    async def add_app_plugin(self):
-        await self._services.get('data_svc').store(Plugin(
-            name='app',
-            description='A plugin designed to hold global application data',
-            data_dir='data',
-            enabled=True,
-            access=self.Access.APP)
-        )
-
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')
         await contact_svc.register(Http(self.get_services()))
