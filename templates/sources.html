@@ -142,6 +142,7 @@
             applyRules(data[0].rules);
             source.html(data[0].name);
         }
+        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 

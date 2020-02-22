@@ -61,10 +61,12 @@
         stream('If you change an app.* property, it will auto update in all ability commands. Go ahead and check the Sandcat plugin delivery commands for confirmation.');
     });
     function updateConfig(prop) {
+        stream('You updated property "'+prop+'". Good work!');
         restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
     }
     function enablePlugin(name){
-        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, alert('Plugin will be enabled on the next server restart.'));
+        stream('You enabled a new plugin! Bummer that it is not available until your next server restart.');
+        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
     }
     //# sourceURL=configurations.js
 </script>
