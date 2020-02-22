@@ -53,10 +53,11 @@ function uuidv4() {
   });
 }
 
-function stream(msg){
+function stream(msg, speak=false){
     let streamer = $('#streamer');
     if(streamer.text() != msg){
         streamer.fadeOut(function() {
+            if(speak) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg)); }
             $(this).text(msg).fadeIn(1000);
         });
     }
@@ -140,11 +141,10 @@ window.onload = function checkBrowser(){
 };
 
 $(document).ready(function () {
-   stream('Welcome home. Go into the Agents tab to review your deployed agents.');
+   stream('Welcome home. Go into the Agents tab to review your deployed agents.', true);
 });
 
 window.onerror = function(error, url, line) {
     let msg = 'Check your JavaScript console. '+error;
-    stream(msg);
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+    stream(msg, true);
 };
