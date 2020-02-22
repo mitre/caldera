@@ -140,7 +140,7 @@ window.onload = function checkBrowser(){
 };
 
 $(document).ready(function () {
-   stream2('Welcome home. Go into the Agents tab to review your deployed agents.');
+   stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
 
 window.onerror = function(error, url, line) {
