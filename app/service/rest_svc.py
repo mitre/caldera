@@ -119,7 +119,7 @@ class RestService(BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return op.report(output=data.get('agent_output'))
+        return op.report(self.get_service('file_svc'), output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))

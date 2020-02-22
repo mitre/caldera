@@ -148,7 +148,7 @@ class AppService(BaseService):
             config.write(yaml.dump(self.get_config()))
 
     async def _destroy_plugins(self):
-        for plugin in await self._services.get('data_svc').locate('plugins'):
+        for plugin in await self._services.get('data_svc').locate('plugins', dict(enabled=True)):
             await plugin.destroy(self.get_services())
 
     async def _write_reports(self):
@@ -157,4 +157,5 @@ class AppService(BaseService):
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
-            await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
+            report = json.dumps(op.report(self.get_service('file_svc')))
+            await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
