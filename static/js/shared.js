@@ -140,5 +140,5 @@ window.onload = function checkBrowser(){
 };
 
 $(document).ready(function () {
-   stream('Time to get started. Go into the Campaigns -> Agents tab to review your deployed agents.');
+   stream('Time to get started. Go into the Agents tab to review your deployed agents.');
 });
