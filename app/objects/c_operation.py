@@ -225,12 +225,12 @@ class Operation(BaseObject):
         try:
             planner = await self._get_planning_module(services)
             self.adversary = await self._adjust_adversary_phases()
-            await self._run_phases(services, planner)
+            await self._run_phases(planner)
 
             self.phases_enabled = False
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-                await self._run_phases(services, planner)
+                await self._run_phases(planner)
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
@@ -239,7 +239,7 @@ class Operation(BaseObject):
 
     """ PRIVATE """
 
-    async def _run_phases(self, services, planner):
+    async def _run_phases(self, planner):
         for phase in self.adversary.phases:
             if not await self.is_closeable():
                 await planner.execute(phase)
