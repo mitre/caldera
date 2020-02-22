@@ -100,7 +100,7 @@
               </select>
               <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
               <p style="margin-bottom:-10px">adjust visibility: </p>
-              <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100">
+              <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100" onchange="stream('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.')">
           </div>
 
           <div id="schedules" class="column sidebar-cutout sidebar-header">
@@ -290,15 +290,19 @@
 
     $(document).ready(function(){
         $("#optional").click(function(){
+            stream('Basic options are your most likely to modify');
             $("#optional-options").slideToggle("slow");
         });
         $("#schedules").click(function(){
+            stream('Schedule your operation to run every day.');
             $("#schedules-options").slideToggle("slow");
         });
         $("#stealth").click(function(){
+            stream('Stealth options will determine just how noticeable your operation is to the defense.');
             $("#stealth-options").slideToggle("slow");
         });
         $("#autonomous").click(function(){
+            stream('Autonomous options allow you to configure how much manual intervention you want.');
             $("#autonomous-options").slideToggle("slow");
         });
     });
