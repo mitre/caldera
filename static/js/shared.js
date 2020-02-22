@@ -142,3 +142,9 @@ window.onload = function checkBrowser(){
 $(document).ready(function () {
    stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
+
+window.onerror = function(error, url, line) {
+    let msg = 'Check your JavaScript console. '+error;
+    stream(msg);
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+};
