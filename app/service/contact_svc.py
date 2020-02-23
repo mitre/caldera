@@ -115,8 +115,11 @@ class ContactService(BaseService):
                 if result.output:
                     link.output = True
                     self.get_service('file_svc').write_result_file(result.id, result.output)
-                    operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
-                    loop.create_task(link.parse(operation[0], result.output))
+                    if link.ability.parsers: # todo this is temporary while we drop parsers
+                        operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
+                        loop.create_task(link.parse(operation[0], result.output))
+                    else:
+                        loop.create_task(self.get_service('learning_svc').learn(link, result.output))
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 

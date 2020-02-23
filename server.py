@@ -14,6 +14,7 @@ from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
+from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
@@ -81,6 +82,7 @@ if __name__ == '__main__':
         rest_svc = RestService()
         auth_svc = AuthService()
         file_svc = FileSvc()
+        learning_svc = LearningService()
         app_svc = AppService(application=web.Application())
 
         if args.fresh:
