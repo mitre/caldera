@@ -141,10 +141,14 @@ window.onload = function checkBrowser(){
 };
 
 $(document).ready(function () {
-   stream('Welcome home. Go into the Agents tab to review your deployed agents.', true);
+   stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
 
 window.onerror = function(error, url, line) {
     let msg = 'Check your JavaScript console. '+error;
-    stream(msg, true);
+    if(msg.includes('TypeError')) {
+        stream('Refresh your GUI', true);
+    } else {
+        stream(msg, true);
+    }
 };
