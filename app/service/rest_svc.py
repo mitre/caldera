@@ -11,7 +11,6 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
-from app.objects.secondclass.c_fact import Fact
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
@@ -195,7 +194,7 @@ class RestService(BaseService):
             link = await self.get_service('app_svc').find_link(link_id)
             link.visibility.apply_extra_info(extra_info)
         except Exception as e:
-            self.log.debug('Invalid link ID')
+            self.log.debug('Invalid link ID; ' + e)
 
     async def find_link(self, unique):
         try:

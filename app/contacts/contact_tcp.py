@@ -3,7 +3,6 @@ import json
 import socket
 import time
 
-from app.objects.secondclass.c_result import Result
 from app.utility.base_world import BaseWorld
 from plugins.terminal.app.c_session import Session
 
