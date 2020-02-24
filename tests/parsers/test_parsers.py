@@ -14,9 +14,8 @@ class TestFile(TestBase):
 
     def test_path(self):
         parser = p_path()
-        results = list(parser.parse('first /some/file/path/one.txt for linux and C:\Some\Windows.blah and '
+        results = list(parser.parse('first /some/file/path/one.txt for linux and '
                                     '/Users/tricky/rsc.io_quote_v1.5.1.txt'))
-        self.assertEqual(4, len(results))
+        self.assertEqual(2, len(results))
         self.assertTrue('/some/file/path/one.txt' in [r.value for r in results])
         self.assertTrue('/Users/tricky/rsc.io_quote_v1.5.1.txt' in [r.value for r in results])
-        self.assertTrue('C:\Some\Windows.blah' in [r.value for r in results])
