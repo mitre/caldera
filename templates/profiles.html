@@ -295,9 +295,9 @@
             identifier = uuidv4();
         }
         let name = $('#profile-goal').val();
-        if(!name){ alert('Please enter a profile name!'); return; }
+        if(!name){ warn('Please enter a profile name!'); return; }
         let description = $('#profile-description').val();
-        if(!description){ alert('Please enter a description!'); return; }
+        if(!description){ warn('Please enter a description!'); return; }
 
         let abilities = [];
         $('#profile-tests li').each(function() {
@@ -314,9 +314,9 @@
 
     function saveAbility() {
         let name = $('#ability-name').val();
-        if(!name){ alert('Please enter an ability name!'); return; }
+        if(!name){ warn('Please enter an ability name!'); return; }
         let description = $('#ability-description').val();
-        if(!description){ alert('Please enter a description!'); return; }
+        if(!description){ warn('Please enter a description!'); return; }
 
         let data = {};
         let platforms = {};

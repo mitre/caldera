@@ -163,7 +163,7 @@
         let source = $('#source-name');
         let name = source.text();
         let id = source.data('id');
-        if(!name){ alert('Please enter a name!'); return; }
+        if(!name){ warn('Please enter a name!'); return; }
         if(!id) {
             id = uuidv4();
             source.data('id', id);
@@ -180,7 +180,7 @@
             let value = $(this.cells[1]).text();
             data['facts'].push({'trait':trait,'value':value});
         });
-        if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
 
         let invalidRules = 0;
         $('#source-rules li').each(function() {
@@ -196,7 +196,7 @@
             data['rules'].push({'trait': trait, 'match': match, 'action': action});
         });
         if(invalidRules > 0) {
-            alert(invalidRules + ' invalid rules!');
+            warn(invalidRules + ' invalid rules!');
             return;
         }
         restRequest('PUT', data, saveSourceCallback);
