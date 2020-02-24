@@ -343,7 +343,7 @@
 
     function buildOperationObject() {
         let name = document.getElementById("queueName").value;
-        if(!name){ alert('Please enter an operation name'); return; }
+        if(!name){ warn('Please enter an operation name'); return; }
 
         let jitter = document.getElementById("queueJitter").value || "4/8";
         try {
@@ -354,11 +354,11 @@
                 throw true;
             }
             if(jitterMin >= jitterMax){
-                alert('Jitter MIN must be less than the jitter MAX.');
+                warn('Jitter MIN must be less than the jitter MAX.');
                 return;
             }
         } catch (e) {
-            alert('Jitter must be of the form "min/max" (e.x. 4/8)');
+            warn('Jitter must be of the form "min/max" (e.x. 4/8)');
             return;
         }
         return {

@@ -152,3 +152,8 @@ window.onerror = function(error, url, line) {
         stream(msg, true);
     }
 };
+
+function warn(msg){
+    document.getElementById("alert-modal").style.display="block";
+    $("#alert-text").html(msg);
+}
