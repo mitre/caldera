@@ -67,9 +67,25 @@ class ContactService(BaseService):
         self._sleep_min = agent_config['sleep_min']
         self._sleep_max = agent_config['sleep_max']
         self._watchdog = agent_config['watchdog']
-        self._file_names = agent_config['names']
+        self._file_names = self.collect_file_names(agent_config['names'])
         self._untrusted_timer = agent_config['untrusted_timer']
         self._bootstrap_instructions = agent_config['bootstrap_abilities']
+
+    def collect_file_names(self, names):
+        multiplatform = []
+        for platform, agents in names.items():
+            if "," in platform:
+                multiplatform.append(platform)
+
+        if multiplatform is not []:
+            for string in multiplatform:
+                agents = names[string]
+                platforms = string.split(",")
+                for p in platforms:
+                    new = {p: agents}
+                    names.update(new)
+                del names[string]
+        return names
 
     async def register(self, contact):
         try:

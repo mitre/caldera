@@ -49,7 +49,7 @@ agent_config:
       - coreservicesd
       - authd
       - splunkd
-    linux:
+    linux,freebsd:
       - hosts
       - ntp.conf
       - mnt
