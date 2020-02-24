@@ -26,7 +26,7 @@ class Fact(BaseObject):
 
     @property
     def display(self):
-        return dict(unique=self.unique, trait=self.trait, value=self.value, score=self.score)
+        return dict(unique=self.unique, trait=self.trait, value=self.value, score=self.score, tactic=self.technique_id)
 
     def escaped(self, executor):
         if executor not in escape_ref:
@@ -36,9 +36,10 @@ class Fact(BaseObject):
             escaped_value = escaped_value.replace(char, (escape_ref[executor]['escape_prefix'] + char))
         return escaped_value
 
-    def __init__(self, trait, value, score=1, collected_by=None):
+    def __init__(self, trait, value, score=1, collected_by=None, technique_id=None):
         super().__init__()
         self.trait = trait
         self.value = value
         self.score = score
         self.collected_by = collected_by
+        self.technique_id = technique_id
