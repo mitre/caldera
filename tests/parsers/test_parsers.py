@@ -1,5 +1,3 @@
-import unittest
-
 from app.learning.p_ip import Parser as p_ip
 from app.learning.p_path import Parser as p_path
 from tests.base.test_base import TestBase
