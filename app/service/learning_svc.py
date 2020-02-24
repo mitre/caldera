@@ -48,4 +48,5 @@ class LearningService(BaseService):
     async def _save_fact(link, operation, fact):
         if all(fact.trait) and not any(f.trait == fact.trait and f.value == fact.value for f in operation.all_facts()):
             fact.collected_by = link.paw
+            fact.technique_id = link.ability.technique_id
             link.facts.append(fact)
