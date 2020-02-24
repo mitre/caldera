@@ -166,3 +166,7 @@ a:hover {
 .cleanup .event:before {
   content: attr(data-host-name);
 }
+
+.extra-info-contents {
+    color: var(--font-color);
+}

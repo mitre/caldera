@@ -199,7 +199,7 @@
         <div class="container" style="text-align:left">
             <span id="extra-info"></span>
             <hr>
-            <span id="extra-info-values"></span>
+            <ul style="list-style-type:none" id="extra-info-values"></ul>
         </div>
     </form>
 </div>
@@ -644,7 +644,7 @@
                 for (let key in data.visibility.extra_info){
                     if (data.visibility.extra_info.hasOwnProperty(key)){
                         $('#extra-info').html('Extra Info')
-                        $('#extra-info-values').html(key.toString() + ': ' + data.visibility.extra_info[key].toString())
+                        $('#extra-info-values').append('<li class="extra-info-contents">' + key.toString() + ': ' + data.visibility.extra_info[key].toString() + '</li>')
                     }
                 }
             }
@@ -684,6 +684,7 @@
         let modal = $('#info-modal');
         modal.hide();
         modal.find('#extra-info').text('');
+        $('#extra-info-values').html('');
     }
 
     function submitHilChanges(status){
