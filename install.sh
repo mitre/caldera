@@ -83,6 +83,13 @@ function centos_install_python() {
     install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv"
 }
 
+function bash_set_random_conf_data() {
+    echo "[-] Generating Random Values"
+    sed -i "s/ADMIN123/$(uuidgen)/g" conf/default.yml
+    sed -i "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" conf/default.yml
+    echo "[+] Random Values added to default.yml"
+}
+
 function display_welcome_msg() {
 cat << EOF
 [+] Caldera environment built
@@ -100,6 +107,7 @@ function darwin() {
     darwin_install_go
     darwin_install_mingw
     darwin_install_python
+    bash_set_random_conf_data
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -112,6 +120,7 @@ function ubuntu() {
     ubuntu_install_go
     ubuntu_install_mingw
     ubuntu_install_python
+    bash_set_random_conf_data
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -124,6 +133,7 @@ function centos() {
     centos_install_go
     centos_install_mingw
     centos_install_python
+    bash_set_random_conf_data
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
