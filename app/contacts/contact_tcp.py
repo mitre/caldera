@@ -72,11 +72,11 @@ class TcpSessionHandler(BaseWorld):
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
             conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(conn, 100)
+            response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
             return response['status'], response["pwd"], response['response']
         except Exception as e:
-            return 1, e
+            return 1, '~$ ', e
 
     """ PRIVATE """
 
@@ -98,7 +98,7 @@ class TcpSessionHandler(BaseWorld):
                     break
             except BlockingIOError as err:
                 if attempts > max_tries:
-                    raise err
+                    return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
                 attempts += 1
                 time.sleep(.1 * attempts)
         return str(data, 'utf-8')

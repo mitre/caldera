@@ -35,6 +35,7 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+        self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -115,7 +116,6 @@ class PlanningService(BasePlanningService):
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))
             )
-        self.log.debug('Generated %s links for %s' % (len(links), agent.paw))
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
@@ -125,7 +125,7 @@ class PlanningService(BasePlanningService):
                                                                  match=dict(unique=link.ability.unique)))[0]
             if ability.cleanup and link.status >= 0:
                 decoded_cmd = agent.replace(ability.cleanup)
-                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used)
+                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
                 lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                            ability=ability, score=0, jitter=0, status=link_status)
                 lnk.apply_id(agent.host)

@@ -15,14 +15,14 @@ class Plugin(BaseObject):
     def display(self):
         return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
 
-    def __init__(self, name, description=None, address=None, enabled=False, data_dir=None, access=None):
+    def __init__(self, name='virtual', description=None, address=None, enabled=False, data_dir=None, access=None):
         super().__init__()
         self.name = name
         self.description = description
         self.address = address
         self.enabled = enabled
         self.data_dir = data_dir
-        self.access = access
+        self.access = access if access else self.Access.APP
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)

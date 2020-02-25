@@ -131,6 +131,14 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        let agentCnt = ($('#agent-table tr').length-1);
+        if(agentCnt < 1){
+            stream('Looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
+        } else {
+            stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
+        }
+    });
 
     function refresh(){
         function updateTbl(data){
@@ -169,6 +177,7 @@
         function deleteAgentCallback(data){
             $('#'+paw).remove();
         }
+        stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
         restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
     }
 
@@ -252,4 +261,6 @@
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
     }
+
+    //# sourceURL=agents.js
 </script>

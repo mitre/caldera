@@ -7,6 +7,7 @@ from datetime import datetime, date
 
 import aiohttp_jinja2
 import jinja2
+import yaml
 
 from app.contacts.contact_http import Http
 from app.contacts.contact_tcp import Tcp
@@ -124,14 +125,6 @@ class AppService(BaseService):
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
-    async def add_app_plugin(self):
-        await self._services.get('data_svc').store(Plugin(
-            name='app',
-            description='A plugin designed to hold global application data',
-            data_dir='data',
-            access=self.Access.APP)
-        )
-
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')
         await contact_svc.register(Http(self.get_services()))
@@ -143,10 +136,10 @@ class AppService(BaseService):
 
     async def _save_configuration(self):
         with open('conf/default.yml', 'w') as config:
-            config.write(json.dumps(self.get_config()))
+            config.write(yaml.dump(self.get_config()))
 
     async def _destroy_plugins(self):
-        for plugin in await self._services.get('data_svc').locate('plugins'):
+        for plugin in await self._services.get('data_svc').locate('plugins', dict(enabled=True)):
             await plugin.destroy(self.get_services())
 
     async def _write_reports(self):
@@ -155,4 +148,5 @@ class AppService(BaseService):
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
-            await file_svc.save_file('operation_%s' % op.id,  json.dumps(op.report()).encode(), r_dir)
+            report = json.dumps(op.report(self.get_service('file_svc')))
+            await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)

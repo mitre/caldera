@@ -53,10 +53,14 @@ function uuidv4() {
   });
 }
 
-function stream(msg){
-    $("#streamer").fadeOut(function() {
-      $(this).text(msg).fadeIn(1000);
-    });
+function stream(msg, speak=false){
+    let streamer = $('#streamer');
+    if(streamer.text() != msg){
+        streamer.fadeOut(function() {
+            if(speak) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg)); }
+            $(this).text(msg).fadeIn(1000);
+        });
+    }
 }
 
 function doNothing() {}
@@ -65,7 +69,6 @@ function doNothing() {}
 
 function viewSection(name, address){
     function display(data) {
-        stream('Auto-refresh ON for '+name+' section');
         let plugin = $($.parseHTML(data, keepScripts=true));
         $('#section-container').append('<div id="section-'+name+'"></div>');
         let newSection = $('#section-'+name);
@@ -76,7 +79,6 @@ function viewSection(name, address){
 }
 
 function removeSection(identifier){
-    stream('Auto-refresh OFF for '+identifier+' section');
     $('#'+identifier).remove();
 }
 
@@ -137,3 +139,21 @@ window.onload = function checkBrowser(){
           });
     }
 };
+
+$(document).ready(function () {
+   stream('Welcome home. Go into the Agents tab to review your deployed agents.');
+});
+
+window.onerror = function(error, url, line) {
+    let msg = 'Check your JavaScript console. '+error;
+    if(msg.includes('TypeError')) {
+        stream('Refresh your GUI', true);
+    } else {
+        stream(msg, true);
+    }
+};
+
+function warn(msg){
+    document.getElementById("alert-modal").style.display="block";
+    $("#alert-text").html(msg);
+}

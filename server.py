@@ -8,11 +8,13 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
+from app.objects.c_plugin import Plugin
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
+from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
@@ -20,8 +22,11 @@ from app.utility.base_world import BaseWorld
 
 def setup_logger():
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-    for logger in [name for name in logging.root.manager.loggerDict]:
-        logging.getLogger(logger).setLevel(100)
+    for logger_name in logging.root.manager.loggerDict.keys():
+        if logger_name in ('aiohttp.server', 'asyncio'):
+            continue
+        else:
+            logging.getLogger(logger_name).setLevel(100)
 
 
 async def build_docs():
@@ -46,7 +51,7 @@ def run_tasks(services):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins())
-    loop.run_until_complete(app_svc.add_app_plugin())
+    loop.run_until_complete(data_svc.load_data([Plugin(data_dir='data')]))
     loop.run_until_complete(data_svc.load_data())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
@@ -77,6 +82,7 @@ if __name__ == '__main__':
         rest_svc = RestService()
         auth_svc = AuthService()
         file_svc = FileSvc()
+        learning_svc = LearningService()
         app_svc = AppService(application=web.Application())
 
         if args.fresh:

@@ -2,7 +2,6 @@
   <div class="row">
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('adversaries-sidebar')" src="/gui/img/expand.png"></div>
     <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
-    <div class="topright duk-icon"><img onclick="openDuk2()" src="/gui/img/duk.png"></div>
     <div id="adversaries-sidebar" class="column section-border" style="flex:25%;">
       <img src="/gui/img/hacker.png">
       <h4>Profiles</h4>
@@ -257,6 +256,10 @@
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
+    });
+
     function toggleAdversaryView() {
         $('#profile-existing-name option:eq(0)').prop('selected', true);
         $('#profile-goal').val('');
@@ -266,6 +269,7 @@
     }
 
     function addPhase(number) {
+        stream('Add abilities to a phase by selecting +add abilities or +add pack. In the former, you can even create new abilities');
         let template = $("#phase-template").clone();
         if(number == null) {
             let existingPhases = $('.tempPhase').length;
@@ -291,9 +295,9 @@
             identifier = uuidv4();
         }
         let name = $('#profile-goal').val();
-        if(!name){ alert('Please enter a profile name!'); return; }
+        if(!name){ warn('Please enter a profile name!'); return; }
         let description = $('#profile-description').val();
-        if(!description){ alert('Please enter a description!'); return; }
+        if(!description){ warn('Please enter a description!'); return; }
 
         let abilities = [];
         $('#profile-tests li').each(function() {
@@ -310,9 +314,9 @@
 
     function saveAbility() {
         let name = $('#ability-name').val();
-        if(!name){ alert('Please enter an ability name!'); return; }
+        if(!name){ warn('Please enter an ability name!'); return; }
         let description = $('#ability-description').val();
-        if(!description){ alert('Please enter a description!'); return; }
+        if(!description){ warn('Please enter a description!'); return; }
 
         let data = {};
         let platforms = {};
@@ -386,6 +390,7 @@
     }
 
     function loadAdversaryCallback(data) {
+        stream('Profiles contain phases, which will run in order. Each phase contains abilities, or TTPs.');
         $('#profile-goal').val(data[0].name);
         $('#profile-description').val(data[0].description);
 
@@ -695,10 +700,5 @@
         document.getElementById('pack-modal').style.display='none';
     }
 
-    function openDuk2(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... you can link abilities together by matching the output property from an ability\'s ' +
-            'parser to variables inside another ability\'s command. Variables can be identified by looking for ' +
-            '#{variable_name_goes_here} syntax.');
-    }
+    //# sourceURL=profiles.js
 </script>

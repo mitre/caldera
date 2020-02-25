@@ -12,6 +12,7 @@ from aiohttp import web
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
+from app.objects.c_plugin import Plugin
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_service import BaseService
@@ -43,7 +44,7 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
@@ -74,7 +75,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
@@ -84,7 +85,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):
@@ -119,7 +120,7 @@ class RestService(BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return op.report(output=data.get('agent_output'))
+        return op.report(self.get_service('file_svc'), output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
@@ -239,18 +240,18 @@ class RestService(BaseService):
 
     async def _build_operation_object(self, access, data):
         name = data.pop('name')
-        group = data.pop('group')
-        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner')))
-        adversary = await self._construct_adversary_for_op(data.pop('adversary_id'))
+        group = data.pop('group', '')
+        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner', 'sequential')))
+        adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
-        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source')))
+        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
-                         jitter=data.pop('jitter'), source=next(iter(sources), None), state=data.pop('state'),
-                         autonomous=int(data.pop('autonomous')), access=allowed,
-                         phases_enabled=bool(int(data.pop('phases_enabled'))), obfuscator=data.pop('obfuscator'),
-                         auto_close=bool(int(data.pop('auto_close'))), visibility=int(data.pop('visibility')))
+                         jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
+                         state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
+                         phases_enabled=bool(int(data.pop('phases_enabled', 1))), obfuscator=data.pop('obfuscator', 'plain-text'),
+                         auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 
     @staticmethod
     async def _read_from_yaml(file_path):

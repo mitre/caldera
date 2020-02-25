@@ -2,7 +2,6 @@
   <div class="row">
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('operations-sidebar')" src="/gui/img/expand.png"></div>
     <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
-    <div class="topright duk-icon"><img onclick="openDuk3()" src="/gui/img/duk.png"></div>
     <div id="operations-sidebar" class="column section-border" style="flex:25%">
       <img src="/gui/img/operation.png">
       <h4>Operations</h4>
@@ -101,7 +100,7 @@
               </select>
               <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
               <p style="margin-bottom:-10px">adjust visibility: </p>
-              <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100">
+              <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100" onchange="stream('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.')">
           </div>
 
           <div id="schedules" class="column sidebar-cutout sidebar-header">
@@ -207,7 +206,6 @@
 <div id="potential-modal" class="modal">
     <form class="modal-content" style="width:100%;">
         <div class="container section-profile row ability-viewer modal-box">
-            <div class="topleft duk-icon"><img onclick="openDuk6()" src="/gui/img/duk.png"></div>
             <div class="column control-width" style="flex:100%;">
                 <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
                     <option disabled selected>Choose an agent</option>
@@ -299,18 +297,25 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
+    });
 
     $(document).ready(function(){
         $("#optional").click(function(){
+            stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
             $("#optional-options").slideToggle("slow");
         });
         $("#schedules").click(function(){
+            stream('Schedule your operation to run every day.');
             $("#schedules-options").slideToggle("slow");
         });
         $("#stealth").click(function(){
+            stream('Stealth options will determine just how noticeable your operation is to the defense.');
             $("#stealth-options").slideToggle("slow");
         });
         $("#autonomous").click(function(){
+            stream('Autonomous options allow you to configure how much manual intervention you want.');
             $("#autonomous-options").slideToggle("slow");
         });
     });
@@ -320,6 +325,7 @@
         $('#addOperation').toggle();
 
         if ($('#togBtnOp').is(':checked')) {
+            stream('OK, provide at least a name. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
@@ -350,7 +356,7 @@
 
     function buildOperationObject() {
         let name = document.getElementById("queueName").value;
-        if(!name){ alert('Please enter an operation name'); return; }
+        if(!name){ warn('Please enter an operation name'); return; }
 
         let jitter = document.getElementById("queueJitter").value || "4/8";
         try {
@@ -361,11 +367,11 @@
                 throw true;
             }
             if(jitterMin >= jitterMax){
-                alert('Jitter MIN must be less than the jitter MAX.');
+                warn('Jitter MIN must be less than the jitter MAX.');
                 return;
             }
         } catch (e) {
-            alert('Jitter must be of the form "min/max" (e.x. 4/8)');
+            warn('Jitter must be of the form "min/max" (e.x. 4/8)');
             return;
         }
         return {
@@ -387,11 +393,13 @@
 
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
+        stream('Changing operation state to '+newState);
         restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
+        stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
         restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
 
@@ -456,7 +464,7 @@
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
-                    refreshUpdatableFields(OPERATION.chain[i], template);
+                    refreshUpdatableFields(OPERATION.chain[i], template, true);
 
                     template.insertAfter("#time-start");
                     $(template.find("#inner-contents")).slideUp();
@@ -473,6 +481,7 @@
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
+            stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
             restRequest('POST', postData, operationCallback, '/api/rest');
         }
     }
@@ -566,17 +575,18 @@
         $('#potential-links-count').html($('#potential-links li').length + ' potential links');
     }
 
-    function refreshUpdatableFields(chain, div){
+    function refreshUpdatableFields(chain, div, newEntry=false){
         if(chain.status !== -5) {
             div.find('#'+chain.id+'-add').remove();
         }
         if(chain.collect || chain.status <= -4) {
             div.find('#'+chain.id+'-rm').remove();
         }
-        if(chain.finish) {
+        if(chain.finish && chain.output) {
             let resultStar = div.find('#'+chain.id+'-rs');
             resultStar.css('display', 'block');
             if(chain.facts.length > 0){
+                stream('Click the stars to view command output. Gold ones mean information was learned.');
                 resultStar.html('&#11088;');
             }
             if(jQuery.isEmptyObject(chain.visibility.extra_info) === false){
@@ -717,20 +727,5 @@
         validateFormState(($('#queueName').val()) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
             '#scheduleBtn');
     }
-
-    function openDuk3(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... You can click the ' +
-            'star icon to view the standard output or error from the command that was executed. Highlighted text indicates ' +
-            'facts which were learned from executing the step.');
-    }
-
-    function openDuk6(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... an operation chain contains all the decisions - or links - which were made by ' +
-            'the planner, utilizing the abilities contained inside the chosen profile. This list shows, per agent, ' +
-            'the potential links that will not run as part of the operation but otherwise could. Add them as you wish.');
-    }
-
     //# sourceURL=operations.js
 </script>

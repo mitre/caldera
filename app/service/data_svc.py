@@ -78,22 +78,22 @@ class DataService(BaseService):
         if collection not in self.ram:
             self.ram[collection] = []
 
-    async def load_data(self):
+    async def load_data(self, plugins=()):
         """
         Non-blocking read all the data sources to populate the object store
 
         :return: None
         """
         loop = asyncio.get_event_loop()
-        loop.create_task(self._load())
+        loop.create_task(self._load(plugins))
 
-    async def reload_data(self):
+    async def reload_data(self, plugins=()):
         """
         Blocking read all the data sources to populate the object store
 
         :return: None
         """
-        await self._load()
+        await self._load(plugins)
 
     async def store(self, c_object):
         """
@@ -170,11 +170,13 @@ class DataService(BaseService):
             phase_id += 1
         return dict(pp)
 
-    async def _load(self):
+    async def _load(self, plugins=()):
         try:
-            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
+            if not plugins:
+                plugins = [p for p in await self.locate('plugins') if p.data_dir]
+            for plug in plugins:
                 await self._load_abilities(plug)
-            for plug in [p for p in await self.locate('plugins') if p.data_dir]:
+            for plug in plugins:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)

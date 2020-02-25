@@ -1,7 +1,6 @@
 <div id="sources" class="section-profile">
   <div class="advanced row">
       <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
-      <div class="topright duk-icon"><img onclick="openDuk5()" src="/gui/img/duk.png"></div>
       <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
       <div id="sources-sidebar"  class="column section-border" style="flex:25%">
       <img src="/gui/img/facts.png">
@@ -95,8 +94,10 @@
 </li>
 
 <script>
+    $(document).ready(function () {
+        stream('New sources will be created after each operation, containing the intelligence that was learned.')
+    });
     let refresher = setInterval(refresh, 15000);
-    console.log('sources refresh on');
     $('.section-profile').bind('destroyed', function() {
         console.log('sources refresh off');
         clearInterval(refresher);
@@ -141,6 +142,7 @@
             applyRules(data[0].rules);
             source.html(data[0].name);
         }
+        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 
@@ -161,7 +163,7 @@
         let source = $('#source-name');
         let name = source.text();
         let id = source.data('id');
-        if(!name){ alert('Please enter a name!'); return; }
+        if(!name){ warn('Please enter a name!'); return; }
         if(!id) {
             id = uuidv4();
             source.data('id', id);
@@ -178,7 +180,7 @@
             let value = $(this.cells[1]).text();
             data['facts'].push({'trait':trait,'value':value});
         });
-        if(data['facts'].length === 0) { alert('Please enter some facts!'); return; }
+        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
 
         let invalidRules = 0;
         $('#source-rules li').each(function() {
@@ -194,7 +196,7 @@
             data['rules'].push({'trait': trait, 'match': match, 'action': action});
         });
         if(invalidRules > 0) {
-            alert(invalidRules + ' invalid rules!');
+            warn(invalidRules + ' invalid rules!');
             return;
         }
         restRequest('PUT', data, saveSourceCallback);
@@ -227,9 +229,5 @@
         $('#source-rules').append(template);
     }
 
-    function openDuk5(){
-        document.getElementById("duk-modal").style.display="block";
-        $('#duk-text').text('Did you know... A fact trait can be placed inside any ability command as a variable, allowing '+
-            'you to create extensible abilities. Additionally, sources can include rules which can restrict agents from using specific traits.');
-    }
+    //# sourceURL=sources.js
 </script>

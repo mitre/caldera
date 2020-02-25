@@ -6,14 +6,13 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
-from app.service.data_svc import DataService
-from tests.test_base import TestBase
+from tests.base.test_base import TestBase
 
 
-class TestData(TestBase):
+class TestDataService(TestBase):
 
     def setUp(self):
-        self.data_svc = DataService()
+        self.initialize()
 
     def test_adversary(self):
         self.run_async(self.data_svc.store(

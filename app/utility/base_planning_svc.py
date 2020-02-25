@@ -13,7 +13,7 @@ class BasePlanningService(BaseService):
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
     re_limited = re.compile(r'#{.*\[*\]}')
     re_trait = re.compile(r'(?<=\{).+?(?=\[)')
-    re_count = re.compile(r'(?<=\[).+?(?=\])')
+    re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
 
     async def trim_links(self, operation, links, agent):
         """
@@ -54,7 +54,7 @@ class BasePlanningService(BaseService):
                     try:
                         copy_test = copy.copy(decoded_test)
                         copy_link = copy.deepcopy(link)
-                        variant, score, used = await self._build_single_test_variant(copy_test, combo)
+                        variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
@@ -112,7 +112,7 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    async def _build_single_test_variant(copy_test, combo):
+    async def _build_single_test_variant(copy_test, combo, executor):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
@@ -121,7 +121,7 @@ class BasePlanningService(BaseService):
             score += (score + var.score)
             used.append(var)
             re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.value).strip().encode('unicode-escape').decode('utf-8'), copy_test)
+            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
     @staticmethod
@@ -158,11 +158,21 @@ class BasePlanningService(BaseService):
     async def _trim_by_limit(self, decoded_test, facts):
         limited_facts = []
         for limit in re.findall(self.re_limited, decoded_test):
+            limited = copy.deepcopy(facts[0])
             trait = re.search(self.re_trait, limit).group(0)
-            count = int(re.search(self.re_count, limit).group(0)) + 1
-            limited = sorted([f for f in copy.deepcopy(facts[0]) if f.trait == trait], key=lambda k: (-k.score))[:count]
-            if limited:
-                limited_facts.append(limited)
+
+            limit_definitions = re.search(self.re_index, limit).group(0)
+            if limit_definitions:
+                for limiter in limit_definitions.split(','):
+                    limited = self._apply_limiter(trait=trait, limiter=limiter.split('='), facts=limited)
+            limited_facts.append(limited)
         if limited_facts:
             return limited_facts
         return facts
+
+    @staticmethod
+    def _apply_limiter(trait, limiter, facts):
+        if limiter[0] == 'max':
+            return sorted([f for f in facts if f.trait == trait], key=lambda k: (-k.score))[:int(limiter[1])]
+        if limiter[0] == 'technique':
+            return [f for f in facts if f.technique_id == limiter[1]]

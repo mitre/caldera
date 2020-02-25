@@ -8,7 +8,7 @@
       <link rel="stylesheet" href="/gui/css/modal.css">
       <link rel="stylesheet" href="/gui/css/basic.css">
       <link rel="stylesheet" href="/gui/css/timeline.css">
-    </head>
+</head>
 
     <div class="navbar-buffer">
         <div class="navbar">
@@ -40,7 +40,7 @@
                       {% if plugin.address %}
                           <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
                       {% else %}
-                          <a onclick="alert('No GUI component to this plugin')">{{ plugin.name }}</a>
+                          <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
                       {% endif %}
                     {% endfor %}
                 </div>
@@ -50,6 +50,19 @@
     <div style="margin-bottom:75px"></div>
 
     <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
+
+    <div id="alert-modal" class="modal">
+        <form class="modal-content">
+            <div class="container modal-box">
+                <div class="row duk-modal">
+                    <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                    <div class="column" style="flex:92%">
+                        <p id="alert-text" style="color: white"></p>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 
     <center>
         <div id="intro" class="home-box watermark">
@@ -65,9 +78,6 @@
                 <div class="container modal-box">
                     <div class="row duk-modal">
                         <span onclick="document.getElementById('duk-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                        <div class="column" style="flex:8%">
-                            <img src="/gui/img/duk.png"/>
-                        </div>
                         <div class="column" style="flex:92%">
                             <p id="duk-text" style="color: white"></p>
                         </div>
@@ -75,6 +85,7 @@
                 </div>
             </form>
         </div>
+
     </center>
 
     <div style="margin-bottom: 100px"></div>

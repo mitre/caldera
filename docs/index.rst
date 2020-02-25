@@ -22,7 +22,7 @@ If you're new to CALDERA, this is a good place to start.
    How-CALDERA-makes-decisions.md
    Install-CALDERA-offline.md
    Docker-deployment.md
-   Auto-install-script.md
+   Install-script.md
    CALDERA-2.0.md
    Common-problems.md
 
