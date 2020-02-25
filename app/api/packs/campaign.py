@@ -46,7 +46,7 @@ class CampaignPack(BaseWorld):
         adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
         sources = [s.display for s in await self.data_svc.locate('sources', match=access)]
         planners = [p.display for p in await self.data_svc.locate('planners')]
-        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators') if not o.hidden]
+        obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         operations = [o.display for o in await self.data_svc.locate('operations', match=access)]
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                     obfuscators=obfuscators)

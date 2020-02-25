@@ -241,7 +241,7 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _run_phases(self, services, planner):
-        for phase in sorted(self.adversary.phases):
+        for phase in self.adversary.phases:
             if not await self.is_closeable():
                 await self._update_operation(services)
                 await planner.execute(phase)
