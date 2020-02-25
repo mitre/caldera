@@ -9,8 +9,11 @@ function install_wrapper() {
     which $2
     if [[ $? != 0 ]]; then
         echo "[-] Installing $1"
-        eval $3
-        echo "[+] $1 installed"
+        if eval $3; then
+            echo "[+] $1 installed"
+        else
+            echo "[x] $1 FAILED to install"
+        fi
     else
         echo "[+] $1 already installed"
     fi
@@ -28,9 +31,11 @@ function all_install_go_dependencies() {
 }
 
 function all_install_python_requirements() {
-    run_uprivileged "pip3 install virtualenv"
-    run_uprivileged "virtualenv -p python3 $CALDERA_DIR/calderaenv"
-    run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip install -r $CALDERA_DIR/requirements.txt"
+    echo "[-] Setting up Python venv"
+    run_uprivileged "pip3 -q install virtualenv"
+    run_uprivileged "virtualenv -q -p python3 $CALDERA_DIR/calderaenv"
+    run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip -q install -r $CALDERA_DIR/requirements.txt"
+    echo "[+] Python venv set up"
 }
 
 function all_build_documentation() {
