@@ -67,7 +67,10 @@ class Agent(BaseObject):
 
     async def capabilities(self, ability_set):
         abilities = []
-        preferred = self.executors[0]
+        if 'psh' in self.executors:
+            preferred = 'psh'
+        else:
+            preferred = self.executors[0]
         executors = self.executors
         for ai in set([pa.ability_id for pa in ability_set]):
             total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
