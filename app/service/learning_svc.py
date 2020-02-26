@@ -31,8 +31,6 @@ class LearningService(BaseService):
             if len(variables) > 1:
                 self.model.add(variables)
         self.model = set(self.model)
-        for x in self.model:
-            print(x)
 
     async def learn(self, link, blob):
         decoded_blob = b64decode(blob).decode('utf-8')
