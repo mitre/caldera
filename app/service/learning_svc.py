@@ -78,4 +78,3 @@ class LearningService(BaseService):
             for pair in itertools.combinations(matches, r=2):
                 if pair[0].trait != pair[1].trait:
                     link.relationships.append(Relationship(source=pair[0], edge='has', target=pair[1]))
-
