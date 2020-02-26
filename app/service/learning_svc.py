@@ -33,7 +33,7 @@ class LearningService(BaseService):
         """
         for ability in await self.get_service('data_svc').locate('abilities'):
             variables = frozenset(re.findall(self.re_variable, self.decode_bytes(ability.test)))
-            if len(variables) > 1:
+            if len(variables) > 1:  # relationships require at least 2 variables
                 self.model.add(variables)
         self.model = set(self.model)
 
