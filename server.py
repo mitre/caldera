@@ -79,7 +79,8 @@ if __name__ == '__main__':
         BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
 
         data_svc = DataService()
-        contact_svc = ContactService()
+        contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
+        # payload_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService()

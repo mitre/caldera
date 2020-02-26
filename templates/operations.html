@@ -93,6 +93,10 @@
               <h5>STEALTH</h5>
           </div>
           <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
+                <select name="phases" id="obfuscate_Payload" class="queueOption" style="opacity:0.5" disabled="true">
+                    <option value="0">Plain-Text Payload</option>
+                    <option value="0">Obfuscate Payload</option>
+              </select>
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
                     <option value="{{ o.name }}">{{ o.name }} obfuscation</option>

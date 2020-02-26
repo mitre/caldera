@@ -1,16 +1,15 @@
 api_key: ADMIN123
-app.contact.html: /weather
-app.contact.http: http://127.0.0.1:8888
-app.contact.tcp: 127.0.0.1:7010
-app.contact.udp: 127.0.0.1:7011
-app.contact.websocket: 127.0.0.1:7012
+app.contact.http: http://0.0.0.0:8888
+app.contact.tcp: 0.0.0.0:7010
+app.contact.udp: 0.0.0.0:7011
+app.contact.websocket: 0.0.0.0:7012
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 exfil_dir: /tmp
 plugins:
 - sandcat
 - stockpile
 - compass
-- manx
+- terminal
 - response
 - gameboard
 port: 8888
