@@ -8,7 +8,7 @@ class Visibility(BaseObject):
 
     @property
     def display(self):
-        return self.clean(dict(score=self.score, extra_info=self.extra_info))
+        return self.clean(dict(score=self.score))
 
     @property
     def score(self):
@@ -23,10 +23,6 @@ class Visibility(BaseObject):
         super().__init__()
         self._score = 50
         self.adjustments = []
-        self.extra_info = dict()
 
-    def apply_adjustment(self, adjustment):
+    def apply(self, adjustment):
         self.adjustments.append(adjustment)
-
-    def apply_extra_info(self, extra_info):
-        self.extra_info = extra_info

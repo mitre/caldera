@@ -62,7 +62,7 @@ class PlanningService(BasePlanningService):
         agent_links = []
         if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
-            await self._apply_adjustments_and_extra_info(operation, agent_links)
+            await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
@@ -133,9 +133,9 @@ class PlanningService(BasePlanningService):
         return links
 
     @staticmethod
-    async def _apply_adjustments_and_extra_info(operation, links):
+    async def _apply_adjustments(operation, links):
         for l in links:
             for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility.apply_adjustment(adjustment)
+                    l.visibility.apply(adjustment)
                     l.status = l.states['HIGH_VIZ']

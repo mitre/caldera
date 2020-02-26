@@ -190,19 +190,6 @@
     </form>
 </div>
 
-<div id="info-modal" class="modal">
-    <form class="modal-content ability-viewer">
-        <div class="imgcontainer">
-            <span onclick="resetInfoModal();" class="close" title="Close Modal">&times;</span>
-        </div>
-        <div class="container" style="text-align:left">
-            <span id="extra-info"></span>
-            <hr>
-            <ul style="list-style-type:none" id="extra-info-values"></ul>
-        </div>
-    </form>
-</div>
-
 <div id="potential-modal" class="modal">
     <form class="modal-content" style="width:100%;">
         <div class="container section-profile row ability-viewer modal-box">
@@ -456,10 +443,8 @@
                     template.attr("operation", OPERATION.id);
                     template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
                     template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                        'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' + title +
-                        '<span id="' + OPERATION.chain[i].id + '-info" class="tactic-find-result" ' +
-                        'onclick="findExtraInfoResults(this,'+lnk+','+OPERATION.id+')" alt="Additional info">&#9432;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
+                        'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
+                        title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                         'onclick="findResults(this,'+lnk+','+OPERATION.id+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
@@ -589,9 +574,6 @@
                 stream('Click the stars to view command output. Gold ones mean information was learned.');
                 resultStar.html('&#11088;');
             }
-            if(jQuery.isEmptyObject(chain.visibility.extra_info) === false){
-                div.find('#'+chain.id+'-info').css('display', 'block');
-            }
             div.find('#'+chain.id+'-rm').remove();
         }
         if(chain.status === 0) {
@@ -647,22 +629,6 @@
         restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
     }
 
-    function findExtraInfoResults(elem, lnk, opId) {
-        function loadExtraInfoResults(data){
-            if (data) {
-                for (let key in data.visibility.extra_info){
-                    if (data.visibility.extra_info.hasOwnProperty(key)){
-                        $('#extra-info').html('Extra Info')
-                        $('#extra-info-values').append('<li class="extra-info-contents">' + key.toString() + ': ' + data.visibility.extra_info[key].toString() + '</li>')
-                    }
-                }
-            }
-        }
-        document.getElementById('info-modal').style.display = 'block';
-        let link_id = opId + '-' + lnk;
-        restRequest('POST', { 'index':'chain','unique':link_id }, loadExtraInfoResults);
-    }
-
     function downloadOperationReport() {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
@@ -687,13 +653,6 @@
         modal.hide();
         modal.find('#resultCmd').text('');
         modal.find('#resultView').text('');
-    }
-
-    function resetInfoModal(){
-        let modal = $('#info-modal');
-        modal.hide();
-        modal.find('#extra-info').text('');
-        $('#extra-info-values').html('');
     }
 
     function submitHilChanges(status){
