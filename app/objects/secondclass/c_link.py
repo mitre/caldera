@@ -52,6 +52,7 @@ class Link(BaseObject):
         super().__init__()
         self.id = id
         self.command = command
+        self.command_hash = None
         self.operation = operation
         self.paw = paw
         self.host = host
