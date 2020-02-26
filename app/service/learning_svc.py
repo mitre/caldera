@@ -26,6 +26,11 @@ class LearningService(BaseService):
         return parsers
 
     async def build_model(self):
+        """
+        The model is a static set of all variables used inside all ability commands
+        This can be used to determine which facts - when found together - are more likely to be used together
+        :return:
+        """
         for ability in await self.get_service('data_svc').locate('abilities'):
             variables = frozenset(re.findall(self.re_variable, self.decode_bytes(ability.test)))
             if len(variables) > 1:
