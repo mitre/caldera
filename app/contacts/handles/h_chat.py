@@ -13,24 +13,27 @@ class Handle:
         self.servers = set()
         self.log = logging.getLogger('chat_handler')
 
-    async def run(self, sock, path, users, server=False):
+    async def run(self, sock, path, users):
         async def _chat(mes, mes_obj):
             self.history.append(mes)
-            if sock not in self.servers and not server:
+            if sock not in self.servers:
                 await send_servers(mes)
             await send_users(mes)
 
         async def _init(mes, mes_obj):
-            self.log.debug(f'got init message: {mes}')
+            self.log.debug(f'new chat client initialized')
             if len(self.history) > 0:
                 hist = {'type': 'history',
                         'data': self.history
                         }
                 await sock.send(json.dumps(hist))
 
+        async def _flag_server(mes, mes_obj):
+            self.servers.add(sock)
+
         async def _server_init(mes, mes_obj):
             self.log.debug(f'new server connecting: {mes_obj["user"]}:{mes_obj["data"]["ip"]}')
-            self.servers.add(sock)
+            await _flag_server(None, None)
             if len(self.history) > 0:
                 await asyncio.wait([sock.send(old_message) for old_message in self.history])
             if mes_obj['data']['host'] != socket.gethostname():
@@ -59,14 +62,14 @@ class Handle:
         message_handlers = {
             'chat': _chat,
             'init': _init,
+            'welcome': _flag_server,
             'server_init': _server_init
         }
 
-        if server:
-            self.servers.add(sock)
+        welcome = {'type': 'welcome', 'data': 'thanks for connecting to your friendly local chat server'}
+        await sock.send(json.dumps(welcome))
         while True:
             message = await sock.recv()
-            self.log.debug(message)
             try:
                 m = json.loads(message)
                 await message_handlers[m['type']](message, m)

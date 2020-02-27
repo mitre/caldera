@@ -41,14 +41,12 @@ class Handler:
         self.users = set()
 
     async def handle(self, conn_type, socket, path):
-        server = True
         if conn_type == 'client':
             self.users.add(socket)
-            server = False
         try:
             self.log.debug(f'{conn_type} connection on {path}')
             for handle in [h for h in self.handles if h.tag == path.split('/')[1]]:
-                await handle.run(socket, path, self.users, server=server)
+                await handle.run(socket, path, self.users)
         except Exception as e:
             self.log.debug(e)
             self.users.discard(socket)
