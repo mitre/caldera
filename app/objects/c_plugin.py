@@ -31,6 +31,7 @@ class Plugin(BaseObject):
             return self.retrieve(ram['plugins'], self.unique)
         else:
             existing.update('enabled', self.enabled)
+            existing.update('access', self.access)
         return existing
 
     async def load(self):
