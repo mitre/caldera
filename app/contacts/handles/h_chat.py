@@ -13,10 +13,10 @@ class Handle:
         self.servers = set()
         self.log = logging.getLogger('chat_handler')
 
-    async def run(self, sock, path, users):
+    async def run(self, sock, path, users, server=False):
         async def _chat(mes, mes_obj):
             self.history.append(mes)
-            if sock not in self.servers:
+            if sock not in self.servers and not server:
                 await send_servers(mes)
             await send_users(mes)
 
@@ -51,7 +51,7 @@ class Handle:
                 await asyncio.wait([ws.send(mes) for ws in valid_users])
 
         async def send_servers(mes):
-            valid_servers = self.servers.union(users)
+            valid_servers = self.servers.intersection(users)
             valid_servers.discard(sock)
             if len(valid_servers) > 0:
                 await asyncio.wait([ws.send(mes) for ws in valid_servers])
@@ -62,6 +62,8 @@ class Handle:
             'server_init': _server_init
         }
 
+        if server:
+            self.servers.add(sock)
         while True:
             message = await sock.recv()
             self.log.debug(message)

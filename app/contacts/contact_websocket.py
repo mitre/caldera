@@ -17,7 +17,7 @@ class WebSocket(BaseWorld):
 
     async def start(self):
         web_socket = self.get_config('app.contact.websocket')
-        await websockets.serve(lambda x, y: self.handler.handle('server', x, y), '0.0.0.0', web_socket.split(':')[1])
+        await websockets.serve(lambda x, y: self.handler.handle('client', x, y), '0.0.0.0', web_socket.split(':')[1])
 
     async def start_client(self, ip, port, path, beacon=None):
         if ip in ['127.0.0.1', 'localhost', (await self.get_machine_info())['ip']]:
@@ -40,13 +40,15 @@ class Handler:
         self.log = BaseWorld.create_logger('websocket_handler')
         self.users = set()
 
-    async def handle(self, origin, socket, path):
-        if origin == 'server':
+    async def handle(self, conn_type, socket, path):
+        server = True
+        if conn_type == 'client':
             self.users.add(socket)
+            server = False
         try:
-            self.log.debug(f'{origin} connection on {path}')
+            self.log.debug(f'{conn_type} connection on {path}')
             for handle in [h for h in self.handles if h.tag == path.split('/')[1]]:
-                await handle.run(socket, path, self.users)
+                await handle.run(socket, path, self.users, server=server)
         except Exception as e:
             self.log.debug(e)
             self.users.discard(socket)
@@ -69,8 +71,8 @@ class Client:
                 self.socket = socket
                 if beacon:
                     await socket.send(beacon)
-                await self.handler.handle('client', socket, urllib.parse.urlparse(self.uri).path)
+                await self.handler.handle('server', socket, urllib.parse.urlparse(self.uri).path)
         except Exception as e:
-            self.log.debug(e)
+            pass
         finally:
             self.clients.pop(self.uri)
