@@ -26,14 +26,14 @@ class Handle:
                 await sock.send(json.dumps(hist))
 
         async def _server_init(mes, mes_obj):
-            self.log.debug(f'got init message: {mes}')
+            self.log.debug(f'new server connecting: {mes_obj["user"]}:{mes_obj["data"]["ip"]}')
             if len(self.history) > 0:
                 await asyncio.wait([sock.send(old_message) for old_message in self.history])
             if mes_obj['data']['host'] != socket.gethostname():
                 config = self.services.get('contact_svc').get_config()
                 config['teammates'][mes_obj['user']] = mes_obj['data']['ip']
             websocket_contact = {c.name: c for c in self.services.get('contact_svc').contacts}['websocket']
-            websocket_contact.start_client(mes_obj['data']['ip'], '7012', path)
+            await websocket_contact.start_client(mes_obj['data']['ip'], '7012', path)
 
         async def send_all(mes):
             if len(users) > 1:

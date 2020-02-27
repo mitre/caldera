@@ -135,6 +135,21 @@ class AppService(BaseService):
         await contact_svc.register(Tcp(self.get_services()))
         await contact_svc.register(WebSocket(self.get_services()))
 
+    async def connect_teammates(self):
+        websocket_contact = {c.name: c for c in self.get_service('contact_svc').contacts}['websocket']
+        port = self.get_config('app.contact.websocket').split(':')[1]
+        teammates = self.get_config('teammates')
+        myself = await self.get_machine_info()
+        beacon = {
+            'type': 'server_init',
+            'user': myself['user'],
+            'data': {'ip': myself['ip'],
+                     'host': myself['host']
+                     }
+        }
+        for mate, ip in teammates.items():
+            await websocket_contact.start_client(ip, port, 'chat', beacon=json.dumps(beacon))
+
     """ PRIVATE """
 
     async def _destroy_plugins(self):

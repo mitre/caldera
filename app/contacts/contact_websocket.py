@@ -21,11 +21,15 @@ class WebSocket(BaseWorld):
         await websockets.serve(lambda x, y: self.handler.handle('server', x, y), '0.0.0.0', web_socket.split(':')[1])
 
     async def start_client(self, ip, port, path, beacon=None):
+        if ip in ['127.0.0.1', 'localhost', (await self.get_machine_info())['ip']]:
+            return
+        path = path[1:] if path[0] == '/' else path
         uri = f'ws://{ip}:{port}/{path}'
         if uri not in self.clients:
             client = Client(uri, self.handler.handle)
             self.clients[uri] = client
-            await client.run(beacon=beacon)
+            loop = asyncio.get_event_loop()
+            loop.create_task(client.run(beacon=beacon))
 
 
 class Handler:
@@ -56,10 +60,12 @@ class Client:
         self.uri = uri
         self.handler = message_handler
         self.socket = None
+        self.log = BaseWorld.create_logger('websocket_client')
 
     async def run(self, beacon=None):
         async with websockets.connect(self.uri) as socket:
+            self.log.debug(f'connected to client: {self.uri}, {socket}')
             self.socket = socket
             if beacon:
-                socket.send(beacon)
+                await socket.send(beacon)
             await self.handler('client', socket, urllib.parse.urlparse(self.uri).path)

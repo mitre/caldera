@@ -3,6 +3,9 @@ import string
 import os
 import yaml
 import logging
+import socket
+import platform
+import getpass
 
 from base64 import b64encode, b64decode
 from datetime import datetime
@@ -96,6 +99,21 @@ class BaseWorld:
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    @staticmethod
+    async def get_machine_info():
+        def get_ip():
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                s.connect(('10.255.255.255', 1))
+                ip = s.getsockname()[0]
+            except Exception:
+                ip = '127.0.0.1'
+            finally:
+                s.close()
+            return ip
+
+        return {'user': getpass.getuser(), 'host': socket.gethostname(), 'ip': get_ip(), 'platform': platform.system()}
 
     class Access(Enum):
         APP = 0
