@@ -234,11 +234,6 @@ class RestService(BaseService):
 
         return {'user': getpass.getuser(), 'host': socket.gethostname(), 'ip': get_ip(), 'platform': platform.system()}
 
-    async def update_chat_users(self, data):
-        config = self.get_config()
-        for user, ip in data.items():
-            config['teammates'][user] = ip
-
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):

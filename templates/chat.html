@@ -35,80 +35,63 @@
     });
     let username = (config.chat_username)?config.chat_username:machine.user;
     let team = {};
+    let server = NaN;
     console.log(username + ' ' + machine.ip);
 
-    testConnectivity();
+    connectChat(window.location.hostname, confPort);
     toggleChat();
 
-    function connectToUser(user, ip, port) {
+    function connectChat(ip, port) {
         let websocket = new WebSocket('ws://'+ip+':'+port+'/chat');
         websocket.onopen = function(evt) {
             console.log('connected on: '+ ip + ':' + port);
             websocket.addEventListener('message', event => {
-                handleIncomingMessage(event.data, user);
+                handleIncomingMessage(event.data);
             });
-            team[user] = websocket;
-            beaconUser(user);
+            server = websocket;
+            beacon();
         };
         websocket.onerror = function(evt) {
             console.log('error on: '+ ip);
-            writeMessage(user +' is offline', false, Date.now());
+            writeMessage('chat is offline', false, Date.now());
         };
         websocket.onclose = function(evt) {
-            console.log('connection to ' + user + '[' + ip + '] closed')
+            console.log('connection to ' + '[' + ip + '] closed')
         };
     }
 
-    function testConnectivity(){
-        Object.keys(config.teammates).forEach(function(user) {
-            let ip = config.teammates[user];
-            connectToUser(user, ip, confPort)
-        });
+    function beacon() {
+        sendMessage('init', {'ip':machine.ip, 'host':machine.host});
     }
 
-    function beaconUser(user) {
-        sendMessage('init', {'ip':machine.ip, 'host':machine.host}, user);
-    }
-
-    function handleIncomingMessage(message, user) {
+    function handleIncomingMessage(message) {
         let m = JSON.parse(message);
         switch (m.type) {
             case 'chat': //{'type':'chat', 'user': user, 'data':{'text': message, 'ts': ms_timestamp}}
                 if(m.user === username) { writeMessage(m.data.text, false, m.data.ts); }
-                else { writeMessage(m.data.text, user, m.data.ts); }
+                else { writeMessage(m.data.text, m.user, m.data.ts); }
+                break;
+            case 'history':
+                m.data.forEach(function(mess) {
+                    handleIncomingMessage(mess);
+                });
                 break;
             case 'init': //{'type':'init', 'user': user, 'data':{'ip': ip_address}}
-                //TODO: handle init messages from other users with possible username changes or new ip address values for the same username
-                connectToUser(m.user, m.data.ip, confPort);
-                restRequest('PUT', {'index':'chat_users', [m.user]: m.ip}, doNothing);
+                //TODO: handled on server side
+                console.log(message)
                 break;
             case 'sync':
                 //TODO: handle chat history syncing or syncing of other users IPs and data
-                console.log(user + message)
+                console.log(message)
                 break;
             default:
                 console.log('received unhandleable message:' + message);
         }
     }
 
-    function sendMessage(type, data, user=undefined) {
+    function sendMessage(type, data) {
         function send(message) {
-            if(user) {
-                sendUser(message, user);
-            }
-            else {
-                sendAll(message);
-            }
-        }
-
-        function sendAll(message) {
-            Object.keys(team).forEach(function(user) {
-                sendUser(message, user);
-            });
-        }
-
-        function sendUser(message, user) {
-            team[user].send(JSON.stringify(message));
+            server.send(JSON.stringify(message))
         }
 
         let message = {'type':type, 'user': username};

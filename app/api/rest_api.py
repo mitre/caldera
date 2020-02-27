@@ -80,8 +80,7 @@ class RestApi(BaseWorld):
                     chain=lambda d: self.rest_svc.update_chain_data(d),
                     operations=lambda d: self.rest_svc.create_operation(access, d),
                     schedule=lambda d: self.rest_svc.create_schedule(d),
-                    link=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d)),
-                    chat_users=lambda d: self.rest_svc.update_chat_users(d)
+                    link=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d))
                 ),
                 POST=dict(
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
