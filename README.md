@@ -26,7 +26,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.6.1+
+* Python 3.6.1+ (with Pip3)
 * Google Chrome or Safari are our only supported browsers
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
