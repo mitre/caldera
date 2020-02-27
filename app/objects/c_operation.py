@@ -97,6 +97,7 @@ class Operation(BaseObject):
         self.autonomous = autonomous
         self.phases_enabled = phases_enabled
         self.phase = 0
+        self.obfuscator = obfuscator
         self.obfuscatePayload = obfuscatePayload
         self.auto_close = auto_close
         self.visibility = visibility
