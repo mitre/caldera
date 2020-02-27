@@ -653,7 +653,7 @@
                 for (let key in data.visibility.extra_info){
                     if (data.visibility.extra_info.hasOwnProperty(key)){
                         $('#extra-info').html('Extra Info')
-                        $('#extra-info-values').append('<li class="extra-info-contents">' + key.toString() + ': ' + data.visibility.extra_info[key].toString() + '</li>')
+                        $('#extra-info-values').append('<li class="extra-info-contents"> <b>' + key.toString() + ':</b> ' + data.visibility.extra_info[key].toString().replace(/,/g,", ") + '</li>')
                     }
                 }
             }
