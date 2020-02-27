@@ -114,6 +114,9 @@ class AppService(BaseService):
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform):
+        # if(name):
+        #     check_name = await self._services.get('file_svc').checkname(name)
+        #
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
         signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename(platform)

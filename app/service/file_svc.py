@@ -1,4 +1,5 @@
 import base64
+import random
 import os
 
 from aiohttp import web
@@ -15,11 +16,12 @@ FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 class FileSvc(BaseService):
 
-    def __init__(self):
+    def __init__(self, payload_config):
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
+        self._payload_names = payload_config['names']
 
     async def get_file(self, headers):
         """
@@ -31,14 +33,36 @@ class FileSvc(BaseService):
         """
         if 'file' not in headers:
             raise KeyError('File key was not provided')
-
-        display_name = payload = headers.get('file')
+        payload = headers.get('file')
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
+        # if obfuscation TRUE pass variable 'obscured'
+        if payload:
+            display_name = await self.build_payloadname('Obscured')
+        # # else do nothing
         if headers.get('name'):
             display_name = headers.get('name')
         return file_path, contents, display_name
+
+    async def build_payloadname(self, obfuscation):
+        self.log.debug('*** WE ARE IN build payload ***')
+        self.log.debug(obfuscation)
+        return random.choice(self._payload_names.get(obfuscation))
+
+    async def check_name(self, name):
+        """
+        Enter Description here
+
+        :param name: file name
+
+        :return: obfuscated name
+        """
+        self.log.debug('*** WE ARE IN CHECKNAME ***')
+
+
+        name = 'MP RETURN CHECK_NAME'
+        return name
 
     async def save_file(self, filename, payload, target_dir):
         self._save(os.path.join(target_dir, filename), payload)

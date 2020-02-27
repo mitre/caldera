@@ -75,16 +75,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
-        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
-        BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-
+        BaseWorld.apply_config(yaml.load(c, Loader=yaml.FullLoader))
         data_svc = DataService()
         contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
-        # payload_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService()
-        file_svc = FileSvc()
+        file_svc = FileSvc(BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config'])
         learning_svc = LearningService()
         app_svc = AppService(application=web.Application())
 
