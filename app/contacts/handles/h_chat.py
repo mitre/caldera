@@ -22,11 +22,17 @@ class Handle:
 
         async def _init(mes, mes_obj):
             self.log.debug(f'new chat client initialized')
+            await _send_history()
+
+        async def _send_history():
             if len(self.history) > 0:
                 hist = {'type': 'history',
                         'data': self.history
                         }
                 await sock.send(json.dumps(hist))
+
+        async def _set_history(mes, mes_obj):
+            self.history = mes_obj['data']
 
         async def _flag_server(mes, mes_obj):
             self.servers.add(sock)
@@ -34,8 +40,7 @@ class Handle:
         async def _server_init(mes, mes_obj):
             self.log.debug(f'new server connecting: {mes_obj["user"]}:{mes_obj["data"]["ip"]}')
             await _flag_server(None, None)
-            if len(self.history) > 0:
-                await asyncio.wait([sock.send(old_message) for old_message in self.history])
+            await _send_history()
             if mes_obj['data']['host'] != socket.gethostname():
                 config = self.services.get('contact_svc').get_config()
                 config['teammates'][mes_obj['user']] = mes_obj['data']['ip']
@@ -63,7 +68,8 @@ class Handle:
             'chat': _chat,
             'init': _init,
             'welcome': _flag_server,
-            'server_init': _server_init
+            'server_init': _server_init,
+            'history': _set_history
         }
 
         welcome = {'type': 'welcome', 'data': 'thanks for connecting to your friendly local chat server'}

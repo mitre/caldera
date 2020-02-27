@@ -34,7 +34,6 @@
         async: false
     });
     let username = (config.chat_username)?config.chat_username:machine.user;
-    let team = {};
     let server = NaN;
     console.log(username + ' ' + machine.ip);
 
@@ -75,6 +74,8 @@
                 m.data.forEach(function(mess) {
                     handleIncomingMessage(mess);
                 });
+                break;
+            case 'welcome':
                 break;
             case 'init': //{'type':'init', 'user': user, 'data':{'ip': ip_address}}
                 //TODO: handled on server side
@@ -127,6 +128,7 @@
             line.find('#chat-user').text(user + ':').html();
         } else {
             line.prop('class','outgoing');
+            line.find('#chat-user').remove();
         }
         line.find('#chat-line-text').text(m).html();
         line.find('#timestamp').html(now.toLocaleString());
