@@ -16,7 +16,6 @@ class WebSocket(BaseWorld):
         self.clients = {}
 
     async def start(self):
-        loop = asyncio.get_event_loop()
         web_socket = self.get_config('app.contact.websocket')
         await websockets.serve(lambda x, y: self.handler.handle('server', x, y), '0.0.0.0', web_socket.split(':')[1])
 
@@ -26,8 +25,7 @@ class WebSocket(BaseWorld):
         path = path[1:] if path[0] == '/' else path
         uri = f'ws://{ip}:{port}/{path}'
         if uri not in self.clients:
-            client = Client(uri, self.handler.handle)
-            self.clients[uri] = client
+            client = Client(uri, self.handler, self.clients)
             loop = asyncio.get_event_loop()
             loop.create_task(client.run(beacon=beacon))
 
@@ -46,26 +44,33 @@ class Handler:
         if origin == 'server':
             self.users.add(socket)
         try:
-            self.log.debug(path)
+            self.log.debug(f'{origin} connection on {path}')
             for handle in [h for h in self.handles if h.tag == path.split('/')[1]]:
                 await handle.run(socket, path, self.users)
         except Exception as e:
             self.log.debug(e)
-            self.users.remove(socket)
+            self.users.discard(socket)
 
 
 class Client:
 
-    def __init__(self, uri, message_handler):
+    def __init__(self, uri, message_handler, clients):
         self.uri = uri
         self.handler = message_handler
         self.socket = None
         self.log = BaseWorld.create_logger('websocket_client')
+        self.clients = clients
 
     async def run(self, beacon=None):
-        async with websockets.connect(self.uri) as socket:
-            self.log.debug(f'connected to client: {self.uri}, {socket}')
-            self.socket = socket
-            if beacon:
-                await socket.send(beacon)
-            await self.handler('client', socket, urllib.parse.urlparse(self.uri).path)
+        try:
+            async with websockets.connect(self.uri) as socket:
+                self.clients[self.uri] = self
+                self.log.debug(f'connected to client: {self.uri}, {socket}')
+                self.socket = socket
+                if beacon:
+                    await socket.send(beacon)
+                await self.handler.handle('client', socket, urllib.parse.urlparse(self.uri).path)
+        except Exception as e:
+            self.log.debug(e)
+        finally:
+            self.clients.pop(self.uri)
