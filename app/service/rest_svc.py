@@ -147,8 +147,8 @@ class RestService(BaseService):
         self.loop.create_task(operation.run(self.get_services()))
         return [operation.display]
 
-    async def create_schedule(self, data):
-        operation = await self._build_operation_object(data['operation'])
+    async def create_schedule(self, access, data):
+        operation = await self._build_operation_object(access, data['operation'])
         scheduled = await self.get_service('data_svc').store(
             Schedule(name=operation.name,
                      schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
