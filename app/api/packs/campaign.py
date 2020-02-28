@@ -33,7 +33,8 @@ class CampaignPack(BaseWorld):
         abilities = await self.data_svc.locate('abilities', match=access)
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
+        adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                             key=lambda a: a['name'])
         return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads,
                     tactics=tactics)
 
@@ -42,10 +43,12 @@ class CampaignPack(BaseWorld):
     async def _section_operations(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         hosts = [h.display for h in await self.data_svc.locate('agents', match=access)]
-        groups = list(set(([h['group'] for h in hosts])))
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
+        groups = sorted(list(set(([h['group'] for h in hosts]))))
+        adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                             key=lambda a: a['name'])
         sources = [s.display for s in await self.data_svc.locate('sources', match=access)]
-        planners = [p.display for p in await self.data_svc.locate('planners')]
+        planners = sorted([p.display for p in await self.data_svc.locate('planners')],
+                          key=lambda p: p['name'])
         obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         operations = [o.display for o in await self.data_svc.locate('operations', match=access)]
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
