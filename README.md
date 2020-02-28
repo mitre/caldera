@@ -26,7 +26,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.6.1+
+* Python 3.6.1+ (with Pip3)
 * Google Chrome or Safari are our only supported browsers
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
@@ -37,9 +37,9 @@ Start by cloning this repository recursively, passing the desired version/releas
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next run the install.sh script. Replace "ubuntu" with your operating-system. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
+Next run the install.sh script. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
 ```
-./install.sh --ubuntu
+./install.sh
 ```
 
 Finally, start the server. 

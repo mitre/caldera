@@ -56,6 +56,7 @@ def run_tasks(services):
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
+    loop.create_task(learning_svc.build_model())
     loop.run_until_complete(start_server())
     try:
         logging.info('All systems ready.')
