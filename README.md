@@ -54,7 +54,7 @@ You can now navigate to 127.0.0.1:8888 in a browser and log in with either red t
 
 Watch the following video for a brief run through of how to run your first operation. 
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
+[![IMAGE ALT TEXT HERE](https://www.youtube.com/watch?v=_mVGjqu03fg)
 
 ## Developers
 
