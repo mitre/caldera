@@ -18,6 +18,15 @@ class Ability(BaseObject):
         return self.encode_string(decoded_test)
 
     @property
+    def obfuscate(self):
+        decoded_test = self.decode_bytes(self._test)
+        for k, v in self.get_config().items():
+            if k.startswith('app.'):
+                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
+                decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
+        return self.encode_string(decoded_test)
+
+    @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
 

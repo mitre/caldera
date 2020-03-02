@@ -1,0 +1,6 @@
+---
+payload_config:
+  names:
+    Obscured:
+      - obscured1
+      - obscured2

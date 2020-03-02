@@ -60,7 +60,8 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_links = []
-        if agent.trusted:
+        #FIX PUT BACK agent.trusted:
+        if agent:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             await self._apply_adjustments(operation, agent_links)
             if trim:
@@ -112,6 +113,12 @@ class PlanningService(BasePlanningService):
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
         for a in await agent.capabilities(abilities):
+            if operation.obfuscatePayload:
+                if a.payload:
+                    obfuscatedPayload = 'Obfuscated.sh'
+                    # a.test.payload = operation.obfuscatedPayloadList[0]
+
+                    a.test.replace('wifi.sh', obfuscatedPayload)
             links.append(
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))

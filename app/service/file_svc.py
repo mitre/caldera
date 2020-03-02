@@ -36,8 +36,14 @@ class FileSvc(BaseService):
         payload = headers.get('file')
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
-        file_path, contents = await self.read_file(payload)
+
         # if obfuscation TRUE pass variable 'obscured'
+        if headers.get('op_id'):
+            op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
+            if op.obfuscatedPayloads:
+                payload = op.deobfuscate_payload(payload)
+
+        file_path, contents = await self.read_file(payload)
         if payload:
             display_name = await self.build_payloadname('Obscured')
         # # else do nothing
@@ -46,8 +52,6 @@ class FileSvc(BaseService):
         return file_path, contents, display_name
 
     async def build_payloadname(self, obfuscation):
-        self.log.debug('*** WE ARE IN build payload ***')
-        self.log.debug(obfuscation)
         return random.choice(self._payload_names.get(obfuscation))
 
     async def check_name(self, name):
