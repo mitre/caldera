@@ -135,8 +135,8 @@
             </div>
         </div>
     </div>
-    <textarea id="instructions">{{ instructions }}</textarea>
-    <textarea id="beacons" onchange="restRequest();"></textarea>
+    <textarea id="beacons" onchange="restRequest()"></textarea>
+    <textarea id="instructions"></textarea>
 </body>
 </html>
 <script src="/gui/jquery/jquery.js"></script>
@@ -148,14 +148,15 @@
         });
     });
     function restRequest() {
-        let data = $('#input').val();
-        return;
+        let beacon = $('#beacons').val();
         $.ajax({
            url: '/beacon',
            type: 'POST',
            contentType: 'application/json',
-           data: JSON.stringify(data),
-           success: function(data, status, options) {},
+           data: JSON.stringify(beacon),
+           success: function(data, status, options) {
+               $('#instructions').text(data);
+           },
            error: function (xhr, ajaxOptions, thrownError) {
                console.log(thrownError);
            }
