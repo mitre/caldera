@@ -16,12 +16,12 @@ FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 class FileSvc(BaseService):
 
-    def __init__(self, payload_config):
+    def __init__(self):
         self.log = self.add_service('file_svc', self)
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
-        self._payload_names = payload_config['names']
+
 
     async def get_file(self, headers):
         """
@@ -44,8 +44,8 @@ class FileSvc(BaseService):
                 payload = op.deobfuscate_payload(payload)
 
         file_path, contents = await self.read_file(payload)
-        if payload:
-            display_name = await self.build_payloadname('Obscured')
+        # if payload:
+        #     display_name = await self.build_payloadname('Obscured')
         # # else do nothing
         if headers.get('name'):
             display_name = headers.get('name')

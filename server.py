@@ -14,6 +14,7 @@ from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
+from app.objects.c_ability import Ability
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
@@ -76,12 +77,13 @@ if __name__ == '__main__':
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
         BaseWorld.apply_config(yaml.load(c, Loader=yaml.FullLoader))
-        data_svc = DataService()
+        data_svc = DataService(BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config'])
         contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
         planning_svc = PlanningService()
         rest_svc = RestService()
         auth_svc = AuthService()
-        file_svc = FileSvc(BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config'])
+        # file_svc = FileSvc(BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config'])
+        file_svc = FileSvc()
         learning_svc = LearningService()
         app_svc = AppService(application=web.Application())
 

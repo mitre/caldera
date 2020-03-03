@@ -1,7 +1,7 @@
 import re
 import os
 import random
-
+from base64 import b64encode
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_object import BaseObject
@@ -22,12 +22,15 @@ class Ability(BaseObject):
     def obfuscate(self):
         decoded_test = self.decode_bytes(self._test)
         plainPayload = self.payload
-        obfuscatedPayload = random.choice(self.payload_names.get('Obscured'))
+        obfuscatedPayload = random.choice(self.payload_name.get('Obscured'))
+        obfuscatedPayload_cmd = decoded_test.replace(plainPayload, obfuscatedPayload)
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                decoded_test = re.sub(re_variable, str(v).strip(), self.obfuscate)
-        return self.encode_string(decoded_test)
+                obfuscatedPayload_cmd = re.sub(re_variable, str(v).strip(), obfuscatedPayload_cmd)
+        obfuscatedPayload_cmd = obfuscatedPayload_cmd.encode()
+        payload_encoded = b64encode(obfuscatedPayload_cmd)
+        return payload_encoded
 
     @property
     def unique(self):
@@ -54,12 +57,13 @@ class Ability(BaseObject):
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
                                timeout=self.timeout, access=self.access.value))
 
-    def __init__(self, ability_id, payload_config, tactic=None, technique_id=None, technique=None, name=None, test=None,
+    def __init__(self, payload_name, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
+        self.payload_name = payload_name
         self.tactic = tactic
         self.technique_name = technique
         self.technique_id = technique_id
@@ -74,7 +78,6 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
-        self._payload_names = payload_config['names']
         if access:
             self.access = self.Access(access)
 

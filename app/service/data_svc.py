@@ -23,11 +23,12 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 class DataService(BaseService):
 
-    def __init__(self):
+    def __init__(self, payload_config):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
                            schedules=[], plugins=[], obfuscators=[])
         self.ram = copy.deepcopy(self.schema)
+        self._payload_name = payload_config['names']
 
     @staticmethod
     async def destroy():
@@ -209,7 +210,7 @@ class DataService(BaseService):
                         for name, info in executors.items():
                             for e in name.split(','):
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8'))
-                                a = await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
+                                a = await self._create_ability(payload_name=self._payload_name, ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                                technique_name=ab['technique']['name'],
                                                                technique_id=ab['technique']['attack_id'],
                                                                test=encoded_test.decode(),
@@ -288,7 +289,7 @@ class DataService(BaseService):
         for adv in self.strip_yml(filename):
             return adv.get('phases')
 
-    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
+    async def _create_ability(self, payload_name, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
                               privilege=None, timeout=60, access=None, repeatable=False):
         ps = []
@@ -301,7 +302,7 @@ class DataService(BaseService):
                 relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
                             requirement[module]]
                 rs.append(Requirement(module=module, relationships=relation))
-        ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
+        ability = Ability(payload_name=payload_name, ability_id=ability_id, name=name, test=test, tactic=tactic,
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
                           cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
