@@ -1,23 +1,24 @@
----
-port: 8888
-plugins:
-  - sandcat
-  - stockpile
-  - compass
-  - terminal
-  - response
-  - gameboard
-users:
-  red:
-    admin: admin
-    red: admin
-  blue:
-    blue: admin
 api_key: ADMIN123
-exfil_dir: /tmp
-reports_dir: /tmp
-crypt_salt: REPLACE_WITH_RANDOM_VALUE
+app.contact.html: /link
 app.contact.http: http://127.0.0.1:8888
 app.contact.tcp: 127.0.0.1:7010
 app.contact.udp: 127.0.0.1:7011
 app.contact.websocket: 127.0.0.1:7012
+crypt_salt: REPLACE_WITH_RANDOM_VALUE
+exfil_dir: /tmp
+plugins:
+- sandcat
+- stockpile
+- compass
+- terminal
+- response
+- gameboard
+- abilities
+port: 8888
+reports_dir: /tmp
+users:
+  blue:
+    blue: admin
+  red:
+    admin: admin
+    red: admin
