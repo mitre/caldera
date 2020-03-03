@@ -1,5 +1,6 @@
 import re
 import os
+import random
 
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -20,10 +21,12 @@ class Ability(BaseObject):
     @property
     def obfuscate(self):
         decoded_test = self.decode_bytes(self._test)
+        plainPayload = self.payload
+        obfuscatedPayload = random.choice(self.payload_names.get('Obscured'))
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
+                decoded_test = re.sub(re_variable, str(v).strip(), self.obfuscate)
         return self.encode_string(decoded_test)
 
     @property
@@ -51,7 +54,7 @@ class Ability(BaseObject):
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
                                timeout=self.timeout, access=self.access.value))
 
-    def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
+    def __init__(self, ability_id, payload_config, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None):
         super().__init__()
@@ -71,6 +74,7 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
+        self._payload_names = payload_config['names']
         if access:
             self.access = self.Access(access)
 

@@ -118,7 +118,7 @@ class PlanningService(BasePlanningService):
                     obfuscatedPayload = 'Obfuscated.sh'
                     # a.test.payload = operation.obfuscatedPayloadList[0]
 
-                    a.test.replace('wifi.sh', obfuscatedPayload)
+                    a.obfuscate.replace('wifi.sh', obfuscatedPayload)
             links.append(
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))
