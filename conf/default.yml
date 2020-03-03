@@ -1,5 +1,5 @@
 api_key: ADMIN123
-app.contact.html: /link
+app.contact.html: /weather
 app.contact.http: http://127.0.0.1:8888
 app.contact.tcp: 127.0.0.1:7010
 app.contact.udp: 127.0.0.1:7011
@@ -13,7 +13,6 @@ plugins:
 - terminal
 - response
 - gameboard
-- abilities
 port: 8888
 reports_dir: /tmp
 users:
