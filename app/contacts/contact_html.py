@@ -23,5 +23,9 @@ class Html(BaseWorld):
         profile = json.loads(self.decode_bytes(request.query.get('profile')))
         profile['paw'] = profile.get('paw')
         profile['contact'] = 'html'
-        _, instructions = await self.contact_svc.handle_heartbeat(**profile)
-        return dict(instructions=self.encode_string(json.dumps([i.display for i in instructions])))
+        agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
+        response = dict(paw=agent.paw,
+                        sleep=await agent.calculate_sleep(),
+                        watchdog=agent.watchdog,
+                        instructions=json.dumps([json.dumps(i.display) for i in instructions]))
+        return dict(instructions=self.encode_string(json.dumps(response)))
