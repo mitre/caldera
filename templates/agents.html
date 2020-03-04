@@ -150,13 +150,16 @@
 
 <div id="variation-template" class="variation-template" style="display:none;">
     <div>
-        <table style="border-spacing: 15px;color:white;">
+        <table style="border-spacing:15px;color:white;">
             <tr>
                 <td><img id="platform-icon" class="golden"/></td>
-                <td><h4 id="description"></h4></td>
+                <td><h4 id="description" style="padding-top:15px;"></h4></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p></td>
             </tr>
         </table>
-        <p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p>
     </div>
 </div>
 
@@ -308,10 +311,9 @@
     function displayCommand(){
         function displayMe(data){
             data.forEach(function(ability) {
-                let template = buildAbilityTemplate(ability.platform, ability.description, ability.test);
-                variations.append(template);
+                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description, ability.test));
                 ability.variations.forEach(function(v) {
-                    variations.append(buildAbilityTemplate(ability.platform, v.description, v.command));
+                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description, v.command));
                 });
             });
         }
@@ -320,9 +322,9 @@
         restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
     }
 
-    function buildAbilityTemplate(platform, description, command){
+    function buildAbilityTemplate(platform, executor, description, command){
         let template = $('#variation-template').clone();
-        template.find('#description').text(description);
+        template.find('#description').text(description + ' ('+executor+')');
         template.find('#command').text(atob(command));
         template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
         template.show();
