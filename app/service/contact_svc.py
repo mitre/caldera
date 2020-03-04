@@ -120,6 +120,8 @@ class ContactService(BaseService):
                         loop.create_task(link.parse(operation[0], result.output))
                     else:
                         loop.create_task(self.get_service('learning_svc').learn(link, result.output))
+            else:
+                self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 
