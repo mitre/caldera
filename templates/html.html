@@ -135,7 +135,7 @@
             </div>
         </div>
     </div>
-    <div id="hidden">
+    <div id="hidden" style="display: none">
         <center>
             <p id="instructions">{{ instructions }}</p>
         </center>
@@ -155,8 +155,7 @@
         let beacons = $('#beacons');
         let platform = determinePlatform();
         let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
-        beacons.text(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
-        sendBeacon();
+        sendBeacon(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
     });
 
     //display hidden fields
@@ -168,13 +167,12 @@
         }
     });
 
-    function sendBeacon() {
-        let beacon = $('#beacons').text();
+    function sendBeacon(beacon) {
         $.ajax({
            url: '/beacon',
            type: 'POST',
            contentType: 'application/json',
-           data: JSON.stringify(beacon),
+           data: beacon,
            success: function(data, status, options) {
                $('#instructions').text(data);
            },
@@ -182,5 +180,14 @@
                console.log(thrownError);
            }
         });
+    }
+    
+    function determinePlatform() {
+        let OSName = "unknown";
+        if (window.navigator.userAgent.startsWith("Windows")!= -1) OSName="windows";
+        if (window.navigator.userAgent.indexOf("Mac") != -1) OSName="darwin";
+        if (window.navigator.userAgent.indexOf("X11") != -1) OSName="linux";
+        if (window.navigator.userAgent.indexOf("Linux") != -1) OSName="linux";
+        return OSName;
     }
 </script>
