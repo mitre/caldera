@@ -24,7 +24,8 @@ class CampaignPack(BaseWorld):
     async def _section_agent(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         agents = [h.display for h in await self.data_svc.locate('agents', match=access)]
-        return dict(agents=agents)
+        delivery_commands = await self.data_svc.locate('abilities', match=dict(tactic='initial-access'))
+        return dict(agents=agents, delivery_commands=[d.display for d in delivery_commands])
 
     @check_authorization
     @template('profiles.html')

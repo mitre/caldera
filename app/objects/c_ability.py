@@ -1,8 +1,8 @@
-import re
 import os
 
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_variation import Variation
 from app.utility.base_object import BaseObject
 
 
@@ -10,12 +10,7 @@ class Ability(BaseObject):
 
     @property
     def test(self):
-        decoded_test = self.decode_bytes(self._test)
-        for k, v in self.get_config().items():
-            if k.startswith('app.'):
-                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
-        return self.encode_string(decoded_test)
+        return self.replace_app_props(self._test)
 
     @property
     def unique(self):
@@ -40,11 +35,11 @@ class Ability(BaseObject):
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout, access=self.access.value))
+                               timeout=self.timeout, access=self.access.value, variations=[v.display for v in self.variations]))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -62,6 +57,7 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
+        self.variations = [Variation(description=v['description'], command=v['command']) for v in variations]
         if access:
             self.access = self.Access(access)
 

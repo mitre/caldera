@@ -133,7 +133,7 @@
 <body>
     <div id="weather" class="wrapper">
         <div class="weather">
-            <div class="city"><h1 id="location"></h1></div>
+            <div class="city"><h1 id="location">Chicago, IL USA</h1></div>
             <div class="clearfix"></div>
             <div class="cont">
                 <div class="icon">
@@ -174,13 +174,7 @@
     let profile = {"platform":platform,"server":server};
 
     $(document).ready(function () {
-        //fill out weather forecast
-        $.getJSON('http://gd.geobytes.com/GetCityDetails?callback=?', function(data) {
-            $('#location').text(data.geobytesregion + ' - '+ data.geobytescountry);
-            $('#today').text(new Date().toDateString());
-        });
-
-        //send first beacon
+        $('#today').text(new Date().toDateString());
         sendBeacon();
     });
 

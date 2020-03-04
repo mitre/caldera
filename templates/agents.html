@@ -9,6 +9,8 @@
           Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
           least 1 agent in order to run an operation.
       </p>
+      <a class="blink" onclick="$('#delivery-modal').show();">Click here to deploy an agent</a>
+      <br><br>
       <hr>
       <br>
       <div>
@@ -126,15 +128,45 @@
     </form>
 </div>
 
+<div id="delivery-modal" class="modal">
+    <form class="modal-content">
+        <div class="container modal-box">
+            <div class="row duk-modal">
+                <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:92%">
+                    <select id="chosen-agent" onchange="displayCommand()">
+                        <option disabled selected>Choose an agent</option>
+                        {% for d in delivery_commands %}
+                            <option value="{{ d.ability_id }}" data-ability="{{ d }}">{{ d.name }} for {{ d.platform }} platform</option>
+                        {% endfor %}}
+                    </select>
+                    <div id="base-ability" class="variation-template">
+                        <h3 id="base-description"></h3>
+                        <pre id="base-command"></pre>
+                    </div>
+                    <hr>
+                    <ul id="variations"></ul>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="variation-template" class="variation-template" style="display:none">
+    <h3 id="description"></h3>
+    <pre id="command"></pre>
+</div>
+
 <script>
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
     $(document).ready(function () {
+        blink('.blink');
         let agentCnt = ($('#agent-table tr').length-1);
         if(agentCnt < 1){
-            stream('Looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
+            stream('Looks like you have no agents. You should deploy one now.');
         } else {
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
@@ -260,6 +292,32 @@
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
+    }
+
+    function blink(selector){
+        $(selector).fadeOut('slow', function(){
+            $(this).fadeIn('slow', function(){
+                blink(this);
+            });
+        });
+    }
+
+    function displayCommand(){
+        function displayMe(data){
+            let baseAbility = $('#base-ability');
+            baseAbility.find('#base-description').text(data[0].description);
+            baseAbility.find('#base-command').text(atob(data[0].test));
+            data[0].variations.forEach(function(v) {
+                let template = $('#variation-template').clone();
+                template.find('#description').text(v.description);
+                template.find('#command').text(atob(v.command));
+                template.show();
+                variations.append(template);
+            });
+        }
+        let variations = $('#variations');
+        variations.empty();
+        restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
     }
 
     //# sourceURL=agents.js
