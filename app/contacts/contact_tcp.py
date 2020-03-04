@@ -31,7 +31,7 @@ class Tcp(BaseWorld):
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
                         status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
-                        beacon = dict(paw=session.paw, result=dict(id=instruction.id, output=self.encode_string(response), status=status))
+                        beacon = dict(paw=session.paw, results=[dict(id=instruction.id, output=self.encode_string(response), status=status)])
                         await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
                     except Exception as e:

@@ -152,7 +152,6 @@
         });
 
         //send first beacon
-        let beacons = $('#beacons');
         let platform = determinePlatform();
         let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
         sendBeacon(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
