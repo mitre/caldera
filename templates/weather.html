@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <title>Weather</title>
     <style>
@@ -105,6 +104,29 @@
             color: #FFFFFF;
             font-size: 18pt;
         }
+        .profiler {
+            margin: 25px;
+            border: 1px solid black;
+            border-radius: 10px;
+            background-color: #f2f2f2;
+            padding: 20px;
+            width: 50%;
+        }
+        textarea {
+          width: 100%;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        button {
+            width: 50%;
+            height: 50px;
+            background-color: green;
+            color: white;
+            border-radius: 15px;
+        }
     </style>
 
 </head>
@@ -135,15 +157,22 @@
             </div>
         </div>
     </div>
-    <div id="hidden" style="display: none">
-        <center>
-            <p id="instructions">{{ instructions }}</p>
-        </center>
-    </div>
+    <center>
+        <div id="hidden" class="profiler" style="display:none">
+            <h1 id="paw"></h1>
+            <textarea id="result" placeholder="Enter results"></textarea>
+            <button onclick="sendBeacon()">submit</button>
+            <p id="instructions" style="display:none">{{ instructions }}</p>
+        </div>
+    </center>
 </body>
 </html>
 <script src="/gui/jquery/jquery.js"></script>
 <script>
+    let platform = determinePlatform();
+    let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+    let profile = {"platform":platform,"server":server};
+
     $(document).ready(function () {
         //fill out weather forecast
         $.getJSON('http://gd.geobytes.com/GetCityDetails?callback=?', function(data) {
@@ -152,9 +181,7 @@
         });
 
         //send first beacon
-        let platform = determinePlatform();
-        let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
-        sendBeacon(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
+        sendBeacon();
     });
 
     //display hidden fields
@@ -163,17 +190,25 @@
         log = log.concat(event.key);
         if(log.toLowerCase().includes('caldera')) {
             $('#weather').fadeOut(1000);
+            $('#hidden').show();
         }
     });
 
-    function sendBeacon(beacon) {
+    function sendBeacon() {
+        let beacon = JSON.parse(JSON.stringify(profile));
+        if($('#result').val()) {
+            beacon['results'] = [{"output":$('#result').val(),"pid":0,"status":0,"id":$('#paw').text()+'-html'}];
+        }
         $.ajax({
            url: '/beacon',
            type: 'POST',
            contentType: 'application/json',
-           data: beacon,
+           data: btoa(JSON.stringify(beacon)),
            success: function(data, status, options) {
-               $('#instructions').text(data);
+               let instructions = JSON.parse(atob(data));
+               profile['paw'] = instructions.paw;
+               $('#paw').text(instructions.paw);
+               $('#result').val('');
            },
            error: function (xhr, ajaxOptions, thrownError) {
                console.log(thrownError);

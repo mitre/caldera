@@ -18,7 +18,7 @@ class Html(BaseWorld):
 
     """ PRIVATE """
 
-    @template('html.html')
+    @template('weather.html')
     async def _accept_beacon(self, request):
         try:
             profile = json.loads(self.decode_bytes(request.query.get('profile')))

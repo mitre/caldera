@@ -85,7 +85,7 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object, instructions to execute
         """
-        results = kwargs.pop('results', dict())
+        results = kwargs.pop('results', [])
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
