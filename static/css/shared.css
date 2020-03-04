@@ -471,4 +471,10 @@ p[onclick] {
     padding:10px;
     text-align: left;
     margin: 15px;
+    box-sizing: border-box;
+}
+.variation-template img {
+    height: 25px;
+    -webkit-filter: invert(1);
+   filter: invert(1);
 }
