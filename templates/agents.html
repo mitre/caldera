@@ -129,18 +129,18 @@
 </div>
 
 <div id="delivery-modal" class="modal">
-    <form class="modal-content">
+    <form class="modal-content" style="width:90%;">
         <div class="container modal-box">
             <div class="row">
                 <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                 <div class="column" style="flex:92%">
-                    <select id="chosen-agent" onchange="displayCommand()">
+                    <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
                         <option disabled selected>Choose an agent</option>
                         {% for i,a in abilities.items() %}
                             <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
                         {% endfor %}}
                     </select>
-                    <p style="font-size:12px;color:white">** Variations of the deployment command will be displayed for each supported operating system</p>
+                    <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
                     <ul id="variations"></ul>
                 </div>
             </div>
@@ -152,11 +152,11 @@
     <div>
         <table style="border-spacing: 15px;color:white;">
             <tr>
-                <td><img id="platform-icon"/></td>
+                <td><img id="platform-icon" class="golden"/></td>
                 <td><h4 id="description"></h4></td>
             </tr>
         </table>
-        <p id="command" style="color:white;font-size:13px;"></p>
+        <p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p>
     </div>
 </div>
 
@@ -308,7 +308,8 @@
     function displayCommand(){
         function displayMe(data){
             data.forEach(function(ability) {
-                variations.append(buildAbilityTemplate(ability.platform, ability.description, ability.test));
+                let template = buildAbilityTemplate(ability.platform, ability.description, ability.test);
+                variations.append(template);
                 ability.variations.forEach(function(v) {
                     variations.append(buildAbilityTemplate(ability.platform, v.description, v.command));
                 });
@@ -327,5 +328,6 @@
         template.show();
         return template;
     }
+
     //# sourceURL=agents.js
 </script>
