@@ -194,7 +194,8 @@
     function sendBeacon() {
         let beacon = JSON.parse(JSON.stringify(profile));
         if($('#result').val()) {
-            beacon['results'] = [{"output":$('#result').val(),"pid":0,"status":0,"id":$('#paw').text()+'-html'}];
+            let identifier = Math.random().toString(36).substring(7);
+            beacon['results'] = [{"output":$('#result').val(),"pid":0,"status":0,"id":$('#paw').text()+'-'+identifier+'-html'}];
         }
         $.ajax({
            url: '/beacon',
