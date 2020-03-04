@@ -9,7 +9,7 @@ class TestRestSvc(TestBase):
         self.initialize()
         BaseWorld.apply_config({'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
         self.run_async(self.data_svc.store(
-            Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}')), variations=[])
+            Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
         )
 
     def test_update_config(self):

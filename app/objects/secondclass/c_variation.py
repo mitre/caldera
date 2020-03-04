@@ -15,4 +15,3 @@ class Variation(BaseObject):
         super().__init__()
         self.description = description
         self._command = self.encode_string(command)
-
