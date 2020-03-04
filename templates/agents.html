@@ -136,13 +136,13 @@
                 <div class="column" style="flex:92%">
                     <select id="chosen-agent" onchange="displayCommand()">
                         <option disabled selected>Choose an agent</option>
-                        {% for d in delivery_commands %}
-                            <option value="{{ d.ability_id }}" data-ability="{{ d }}">{{ d.name }} for {{ d.platform }} platform</option>
+                        {% for i,a in abilities.items() %}
+                            <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
                         {% endfor %}}
                     </select>
                     <div id="base-ability" class="variation-template">
-                        <h3 id="base-description"></h3>
-                        <pre id="base-command"></pre>
+                        <h4 id="base-description"></h4>
+                        <code id="base-command"></code>
                     </div>
                     <hr>
                     <ul id="variations"></ul>
@@ -153,8 +153,8 @@
 </div>
 
 <div id="variation-template" class="variation-template" style="display:none">
-    <h3 id="description"></h3>
-    <pre id="command"></pre>
+    <h4 id="description"></h4>
+    <code id="command"></code>
 </div>
 
 <script>
