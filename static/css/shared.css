@@ -95,7 +95,7 @@ pre {
 .row {
     margin-top:50px;
     text-align:center;
-    background-color: var(--section-background);
+    background-image: url('/gui/img/back-grey.jpg');
     padding:25px;
     border-radius:25px;
     width: 95%;
@@ -467,8 +467,17 @@ p[onclick] {
 .maroon {
     background-color: maroon;
 }
+.golden {
+    background-color: goldenrod;
+    border-radius: 50%;
+    padding:5px;
+}
 .variation-template {
     padding:10px;
     text-align: left;
     margin: 15px;
+    box-sizing: border-box;
+}
+.variation-template img {
+    height: 25px;
 }

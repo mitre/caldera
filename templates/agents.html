@@ -129,22 +129,18 @@
 </div>
 
 <div id="delivery-modal" class="modal">
-    <form class="modal-content">
+    <form class="modal-content" style="width:90%;">
         <div class="container modal-box">
-            <div class="row duk-modal">
+            <div class="row">
                 <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                 <div class="column" style="flex:92%">
-                    <select id="chosen-agent" onchange="displayCommand()">
+                    <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
                         <option disabled selected>Choose an agent</option>
                         {% for i,a in abilities.items() %}
                             <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
                         {% endfor %}}
                     </select>
-                    <div id="base-ability" class="variation-template">
-                        <h4 id="base-description"></h4>
-                        <code id="base-command"></code>
-                    </div>
-                    <hr>
+                    <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
                     <ul id="variations"></ul>
                 </div>
             </div>
@@ -152,9 +148,16 @@
     </form>
 </div>
 
-<div id="variation-template" class="variation-template" style="display:none">
-    <h4 id="description"></h4>
-    <code id="command"></code>
+<div id="variation-template" class="variation-template" style="display:none;">
+    <div>
+        <table style="border-spacing: 15px;color:white;">
+            <tr>
+                <td><img id="platform-icon" class="golden"/></td>
+                <td><h4 id="description"></h4></td>
+            </tr>
+        </table>
+        <p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p>
+    </div>
 </div>
 
 <script>
@@ -304,20 +307,26 @@
 
     function displayCommand(){
         function displayMe(data){
-            let baseAbility = $('#base-ability');
-            baseAbility.find('#base-description').text(data[0].description);
-            baseAbility.find('#base-command').text(atob(data[0].test));
-            data[0].variations.forEach(function(v) {
-                let template = $('#variation-template').clone();
-                template.find('#description').text(v.description);
-                template.find('#command').text(atob(v.command));
-                template.show();
+            data.forEach(function(ability) {
+                let template = buildAbilityTemplate(ability.platform, ability.description, ability.test);
                 variations.append(template);
+                ability.variations.forEach(function(v) {
+                    variations.append(buildAbilityTemplate(ability.platform, v.description, v.command));
+                });
             });
         }
         let variations = $('#variations');
         variations.empty();
         restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
+    }
+
+    function buildAbilityTemplate(platform, description, command){
+        let template = $('#variation-template').clone();
+        template.find('#description').text(description);
+        template.find('#command').text(atob(command));
+        template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
+        template.show();
+        return template;
     }
 
     //# sourceURL=agents.js
