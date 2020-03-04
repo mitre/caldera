@@ -30,5 +30,5 @@ class Http(BaseWorld):
                             watchdog=agent.watchdog,
                             instructions=json.dumps([json.dumps(i.display) for i in instructions]))
             return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
-        except Exception:
-            logging.error('Malformed beacon')
+        except Exception as e:
+            logging.error('Malformed beacon: %s' % e)
