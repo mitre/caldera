@@ -13,11 +13,6 @@
           padding: 0;
           margin: 0 auto;
         }
-        textarea {
-            width: 80%;
-            min-height: 100px;
-            margin: 15px;
-        }
         .wrapper::before{
           content: "";
           background: rgba(0,0,0,0.2);
@@ -140,10 +135,11 @@
             </div>
         </div>
     </div>
-    <center>
-        <textarea id="beacons" onchange="sendBeacon()"></textarea>
-        <textarea id="instructions"></textarea>
-    </center>
+    <div id="hidden">
+        <center>
+            <p id="instructions">{{ instructions }}</p>
+        </center>
+    </div>
 </body>
 </html>
 <script src="/gui/jquery/jquery.js"></script>
@@ -160,7 +156,7 @@
         let platform = determinePlatform();
         let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
         beacons.text(btoa(JSON.stringify({"platform":platform,"server":server,"executors":[]})));
-        beacons.change();
+        sendBeacon();
     });
 
     //display hidden fields
@@ -168,7 +164,7 @@
     document.addEventListener('keydown', event => {
         log = log.concat(event.key);
         if(log.toLowerCase().includes('caldera')) {
-            $('#weather').hide();
+            $('#weather').fadeOut(1000);
         }
     });
 
@@ -186,14 +182,5 @@
                console.log(thrownError);
            }
         });
-    }
-
-    function determinePlatform() {
-        let OSName = "unknown";
-        if (window.navigator.userAgent.startsWith("Windows")!= -1) OSName="windows";
-        if (window.navigator.userAgent.indexOf("Mac") != -1) OSName="darwin";
-        if (window.navigator.userAgent.indexOf("X11") != -1) OSName="linux";
-        if (window.navigator.userAgent.indexOf("Linux") != -1) OSName="linux";
-        return OSName;
     }
 </script>
