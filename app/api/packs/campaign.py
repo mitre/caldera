@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import check_authorization
@@ -22,10 +24,11 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('agents.html')
     async def _section_agent(self, request):
-        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
-        agents = [h.display for h in await self.data_svc.locate('agents', match=access)]
-        delivery_commands = await self.data_svc.locate('abilities', match=dict(tactic='initial-access'))
-        return dict(agents=agents, delivery_commands=[d.display for d in delivery_commands])
+        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        agents = [h.display for h in await self.data_svc.locate('agents', match=search)]
+        search.update(dict(tactic='initial-access'))
+        abilities = await self.data_svc.locate('abilities', match=search)
+        return dict(agents=agents, abilities=self._rollup_abilities(abilities))
 
     @check_authorization
     @template('profiles.html')
@@ -54,3 +57,12 @@ class CampaignPack(BaseWorld):
         operations = [o.display for o in await self.data_svc.locate('operations', match=access)]
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                     obfuscators=obfuscators)
+
+    """ PRIVATE """
+
+    @staticmethod
+    def _rollup_abilities(abilities):
+        rolled = defaultdict(list)
+        for a in abilities:
+            rolled[a.ability_id].append(a.display)
+        return dict(rolled)
