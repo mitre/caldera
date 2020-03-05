@@ -130,6 +130,6 @@ and determines which one is "winning".
 ## Human
 
 The Human plugin allows you to build "Humans" that will perform user actions on a target system as a means to obfuscate 
-red action by Caldera. Each human is built for a specific operating system and leverage the Chrome browser along with native 
-system calls to perform a variety of tasks.  Additionally, these humans can have various aspects of their behavior "tuned"
+red actions by Caldera. Each human is built for a specific operating system and leverages the Chrome browser along with other native 
+OS applications to perform a variety of tasks.  Additionally, these humans can have various aspects of their behavior "tuned"
 to add randomization to the behaviors on the target system.
