@@ -4,7 +4,7 @@ import socket
 import time
 
 from app.utility.base_world import BaseWorld
-from plugins.terminal.app.c_session import Session
+from plugins.manx.app.c_session import Session
 
 
 class Tcp(BaseWorld):

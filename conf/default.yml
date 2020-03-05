@@ -10,7 +10,7 @@ plugins:
 - sandcat
 - stockpile
 - compass
-- terminal
+- manx
 - response
 - gameboard
 port: 8888
