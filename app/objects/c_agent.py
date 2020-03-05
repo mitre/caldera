@@ -67,15 +67,16 @@ class Agent(BaseObject):
 
     async def capabilities(self, ability_set):
         abilities = []
-        preferred = 'psh' if 'psh' in self.executors else self.executors[0]
-        executors = self.executors
-        for ai in set([pa.ability_id for pa in ability_set]):
-            total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
-                             and (ab.platform == self.platform) and (ab.executor in executors)]
-            if len(total_ability) > 0:
-                val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                if val.privilege and val.privilege == self.privilege or not val.privilege:
-                    abilities.append(val)
+        if self.executors:
+            preferred = 'psh' if 'psh' in self.executors else self.executors[0]
+            executors = self.executors
+            for ai in set([pa.ability_id for pa in ability_set]):
+                total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
+                                 and (ab.platform == self.platform) and (ab.executor in executors)]
+                if len(total_ability) > 0:
+                    val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
+                    if val.privilege and val.privilege == self.privilege or not val.privilege:
+                        abilities.append(val)
         return abilities
 
     async def heartbeat_modification(self, **kwargs):

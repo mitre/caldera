@@ -102,6 +102,8 @@ class AuthService(BaseService):
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
         elif self.bypass in request.host:
             return self.Access.RED, self.Access.APP
+        elif request.headers.get('KEY') == self.get_config('api_key'):
+            return self.Access.RED, self.Access.BLUE, self.Access.BLUE
         return ()
 
     """ PRIVATE """

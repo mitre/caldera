@@ -85,11 +85,11 @@ class ContactService(BaseService):
         :param kwargs: key/value pairs
         :return: the agent object, instructions to execute
         """
-        result = kwargs.pop('result', dict())
+        results = kwargs.pop('results', [])
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
-            if result:
+            for result in results:
                 await self._save(Result(**result))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
@@ -120,6 +120,8 @@ class ContactService(BaseService):
                         loop.create_task(link.parse(operation[0], result.output))
                     else:
                         loop.create_task(self.get_service('learning_svc').learn(link, result.output))
+            else:
+                self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
 

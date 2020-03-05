@@ -49,12 +49,14 @@ class TestDataService(TestBase):
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
+                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                    variations=[])
         ))
         self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
+                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                    variations=[])
         ))
         abilities = self.run_async(self.data_svc.locate('abilities'))
 
