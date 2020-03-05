@@ -38,21 +38,28 @@ class FileSvc(BaseService):
             payload, display_name = await self.special_payloads[payload](headers)
 
         # if obfuscation TRUE pass variable 'obscured'
-        if headers.get('op_id'):
-            op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
-            if op.obfuscatedPayloads:
-                payload = op.deobfuscate_payload(payload)
+        # if await self.get_service('data_svc').locate('operations'):
 
-        file_path, contents = await self.read_file(payload)
-        # if payload:
-        #     display_name = await self.build_payloadname('Obscured')
-        # # else do nothing
+        for op in await self.get_service('data_svc').locate('operations'):
+            # op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
+            self.log.debug('operation_ID: %s' % op.id)
+            self.log.debug('operation_ID: %s' % op.obfuscatePayload)
+
+            display_name = payload
+
+            file_path, contents = await self.read_file(await self.build_payloadname(op, payload))
+
         if headers.get('name'):
             display_name = headers.get('name')
         return file_path, contents, display_name
 
-    async def build_payloadname(self, obfuscation):
-        return random.choice(self._payload_names.get(obfuscation))
+    async def build_payloadname(self, op, payload):
+        plaintext_payload =""
+        payloadDict = op.obfuscatedPayloadDict.items()
+        for item in payloadDict:
+            if item[1] == payload:
+                plaintext_payload = (item[0])
+        return plaintext_payload
 
     async def check_name(self, name):
         """
