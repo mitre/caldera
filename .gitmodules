@@ -31,3 +31,6 @@
 [submodule "plugins/manx"]
 	path = plugins/manx
 	url = https://github.com/mitre/manx.git
+[submodule "plugins/training"]
+	path = plugins/training
+	url = https://github.com/mitre/training.git
