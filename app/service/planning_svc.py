@@ -9,6 +9,7 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
         self._payload_name = payload_config['names']
+        self.uniqOp = {}
 
     async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[]):
         """
@@ -114,8 +115,20 @@ class PlanningService(BasePlanningService):
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
+        if operation.id not in self.uniqOp:
+            operation.obfuscatePayloadDict = {}
+            opid = str(operation.id)
+            self.uniqOp.update({'id' : operation.id})
+            # opid = str(operation.id)
+            # self.log.debug("ADDING OPERATION ID: " % opid)
+
+        # self.log.debug("OPERATION ID: " % opid)
+        # if operation.id not in uniqOps:
+        #     uniqOps.update{}
         for a in await agent.capabilities(abilities):
             if a.payload:
+                payloadbkp = a.payload
+
                 if operation.obfuscatePayload:
                     if a.payload not in operation.obfuscatedPayloadDict:
                         while True:
@@ -123,6 +136,8 @@ class PlanningService(BasePlanningService):
                                 a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
                                 if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
                                     operation.obfuscatedPayloadDict.update({a.payload : a.obscuredPayload})
+                                    dict = str(operation.obfuscatedPayloadDict)
+                                    # self.log.debug("New TUPLE: " % dict)
                                     break
                             except:
                                 pass
@@ -131,11 +146,18 @@ class PlanningService(BasePlanningService):
                         for item in payloadDict:
                             if item[1] == a.payload:
                                 a.obscuredPayload = (item[0])
-                    a.obfuscate
-            links.append(
-                Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
-                     status=link_status, jitter=self.jitter(operation.jitter))
-            )
+
+                    links.append(
+                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0, ability=a,
+                             status=link_status, jitter=self.jitter(operation.jitter))
+                    )
+
+                else:
+                    links.append(
+                        Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
+                             status=link_status, jitter=self.jitter(operation.jitter))
+                    )
+            # a.payload = payloadbkp
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
