@@ -33,22 +33,24 @@ class FileSvc(BaseService):
         """
         if 'file' not in headers:
             raise KeyError('File key was not provided')
-        payload = headers.get('file')
+        display_name = payload = headers.get('file')
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
 
         # if obfuscation TRUE pass variable 'obscured'
-        # if await self.get_service('data_svc').locate('operations'):
+        if await self.get_service('data_svc').locate('operations'):
 
-        for op in await self.get_service('data_svc').locate('operations'):
-            # op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
-            self.log.debug('operation_ID: %s' % op.id)
-            self.log.debug('operation_ID: %s' % op.obfuscatePayload)
+            for op in await self.get_service('data_svc').locate('operations'):
+                # op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
+                self.log.debug('operation_ID: %s' % op.id)
+                self.log.debug('operation_ID: %s' % op.obfuscatePayload)
 
-            display_name = payload
+                display_name = payload
+                plaintext_payload = await self.build_payloadname(op, payload)
+                file_path, contents = await self.read_file(plaintext_payload)
 
-            file_path, contents = await self.read_file(await self.build_payloadname(op, payload))
-
+        else:
+            file_path, contents = await self.read_file(payload)
         if headers.get('name'):
             display_name = headers.get('name')
         return file_path, contents, display_name

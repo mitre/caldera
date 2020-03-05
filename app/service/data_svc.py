@@ -216,7 +216,7 @@ class DataService(BaseService):
                                                                test=encoded_test.decode(),
                                                                description=ab.get('description') or '',
                                                                executor=e, name=ab['name'], platform=pl,
-                                                               cleanup=b64encode(
+                                                              cleanup=b64encode(
                                                                    info['cleanup'].strip().encode(
                                                                        'utf-8')).decode() if info.get(
                                                                    'cleanup') else None,

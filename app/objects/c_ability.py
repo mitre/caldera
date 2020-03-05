@@ -21,16 +21,15 @@ class Ability(BaseObject):
     @property
     def obfuscate(self):
         decoded_test = self.decode_bytes(self._test)
-        # obscuredPayload = random.choice(self.payload_name.get('Obscured'))
         obfuscatedPayload_cmd = decoded_test.replace(self.payload, self.obscuredPayload)
-
-        # self.payload = self.obscuredPayload
-
+        self.payloadbkp = self.payload
+        self.payload = self.obscuredPayload
         self._test = self.encode_string(obfuscatedPayload_cmd)
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
                 obfuscatedPayload_cmd = re.sub(re_variable, str(v).strip(), obfuscatedPayload_cmd)
+        # self.payload = self.payloadbkp
         return self._test
 
     @property
@@ -61,7 +60,7 @@ class Ability(BaseObject):
 
     def __init__(self, payload_name, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=None):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=""):
         super().__init__()
         self._test = test
         self.obscuredPayload = obscuredPayload
