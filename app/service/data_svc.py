@@ -85,7 +85,9 @@ class DataService(BaseService):
         :return: None
         """
         loop = asyncio.get_event_loop()
-        loop.create_task(self._load(plugins))
+        await loop.create_task(self._load(plugins))
+
+        return
 
     async def reload_data(self, plugins=()):
         """
@@ -171,6 +173,7 @@ class DataService(BaseService):
         return dict(pp)
 
     async def _load(self, plugins=()):
+        await asyncio.sleep(100)
         try:
             if not plugins:
                 plugins = [p for p in await self.locate('plugins') if p.data_dir]
