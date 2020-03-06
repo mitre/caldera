@@ -96,6 +96,7 @@ pre {
     margin-top:50px;
     text-align:center;
     background-image: url('/gui/img/back-grey.jpg');
+    background-size: cover;
     padding:25px;
     border-radius:25px;
     width: 95%;
@@ -382,6 +383,10 @@ p[onclick] {
 }
 .sidebar-cutout h5 {
     margin-bottom: 0;
+}
+.sidebar-cutout input[type=text] {
+    width:90%;
+    border-radius: 5px;
 }
 .checkdiv label {
   display: block;

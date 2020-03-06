@@ -1,72 +1,70 @@
----
-agent_config:
-  untrusted_timer: 60
-  sleep_min: 30
-  sleep_max: 60
-  watchdog: 0
-  bootstrap_abilities:
-    - 43b3754c-def4-4699-a673-1d85648fda6a
-  names:
-    windows:
-      - smss
-      - csrss
-      - wininit
-      - services
-      - lsass
-      - svchost
-      - lsm
-      - iexplore
-      - acrotray
-      - ccSetMgr
-      - ctfmon
-      - explorer
-      - savscan
-      - realsched
-      - winword
-      - winlogon
-      - taskmgr
-      - splunkd
-    darwin:
-      - asl.conf
-      - hosts
-      - chrome
-      - libexec
-      - trustd
-      - cron
-      - timed
-      - securityd
-      - .gitignore
-      - .sshd
-      - .bashprofile
-      - .npmr
-      - .history
-      - .known_hosts
-      - .id_rsa.pub
-      - photolibraryd
-      - htop
-      - mediaremoted
-      - vpnagentd
-      - coreservicesd
-      - authd
-      - splunkd
-    linux:
-      - hosts
-      - ntp.conf
-      - mnt
-      - resolv.conf
-      - renice
-      - kill
-      - pgrep
-      - top
-      - htop
-      - ps
-      - pstree
-      - rc.common
-      - .gitignore
-      - .sshd
-      - .bashprofile
-      - .npmr
-      - .history
-      - .known_hosts
-      - .id_rsa.pub
-      - splunkd
+bootstrap_abilities:
+- 43b3754c-def4-4699-a673-1d85648fda6a
+names:
+  darwin:
+  - asl.conf
+  - hosts
+  - chrome
+  - libexec
+  - trustd
+  - cron
+  - timed
+  - securityd
+  - .gitignore
+  - .sshd
+  - .bashprofile
+  - .npmr
+  - .history
+  - .known_hosts
+  - .id_rsa.pub
+  - photolibraryd
+  - htop
+  - mediaremoted
+  - vpnagentd
+  - coreservicesd
+  - authd
+  - splunkd
+  linux:
+  - hosts
+  - ntp.conf
+  - mnt
+  - resolv.conf
+  - renice
+  - kill
+  - pgrep
+  - top
+  - htop
+  - ps
+  - pstree
+  - rc.common
+  - .gitignore
+  - .sshd
+  - .bashprofile
+  - .npmr
+  - .history
+  - .known_hosts
+  - .id_rsa.pub
+  - splunkd
+  windows:
+  - smss
+  - csrss
+  - wininit
+  - services
+  - lsass
+  - svchost
+  - lsm
+  - iexplore
+  - acrotray
+  - ccSetMgr
+  - ctfmon
+  - explorer
+  - savscan
+  - realsched
+  - winword
+  - winlogon
+  - taskmgr
+  - splunkd
+sleep_max: 60
+sleep_min: 30
+untrusted_timer: 90
+watchdog: 0

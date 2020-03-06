@@ -11,13 +11,15 @@
       </p>
       <a class="blink" onclick="$('#delivery-modal').show();">Click here to deploy an agent</a>
       <br><br>
-      <hr>
-      <br>
-      <div>
-          <h4>Global settings for new agents</h4>
-          <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
-          <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
-          <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
+
+      <div id="agent-optional" class="column sidebar-cutout sidebar-header">
+          <h5>GLOBAL TIMERS</h5>
+      </div>
+      <div id="agent-options" class="column sidebar-cutout" style="display: none">
+          <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)"/>
+          <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)"/>
+          <input id="globalWatchdog" type="text" placeholder="Watchdog (minutes)"/>
+          <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
       </div>
       <br>
       <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
@@ -176,6 +178,10 @@
         } else {
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
+        $("#agent-optional").click(function(){
+            stream('Timer changes will affect new incoming agents only');
+            $("#agent-options").slideToggle("slow");
+        });
     });
 
     function refresh(){
@@ -241,7 +247,9 @@
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
-        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
+        let globalUntrusted = $('#globalUntrusted').val();
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted)};
+        stream('Agent configuration has been updated!');
         restRequest('PUT', d, doNothing);
     }
     function killAgent(){
