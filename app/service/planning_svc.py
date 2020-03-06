@@ -51,7 +51,7 @@ class PlanningService(BasePlanningService):
                 if entry.ability.ability_id in lim_ability:
                     ret.append(entry)
             if len(ret) > 0:
-                self.log.debug('Generated %s usable links for bucket|phase: %s|%s' % (len(ret), bucket, phase))
+                self.log.debug('Generated %s usable links for bucket(phase): %s(%s)' % (len(ret), bucket, phase))
         return ret
 
     async def get_buckets(self):
