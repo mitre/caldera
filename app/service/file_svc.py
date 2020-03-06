@@ -166,7 +166,7 @@ class FileSvc(BaseService):
         """
         os.system(
             '%s %s go build %s -o %s -ldflags=\'%s\' %s' % (_get_go_var(arch, platform), cflags, buildmode, output,
-                                                                           ldflags, src_fle)
+                                                            ldflags, src_fle)
         )
 
     """ PRIVATE """
