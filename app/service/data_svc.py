@@ -225,10 +225,10 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               bucket = await self._classify(ab),
+                                                               bucket=await self._classify(ab),
                                                                access=plugin.access,
                                                                repeatable=ab.get('repeatable', False),
-                                                               variations = info.get('variations', []))
+                                                               variations=info.get('variations', []))
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:

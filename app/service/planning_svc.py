@@ -41,7 +41,7 @@ class PlanningService(BasePlanningService):
         return await self.sort_links(links)
 
     async def get_bucket_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[],
-                          bucket=None):
+                               bucket=None):
         ret = []
         if bucket is not None:
             usual = await self.get_links(operation, phase, agent, trim, planner, stopping_conditions, sub=True)
