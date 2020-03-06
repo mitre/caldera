@@ -8,7 +8,8 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[]):
+    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[],
+                        sub=False):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
@@ -35,8 +36,32 @@ class PlanningService(BasePlanningService):
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
-        self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
+        if not sub:
+            self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
         return await self.sort_links(links)
+
+    async def get_bucket_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[],
+                          bucket=None):
+        ret = []
+        if bucket is not None:
+            usual = await self.get_links(operation, phase, agent, trim, planner, stopping_conditions, sub=True)
+            limited = await self.get_service('data_svc').locate('abilities', match=dict(bucket=bucket.lower()))
+            lim_ability = [x.ability_id for x in limited]
+            for entry in usual:
+                if entry.ability.ability_id in lim_ability:
+                    ret.append(entry)
+            if len(ret) > 0:
+                self.log.debug('Generated %s usable links for bucket|phase: %s|%s' % (len(ret), bucket, phase))
+        return ret
+
+    async def get_buckets(self):
+        complete = await self.get_service('data_svc').locate('abilities')
+        ret = []
+        for ability in complete:
+            bucket_listing = ability.bucket
+            if bucket_listing not in ret:
+                ret.append(bucket_listing)
+        return ret
 
     async def get_cleanup_links(self, operation, agent=None):
         """

@@ -24,7 +24,8 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'], access=json['access'])
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'],
+                   bucket=json['bucket'], access=json['access'])
 
     @property
     def display(self):
@@ -35,11 +36,13 @@ class Ability(BaseObject):
                                executor=self.executor, unique=self.unique,
                                platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout, access=self.access.value, variations=[v.display for v in self.variations]))
+                               timeout=self.timeout, bucket=self.bucket, access=self.access.value,
+                               variations=[v.display for v in self.variations]))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, bucket=None, access=None,
+                 variations=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -58,6 +61,8 @@ class Ability(BaseObject):
         self.timeout = timeout
         self.repeatable = repeatable
         self.variations = [Variation(description=v['description'], command=v['command']) for v in variations]
+        self.bucket = bucket
+
         if access:
             self.access = self.Access(access)
 
@@ -77,6 +82,7 @@ class Ability(BaseObject):
         existing.update('platform', self.platform)
         existing.update('payload', self.payload)
         existing.update('privilege', self.privilege)
+        existing.update('bucket', self.bucket)
         existing.update('timeout', self.timeout)
         return existing
 

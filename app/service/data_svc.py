@@ -26,7 +26,7 @@ class DataService(BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[])
+                           schedules=[], plugins=[], obfuscators=[], classifier=dict())
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -225,8 +225,10 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access, repeatable=ab.get('repeatable', False),
-                                                               variations=info.get('variations', []))
+                                                               bucket = await self._classify(ab),
+                                                               access=plugin.access,
+                                                               repeatable=ab.get('repeatable', False),
+                                                               variations = info.get('variations', []))
                                 saved.add(a.unique)
                     for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
                         if existing.unique not in saved:
@@ -239,6 +241,11 @@ class DataService(BaseService):
                                 if not path:
                                     self.log.error('Payload referenced in %s but not found: %s' %
                                                    (existing.ability_id, payload))
+
+    async def _classify(self, ability):
+        if 'bucket' in ability:
+            return ability['bucket'].lower()
+        return ability['tactic'].lower()
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -291,7 +298,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
                               executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60, access=None, repeatable=False, variations=None):
+                              privilege=None, timeout=60, access=None, bucket=None, repeatable=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -306,7 +313,8 @@ class DataService(BaseService):
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
                           cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
+                          privilege=privilege, timeout=timeout, bucket=bucket, repeatable=repeatable,
+                          variations=variations)
         ability.access = access
         return await self.store(ability)
 
