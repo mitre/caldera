@@ -10,6 +10,7 @@ from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
+from app.utility.api_docs import swagger, build_openapi_spec
 
 
 class RestApi(BaseWorld):
@@ -31,9 +32,11 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('GET', '/docs/api', self.api_doc_page)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
+        self.app_svc.application.router.add_route('GET', '/swagger.json', self.swagger_spec)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
 
@@ -58,8 +61,22 @@ class RestApi(BaseWorld):
         data = dict(plugins=[p.display for p in plugins])
         return render_template('%s.html' % access[0].name, request, data)
 
+    @staticmethod
+    async def api_doc_page(request):
+        return render_template('apidocs.html', request, dict())
+
     """ API ENDPOINTS """
 
+    @swagger(summary='Core API Endpoint', description='Supports read, update, and delete operations',
+             requestBody={'content': 'application/json'},
+             responses={
+                 '200': {
+                     'description': 'successful operation',
+                     'content': 'application/json'},
+                 '400': {
+                     'description': 'invalid request'
+                 }
+             })
     @check_authorization
     async def rest_core(self, request):
         try:
@@ -98,6 +115,37 @@ class RestApi(BaseWorld):
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
+    @swagger(summary='Upload File(s)', description='Upload files to the server.',
+             parameters=[
+                 {'in': 'header',
+                  'name': 'Directory',
+                  'schema': {'type': 'string'},
+                  'required': False,
+                  'description': 'Whether a directory being uploaded. Defaults to false.'
+                  },
+                 {'in': 'header',
+                  'name': 'X-Request-ID',
+                  'schema': {'type': 'string', 'format': 'uuid'},
+                  'required': False,
+                  'description': 'The directory to save the uploaded file(s) to. Defaults to a random uuid.'
+                  }
+             ],
+             requestBody={'content': {
+                 'multipart/form-data': {
+                     'schema': {
+                         'type': 'object',
+                         'properties': {
+                             'filename': {
+                                 'type': 'array',
+                                 'items': {
+                                     'type': 'string',
+                                     'format': 'binary'
+                                 }
+                             }
+                         }
+                     }
+                 }}}
+             )
     async def upload_file(self, request):
         dir_name = request.headers.get('Directory', None)
         if dir_name:
@@ -106,6 +154,22 @@ class RestApi(BaseWorld):
         saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
+    @swagger(summary='Download files', description='Downloads files from the server',
+             parameters=[
+                 {'in': 'header',
+                  'name': 'file',
+                  'schema': {'type': 'string'},
+                  'required': True,
+                  'description': 'The name of the file to download.'
+                  },
+                 {'in': 'name',
+                  'name': 'X-Request-ID',
+                  'schema': {'type': 'string'},
+                  'required': False,
+                  'description': 'The file name that should appear in the response CONTENT-DISPOSITION header.'
+                  }
+             ]
+             )
     async def download_file(self, request):
         try:
             payload, content, display_name = await self.file_svc.get_file(request.headers)
@@ -115,3 +179,12 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
+
+    @swagger(summary='Swagger spec', description='Retrieve the openapi 3.0 specification.',
+             responses={
+                 '200': {
+                     'description': 'successful operation',
+                     'content': 'application/json'},
+             })
+    async def swagger_spec(self, _):
+        return web.json_response(build_openapi_spec(self.app_svc.application))
