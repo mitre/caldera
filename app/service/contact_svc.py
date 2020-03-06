@@ -1,5 +1,4 @@
 import asyncio
-import random
 from collections import defaultdict
 from datetime import datetime
 
@@ -59,7 +58,7 @@ class ContactService(BaseService):
         return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
     async def build_filename(self, platform):
-        return random.choice(self.get_config(name='agents', prop='names').get(platform))
+        return self.get_config(name='agents', prop='implant_name')
 
     """ PRIVATE """
 

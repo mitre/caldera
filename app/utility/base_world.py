@@ -31,8 +31,9 @@ class BaseWorld:
 
     @staticmethod
     def set_config(name, prop, value):
-        logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
-        BaseWorld._app_configuration[name][prop] = value
+        if value is not None:
+            logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
+            BaseWorld._app_configuration[name][prop] = value
 
     @staticmethod
     def decode_bytes(s):
