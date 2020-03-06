@@ -64,7 +64,7 @@ names:
   - winlogon
   - taskmgr
   - splunkd
-sleep_max: 37
-sleep_min: 32
+sleep_max: 60
+sleep_min: 30
 untrusted_timer: 90
-watchdog: 33
+watchdog: 0
