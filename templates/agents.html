@@ -21,6 +21,19 @@
           <input id="globalWatchdog" type="text" placeholder="Watchdog (minutes)"/>
           <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
       </div>
+      <div id="agent-implant" class="column sidebar-cutout sidebar-header">
+          <h5>IMPLANT NAME</h5>
+      </div>
+      <div id="agent-implant-options" class="column sidebar-cutout" style="display: none">
+          <input id="globalImplantName" type="text" placeholder="Random filename"/>
+      </div>
+      <div id="agent-bootstrap" class="column sidebar-cutout sidebar-header">
+          <h5>BOOTSTRAP ABILITIES</h5>
+      </div>
+      <div id="agent-bootstrap-options" class="column sidebar-cutout" style="display: none">
+          <input id="globalBootstrap" type="text" placeholder="Add a new bootstrap ability ID"/>
+      </div>
+
       <br>
       <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
@@ -182,8 +195,15 @@
             stream('Timer changes will affect new incoming agents only');
             $("#agent-options").slideToggle("slow");
         });
+        $("#agent-implant").click(function(){
+            stream('Add a random filename for new agents when they are downloaded');
+            $("#agent-implant-options").slideToggle("slow");
+        });
+        $("#agent-bootstrap").click(function(){
+            stream('Add a new ability ID to be run on a new agent beacon');
+            $("#agent-bootstrap-options").slideToggle("slow");
+        });
     });
-
     function refresh(){
         function updateTbl(data){
             $('#agent-cnt').text(data.length);
@@ -244,14 +264,19 @@
     }
 
     function saveGlobalAgent(){
+        let globalBootstrap = $('#globalBootstrap').val();
+        let globalImplantName = $('#globalImplantName').val();
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
         let globalUntrusted = $('#globalUntrusted').val();
-        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted)};
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
+            "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
+            "bootstrap_abilities":globalBootstrap};
         stream('Agent configuration has been updated!');
         restRequest('PUT', d, doNothing);
     }
+
     function killAgent(){
         /**
         Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog minutes.
