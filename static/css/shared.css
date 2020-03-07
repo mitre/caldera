@@ -63,9 +63,43 @@ input[type=button] {
     cursor: pointer;
     width: 90%;
 }
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: none;
+    outline: none;
+}
+input[type=range]:focus {
+    outline: none;
+    box-shadow:none;
+    border-color:transparent;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 5px;
+    cursor: pointer;
+    background: #ECF0F1;
+    outline: none;
+    box-shadow: none;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ECF0F1;
+    height: 24px;
+    width: 8px;
+    border: 1px #2f2f2f solid;
+    margin-top: -9px;
+}
+
+
 .input button:hover {
     opacity: 0.6;
 }
+
 pre {
     overflow-x: auto;
     white-space: pre-wrap;
