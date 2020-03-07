@@ -16,24 +16,21 @@ class BaseWorld:
     A collection of base static functions for service & object module usage
     """
 
-    _app_configuration = dict()
+    _app_configuration = None
 
     @staticmethod
-    def apply_config(name, config):
-        BaseWorld._app_configuration[name] = config
+    def apply_config(config):
+        BaseWorld._app_configuration = config
 
     @staticmethod
-    def get_config(prop=None, name=None):
-        name = name if name else 'default'
+    def get_config(prop=None):
         if prop:
-            return BaseWorld._app_configuration[name].get(prop)
-        return BaseWorld._app_configuration[name]
+            return BaseWorld._app_configuration.get(prop)
+        return BaseWorld._app_configuration
 
     @staticmethod
-    def set_config(name, prop, value):
-        if value is not None:
-            logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
-            BaseWorld._app_configuration[name][prop] = value
+    def set_config(prop, value):
+        BaseWorld._app_configuration[prop] = value
 
     @staticmethod
     def decode_bytes(s):

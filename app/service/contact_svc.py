@@ -1,4 +1,5 @@
 import asyncio
+import random
 from collections import defaultdict
 from datetime import datetime
 
@@ -21,10 +22,54 @@ def report(func):
 
 class ContactService(BaseService):
 
-    def __init__(self):
+    @property
+    def sleep_min(self):
+        return self._sleep_min
+
+    @sleep_min.setter
+    def sleep_min(self, v):
+        if v and v != self.sleep_min:
+            self.log.debug('Agent sleep_min now = %d' % v)
+            self._sleep_min = v
+
+    @property
+    def sleep_max(self):
+        return self._sleep_max
+
+    @sleep_max.setter
+    def sleep_max(self, v):
+        if v and v != self._sleep_max:
+            self.log.debug('Agent sleep_max now = %d' % v)
+            self._sleep_max = v
+
+    @property
+    def watchdog(self):
+        return self._watchdog
+
+    @watchdog.setter
+    def watchdog(self, v):
+        if v and v != self.watchdog:
+            self.log.debug('Agent watchdog now = %d' % v)
+            self._watchdog = v
+
+    @property
+    def untrusted_timer(self):
+        return self._untrusted_timer
+
+    @property
+    def bootstrap_instructions(self):
+        return self._bootstrap_instructions
+
+    def __init__(self, agent_config):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
         self.report = defaultdict(list)
+        self._sleep_min = agent_config['sleep_min']
+        self._sleep_max = agent_config['sleep_max']
+        self._watchdog = agent_config['watchdog']
+        self._file_names = agent_config['names']
+        self._untrusted_timer = agent_config['untrusted_timer']
+        self._bootstrap_instructions = agent_config['bootstrap_abilities']
 
     async def register(self, contact):
         try:
@@ -48,17 +93,14 @@ class ContactService(BaseService):
                 await self._save(Result(**result))
             return agent, await self._get_instructions(agent.paw)
         agent = await self.get_service('data_svc').store(Agent(
-            sleep_min=self.get_config(name='agents', prop='sleep_min'),
-            sleep_max=self.get_config(name='agents', prop='sleep_max'),
-            watchdog=self.get_config(name='agents', prop='watchdog'),
-            **kwargs)
+            sleep_min=self.sleep_min, sleep_max=self.sleep_max, watchdog=self.watchdog, **kwargs)
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
     async def build_filename(self, platform):
-        return self.get_config(name='agents', prop='implant_name')
+        return random.choice(self._file_names.get(platform))
 
     """ PRIVATE """
 
@@ -104,7 +146,7 @@ class ContactService(BaseService):
     async def _get_bootstrap_instructions(self, agent):
         data_svc = self._services.get('data_svc')
         abilities = []
-        for i in self.get_config(name='agents', prop='bootstrap_abilities'):
+        for i in self._bootstrap_instructions:
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
         instructions = []

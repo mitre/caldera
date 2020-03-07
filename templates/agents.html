@@ -9,31 +9,14 @@
           Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
           least 1 agent in order to run an operation.
       </p>
-      <a class="blink" onclick="$('#delivery-modal').show();">Click here to deploy an agent</a>
-      <br><br>
-
-      <div id="agent-optional" class="column sidebar-cutout sidebar-header">
-          <h5>GLOBAL TIMERS</h5>
+      <hr>
+      <br>
+      <div>
+          <h4>Global settings for new agents</h4>
+          <input id="globalSleepMin" style="width:50%" type="text" placeholder="Min sleep (s)"/>
+          <input id="globalSleepMax" style="width:50%" type="text" placeholder="Max sleep (s)"/>
+          <input id="globalWatchdog" style="width:50%" type="text" placeholder="Watchdog (m)"/>
       </div>
-      <div id="agent-options" class="column sidebar-cutout" style="display: none">
-          <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)"/>
-          <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)"/>
-          <input id="globalWatchdog" type="text" placeholder="Watchdog (minutes)"/>
-          <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
-      </div>
-      <div id="agent-implant" class="column sidebar-cutout sidebar-header">
-          <h5>IMPLANT NAME</h5>
-      </div>
-      <div id="agent-implant-options" class="column sidebar-cutout" style="display: none">
-          <input id="globalImplantName" type="text" placeholder="Random filename"/>
-      </div>
-      <div id="agent-bootstrap" class="column sidebar-cutout sidebar-header">
-          <h5>BOOTSTRAP ABILITIES</h5>
-      </div>
-      <div id="agent-bootstrap-options" class="column sidebar-cutout" style="display: none">
-          <input id="globalBootstrap" type="text" placeholder="Add a new bootstrap ability ID"/>
-      </div>
-
       <br>
       <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
@@ -143,67 +126,20 @@
     </form>
 </div>
 
-<div id="delivery-modal" class="modal">
-    <form class="modal-content" style="width:90%;">
-        <div class="container modal-box">
-            <div class="row">
-                <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                <div class="column" style="flex:92%">
-                    <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
-                        <option disabled selected>Choose an agent</option>
-                        {% for i,a in abilities.items() %}
-                            <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
-                        {% endfor %}}
-                    </select>
-                    <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
-                    <ul id="variations"></ul>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div id="variation-template" class="variation-template" style="display:none;">
-    <div>
-        <table style="border-spacing:15px;color:white;">
-            <tr>
-                <td><img id="platform-icon" class="golden"/></td>
-                <td><h4 id="description" style="padding-top:15px;"></h4></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p></td>
-            </tr>
-        </table>
-    </div>
-</div>
-
 <script>
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
     $(document).ready(function () {
-        blink('.blink');
         let agentCnt = ($('#agent-table tr').length-1);
         if(agentCnt < 1){
-            stream('Looks like you have no agents. You should deploy one now.');
+            stream('Looks like you have no agents. You should head to Plugins -> Sandcat to deploy one.');
         } else {
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
-        $("#agent-optional").click(function(){
-            stream('Timer changes will affect new incoming agents only');
-            $("#agent-options").slideToggle("slow");
-        });
-        $("#agent-implant").click(function(){
-            stream('Add a random filename for new agents when they are downloaded');
-            $("#agent-implant-options").slideToggle("slow");
-        });
-        $("#agent-bootstrap").click(function(){
-            stream('Add a new ability ID to be run on a new agent beacon');
-            $("#agent-bootstrap-options").slideToggle("slow");
-        });
     });
+
     function refresh(){
         function updateTbl(data){
             $('#agent-cnt').text(data.length);
@@ -264,19 +200,12 @@
     }
 
     function saveGlobalAgent(){
-        let globalBootstrap = $('#globalBootstrap').val();
-        let globalImplantName = $('#globalImplantName').val();
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
-        let globalUntrusted = $('#globalUntrusted').val();
-        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
-            "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
-            "bootstrap_abilities":globalBootstrap};
-        stream('Agent configuration has been updated!');
+        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),"watchdog":parseInt(globalWatchdog)};
         restRequest('PUT', d, doNothing);
     }
-
     function killAgent(){
         /**
         Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog minutes.
@@ -331,37 +260,6 @@
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
-    }
-
-    function blink(selector){
-        $(selector).fadeOut('slow', function(){
-            $(this).fadeIn('slow', function(){
-                blink(this);
-            });
-        });
-    }
-
-    function displayCommand(){
-        function displayMe(data){
-            data.forEach(function(ability) {
-                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description, ability.test));
-                ability.variations.forEach(function(v) {
-                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description, v.command));
-                });
-            });
-        }
-        let variations = $('#variations');
-        variations.empty();
-        restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
-    }
-
-    function buildAbilityTemplate(platform, executor, description, command){
-        let template = $('#variation-template').clone();
-        template.find('#description').text(description + ' ('+executor+')');
-        template.find('#command').text(atob(command));
-        template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
-        template.show();
-        return template;
     }
 
     //# sourceURL=agents.js

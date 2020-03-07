@@ -288,10 +288,11 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
+    });
 
     $(document).ready(function(){
-        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
-
         $("#optional").click(function(){
             stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
             $("#optional-options").slideToggle("slow");

@@ -127,7 +127,8 @@ class RestService(BaseService):
 
     async def update_agent_data(self, data):
         if 'paw' not in data:
-            await self._update_global_props(**data)
+            await self._update_global_props(data.get('sleep_min'), data.get('sleep_max'), data.get('watchdog'))
+
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
             await agent.gui_modification(**data)
             return agent.display
@@ -196,7 +197,8 @@ class RestService(BaseService):
             enabled_plugins = self.get_config('plugins')
             enabled_plugins.append(data.get('value'))
         else:
-            self.set_config('default', data.get('prop'), data.get('value'))
+            self.set_config(data.get('prop'), data.get('value'))
+        self.log.debug('Configuration update: %s set to %s' % (data.get('prop'), data.get('value')))
 
     async def update_operation(self, op_id, state=None, autonomous=None):
         async def validate(op):
@@ -279,13 +281,8 @@ class RestService(BaseService):
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
 
-    async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
-        if implant_name:
-            self.set_config(name='agents', prop='implant_name', value=implant_name)
-        if bootstrap_abilities:
-            abilities = self.get_config(name='agents', prop='bootstrap_abilities')
-            abilities.append(bootstrap_abilities)
-        self.set_config(name='agents', prop='sleep_min', value=sleep_min)
-        self.set_config(name='agents', prop='sleep_max', value=sleep_max)
-        self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
-        self.set_config(name='agents', prop='watchdog', value=watchdog)
+    async def _update_global_props(self, sleep_min, sleep_max, watchdog):
+        contact_svc = self.get_service('contact_svc')
+        contact_svc.sleep_min = sleep_min
+        contact_svc.sleep_max = sleep_max
+        contact_svc.watchdog = watchdog
