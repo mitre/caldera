@@ -1,8 +1,6 @@
 import random
-import threading
 from app.objects.secondclass.c_link import Link
 from app.utility.base_planning_svc import BasePlanningService
-
 
 
 class PlanningService(BasePlanningService):
@@ -12,8 +10,6 @@ class PlanningService(BasePlanningService):
         self.log = self.add_service('planning_svc', self)
         self._payload_name = payload_config['names']
         self.uniqOp = {}
-        self.lock = threading.Lock()
-
 
     async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[]):
         """
@@ -118,81 +114,51 @@ class PlanningService(BasePlanningService):
         return agent_cleanup_links
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
-
         links = []
         if operation.id not in self.uniqOp:
             operation.obfuscatePayloadDict = {}
-
+            opid = str(operation.id)
             self.uniqOp.update({'id' : operation.id})
+            # opid = str(operation.id)
+            # self.log.debug("ADDING OPERATION ID: " % opid)
 
+        # self.log.debug("OPERATION ID: " % opid)
+        # if operation.id not in uniqOps:
+        #     uniqOps.update{}
         for a in await agent.capabilities(abilities):
-            self.log.debug("A TEST: %s" % self.decode_bytes(a.test))
-
-            a.copy
-
             if a.payload:
                 payloadbkp = a.payload
 
                 if operation.obfuscatePayload:
-
-                    if operation.obfuscatedPayloadDict:
-                        self.lock.acquire()
-                        try:
-                            for key, value in operation.obfuscatedPayloadDict.items():
-                                if a.payload != key and a.payload != value:
-                                    a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():  # NEED ELSE IF IT IS
-                                        operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                        dict = str(operation.obfuscatedPayloadDict)
-                                        # self.log.debug("New TUPLE: " % dict)
-                                    links.append(
-                                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0, ability=a,
-                                             status=link_status, jitter=self.jitter(operation.jitter))
-                                    )
-                                else:
-                                    a.obscuredPayload = value
-                                    links.append(
-                                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0, ability=a,
-                                             status=link_status, jitter=self.jitter(operation.jitter))
-                                    )
-                        finally:
-                            self.lock.release()
+                    if a.payload not in operation.obfuscatedPayloadDict:
+                        while True:
+                            try:
+                                a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
+                                if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
+                                    operation.obfuscatedPayloadDict.update({a.payload : a.obscuredPayload})
+                                    dict = str(operation.obfuscatedPayloadDict)
+                                    # self.log.debug("New TUPLE: " % dict)
+                                    break
+                            except:
+                                pass
                     else:
-                        self.lock.acquire()
-                        try:
-                            while True:
-                                try:
-                                    a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
-                                        operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                        dict = str(operation.obfuscatedPayloadDict)
-                                        # self.log.debug("New TUPLE: " % dict)
-                                        break
-                                except:
-                                    pass
-                            links.append(
-                                Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0, ability=a,
-                                     status=link_status, jitter=self.jitter(operation.jitter))
-                            )
-                        finally:
-                            self.lock.release()
+                        payloadDict = operation.obfuscatedPayloadDict.items()
+                        for item in payloadDict:
+                            if item[1] == a.payload:
+                                a.obscuredPayload = (item[0])
+
+                    links.append(
+                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0, ability=a,
+                             status=link_status, jitter=self.jitter(operation.jitter))
+                    )
+
                 else:
                     links.append(
                         Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                              status=link_status, jitter=self.jitter(operation.jitter))
                     )
-            a.set
+            # a.payload = payloadbkp
         return links
-
-    async def obscuredPayload(self, payload,operation):
-        obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-        if obscuredPayload not in operation.obfuscatedPayloadDict.values(): # NEED ELSE IF IT IS
-            operation.obfuscatedPayloadDict.update({payload : obscuredPayload})
-            dict = str(operation.obfuscatedPayloadDict)
-            # self.log.debug("New TUPLE: " % dict)
-
-            return obscuredPayload
-
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
         links = []
