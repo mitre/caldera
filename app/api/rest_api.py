@@ -31,6 +31,8 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('GET', '/upgrade', self.upgrade)
+
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
@@ -57,6 +59,39 @@ class RestApi(BaseWorld):
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins])
         return render_template('%s.html' % access[0].name, request, data)
+
+    """ UPGRADE VERSION """
+
+    async def run(self, cmd):
+        upgrade_result = {}
+        proc = await asyncio.create_subprocess_shell(
+            cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE)
+
+        stdout, stderr = await proc.communicate()
+        self.log.debug(f'[{cmd!r} exited with {proc.returncode}]')
+        
+        if stdout:
+            # print(f'[stdout]\n{stdout.decode()}')
+            output = stdout.decode().strip() ## removes 'b (byte) and \n (newline)
+            if output == 'Already up to date.':
+                upgrade_result['status_code'] = output
+            else:
+                upgrade_result['status_code'] = 'Caldera has been updated, please restart server.py'
+
+        if stderr:
+            self.log.debug(f'[stderr]\n{stderr.decode()}')
+            # stderr = stdout.decode().strip()
+            upgrade_result['status_code'] = stderr
+
+        return upgrade_result
+
+    @check_authorization
+    @template('RED.html', status=200)
+    async def upgrade(self, request):       
+        self.log.debug("Checking if new version of Caldera is available")      
+        return await self.run('git pusll')
 
     """ API ENDPOINTS """
 
