@@ -8,18 +8,26 @@ WARNING=0
 CRITICAL_FAIL=0
 WARNING_FAIL=0
 
+function installed() {
+    echo "[+] $1 installed"
+    echo "[+] $1 installed">>install_log.txt
+}
+
+function failed() {
+    echo "[x] "$1" FAILED to install"
+    echo "[x] "$1" FAILED to install">>install_log.txt
+    echo " - command: $2">>install_log.txt
+}
+
 function install_wrapper() {
     echo "[-] Checking for $1"
     which $2
     if [[ $? != 0 ]]; then
         echo "[-] Installing $1"
         if eval $3; then
-            echo "[+] $1 installed"
-            echo "[+] $1 installed">>install_log.txt
+            installed "$1"
         else
-            echo "[x] $1 FAILED to install"
-            echo "[x] $1 FAILED to install">>install_log.txt
-            echo " - command: $3">>install_log.txt
+            failed "$1" "$3"
             if [[ $4 == 1 ]]; then
                 CRITICAL_FAIL=1
             else
@@ -27,8 +35,8 @@ function install_wrapper() {
             fi
         fi
     else
-        echo "[+] $1 already installed"
-        echo "[+] $1 already installed">>install_log.txt
+        echo "[+] "$1" already installed"
+        echo "[+] "$1" already installed">>install_log.txt
     fi
 }
 
@@ -38,12 +46,9 @@ function initialize_log() {
 
 function extra_error() {
     if [[ $? == 0 ]]; then
-        echo "[+] $2 installed"
-        echo "[+] $2 installed">>install_log.txt
+        installed "$2"
     else
-        echo "[x] $2 FAILED to install"
-        echo "[x] $2 FAILED to install">>install_log.txt
-        echo " - command: $1">>install_log.txt
+        failed "$2" "$1"
         if [[ $3 == 1 ]]; then
         CRITICAL_FAIL=1
             echo $CRITICAL_FAIL
