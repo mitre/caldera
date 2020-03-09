@@ -93,9 +93,9 @@
               <h5>STEALTH</h5>
           </div>
           <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
-                <select name="phases" id="obfuscate_Payload" class="queueOption" style="opacity:0.5" disabled="true">
+                <select name="phases" id="queueObfuscatePayload" class="queueOption" style="opacity:0.5" disabled="true">
                     <option value="0">Plain-Text Payload</option>
-                    <option value="0">Obfuscate Payload</option>
+                    <option value="1">Obfuscate Payload</option>
               </select>
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
@@ -374,6 +374,7 @@
             "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
             "phases_enabled":document.getElementById("queuePhasesEnabled").value,
+            "obfuscatePayload":document.getElementById("queueObfuscatePayload").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,

@@ -41,10 +41,6 @@ class FileSvc(BaseService):
         if await self.get_service('data_svc').locate('operations'):
 
             for op in await self.get_service('data_svc').locate('operations'):
-                # op = await self.data_svc.locate('operation', match=dict(op_id=headers.get('op_id')))
-                self.log.debug('operation_ID: %s' % op.id)
-                self.log.debug('operation_ID: %s' % op.obfuscatePayload)
-
                 display_name = payload
                 plaintext_payload = await self.build_payloadname(op, payload)
                 file_path, contents = await self.read_file(plaintext_payload)
