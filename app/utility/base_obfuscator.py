@@ -1,4 +1,5 @@
 import logging
+import hashlib
 
 from app.utility.base_world import BaseWorld
 
@@ -10,6 +11,7 @@ class BaseObfuscator(BaseWorld):
         supported_platforms = self.__getattribute__('supported_platforms')
         try:
             if agent.platform in supported_platforms and link.ability.executor in agent.executors:
+                link.command_hash = hashlib.md5(str.encode(link.command)).hexdigest()
                 o = self.__getattribute__(link.ability.executor)
                 return o(link, **kwargs)
         except Exception:

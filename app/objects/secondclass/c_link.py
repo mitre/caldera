@@ -25,7 +25,7 @@ class Link(BaseObject):
     def display(self):
         return self.clean(dict(id=self.id, operation=self.operation, paw=self.paw, command=self.command,
                                executor=self.ability.executor, status=self.status, score=self.score,
-                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), pin=self.pin,
+                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), pin=self.pin, pid=self.pid,
                                facts=[fact.display for fact in self.facts], unique=self.unique,
                                collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
                                finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
@@ -47,10 +47,12 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0, host=None):
+    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
+                 host=None):
         super().__init__()
         self.id = id
         self.command = command
+        self.command_hash = None
         self.operation = operation
         self.paw = paw
         self.host = host

@@ -1,34 +1,34 @@
 import json
-import logging
 
-from aiohttp import web
+from aiohttp_jinja2 import template
 
 from app.utility.base_world import BaseWorld
 
 
-class Http(BaseWorld):
+class Html(BaseWorld):
 
     def __init__(self, services):
-        self.name = 'http'
-        self.description = 'Accept beacons through a REST API endpoint'
+        self.name = 'html'
+        self.description = 'Accept beacons through an HTML page'
         self.app_svc = services.get('app_svc')
         self.contact_svc = services.get('contact_svc')
 
     async def start(self):
-        self.app_svc.application.router.add_route('POST', '/beacon', self._beacon)
+        self.app_svc.application.router.add_route('GET', self.get_config('app.contact.html'), self._accept_beacon)
 
     """ PRIVATE """
 
-    async def _beacon(self, request):
+    @template('weather.html')
+    async def _accept_beacon(self, request):
         try:
-            profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
+            profile = json.loads(self.decode_bytes(request.query.get('profile')))
             profile['paw'] = profile.get('paw')
-            profile['contact'] = 'http'
+            profile['contact'] = 'html'
             agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
             response = dict(paw=agent.paw,
                             sleep=await agent.calculate_sleep(),
                             watchdog=agent.watchdog,
                             instructions=json.dumps([json.dumps(i.display) for i in instructions]))
-            return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
-        except Exception as e:
-            logging.error('Malformed beacon: %s' % e)
+            return dict(instructions=self.encode_string(json.dumps(response)))
+        except Exception:
+            return dict(instructions=[])

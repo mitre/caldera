@@ -2,9 +2,9 @@
 [![Build Status](https://travis-ci.com/mitre/caldera.svg?branch=master)](https://travis-ci.com/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
-**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Terminal](https://github.com/mitre/terminal)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Atomic](https://github.com/mitre/atomic)**|**[Compass](https://github.com/mitre/compass)**|**[Access](https://github.com/mitre/access)**|**[Response](https://github.com/mitre/response)**
+**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Manx](https://github.com/mitre/manx)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Atomic](https://github.com/mitre/atomic)**|**[Compass](https://github.com/mitre/compass)**|**[Access](https://github.com/mitre/access)**|**[Response](https://github.com/mitre/response)**
 :-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
-[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/terminal.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/atomic)|[![Build Status](https://travis-ci.com/mitre/compass.svg?branch=master)](https://travis-ci.com/mitre/compass)|[![Build Status](https://travis-ci.com/mitre/access.svg?branch=master)](https://travis-ci.com/mitre/access)|[![Build Status](https://travis-ci.com/mitre/response.svg?branch=master)](https://travis-ci.com/mitre/response)
+[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/manx.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/atomic)|[![Build Status](https://travis-ci.com/mitre/compass.svg?branch=master)](https://travis-ci.com/mitre/compass)|[![Build Status](https://travis-ci.com/mitre/access.svg?branch=master)](https://travis-ci.com/mitre/access)|[![Build Status](https://travis-ci.com/mitre/response.svg?branch=master)](https://travis-ci.com/mitre/response)
 
 # CALDERA
 
@@ -26,7 +26,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.6.1+
+* Python 3.6.1+ (with Pip3)
 * Google Chrome or Safari are our only supported browsers
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
@@ -37,9 +37,9 @@ Start by cloning this repository recursively, passing the desired version/releas
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next run the install.sh script. Replace "ubuntu" with your operating-system. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
+Next run the install.sh script. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
 ```
-./install.sh --ubuntu
+./install.sh
 ```
 
 Finally, start the server. 
@@ -52,9 +52,7 @@ You can now navigate to 127.0.0.1:8888 in a browser and log in with either red t
 
 ## Video tutorial
 
-Watch the following video for a brief run through of how to run your first operation. 
-
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/GukTj-i3UDg/0.jpg)](https://www.youtube.com/watch?v=GukTj-i3UDg)
+Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
 
 ## Developers
 

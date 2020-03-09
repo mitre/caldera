@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from aiohttp_jinja2 import template
 
 from app.service.auth_svc import check_authorization
@@ -22,9 +24,11 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('agents.html')
     async def _section_agent(self, request):
-        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
-        agents = [h.display for h in await self.data_svc.locate('agents', match=access)]
-        return dict(agents=agents)
+        search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        agents = [h.display for h in await self.data_svc.locate('agents', match=search)]
+        search.update(dict(tactic='initial-access'))
+        abilities = await self.data_svc.locate('abilities', match=search)
+        return dict(agents=agents, abilities=self._rollup_abilities(abilities))
 
     @check_authorization
     @template('profiles.html')
@@ -33,7 +37,8 @@ class CampaignPack(BaseWorld):
         abilities = await self.data_svc.locate('abilities', match=access)
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
+        adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                             key=lambda a: a['name'])
         return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads,
                     tactics=tactics)
 
@@ -42,11 +47,22 @@ class CampaignPack(BaseWorld):
     async def _section_operations(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         hosts = [h.display for h in await self.data_svc.locate('agents', match=access)]
-        groups = list(set(([h['group'] for h in hosts])))
-        adversaries = [a.display for a in await self.data_svc.locate('adversaries', match=access)]
+        groups = sorted(list(set(([h['group'] for h in hosts]))))
+        adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                             key=lambda a: a['name'])
         sources = [s.display for s in await self.data_svc.locate('sources', match=access)]
-        planners = [p.display for p in await self.data_svc.locate('planners')]
+        planners = sorted([p.display for p in await self.data_svc.locate('planners')],
+                          key=lambda p: p['name'])
         obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         operations = [o.display for o in await self.data_svc.locate('operations', match=access)]
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                     obfuscators=obfuscators)
+
+    """ PRIVATE """
+
+    @staticmethod
+    def _rollup_abilities(abilities):
+        rolled = defaultdict(list)
+        for a in abilities:
+            rolled[a.ability_id].append(a.display)
+        return dict(rolled)

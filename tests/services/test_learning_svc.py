@@ -13,7 +13,8 @@ class TestLearningSvc(TestBase):
         self.ability = self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='T1033', technique='Find', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None)
+                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                    variations=[])
         ))
         self.operation = Operation(name='sample', agents=None, adversary=None)
         self.run_async(self.data_svc.store(self.operation))
