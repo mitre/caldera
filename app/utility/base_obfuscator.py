@@ -6,6 +6,9 @@ from app.utility.base_world import BaseWorld
 
 class BaseObfuscator(BaseWorld):
 
+    def __init__(self, agent):
+        self.agent = agent
+
     def run(self, link, **kwargs):
         agent = self.__getattribute__('agent')
         supported_platforms = self.__getattribute__('supported_platforms')
