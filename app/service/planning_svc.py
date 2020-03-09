@@ -124,12 +124,10 @@ class PlanningService(BasePlanningService):
             if a.payload:
                 if a.test:
                     a.copy
-
                 if operation.obfuscatePayload:
                     if operation.obfuscatedPayloadDict:
                         try:
                            if {k: v for k, v in operation.obfuscatedPayloadDict.items() if a.payload != k and a.payload != v}:
-
                             while True:
                                 try:
                                     a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
@@ -141,7 +139,6 @@ class PlanningService(BasePlanningService):
 
                         except Exception as e:
                             self.log.error(repr(e), exc_info=True)
-
                     else:
                         self.lock.acquire()
                         try:
