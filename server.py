@@ -77,7 +77,7 @@ if __name__ == '__main__':
     with open('conf/%s.yml' % config) as c:
         BaseWorld.apply_config(yaml.load(c, Loader=yaml.FullLoader))
         data_svc = DataService((BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config']))
-        contact_svc = ContactService(BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config'])
+        contact_svc = ContactService((BaseWorld.strip_yml('conf/agents.yml')[0]['agent_config']))
         planning_svc = PlanningService(BaseWorld.strip_yml('conf/payloads.yml')[0]['payload_config'])
         rest_svc = RestService()
         auth_svc = AuthService()

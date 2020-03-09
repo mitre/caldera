@@ -21,7 +21,7 @@ def report(func):
 
 class ContactService(BaseService):
 
-    def __init__(self):
+    def __init__(self, agent):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
         self.report = defaultdict(list)
