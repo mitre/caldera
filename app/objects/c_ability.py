@@ -1,5 +1,6 @@
 import re
 import os
+import logging
 import random
 from base64 import b64encode
 from app.objects.secondclass.c_parser import Parser
@@ -20,12 +21,14 @@ class Ability(BaseObject):
 
     @property
     def obfuscate(self):
+
+
         decoded_test = self.decode_bytes(self._test)
-        obfuscatedPayload_cmd = decoded_test.replace(self.payload, self.obscuredPayload)
-        self.obfuscatedPayload_cmd = self.encode_string(obfuscatedPayload_cmd)
-        # self.payloadbkp = self.payload
+        obfuscatedPayload_cmd = decoded_test.replace(str(self.payload), str(self.obscuredPayload))
+        self.log("OCOMD: %s" % obfuscatedPayload_cmd)
         self.payload = self.obscuredPayload
-        self._test = self.encode_string(self.obfuscatedPayload_cmd)
+        # self.obfuscatedPayload_cmd = self.encode_string(obfuscatedPayload_cmd)
+
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
@@ -33,6 +36,15 @@ class Ability(BaseObject):
 
         return self.encode_string(obfuscatedPayload_cmd)
 
+    @property
+    def copy(self):
+        self._testbkp = self._test
+        return self._testbkp
+
+    @property
+    def set(self):
+        self._test = self._testbkp
+        return self._test
     @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
@@ -60,11 +72,14 @@ class Ability(BaseObject):
                                timeout=self.timeout, access=self.access.value))
 
     def __init__(self, payload_name, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
+                 testbkp=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=None):
         super().__init__()
+        self.log = logging.debug
         self.obfuscatedPayload_cmd = None
         self._test = test
+        self._testbkp = testbkp
         self.obscuredPayload = obscuredPayload
         self.ability_id = ability_id
         self.payload_name = payload_name

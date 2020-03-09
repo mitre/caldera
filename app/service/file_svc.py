@@ -63,20 +63,6 @@ class FileSvc(BaseService):
                 plaintext_payload = (item[0])
         return plaintext_payload
 
-    async def check_name(self, name):
-        """
-        Enter Description here
-
-        :param name: file name
-
-        :return: obfuscated name
-        """
-        self.log.debug('*** WE ARE IN CHECKNAME ***')
-
-
-        name = 'MP RETURN CHECK_NAME'
-        return name
-
     async def save_file(self, filename, payload, target_dir):
         self._save(os.path.join(target_dir, filename), payload)
 
