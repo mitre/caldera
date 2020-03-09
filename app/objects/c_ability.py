@@ -1,8 +1,6 @@
 import re
 import os
 import logging
-import random
-from base64 import b64encode
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_object import BaseObject
@@ -21,14 +19,9 @@ class Ability(BaseObject):
 
     @property
     def obfuscate(self):
-
-
         decoded_test = self.decode_bytes(self._test)
         obfuscatedPayload_cmd = decoded_test.replace(str(self.payload), str(self.obscuredPayload))
-        self.log("OCOMD: %s" % obfuscatedPayload_cmd)
         self.payload = self.obscuredPayload
-        # self.obfuscatedPayload_cmd = self.encode_string(obfuscatedPayload_cmd)
-
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
@@ -45,6 +38,7 @@ class Ability(BaseObject):
     def set(self):
         self._test = self._testbkp
         return self._test
+
     @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)

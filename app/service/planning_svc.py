@@ -67,8 +67,7 @@ class PlanningService(BasePlanningService):
         repeated subroutine
         """
         agent_links = []
-        #FIX PUT BACK agent.trusted:
-        if agent:
+        if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             await self._apply_adjustments(operation, agent_links)
             if trim:
@@ -121,46 +120,24 @@ class PlanningService(BasePlanningService):
         links = []
         if operation.id not in self.uniqOp:
             operation.obfuscatePayloadDict = {}
-            self.uniqOp.update({'id' : operation.id})
         for a in await agent.capabilities(abilities):
             if a.payload:
-                self.log.debug("A TEST: %s" % self.decode_bytes(a.test))
                 if a.test:
                     a.copy
 
                 if operation.obfuscatePayload:
                     if operation.obfuscatedPayloadDict:
-                        # self.lock.acquire()
                         try:
                            if {k: v for k, v in operation.obfuscatedPayloadDict.items() if a.payload != k and a.payload != v}:
-                            self.log.debug("NEW PAIR !")
+
                             while True:
                                 try:
                                     a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():  # NEED ELSE IF IT IS
+                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
                                         operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
                                         break
                                 except Exception as e:
                                     self.log.error(repr(e), exc_info=True)
-                            # for key, value in operation.obfuscatedPayloadDict.items():
-                            #     if a.payload != key and a.payload != value:
-                            #         self.log.debug("NEW PAIR !")
-                            #         await self.obscuredPayload(a.payload,operation)
-                                    # a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    # if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():  # NEED ELSE IF IT IS
-                                    #     operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                    #     for x in operation.obfuscatedPayloadDict:
-                                    #         self.log.debug("DICT: " % x)
-
-                            #     else:
-                            #         self.log.debug("PAIR EXIST!")
-                            #         a.obscuredPayload = value
-                            #         a.payload = key
-                            # links.append(
-                            #     Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
-                            #          ability=a,
-                            #          status=link_status, jitter=self.jitter(operation.jitter))
-                            # )
 
                         except Exception as e:
                             self.log.error(repr(e), exc_info=True)
@@ -170,7 +147,6 @@ class PlanningService(BasePlanningService):
                         try:
                             while True:
                                 try:
-                                    self.log.debug("First Pair!")
                                     a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
                                     if a.obscuredPayload not in operation.obfuscatedPayloadDict.values(): #should be empty
                                         operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
@@ -191,14 +167,6 @@ class PlanningService(BasePlanningService):
                     )
                 a.set
         return links
-
-    def obscuredPayload(self, payload,operation):
-        obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-        if obscuredPayload not in operation.obfuscatedPayloadDict.values(): # NEED ELSE IF IT IS
-            operation.obfuscatedPayloadDict.update({payload : obscuredPayload})
-            return obscuredPayload
-        else:
-            self.obscuredPayload(payload, operation)
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
         links = []
