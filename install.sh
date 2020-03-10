@@ -129,10 +129,10 @@ function centos_install_python() {
 
 function bash_set_random_conf_data() {
     echo "[-] Generating Random Values"
-    sed -i "s/ADMIN123/$(uuidgen)/g" conf/default.yml
-    extra_error "sed -i \"s/ADMIN123/$(uuidgen)/g\" conf/default.yml" "caldera random api_key" $WARNING
-    sed -i "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" conf/default.yml
-    extra_error "sed -i \"s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
+    sed -i.backup "s/ADMIN123/$(uuidgen)/g" conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(uuidgen)/g\" conf/default.yml" "caldera random api_key" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
     echo "[+] Random Values added to default.yml"
 }
 
@@ -157,6 +157,7 @@ fi
 }
 
 function darwin() {
+    [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on OS X..."
     initialize_log
     darwin_install_homebrew
