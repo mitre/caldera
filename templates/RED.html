@@ -28,15 +28,16 @@
                 <button class="subnavbtn">Settings <i class="fa fa-caret-down"></i></button>
                 <div class="subnav-content subnav-content-right">
                     <a onclick="viewSection('upgrade', '/upgrade')">upgrade</a>
-                    {% if status_code %}
+                    <!-- {% if status_code %}
                         <script>alert('{{ status_code}}') </script>
-                    {% endif %}
+                    {% endif %} -->
                     </div>
               </div>
 
               <div class="subnav-right">
                 <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
                 <div class="subnav-content subnav-content-right">
+                    <a onclick="viewSection('upgrade', '/advanced/upgrade')">upgrade</a>
                     <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
                     <a onclick="viewSection('planners', '/advanced/planners')">planners</a>
                     <a onclick="viewSection('contacts', '/advanced/contacts')">contacts</a>

@@ -14,6 +14,7 @@ class AdvancedPack(BaseWorld):
         self.rest_svc = services.get('rest_svc')
 
     async def enable(self):
+        self.app_svc.application.router.add_route('GET', '/advanced/upgrade', self._section_upgrade)
         self.app_svc.application.router.add_route('GET', '/advanced/sources', self._section_sources)
         self.app_svc.application.router.add_route('GET', '/advanced/planners', self._section_planners)
         self.app_svc.application.router.add_route('GET', '/advanced/contacts', self._section_contacts)
@@ -50,3 +51,9 @@ class AdvancedPack(BaseWorld):
     async def _section_sources(self, request):
         access = await self.auth_svc.get_permissions(request)
         return dict(sources=[s.display for s in await self.data_svc.locate('sources', match=dict(access=tuple(access)))])
+    
+    @check_authorization
+    @template('upgrade.html')
+    async def _section_upgrade(self, request):
+        upgrade = [p.display for p in await self.data_svc.locate('upgrade')]
+        return dict(upgrade=upgrade)

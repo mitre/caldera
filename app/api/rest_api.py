@@ -88,7 +88,7 @@ class RestApi(BaseWorld):
         return upgrade_result
 
     @check_authorization
-    @template('RED.html', status=200)
+    @template('upgrade.html', status=200)
     async def upgrade(self, request):       
         self.log.debug("Checking if new version of Caldera is available")      
         return await self.run('git pusll')
