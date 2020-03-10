@@ -2,17 +2,50 @@ import copy
 from collections import defaultdict
 
 
-DEFAULT_RESPONSES = {
-    '200': {
-        'description': 'successful operation'
-    },
-    '400': {
-        'description': 'invalid request'
-    },
-    '500': {
-        'description': 'internal server error'
+class Responses:
+    DEFAULT_RESPONSE = {
+        '200': {
+            'description': 'successful operation'
+        },
+        '400': {
+            'description': 'invalid request'
+        },
+        '500': {
+            'description': 'internal server error'
+        }
     }
-}
+    JSON_RESPONSE = copy.copy(DEFAULT_RESPONSE)
+    JSON_RESPONSE['200']['content'] = 'application/json'
+
+
+class Requests:
+    INDEX_FIELD_REQUEST = {'content': {
+                 'application/json': {'schema': {
+                     'type': 'object',
+                     'additionalProperties': True,
+                     'properties': {
+                         'index': {
+                             'description': 'The caldera object type (e.g. "agent", "link", "ability", etc).',
+                             'required': True,
+                             'type': 'string'},
+                     }
+                     }}}}
+
+    MULTIPART_REQUEST = {'content': {
+                 'multipart/form-data': {
+                     'schema': {
+                         'type': 'object',
+                         'properties': {
+                             'filename': {
+                                 'type': 'array',
+                                 'items': {
+                                     'type': 'string',
+                                     'format': 'binary'
+                                 }
+                             }
+                         }
+                     }
+                 }}}
 
 
 def swagger(summary='', description='', parameters=None, responses=None, requestBody=None, tags=None):
@@ -22,6 +55,9 @@ def swagger(summary='', description='', parameters=None, responses=None, request
     :param summary:
     :param description:
     :param responses:
+    :param parameters
+    :param requestBody
+    :param tags
     :return:
     """
 
@@ -78,7 +114,7 @@ def _get_tags_for_route(route):
 def _get_path_info(route):
     path_info = route.handler.openapi_path_info
     if 'responses' not in path_info:
-        path_info['responses'] = copy.deepcopy(DEFAULT_RESPONSES)
+        path_info['responses'] = copy.deepcopy(Responses.DEFAULT_RESPONSE)
     for tag in _get_tags_for_route(route):
         if tag not in path_info['tags']:
             path_info['tags'].append(tag)

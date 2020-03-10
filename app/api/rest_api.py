@@ -10,7 +10,7 @@ from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
-from app.utility.api_docs import swagger, build_openapi_spec
+from app.utility.api_docs import swagger, build_openapi_spec, Responses, Requests
 
 
 class RestApi(BaseWorld):
@@ -38,7 +38,9 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         self.app_svc.application.router.add_route('GET', '/swagger.json', self.swagger_spec)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        self.app_svc.application.router.add_route('POST', '/api/rest', self.rest_read)
+        self.app_svc.application.router.add_route('PUT', '/api/rest', self.rest_write)
+        self.app_svc.application.router.add_route('DELETE', '/api/rest', self.rest_delete)
 
     """ BOILERPLATE """
 
@@ -67,28 +69,40 @@ class RestApi(BaseWorld):
 
     """ API ENDPOINTS """
 
-    @swagger(summary='Core API Endpoint', description='Supports read, update, and delete operations',
-             requestBody={'content': 'application/json'},
-             responses={
-                 '200': {
-                     'description': 'successful operation',
-                     'content': 'application/json'},
-                 '400': {
-                     'description': 'invalid request'
-                 }
-             })
+    @swagger(summary='Read Objects', description='Retrieve information from the Caldera API.',
+             requestBody=Requests.INDEX_FIELD_REQUEST,
+             responses=Responses.JSON_RESPONSE)
     @check_authorization
-    async def rest_core(self, request):
+    async def rest_read(self, request):
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             data = dict(await request.json())
             index = data.pop('index')
             options = dict(
-                DELETE=dict(
-                    agents=lambda d: self.rest_svc.delete_agent(d),
-                    operations=lambda d: self.rest_svc.delete_operation(d)
-                ),
-                PUT=dict(
+                    operation_report=lambda d: self.rest_svc.display_operation_report(d),
+                    result=lambda d: self.rest_svc.display_result(d),
+                    contact=lambda d: self.rest_svc.download_contact_report(d),
+                    configuration=lambda d: self.rest_svc.update_config(d),
+                    link=lambda d: self.rest_svc.get_potential_links(**d),
+                    operation=lambda d: self.rest_svc.update_operation(**d)
+            )
+            if index not in options:
+                search = {**data, **access}
+                return web.json_response(await self.rest_svc.display_objects(index, search))
+            return web.json_response(await options[index](data))
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
+
+    @swagger(summary='Create/Update Objects', description='Write information from the Caldera API.',
+             requestBody=Requests.INDEX_FIELD_REQUEST,
+             responses=Responses.JSON_RESPONSE)
+    @check_authorization
+    async def rest_write(self, request):
+        try:
+            access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+            data = dict(await request.json())
+            index = data.pop('index')
+            options = dict(
                     adversaries=lambda d: self.rest_svc.persist_adversary(d),
                     abilities=lambda d: self.rest_svc.persist_ability(d),
                     sources=lambda d: self.rest_svc.persist_source(d),
@@ -98,20 +112,24 @@ class RestApi(BaseWorld):
                     operations=lambda d: self.rest_svc.create_operation(access, d),
                     schedule=lambda d: self.rest_svc.create_schedule(access, d),
                     link=lambda d: self.rest_svc.apply_potential_link(Link.from_json(d))
-                ),
-                POST=dict(
-                    operation_report=lambda d: self.rest_svc.display_operation_report(d),
-                    result=lambda d: self.rest_svc.display_result(d),
-                    contact=lambda d: self.rest_svc.download_contact_report(d),
-                    configuration=lambda d: self.rest_svc.update_config(d),
-                    link=lambda d: self.rest_svc.get_potential_links(**d),
-                    operation=lambda d: self.rest_svc.update_operation(**d)
-                )
             )
-            if index not in options[request.method]:
-                search = {**data, **access}
-                return web.json_response(await self.rest_svc.display_objects(index, search))
-            return web.json_response(await options[request.method][index](data))
+            return web.json_response(await options[index](data))
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
+
+    @swagger(summary='Delete Objects', description='Delete information from the Caldera API.',
+             requestBody=Requests.INDEX_FIELD_REQUEST,
+             responses=Responses.DEFAULT_RESPONSE)
+    @check_authorization
+    async def rest_delete(self, request):
+        try:
+            data = dict(await request.json())
+            index = data.pop('index')
+            options = dict(
+                    agents=lambda d: self.rest_svc.delete_agent(d),
+                    operations=lambda d: self.rest_svc.delete_operation(d)
+            )
+            return web.json_response(await options[index](data))
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
@@ -130,21 +148,7 @@ class RestApi(BaseWorld):
                   'description': 'The directory to save the uploaded file(s) to. Defaults to a random uuid.'
                   }
              ],
-             requestBody={'content': {
-                 'multipart/form-data': {
-                     'schema': {
-                         'type': 'object',
-                         'properties': {
-                             'filename': {
-                                 'type': 'array',
-                                 'items': {
-                                     'type': 'string',
-                                     'format': 'binary'
-                                 }
-                             }
-                         }
-                     }
-                 }}}
+             requestBody=Requests.MULTIPART_REQUEST
              )
     async def upload_file(self, request):
         dir_name = request.headers.get('Directory', None)
@@ -181,10 +185,6 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body=str(e))
 
     @swagger(summary='Swagger spec', description='Retrieve the openapi 3.0 specification.',
-             responses={
-                 '200': {
-                     'description': 'successful operation',
-                     'content': 'application/json'},
-             })
+             responses=Responses.JSON_RESPONSE)
     async def swagger_spec(self, _):
         return web.json_response(build_openapi_spec(self.app_svc.application))
