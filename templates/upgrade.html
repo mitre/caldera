@@ -12,25 +12,19 @@
       <br>
 
       <div>
-        <button onclick="viewSection('upgrade', '/upgrade')">Download Latest Version</button>
+        <button class="upgradebtn" onclick="viewSection('upgrade', '/upgrade')">Download Latest Version</button>
       </div>
 
-
-      <!-- <div id="viewPlanner">
-          <select id="planner-select" style="margin-top:-15px" onchange="loadPlanner()">
-            <option value="" disabled selected>Select an existing planner</option>
-            {% for p in planners %}
-              <option value="{{ p.name }}">{{ p.name }} planner</option>
-            {% endfor %}
-          </select>
-      </div> -->
     </div>
 
-    <div id="planner-info" class="column planner-header" style="flex:75%;text-align: left">
+    <div id="planner-info" class="column planner-header" style="flex:65%;text-align: left">
       <h3 id="planner-title"> Update Info:</h3>
-      {% if status_code %}
-          <p id="planner-description"> {{ status_code }} </p>
+      {% if upgrade_code %}
+          <p id="planner-description"> {{ upgrade_code }} </p>
       {% endif %}
+      <!-- {% if status_code %}
+      <p id="planner-description"> {{ status_code }} </p>
+      {% endif %} -->
     </div>
   </div>
 </div>
@@ -48,8 +42,20 @@
             $('#planner-title').text(data[0]['name']);
             $('#planner-description').text(data[0]['description']);
         }
-        restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
+        restRequest('POST'  , {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
     }
 
     //# sourceURL=planners.js
 </script>
+
+<style>
+ .upgradebtn {
+   border-radius: 4px;
+   transition-duration: 0.4s;
+ }
+
+ .upgradebtn:hover {
+   background-color: rgb(31, 30, 30);
+   color: white;
+ }
+</style>
