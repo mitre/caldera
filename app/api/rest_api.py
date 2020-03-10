@@ -69,7 +69,9 @@ class RestApi(BaseWorld):
 
     """ API ENDPOINTS """
 
-    @swagger(summary='Read Objects', description='Retrieve information from the Caldera API.',
+    @swagger(summary='Read Objects',
+             description='Read information from the Caldera API. Must include an index field '
+                         'to designate object type and additional fields valid to the object for querying.',
              requestBody=Requests.INDEX_FIELD_REQUEST,
              responses=Responses.JSON_RESPONSE)
     @check_authorization
@@ -93,7 +95,9 @@ class RestApi(BaseWorld):
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
-    @swagger(summary='Create/Update Objects', description='Write information from the Caldera API.',
+    @swagger(summary='Create/Update Objects',
+             description='Write information from the Caldera API. Must include an index field to designate '
+                         'object type and additional fields valid to the object.',
              requestBody=Requests.INDEX_FIELD_REQUEST,
              responses=Responses.JSON_RESPONSE)
     @check_authorization
@@ -117,8 +121,10 @@ class RestApi(BaseWorld):
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
-    @swagger(summary='Delete Objects', description='Delete information from the Caldera API.',
-             requestBody=Requests.INDEX_FIELD_REQUEST,
+    @swagger(summary='Delete Objects',
+             description='Delete agents and operations from the Caldera. Must include an index field to designate '
+                         'object type and additional fields to identify the correct object.',
+             requestBody=Requests.DELETE_REQUEST_BODY,
              responses=Responses.DEFAULT_RESPONSE)
     @check_authorization
     async def rest_delete(self, request):
@@ -188,3 +194,4 @@ class RestApi(BaseWorld):
              responses=Responses.JSON_RESPONSE)
     async def swagger_spec(self, _):
         return web.json_response(build_openapi_spec(self.app_svc.application))
+
