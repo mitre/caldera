@@ -1,4 +1,5 @@
 api_key: ADMIN123
+app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://127.0.0.1:8888
 app.contact.tcp: 127.0.0.1:7010
