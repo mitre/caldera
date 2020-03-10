@@ -194,4 +194,3 @@ class RestApi(BaseWorld):
              responses=Responses.JSON_RESPONSE)
     async def swagger_spec(self, _):
         return web.json_response(build_openapi_spec(self.app_svc.application))
-

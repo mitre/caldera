@@ -39,27 +39,27 @@ class Schemas:
 
 class Requests:
     INDEX_FIELD_REQUEST = {'content': {
-                 'application/json': {'schema': {
-                     'type': 'object',
-                     'additionalProperties': True,
-                     'properties': {
-                         'index': {
-                             'description': 'The caldera object type (e.g. "agent", "link", "ability", etc).',
-                             'required': True,
-                             'type': 'string'},
-                     }
-                     }}}}
+        'application/json': {'schema': {
+            'type': 'object',
+            'additionalProperties': True,
+            'properties': {
+                'index': {
+                    'description': 'The caldera object type (e.g. "agent", "link", "ability", etc).',
+                    'required': True,
+                    'type': 'string'},
+            }
+        }}}}
 
     DELETE_REQUEST_BODY = {'content': {
         'application/json': {'schema': {
-            'allOf': [{
-                'type': 'object',
-                'additionalProperties': True,
-                'properties': {
-                    'index': {
-                        'description': 'The caldera object type (e.g. "agent", "link", "ability", etc).',
-                        'required': True,
-                        'type': 'string'}}},
+            'allOf': [
+                {'type': 'object',
+                 'additionalProperties': True,
+                 'properties': {
+                      'index': {
+                       'description': 'The caldera object type (e.g. "agent", "link", "ability", etc).',
+                       'required': True,
+                       'type': 'string'}}},
                 {'oneOf': [
                     {'$ref': '#/components/schemas/Agent'},
                     {'$ref': '#/components/schemas/Operation'}
@@ -68,20 +68,20 @@ class Requests:
         }}}}
 
     MULTIPART_REQUEST = {'content': {
-                 'multipart/form-data': {
-                     'schema': {
-                         'type': 'object',
-                         'properties': {
-                             'filename': {
-                                 'type': 'array',
-                                 'items': {
-                                     'type': 'string',
-                                     'format': 'binary'
-                                 }
-                             }
-                         }
-                     }
-                 }}}
+        'multipart/form-data': {
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'filename': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'string',
+                            'format': 'binary'
+                        }
+                    }
+                }
+            }
+        }}}
 
 
 def swagger(summary='', description='', parameters=None, responses=None, requestBody=None, tags=None):
@@ -118,13 +118,13 @@ def build_openapi_spec(app):
     :return: A dictionary object ready for JSON serialization.
     """
     agent_model_tag = {'name': 'agent_model',
-         'x-displayName': 'The Agent Model',
-         'description': '<SchemaDefinition schemaRef="#/components/schemas/Agent"/>'
-         }
-    operation_model_tag = {'name': 'operation_model',
-                       'x-displayName': 'The Operation Model',
-                       'description': '<SchemaDefinition schemaRef="#/components/schemas/Operation"/>'
+                       'x-displayName': 'The Agent Model',
+                       'description': '<SchemaDefinition schemaRef="#/components/schemas/Agent"/>'
                        }
+    operation_model_tag = {'name': 'operation_model',
+                           'x-displayName': 'The Operation Model',
+                           'description': '<SchemaDefinition schemaRef="#/components/schemas/Operation"/>'
+                           }
     openapi_dict = dict(
         openapi='3.0.0',
         info=dict(title='CALDERA API',
