@@ -125,18 +125,24 @@ class PlanningService(BasePlanningService):
                 if a.test:
                     a.copy
                 if operation.obfuscatePayload:
-                    if operation.obfuscatedPayloadDict:
+                    if operation.obfuscatedPayloadDict: # If NOT empty
                         try:
-                           if {k: v for k, v in operation.obfuscatedPayloadDict.items() if a.payload != k and a.payload != v}:
-                            while True:
-                                try:
-                                    a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
-                                        operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                        break
-                                except Exception as e:
-                                    self.log.error(repr(e), exc_info=True)
+                            if {k: v for k, v in operation.obfuscatedPayloadDict.items() if a.payload != k and a.payload != v}: #If NOT FOUND is TRUE
+                                while True:
+                                    try:
+                                        a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
+                                        if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
+                                            operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
+                                            break
+                                    except Exception as e:
+                                        self.log.error(repr(e), exc_info=True)
 
+                            else:
+                                for k, v in operation.obfuscatedPayloadDict.items():
+                                    if a.payload == k:
+                                        a.obscuredPayload == v
+                                    else:
+                                        a.obscuredPayload == k
                         except Exception as e:
                             self.log.error(repr(e), exc_info=True)
                     else:
@@ -147,22 +153,22 @@ class PlanningService(BasePlanningService):
                                     a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
                                     if a.obscuredPayload not in operation.obfuscatedPayloadDict.values(): #should be empty
                                         operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                        links.append(
-                                            Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
-                                                 ability=a,
-                                                 status=link_status, jitter=self.jitter(operation.jitter))
-                                        )
                                         break
                                 except:
                                     pass
                         finally:
                             self.lock.release()
-                else:
-                    links.append(
-                        Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
-                             status=link_status, jitter=self.jitter(operation.jitter))
-                    )
+                links.append(
+                    Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
+                         ability=a,
+                         status=link_status, jitter=self.jitter(operation.jitter))
+                )
                 a.set
+                break
+            links.append(
+                Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
+                     status=link_status, jitter=self.jitter(operation.jitter))
+            )
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):

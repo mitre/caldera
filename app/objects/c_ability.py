@@ -1,6 +1,5 @@
-import re
 import os
-import logging
+
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_variation import Variation
@@ -14,27 +13,6 @@ class Ability(BaseObject):
         return self.replace_app_props(self._test)
 
     @property
-    def obfuscate(self):
-        decoded_test = self.decode_bytes(self._test)
-        obfuscatedPayload_cmd = decoded_test.replace(str(self.payload), str(self.obscuredPayload))
-        self.payload = self.obscuredPayload
-        for k, v in self.get_config().items():
-            if k.startswith('app.'):
-                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                obfuscatedPayload_cmd = re.sub(re_variable, str(v).strip(), obfuscatedPayload_cmd)
-        return self.encode_string(obfuscatedPayload_cmd)
-
-    @property
-    def copy(self):
-        self._testbkp = self._test
-        return self._testbkp
-
-    @property
-    def set(self):
-        self._test = self._testbkp
-        return self._test
-
-    @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
 
@@ -46,8 +24,7 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'],
-                   access=json['access'])
+                   requirements=requirements, privilege=json['privilege'], timeout=json['timeout'], access=json['access'])
 
     @property
     def display(self):
@@ -60,19 +37,12 @@ class Ability(BaseObject):
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
                                timeout=self.timeout, access=self.access.value, variations=[v.display for v in self.variations]))
 
-    def __init__(self, payload_name, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
-                 testbkp=None,
+    def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=None,
-                 variations=None):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
         super().__init__()
-        self.log = logging.debug
-        self.obfuscatedPayload_cmd = None
         self._test = test
-        self._testbkp = testbkp
-        self.obscuredPayload = obscuredPayload
         self.ability_id = ability_id
-        self.payload_name = payload_name
         self.tactic = tactic
         self.technique_name = technique
         self.technique_id = technique_id

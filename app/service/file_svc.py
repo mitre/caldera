@@ -22,7 +22,6 @@ class FileSvc(BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
 
-
     async def get_file(self, headers):
         """
         Retrieve file
@@ -34,19 +33,18 @@ class FileSvc(BaseService):
         if 'file' not in headers:
             raise KeyError('File key was not provided')
         display_name = payload = headers.get('file')
+
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
 
-        # if obfuscation TRUE pass variable 'obscured'
         if await self.get_service('data_svc').locate('operations'):
-
             for op in await self.get_service('data_svc').locate('operations'):
                 display_name = payload
                 plaintext_payload = await self.build_payloadname(op, payload)
                 file_path, contents = await self.read_file(plaintext_payload)
-
         else:
             file_path, contents = await self.read_file(payload)
+
         if headers.get('name'):
             display_name = headers.get('name')
         return file_path, contents, display_name
