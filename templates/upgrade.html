@@ -3,7 +3,7 @@
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
     <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
     <div id="planners-sidebar" class="column section-border" style="flex:25%">
-      <img src="/gui/img/upgrade_arrow2.jpg">
+      <span class='blink_img'><img src="/gui/img/upgrade_arrow2.jpg"> </span>
       <h4>Upgrade</h4>
       <p class="section-description">
           Caldera is always implementing new innovative elements, make sure you have all the newest
@@ -58,4 +58,13 @@
    background-color: rgb(31, 30, 30);
    color: white;
  }
+ .blink_img {
+  animation: blinker 3s linear infinite;
+}
+@keyframes blinker {
+  50% { opacity: 0; }
+}
+@keyframes blin {
+  50% { opacity: 0; }
+}
 </style>

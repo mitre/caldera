@@ -69,9 +69,9 @@ class RestApi(BaseWorld):
             cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
-
+    
         stdout, stderr = await proc.communicate()
-        self.log.debug(f'[{cmd!r} exited with {proc.returncode}]')
+        self.log.debug(f'Command: {cmd!r} exited with {proc.returncode}')
 
         if cmd == 'git pull':
             command = 'upgrade_code'
@@ -84,7 +84,7 @@ class RestApi(BaseWorld):
             if output == 'Already up to date.':
                 upgrade_result[command] = output
             else:
-                upgrade_result['status_code'] = 'Caldera has been updated, please restart server.py'
+                upgrade_result[command] = 'Caldera has been updated, please restart server.py'
 
         if stderr:
             self.log.debug(f'[stderr]\n{stderr.decode()}')
@@ -96,7 +96,7 @@ class RestApi(BaseWorld):
     @check_authorization
     @template('upgrade.html', status=200)
     async def upgrade(self, request):       
-        self.log.debug("Checking if new version of Caldera is available")      
+        self.log.debug("[!] Checking if new version of Caldera is available")      
         return await self.run('git pull')
 
     # @check_authorization
