@@ -165,7 +165,7 @@ class FileSvc(BaseService):
         :return:
         """
         os.system(
-            '%s %s go build %s -o %s -ldflags=\'%s\' %s' % (_get_go_var(arch, platform), cflags, buildmode, output,
+            '%s %s go build %s -o %s -ldflags=\'%s\' %s' % (_go_vars(arch, platform), cflags, buildmode, output,
                                                             ldflags, src_fle)
         )
 
@@ -180,7 +180,7 @@ class FileSvc(BaseService):
         return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('api_key'), 'utf-8'))))
 
 
-def _get_go_var(arch, platform):
+def _go_vars(arch, platform):
     return "%s GOARCH=%s %s GOOS=%s" % (_get_header(), arch, _get_header(), platform)
 
 
