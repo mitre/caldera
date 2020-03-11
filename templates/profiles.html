@@ -21,12 +21,14 @@
           <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
             <option value="" disabled selected>Select an existing profile</option>
             {% for adv in adversaries %}
-                <option value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
             {% endfor %}}
           </select>
           <button class="button-embedded" onclick="addPhase(null)">Add phase</button>
       </div>
       <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
+      <hr>
+      <button type="button" class="button-success atomic-button" onclick="deleteProfile()">Delete profile</button>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
         <input id="profile-goal" type="text" placeholder="enter a profile name">
@@ -698,6 +700,18 @@
     function addPackToPhase() {
         restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-pack-filter').val()}, loadPackCallback);
         document.getElementById('pack-modal').style.display='none';
+    }
+
+    function deleteProfile(){
+        function deleteCallback(data){
+            $('#adversary-'+adversary_id).remove();
+            toggleAdversaryView();
+            stream(data);
+        }
+        let adversary_id = $('#profile-existing-name').val();
+        if (confirm(`Are you sure you want to terminate this adversary?`)){
+            restRequest('DELETE', {"index": "adversaries", "adversary_id": adversary_id}, deleteCallback);
+        }
     }
 
     //# sourceURL=profiles.js
