@@ -76,9 +76,10 @@
                 <hr>
                 <table class="obfuscation-table" border=1 frame=void rules=rows>
                     <tr>
-                        <!--TODO:  Dynamically list available contact options-->
                         <td>Contact *</td>
-                        <td><select id="modal-contact"></select></td>
+                        <td>
+                            <select id="modal-contact" style="margin-top: 0; margin-left: 0; height: inherit;"></select>
+                        </td>
                     </tr>
                     <tr>
                         <td>Host</td>
@@ -311,21 +312,19 @@
     }
 
     function createContactDropdown(data){
-        let str = `<option selected=\"selected\" value=${data['contact']}>${data['contact']}</option>\n`;
-        data['c2'].forEach(function(contact){
+        $('#modal-contact').append(`<option selected=\"selected\" value="${data['contact']}">${data['contact']}</option>`);
+        data['contacts'].forEach(function(contact){
             if(contact === data['contact']) return;
-            str += `<option>${contact}</option>\n`;
+            $('#modal-contact').append(`<option value="${contact}">${contact}</option>`);
         });
-        return str;
     }
 
     function showAgentInfo(paw){
         function agentInfoCallback(data){
             let parent = $('#agent-modal');
             let agent = data[0];
-            let dropdown = createContactDropdown(agent);
+            createContactDropdown(agent);
             parent.find('#modal-paw').html(agent['paw']);
-            parent.find('#modal-contact').html(dropdown);
             parent.find('#modal-host').html(agent['host']);
             parent.find('#modal-privilege').html(agent['privilege']);
             parent.find('#modal-last_seen').html(agent['last_seen']);

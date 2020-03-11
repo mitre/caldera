@@ -52,7 +52,7 @@ class ContactService(BaseService):
             sleep_min=self.get_config(name='agents', prop='sleep_min'),
             sleep_max=self.get_config(name='agents', prop='sleep_max'),
             watchdog=self.get_config(name='agents', prop='watchdog'),
-            c2=[c.name for c in self.contacts],
+            contacts=[c.name for c in self.contacts],
             **kwargs)
         )
         await self._add_agent_to_operation(agent)

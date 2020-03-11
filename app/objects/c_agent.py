@@ -20,7 +20,7 @@ class Agent(BaseObject):
                     last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
                     sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
                     privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog, contact=self.contact, c2=list(self.c2))
+                    watchdog=self.watchdog, contact=self.contact, contacts=list(self.contacts))
 
     @property
     def display_name(self):
@@ -28,7 +28,7 @@ class Agent(BaseObject):
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', c2=['http'],
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', contacts=[],
                  paw=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
@@ -53,7 +53,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
-        self.c2 = c2
+        self.contacts = contacts
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
 
     def store(self, ram):
