@@ -69,7 +69,8 @@ class RestApi(BaseWorld):
             options = dict(
                 DELETE=dict(
                     agents=lambda d: self.rest_svc.delete_agent(d),
-                    operations=lambda d: self.rest_svc.delete_operation(d)
+                    operations=lambda d: self.rest_svc.delete_operation(d),
+                    adversaries=lambda d: self.rest_svc.delete_adversary(d)
                 ),
                 PUT=dict(
                     adversaries=lambda d: self.rest_svc.persist_adversary(d),

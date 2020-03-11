@@ -92,6 +92,14 @@ class RestService(BaseService):
         await self.get_service('data_svc').remove('agents', data)
         return 'Delete action completed'
 
+    async def delete_adversary(self, data):
+        await self.get_service('data_svc').remove('adversaries', data)
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('adversary_id'), location='data')
+        if not file_path:
+            file_path = 'data/adversaries/%s.yml' % data.get('adversary_id')
+        os.remove(file_path)
+        return 'Delete action completed'
+
     async def delete_operation(self, data):
         await self.get_service('data_svc').remove('operations', data)
         await self.get_service('data_svc').remove('sources', dict(id=str(data.get('id'))))
