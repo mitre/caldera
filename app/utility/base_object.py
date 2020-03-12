@@ -51,9 +51,10 @@ class BaseObject(BaseWorld):
         self._access = value
 
     def replace_app_props(self, encoded_string):
-        decoded_test = self.decode_bytes(encoded_string)
-        for k, v in self.get_config().items():
-            if k.startswith('app.'):
-                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
-        return self.encode_string(decoded_test)
+        if encoded_string:
+            decoded_test = self.decode_bytes(encoded_string)
+            for k, v in self.get_config().items():
+                if k.startswith('app.'):
+                    re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
+                    decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
+            return self.encode_string(decoded_test)
