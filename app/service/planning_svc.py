@@ -130,8 +130,6 @@ class PlanningService(BasePlanningService):
                            ability=ability, score=0, jitter=0, status=link_status)
                 lnk.apply_id(agent.host)
                 links.append(lnk)
-        for ll in links:
-            print(self.decode_bytes(ll.command))
         return links
 
     @staticmethod
