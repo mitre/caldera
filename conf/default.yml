@@ -14,7 +14,7 @@ plugins:
 - response
 - gameboard
 port: 8888
-reports_dir: /tmp/derp
+reports_dir: /tmp
 users:
   blue:
     blue: admin

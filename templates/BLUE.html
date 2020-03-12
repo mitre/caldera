@@ -25,16 +25,6 @@
                   <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
 
                   <div class="subnav-right">
-                    <button class="subnavbtn">Settings <i class="fa fa-caret-down"></i></button>
-                    <div class="subnav-content subnav-content-right">
-                        <a onclick="viewSection('upgrade', '/upgrade')">upgrade</a>
-                        {% if status_code %}
-                            <script>alert('{{ status_code}}') </script>
-                        {% endif %}
-                        </div>
-                  </div>
-                  
-                  <div class="subnav-right">
                     <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
                         <div class="subnav-content subnav-content-right">
                             {% for plugin in plugins %}
@@ -49,7 +39,10 @@
               <div class="subnav-right">
                 <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
                 <div class="subnav-content subnav-content-right">
+                    <a onclick="viewSection('upgrade', '/advanced/upgrade')">upgrade</a>
                     <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
+  
+
                 </div>
               </div>
             </div>

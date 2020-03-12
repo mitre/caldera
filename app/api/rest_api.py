@@ -73,16 +73,15 @@ class RestApi(BaseWorld):
         self.log.debug(f'Command: {cmd!r} exited with {proc.returncode}')
         
         if stdout:
-            print(f'[stdout]\n{stdout.decode()}')
+            self.log.debug(f'[stdout] {stdout.decode()}')
             output = stdout.decode().strip() ## removes 'b (byte) and \n (newline)
             if output == 'Already up to date.':
-                upgrade_result['status_code'] = output
+                upgrade_result['status_code'] = output + '\nRunning latest version of Caldera'
             else:
                 upgrade_result['status_code'] = 'Caldera has been updated, please restart server.py'
-            
 
         if stderr:
-            self.log.debug(f'[stderr]\n{stderr.decode()}')
+            self.log.debug(f'[stderr] {stderr.decode()}')
             # stderr = stdout.decode().strip()
             upgrade_result['status_code'] = stderr
 
