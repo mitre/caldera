@@ -4,6 +4,22 @@ SCRIPT=$(readlink -f "$0")
 CALDERA_DIR=$(dirname "$SCRIPT")
 USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 
+function upgrade_caldera(){
+    git fetch
+
+    var_local=`cat .git/refs/heads/master`
+    var_remote=`git log origin/master -1 | head -n1 | cut -d" " -f2`
+
+    if [ "$var_remote" = "$var_local" ]; then
+        echo "[+] Running current version of Caldera" 
+    else
+        echo "[-] Downloading latest Caldera updates."
+        git pull
+    fi
+}
+
+
+
 function install_wrapper() {
     echo "[-] Checking for $1"
     which $2
@@ -96,6 +112,7 @@ EOF
 
 function darwin() {
     echo "[-] Installing on OS X..."
+    upgrade_caldera
     darwin_install_homebrew
     darwin_install_go
     darwin_install_mingw
@@ -109,6 +126,7 @@ function darwin() {
 function ubuntu() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on Ubuntu (Debian)..."
+    upgrade_caldera
     ubuntu_install_go
     ubuntu_install_mingw
     ubuntu_install_python
@@ -121,6 +139,7 @@ function ubuntu() {
 function centos() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on CentOS (RedHat)..."
+    upgrade_caldera
     centos_install_go
     centos_install_mingw
     centos_install_python

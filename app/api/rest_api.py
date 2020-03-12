@@ -33,7 +33,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         self.app_svc.application.router.add_route('GET', '/upgrade', self.upgrade)
 
-
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
@@ -72,22 +71,15 @@ class RestApi(BaseWorld):
     
         stdout, stderr = await proc.communicate()
         self.log.debug(f'Command: {cmd!r} exited with {proc.returncode}')
-
-        # if cmd == 'git pull':
-        #     command = 'upgrade_code'
-        # if cmd == 'git status':
-        #     command = 'status_code'
-        # else:
-        #     command = 'upgrade_code'
         
         if stdout:
-            # print(f'[stdout]\n{stdout.decode()}')
+            print(f'[stdout]\n{stdout.decode()}')
             output = stdout.decode().strip() ## removes 'b (byte) and \n (newline)
-            # if output == 'Already up to date.':
-            #     upgrade_result[command] = output
-            # else:
-            #     upgrade_result[command] = 'Caldera has been updated, please restart server.py'
-            upgrade_result['status_code'] = output
+            if output == 'Already up to date.':
+                upgrade_result['status_code'] = output
+            else:
+                upgrade_result['status_code'] = 'Caldera has been updated, please restart server.py'
+            
 
         if stderr:
             self.log.debug(f'[stderr]\n{stderr.decode()}')
@@ -100,13 +92,7 @@ class RestApi(BaseWorld):
     @template('upgrade.html', status=200)
     async def upgrade(self, request):       
         self.log.debug("[!] Checking if new version of Caldera is available")      
-        return await self.run('python /home/huzar/Projects/huzar-forks/new/caldera/upgrade.py')
-
-    # @check_authorization
-    # @template('upgrade.html', status=200)
-    # async def status(self, request):       
-    #     self.log.debug("Checking status of git repo")      
-    #     return await self.run('git status')
+        return await self.run('git pull')
 
     """ API ENDPOINTS """
 

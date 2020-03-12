@@ -1,14 +1,12 @@
 import subprocess
 
-
-
 def beautify(output):
     return output.decode().strip()
 
 def bash_command(cmd):
     subprocess.Popen(cmd, shell=True)
 
-
+#Compares remote reference HEAD to local and if different does a git pull
 def main():
     bash_command('git fetch')
     var_local = subprocess.check_output('cat .git/refs/heads/master',shell=True)
@@ -22,3 +20,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
