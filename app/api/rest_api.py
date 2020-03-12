@@ -73,23 +73,26 @@ class RestApi(BaseWorld):
         stdout, stderr = await proc.communicate()
         self.log.debug(f'Command: {cmd!r} exited with {proc.returncode}')
 
-        if cmd == 'git pull':
-            command = 'upgrade_code'
-        if cmd == 'git status':
-            command = 'status_code'
+        # if cmd == 'git pull':
+        #     command = 'upgrade_code'
+        # if cmd == 'git status':
+        #     command = 'status_code'
+        # else:
+        #     command = 'upgrade_code'
         
         if stdout:
             # print(f'[stdout]\n{stdout.decode()}')
             output = stdout.decode().strip() ## removes 'b (byte) and \n (newline)
-            if output == 'Already up to date.':
-                upgrade_result[command] = output
-            else:
-                upgrade_result[command] = 'Caldera has been updated, please restart server.py'
+            # if output == 'Already up to date.':
+            #     upgrade_result[command] = output
+            # else:
+            #     upgrade_result[command] = 'Caldera has been updated, please restart server.py'
+            upgrade_result['status_code'] = output
 
         if stderr:
             self.log.debug(f'[stderr]\n{stderr.decode()}')
             # stderr = stdout.decode().strip()
-            upgrade_result[command] = stderr
+            upgrade_result['status_code'] = stderr
 
         return upgrade_result
 
@@ -97,7 +100,7 @@ class RestApi(BaseWorld):
     @template('upgrade.html', status=200)
     async def upgrade(self, request):       
         self.log.debug("[!] Checking if new version of Caldera is available")      
-        return await self.run('git pull')
+        return await self.run('python /home/huzar/Projects/huzar-forks/new/caldera/upgrade.py')
 
     # @check_authorization
     # @template('upgrade.html', status=200)
