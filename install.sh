@@ -109,6 +109,7 @@ function ubuntu_install_mingw() {
 
 function ubuntu_install_python() {
     install_wrapper "Python" python3 "apt-get install -y software-properties-common && add-apt-repository -y ppa:deadsnakes/ppa && apt-get update -y && apt-get install -y python3.7" $CRITICAL
+    install_wrapper "Pip" pip3 "apt-get install -y python3-pip" $CRITICAL
 }
 
 function centos_install_core_tools() {
