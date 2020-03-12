@@ -179,9 +179,9 @@
             <td>
               <select id="ability-platform">
                 <option value="" disabled selected>Select a platform</option>
-                    <option value="darwin">darwin</option>
-                    <option value="linux">linux</option>
-                    <option value="windows">windows</option>
+                    {% for platform in platforms %}
+                        <option value="{{ platform }}">{{ platform }}</option>
+                    {% endfor %}
               </select>
             </td>
         </tr>
@@ -190,10 +190,9 @@
             <td>
               <select id="ability-executor">
                 <option value="" disabled selected>Select an executor</option>
-                    <option value="sh">sh</option>
-                    <option value="psh">psh</option>
-                    <option value="pwsh">pwsh</option>
-                    <option value="cmd">cmd</option>
+                    {% for executor in executors %}
+                        <option value="{{ executor }}">{{ executor }}</option>
+                    {% endfor %}
               </select>
             </td>
         </tr>
@@ -593,7 +592,6 @@
         $('#ability-tactic-name').val(aid.tactic);
         $('#ability-tech-id').val(aid.technique_id);
         $('#ability-tech-name').val(aid.technique_name);
-
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();

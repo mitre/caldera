@@ -202,20 +202,21 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             for entries in self.strip_yml(filename):
                 for ab in entries:
-                    saved = set()
-                    if ab['tactic'] not in filename:
+                    if ab.get('tactic') and ab.get('tactic') not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
                     for pl, executors in ab['platforms'].items():
                         for name, info in executors.items():
                             for e in name.split(','):
+                                technique_name = ab.get('technique', dict()).get('name')
+                                technique_id = ab.get('technique', dict()).get('attack_id')
                                 encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
                                 cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
-                                a = await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
-                                                               technique_name=ab['technique']['name'],
-                                                               technique_id=ab['technique']['attack_id'],
+                                a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
+                                                               technique_name=technique_name,
+                                                               technique_id=technique_id,
                                                                test=encoded_test,
                                                                description=ab.get('description') or '',
-                                                               executor=e, name=ab['name'], platform=pl,
+                                                               executor=e, name=ab.get('name'), platform=pl,
                                                                cleanup=cleanup_cmd,
                                                                payload=info.get('payload'),
                                                                parsers=info.get('parsers', []),
@@ -225,18 +226,17 @@ class DataService(BaseService):
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
                                                                access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                variations=info.get('variations', []))
-                                saved.add(a.unique)
-                    for existing in await self.locate('abilities', match=dict(ability_id=ab['id'])):
-                        if existing.unique not in saved:
-                            self.log.debug('Ability no longer exists on disk, removing: %s' % existing.unique)
-                            await self.remove('abilities', match=dict(unique=existing.unique))
-                        if existing.payload:
-                            payloads = existing.payload.split(',')
-                            for payload in payloads:
-                                _, path = await self.get_service('file_svc').find_file_path(payload)
-                                if not path:
-                                    self.log.error('Payload referenced in %s but not found: %s' %
-                                                   (existing.ability_id, payload))
+                                await self._update_extensions(a)
+                    await self._verify_ability_set(ab['id'])
+
+    async def _update_extensions(self, ability):
+        for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
+            ab.name = ability.name
+            ab.description = ability.description
+            ab.tactic = ability.tactic
+            ab.technique_id = ability.technique_id
+            ab.technique_name = ability.technique_name
+            await self.store(ab)
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -287,9 +287,9 @@ class DataService(BaseService):
         for adv in self.strip_yml(filename):
             return adv.get('phases')
 
-    async def _create_ability(self, ability_id, tactic, technique_name, technique_id, name, test, description,
-                              executor, platform, cleanup=None, payload=None, parsers=None, requirements=None,
-                              privilege=None, timeout=60, access=None, repeatable=False, variations=None):
+    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
+                              description=None, executor=None, platform=None, cleanup=None, payload=None, parsers=None,
+                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -311,3 +311,12 @@ class DataService(BaseService):
     async def _prune_non_critical_data(self):
         self.ram.pop('plugins')
         self.ram.pop('obfuscators')
+
+    async def _verify_ability_set(self, identifier):
+        for existing in await self.locate('abilities', match=dict(ability_id=identifier)):
+            if existing.payload:
+                payloads = existing.payload.split(',')
+                for payload in payloads:
+                    _, path = await self.get_service('file_svc').find_file_path(payload)
+                    if not path:
+                        self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
