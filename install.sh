@@ -209,4 +209,6 @@ elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Kali"* ]]; then
   ubuntu
+else
+    echo "OS not supported. Supported OS are Ubuntu, Centos, Fedora and Kali." && exit 1
 fi
