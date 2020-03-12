@@ -35,12 +35,14 @@ class CampaignPack(BaseWorld):
     async def _section_profiles(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=access)
+        platforms = set([a.platform for a in abilities])
+        executors = set([a.executor for a in abilities])
         tactics = set([a.tactic.lower() for a in abilities])
         payloads = await self.rest_svc.list_payloads()
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
                              key=lambda a: a['name'])
         return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads,
-                    tactics=tactics)
+                    tactics=tactics, platforms=platforms, executors=executors)
 
     @check_authorization
     @template('operations.html')
