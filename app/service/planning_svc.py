@@ -119,7 +119,7 @@ class PlanningService(BasePlanningService):
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
-        links = []
+        links = await self._apply_global_cleanup_links(operation, agent, link_status)
         for link in [l for l in operation.chain if l.paw == agent.paw]:
             ability = (await self.get_service('data_svc').locate('abilities',
                                                                  match=dict(unique=link.ability.unique)))[0]
@@ -139,3 +139,13 @@ class PlanningService(BasePlanningService):
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
                     l.visibility.apply(adjustment)
                     l.status = l.states['HIGH_VIZ']
+
+    async def _apply_global_cleanup_links(self, operation, agent, link_status):
+        links = []
+        for ability_id in self.get_config(name='agents', prop='cleanup_abilities'):
+            for ability in await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id)):
+                decoded_cmd = agent.replace(ability.cleanup)
+                variant, _, _ = await self._build_single_test_variant(decoded_cmd, [], ability.executor)
+                links.append(Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                                  ability=ability, score=0, jitter=0, status=link_status))
+        return links
