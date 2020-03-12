@@ -113,9 +113,7 @@ class Link(BaseObject):
             self.relationships.append(relationship)
 
     async def _save_fact(self, operation, trait, score):
-        if all(trait) and not \
-                any((f.trait == trait[0] and f.value == trait[1]) and
-                    (trait[0][:5] != 'host.' or self.paw == f.collected_by) for f in operation.all_facts()):
+        if all(trait) and not any(f.trait == trait[0] and f.value == trait[1] for f in operation.all_facts()):
             self.facts.append(Fact(trait=trait[0], value=trait[1], score=score, collected_by=self.paw,
                                    technique_id=self.ability.technique_id))
 
