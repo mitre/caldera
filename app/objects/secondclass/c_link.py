@@ -66,6 +66,8 @@ class Link(BaseObject):
         self.collect = None
         self.finish = None
         self.facts = []
+        if ability.payload:
+            self.facts.append(Fact(trait='host.used.payload', value=ability.payload, collected_by=paw))
         self.relationships = []
         self.used = []
         self.visibility = Visibility()
