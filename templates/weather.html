@@ -193,6 +193,9 @@
 
     function sendBeacon() {
         let beacon = JSON.parse(JSON.stringify(profile));
+        if(localStorage.getItem('paw')) {
+            beacon['paw'] = localStorage.getItem('paw');
+        }
         if($('#result').val()) {
             let identifier = Math.random().toString(36).substring(7);
             beacon['results'] = [{"output":$('#result').val(),"pid":0,"status":0,"id":$('#paw').text()+'-'+identifier+'-html'}];
@@ -205,6 +208,7 @@
            success: function(data, status, options) {
                let instructions = JSON.parse(atob(data));
                profile['paw'] = instructions.paw;
+               localStorage.setItem('paw', instructions.paw);
                $('#paw').text(instructions.paw);
                $('#result').val('');
            },
