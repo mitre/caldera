@@ -130,6 +130,8 @@ class PlanningService(BasePlanningService):
                            ability=ability, score=0, jitter=0, status=link_status)
                 lnk.apply_id(agent.host)
                 links.append(lnk)
+        for ll in links:
+            print(self.decode_bytes(ll.command))
         return links
 
     @staticmethod
@@ -144,8 +146,6 @@ class PlanningService(BasePlanningService):
         links = []
         for ability_id in self.get_config(name='agents', prop='cleanup_abilities'):
             for ability in await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id)):
-                decoded_cmd = agent.replace(ability.cleanup)
-                variant, _, _ = await self._build_single_test_variant(decoded_cmd, [], ability.executor)
-                links.append(Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                links.append(Link(operation=operation.id, command=ability.cleanup, paw=agent.paw, cleanup=1,
                                   ability=ability, score=0, jitter=0, status=link_status))
-        return links
+        return await self.add_test_variants(links, agent, operation)
