@@ -3,7 +3,7 @@ bootstrap_abilities:
 cleanup_abilities:
 - 4cd4eb44-29a7-4259-91ae-e457b283a880
 implant_name: splunkd
-sleep_max: 13
-sleep_min: 10
+sleep_max: 30
+sleep_min: 60
 untrusted_timer: 90
 watchdog: 0
