@@ -495,19 +495,12 @@
         });
 
         ability.platform.forEach(function(p, index) {
-            let icon = null;
             let exec = ability.executor[index];
             if (exec === 'psh'){exec = 'powershell';}
             else if(exec === 'pwsh') {exec = 'powershell core';}
             else if(exec === 'sh') {exec = 'shell';}
             else if(exec === 'cmd') {exec = 'commandline';}
-            if(p === 'windows') {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Windows ('+ exec +')</span><img src="/gui/img/windows.png"/></div>');
-            } else if (p === 'linux') {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Linux ('+ exec +')</span><img src="/gui/img/linux.png"/></div>');
-            } else {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on MacOS ('+ exec +')</span><img src="/gui/img/darwin.png"/></div>');
-            }
+            let icon = $('<div class="tooltip"><span class="tooltiptext">Works on '+p+' ('+ exec +')</span><img src="/gui/img/'+p+'.png"/></div>');
             icon.appendTo(template.find('#icon-row'));
         });
         template.show();
