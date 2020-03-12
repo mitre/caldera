@@ -176,6 +176,7 @@ class DataService(BaseService):
                 plugins = [p for p in await self.locate('plugins') if p.data_dir]
             for plug in plugins:
                 await self._load_abilities(plug)
+            await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
@@ -227,7 +228,6 @@ class DataService(BaseService):
                                                                access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                variations=info.get('variations', []))
                                 await self._update_extensions(a)
-                    await self._verify_ability_set(ab['id'])
 
     async def _update_extensions(self, ability):
         for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
@@ -312,11 +312,26 @@ class DataService(BaseService):
         self.ram.pop('plugins')
         self.ram.pop('obfuscators')
 
-    async def _verify_ability_set(self, identifier):
-        for existing in await self.locate('abilities', match=dict(ability_id=identifier)):
+    async def _verify_ability_set(self):
+        for existing in await self.locate('abilities'):
             if existing.payload:
                 payloads = existing.payload.split(',')
                 for payload in payloads:
                     _, path = await self.get_service('file_svc').find_file_path(payload)
                     if not path:
                         self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
+            if not existing.name:
+                existing.name = 'Fix me'
+                self.log.error('Please fix name for ability: %s' % existing.ability_id)
+            if not existing.description:
+                existing.description = 'Fix me'
+                self.log.error('Please fix description for ability: %s' % existing.ability_id)
+            if not existing.tactic:
+                existing.tactic = 'needs_fix'
+                self.log.error('Please fix tactic for ability: %s' % existing.ability_id)
+            if not existing.technique_id:
+                existing.technique_id = 'FixMe'
+                self.log.error('Please fix technique ID for ability: %s' % existing.ability_id)
+            if not existing.technique_name:
+                existing.technique_name = 'fix me'
+                self.log.error('Please fix technique name for ability: %s' % existing.ability_id)
