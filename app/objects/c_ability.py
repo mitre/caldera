@@ -1,4 +1,7 @@
 import os
+import random
+import logging
+import re
 
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -11,6 +14,27 @@ class Ability(BaseObject):
     @property
     def test(self):
         return self.replace_app_props(self._test)
+
+    @property
+    def obfuscate(self):
+        decoded_test = self.decode_bytes(self._test)
+        obfuscatedPayload_cmd = decoded_test.replace(str(self.payload), str(self.obscuredPayload))
+        self.payload = self.obscuredPayload
+        for k, v in self.get_config().items():
+            if k.startswith('app.'):
+                re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
+                obfuscatedPayload_cmd = re.sub(re_variable, str(v).strip(), obfuscatedPayload_cmd)
+        return self.encode_string(obfuscatedPayload_cmd)
+
+    @property
+    def copy(self):
+        self._testbkp = self._test
+        return self._testbkp
+
+    @property
+    def set(self):
+        self._test = self._testbkp
+        return self._test
 
     @property
     def unique(self):
@@ -38,11 +62,18 @@ class Ability(BaseObject):
                                timeout=self.timeout, access=self.access.value, variations=[v.display for v in self.variations]))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
-                 description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
+             testbkp=None,
+             description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
+             requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=None,
+             variations=None):
         super().__init__()
+        self.log = logging.debug
+        self.obfuscatedPayload_cmd = None
         self._test = test
+        self._testbkp = testbkp
+        self.obscuredPayload = obscuredPayload
         self.ability_id = ability_id
+        # self.payload_name = payload_name
         self.tactic = tactic
         self.technique_name = technique
         self.technique_id = technique_id

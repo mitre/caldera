@@ -93,6 +93,10 @@
               <h5>STEALTH</h5>
           </div>
           <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
+              <select name="phases" id="queueObfuscatepayload" class="queueOption" style="opacity:0.5" disabled="true">
+                    <option value="0">Plain-Text Payload</option>
+                    <option value="0">Obfuscate Payload</option>
+              </select>
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
                     <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
@@ -284,10 +288,11 @@
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
     });
+    $(document).ready(function () {
+        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
+    });
 
     $(document).ready(function(){
-        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
-
         $("#optional").click(function(){
             stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
             $("#optional-options").slideToggle("slow");
@@ -370,6 +375,7 @@
             "autonomous":document.getElementById("queueAuto").value,
             "phases_enabled":document.getElementById("queuePhasesEnabled").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
+            "obfuscatepayload":document.getElementById("queueObfuscatepayload").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,

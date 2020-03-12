@@ -38,12 +38,15 @@ class FileSvc(BaseService):
             payload, display_name = await self.special_payloads[payload](headers)
 
         if await self.get_service('data_svc').locate('operations'):
+
             for op in await self.get_service('data_svc').locate('operations'):
-                display_name = payload
-                plaintext_payload = await self.build_payloadname(op, payload)
-                file_path, contents = await self.read_file(plaintext_payload)
-        else:
-            file_path, contents = await self.read_file(payload)
+                if op.obfuscatePayload:
+                    display_name = payload
+                    plaintext_payload = await self.build_payloadname(op, payload)
+                    file_path, contents = await self.read_file(plaintext_payload)
+                else:
+                    file_path, contents = await self.read_file(payload)
+
 
         if headers.get('name'):
             display_name = headers.get('name')

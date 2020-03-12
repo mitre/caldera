@@ -158,13 +158,12 @@ class PlanningService(BasePlanningService):
                                     pass
                         finally:
                             self.lock.release()
-                links.append(
-                    Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
-                         ability=a,
-                         status=link_status, jitter=self.jitter(operation.jitter))
-                )
+                    links.append(
+                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
+                             ability=a,
+                             status=link_status, jitter=self.jitter(operation.jitter))
+                    )
                 a.set
-                break
             links.append(
                 Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
                      status=link_status, jitter=self.jitter(operation.jitter))

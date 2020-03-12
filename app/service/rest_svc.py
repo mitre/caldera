@@ -235,6 +235,7 @@ class RestService(BaseService):
                          jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          phases_enabled=bool(int(data.pop('phases_enabled', 1))), obfuscator=data.pop('obfuscator', 'plain-text'),
+                         obfuscatepayload=bool(int(data.pop('obfuscatepayload'))),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 
     @staticmethod
