@@ -100,7 +100,7 @@ function darwin_install_python() {
 }
 
 function ubuntu_install_go() {
-    install_wrapper "GO" go "add-apt-repository -y ppa:longsleep/golang-backports && apt-get update -y && apt-get install -y golang-go" $WARNING
+    install_wrapper "GO" go "apt-get install -y software-properties-common && add-apt-repository -y ppa:longsleep/golang-backports && apt-get update -y && apt-get install -y golang-go" $WARNING
 }
 
 function ubuntu_install_mingw() {
