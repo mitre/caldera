@@ -208,17 +208,15 @@ class DataService(BaseService):
                     for pl, executors in ab['platforms'].items():
                         for name, info in executors.items():
                             for e in name.split(','):
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8'))
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
+                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
                                 a = await self._create_ability(ability_id=ab.get('id'), tactic=ab['tactic'].lower(),
                                                                technique_name=ab['technique']['name'],
                                                                technique_id=ab['technique']['attack_id'],
-                                                               test=encoded_test.decode(),
+                                                               test=encoded_test,
                                                                description=ab.get('description') or '',
                                                                executor=e, name=ab['name'], platform=pl,
-                                                               cleanup=b64encode(
-                                                                   info['cleanup'].strip().encode(
-                                                                       'utf-8')).decode() if info.get(
-                                                                   'cleanup') else None,
+                                                               cleanup=cleanup_cmd,
                                                                payload=info.get('payload'),
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
