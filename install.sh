@@ -129,10 +129,10 @@ function centos_install_python() {
 
 function bash_set_random_conf_data() {
     echo "[-] Generating Random Values"
-    sed -i.backup "s/ADMIN123/$(uuidgen)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/ADMIN123/$(uuidgen)/g\" conf/default.yml" "caldera random api_key" $WARNING
-    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
+    sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random api_key" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
     echo "[+] Random Values added to default.yml"
 }
 
