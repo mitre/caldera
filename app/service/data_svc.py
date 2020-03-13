@@ -339,4 +339,6 @@ class DataService(BaseService):
                         continue
                     for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                         decoded_test = existing.replace(clean_ability.cleanup[0])
-                        existing.cleanup.append(self.encode_string(decoded_test))
+                        cleanup_command = self.encode_string(decoded_test)
+                        if cleanup_command not in existing.cleanup:
+                            existing.cleanup.append(cleanup_command)
