@@ -51,7 +51,7 @@ class Ability(BaseObject):
         self.technique_id = technique_id
         self.name = name
         self.description = description
-        self.cleanup = cleanup
+        self.cleanup = [cleanup] if cleanup else []
         self.executor = executor
         self.platform = platform
         self.payload = payload

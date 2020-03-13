@@ -70,7 +70,7 @@ class RestService(BaseService):
         if not file_path:
             d = 'data/abilities/%s' % data.get('tactic')
             if not os.path.exists(d):
-                os.makedirs(d)
+                os.makedirs(d, 777)
             file_path = '%s/%s.yml' % (d, data.get('id'))
         with open(file_path, 'w+') as f:
             f.seek(0)

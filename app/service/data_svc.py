@@ -337,7 +337,6 @@ class DataService(BaseService):
                     if not path:
                         self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
                         continue
-                    clean_ability = next((a for a in payload_cleanup if a.executor == existing.executor), None)
-                    if clean_ability:
-                        decoded_test = existing.replace(clean_ability.cleanup)
-                        existing.cleanup = self.encode_string(decoded_test)
+                    for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
+                        decoded_test = existing.replace(clean_ability.cleanup[0])
+                        existing.cleanup.append(self.encode_string(decoded_test))
