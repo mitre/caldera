@@ -179,9 +179,9 @@
             <td>
               <select id="ability-platform">
                 <option value="" disabled selected>Select a platform</option>
-                    <option value="darwin">darwin</option>
-                    <option value="linux">linux</option>
-                    <option value="windows">windows</option>
+                    {% for platform in platforms %}
+                        <option value="{{ platform }}">{{ platform }}</option>
+                    {% endfor %}
               </select>
             </td>
         </tr>
@@ -190,10 +190,9 @@
             <td>
               <select id="ability-executor">
                 <option value="" disabled selected>Select an executor</option>
-                    <option value="sh">sh</option>
-                    <option value="psh">psh</option>
-                    <option value="pwsh">pwsh</option>
-                    <option value="cmd">cmd</option>
+                    {% for executor in executors %}
+                        <option value="{{ executor }}">{{ executor }}</option>
+                    {% endfor %}
               </select>
             </td>
         </tr>
@@ -496,19 +495,12 @@
         });
 
         ability.platform.forEach(function(p, index) {
-            let icon = null;
             let exec = ability.executor[index];
             if (exec === 'psh'){exec = 'powershell';}
             else if(exec === 'pwsh') {exec = 'powershell core';}
             else if(exec === 'sh') {exec = 'shell';}
             else if(exec === 'cmd') {exec = 'commandline';}
-            if(p === 'windows') {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Windows ('+ exec +')</span><img src="/gui/img/windows.png"/></div>');
-            } else if (p === 'linux') {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on Linux ('+ exec +')</span><img src="/gui/img/linux.png"/></div>');
-            } else {
-                icon = $('<div class="tooltip"><span class="tooltiptext">Works on MacOS ('+ exec +')</span><img src="/gui/img/darwin.png"/></div>');
-            }
+            let icon = $('<div class="tooltip"><span class="tooltiptext">Works on '+p+' ('+ exec +')</span><img src="/gui/img/'+p+'.png"/></div>');
             icon.appendTo(template.find('#icon-row'));
         });
         template.show();
@@ -593,7 +585,6 @@
         $('#ability-tactic-name').val(aid.tactic);
         $('#ability-tech-id').val(aid.technique_id);
         $('#ability-tech-name').val(aid.technique_name);
-
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();
