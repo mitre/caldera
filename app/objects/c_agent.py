@@ -75,7 +75,7 @@ class Agent(BaseObject):
                                  and (ab.platform == self.platform) and (ab.executor in executors)]
                 if len(total_ability) > 0:
                     val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                    if val.privilege and val.privilege == self.privilege or not val.privilege:
+                    if self.privileged_to_run(val):
                         abilities.append(val)
         return abilities
 
@@ -116,3 +116,8 @@ class Agent(BaseObject):
         decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], self.location)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['exe_name'], self.exe_name)
         return decoded_cmd
+
+    def privileged_to_run(self, ability):
+        if not ability.privilege or self.Privileges[self.privilege].value >= self.Privileges[ability.privilege].value:
+            return True
+        return False

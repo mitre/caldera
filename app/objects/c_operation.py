@@ -323,7 +323,7 @@ class Operation(BaseObject):
         elif variables and not all(op_fact in op_facts for op_fact in variables):
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif ability.privilege != agent.privilege:
+        elif agent.privileged_to_run(ability):
             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         else:
