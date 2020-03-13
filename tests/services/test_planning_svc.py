@@ -23,4 +23,4 @@ class TestPlanningService(TestBase):
         )
         link_list = list(links)
         self.assertEqual(len(link_list), 1)
-        self.assertEqual(link_list[0].command, self.ability.cleanup)
+        self.assertEqual(link_list[0].command, self.ability.cleanup[0])
