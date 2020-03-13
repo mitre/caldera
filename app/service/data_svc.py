@@ -313,25 +313,32 @@ class DataService(BaseService):
         self.ram.pop('obfuscators')
 
     async def _verify_ability_set(self):
+        payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for existing in await self.locate('abilities'):
+            if not existing.name:
+                existing.name = '(auto-generated)'
+                self.log.error('Fix name for ability: %s' % existing.ability_id)
+            if not existing.description:
+                existing.description = '(auto-generated)'
+                self.log.error('Fix description for ability: %s' % existing.ability_id)
+            if not existing.tactic:
+                existing.tactic = '(auto-generated)'
+                self.log.error('Fix tactic for ability: %s' % existing.ability_id)
+            if not existing.technique_id:
+                existing.technique_id = '(auto-generated)'
+                self.log.error('Fix technique ID for ability: %s' % existing.ability_id)
+            if not existing.technique_name:
+                existing.technique_name = '(auto-generated)'
+                self.log.error('Fix technique name for ability: %s' % existing.ability_id)
             if existing.payload:
                 payloads = existing.payload.split(',')
                 for payload in payloads:
                     _, path = await self.get_service('file_svc').find_file_path(payload)
                     if not path:
                         self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
-            if not existing.name:
-                existing.name = 'Fix me'
-                self.log.error('Please fix name for ability: %s' % existing.ability_id)
-            if not existing.description:
-                existing.description = 'Fix me'
-                self.log.error('Please fix description for ability: %s' % existing.ability_id)
-            if not existing.tactic:
-                existing.tactic = 'needs_fix'
-                self.log.error('Please fix tactic for ability: %s' % existing.ability_id)
-            if not existing.technique_id:
-                existing.technique_id = 'FixMe'
-                self.log.error('Please fix technique ID for ability: %s' % existing.ability_id)
-            if not existing.technique_name:
-                existing.technique_name = 'fix me'
-                self.log.error('Please fix technique name for ability: %s' % existing.ability_id)
+                        continue
+                    for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
+                        decoded_test = existing.replace(clean_ability.cleanup[0])
+                        cleanup_command = self.encode_string(decoded_test)
+                        if cleanup_command not in existing.cleanup:
+                            existing.cleanup.append(cleanup_command)

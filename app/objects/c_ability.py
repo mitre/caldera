@@ -1,4 +1,5 @@
 import os
+from base64 import b64decode
 
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -7,6 +8,8 @@ from app.utility.base_object import BaseObject
 
 
 class Ability(BaseObject):
+
+    RESERVED = dict(payload='#{payload}')
 
     @property
     def test(self):
@@ -48,7 +51,7 @@ class Ability(BaseObject):
         self.technique_id = technique_id
         self.name = name
         self.description = description
-        self.cleanup = cleanup
+        self.cleanup = [cleanup] if cleanup else []
         self.executor = executor
         self.platform = platform
         self.payload = payload
@@ -85,3 +88,8 @@ class Ability(BaseObject):
             if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.ability_id):
                 return plugin
         return None
+
+    def replace(self, encoded_cmd):
+        decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['payload'], self.payload)
+        return decoded_cmd
