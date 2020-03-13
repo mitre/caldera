@@ -104,3 +104,7 @@ class BaseWorld:
         APP = 0
         RED = 1
         BLUE = 2
+
+    class Privileges(Enum):
+        User = 0
+        Elevated = 1
