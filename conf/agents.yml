@@ -1,7 +1,5 @@
 bootstrap_abilities:
 - 43b3754c-def4-4699-a673-1d85648fda6a
-cleanup_abilities:
-- 4cd4eb44-29a7-4259-91ae-e457b283a880
 implant_name: splunkd
 sleep_max: 60
 sleep_min: 30
