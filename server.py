@@ -21,7 +21,7 @@ from app.utility.base_world import BaseWorld
 
 
 def setup_logger():
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s (%(filename)s - %(funcName)s) - %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     for logger_name in logging.root.manager.loggerDict.keys():
         if logger_name in ('aiohttp.server', 'asyncio'):
             continue
