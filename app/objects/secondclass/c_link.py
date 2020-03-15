@@ -118,13 +118,13 @@ class Link(BaseObject):
                                    technique_id=self.ability.technique_id))
 
     async def _is_new_trait(self, trait, facts):
-        return all(not self._trait_exists(trait, f) or self._is_unique_host_trait(trait, f) for f in facts)
+        return all(not self._trait_exists(trait, f) or self._is_new_host_trait(trait, f) for f in facts)
 
     @staticmethod
     def _trait_exists(trait, fact):
         return trait[0] == fact.trait and trait[1] == fact.value
 
-    def _is_unique_host_trait(self, trait, fact):
+    def _is_new_host_trait(self, trait, fact):
         return trait[0][:5] == 'host.' and self.paw != fact.collected_by
 
     async def _update_scores(self, operation, increment):
