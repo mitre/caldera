@@ -27,7 +27,7 @@ def redact_report(report):
         agent['host'] = REDACTED
     # steps
     steps = redacted.get('steps', dict())
-    for agentname, agent in steps.items():
+    for _, agent in steps.items():
         for step in agent['steps']:
             step['description'] = REDACTED
             step['name'] = REDACTED
@@ -45,7 +45,7 @@ def redact_report(report):
         fact['value'] = REDACTED
     # skipped_abilities
     for s in redacted.get('skipped_abilities', []):
-        for agentname, ability_list in s.items():
+        for _, ability_list in s.items():
             for ability in ability_list:
                 ability['ability_name'] = REDACTED
 
@@ -257,8 +257,8 @@ class Operation(BaseObject):
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
         planner_params = ast.literal_eval(self.planner.params)
-        return getattr(planning_module, 'LogicalPlanner')(self, services.get('planning_svc'), **planner_params,
-                                                          stopping_conditions=self.planner.stopping_conditions)
+        return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
+                                              stopping_conditions=self.planner.stopping_conditions)
 
     async def _adjust_adversary_phases(self):
         if not self.phases_enabled:
