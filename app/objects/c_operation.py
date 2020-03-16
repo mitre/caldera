@@ -258,7 +258,7 @@ class Operation(BaseObject):
         planning_module = import_module(self.planner.module)
         planner_params = ast.literal_eval(self.planner.params)
         return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
-                                                          stopping_conditions=self.planner.stopping_conditions)
+                                              stopping_conditions=self.planner.stopping_conditions)
 
     async def _adjust_adversary_phases(self):
         if not self.phases_enabled:
