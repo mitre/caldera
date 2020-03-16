@@ -18,7 +18,7 @@
       <div id="agent-options" class="column sidebar-cutout" style="display: none">
           <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)"/>
           <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)"/>
-          <input id="globalWatchdog" type="text" placeholder="Watchdog (minutes)"/>
+          <input id="globalWatchdog" type="text" placeholder="Watchdog (seconds)"/>
           <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
       </div>
       <div id="agent-implant" class="column sidebar-cutout sidebar-header">
@@ -279,19 +279,19 @@
 
     function killAgent(){
         /**
-        Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog minutes.
+        Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog.
         **/
         let data = {
             'index': 'agents',
             'paw': $('#modal-paw').text(),
             'watchdog': 1,
-            'sleep_min': 2*60,
-            'sleep_max': 2*60
+            'sleep_min': 3,
+            'sleep_max': 3
         };
         if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
             restRequest('PUT', data, (data) => {
                 document.getElementById('agent-modal').style.display='none';
-                stream(`Agent ${data.paw} will self terminate.`);
+                stream(`Agent ${data.paw} will self terminate after its next beacon.`);
             });
         }
     }
