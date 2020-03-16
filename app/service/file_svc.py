@@ -151,7 +151,8 @@ class FileSvc(BaseService):
         return buf
 
     @staticmethod
-    async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode=''):
+    async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
+                         build_dir='.'):
         """
         Dynamically compile a go file
 
@@ -165,8 +166,8 @@ class FileSvc(BaseService):
         :return:
         """
         os.system(
-            '%s %s go build %s -o %s -ldflags=\'%s\' %s' % (_go_vars(arch, platform), cflags, buildmode, output,
-                                                            ldflags, src_fle)
+            'cd %s && %s %s go build %s -o %s -ldflags=\'%s\' %s' % (build_dir, _go_vars(arch, platform), cflags,
+                                                                     buildmode, output, ldflags, src_fle)
         )
 
     """ PRIVATE """
