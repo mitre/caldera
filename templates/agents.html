@@ -291,7 +291,7 @@
         if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
             restRequest('PUT', data, (data) => {
                 document.getElementById('agent-modal').style.display='none';
-                stream(`Agent ${data.paw} will self terminate.`);
+                stream(`Agent ${data.paw} will self terminate after its next beacon.`);
             });
         }
     }
