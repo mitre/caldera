@@ -32,7 +32,7 @@ class FileSvc(BaseService):
         """
         if 'file' not in headers:
             raise KeyError('File key was not provided')
-        display_name = payload = headers.get('file')
+        contents = file_path = display_name = payload = headers.get('file')
 
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
@@ -46,7 +46,8 @@ class FileSvc(BaseService):
                     file_path, contents = await self.read_file(plaintext_payload)
                 else:
                     file_path, contents = await self.read_file(payload)
-
+        else:
+            file_path, contents = await self.read_file(payload)
 
         if headers.get('name'):
             display_name = headers.get('name')
@@ -54,7 +55,7 @@ class FileSvc(BaseService):
 
     async def build_payloadname(self, op, payload):
         plaintext_payload =""
-        payloadDict = op.obfuscatedPayloadDict.items()
+        payloadDict = op.OPobfuscatePayloadDict.items()
         for item in payloadDict:
             if item[1] == payload:
                 plaintext_payload = (item[0])

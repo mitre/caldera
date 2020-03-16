@@ -17,25 +17,35 @@ class Ability(BaseObject):
 
     @property
     def obfuscate(self):
-        decoded_test = self.decode_bytes(self._test)
-        obfuscatedPayload_cmd = decoded_test.replace(str(self.payload), str(self.obscuredPayload))
+        # for k, v in self.obfuscatePayloadDict.items():
+        #     if self.payload == k:
+        #         self.obscuredPayload == v
+        #         self.payload == k
+        #     else:
+        #         self.obscuredPayload == v
+        #         self.payload == k
+        obfuscatedPayload_cmd = self.decode_bytes(self._test).replace(str(self.payload), str(self.obscuredPayload))
+        self.log("Payload IN: %s,", self.payload)
+        self.log("Payload OB OUT: %s, ", self.obscuredPayload)
+        self.log("Payload CMD: %s, ", obfuscatedPayload_cmd)
+        # payloadbkp = self.payload
         self.payload = self.obscuredPayload
+        # return self.replace_app_props(self.encode_string(obfuscatedPayload_cmd))
         for k, v in self.get_config().items():
             if k.startswith('app.'):
                 re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
                 obfuscatedPayload_cmd = re.sub(re_variable, str(v).strip(), obfuscatedPayload_cmd)
+        # self.payload = payloadbkp
         return self.encode_string(obfuscatedPayload_cmd)
 
     @property
     def copy(self):
-        self._testbkp = self._test
-        return self._testbkp
+        self._testbkp = self.payload
 
     @property
     def set(self):
-        self._test = self._testbkp
-        return self._test
-
+        self.payload = self._testbkp
+        return self.payload
     @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
@@ -65,6 +75,7 @@ class Ability(BaseObject):
              testbkp=None,
              description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
              requirements=None, privilege=None, timeout=60, repeatable=False, access=None, obscuredPayload=None,
+             obfuscatePayloadDict=None,
              variations=None):
         super().__init__()
         self.log = logging.debug
@@ -73,7 +84,6 @@ class Ability(BaseObject):
         self._testbkp = testbkp
         self.obscuredPayload = obscuredPayload
         self.ability_id = ability_id
-        # self.payload_name = payload_name
         self.tactic = tactic
         self.technique_name = technique
         self.technique_id = technique_id
@@ -83,6 +93,7 @@ class Ability(BaseObject):
         self.executor = executor
         self.platform = platform
         self.payload = payload
+        self.obfuscatePayloadDict = obfuscatePayloadDict
         self.parsers = parsers
         self.requirements = requirements
         self.privilege = privilege

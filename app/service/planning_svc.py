@@ -118,56 +118,59 @@ class PlanningService(BasePlanningService):
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
-        if operation.id not in self.uniqOp:
-            operation.obfuscatePayloadDict = {}
+        # if operation.id not in self.uniqOp:
+        #     operation.OPobfuscatePayloadDict = {}
+
         for a in await agent.capabilities(abilities):
             if a.payload:
-                if a.test:
-                    a.copy
-                if operation.obfuscatePayload:
-                    if operation.obfuscatedPayloadDict: # If NOT empty
-                        try:
-                            if {k: v for k, v in operation.obfuscatedPayloadDict.items() if a.payload != k and a.payload != v}: #If NOT FOUND is TRUE
+                a.copy
+                try:
+                    if operation.OPobfuscatePayloadDict:
+                        for k, v in operation.OPobfuscatePayloadDict.items():
+                            if a.payload == k or a.payload == v:
+                                a.payload == k
+                                a.obscuredPayload == v
+                        for k, v in operation.OPobfuscatePayloadDict.items():
+                            if a.payload != k and a.payload != v:  # If NOT FOUND is TRUE
                                 while True:
                                     try:
                                         a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                        if a.obscuredPayload not in operation.obfuscatedPayloadDict.values():
-                                            operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
+                                        if a.obscuredPayload not in operation.OPobfuscatePayloadDict.values():
+                                            operation.OPobfuscatePayloadDict.update({a.payload: a.obscuredPayload})
                                             break
                                     except Exception as e:
                                         self.log.error(repr(e), exc_info=True)
-
+                                break
                             else:
-                                for k, v in operation.obfuscatedPayloadDict.items():
-                                    if a.payload == k:
-                                        a.obscuredPayload == v
-                                    else:
-                                        a.obscuredPayload == k
-                        except Exception as e:
-                            self.log.error(repr(e), exc_info=True)
+                                for k, v in operation.OPobfuscatePayloadDict.items():
+                                    if a.payload == k or a.payload == v:
+                                            a.payload == k
+                                break
+
+                    elif a.obfuscatePayloadDict:
+                        for k, v in operation.OPobfuscatePayloadDict.items():
+                            if a.payload == k or a.payload == v:
+                                a.payload == k
+                                a.obscuredPayload == v
                     else:
-                        self.lock.acquire()
-                        try:
-                            while True:
-                                try:
-                                    a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
-                                    if a.obscuredPayload not in operation.obfuscatedPayloadDict.values(): #should be empty
-                                        operation.obfuscatedPayloadDict.update({a.payload: a.obscuredPayload})
-                                        break
-                                except:
-                                    pass
-                        finally:
-                            self.lock.release()
-                    links.append(
-                        Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
-                             ability=a,
-                             status=link_status, jitter=self.jitter(operation.jitter))
-                    )
-                a.set
-            links.append(
-                Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
-                     status=link_status, jitter=self.jitter(operation.jitter))
-            )
+                        a.obscuredPayload = random.choice(self._payload_name.get('Obscured'))
+                        operation.OPobfuscatePayloadDict.update({a.payload: a.obscuredPayload})
+                except Exception as e:
+                    self.log.error(repr(e), exc_info=True)
+
+            if operation.obfuscatePayload and a.payload:
+                links.append(
+                    Link(operation=operation.id, command=a.obfuscate, paw=agent.paw, score=0,
+                         ability=a,
+                         status=link_status, jitter=self.jitter(operation.jitter))
+                )
+
+            else:
+                links.append(
+                    Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
+                         status=link_status, jitter=self.jitter(operation.jitter))
+                )
+            a.set
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):

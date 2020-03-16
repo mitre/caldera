@@ -78,7 +78,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, phases_enabled=True, obfuscator='plain-text', obfuscatepayload=None,
+                 autonomous=True, phases_enabled=True, obfuscator='plain-text', obfuscatepayload=None, OPobfuscatePayloadDict={},
                  group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
@@ -97,6 +97,7 @@ class Operation(BaseObject):
         self.phase = 0
         self.obfuscator = obfuscator
         self.obfuscatePayload = obfuscatepayload
+        self.OPobfuscatePayloadDict = OPobfuscatePayloadDict
         self.auto_close = auto_close
         self.visibility = visibility
         self.chain, self.rules = [], []
