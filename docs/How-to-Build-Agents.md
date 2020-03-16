@@ -48,7 +48,7 @@ won't know which ones are valid to send.
 At this point, you are ready to make a POST request with the profile to the /beacon endpoint. You should get back:
 
 1) The recommended number of seconds to sleep before sending the next beacon
-2) The recommended number of minutes (watchdog) to wait before killing the agent, once the server is unreachable (0 means infinite)
+2) The recommended number of seconds (watchdog) to wait before killing the agent, once the server is unreachable (0 means infinite)
 3) A list of instructions - base64 encoded.
 ```
 profile=$(echo '{"server":"http://127.0.0.1:8888","platform":"darwin","executors":["sh"]}' | base64)
@@ -106,4 +106,4 @@ curl -X POST -H "file:$payload" http://localhost:8888/file/download > some_file_
 ### Part #4
 
 You should implement the watchdog configuration. This property, passed to the agent in every beacon, contains
-the number of minutes to allow a dead beacon before killing the agent. 
+the number of seconds to allow a dead beacon before killing the agent. 
