@@ -3,10 +3,10 @@ language: python
 matrix:
     include:
         - python: 3.6.1
-          env: TOXENV=py36,coverage-ci
+          env: TOXENV=py36,style,coverage-ci
 
         - python: 3.7
-          env: TOXENV=py37,coverage-ci
+          env: TOXENV=py37,style,coverage-ci
 
 install:
     - pip install tox
