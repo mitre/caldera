@@ -4,3 +4,4 @@ source =
 omit =
     *tests*
     *.tox*
+    *venv*
