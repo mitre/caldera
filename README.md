@@ -54,9 +54,8 @@ You can now navigate to 127.0.0.1:8888 in a browser and log in with either red t
 
 Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
 
-## Developers
-
-Want to contribute to this project? We use the basic feature branch GIT flow. Fork this repository and create a feature branch off of master and when ready, submit a merge request. Make branch names and commits descriptive. A merge request should solve one problem, not many. 
+## Contributing
+Refer to our [contributor documentation](CONTRIBUTING.md)
 
 ## Licensing
 
