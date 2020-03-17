@@ -65,12 +65,15 @@ class TcpSessionHandler(BaseWorld):
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
         new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
         self.sessions.append(new_session)
-        await self.send(new_session.id, agent.paw)
+        await self.send(new_session.id, agent.paw, agent.contact)
 
-    async def send(self, session_id, cmd):
+    async def send(self, session_id, cmd, contact=None):
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
+            if contact:
+                conn.send(str.encode(contact))
+                conn.send(str.encode('\t'))
             conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
