@@ -1,2 +1,5 @@
 [flake8]
 max-line-length = 180
+
+per-file-ignores =
+    app/service/file_svc.py:B305
