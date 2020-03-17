@@ -3,7 +3,7 @@ language: python
 matrix:
     include:
         - python: 3.6.1
-          env: TOXENV=py361,coverage-ci
+          env: TOXENV=py36,coverage-ci
 
         - python: 3.7
           env: TOXENV=py37,coverage-ci
