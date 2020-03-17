@@ -22,7 +22,7 @@ class LearningService(BaseService):
         parsers = []
         for filepath in glob.iglob('%s/**.py' % directory):
             module = import_module(filepath.replace('/', '.').replace('\\', '.').replace('.py', ''))
-            parsers.append(getattr(module, 'Parser')())
+            parsers.append(module.Parser())
         return parsers
 
     async def build_model(self):
