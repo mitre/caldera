@@ -22,9 +22,7 @@ python3 -m venv venv
 pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-4. Install the [pre-commit framework](https://pre-commit.com/#install)
-
-5. Install the pre-commit hooks:
+4. Install the pre-commit hooks:
 ```
 pre-commit install --install-hooks
 ```
