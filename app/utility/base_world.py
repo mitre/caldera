@@ -93,7 +93,7 @@ class BaseWorld:
 
     @staticmethod
     async def walk_file_path(path, target):
-        for root, dirs, files in os.walk(path):
+        for root, _, files in os.walk(path):
             if target in files:
                 return os.path.join(root, target)
             if '%s.xored' % target in files:
