@@ -42,4 +42,3 @@ class TestCoreEndponts(TestBase):
     async def test_core(self):
         resp = await self.authorized_request('POST', '/api/rest', json=dict(index='agents'))
         assert resp.status == HTTPStatus.OK
-
