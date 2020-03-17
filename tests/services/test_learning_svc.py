@@ -9,6 +9,7 @@ from tests.base.test_base import TestBase
 class TestLearningSvc(TestBase):
 
     def setUp(self):
+        super().setUp()
         self.initialize()
         self.ability = self.run_async(self.data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='T1033', technique='Find', name='test',

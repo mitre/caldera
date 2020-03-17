@@ -6,6 +6,7 @@ from tests.base.test_base import TestBase
 class TestRestSvc(TestBase):
 
     def setUp(self):
+        super().setUp()
         self.initialize()
         BaseWorld.apply_config(name='default', config={'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
         self.run_async(self.data_svc.store(

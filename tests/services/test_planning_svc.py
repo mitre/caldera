@@ -9,6 +9,7 @@ from tests.base.test_base import TestBase
 class TestPlanningService(TestBase):
 
     def setUp(self):
+        super().setUp()
         self.initialize()
         self.ability = Ability(ability_id='123', executor='sh', test=BaseWorld.encode_string('mkdir test'),
                                cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])

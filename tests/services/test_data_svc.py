@@ -12,6 +12,7 @@ from tests.base.test_base import TestBase
 class TestDataService(TestBase):
 
     def setUp(self):
+        super().setUp()
         self.initialize()
 
     def test_adversary(self):

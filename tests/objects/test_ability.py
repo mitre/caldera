@@ -6,6 +6,7 @@ from tests.base.test_base import TestBase
 class TestAbility(TestBase):
 
     def setUp(self):
+        super().setUp()
         self.initialize()
 
     def test_privileged_to_run__1(self):
