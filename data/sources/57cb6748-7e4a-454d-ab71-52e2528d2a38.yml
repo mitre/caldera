@@ -1,0 +1,66 @@
+facts:
+- score: 2
+  trait: host.ip.address
+  value: 10.0.2.2
+- score: 1
+  trait: host.user.name
+  value: root
+- score: 20
+  trait: host.file.path
+  value: /usr/bin/dbus-daemon --config-file=/usr/share/defaults/at-spi2/accessibility.conf
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libwhiskermenu.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libsystray.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libpulseaudio-plugin.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libnotification-plugin.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libxfce4powermanager.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/x86_64-linux-gnu/xfce4/panel/wrapper-2.0 /usr/lib/x86_64-linux-gnu/xfce4/panel/plugins/libactions.so
+- score: 20
+  trait: host.file.path
+  value: /usr/lib/gvfs/gvfsd-trash --spawner :1.11
+- score: 20
+  trait: host.file.path
+  value: /usr/libexec/geoclue-2.0/demos/agent
+- score: 20
+  trait: host.file.path
+  value: /usr/bin/python3 /usr/share/system-config-printer/applet.py
+- score: 20
+  trait: host.file.path
+  value: /0 Sl   19:36  38:20 /root/Downloads/pycharm-2019.3.3/jbr/bin/java
+- score: 20
+  trait: host.file.path
+  value: /root/Downloads/pycharm-2019.3.3/lib/bootstrap.jar:/root/Downloads/pycharm-2019.3.3/lib/extensions.jar:/root/Downloads/pycharm-2019.3.3/lib/util.jar:/root/Downloads/pycharm-2019.3.3/lib/jdom.jar:/root/Downloads/pycharm-2019.3.3/lib/log4j.jar:/root/Downloads/pycharm-2019.3.3/lib/trove4j.jar:/root/Downloads/pycharm-2019.3.3/lib/jna.jar
+- score: 20
+  trait: host.file.path
+  value: /root/java_error_in_PYCHARM_%p.log
+- score: 20
+  trait: host.file.path
+  value: /root/java_error_in_PYCHARM.hprof
+- score: 20
+  trait: host.file.path
+  value: /root/.PyCharm2019.3/config/pycharm64.vmoptions
+- score: 20
+  trait: host.file.path
+  value: /0    Sl+  23:20   0:00 ./sandcat.go
+- score: 20
+  trait: host.file.path
+  value: //127.0.0.1:8888
+- score: 20
+  trait: host.file.path
+  value: /0    Sl   23:22   0:08 /usr/bin/python3.8 /root/Downloads/pycharm-2019.3.3/plugins/python/helpers/pydev/pydevd.py
+- score: 20
+  trait: host.file.path
+  value: /root/caldera/server.py
+id: 57cb6748-7e4a-454d-ab71-52e2528d2a38
+name: asdf
