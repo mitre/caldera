@@ -26,11 +26,14 @@ class Tcp(BaseWorld):
         while True:
             await self.tcp_handler.refresh()
             for session in self.tcp_handler.sessions:
-                _, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
+                agent, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
                 for instruction in instructions:
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
-                        status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
+                        if agent.contact != self.name:
+                            status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command), agent.contact)
+                        else:
+                            status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
                         beacon = dict(paw=session.paw, results=[dict(id=instruction.id, output=self.encode_string(response), status=status)])
                         await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
@@ -65,7 +68,7 @@ class TcpSessionHandler(BaseWorld):
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
         new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
         self.sessions.append(new_session)
-        await self.send(new_session.id, agent.paw, agent.contact)
+        await self.send(new_session.id, agent.paw)
 
     async def send(self, session_id, cmd, contact=None):
         try:
