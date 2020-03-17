@@ -1,6 +1,5 @@
 import itertools
 import glob
-import logging
 import re
 from base64 import b64decode
 from importlib import import_module
@@ -23,7 +22,6 @@ class LearningService(BaseService):
         parsers = []
         for filepath in glob.iglob('%s/**.py' % directory):
             module = import_module(filepath.replace('/', '.').replace('\\', '.').replace('.py', ''))
-            logging.info("Adding module parser")
             parsers.append(module.Parser())
         return parsers
 
