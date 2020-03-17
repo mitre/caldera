@@ -48,7 +48,7 @@ class Plugin(BaseObject):
         try:
             if os.path.exists('plugins/%s/data' % self.name.lower()):
                 self.data_dir = 'plugins/%s/data' % self.name.lower()
-            plugin = getattr(self._load_module(), 'enable')
+            plugin = self._load_module().enable
             await plugin(services)
             self.enabled = True
         except Exception as e:
