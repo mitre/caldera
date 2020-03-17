@@ -8,7 +8,7 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=[]):
+    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
@@ -21,7 +21,7 @@ class PlanningService(BasePlanningService):
         :param stopping_conditions:
         :return: a list of links
         """
-        if len(stopping_conditions) > 0 and await self._check_stopping_conditions(operation, stopping_conditions):
+        if stopping_conditions and await self._check_stopping_conditions(operation, stopping_conditions):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
             return []
