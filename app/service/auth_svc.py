@@ -76,7 +76,7 @@ class AuthService(BaseService):
         response = web.HTTPFound('/')
         if verified:
             await remember(request, response, data.get('username'))
-            return response
+            raise response
         raise web.HTTPFound('/login')
 
     async def check_permissions(self, group, request):
