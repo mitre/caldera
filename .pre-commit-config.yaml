@@ -1,0 +1,6 @@
+repos:
+    - repo: https://gitlab.com/pycqa/flake8
+      rev: 3.7.7
+      hooks:
+          - id: flake8
+            additional_dependencies: [flake8-bugbear]

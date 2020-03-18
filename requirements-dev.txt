@@ -1,0 +1,4 @@
+tox
+pytest
+coverage
+pre-commit
