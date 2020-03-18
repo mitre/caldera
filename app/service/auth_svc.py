@@ -89,7 +89,7 @@ class AuthService(BaseService):
         try:
             if request.headers.get('KEY') == self.get_config('api_key'):
                 return True
-            elif self.bypass in request.host:
+            elif self.get_config('api_key') in request.host:
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
