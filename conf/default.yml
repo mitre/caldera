@@ -13,6 +13,7 @@ plugins:
 - manx
 - response
 - gameboard
+- training
 port: 8888
 reports_dir: /tmp
 users:
