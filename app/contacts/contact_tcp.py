@@ -27,13 +27,12 @@ class Tcp(BaseWorld):
             await self.tcp_handler.refresh()
             for session in self.tcp_handler.sessions:
                 agent, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
+                if agent.contact != self.name:
+                    await self.tcp_handler.send(session.id, (agent.contact + '\t'))
                 for instruction in instructions:
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
-                        if agent.contact != self.name:
-                            status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command), agent.contact)
-                        else:
-                            status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
+                        status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
                         beacon = dict(paw=session.paw, results=[dict(id=instruction.id, output=self.encode_string(response), status=status)])
                         await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
@@ -70,13 +69,10 @@ class TcpSessionHandler(BaseWorld):
         self.sessions.append(new_session)
         await self.send(new_session.id, agent.paw)
 
-    async def send(self, session_id, cmd, contact=None):
+    async def send(self, session_id, cmd):
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
-            if contact:
-                conn.send(str.encode(contact))
-                conn.send(str.encode('\t'))
             conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
