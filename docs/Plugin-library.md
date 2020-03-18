@@ -133,3 +133,7 @@ The Human plugin allows you to build "Humans" that will perform user actions on 
 red actions by Caldera. Each human is built for a specific operating system and leverages the Chrome browser along with other native 
 OS applications to perform a variety of tasks.  Additionally, these humans can have various aspects of their behavior "tuned"
 to add randomization to the behaviors on the target system.
+
+## Training
+
+This plugin allows a user to gain a "User Certificate" which proves their ability to use CALDERA. This is the first of several certificates planned in the future. The plugin takes you through a capture-the-flag style certification course, covering all parts CALDERA.
