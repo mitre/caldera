@@ -88,8 +88,6 @@ class AuthService(BaseService):
         try:
             if request.headers.get('KEY') == self.get_config('api_key'):
                 return True
-            elif self.get_config('api_key') in request.host:
-                return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
             raise web.HTTPFound('/login')
@@ -99,8 +97,6 @@ class AuthService(BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        elif self.get_config('api_key') in request.host:
-            return self.Access.RED, self.Access.APP
         elif request.headers.get('KEY') == self.get_config('api_key'):
             return self.Access.RED, self.Access.BLUE, self.Access.BLUE
         return ()
