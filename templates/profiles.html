@@ -321,6 +321,7 @@
 
         let data = {};
         let platforms = {};
+        let invalid = false;
         $('#ttp-tests li').each(function() {
             let platform = $(this).find('#ability-platform').val();
 
@@ -333,8 +334,8 @@
             let payload = $(this).find('#ability-payload').val();
             let cleanup = $(this).find('#ability-cleanup').val();
 
-            if(!name || !description || !command) {
-                return;
+            if(!name || !description || !command || !executor || !platform) {
+                invalid = true;
             }
             let ex = {'command': command};
             if(payload) {
@@ -345,6 +346,10 @@
             }
             platforms[platform][executor] = ex;
         });
+        if(invalid) {
+            alert('Missing required data!');
+            return;
+        }
         data['index'] = 'abilities';
         data['id'] = $('#ability-identifier').val();
         data['name'] = name;
