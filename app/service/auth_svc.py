@@ -75,8 +75,10 @@ class AuthService(BaseService):
         verified = await self._check_credentials(request.app.user_map, data.get('username'), data.get('password'))
         response = web.HTTPFound('/')
         if verified:
+            self.log.debug('%s logging in:' % data.get('username'))
             await remember(request, response, data.get('username'))
             raise response
+        self.log.debug('%s failed login attempt: ' % data.get('username'))
         raise web.HTTPFound('/login')
 
     async def check_permissions(self, group, request):
@@ -103,8 +105,8 @@ class AuthService(BaseService):
 
     """ PRIVATE """
 
-    async def _check_credentials(self, user_map, username, password):
-        self.log.debug('%s logging in' % username)
+    @staticmethod
+    async def _check_credentials(user_map, username, password):
         user = user_map.get(username)
         if not user:
             return False
