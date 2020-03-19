@@ -24,6 +24,13 @@ def data_svc():
 
 @pytest.fixture(scope='class')
 def rest_svc():
+    """
+    The REST service requires the test's loop in order to be initialized in the same Thread
+    as the test. This mitigates the issue where the service's calls to `asyncio.get_event_loop`
+    would result in a RuntimeError indicating that there is no currentevent loop in the main
+    thread.
+    :param loop: Test's event loop (from the `loop` fixture)
+    """
     async def _init_rest_svc():
         return RestService()
 
