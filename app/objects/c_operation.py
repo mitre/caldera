@@ -265,12 +265,11 @@ class Operation(BaseObject):
 
     async def _adjust_adversary_phases(self):
         if not self.phases_enabled:
-            return Adversary(adversary_id=(self.adversary.adversary_id + "_phases_disabled"),
+            return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_phases_disabled"),
                              name=(self.adversary.name + " - with phases disabled"),
                              description=(self.adversary.name + " with phases disabled"),
                              phases={1: [i for phase, ab in self.adversary.phases.items() for i in ab]})
-        else:
-            return self.adversary
+        return self.adversary
 
     async def _save_new_source(self, services):
         data = dict(
