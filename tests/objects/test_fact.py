@@ -6,7 +6,7 @@ class TestFact:
     def test_escaped_cmd(self):
         test_fact = Fact('test', 'test value| &')
         assert test_fact.escaped('cmd') == 'test^ value^|^ ^&'
-        assert test_fact.escaped('cmd') == 'test value| &'
+        assert test_fact.escaped('cmd') != 'test value| &'
 
     def test_escaped_sh(self):
         test_fact = Fact('test', 'test value| &')
