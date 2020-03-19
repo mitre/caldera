@@ -39,3 +39,28 @@ class TestRestSvc:
         assert ['sandcat', 'stockpile'] == BaseWorld.get_config('plugins')
         loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='plugin', value='ssl')))
         assert ['sandcat', 'stockpile', 'ssl'] == BaseWorld.get_config('plugins')
+
+    def test_delete_ability(self):
+        data = """
+---
+- id: 123
+  name: test
+  description: test
+        """
+        with open('data/abilities/123.yml', 'w') as f:
+            f.write(data)
+        self.assertEqual('Delete action completed', self.run_async(
+            self.rest_svc.delete_ability(data=dict(ability_id='123'))))
+
+    def test_delete_adversary(self):
+        data = """
+---
+- id: 123
+  name: test
+  description: test
+  phases:
+        """
+        with open('data/adversaries/123.yml', 'w') as f:
+            f.write(data)
+        self.assertEqual('Delete action completed', self.run_async(
+            self.rest_svc.delete_adversary(data=dict(adversary_id='123'))))
