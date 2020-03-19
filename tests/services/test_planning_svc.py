@@ -1,26 +1,27 @@
-from app.objects.c_ability import Ability
-from app.objects.c_agent import Agent
-from app.objects.c_operation import Operation
+import pytest
+
 from app.objects.secondclass.c_link import Link
 from app.utility.base_world import BaseWorld
-from tests.base.test_base import TestBase
 
 
-class TestPlanningService(TestBase):
+@pytest.fixture
+def setup_planning_test(loop, ability, agent, operation, data_svc):
+    tability = ability(ability_id='123', executor='sh', test=BaseWorld.encode_string('mkdir test'),
+                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
+    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0)
+    toperation = operation(name='test1', agents=tagent, adversary='hunter')
+    loop.run_until_complete(data_svc.store(tability))
+    yield (tability, tagent, toperation)
 
-    def setUp(self):
-        self.initialize()
-        self.ability = Ability(ability_id='123', executor='sh', test=BaseWorld.encode_string('mkdir test'),
-                               cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
-        self.agent = Agent(sleep_min=1, sleep_max=2, watchdog=0)
-        self.operation = Operation(name='test1', agents=self.agent, adversary='hunter')
-        self.run_async(self.data_svc.store(self.ability))
 
-    def test_get_cleanup_links(self):
-        self.operation.add_link(Link(operation=self.operation, command='', paw=self.agent.paw, ability=self.ability, status=0))
-        links = self.run_async(
-            self.planning_svc.get_cleanup_links(operation=self.operation, agent=self.agent)
+class TestPlanningService:
+
+    def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
+        ability, agent, operation = setup_planning_test
+        operation.add_link(Link(operation=operation, command='', paw=agent.paw, ability=ability, status=0))
+        links = loop.run_until_complete(
+            planning_svc.get_cleanup_links(operation=operation, agent=agent)
         )
         link_list = list(links)
-        self.assertEqual(len(link_list), 1)
-        self.assertEqual(link_list[0].command, self.ability.cleanup[0])
+        assert len(link_list) == 1
+        assert link_list[0].command == ability.cleanup[0]
