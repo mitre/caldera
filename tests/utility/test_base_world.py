@@ -27,24 +27,24 @@ class TestBaseWorld:
 
     @pytest.fixture
     def text_file(self, tmpdir):
-        txt_str = "Hello world!"
+        txt_str = 'Hello world!'
         f = tmpdir.mkdir('txt').join('test.txt')
         f.write(txt_str)
         assert f.read() == txt_str
         yield f
 
-    @pytest.mark.usefixtures("reset_config")
+    @pytest.mark.usefixtures('reset_config')
     def test_apply_and_retrieve_config(self):
         new_config = dict(name='newconfig', config={'app.unit.test': 'abcd12345', 'plugins': ['stockpile']})
         BaseWorld.apply_config(**new_config)
 
         assert BaseWorld.get_config(name='newconfig') == new_config['config']
 
-    @pytest.mark.usefixtures("reset_config")
+    @pytest.mark.usefixtures('reset_config')
     def test_get_prop_from_config(self):
         assert BaseWorld.get_config(name='default', prop='app.contact.http') == '0.0.0.0'
 
-    @pytest.mark.usefixtures("reset_config")
+    @pytest.mark.usefixtures('reset_config')
     def test_set_prop_from_config(self):
         BaseWorld.set_config(name='default', prop='newprop', value='unittest')
         assert BaseWorld.get_config(name='default', prop='newprop') == 'unittest'
@@ -75,12 +75,33 @@ class TestBaseWorld:
         assert yaml == [self.default_yaml]
 
     def test_prepend_to_file(self, text_file):
-        line = "This is appended!"
+        line = 'This is appended!'
         BaseWorld.prepend_to_file(text_file, line)
-        assert "This is appended!\nHello world!" == text_file.read()
+        assert 'This is appended!\nHello world!' == text_file.read()
 
     def test_get_current_timestamp(self):
         date_format = '%Y-%m-%d %H'
         output = BaseWorld.get_current_timestamp(date_format)
         cur_time = datetime.now().strftime(date_format)
         assert cur_time == output
+
+    def test_is_not_base64(self):
+        assert not BaseWorld.is_base64('not base64')
+
+    def test_is_base64(self):
+        b64str = 'aGVsbG8gd29ybGQgZnJvbSB1bml0IHRlc3QgbGFuZAo='
+        assert BaseWorld.is_base64(b64str)
+
+    def test_walk_file_path_exists_nonxor(self, loop, text_file):
+        ret = loop.run_until_complete(BaseWorld.walk_file_path(text_file.dirname, text_file.basename))
+        assert ret == text_file
+
+    def test_walk_file_path_notexists(self, loop, text_file):
+        ret = loop.run_until_complete(BaseWorld.walk_file_path(text_file.dirname, 'not-a-real.file'))
+        assert ret is None
+
+    def test_walk_file_path_xor_fn(self, loop, tmpdir):
+        f = tmpdir.mkdir('txt').join('xorfile.txt.xored')
+        f.write("test")
+        ret = loop.run_until_complete(BaseWorld.walk_file_path(f.dirname, 'xorfile.txt'))
+        assert ret == f
