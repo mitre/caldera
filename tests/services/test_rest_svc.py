@@ -12,9 +12,12 @@ def setup_rest_svc_test(loop, data_svc):
     )
 
 
+@pytest.mark.usefixtures(
+    "setup_rest_svc_test"
+)
 class TestRestSvc:
 
-    def test_update_config(self, loop, setup_rest_svc_test, data_svc, rest_svc):
+    def test_update_config(self, loop, data_svc, rest_svc):
         internal_rest_svc = rest_svc(loop)
         # check that an ability reflects the value in app. property
         pre_ability = loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
@@ -29,7 +32,7 @@ class TestRestSvc:
         assert '127.0.0.1' == BaseWorld.get_config('app.contact.http')
         assert 'curl 127.0.0.1' == BaseWorld.decode_bytes(post_ability[0].test)
 
-    def test_update_config_plugin(self, loop, setup_rest_svc_test, rest_svc):
+    def test_update_config_plugin(self, loop, rest_svc):
         internal_rest_svc = rest_svc(loop)
         # update plugin property
         assert ['sandcat', 'stockpile'] == BaseWorld.get_config('plugins')
