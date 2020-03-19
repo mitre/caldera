@@ -1,4 +1,4 @@
-import asyncio
+import random
 import pytest
 
 from app.service.app_svc import AppService
@@ -6,6 +6,10 @@ from app.service.data_svc import DataService
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.objects.c_ability import Ability
+from app.objects.c_operation import Operation
+from app.objects.c_agent import Agent
+from app.objects.secondclass.c_link import Link
 
 
 @pytest.fixture(scope='class')
@@ -39,7 +43,33 @@ def services():
 
 
 @pytest.fixture
-def run_async():
-    def _run_async(c):
-        return asyncio.get_event_loop().run_until_complete(c)
-    return _run_async
+def ability():
+    def _generate_ability(*args, **kwargs):
+        ability_id = random.randint(0, 999999)
+        return Ability(ability_id=ability_id, *args, **kwargs)
+
+    return _generate_ability
+
+
+@pytest.fixture
+def operation():
+    def _generate_operation(name, agents, adversary, *args, **kwargs):
+        return Operation(name=name, agents=agent, adversary=adversary, *args, **kwargs)
+
+    return _generate_operation
+
+
+@pytest.fixture
+def agent():
+    def _generate_agent(sleep_min, sleep_max, watchdog, *args, **kwargs):
+        return Agent(sleep_min=sleep_min, sleep_max=sleep_max, watchdog=watchdog, *args, **kwargs)
+
+    return _generate_agent
+
+
+@pytest.fixture
+def link():
+    def _generate_link(operation, command, paw, ability, *args, **kwargs):
+        return Link(operation=operation, ability=ability, command=command, paw=paw, *args, **kwargs)
+
+    return _generate_link
