@@ -1,19 +1,39 @@
 import binascii
 import string
+import os
+import yaml
+import logging
+
 from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
 from random import randint, choice
-
-import yaml
-
-from app.utility.logger import Logger
+from enum import Enum
 
 
 class BaseWorld:
     """
     A collection of base static functions for service & object module usage
     """
+
+    _app_configuration = dict()
+
+    @staticmethod
+    def apply_config(name, config):
+        BaseWorld._app_configuration[name] = config
+
+    @staticmethod
+    def get_config(prop=None, name=None):
+        name = name if name else 'default'
+        if prop:
+            return BaseWorld._app_configuration[name].get(prop)
+        return BaseWorld._app_configuration[name]
+
+    @staticmethod
+    def set_config(name, prop, value):
+        if value is not None:
+            logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
+            BaseWorld._app_configuration[name][prop] = value
 
     @staticmethod
     def decode_bytes(s):
@@ -30,7 +50,7 @@ class BaseWorld:
 
     @staticmethod
     def create_logger(name):
-        return Logger(name)
+        return logging.getLogger(name)
 
     @staticmethod
     def strip_yml(path):
@@ -49,16 +69,6 @@ class BaseWorld:
     @staticmethod
     def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
         return datetime.now().strftime(date_format)
-
-    @staticmethod
-    def decode(encoded_cmd, agent, group, reserved_words):
-        decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
-        decoded_cmd = decoded_cmd.replace(reserved_words['server'], agent.server)
-        decoded_cmd = decoded_cmd.replace(reserved_words['group'], group)
-        decoded_cmd = decoded_cmd.replace(reserved_words['agent_paw'], agent.paw)
-        decoded_cmd = decoded_cmd.replace(reserved_words['location'], agent.location)
-        decoded_cmd = decoded_cmd.replace(reserved_words['exe_name'], agent.exe_name)
-        return decoded_cmd
 
     @staticmethod
     async def load_module(module_type, module_info):
@@ -80,3 +90,21 @@ class BaseWorld:
             return True
         except binascii.Error:
             return False
+
+    @staticmethod
+    async def walk_file_path(path, target):
+        for root, _, files in os.walk(path):
+            if target in files:
+                return os.path.join(root, target)
+            if '%s.xored' % target in files:
+                return os.path.join(root, '%s.xored' % target)
+        return None
+
+    class Access(Enum):
+        APP = 0
+        RED = 1
+        BLUE = 2
+
+    class Privileges(Enum):
+        User = 0
+        Elevated = 1

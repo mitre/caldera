@@ -8,76 +8,66 @@ import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
+from app.objects.c_plugin import Plugin
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
+from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.utility.base_world import BaseWorld
 
 
-def set_logging_state():
-    logging.getLogger('aiohttp.access').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp_session').setLevel(logging.FATAL)
-    logging.getLogger('aiohttp.server').setLevel(logging.FATAL)
-    logging.getLogger('asyncio').setLevel(logging.FATAL)
-    if cfg['debug']:
-        logging.getLogger().setLevel(logging.DEBUG)
-        logging.getLogger('aiohttp.server').setLevel(logging.DEBUG)
-        logging.getLogger('asyncio').setLevel(logging.DEBUG)
-    logging.debug('Agents will be considered untrusted after %s seconds of silence' % cfg['untrusted_timer'])
-    logging.debug('Uploaded files will be put in %s' % cfg['exfil_dir'])
-    logging.debug('Serving at http://%s:%s' % (cfg['host'], cfg['port']))
+def setup_logger():
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    for logger_name in logging.root.manager.loggerDict.keys():
+        if logger_name in ('aiohttp.server', 'asyncio'):
+            continue
+        else:
+            logging.getLogger(logger_name).setLevel(100)
 
 
 async def build_docs():
     process = await asyncio.create_subprocess_exec('sphinx-build', 'docs/', 'docs/_build/html',
                                                    '-b', 'html', '-c', 'docs/',
                                                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    stdout, stderr = await process.communicate()
-    if process.returncode != 0:
-        logging.warning('Unable to refresh docs')
-        if cfg['debug']:
-            logging.debug(stderr)
-    else:
-        logging.info('Successfully rebuilt documentation.')
+    await process.communicate()
 
 
-async def start_server(config, services):
-    app = services.get('app_svc').application
-    await auth_svc.apply(app, config['users'])
-
-    app.router.add_route('*', '/file/download', services.get('file_svc').download)
-    app.router.add_route('POST', '/file/upload', services.get('file_svc').upload_exfil)
-    app.router.add_static('/docs/', 'docs/_build/html', append_version=True)
-
-    runner = web.AppRunner(app)
+async def start_server():
+    await auth_svc.apply(app_svc.application, BaseWorld.get_config('users'))
+    app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
+    runner = web.AppRunner(app_svc.application)
     await runner.setup()
-    await web.TCPSite(runner, config['host'], config['port']).start()
+    await web.TCPSite(runner, '0.0.0.0', BaseWorld.get_config('port')).start()
 
 
-def main(services, config):
+def run_tasks(services):
     loop = asyncio.get_event_loop()
+    loop.create_task(build_docs())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
+    loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins())
-    loop.run_until_complete(data_svc.load_data(directory='data'))
-    loop.create_task(build_docs())
+    loop.run_until_complete(data_svc.load_data([Plugin(data_dir='data')]))
+    loop.run_until_complete(data_svc.load_data())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
-    loop.run_until_complete(start_server(config, services))
+    loop.create_task(learning_svc.build_model())
+    loop.run_until_complete(start_server())
     try:
-        print('All systems ready. Navigate to http://%s:%s to log in.' % (config['host'], config['port']))
+        logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('data_svc').save_state())
-        logging.debug('[!] shutting down server...good-bye')
+        loop.run_until_complete(services.get('app_svc').teardown())
 
 
 if __name__ == '__main__':
     sys.path.append('')
+    setup_logger()
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
@@ -85,17 +75,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     with open('conf/%s.yml' % config) as c:
-        cfg = yaml.load(c, Loader=yaml.FullLoader)
-        set_logging_state()
+        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
+        BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
 
         data_svc = DataService()
         contact_svc = ContactService()
         planning_svc = PlanningService()
         rest_svc = RestService()
-        auth_svc = AuthService(cfg['api_key'])
-        file_svc = FileSvc(cfg['exfil_dir'])
-        app_svc = AppService(application=web.Application(), config=cfg)
+        auth_svc = AuthService()
+        file_svc = FileSvc()
+        learning_svc = LearningService()
+        app_svc = AppService(application=web.Application())
 
         if args.fresh:
             asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        main(config=cfg, services=app_svc.get_services())
+        run_tasks(services=app_svc.get_services())

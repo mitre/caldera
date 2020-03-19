@@ -1,0 +1,229 @@
+<html>
+<head>
+    <title>Weather</title>
+    <style>
+        *{
+            box-sizing: border-box;
+            font-family: 'Droid Sans', sans-serif;
+        }
+        html,body,.wrapper{
+          height:100%;
+          width: 100%;
+          padding: 0;
+          margin: 0 auto;
+        }
+        .wrapper::before{
+          content: "";
+          background: rgba(0,0,0,0.2);
+          position: absolute;
+          top:0;
+          left:0;
+          height:100%;
+          width: 100%;
+        }
+        .wrapper{
+          background: url('/gui/img/weather.jpg');
+          background-size: cover;
+          background-attachment: fixed;
+          position: absolute;
+        }
+        .weather{
+          position: relative;
+          height: 275px;
+          width: 400px;
+          background: #7abcff; /* Old browsers */
+          background: -moz-radial-gradient(center, ellipse cover,  #7abcff 0%, #60abf8 44%, #4096ee 100%); /* FF3.6+ */
+          background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee)); /* Chrome,Safari4+ */
+          background: -webkit-radial-gradient(center, ellipse cover,  #7abcff 0%,#60abf8 44%,#4096ee 100%); /* Chrome10+,Safari5.1+ */
+          background: -o-radial-gradient(center, ellipse cover,  #7abcff 0%,#60abf8 44%,#4096ee 100%); /* Opera 12+ */
+          background: -ms-radial-gradient(center, ellipse cover,  #7abcff 0%,#60abf8 44%,#4096ee 100%); /* IE10+ */
+          background: radial-gradient(ellipse at center,  #7abcff 0%,#60abf8 44%,#4096ee 100%); /* W3C */
+          filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7abcff', endColorstr='#4096ee',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+          border-radius: 10px;
+          top:calc(50% - 125px);
+          left: calc(50% - 200px);
+          border: 3px solid #FFFFFF;
+          padding: 10px 20px;
+        }
+        .city h1{
+          padding: 0;
+          margin: 5px 0px;
+          text-align: center;
+          font-size: 11pt;
+          text-transform: uppercase;
+          color: #FFFFFF;
+          font-weight: normal;
+        }
+        .icon{
+          width: 50%;
+          height:auto;
+          float: left;
+          padding: 10px;
+          margin: 10px 0;
+          position: relative;
+        }
+        .icon .fa-sun-o {
+          font-size: 88pt;
+          position: absolute;
+        }
+        .temp{
+          width: 50%;
+          float: left;
+          padding: 10px;
+          color: #FFFFFF;
+          margin: 5px 0;
+        }
+        .current{
+          font-size: 68pt;
+          text-align: center;
+          font-weight: lighter;
+        }
+        .clearfix{
+          clear:both;
+          width: 100%;
+          border-top: 3px solid #FFFFFF;
+        }
+        .left,.right{
+          float: left;
+          width: 33%;
+          height: 35px;
+          margin: 0 auto;
+          padding: 0;
+        }
+        .left i, .right i{
+          font-size: 38pt;
+          color: #FFFFFF;
+          position: relative;
+          top: -5px;
+        }
+        .date{
+            width:100%;
+            text-align: center;
+            position: relative;
+            top: -15px;
+            color: #FFFFFF;
+            font-size: 18pt;
+        }
+        .profiler {
+            margin: 25px;
+            border: 1px solid black;
+            border-radius: 10px;
+            background-color: #f2f2f2;
+            padding: 20px;
+            width: 50%;
+        }
+        textarea {
+          width: 100%;
+          padding: 14px 20px;
+          margin: 8px 0;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+        button {
+            width: 50%;
+            height: 50px;
+            background-color: green;
+            color: white;
+            border-radius: 15px;
+        }
+    </style>
+
+</head>
+<body>
+    <div id="weather" class="wrapper">
+        <div class="weather">
+            <div class="city"><h1 id="location">Chicago, IL USA</h1></div>
+            <div class="clearfix"></div>
+            <div class="cont">
+                <div class="icon">
+                    <i class="fa-sun-o">&#x26C5;</i>
+                </div>
+                <div class="temp">
+                    <div class="current">
+                      18&deg;
+                    </div>
+                    <div class="high">
+                      High: 20&deg;
+                    </div>
+                    <div class="low">
+                      Low: 5&deg;
+                    </div>
+                </div>
+                <div class="clearfix"></div>
+                <center>
+                    <div class="date"><p id="today"></p></div>
+                </center>
+            </div>
+        </div>
+    </div>
+    <center>
+        <div id="hidden" class="profiler" style="display:none">
+            <h1 id="paw"></h1>
+            <textarea id="result" placeholder="Enter results"></textarea>
+            <button onclick="sendBeacon()">submit</button>
+            <p id="instructions" style="display:none">{{ instructions }}</p>
+            <b><p>
+                This host is a registered agent now. Any results you post will be associated to it.
+            </p></b>
+        </div>
+    </center>
+</body>
+</html>
+<script src="/gui/jquery/jquery.js"></script>
+<script>
+    let platform = determinePlatform();
+    let server = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+    let profile = {"platform":platform,"server":server};
+
+    $(document).ready(function () {
+        $('#today').text(new Date().toDateString());
+        sendBeacon();
+    });
+
+    //display hidden fields
+    let log = '';
+    document.addEventListener('keydown', event => {
+        log = log.concat(event.key);
+        if(log.toLowerCase().includes('caldera')) {
+            $('#weather').fadeOut(1000);
+            $('#hidden').show();
+        }
+    });
+
+    function sendBeacon() {
+        let beacon = JSON.parse(JSON.stringify(profile));
+        if(localStorage.getItem('paw')) {
+            beacon['paw'] = localStorage.getItem('paw');
+        }
+        if($('#result').val()) {
+            let identifier = Math.random().toString(36).substring(7);
+            beacon['results'] = [{"output":$('#result').val(),"pid":0,"status":0,"id":$('#paw').text()+'-'+identifier+'-html'}];
+        }
+        $.ajax({
+           url: '/beacon',
+           type: 'POST',
+           contentType: 'application/json',
+           data: btoa(JSON.stringify(beacon)),
+           success: function(data, status, options) {
+               let instructions = JSON.parse(atob(data));
+               profile['paw'] = instructions.paw;
+               localStorage.setItem('paw', instructions.paw);
+               $('#paw').text(instructions.paw);
+               $('#result').val('');
+           },
+           error: function (xhr, ajaxOptions, thrownError) {
+               console.log(thrownError);
+           }
+        });
+    }
+    
+    function determinePlatform() {
+        let OSName = "unknown";
+        if (window.navigator.userAgent.startsWith("Windows")!= -1) OSName="windows";
+        if (window.navigator.userAgent.indexOf("Mac") != -1) OSName="darwin";
+        if (window.navigator.userAgent.indexOf("X11") != -1) OSName="linux";
+        if (window.navigator.userAgent.indexOf("Linux") != -1) OSName="linux";
+        return OSName;
+    }
+</script>

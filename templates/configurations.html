@@ -1,0 +1,72 @@
+<div id="configuration" class="section-profile">
+  <div class="advanced row">
+    <div class="topleft duk-icon"><img onclick="removeSection('configuration')" src="/gui/img/x.png"></div>
+    <div class="column planner-header" style="flex:100%;text-align: left">
+        <h3>Configuration</h3>
+        <br>
+        <h4>Settings</h4>
+        <hr><br>
+        <div>
+            <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
+                <tr>
+                    <td><img src="/gui/img/planners.png"/></td>
+                    <td>reports_dir</td>
+                    <td><input id="reports_dir" type="text" value="{{ config.reports_dir }}"/></td>
+                    <td>reports are saved here</td>
+                    <td><button class="button-row" onclick="updateConfig('reports_dir')">update</button></td>
+                </tr>
+                <tr>
+                    <td><img src="/gui/img/planners.png"/></td>
+                    <td>exfil_dir</td>
+                    <td><input id="exfil_dir" type="text" value="{{ config.exfil_dir }}"/></td>
+                    <td>exfiled files are saved here</td>
+                    <td><button class="button-row" onclick="updateConfig('exfil_dir')">update</button></td>
+                </tr>
+                {% for k, v in config.items() %}
+                    {% if k.startswith('app.') %}
+                    <tr>
+                        <td><img src="/gui/img/facts.png"/></td>
+                        <td>{{ k}}</td>
+                        <td><input id="{{ k }}" type="text" value="{{ v }}"/></td>
+                        <td>a fact to use in a command</td>
+                        <td><button class="button-row" onclick="updateConfig('{{ k }}')">update</button></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </table>
+            <br><br>
+            <h4>Plugins</h4>
+            <hr><br>
+            <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
+                {% for plugin in plugins %}
+                    <tr>
+                        <td><img src="/gui/img/operation.png"/></td>
+                        <td>{{ plugin.name }}</td>
+                        <td>{{ plugin.description }}</td>
+                        {% if plugin.enabled %}
+                            <td></td>
+                        {% else %}
+                            <td><button class="button-row" onclick="enablePlugin('{{ plugin.name }}')">enable</button></td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        stream('If you change a app.* property, it will auto update in all ability commands. Go ahead and check the Sandcat plugin delivery commands for confirmation.');
+    });
+    function updateConfig(prop) {
+        stream('You updated property "'+prop+'". Good work!');
+        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+    }
+    function enablePlugin(name){
+        stream('You enabled a new plugin! Bummer that it is not available until your next server restart.');
+        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
+    }
+    //# sourceURL=configurations.js
+</script>

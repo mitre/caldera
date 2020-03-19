@@ -10,12 +10,27 @@
 [submodule "plugins/caltack"]
 	path = plugins/caltack
 	url = https://github.com/mitre/caltack.git
-[submodule "plugins/terminal"]
-	path = plugins/terminal
-	url = https://github.com/mitre/terminal.git
 [submodule "plugins/mock"]
 	path = plugins/mock
 	url = https://github.com/mitre/mock.git
 [submodule "plugins/compass"]
 	path = plugins/compass
 	url = https://github.com/mitre/compass.git
+[submodule "plugins/access"]
+	path = plugins/access
+	url = https://github.com/mitre/access.git
+[submodule "plugins/atomic"]
+	path = plugins/atomic
+	url = https://github.com/mitre/atomic.git
+[submodule "plugins/response"]
+	path = plugins/response
+	url = https://github.com/mitre/response.git
+[submodule "plugins/gameboard"]
+	path = plugins/gameboard
+	url = https://github.com/mitre/gameboard.git
+[submodule "plugins/manx"]
+	path = plugins/manx
+	url = https://github.com/mitre/manx.git
+[submodule "plugins/training"]
+	path = plugins/training
+	url = https://github.com/mitre/training.git

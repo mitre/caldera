@@ -1,0 +1,32 @@
+<div id="contacts" class="section-profile">
+  <div class="advanced row">
+    <div class="topleft duk-icon"><img onclick="removeSection('contacts')" src="/gui/img/x.png"></div>
+    <div class="column planner-header" style="flex:100%;text-align: left">
+        <h4>Contacts are touch-points for agents</h4>
+        <p style="width:33%">
+            A contact is a connection point on the server for agents to communicate through. Agents can be
+            custom written against one (or multiple) contacts. Each contact logs all agent connections - and
+            all commands it hands out. Download a report for any contact below.
+        </p>
+        <hr><br>
+        <table class="obfuscation-table" border=1 frame=void rules=rows>
+            {% for c in contacts %}
+                <tr>
+                    <td><img src="/gui/img/contact.png"/></td>
+                    <td><h4>{{ c.name }}</h4></td>
+                    <td>{{ c.description }}</td>
+                    <td><button class="button-row" onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+  </div>
+</div>
+
+<script>
+    function downloadContactReport(contact) {
+        downloadReport('/api/rest', contact + '_report', {"index":"contact", "contact":contact});
+    }
+
+    //# sourceURL=contacts.js
+</script>

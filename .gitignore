@@ -27,3 +27,12 @@ data/payloads/*
 !data/payloads/.gitkeep
 data/facts/*yml
 !data/facts/.gitkeep
+data/sources/*
+!data/sources/.gitkeep
+.tox/
+
+# coverage reports
+htmlcov/
+.coverage
+.coverage.*
+*,cover

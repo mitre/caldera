@@ -11,3 +11,4 @@ pyfiglet==0.8.post1
 websockets
 Sphinx
 sphinx_rtd_theme
+recommonmark

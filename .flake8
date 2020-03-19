@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 180
+exclude =
+    .svn,
+    CVS,
+    .bzr,
+    .hg,
+    .git,
+    __pycache__,
+    .tox,
+    venv,
+    .venv
+
+per-file-ignores =
+    app/service/file_svc.py:B305

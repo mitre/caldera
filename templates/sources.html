@@ -1,0 +1,233 @@
+<div id="sources" class="section-profile">
+  <div class="advanced row">
+      <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
+      <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
+      <div id="sources-sidebar"  class="column section-border" style="flex:25%">
+      <img src="/gui/img/facts.png">
+      <h4>Sources</h4>
+      <br>
+      <div class="toggle">
+        <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
+          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+        </label>
+      </div>
+      <br>
+      <p class="section-description">
+          Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
+          A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
+      </p>
+      <br>
+      <div id="viewSource">
+          <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
+            <option value="" disabled selected>Select an existing source</option>
+            {% for s in sources %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}}
+          </select>
+      </div>
+      <div id="addSource"></div>
+      <button id="sourceBtn" type="button" class="button-success atomic-button"
+              onclick="viewRules()">View rules
+      </button>
+      <button id="saveSourceBtn" type="button" class="button-success atomic-button"
+              onclick="saveSource()">Save
+      </button>
+    </div>
+    <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+        <h4 id="source-name" contenteditable="true" class="advGoal">Sample name</h4>
+        <hr>
+        <table id="factTbl" class="obfuscation-table" border=1 frame=void rules=rows>
+            <thead>
+                <tr>
+                    <td><b>trait</b></td>
+                    <td><b>value</b></td>
+                    <td></td>
+                </tr>
+            </thead>
+        </table>
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
+            &#10010;&nbsp;add row
+        </p>
+    </div>
+  </div>
+</div>
+
+<div id="source-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('source-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Rules</span>
+                        <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="source-rules"></ul>
+                        <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
+                        <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<li id="rule-template" class="row-simple ttp-template" style="display: none;">
+    <div class="column">
+        <div class="dotted">
+            <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        </div>
+        <table frame=void rules=rows style="border-spacing:20px;width:100%">
+            <tr>
+                <td style="width:20%"><b>trait:</b></td>
+                <td><input id="trait" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>match:</b></td>
+                <td><input id="match" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>action:</b></td>
+                <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+        </table>
+    </div>
+</li>
+
+<script>
+    $(document).ready(function () {
+        stream('New sources will be created after each operation, containing the intelligence that was learned.')
+    });
+    let refresher = setInterval(refresh, 15000);
+    $('.section-profile').bind('destroyed', function() {
+        console.log('sources refresh off');
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function sourceCallback(data){
+            data.forEach(function(s) {
+                let found = false;
+                $("#profile-source-name > option").each(function() {
+                    if($(this).val() === s.id) {
+                        found = true;
+                    }
+                });
+                if(!found){
+                    $('#profile-source-name').append('<option value="'+s.id+'">'+s.name+'</option>');
+                }
+            });
+        }
+        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
+    }
+
+    function toggleSourceView() {
+        $('#viewSource').toggle();
+        $('#addSource').toggle();
+        clearFactCanvas();
+    }
+
+    function clearFactCanvas(){
+        $('#factTbl').find("tr:gt(0)").remove();
+        $('#source-rules').empty();
+    }
+
+    function loadSource() {
+        function loadSourceCallback(data) {
+            clearFactCanvas();
+            let source = $('#source-name');
+            data[0].facts.forEach(f => {
+                addFactRow(f.trait, f.value);
+            });
+            source.data('id', data[0].id);
+            applyRules(data[0].rules);
+            source.html(data[0].name);
+        }
+        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
+        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+    }
+
+    function addFactRow(trait, value){
+        $('#factTbl tr:last').after(
+            '<tr>' +
+                '<td><p contenteditable="true">'+trait+'</p></td>' +
+                '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
+    }
+
+    function saveSource(){
+        function saveSourceCallback(data) {
+            stream('New fact source saved!');
+        }
+        let source = $('#source-name');
+        let name = source.text();
+        let id = source.data('id');
+        if(!name){ warn('Please enter a name!'); return; }
+        if(!id) {
+            id = uuidv4();
+            source.data('id', id);
+        }
+        let data = {};
+        data['index'] = 'sources';
+        data['id'] = id;
+        data['name'] = name;
+        data['facts'] = [];
+        data['rules'] = [];
+
+        $("#factTbl tr").not(":first").each(function () {
+            let trait = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            data['facts'].push({'trait':trait,'value':value});
+        });
+        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
+
+        let invalidRules = 0;
+        $('#source-rules li').each(function() {
+            let trait = $(this).find('#trait').val();
+            let match = $(this).find('#match').val();
+            let action = $(this).find('#action').val();
+            if(trait === undefined || match === undefined || action === undefined){
+                return;
+            }
+            if(action !== 'ALLOW' && action !== 'DENY') {
+                invalidRules += 1;
+            }
+            data['rules'].push({'trait': trait, 'match': match, 'action': action});
+        });
+        if(invalidRules > 0) {
+            warn(invalidRules + ' invalid rules!');
+            return;
+        }
+        restRequest('PUT', data, saveSourceCallback);
+    }
+
+    function viewRules(){
+        document.getElementById("source-modal").style.display = "block";
+        let sourceName = $('#source-name').val();
+        $('#rules-name').text(sourceName);
+    }
+
+    function applyRules(rules){
+        rules.forEach(r => {
+            let template = $("#rule-template").clone();
+            template.find('#trait').val(r.trait);
+            template.find('#match').val(r.match);
+            if(r.action === 0) {
+                template.find('#action').val('DENY');
+            } else if (r.action === 1) {
+                template.find('#action').val('ALLOW');
+            }
+            template.show();
+            $('#source-rules').append(template);
+        });
+    }
+
+    function addRuleBlock(){
+        let template = $("#rule-template").clone();
+        template.show();
+        $('#source-rules').append(template);
+    }
+
+    //# sourceURL=sources.js
+</script>

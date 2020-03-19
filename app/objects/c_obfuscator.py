@@ -30,6 +30,6 @@ class Obfuscator(BaseObject):
     def load(self, agent):
         try:
             mod = import_module(self.module)
-            return getattr(mod, 'Obfuscation')(agent)
+            return mod.Obfuscation(agent)
         except Exception as e:
             logging.error('Error importing obfuscator=%s, %s' % (self.name, e))

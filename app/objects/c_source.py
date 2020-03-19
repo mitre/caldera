@@ -13,12 +13,13 @@ class Source(BaseObject):
             dict(id=self.id, name=self.name, facts=[f.display for f in self.facts], rules=[r.display for r in self.rules])
         )
 
-    def __init__(self, identifier, name, facts, rules=None):
+    def __init__(self, identifier, name, facts, rules=(), adjustments=()):
         super().__init__()
         self.id = identifier
         self.name = name
         self.facts = facts
-        self.rules = rules or []
+        self.rules = rules
+        self.adjustments = adjustments
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)

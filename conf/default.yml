@@ -1,14 +1,24 @@
----
-
-host: 0.0.0.0
-port: 8888
-exfil_dir: /tmp
-untrusted_timer: 60
-plugins:
-  - sandcat
-  - stockpile
-  - compass
-debug: True
 api_key: ADMIN123
+app.contact.html: /weather
+app.contact.http: http://127.0.0.1:8888
+app.contact.tcp: 127.0.0.1:7010
+app.contact.udp: 127.0.0.1:7011
+app.contact.websocket: 127.0.0.1:7012
+crypt_salt: REPLACE_WITH_RANDOM_VALUE
+exfil_dir: /tmp
+plugins:
+- sandcat
+- stockpile
+- compass
+- manx
+- response
+- gameboard
+- training
+port: 8888
+reports_dir: /tmp
 users:
-  admin: admin
+  blue:
+    blue: admin
+  red:
+    admin: admin
+    red: admin

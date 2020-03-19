@@ -1,9 +1,22 @@
 import asyncio
-import json
+from collections import defaultdict
 from datetime import datetime
 
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_instruction import Instruction
+from app.objects.secondclass.c_result import Result
 from app.utility.base_service import BaseService
+from app.utility.base_world import BaseWorld
+
+
+def report(func):
+    async def wrapper(*args, **kwargs):
+        agent, instructions = await func(*args, **kwargs)
+        log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
+                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        args[0].report[agent.contact].append(log)
+        return agent, instructions
+    return wrapper
 
 
 class ContactService(BaseService):
@@ -11,114 +24,108 @@ class ContactService(BaseService):
     def __init__(self):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
+        self.report = defaultdict(list)
 
     async def register(self, contact):
         try:
-            if contact.valid_config() and contact.enabled:
-                await self._start_c2_channel(contact=contact)
-                self.log.debug('Started %s command and control channel' % contact.name)
-            else:
-                self.log.debug('%s command and control channel not started' % contact.name)
+            await self._start_c2_channel(contact=contact)
+            self.log.debug('Registered contact: %s' % contact.name)
         except Exception as e:
-            self.log.error('Failed to start %s command and control channel: %s' % (contact.name, e))
+            self.log.error('Failed to start %s contact: %s' % (contact.name, e))
 
-    async def handle_heartbeat(self, paw, platform, server, group, host, username, executors, architecture, location,
-                               pid, ppid, sleep, privilege, c2, exe_name):
+    @report
+    async def handle_heartbeat(self, **kwargs):
         """
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-
-        :param paw:
-        :param platform:
-        :param server:
-        :param group:
-        :param host:
-        :param username:
-        :param executors:
-        :param architecture:
-        :param location:
-        :param pid:
-        :param ppid:
-        :param sleep:
-        :param privilege:
-        :return: the agent object from explode
+        :param kwargs: key/value pairs
+        :return: the agent object, instructions to execute
         """
-        agent = Agent(paw=paw, host=host, username=username, platform=platform, server=server, location=location,
-                      executors=executors, architecture=architecture, pid=pid, ppid=ppid, privilege=privilege, c2=c2,
-                      exe_name=exe_name)
-        if await self.get_service('data_svc').locate('agents', dict(paw=paw)):
-            new_agent = await self.get_service('data_svc').store(agent)
-            await self._add_agent_to_operation(new_agent)
-            return new_agent
-        agent.sleep_min = agent.sleep_max = sleep
-        agent.group = group
-        agent.trusted = True
-        new_agent = await self.get_service('data_svc').store(agent)
-        await self._add_agent_to_operation(new_agent)
-        return new_agent
+        results = kwargs.pop('results', [])
+        for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
+            await agent.heartbeat_modification(**kwargs)
+            self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
+            for result in results:
+                await self._save(Result(**result))
+            return agent, await self._get_instructions(agent.paw)
+        agent = await self.get_service('data_svc').store(Agent(
+            sleep_min=self.get_config(name='agents', prop='sleep_min'),
+            sleep_max=self.get_config(name='agents', prop='sleep_max'),
+            watchdog=self.get_config(name='agents', prop='watchdog'),
+            **kwargs)
+        )
+        await self._add_agent_to_operation(agent)
+        self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
+        return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
 
-    async def get_instructions(self, paw):
-        """
-        Get next set of instructions to execute
-
-        :param paw:
-        :return: a list of links in JSON format
-        """
-        ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
-        instructions = []
-        for link in [c for op in ops for c in op.chain
-                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
-            link.collect = datetime.now()
-            payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(json.dumps(dict(id=link.unique,
-                                                sleep=link.jitter,
-                                                command=link.command,
-                                                executor=link.ability.executor,
-                                                timeout=link.ability.timeout,
-                                                payload=payload)))
-        return json.dumps(instructions)
-
-    async def save_results(self, id, output, status, pid):
-        """
-        Save the results from a single executed link
-
-        :param id:
-        :param output:
-        :param status:
-        :param pid:
-        :return: a JSON status message
-        """
-        try:
-            loop = asyncio.get_event_loop()
-            for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
-                link = next((l for l in op.chain if l.unique == id), None)
-                if link:
-                    link.pid = int(pid)
-                    link.finish = self.get_service('data_svc').get_current_timestamp()
-                    link.status = int(status)
-                    if output:
-                        with open('data/results/%s' % id, 'w') as out:
-                            out.write(output)
-                        loop.create_task(link.parse(op))
-                    await self.get_service('data_svc').store(Agent(paw=link.paw))
-                    return json.dumps(dict(status=True))
-        except Exception:
-            pass
+    async def build_filename(self, platform):
+        return self.get_config(name='agents', prop='implant_name')
 
     """ PRIVATE """
 
-    async def _add_agent_to_operation(self, agent):
-        ops = await self.get_service('data_svc').locate('operations', match=dict(group=agent.group, finish=None))
-        for operation in ops:
-            await self._update_operation(operation)
+    async def _save(self, result):
+        try:
+            loop = asyncio.get_event_loop()
+            link = await self.get_service('app_svc').find_link(result.id)
+            if link:
+                link.pid = int(result.pid)
+                link.finish = self.get_service('data_svc').get_current_timestamp()
+                link.status = int(result.status)
+                if result.output:
+                    link.output = True
+                    self.get_service('file_svc').write_result_file(result.id, result.output)
+                    if link.ability.parsers:
+                        operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
+                        loop.create_task(link.parse(operation[0], result.output))
+                    else:
+                        loop.create_task(self.get_service('learning_svc').learn(link, result.output))
+            else:
+                self.get_service('file_svc').write_result_file(result.id, result.output)
+        except Exception as e:
+            self.log.debug('save_results exception: %s' % e)
 
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()
         loop.create_task(contact.start())
         self.contacts.append(contact)
 
-    async def _update_operation(self, operation):
-        if operation.group:
-            updated_agents = await self.get_service('data_svc').locate('agents', match=dict(group=operation.group))
-        else:
-            updated_agents = await self.get_service('data_svc').locate('agents')
-        operation.agents = updated_agents
+    async def _get_instructions(self, paw):
+        ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
+        instructions = []
+        for link in [c for op in ops for c in op.chain
+                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
+            link.collect = datetime.now()
+            payload = link.ability.payload if link.ability.payload else ''
+            instructions.append(Instruction(identifier=link.unique,
+                                            sleep=link.jitter,
+                                            command=link.command,
+                                            executor=link.ability.executor,
+                                            timeout=link.ability.timeout,
+                                            payload=payload))
+        return instructions
+
+    async def _get_bootstrap_instructions(self, agent):
+        data_svc = self._services.get('data_svc')
+        abilities = []
+        for i in self.get_config(name='agents', prop='bootstrap_abilities'):
+            for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
+                abilities.append(a)
+        instructions = []
+        for x, i in enumerate(await agent.capabilities(abilities)):
+            new_id = 'bootstrap-%s-%d' % (agent.paw, x)
+            cmd = self.encode_string(agent.replace(i.test))
+            instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
+        return instructions
+
+    async def _add_agent_to_operation(self, agent):
+        """Determine which operation(s) incoming agent belongs to and
+        add it to operation.
+
+        Note: Agent is added immediately to operation, as certain planners
+        may execute single links at a time before relinquishing control back
+        to c_operation.run() (when previously the operation was updated with
+        new agents), and during those link executions, new agents may arise
+        which the planner needs to be aware of.
+        """
+        for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
+            if op.group == agent.group or op.group is None:
+                await op.update_operation(self.get_services())

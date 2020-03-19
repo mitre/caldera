@@ -10,6 +10,11 @@ from app.utility.rule_set import RuleSet
 
 class BasePlanningService(BaseService):
 
+    re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
+    re_limited = re.compile(r'#{.*\[*\]}')
+    re_trait = re.compile(r'(?<=\{).+?(?=\[)')
+    re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
+
     async def trim_links(self, operation, links, agent):
         """
         Trim links in supplied list. Where 'trim' entails:
@@ -38,27 +43,27 @@ class BasePlanningService(BaseService):
         :param operation:
         :return: updated list of links
         """
-        group = agent.group
         for link in links:
-            decoded_test = self.decode(link.command, agent, group, operation.RESERVED)
-            variables = re.findall(r'#{(.*?)}', decoded_test, flags=re.DOTALL)
+            decoded_test = agent.replace(link.command)
+            variables = re.findall(self.re_variable, decoded_test)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)
-                valid_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
+                good_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
+                valid_facts = await self._trim_by_limit(decoded_test, good_facts)
                 for combo in list(itertools.product(*valid_facts)):
                     try:
                         copy_test = copy.copy(decoded_test)
                         copy_link = copy.deepcopy(link)
-                        variant, score, used = await self._build_single_test_variant(copy_test, combo)
+                        variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
                         copy_link.command = self.encode_string(variant)
                         copy_link.score = score
                         copy_link.used.extend(used)
-                        copy_link.apply_id()
+                        copy_link.apply_id(agent.host)
                         links.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
-                link.apply_id()
+                link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
         return links
 
@@ -72,9 +77,10 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [l.command for l in operation.chain
-                           if l.paw == agent.paw and (l.finish or l.status == l.states['DISCARD'])]
-        return [l for l in links if l.command not in completed_links]
+        completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
+                           if l.paw == agent.paw and (l.finish or l.can_ignore())]
+        return [l for l in links if l.ability.repeatable or
+                (l.command_hash if l.command_hash else l.command) not in completed_links]
 
     @staticmethod
     async def remove_links_missing_facts(links):
@@ -89,7 +95,12 @@ class BasePlanningService(BaseService):
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if await self._do_enforcements(l, operation)]
+        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
+        return links
+
+    @staticmethod
+    async def remove_links_above_visibility(links, operation):
+        links[:] = [l for l in links if operation.visibility >= l.visibility.score]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
@@ -102,7 +113,7 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    async def _build_single_test_variant(copy_test, combo):
+    async def _build_single_test_variant(copy_test, combo, executor):
         """
         Replace all variables with facts from the combo to build a single test variant
         """
@@ -110,7 +121,8 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            copy_test = copy_test.replace('#{%s}' % var.trait, str(var.value).strip())
+            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
     @staticmethod
@@ -120,14 +132,14 @@ class BasePlanningService(BaseService):
     @staticmethod
     async def _build_relevant_facts(variables, operation):
         """
-        Create a list of ([fact, value, score]) tuples for each variable/fact
+        Create a list of facts which are relevant to the given ability's defined variables
         """
         facts = operation.all_facts()
 
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            for fact in [f for f in facts if f.trait == v]:
+            for fact in [f for f in facts if f.trait == v.split('[')[0]]:
                 variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
@@ -137,8 +149,31 @@ class BasePlanningService(BaseService):
         enforce any defined requirements on the link
         """
         for req_inst in link.ability.requirements:
-            requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
-            requirement = await self.load_module('Requirement', requirements_info)
-            if not await requirement.enforce(link, operation):
-                return False
+            if req_inst.module not in operation.planner.ignore_enforcement_modules:
+                requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationships[0])
+                requirement = await self.load_module('Requirement', requirements_info)
+                if not await requirement.enforce(link, operation):
+                    return False
         return True
+
+    async def _trim_by_limit(self, decoded_test, facts):
+        limited_facts = []
+        for limit in re.findall(self.re_limited, decoded_test):
+            limited = copy.deepcopy(facts[0])
+            trait = re.search(self.re_trait, limit).group(0)
+
+            limit_definitions = re.search(self.re_index, limit).group(0)
+            if limit_definitions:
+                for limiter in limit_definitions.split(','):
+                    limited = self._apply_limiter(trait=trait, limiter=limiter.split('='), facts=limited)
+            limited_facts.append(limited)
+        if limited_facts:
+            return limited_facts
+        return facts
+
+    @staticmethod
+    def _apply_limiter(trait, limiter, facts):
+        if limiter[0] == 'max':
+            return sorted([f for f in facts if f.trait == trait], key=lambda k: (-k.score))[:int(limiter[1])]
+        if limiter[0] == 'technique':
+            return [f for f in facts if f.technique_id == limiter[1]]

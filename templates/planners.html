@@ -1,0 +1,48 @@
+<div id="planners" class="section-profile planners">
+  <div class="advanced row">
+    <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
+    <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
+    <div id="planners-sidebar" class="column section-border" style="flex:25%">
+      <img src="/gui/img/planners.png">
+      <h4>Planners</h4>
+      <p class="section-description">
+          A planner is a module which contains logic for how a running operation should make decisions about
+          which abilities to use and in what order. Specifically, a planner's logic contains the decision making to
+          execute a single phase of an operation.
+      </p>
+      <br>
+      <div id="viewPlanner">
+          <select id="planner-select" style="margin-top:-15px" onchange="loadPlanner()">
+            <option value="" disabled selected>Select an existing planner</option>
+            {% for p in planners %}
+              <option value="{{ p.name }}">{{ p.name }} planner</option>
+            {% endfor %}
+          </select>
+      </div>
+    </div>
+
+    <div id="planner-info" class="column planner-header" style="flex:75%;text-align: left">
+      <h3 id="planner-title"></h3>
+      <p id="planner-description"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+    function loadPlanner() {
+        function loadPlannerCallback(data) {
+            // remove old text before displaying new text
+            $('#planner-title').empty();
+            $('#planner-description').empty();
+            $('#planner-stop-conditions').empty();
+
+            // fill text from API callback
+            $('#add_sc_button').show();
+            $('#planner-title').text(data[0]['name']);
+            $('#planner-description').text(data[0]['description']);
+        }
+        restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
+    }
+
+    //# sourceURL=planners.js
+</script>

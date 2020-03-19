@@ -1,18 +1,14 @@
 .home-box {
     border-radius: 25px;
-    padding: 10px;
-    vertical-align: middle;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
 }
 .big-head {
     margin-bottom: -20px;
-    font-size:185px;
+    font-size:165px;
     opacity:0.5;
 }
 .small-head {
     color:white;
-    font-size: 30px;
+    font-size: 22px;
     opacity:0.5;
 }
 .row-toolbar{
@@ -293,6 +289,15 @@
     color: white;
     width: 70%;
 }
+.pack-phase-template {
+    list-style-type: none;
+}
+#pack-phases h4 {
+    text-align: left;
+}
+#pack-phases td {
+    padding: 5px 8px;
+}
 #source-rules li {
     list-style-type:none;
 }
@@ -338,6 +343,12 @@
     cursor: pointer;
 }
 .ability-remove {
+    cursor: pointer;
+}
+.pack-add {
+    float: right;
+    font-size: 13px;
+    margin-right: 20px;
     cursor: pointer;
 }
 .advGoal {
@@ -519,6 +530,10 @@ table.dataTable input[type=text] {
 .legend .untrusted {
     background-color: white;
     color: black;
+}
+.legend .visibility {
+    background-color: #F012BE;
+    color: white;
 }
 .legend .discarded {
     background-color: var(--primary-background);

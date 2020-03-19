@@ -24,6 +24,7 @@ master_doc = 'index'
 # -- General configuration ---------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',
+    'recommonmark',
 ]
 
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
