@@ -193,33 +193,36 @@ class Operation(BaseObject):
         return active
 
     def report(self, file_svc, output=False, redacted=False):
-        report = dict(name=self.name, host_group=[a.display for a in self.agents],
-                      start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
-                      steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
-                      jitter=self.jitter, facts=[f.display for f in self.all_facts()])
-        agents_steps = {a.paw: {'steps': []} for a in self.agents}
-        for step in self.chain:
-            step_report = dict(ability_id=step.ability.ability_id,
-                               command=step.command,
-                               delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
-                               run=step.finish,
-                               status=step.status,
-                               platform=step.ability.platform,
-                               executor=step.ability.executor,
-                               pid=step.pid,
-                               description=step.ability.description,
-                               name=step.ability.name,
-                               attack=dict(tactic=step.ability.tactic,
-                                           technique_name=step.ability.technique_name,
-                                           technique_id=step.ability.technique_id))
-            if output and step.output:
-                step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
-            agents_steps[step.paw]['steps'].append(step_report)
-        report['steps'] = agents_steps
-        report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
-        if redacted:
-            return redact_report(report)
-        return report
+        try:
+            report = dict(name=self.name, host_group=[a.display for a in self.agents],
+                          start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                          steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
+                          jitter=self.jitter, facts=[f.display for f in self.all_facts()])
+            agents_steps = {a.paw: {'steps': []} for a in self.agents}
+            for step in self.chain:
+                step_report = dict(ability_id=step.ability.ability_id,
+                                   command=step.command,
+                                   delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                                   run=step.finish,
+                                   status=step.status,
+                                   platform=step.ability.platform,
+                                   executor=step.ability.executor,
+                                   pid=step.pid,
+                                   description=step.ability.description,
+                                   name=step.ability.name,
+                                   attack=dict(tactic=step.ability.tactic,
+                                               technique_name=step.ability.technique_name,
+                                               technique_id=step.ability.technique_id))
+                if output and step.output:
+                    step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
+                agents_steps[step.paw]['steps'].append(step_report)
+            report['steps'] = agents_steps
+            report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+            if redacted:
+                return redact_report(report)
+            return report
+        except Exception:
+            logging.error('Error saving operation report (%s)' % self.name)
 
     async def run(self, services):
         try:
