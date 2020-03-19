@@ -112,10 +112,11 @@ class PlanningService(BasePlanningService):
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
         for a in await agent.capabilities(abilities):
-            links.append(
-                Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
-                     status=link_status, jitter=self.jitter(operation.jitter))
-            )
+            if a.test:
+                links.append(
+                    Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
+                         status=link_status, jitter=self.jitter(operation.jitter))
+                )
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
