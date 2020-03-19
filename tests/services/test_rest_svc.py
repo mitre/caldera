@@ -1,6 +1,7 @@
 import pytest
 
 from app.objects.c_ability import Ability
+from app.objects.c_adversary import Adversary
 from app.utility.base_world import BaseWorld
 
 
