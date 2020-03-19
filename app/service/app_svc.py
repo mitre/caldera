@@ -153,4 +153,5 @@ class AppService(BaseService):
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
             report = json.dumps(op.report(self.get_service('file_svc')))
-            await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
+            if report:
+                await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
