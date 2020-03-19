@@ -41,14 +41,6 @@ class TestRestSvc:
         assert ['sandcat', 'stockpile', 'ssl'] == BaseWorld.get_config('plugins')
 
     def test_delete_ability(self):
-        data = """
----
-- id: 123
-  name: test
-  description: test
-        """
-        with open('data/abilities/123.yml', 'w') as f:
-            f.write(data)
         self.assertEqual('Delete action completed', self.run_async(
             self.rest_svc.delete_ability(data=dict(ability_id='123'))))
 

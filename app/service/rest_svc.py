@@ -301,6 +301,7 @@ class RestService(BaseService):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get(identifier),
                                                                          location='data')
         if not file_path:
-            file_path = 'data/%s/%s.yml' % (ram_key, data.get('adversary_id'))
-        os.remove(file_path)
+            file_path = 'data/%s/%s.yml' % (ram_key, data.get(identifier))
+        if os.path.exists(file_path):
+            os.remove(file_path)
         return 'Delete action completed'
