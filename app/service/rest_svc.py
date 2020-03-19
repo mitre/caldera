@@ -93,10 +93,10 @@ class RestService(BaseService):
         return 'Delete action completed'
 
     async def delete_ability(self, data):
-        return await self._delete_user_added_information(ram_key='abilities', identifier='ability_id', data=data)
+        return await self._delete_data_from_memory_and_disk(ram_key='abilities', identifier='ability_id', data=data)
 
     async def delete_adversary(self, data):
-        return await self._delete_user_added_information(ram_key='adversaries', identifier='adversary_id', data=data)
+        return await self._delete_data_from_memory_and_disk(ram_key='adversaries', identifier='adversary_id', data=data)
 
     async def delete_operation(self, data):
         await self.get_service('data_svc').remove('operations', data)
@@ -296,7 +296,7 @@ class RestService(BaseService):
         self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
         self.set_config(name='agents', prop='watchdog', value=watchdog)
 
-    async def _delete_user_added_information(self, ram_key, identifier, data):
+    async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
         await self.get_service('data_svc').remove(ram_key, data)
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get(identifier),
                                                                          location='data')
