@@ -24,7 +24,12 @@ def data_svc():
 
 @pytest.fixture(scope='class')
 def rest_svc():
-    return RestService()
+    async def _init_rest_svc():
+        return RestService()
+
+    def _rest_svc(loop):
+        return loop.run_until_complete(_init_rest_svc())
+    return _rest_svc
 
 
 @pytest.fixture(scope='class')
