@@ -24,7 +24,7 @@ class Ability(BaseObject):
         parsers = [Parser.from_json(p) for p in json['parsers']]
         requirements = [Requirement.from_json(r) for r in json['requirements']]
         return cls(ability_id=json['ability_id'], tactic=json['tactic'], technique_id=json['technique_id'],
-                   technique=json['technique_name'], name=json['name'], test=json['test'],
+                   technique=json['technique_name'], name=json['name'], test=json['test'], variations=[],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payload=json['payload'], parsers=parsers,
                    requirements=requirements, privilege=json['privilege'], timeout=json['timeout'], access=json['access'])
