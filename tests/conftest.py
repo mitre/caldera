@@ -44,8 +44,9 @@ def services():
 
 @pytest.fixture
 def ability():
-    def _generate_ability(*args, **kwargs):
-        ability_id = random.randint(0, 999999)
+    def _generate_ability(ability_id=None, *args, **kwargs):
+        if not ability_id:
+            ability_id = random.randint(0, 999999)
         return Ability(ability_id=ability_id, *args, **kwargs)
 
     return _generate_ability
