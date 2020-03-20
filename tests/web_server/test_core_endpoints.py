@@ -58,10 +58,10 @@ def authorized_cookies(loop, aiohttp_client):
 
 @pytest.fixture
 def sample_agent(loop, aiohttp_client):
-    kwargs = {'architecture': 'amd64', 'exe_name': 'sandcat.go', 'executors': ['shellcode_amd64', 'sh'],
-              'group': 'red', 'host': 'testsystem.localdomain', 'location': './sandcat.go', 'pid': 125266,
-              'platform': 'linux', 'ppid': 124042, 'privilege': 'User', 'server': 'http://127.0.0.1:8888',
-              'username': 'testuser', 'paw': None, 'contact': 'http'}
+    kwargs = dict(architecture='amd64', exe_name='sandcat.go', executors=['shellcode_amd64', 'sh'],
+                  group='red', host='testsystem.localdomain', location='./sandcat.go', pid=125266,
+                  platform='linux', ppid=124042, privilege='User', server='http://127.0.0.1:8888',
+                  username='testuser', paw=None, contact='http')
 
     agent = loop.run_until_complete(
         BaseService.get_service('data_svc').store(Agent(sleep_min=0, sleep_max=60, watchdog=0, **kwargs))
@@ -119,4 +119,4 @@ async def test_invalid_request(aiohttp_client, authorized_cookies, sample_agent)
                                     cookies=authorized_cookies)
     assert resp.status == HTTPStatus.BAD_REQUEST
     messages = await resp.json()
-    assert messages == {'sleep_min': ['Not a valid integer.']}
+    assert messages == dict(sleep_min=['Not a valid integer.'])
