@@ -25,10 +25,11 @@ class Tcp(BaseWorld):
     async def operation_loop(self):
         while True:
             await self.tcp_handler.refresh()
-            for session in self.tcp_handler.sessions:
+            for index, session in enumerate(self.tcp_handler.sessions):
                 agent, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
                 if agent.contact != self.name:
                     await self.tcp_handler.send(session.id, (agent.contact + '\t'))
+                    del self.tcp_handler.sessions[index]
                 for instruction in instructions:
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
