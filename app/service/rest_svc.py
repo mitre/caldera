@@ -132,9 +132,10 @@ class RestService(BaseService):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
 
     async def update_agent_data(self, data):
-        if 'paw' not in data:
+        paw = data.pop('paw', None)
+        if paw is None:
             await self._update_global_props(**data)
-        for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=data.get('paw'))):
+        for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=paw)):
             await agent.gui_modification(**data)
             return agent.display
 
