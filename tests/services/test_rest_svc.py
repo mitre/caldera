@@ -1,14 +1,22 @@
 import pytest
 
 from app.objects.c_ability import Ability
+from app.objects.c_adversary import Adversary
 from app.utility.base_world import BaseWorld
 
 
 @pytest.fixture
 def setup_rest_svc_test(loop, data_svc):
-    BaseWorld.apply_config(name='default', config={'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
+    BaseWorld.apply_config(name='default', config={'app.contact.http': '0.0.0.0',
+                                                   'plugins': ['sandcat', 'stockpile'],
+                                                   'crypt_salt': 'BLAH',
+                                                   'api_key': 'ADMIN123',
+                                                   'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
+    )
+    loop.run_until_complete(data_svc.store(
+        Adversary(adversary_id='123', name='test', description='test', phases=[]))
     )
 
 
@@ -38,3 +46,22 @@ class TestRestSvc:
         assert ['sandcat', 'stockpile'] == BaseWorld.get_config('plugins')
         loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='plugin', value='ssl')))
         assert ['sandcat', 'stockpile', 'ssl'] == BaseWorld.get_config('plugins')
+
+    def test_delete_ability(self, loop, rest_svc, file_svc):
+        internal_rest_svc = rest_svc(loop)
+        response = loop.run_until_complete(internal_rest_svc.delete_ability(data=dict(ability_id='123')))
+        assert 'Delete action completed' == response
+
+    def test_delete_adversary(self, loop, rest_svc, file_svc):
+        internal_rest_svc = rest_svc(loop)
+        data = """
+---
+- id: 123
+  name: test
+  description: test
+  phases:
+        """
+        with open('data/adversaries/123.yml', 'w') as f:
+            f.write(data)
+        response = loop.run_until_complete(internal_rest_svc.delete_adversary(data=dict(adversary_id='123')))
+        assert 'Delete action completed' == response

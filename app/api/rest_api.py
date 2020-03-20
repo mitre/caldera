@@ -70,6 +70,7 @@ class RestApi(BaseWorld):
                 DELETE=dict(
                     agents=lambda d: self.rest_svc.delete_agent(d),
                     operations=lambda d: self.rest_svc.delete_operation(d),
+                    abilities=lambda d: self.rest_svc.delete_ability(d),
                     adversaries=lambda d: self.rest_svc.delete_adversary(d)
                 ),
                 PUT=dict(
