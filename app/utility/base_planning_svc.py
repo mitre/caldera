@@ -36,7 +36,7 @@ class BasePlanningService(BaseService):
 
     async def add_test_variants(self, links, agent, operation):
         """
-        Create a list of all possible links for a given phase
+        Create a list of all possible links for a given set of templates
 
         :param links:
         :param agent:
