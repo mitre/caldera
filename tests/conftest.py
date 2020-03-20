@@ -56,7 +56,7 @@ def learning_svc():
 
 
 @pytest.fixture(scope='class')
-def services():
+def services(app_svc):
     return app_svc.get_services()
 
 
