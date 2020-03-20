@@ -180,14 +180,17 @@
     cursor: pointer;
 }
 .profile-tests {
-    float: left;
-    width: 100%;
+    width: 45%;
+    cursor: move;
+    padding-inline-start: 10px;
+    padding-inline-end: 10px;
+    border-right: 1px dotted white;
+    border-left: 1px dotted white;
 }
 .profile-tests li {
    font-size: 16px;
    color: var(--font-color);
    display: block;
-   float: left;
    margin: 2px;
 }
 .ability-box {
