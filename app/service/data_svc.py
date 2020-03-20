@@ -135,41 +135,17 @@ class DataService(BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     """ PRIVATE """
-
-    @staticmethod
-    async def _add_phase_abilities(phase_dict, phase, phase_entries):
-        for ability in phase_entries:
-            phase_dict[phase].append(ability)
-        return phase_dict
-
-    async def _insert_pack_phases(self, pack, phases, current_phase, adversary):
-        phases_new = await self._add_adversary_packs(pack)
-        if phases_new:
-            for i, phase in phases_new.items():
-                phases.insert(current_phase + i, phase)
-            return current_phase + i
-        else:
-            self.log.error(
-                'Missing ability or pack (%s) for adversary: %s (%s)' % (pack, adversary['name'], adversary['id']))
-            return 0
-
-    async def _add_phases(self, phases, adversary):
-        pp = defaultdict(list)
-        phase_id = 0
-        while phase_id < len(phases):
-            for idx, step in enumerate(phases[phase_id]):
-                abilities = await self.locate('abilities', match=dict(ability_id=step))
-                if abilities:
-                    await self._add_phase_abilities(pp, phase_id + 1, abilities)
-                else:
-                    # insert this phase and shift down later abilities to new phase
-                    del phases[phase_id][idx]
-                    last_phase = await self._insert_pack_phases(step, phases, phase_id, adversary)
-                    if last_phase and idx < len(phases[phase_id]):
-                        phases.insert(last_phase + 1, [phases[phase_id][idx]])
-                        del phases[phase_id][idx + 1:]
-            phase_id += 1
-        return dict(pp)
+    async def _link_abilities(self, ordering, adversary):
+        atomics = []
+        for ability in ordering:
+            trigger = await self.locate('abilities', match=dict(ability_id=ability))
+            if trigger:
+                for variant in trigger:
+                    atomics.append(variant)
+            else:
+                self.log.error(
+                    'Missing ability (%s) for adversary: %s (%s)' % (ability, adversary['name'], adversary['id']))
+        return atomics
 
     async def _load(self, plugins=()):
         try:
@@ -190,15 +166,16 @@ class DataService(BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
-                phases = adv.get('phases', dict())
-                for p in adv.get('packs', []):
-                    adv_pack = await self._add_adversary_packs(p)
-                    if adv_pack:
-                        await self._merge_phases(phases, adv_pack)
-                sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                phases = await self._add_phases(sorted_phases, adv)
+                ordering = adv.get('atomic_ordering', dict())
+                for entry in ordering:
+                    if entry.startswith('pack'):
+                        adv_pack = await self._add_adversary_packs(entry[5:])
+                        if adv_pack:
+                            ordering[ordering.index(entry)] = adv_pack
+                            ordering = await self._merge_pack(ordering)
+                atomic_ordering = await self._link_abilities(ordering, adv)
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                      phases=phases)
+                                      atomic_ordering=atomic_ordering)
                 adversary.access = plugin.access
                 await self.store(adversary)
 
@@ -285,12 +262,15 @@ class DataService(BaseService):
         return x
 
     @staticmethod
-    async def _merge_phases(phases, new_phases):
-        for phase, ids in new_phases.items():
-            if phase in phases:
-                phases[phase].extend(ids)
+    async def _merge_pack(listing):
+        temp = []
+        for entry in listing:
+            if isinstance(entry, list):
+                for elm in entry:
+                    temp.append(elm)
             else:
-                phases[phase] = ids
+                temp.append(entry)
+        return temp
 
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack,
@@ -298,7 +278,7 @@ class DataService(BaseService):
         if filename is None:
             return {}
         for adv in self.strip_yml(filename):
-            return adv.get('phases')
+            return adv.get('atomic_ordering')
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
