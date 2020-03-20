@@ -24,7 +24,6 @@
                 <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
             {% endfor %}}
           </select>
-          <button class="button-embedded" onclick="addPhase(null)">Add phase</button>
       </div>
       <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
       <hr>
@@ -158,15 +157,19 @@
     </center>
 </div>
 
-<li id="ability-template" class="ability-box" style="display: none">
+<li id="ability-template" class="ability-box" style="display: none" draggable="True">
     <h4 id="name" style="margin:5px"></h4>
     <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
     <center>
-        <p class="topright" id="ability-rm"></p>
-        <table class="bottomright">
-            <tr id="ability-metadata"></tr>
-        </table>
-        <div id="icon-row" class="icon-row"></div>
+        <div>
+            <div class="topright" id="ability-rm">
+                <div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>
+            </div>
+            <table class="bottomright">
+                <tr id="ability-metadata"></tr>
+            </table>
+            <div id="icon-row" class="icon-row"></div>
+        </div>
     </center>
 </li>
 
@@ -267,27 +270,6 @@
         $('#profile-description').val('');
         $('.tempPhase').remove();
         $('.phase-headers').remove();
-    }
-
-    function addPhase(number) {
-        stream('Add abilities to a phase by selecting +add abilities or +add pack. In the former, you can even create new abilities');
-        let template = $("#phase-template").clone();
-        if(number == null) {
-            let existingPhases = $('.tempPhase').length;
-            number = existingPhases + 1;
-        }
-        template.attr("id", "tempPhase" + number);
-        template.addClass("tempPhase");
-        if(number == 1) {
-            template.insertBefore('#dummy');
-        } else {
-            template.insertAfter('#tempPhase' + (number-1));
-        }
-        template.show();
-        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Phase ' + number +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
-        $('#tempPhase' + number).prepend(phaseHeader);
-        phaseHeader.show();
-        return template;
     }
 
     function saveAdversary() {
@@ -402,20 +384,46 @@
 
         $('.tempPhase').remove();
         $('.phase-headers').remove();
-        $.each(data[0].phases, loadAdversaryPhase);
+        loadAtomicOrder(data[0].listing);
     }
 
-    function loadAdversaryPhase(phase, abilities) {
-        let template = $("#tempPhase" + phase);
+    function loadAtomicOrder(abilities) {
+        console.log(abilities);
+        let template = $("#tempPhase");
         if (!template.length) {
-            template = addPhase(phase);
+            template = addPhase(1);
         }
 
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
-            let abilityBox = buildAbility(a, phase);
+            let abilityBox = buildAbility(a);
             template.find('#profile-tests').append(abilityBox);
         });
+        var ability_box = document.querySelectorAll('#profile-tests .ability-box');
+        [].forEach.call(ability_box, addDnDHandlers);
+
+    }
+
+    function addPhase(number) {
+        stream('Add abilities by selecting +add abilities or +add pack. In the former, you can even create new abilities');
+        let template = $("#phase-template").clone();
+        if(number == null) {
+            let existingPhases = $('.tempPhase').length;
+            number = existingPhases + 1;
+        }
+        template.attr("id", "tempPhase" + number);
+        template.addClass("tempPhase");
+        if(number == 1) {
+            template.insertBefore('#dummy');
+        } else {
+            template.insertAfter('#tempPhase' + (number-1));
+        }
+        template.show();
+        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
+            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><span class="pack-add" onclick="showPackModal('+number+')">&#10010; add pack</span><hr></h4>');
+        $('#tempPhase' + number).prepend(phaseHeader);
+        phaseHeader.show();
+        return template;
     }
 
     function loadPackCallback(data) {
@@ -470,13 +478,12 @@
         return ab;
     }
 
-    function buildAbility(ability, phase){
+    function buildAbility(ability){
         let requirements = buildRequirements(ability.test);
         let template = $("#ability-template").clone();
         template.attr('id', ability.ability_id)
             .data('parsers', ability.parsers)
             .data('testId', ability.ability_id)
-            .data('phase', phase)
             .data('requirements', requirements);
 
         template.find('#name').html(ability.name);
@@ -494,10 +501,12 @@
         if(ability.payloads.length > 0) {
            template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
         }
+
         template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
         template.find('.ability-remove').click(function() {
-            removeAbility(ability.ability_id);
+            removeAbility(ability);
         });
+
 
         ability.platform.forEach(function(p, index) {
             let exec = ability.executor[index];
@@ -742,4 +751,80 @@
         abList.prepend("<option disabled='disabled' selected>"+added.length+" abilities</option>");
     }
     //# sourceURL=profiles.js
+
+    // drag module code
+    var dragSrcEl = null;
+
+    function handleDragStart(e) {
+      // Target (this) element is the source node.
+      dragSrcEl = this;
+
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.outerHTML);
+
+      this.classList.add('dragElem');
+    }
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault(); // Necessary. Allows us to drop.
+      }
+      this.classList.add('over');
+
+      e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
+
+      return false;
+    }
+
+    function handleDragEnter(e) {
+      // this / e.target is the current hover target.
+    }
+
+    function handleDragLeave(e) {
+      this.classList.remove('over');  // this / e.target is previous target element.
+    }
+
+    function handleDrop(e) {
+      // this/e.target is current target element.
+
+      if (e.stopPropagation) {
+        e.stopPropagation(); // Stops some browsers from redirecting.
+      }
+
+      // Don't do anything if dropping the same column we're dragging.
+      if (dragSrcEl != this) {
+        // Set the source column's HTML to the HTML of the column we dropped on.
+        //alert(this.outerHTML);
+        //dragSrcEl.innerHTML = this.innerHTML;
+        //this.innerHTML = e.dataTransfer.getData('text/html');
+        this.parentNode.removeChild(dragSrcEl);
+        var dropHTML = e.dataTransfer.getData('text/html');
+        this.insertAdjacentHTML('beforebegin',dropHTML);
+        var dropElem = this.previousSibling;
+        addDnDHandlers(dropElem);
+
+      }
+      this.classList.remove('over');
+      $(this).find('.ability-remove').click(function() {
+            removeAbility(event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id);
+        });
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      // this/e.target is the source node.
+      this.classList.remove('over');
+    }
+
+    function addDnDHandlers(elem) {
+      elem.addEventListener('dragstart', handleDragStart, false);
+      elem.addEventListener('dragenter', handleDragEnter, false);
+      elem.addEventListener('dragover', handleDragOver, false);
+      elem.addEventListener('dragleave', handleDragLeave, false);
+      elem.addEventListener('drop', handleDrop, false);
+      elem.addEventListener('dragend', handleDragEnd, false);
+
+    }
+
+
+
 </script>
