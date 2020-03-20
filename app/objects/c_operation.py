@@ -35,10 +35,9 @@ def redact_report(report):
     # adversary
     redacted['adversary']['name'] = REDACTED
     redacted['adversary']['description'] = REDACTED
-    for phase in redacted['adversary']['phases'].values():
-        for step in phase:
-            step['name'] = REDACTED
-            step['description'] = REDACTED
+    for ability in redacted['adversary']['atomic_ordering']:
+        ability['name'] = REDACTED
+        ability['description'] = REDACTED
     # facts
     for fact in redacted.get('facts', []):
         fact['unique'] = REDACTED
@@ -65,7 +64,7 @@ class Operation(BaseObject):
                                source=self.source.display if self.source else '',
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, phase=self.phase, obfuscator=self.obfuscator,
+                               state=self.state, cursor=self.cursor, obfuscator=self.obfuscator,
                                autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -78,7 +77,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True,
+                 autonomous=True, atomic_enabled=False, obfuscator='plain-text', group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
         self.id = id
@@ -92,8 +91,8 @@ class Operation(BaseObject):
         self.planner = planner
         self.state = state
         self.autonomous = autonomous
-        self.phases_enabled = phases_enabled
-        self.phase = 0
+        self.atomic_enabled = atomic_enabled
+        self.cursor = 0
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
@@ -146,7 +145,7 @@ class Operation(BaseObject):
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
 
-    async def wait_for_phase_completion(self):
+    async def wait_for_completion(self):
         for member in self.agents:
             if not member.trusted:
                 for link in await self._unfinished_links_for_agent(member.paw):
@@ -172,7 +171,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or (self.auto_close and self.phase >= len(self.adversary.phases)):
+        if await self.is_finished() or (self.auto_close and self.cursor >= len(self.adversary.atomic_ordering)):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -230,13 +229,13 @@ class Operation(BaseObject):
     async def run(self, services):
         try:
             planner = await self._get_planning_module(services)
-            self.adversary = await self._adjust_adversary_phases()
-            await self._run_phases(planner)
+            self.adversary = await self._adjust_adversary()
+            await self._run(planner)
 
-            self.phases_enabled = False
+            self.atomic_enabled = False
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-                await self._run_phases(planner)
+                await self._run(planner)
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
@@ -245,20 +244,20 @@ class Operation(BaseObject):
 
     """ PRIVATE """
 
-    async def _run_phases(self, planner):
-        for phase in self.adversary.phases:
+    async def _run(self, planner):
+        for cursor in self.adversary.atomic_ordering:
             if not await self.is_closeable():
-                await planner.execute(phase)
+                await planner.execute(cursor)
                 if planner.stopping_condition_met:
                     break
-                await self.wait_for_phase_completion()
-            self.phase = phase
+                await self.wait_for_completion()
+            self.cursor = cursor
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
             for link in await services.get('planning_svc').get_cleanup_links(self, member):
                 self.add_link(link)
-        await self.wait_for_phase_completion()
+        await self.wait_for_completion()
 
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
@@ -266,13 +265,17 @@ class Operation(BaseObject):
         return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
                                               stopping_conditions=self.planner.stopping_conditions)
 
-    async def _adjust_adversary_phases(self):
-        if not self.phases_enabled:
-            return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_phases_disabled"),
-                             name=(self.adversary.name + " - with phases disabled"),
-                             description=(self.adversary.name + " with phases disabled"),
-                             phases={1: [i for phase, ab in self.adversary.phases.items() for i in ab]})
-        return self.adversary
+    async def _adjust_adversary(self):
+        if self.atomic_enabled:
+            return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_atomic"),
+                             name=(self.adversary.name + " - with atomic enabled"),
+                             description=(self.adversary.name + " with atomic enabled"),
+                             atomic_ordering=self.adversary.atomic_ordering)
+        else:
+            return Adversary(adversary_id=(str(self.adversary.adversary_id)),
+                             name=(self.adversary.name),
+                             description=(self.adversary.name),
+                             atomic_ordering=[self.adversary.atomic_ordering])
 
     async def _save_new_source(self, services):
         data = dict(
@@ -309,8 +312,7 @@ class Operation(BaseObject):
         return skipped_abilities
 
     def _get_all_possible_abilities_by_agent(self):
-        return {a.paw: {'all_abilities': [ab for p in self.adversary.phases
-                                          for ab in self.adversary.phases[p]]} for a in self.agents}
+        return {a.paw: {'all_abilities': self.adversary.atomic_ordering} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL)
