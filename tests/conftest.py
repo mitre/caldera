@@ -3,6 +3,7 @@ import pytest
 
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
+from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
@@ -20,6 +21,11 @@ def app_svc():
 @pytest.fixture(scope='class')
 def data_svc():
     return DataService()
+
+
+@pytest.fixture(scope='class')
+def file_svc():
+    return FileSvc()
 
 
 @pytest.fixture(scope='class')
