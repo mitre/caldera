@@ -18,6 +18,7 @@ class Agent(BaseObject):
         architecture = ma.fields.String()
         platform = ma.fields.String()
         server = ma.fields.String()
+        username = ma.fields.String()
         location = ma.fields.String()
         pid = ma.fields.Integer()
         ppid = ma.fields.Integer()
@@ -32,6 +33,10 @@ class Agent(BaseObject):
         host = ma.fields.String()
         watchdog = ma.fields.Integer()
         contact = ma.fields.String()
+
+        @ma.pre_load
+        def remove_nulls(self, in_data, **_):
+            return {k: v for k, v in in_data.items() if v is not None}
 
     @property
     def unique(self):
@@ -76,7 +81,7 @@ class Agent(BaseObject):
     @classmethod
     def from_dict(cls, dict_obj):
         """ Creates an Agent object from parameters stored in a dict. AgentSchema is used to validate inputs."""
-        return cls(**cls.AgentSchema().load(dict_obj))
+        return cls(**cls.AgentSchema().load(dict_obj, partial=['paw']))
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
