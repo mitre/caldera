@@ -9,6 +9,7 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 
+from app.contacts.contact_gist import Gist
 from app.contacts.contact_html import Html
 from app.contacts.contact_http import Http
 from app.contacts.contact_tcp import Tcp
@@ -134,6 +135,7 @@ class AppService(BaseService):
         await contact_svc.register(Tcp(self.get_services()))
         await contact_svc.register(WebSocket(self.get_services()))
         await contact_svc.register(Html(self.get_services()))
+        await contact_svc.register(Gist(self.get_services()))
 
     """ PRIVATE """
 
