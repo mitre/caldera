@@ -123,11 +123,6 @@ class Agent(BaseObject):
         loaded = self.AgentSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)
         for k, v in loaded.items():
             self.update(k, v)
-        # self.update('group', kwargs.get('group'))
-        # self.update('trusted', kwargs.get('trusted'))
-        # self.update('sleep_min', int(kwargs['sleep_min']) if 'sleep_min' in kwargs else None)
-        # self.update('sleep_max', int(kwargs['sleep_max']) if 'sleep_max' in kwargs else None)
-        # self.update('watchdog', int(kwargs['watchdog']) if 'watchdog' in kwargs else None)
 
     async def kill(self):
         self.update('watchdog', 1)
