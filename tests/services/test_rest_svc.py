@@ -1,6 +1,7 @@
 import pytest
 
 from app.objects.c_ability import Ability
+from app.objects.c_agent import Agent
 from app.objects.c_adversary import Adversary
 from app.utility.base_world import BaseWorld
 
@@ -18,6 +19,9 @@ def setup_rest_svc_test(loop, data_svc):
     loop.run_until_complete(data_svc.store(
         Adversary(adversary_id='123', name='test', description='test', phases=[]))
     )
+    loop.run_until_complete(data_svc.store(
+        Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0)
+    ))
 
 
 @pytest.mark.usefixtures(
@@ -65,3 +69,8 @@ class TestRestSvc:
             f.write(data)
         response = loop.run_until_complete(internal_rest_svc.delete_adversary(data=dict(adversary_id='123')))
         assert 'Delete action completed' == response
+
+    def test_delete_agent(self, loop, rest_svc, file_svc):
+        internal_rest_svc = rest_svc(loop)
+        response = loop.run_until_complete(internal_rest_svc.delete_agent(data=dict(paw='123')))
+        'Delete action completed' == response
