@@ -19,3 +19,12 @@ async def test_modify_agent(aiohttp_client, authorized_cookies, sample_agent):
     assert agent_dict['sleep_max'] == 5
     assert sample_agent.sleep_min == 1
     assert sample_agent.sleep_max == 5
+
+
+async def test_invalid_request(aiohttp_client, authorized_cookies, sample_agent):
+    resp = await aiohttp_client.put('/api/rest', json=dict(index='agents', paw=sample_agent.paw,
+                                                           sleep_min='notaninteger', sleep_max=5),
+                                    cookies=authorized_cookies)
+    assert resp.status == HTTPStatus.BAD_REQUEST
+    messages = await resp.json()
+    assert messages == {'sleep_min': ['Not a valid integer.']}

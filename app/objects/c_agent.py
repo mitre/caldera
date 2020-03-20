@@ -2,6 +2,8 @@ from base64 import b64decode
 from datetime import datetime
 from urllib.parse import urlparse
 
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
 
 
@@ -10,18 +12,34 @@ class Agent(BaseObject):
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
                     exe_name='#{exe_name}')
 
+    class AgentSchema(ma.Schema):
+        paw = ma.fields.String()
+        group = ma.fields.String()
+        architecture = ma.fields.String()
+        platform = ma.fields.String()
+        server = ma.fields.String()
+        location = ma.fields.String()
+        pid = ma.fields.Integer()
+        ppid = ma.fields.Integer()
+        trusted = ma.fields.Boolean()
+        last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+        sleep_min = ma.fields.Integer()
+        sleep_max = ma.fields.Integer()
+        executors = ma.fields.List(ma.fields.String())
+        privilege = ma.fields.String()
+        display_name = ma.fields.String()
+        exe_name = ma.fields.String()
+        host = ma.fields.String()
+        watchdog = ma.fields.Integer()
+        contact = ma.fields.String()
+
     @property
     def unique(self):
         return self.hash(self.paw)
 
     @property
     def display(self):
-        return dict(paw=self.paw, group=self.group, architecture=self.architecture, platform=self.platform,
-                    server=self.server, location=self.location, pid=self.pid, ppid=self.ppid, trusted=self.trusted,
-                    last_seen=self.last_seen.strftime('%Y-%m-%d %H:%M:%S'),
-                    sleep_min=self.sleep_min, sleep_max=self.sleep_max, executors=self.executors,
-                    privilege=self.privilege, display_name=self.display_name, exe_name=self.exe_name, host=self.host,
-                    watchdog=self.watchdog, contact=self.contact)
+        return self.AgentSchema().dump(self)
 
     @property
     def display_name(self):
@@ -54,6 +72,11 @@ class Agent(BaseObject):
         self.watchdog = int(watchdog)
         self.contact = contact
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
+
+    @classmethod
+    def from_dict(cls, dict_obj):
+        """ Creates an Agent object from parameters stored in a dict. AgentSchema is used to validate inputs."""
+        return cls(**cls.AgentSchema().load(dict_obj))
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -97,11 +120,14 @@ class Agent(BaseObject):
         self.update('executors', kwargs.get('executors'))
 
     async def gui_modification(self, **kwargs):
-        self.update('group', kwargs.get('group'))
-        self.update('trusted', kwargs.get('trusted'))
-        self.update('sleep_min', int(kwargs['sleep_min']) if 'sleep_min' in kwargs else None)
-        self.update('sleep_max', int(kwargs['sleep_max']) if 'sleep_max' in kwargs else None)
-        self.update('watchdog', int(kwargs['watchdog']) if 'watchdog' in kwargs else None)
+        loaded = self.AgentSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)
+        for k, v in loaded.items():
+            self.update(k, v)
+        # self.update('group', kwargs.get('group'))
+        # self.update('trusted', kwargs.get('trusted'))
+        # self.update('sleep_min', int(kwargs['sleep_min']) if 'sleep_min' in kwargs else None)
+        # self.update('sleep_max', int(kwargs['sleep_max']) if 'sleep_max' in kwargs else None)
+        # self.update('watchdog', int(kwargs['watchdog']) if 'watchdog' in kwargs else None)
 
     async def kill(self):
         self.update('watchdog', 1)
