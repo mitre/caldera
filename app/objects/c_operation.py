@@ -3,6 +3,8 @@ import asyncio
 import copy
 import re
 import logging
+import random
+import string
 import uuid
 from collections import defaultdict
 from datetime import datetime
@@ -79,7 +81,7 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None):
+                 visibility=50, access=None, obfuscate_payloads=False):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -97,6 +99,8 @@ class Operation(BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
+        self.obfuscate_payloads = obfuscate_payloads
+        self.payloads_map = dict(to_real_payload=dict(), to_obfuscated_payload=dict())
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
         if source:
@@ -240,7 +244,23 @@ class Operation(BaseObject):
         except Exception as e:
             logging.error(e, exc_info=True)
 
+    async def apply_payload_obfuscation(self, decoded, ability):
+        if ability.payload in self.payloads_map['to_obfuscated_payload'].keys():
+            return decoded.replace(ability.payload, self.payloads_map['to_obfuscated_payload'][ability.payload])
+        random_name = self._get_unique_payload_key()
+        self.payloads_map['to_real_payload'][random_name] = ability.payload
+        self.payloads_map['to_obfuscated_payload'][ability.payload] = random_name
+        return decoded.replace(ability.payload, random_name)
+
     """ PRIVATE """
+
+    def _get_unique_payload_key(self, payload_name_len=10):
+        payloads = self.get_config(prop='obfuscated_payloads', name='abilities').get('names')
+        random.shuffle(payloads)
+        for name in payloads:
+            if name not in self.payloads_map['to_real_payload'].keys():
+                return name
+        return ''.join(random.choice(string.ascii_letters) for i in range(payload_name_len))
 
     async def _run_phases(self, planner):
         for phase in self.adversary.phases:

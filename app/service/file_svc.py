@@ -33,8 +33,11 @@ class FileSvc(BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = headers.get('file')
+        link_id = headers.get('identifier')
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
+        if link_id:
+            payload, display_name = await self.check_payload_obfuscation(link_id, payload)
         file_path, contents = await self.read_file(payload)
         if headers.get('name'):
             display_name = headers.get('name')
@@ -137,18 +140,18 @@ class FileSvc(BaseService):
         """
         self.special_payloads[name] = func
 
-    def _save(self, filename, content):
-        if self.encryptor:
-            content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
-        with open(filename, 'wb') as f:
-            f.write(content)
-
-    def _read(self, filename):
-        with open(filename, 'rb') as f:
-            buf = f.read()
-        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
-            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
-        return buf
+    async def check_payload_obfuscation(self, identifier, payload):
+        """
+        Given a unique link identifer and payload, we can check if the payload is obfuscated
+        :param identifier: The operation-link identifier associated with the download request.
+        :param payload: The payload name to check
+        :return: (actual payload name, payload display name)
+        """
+        display_name = payload
+        op = await self.data_svc.locate('operations', match=dict(id=int(identifier.split('-')[0])))
+        if len(op) and op[0].obfuscate_payloads:
+            payload = op[0].payloads_map['to_real_payload'][payload]
+        return payload, display_name
 
     @staticmethod
     async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
@@ -171,6 +174,19 @@ class FileSvc(BaseService):
         )
 
     """ PRIVATE """
+
+    def _save(self, filename, content):
+        if self.encryptor:
+            content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
+        with open(filename, 'wb') as f:
+            f.write(content)
+
+    def _read(self, filename):
+        with open(filename, 'rb') as f:
+            buf = f.read()
+        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
+            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
+        return buf
 
     def _get_encryptor(self):
         generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),

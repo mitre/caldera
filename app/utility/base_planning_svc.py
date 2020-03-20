@@ -46,6 +46,8 @@ class BasePlanningService(BaseService):
         for link in links:
             decoded_test = agent.replace(link.command)
             variables = re.findall(self.re_variable, decoded_test)
+            if operation.obfuscate_payloads:
+                decoded_test = await operation.apply_payload_obfuscation(decoded_test, link.ability)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)
                 good_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])

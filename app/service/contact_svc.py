@@ -91,16 +91,18 @@ class ContactService(BaseService):
     async def _get_instructions(self, paw):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
-        for link in [c for op in ops for c in op.chain
-                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
-            link.collect = datetime.now()
-            payload = link.ability.payload if link.ability.payload else ''
-            instructions.append(Instruction(identifier=link.unique,
-                                            sleep=link.jitter,
-                                            command=link.command,
-                                            executor=link.ability.executor,
-                                            timeout=link.ability.timeout,
-                                            payload=payload))
+        for op in ops:
+            for link in [c for c in op.chain if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
+                link.collect = datetime.now()
+                payload = link.ability.payload if link.ability.payload else ''
+                if op.obfuscate_payloads and payload:
+                    payload = op.payloads_map['to_obfuscated_payload'][payload]
+                instructions.append(Instruction(identifier=link.unique,
+                                                sleep=link.jitter,
+                                                command=link.command,
+                                                executor=link.ability.executor,
+                                                timeout=link.ability.timeout,
+                                                payload=payload))
         return instructions
 
     async def _get_bootstrap_instructions(self, agent):

@@ -1,0 +1,9 @@
+obfuscated_payloads:
+  names:
+    - README.md
+    - Copying
+    - TODO
+    - NEWS
+    - Makefile
+    - Important_Document.doc
+    - Cyber_bullets.txt
