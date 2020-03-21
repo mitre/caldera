@@ -62,10 +62,12 @@ def services(app_svc):
 
 @pytest.fixture
 def ability():
-    def _generate_ability(ability_id=None, *args, **kwargs):
+    def _generate_ability(ability_id=None, variations=None, *args, **kwargs):
         if not ability_id:
             ability_id = random.randint(0, 999999)
-        return Ability(ability_id=ability_id, *args, **kwargs)
+        if not variations:
+            variations = []
+        return Ability(ability_id=ability_id, variations=variations, *args, **kwargs)
 
     return _generate_ability
 
