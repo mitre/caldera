@@ -1,6 +1,8 @@
 import random
 import pytest
+import yaml
 
+from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
@@ -11,6 +13,14 @@ from app.objects.c_ability import Ability
 from app.objects.c_operation import Operation
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
+
+
+@pytest.fixture(scope='session')
+def init_base_world():
+    with open('conf/default.yml') as c:
+        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
+    BaseWorld.apply_config('abilities', BaseWorld.strip_yml('conf/abilities.yml')[0])
 
 
 @pytest.fixture(scope='class')
