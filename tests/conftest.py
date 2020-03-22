@@ -1,5 +1,7 @@
-import random
 import pytest
+import random
+import string
+import uuid
 import yaml
 
 from app.utility.base_world import BaseWorld
@@ -9,6 +11,7 @@ from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
 from app.objects.c_operation import Operation
 from app.objects.c_agent import Agent
@@ -71,6 +74,22 @@ def services(app_svc):
 
 
 @pytest.fixture
+def adversary():
+    def _generate_adversary(adversary_id=None, name=None, description=None, phases=None):
+        if not adversary_id:
+            adversary_id = uuid.uuid4()
+        if not name:
+            name = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+        if not description:
+            description = "description"
+        if not phases:
+            phases = dict()
+        return Adversary(adversary_id=adversary_id, name=name, description=description, phases=phases)
+
+    return _generate_adversary
+
+
+@pytest.fixture
 def ability():
     def _generate_ability(ability_id=None, variations=None, *args, **kwargs):
         if not ability_id:
@@ -88,6 +107,15 @@ def operation():
         return Operation(name=name, agents=agent, adversary=adversary, *args, **kwargs)
 
     return _generate_operation
+
+
+@pytest.fixture
+def demo_operation(loop, data_svc, operation, adversary):
+    tadversary = loop.run_until_complete(data_svc.store(
+        adversary()
+    ))
+    toperation = operation(name='my first op', agents=[], adversary=tadversary)
+    return toperation
 
 
 @pytest.fixture
