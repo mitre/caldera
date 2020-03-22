@@ -39,30 +39,30 @@ class TestFileService:
         assert os.path.isdir(new_dir)
         os.rmdir(new_dir)
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_save_multipart_file_upload(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_find_file_path(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_read_file(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_read_result_file(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_write_result_file(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_add_special_payload(self):
         pass
 
-    @pytest.skip('not ready')
+    @pytest.mark.skip('not ready')
     def test_compile_go(self):
         pass
