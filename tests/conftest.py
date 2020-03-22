@@ -1,21 +1,30 @@
-import random
 import pytest
-import uuid
+import random
 import string
+import uuid
 import yaml
 
+from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.utility.base_world import BaseWorld
+
+
+@pytest.fixture(scope='session')
+def init_base_world():
+    with open('conf/default.yml') as c:
+        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
 
 
 @pytest.fixture(scope='session')
@@ -84,6 +93,7 @@ def adversary():
         if not phases:
             phases = dict()
         return Adversary(adversary_id=adversary_id, name=name, description=description, phases=phases)
+
     return _generate_adversary
 
 
