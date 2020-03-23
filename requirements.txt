@@ -12,3 +12,4 @@ websockets
 Sphinx
 sphinx_rtd_theme
 recommonmark
+marshmallow

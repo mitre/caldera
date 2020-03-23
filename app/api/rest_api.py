@@ -1,7 +1,9 @@
 import asyncio
+import json
 import logging
 import uuid
 
+import marshmallow as ma
 from aiohttp import web
 from aiohttp_jinja2 import template, render_template
 
@@ -97,6 +99,8 @@ class RestApi(BaseWorld):
                 search = {**data, **access}
                 return web.json_response(await self.rest_svc.display_objects(index, search))
             return web.json_response(await options[request.method][index](data))
+        except ma.ValidationError as e:
+            raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
