@@ -221,15 +221,15 @@ class DataService(BaseService):
 
     @track_recursion
     async def _load_adversary(self, adv):
-            phases = adv.get('phases', dict())
-            for p in adv.get('packs', []):
-                adv_pack = await self._grab_adversary(id=p)
-                for pack in adv_pack:
-                    full_pack = await self._load_adversary(pack)
-                    await self._merge_phases(phases, full_pack['phases'])
-            sorted_phases = [phases[x] for x in sorted(phases.keys())]
-            phases = await self._add_phases(sorted_phases, adv)
-            return dict(adversary_id=adv['id'], name=adv['name'], description=adv['description'], phases=phases)
+        phases = adv.get('phases', dict())
+        for p in adv.get('packs', []):
+            adv_pack = await self._grab_adversary(id=p)
+            for pack in adv_pack:
+                full_pack = await self._load_adversary(pack)
+                await self._merge_phases(phases, full_pack['phases'])
+        sorted_phases = [phases[x] for x in sorted(phases.keys())]
+        phases = await self._add_phases(sorted_phases, adv)
+        return dict(adversary_id=adv['id'], name=adv['name'], description=adv['description'], phases=phases)
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
