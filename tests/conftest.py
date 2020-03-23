@@ -4,6 +4,7 @@ import string
 import uuid
 import yaml
 
+
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
@@ -32,20 +33,6 @@ def init_base_world():
     with open('conf/default.yml') as c:
         BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-
-
-@pytest.fixture
-def AsyncMock(mocker):
-    def _AsyncMock(*args, **kwargs):
-        m = mocker.MagicMock(*args, **kwargs)
-
-        async def mock_coro(*args, **kwargs):
-            return m(*args, **kwargs)
-
-        mock_coro.mock = m
-        return mock_coro
-
-    return _AsyncMock
 
 
 @pytest.fixture(scope='class')
