@@ -1,6 +1,7 @@
 import os
 import pytest
 
+from app.utility.payload_encoder import xor_file
 from tests import AsyncMock
 
 
@@ -83,24 +84,53 @@ class TestFileService:
     def test_read_file_nonexistent_file(self, loop, mocker, file_svc):
         mocker.patch.object(file_svc, 'find_file_path', new_callable=AsyncMock, return_value=(None, None))
         with pytest.raises(FileNotFoundError):
-            loop.run_until_complete(file_svc.read_file("non-existent-file-for-testing"))
+            loop.run_until_complete(file_svc.read_file('non-existent-file-for-testing'))
 
-    @pytest.mark.skip('not ready')
-    def test_find_file_path_plugin(self, loop, mocker, file_svc):
+    def test_find_file_path_plugin(self, loop, mocker, demo_plugin, tmpdir, file_svc):
+        def walk_file_path_mock(path, name):
+            if 'data' in path:
+                return path
+
+        plugin = demo_plugin(enabled=True)
+        location = 'path/to/file'
         data_svc = mocker.Mock()
-        data_svc.locate = AsyncMock(return_value=['plugin'])
+        data_svc.locate = AsyncMock(return_value=[plugin])
+        mocker.patch.object(file_svc, 'data_svc', new=data_svc)
+        mocker.patch.object(file_svc, 'walk_file_path', new_callable=AsyncMock, side_effect=walk_file_path_mock)
 
-    @pytest.mark.skip('not ready')
-    def test_read_file_noxor(self):
-        pass
+        plugin_name, file_path = loop.run_until_complete(file_svc.find_file_path('testfile', location=location))
+        print(plugin_name, file_path)
+        assert plugin_name == plugin.name
+        assert file_path == os.path.join('plugins', plugin.name, 'data', location)
 
-    @pytest.mark.skip('not ready')
-    def test_read_file_xor(self):
-        pass
+    def test_read_file_noxor(self, loop, mocker, tmpdir, file_svc):
+        plaintext_fn = 'read-file-nonxortest.txt'
+        content = b'this is plaintext'
+        plaintext_file = tmpdir.join(plaintext_fn)
+        plaintext_file.write(content)
+
+        mocker.patch.object(file_svc, 'find_file_path', new_callable=AsyncMock, return_value=(None, str(plaintext_file)))
+        name, output = loop.run_until_complete(file_svc.read_file(plaintext_fn))
+        assert name == plaintext_fn
+        assert output == content
+
+    def test_read_file_xor(self, loop, mocker, tmpdir, file_svc):
+        plaintext_fn = 'xor-plaintext.txt'
+        xortext_fn = "%s.xored" % plaintext_fn
+        content = b'this is plaintext'
+        plaintext_file = tmpdir.join(plaintext_fn)
+        plaintext_file.write(content)
+        xored_file = tmpdir.join(xortext_fn)
+        xor_file(plaintext_file, xored_file)
+
+        mocker.patch.object(file_svc, 'find_file_path', new_callable=AsyncMock, return_value=(None, str(xored_file)))
+        name, nonxored_output = loop.run_until_complete(file_svc.read_file(xortext_fn))
+        assert name == xortext_fn
+        assert nonxored_output == content
 
     def test_read_write_result_file(self, tmpdir, file_svc):
-        link_id = "12345"
-        output = "output testing unit"
+        link_id = '12345'
+        output = 'output testing unit'
         # write output data
         file_svc.write_result_file(link_id=link_id, output=output, location=tmpdir)
 
@@ -110,7 +140,7 @@ class TestFileService:
 
     def test_add_special_payload(self, loop, mocker, file_svc):
         mocker.patch.dict(file_svc.special_payloads)
-        payload_name = "unittest12345"
+        payload_name = 'unittest12345'
         payload_func = AsyncMock
         loop.run_until_complete(file_svc.add_special_payload(payload_name, payload_func))
 
