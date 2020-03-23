@@ -16,6 +16,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
+from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.utility.base_world import BaseWorld
@@ -138,3 +139,14 @@ def link():
         return Link(operation=operation, ability=ability, command=command, paw=paw, *args, **kwargs)
 
     return _generate_link
+
+
+@pytest.fixture
+def demo_plugin():
+    def _generate_plugin(enabled=False, gui=False, data_dir=None, access=None):
+        name = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
+        description = 'this is a good description'
+        address = '/plugin/%s/gui' % name if gui else None
+        return Plugin(name=name, description=description, address=address, enabled=enabled, data_dir=data_dir, access=access)
+
+    return _generate_plugin
