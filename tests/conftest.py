@@ -34,6 +34,20 @@ def init_base_world():
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
 
 
+@pytest.fixture
+def AsyncMock(mocker):
+    def _AsyncMock(*args, **kwargs):
+        m = mocker.MagicMock(*args, **kwargs)
+
+        async def mock_coro(*args, **kwargs):
+            return m(*args, **kwargs)
+
+        mock_coro.mock = m
+        return mock_coro
+
+    return _AsyncMock
+
+
 @pytest.fixture(scope='class')
 def app_svc():
     return AppService(None)
