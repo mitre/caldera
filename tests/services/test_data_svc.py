@@ -1,10 +1,12 @@
 import json
+import pytest
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
+from tests.test_utils import temp_file
 
 
 class TestDataService:
@@ -75,3 +77,36 @@ class TestDataService:
         loop.run_until_complete(data_svc.remove('agents', match=dict(paw=a1.paw)))
         agents = loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
         assert len(agents) == 0
+
+    def test_adversary_loading(self, loop, data_svc, file_svc):
+        adversary1 = '''
+---
+id: 900DF00D-900D-F00D-900D-F00D900DF00D
+name: test adversary
+description: dont do much at all
+phases:
+  1:
+    - c0da588f-79f0-4263-8998-7496b1a40596 #whoami?
+        '''
+        with temp_file('data/adversaries/900DF00D-900D-F00D-900D-F00D900DF00D.yml', adversary1):
+            adversary = loop.run_until_complete(data_svc._grab_adversary(id='900DF00D-900D-F00D-900D-F00D900DF00D'))
+            adversary_nextform = loop.run_until_complete(data_svc._load_adversary(adversary[0]))
+            assert adversary_nextform['adversary_id'] == adversary[0]['id']
+            assert all([isinstance(a, Ability) for phase in adversary_nextform['phases'] for a in phase])
+
+    def test_adversary_loading_loop_check(self, loop, data_svc, file_svc):
+        adversary1 = '''
+---
+id: DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF
+name: trouble seeker
+description: throw an error
+phases:
+  1:
+    - c0da588f-79f0-4263-8998-7496b1a40596 #whoami?
+packs:
+  - DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF #ourself
+        '''
+        with temp_file('data/adversaries/DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF.yml', adversary1):
+            with pytest.raises(Exception, match=r".*infinite loop detected.*"):
+                adversary = loop.run_until_complete(data_svc._grab_adversary(id='DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF'))
+                adversary_nextform = loop.run_until_complete(data_svc._load_adversary(adversary[0]))
