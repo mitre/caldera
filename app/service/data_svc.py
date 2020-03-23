@@ -19,6 +19,25 @@ from app.objects.secondclass.c_rule import Rule
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
+history = defaultdict(set)
+
+
+def track_recursion(f):
+    """
+    decorator to track recursive calls in stateless functions to prevent infinite loops
+    """
+    function_history = history[f.__name__]
+
+    async def call(*args, **kwargs):
+        key = str({'args': args, 'kwargs': kwargs})
+        if key in function_history:
+            function_history.clear()
+            raise Exception(f'infinite loop detected, function:{f.__name__}, inputs:{key}')
+        function_history.add(key)
+        ret = await f(*args, **kwargs)
+        function_history.remove(key)
+        return ret
+    return call
 
 
 class DataService(BaseService):
@@ -142,8 +161,10 @@ class DataService(BaseService):
         return phase_dict
 
     async def _insert_pack_phases(self, pack, phases, current_phase, adversary):
-        phases_new = await self._add_adversary_packs(pack)
-        if phases_new:
+        adv_pack = await self._grab_adversary(id=pack)
+        if adv_pack:
+            phases_new = (await self._load_adversary(adv_pack[0]))['phases']
+        if adv_pack and phases_new:
             for i, phase in phases_new.items():
                 phases.insert(current_phase + i, phase)
             return current_phase + i
@@ -157,6 +178,9 @@ class DataService(BaseService):
         phase_id = 0
         while phase_id < len(phases):
             for idx, step in enumerate(phases[phase_id]):
+                if isinstance(step, Ability):
+                    await self._add_phase_abilities(pp, phase_id + 1, [step])
+                    continue
                 abilities = await self.locate('abilities', match=dict(ability_id=step))
                 if abilities:
                     await self._add_phase_abilities(pp, phase_id + 1, abilities)
@@ -186,18 +210,26 @@ class DataService(BaseService):
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
-            for adv in self.strip_yml(filename):
-                phases = adv.get('phases', dict())
-                for p in adv.get('packs', []):
-                    adv_pack = await self._add_adversary_packs(p)
-                    if adv_pack:
-                        await self._merge_phases(phases, adv_pack)
-                sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                phases = await self._add_phases(sorted_phases, adv)
-                adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                      phases=phases)
-                adversary.access = plugin.access
-                await self.store(adversary)
+            try:
+                for adv in await self._grab_adversary(filename=filename):
+                    adversary_dict = await self._load_adversary(adv)
+                    adversary = Adversary(**adversary_dict)
+                    adversary.access = plugin.access
+                    await self.store(adversary)
+            except Exception as e:
+                self.log.debug(repr(e))
+
+    @track_recursion
+    async def _load_adversary(self, adv):
+            phases = adv.get('phases', dict())
+            for p in adv.get('packs', []):
+                adv_pack = await self._grab_adversary(id=p)
+                for pack in adv_pack:
+                    full_pack = await self._load_adversary(pack)
+                    await self._merge_phases(phases, full_pack['phases'])
+            sorted_phases = [phases[x] for x in sorted(phases.keys())]
+            phases = await self._add_phases(sorted_phases, adv)
+            return dict(adversary_id=adv['id'], name=adv['name'], description=adv['description'], phases=phases)
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
@@ -279,13 +311,12 @@ class DataService(BaseService):
             else:
                 phases[phase] = ids
 
-    async def _add_adversary_packs(self, pack):
-        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack,
-                                                                        location=os.path.join('data', 'adversaries'))
+    async def _grab_adversary(self, filename=None, id=None):
+        if not filename:
+            _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % id, location=os.path.join('data', 'adversaries'))
         if filename is None:
-            return {}
-        for adv in self.strip_yml(filename):
-            return adv.get('phases')
+            return []
+        return self.strip_yml(filename)
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payload=None, parsers=None,
