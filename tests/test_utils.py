@@ -14,4 +14,3 @@ def temp_file(filename, contents):
     finally:
         if os.path.exists(filename):
             os.remove(filename)
-

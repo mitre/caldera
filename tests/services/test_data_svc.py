@@ -110,3 +110,4 @@ packs:
             with pytest.raises(Exception, match=r".*infinite loop detected.*"):
                 adversary = loop.run_until_complete(data_svc._grab_adversary(id='DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF'))
                 adversary_nextform = loop.run_until_complete(data_svc._load_adversary(adversary[0]))
+                assert adversary_nextform
