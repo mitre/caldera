@@ -1,5 +1,8 @@
 import random
 import pytest
+import uuid
+import string
+import yaml
 
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
@@ -8,9 +11,19 @@ from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.objects.c_ability import Ability
+from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
+from app.utility.base_world import BaseWorld
+
+
+@pytest.fixture(scope='session')
+def init_base_world():
+    with open('conf/default.yml') as c:
+        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
+    BaseWorld.apply_config('abilities', BaseWorld.strip_yml('conf/abilities.yml')[0])
 
 
 @pytest.fixture(scope='class')
@@ -61,11 +74,28 @@ def services(app_svc):
 
 
 @pytest.fixture
+def adversary():
+    def _generate_adversary(adversary_id=None, name=None, description=None, phases=None):
+        if not adversary_id:
+            adversary_id = uuid.uuid4()
+        if not name:
+            name = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+        if not description:
+            description = "description"
+        if not phases:
+            phases = dict()
+        return Adversary(adversary_id=adversary_id, name=name, description=description, phases=phases)
+    return _generate_adversary
+
+
+@pytest.fixture
 def ability():
-    def _generate_ability(ability_id=None, *args, **kwargs):
+    def _generate_ability(ability_id=None, variations=None, *args, **kwargs):
         if not ability_id:
             ability_id = random.randint(0, 999999)
-        return Ability(ability_id=ability_id, *args, **kwargs)
+        if not variations:
+            variations = []
+        return Ability(ability_id=ability_id, variations=variations, *args, **kwargs)
 
     return _generate_ability
 
@@ -76,6 +106,12 @@ def operation():
         return Operation(name=name, agents=agent, adversary=adversary, *args, **kwargs)
 
     return _generate_operation
+
+
+@pytest.fixture
+def demo_operation(loop, data_svc, operation, adversary):
+    tadversary = loop.run_until_complete(data_svc.store(adversary()))
+    return operation(name='my first op', agents=[], adversary=tadversary)
 
 
 @pytest.fixture
