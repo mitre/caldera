@@ -140,7 +140,7 @@ class AppService(BaseService):
     """ PRIVATE """
 
     async def _save_configurations(self):
-        for cfg in ['default', 'agents']:
+        for cfg in ['default', 'agents', 'payloads']:
             with open('conf/%s.yml' % cfg, 'w') as config:
                 config.write(yaml.dump(self.get_config(name=cfg)))
 

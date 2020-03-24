@@ -175,6 +175,7 @@ class DataService(BaseService):
             if not plugins:
                 plugins = [p for p in await self.locate('plugins') if p.data_dir]
             for plug in plugins:
+                await self._load_payloads(plug)
                 await self._load_abilities(plug)
             await self._verify_ability_set()
             for plug in plugins:
@@ -251,6 +252,15 @@ class DataService(BaseService):
                 source.access = plugin.access
                 await self.store(source)
 
+    async def _load_payloads(self, plugin):
+        for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
+            data = self.strip_yml(filename)
+            payload_config = self.get_config(name='payloads')
+            payload_config['standard_payloads'] = data[0]['standard_payloads']
+            payload_config['special_payloads'] = data[0]['special_payloads']
+            await self._apply_special_payload_hooks(payload_config['special_payloads'])
+            self.apply_config(name='payloads', config=payload_config)
+
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
             for planner in self.strip_yml(filename):
@@ -311,6 +321,11 @@ class DataService(BaseService):
     async def _prune_non_critical_data(self):
         self.ram.pop('plugins')
         self.ram.pop('obfuscators')
+
+    async def _apply_special_payload_hooks(self, special_payloads):
+        for k, v in special_payloads.items():
+            await self.get_service('file_svc').add_special_payload(k, getattr(self.get_service(v['service']),
+                                                                              v['function']))
 
     async def _verify_ability_set(self):
         payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
