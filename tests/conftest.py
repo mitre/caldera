@@ -23,7 +23,6 @@ def init_base_world():
     with open('conf/default.yml') as c:
         BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-    BaseWorld.apply_config('abilities', BaseWorld.strip_yml('conf/abilities.yml')[0])
 
 
 @pytest.fixture(scope='class')
