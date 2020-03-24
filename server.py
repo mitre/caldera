@@ -4,7 +4,6 @@ import logging
 import pathlib
 import sys
 
-import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
@@ -74,20 +73,19 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
-    with open('conf/%s.yml' % config) as c:
-        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
-        BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-        BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
+    BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/default.yml')[0])
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
+    BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
 
-        data_svc = DataService()
-        contact_svc = ContactService()
-        planning_svc = PlanningService()
-        rest_svc = RestService()
-        auth_svc = AuthService()
-        file_svc = FileSvc()
-        learning_svc = LearningService()
-        app_svc = AppService(application=web.Application())
+    data_svc = DataService()
+    contact_svc = ContactService()
+    planning_svc = PlanningService()
+    rest_svc = RestService()
+    auth_svc = AuthService()
+    file_svc = FileSvc()
+    learning_svc = LearningService()
+    app_svc = AppService(application=web.Application())
 
-        if args.fresh:
-            asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        run_tasks(services=app_svc.get_services())
+    if args.fresh:
+        asyncio.get_event_loop().run_until_complete(data_svc.destroy())
+    run_tasks(services=app_svc.get_services())
