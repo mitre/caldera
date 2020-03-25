@@ -88,7 +88,8 @@ class AuthService(BaseService):
         :return: None
         """
         try:
-            if request.headers.get('KEY') == self.get_config('api_key'):
+            if request.headers.get('KEY') == self.get_config('api_key_red') or \
+                    request.headers.get('KEY') == self.get_config('api_key_blue'):
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
@@ -99,8 +100,10 @@ class AuthService(BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        elif request.headers.get('KEY') == self.get_config('api_key'):
-            return self.Access.RED, self.Access.BLUE, self.Access.BLUE
+        elif request.headers.get('KEY') == self.get_config('api_key_red'):
+            return self.Access.RED, self.Access.APP
+        elif request.headers.get('KEY') == self.get_config('api_key_blue'):
+            return self.Access.BLUE, self.Access.APP
         return ()
 
     """ PRIVATE """
