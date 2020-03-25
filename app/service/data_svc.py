@@ -220,7 +220,7 @@ class DataService(BaseService):
                                                                description=ab.get('description') or '',
                                                                executor=e, name=ab.get('name'), platform=pl,
                                                                cleanup=cleanup_cmd,
-                                                               payload=info.get('payload'),
+                                                               payloads=info.get('payloads'),
                                                                parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=ab.get('requirements', []),
@@ -298,7 +298,7 @@ class DataService(BaseService):
             return adv.get('phases')
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
-                              description=None, executor=None, platform=None, cleanup=None, payload=None, parsers=None,
+                              description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
                               requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
         ps = []
         for module in parsers:
@@ -313,7 +313,7 @@ class DataService(BaseService):
         ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
-                          cleanup=cleanup, payload=payload, parsers=ps, requirements=rs,
+                          cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
         ability.access = access
         return await self.store(ability)
@@ -345,15 +345,13 @@ class DataService(BaseService):
             if not existing.technique_name:
                 existing.technique_name = '(auto-generated)'
                 self.log.error('Fix technique name for ability: %s' % existing.ability_id)
-            if existing.payload:
-                payloads = existing.payload.split(',')
-                for payload in payloads:
-                    _, path = await self.get_service('file_svc').find_file_path(payload)
-                    if not path:
-                        self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
-                        continue
-                    for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
-                        decoded_test = existing.replace(clean_ability.cleanup[0])
-                        cleanup_command = self.encode_string(decoded_test)
-                        if cleanup_command not in existing.cleanup:
-                            existing.cleanup.append(cleanup_command)
+            for payload in existing.payloads:
+                _, path = await self.get_service('file_svc').find_file_path(payload)
+                if not path:
+                    self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
+                    continue
+                for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
+                    decoded_test = existing.replace(clean_ability.cleanup[0])
+                    cleanup_command = self.encode_string(decoded_test)
+                    if cleanup_command not in existing.cleanup:
+                        existing.cleanup.append(cleanup_command)
