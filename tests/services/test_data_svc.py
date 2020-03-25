@@ -44,13 +44,13 @@ class TestDataService:
         loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                    platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                     variations=[])
         ))
         loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                    platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                     variations=[])
         ))
         abilities = loop.run_until_complete(data_svc.locate('abilities'))

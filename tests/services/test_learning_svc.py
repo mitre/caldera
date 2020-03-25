@@ -7,7 +7,7 @@ from app.utility.base_world import BaseWorld
 def setup_learning_service(loop, data_svc, ability, operation, link):
     tability = ability(tactic='discovery', technique_id='T1033', technique='Find', name='test',
                        test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                       platform='darwin', payload='wifi.sh', parsers=[], requirements=[], privilege=None,
+                       platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                        variations=[])
     loop.run_until_complete(data_svc.store(tability))
     toperation = operation(name='sample', agents=None, adversary=None)
