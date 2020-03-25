@@ -179,7 +179,7 @@ class FileSvc(BaseService):
                                    salt=bytes(self.get_config('crypt_salt'), 'utf-8'),
                                    iterations=2 ** 20,
                                    backend=default_backend())
-        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('api_key_red'), 'utf-8'))))
+        return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('encryption_key'), 'utf-8'))))
 
 
 def _go_vars(arch, platform):

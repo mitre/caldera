@@ -9,6 +9,7 @@ class TestContactGist:
                                                        'plugins': ['sandcat', 'stockpile'],
                                                        'crypt_salt': 'BLAH',
                                                        'api_key': 'ADMIN123',
+                                                       'encryption_key': 'ADMIN123',
                                                        'exfil_dir': '/tmp'})
         gist_c2 = Gist(services)
         loop.run_until_complete(gist_c2.start())

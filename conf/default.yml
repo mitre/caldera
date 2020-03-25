@@ -1,5 +1,6 @@
 api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
+encryption_key: ADMIN123
 app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://127.0.0.1:8888

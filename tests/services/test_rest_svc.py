@@ -14,6 +14,7 @@ def setup_rest_svc_test(loop, data_svc):
                                                    'plugins': ['sandcat', 'stockpile'],
                                                    'crypt_salt': 'BLAH',
                                                    'api_key': 'ADMIN123',
+                                                   'encryption_key': 'ADMIN123',
                                                    'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
