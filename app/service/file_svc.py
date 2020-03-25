@@ -20,6 +20,7 @@ class FileSvc(BaseService):
         self.data_svc = self.get_service('data_svc')
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
+        self.encrypt_output = False if self.get_config('encrypt_files') is False else True
 
     async def get_file(self, headers):
         """
@@ -138,7 +139,7 @@ class FileSvc(BaseService):
         self.special_payloads[name] = func
 
     def _save(self, filename, content):
-        if self.encryptor:
+        if self.encryptor and self.encrypt_output:
             content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
         with open(filename, 'wb') as f:
             f.write(content)
