@@ -136,12 +136,21 @@ function centos_install_python() {
     install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv && cd $CALDERA_DIR" $CRITICAL
 }
 
-function bash_set_random_conf_data() {
+function bash_set_random_conf_data_linux() {
     echo "[-] Generating Random Values"
     sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
-    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_key" $WARNING
+    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_keys" $WARNING
     sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
-    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random cryps_salt" $WARNING
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random crypt_salt" $WARNING
+    echo "[+] Random Values added to default.yml"
+}
+
+function bash_set_random_conf_data_darwin() {
+    echo "[-] Generating Random Values"
+    sed -i.backup "s/ADMIN123/$(uuidgen)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(uuidgen)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_keys" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g\" $CALDERA_DIR/conf/default.yml" "caldera random crypt_salt" $WARNING
     echo "[+] Random Values added to default.yml"
 }
 
@@ -173,7 +182,7 @@ function darwin() {
     darwin_install_go
     darwin_install_mingw
     darwin_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_darwin
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -187,7 +196,7 @@ function ubuntu() {
     ubuntu_install_go
     ubuntu_install_mingw
     ubuntu_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -201,7 +210,7 @@ function kali() {
     kali_install_go
     ubuntu_install_mingw
     kali_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -216,7 +225,7 @@ function centos() {
     centos_install_go
     centos_install_mingw
     centos_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
