@@ -99,6 +99,15 @@ function darwin_install_python() {
     install_wrapper "Python" python3 "brew install python" $CRITICAL
 }
 
+function kali_install_go() {
+    install_wrapper "GO" go "apt-get install -y golang-go" $WARNING
+}
+
+function kali_install_python() {
+    install_wrapper "Python" python3 "apt-get install -y python3.8 python3.8-dev python3.8-venv" $WARNING
+    install_wrapper "Pip" pip3 "apt-get install -y python3-pip" $CRITICAL
+}
+
 function ubuntu_install_go() {
     install_wrapper "GO" go "apt-get install -y software-properties-common && add-apt-repository -y ppa:longsleep/golang-backports && apt-get update -y && apt-get install -y golang-go" $WARNING
 }
@@ -146,14 +155,14 @@ elif [[ $WARNING_FAIL == 1 ]]; then
     echo "[x] Caldera may run with degraded functionality"
     echo "[x] See install_log.txt for details"
     echo "[+] Caldera environment built"
-    echo "[+] Start the server by copy pasting these commands into the terminal\n\n"
+    echo "[+] Start the server by copy pasting these commands into the terminal"
     echo "    source calderaenv/bin/activate"
-    echo "    python server.py\n"
+    echo "    python server.py"
 else
     echo "[+] Caldera environment built"
-    echo "[+] Start the server by copy pasting these commands into the terminal\n\n"
+    echo "[+] Start the server by copy pasting these commands into the terminal"
     echo "    source calderaenv/bin/activate"
-    echo "    python server.py\n"
+    echo "    python server.py"
 fi
 }
 
@@ -186,6 +195,20 @@ function ubuntu() {
     display_welcome_msg
 }
 
+function kali() {
+    [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
+    echo "[-] Installing on Kali (Debian)..."
+    initialize_log
+    kali_install_go
+    ubuntu_install_mingw
+    kali_install_python
+    bash_set_random_conf_data
+    all_install_go_dependencies
+    all_install_python_requirements
+    all_build_documentation
+    display_welcome_msg
+}
+
 function centos() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on CentOS (RedHat)..."
@@ -209,7 +232,7 @@ elif [[ "$(lsb_release -d)" == *"CentOS"* ]]; then
 elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Kali"* ]]; then
-  ubuntu
+  kali
 else
     echo "OS not supported. Supported OS are Ubuntu, Centos, Fedora and Kali." && exit 1
 fi
