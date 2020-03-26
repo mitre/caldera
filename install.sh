@@ -212,6 +212,7 @@ function centos() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on CentOS (RedHat)..."
     initialize_log
+    centos_install_core_tools
     centos_install_go
     centos_install_mingw
     centos_install_python
@@ -226,7 +227,7 @@ if [[ "$(uname)" == *"Darwin"* ]]; then
   darwin
 elif [[ "$(lsb_release -d)" == *"Ubuntu"* ]]; then
   ubuntu
-elif [[ "$(cat /etc/centos-release -d)" == *"CentOS"* ]]; then
+elif [[ "$(cat /etc/centos-release)" == *"CentOS"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
