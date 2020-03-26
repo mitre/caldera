@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CALDERA_DIR="$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"
+CALDERA_DIR=pwd
 USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 CRITICAL=1
 WARNING=0
@@ -133,15 +133,15 @@ function centos_install_mingw() {
 }
 
 function centos_install_python() {
-    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv" $CRITICAL
+    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv && cd $CALDERA_DIR" $CRITICAL
 }
 
 function bash_set_random_conf_data() {
     echo "[-] Generating Random Values"
-    sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random api_key" $WARNING
-    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
+    sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_key" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random cryps_salt" $WARNING
     echo "[+] Random Values added to default.yml"
 }
 
