@@ -98,6 +98,7 @@ class Operation(BaseObject):
         self.visibility = visibility
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
+        self.generate_expired = 0
         if source:
             self.rules = source.rules
 
@@ -145,6 +146,9 @@ class Operation(BaseObject):
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
 
+    async def incr_ge(self):
+        self.generate_expired += 1
+
     async def wait_for_completion(self):
         for member in self.agents:
             if not member.trusted:
@@ -171,7 +175,9 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or (self.auto_close and self.cursor >= len(self.adversary.atomic_ordering)):
+        if await self.is_finished() or (self.auto_close and self.generate_expired > 3 and
+                                            ((not self.atomic_enabled) or
+                                                 (self.cursor > len(self.adversary.atomic_ordering)))):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -244,11 +250,11 @@ class Operation(BaseObject):
     async def _run(self, planner):
         for cursor in self.adversary.atomic_ordering:
             if not await self.is_closeable():
-                await planner.execute(cursor)
+                await planner.execute(self.adversary.atomic_ordering.index(cursor))
                 if planner.stopping_condition_met:
                     break
                 await self.wait_for_completion()
-            self.cursor = cursor
+            self.cursor = self.adversary.atomic_ordering.index(cursor)
 
     async def _cleanup_operation(self, services):
         for member in self.agents:

@@ -25,9 +25,10 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if operation.atomic_enabled:
-            abilities = [i for p, v in operation.adversary.atomic_ordering if p <= operation.cursor for i in v]
+            abilities = [v for v in operation.adversary.atomic_ordering
+                         if operation.adversary.atomic_ordering.index(v) <= (operation.cursor + 1)]
         else:
-            abilities = [i for p, v in operation.adversary.atomic_ordering for i in v]
+            abilities = [v for v in operation.adversary.atomic_ordering][0]
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
@@ -35,6 +36,7 @@ class PlanningService(BasePlanningService):
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         self.log.debug('Generated %s usable links' % (len(links)))
+        await self._check_completion(links, operation)
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -74,6 +76,10 @@ class PlanningService(BasePlanningService):
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """
+
+    async def _check_completion(self, links, operation):
+        if len(links) == 0:
+            await operation.incr_ge()
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
         """
