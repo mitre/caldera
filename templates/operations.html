@@ -83,9 +83,9 @@
                     <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                 {% endfor %}
               </select>
-              <select name="phases" id="queuePhasesEnabled" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="1" selected>Enable Phases</option>
-                <option value="0">Disable Phases</option>
+              <select name="phases" id="atomicEnabled" class="queueOption" style="opacity:0.5" disabled="true">
+                <option value="1">Force Atomic Ordering</option>
+                <option value="0" selected>Prioritize Planner</option>
               </select>
           </div>
 
@@ -368,7 +368,7 @@
             "state":document.getElementById("queueState").value,
             "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
-            "phases_enabled":document.getElementById("queuePhasesEnabled").value,
+            "atomic_enabled":document.getElementById("atomicEnabled").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
@@ -421,7 +421,8 @@
                 $("#togBtnHil").prop("checked", false);
             }
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt((OPERATION.phase / Object.keys(OPERATION.adversary.phases).length) * 100));
+            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.listing.length) *
+                100));
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
                 if(OPERATION.chain[i].status === -1) {
