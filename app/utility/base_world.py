@@ -19,6 +19,8 @@ class BaseWorld:
 
     _app_configuration = dict()
 
+    re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
+
     @staticmethod
     def apply_config(name, config):
         BaseWorld._app_configuration[name] = config
@@ -94,7 +96,7 @@ class BaseWorld:
 
     @staticmethod
     def is_uuid4(s):
-        if re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL).match(s):
+        if BaseWorld.re_base64.match(s):
             return True
         return False
 
