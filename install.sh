@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CALDERA_DIR="$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"
+CALDERA_DIR=$(pwd)
 USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 CRITICAL=1
 WARNING=0
@@ -72,7 +72,7 @@ function all_install_go_dependencies() {
 
 function all_install_python_requirements() {
     echo "[-] Setting up Python venv"
-    run_uprivileged "pip3 -q install virtualenv" "Python virtualenv" $CRITICAL
+    run_uprivileged "pip3 -q install --user virtualenv" "Python virtualenv" $CRITICAL
     run_uprivileged "virtualenv -q -p python3 $CALDERA_DIR/calderaenv" "Caldera python venv" $CRITICAL
     run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip -q install -r $CALDERA_DIR/requirements.txt" "Caldera python requirements" $CRITICAL
 }
@@ -133,15 +133,24 @@ function centos_install_mingw() {
 }
 
 function centos_install_python() {
-    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv" $CRITICAL
+    install_wrapper "Python" python3 "yum install -y gcc openssl-devel bzip2-devel libffi libffi-devel && cd /root && wget --no-check-certificate https://www.python.org/ftp/python/3.8.0/Python-3.8.0.tgz && tar xzf Python-3.8.0.tgz && cd Python-3.8.0 && ./configure --enable-optimizations && make altinstall && rm -f /root/Python-3.8.0.tgz && ln -fs /usr/local/bin/python3.8 /usr/bin/python3 && ln -fs /usr/local/bin/pip3.8 /usr/bin/pip3 && ln -fs /usr/local/bin/virtualenv /usr/bin/virtualenv && cd $CALDERA_DIR" $CRITICAL
 }
 
-function bash_set_random_conf_data() {
+function bash_set_random_conf_data_linux() {
     echo "[-] Generating Random Values"
-    sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random api_key" $WARNING
-    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" conf/default.yml
-    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" conf/default.yml" "caldera random cryps_salt" $WARNING
+    sed -i.backup "s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_keys" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(cat /proc/sys/kernel/random/uuid)/g\" $CALDERA_DIR/conf/default.yml" "caldera random crypt_salt" $WARNING
+    echo "[+] Random Values added to default.yml"
+}
+
+function bash_set_random_conf_data_darwin() {
+    echo "[-] Generating Random Values"
+    sed -i.backup "s/ADMIN123/$(uuidgen)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/ADMIN123/$(uuidgen)/g\" $CALDERA_DIR/conf/default.yml" "caldera random api_keys" $WARNING
+    sed -i.backup "s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g" $CALDERA_DIR/conf/default.yml
+    extra_error "sed -i.backup \"s/REPLACE_WITH_RANDOM_VALUE/$(uuidgen)/g\" $CALDERA_DIR/conf/default.yml" "caldera random crypt_salt" $WARNING
     echo "[+] Random Values added to default.yml"
 }
 
@@ -173,7 +182,7 @@ function darwin() {
     darwin_install_go
     darwin_install_mingw
     darwin_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_darwin
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -187,7 +196,7 @@ function ubuntu() {
     ubuntu_install_go
     ubuntu_install_mingw
     ubuntu_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -201,7 +210,7 @@ function kali() {
     kali_install_go
     ubuntu_install_mingw
     kali_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -212,10 +221,11 @@ function centos() {
     [[ $EUID -ne 0 ]] && echo "You must run the script with sudo." && exit 1
     echo "[-] Installing on CentOS (RedHat)..."
     initialize_log
+    centos_install_core_tools
     centos_install_go
     centos_install_mingw
     centos_install_python
-    bash_set_random_conf_data
+    bash_set_random_conf_data_linux
     all_install_go_dependencies
     all_install_python_requirements
     all_build_documentation
@@ -226,7 +236,7 @@ if [[ "$(uname)" == *"Darwin"* ]]; then
   darwin
 elif [[ "$(lsb_release -d)" == *"Ubuntu"* ]]; then
   ubuntu
-elif [[ "$(lsb_release -d)" == *"CentOS"* ]]; then
+elif [[ "$(cat /etc/centos-release)" == *"CentOS"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
