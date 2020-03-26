@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CALDERA_DIR=pwd
+CALDERA_DIR=$(pwd)
 USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 CRITICAL=1
 WARNING=0
@@ -72,7 +72,7 @@ function all_install_go_dependencies() {
 
 function all_install_python_requirements() {
     echo "[-] Setting up Python venv"
-    run_uprivileged "pip3 -q install virtualenv" "Python virtualenv" $CRITICAL
+    run_uprivileged "pip3 -q install --user virtualenv" "Python virtualenv" $CRITICAL
     run_uprivileged "virtualenv -q -p python3 $CALDERA_DIR/calderaenv" "Caldera python venv" $CRITICAL
     run_uprivileged "$CALDERA_DIR/calderaenv/bin/pip -q install -r $CALDERA_DIR/requirements.txt" "Caldera python requirements" $CRITICAL
 }
