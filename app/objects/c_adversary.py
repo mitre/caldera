@@ -13,7 +13,11 @@ class Adversary(BaseObject):
     def display(self):
         desc_list = list()
         for v in self.atomic_ordering:
-            desc_list.append(v.display)
+            if isinstance(v, list):
+                for x in v:
+                    desc_list.append(x.display)
+            else:
+                desc_list.append(v.display)
         return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, listing=desc_list)
 
     def __init__(self, adversary_id, name, description, atomic_ordering):

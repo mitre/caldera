@@ -111,7 +111,7 @@
                 <ul id="ttp-tests"></ul>
                 <div style="float:right;">
                     <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
-                    <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to phase</button>
+                    <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
                     <div id="ability-flashy-holder">
                         <span id="message"></span>
                     </div>
@@ -136,12 +136,10 @@
                         <option value={{ pack.adversary_id }}>{{ pack.name }}</option>
                     {% endfor %}}
                 </select></br>
-                <input type="checkbox" id="adv-pack-merge" name="adv-pack-merge">
-                <label for="adv-pack-merge">Merge into existing phases?</label><br>
                 <div id="pack-phases"></div>
                 <br><br>
                 <div style="float:right;width:30%;">
-                    <button type="button" class="button-success atomic-button" onclick="addPackToPhase()">Add to phase</button>
+                    <button type="button" class="button-success atomic-button" onclick="addPackToPhase()">Add to Adversary</button>
                 </div>
             </div>
             <div class="imgcontainer">
@@ -262,6 +260,7 @@
 <script>
     $(document).ready(function () {
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
+        addPhase(1);
     });
 
     function toggleAdversaryView() {
@@ -270,6 +269,7 @@
         $('#profile-description').val('');
         $('.tempPhase').remove();
         $('.phase-headers').remove();
+        addPhase(1);
     }
 
     function saveAdversary() {
@@ -284,9 +284,11 @@
 
         let abilities = [];
         $('#profile-tests li').each(function() {
-            abilities.push({"id": $(this).attr('id'),"phase":$(this).data('phase')})
+            abilities.push({"id": $(this).attr('id')})
         });
-        restRequest('PUT', {"name":name,"description":description,"phases":abilities,"index":"adversaries", 'i': identifier}, saveAdversaryCallback);
+        console.log(abilities);
+        restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
+            'i': identifier}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -388,7 +390,6 @@
     }
 
     function loadAtomicOrder(abilities) {
-        console.log(abilities);
         let template = $("#tempPhase");
         if (!template.length) {
             template = addPhase(1);
@@ -426,19 +427,14 @@
         return template;
     }
 
-    function loadPackCallback(data) {
-        let packPhases = data[0]['phases'];
-        let phaseKeys = Object.keys(packPhases);
-        let curPhase = $('#pack-modal').data('phase');
-        let mergePhase = $('#adv-pack-merge').is(':checked');
-        let phaseMod = 0;
+    function loadPackCallback(data){
+        let abilities = addPlatforms(data[0].listing);
 
-        if (!mergePhase) {
-            shiftPhasesDown(curPhase, phaseKeys.length);
-            phaseMod = curPhase;
-        }
-        phaseKeys.forEach(function(key) {
-            loadAdversaryPhase(parseInt(key) + phaseMod, packPhases[key]);
+
+        abilities.forEach(function(key) {
+            abilityBox = buildAbility(key, 1);
+            $('#tempPhase' + 1).find('#profile-tests').append(abilityBox);
+            document.getElementById('phase-modal').style.display = 'none';
         });
     }
 
@@ -628,28 +624,25 @@
     }
 
     function showPackCallback(data) {
-        Object.keys(data[0].phases).forEach(function(phaseID) {
-            let phaseTemplate = $("#pack-phase-template").clone();
-            phaseTemplate.attr('id', 'pack-phase' + phaseID);
+        let phaseTemplate = $("#pack-phase-template").clone();
+        phaseTemplate.attr('id', 'pack-phase' + 0);
 
-            let abilities = addPlatforms(data[0].phases[phaseID]);
-            abilities.forEach(function(ability) {
-                let template = $("#pack-ability-template").clone();
-                template.find('.ability-identifier').text(ability.ability_id);
-                template.find('.ability-name').text(ability.name);
-                template.find('.ability-description').text(ability.description);
-                template.find('.ability-tactic').text(ability.tactic);
-                template.find('.ability-tech-id').text(ability.technique_id);
-                template.find('.ability-tech-name').text(ability.technique_name);
-                template.find('.ability-platforms').text(ability.platform.join(', '));
-                template.show();
-                phaseTemplate.append(template);
-            });
-
-            phaseTemplate.show();
-            $('#pack-phases').append("<h4>Phase " + phaseID + "</h4>");
-            $('#pack-phases').append(phaseTemplate);
+        let abilities = addPlatforms(data[0].listing);
+        abilities.forEach(function(ability) {
+            let template = $("#pack-ability-template").clone();
+            template.find('.ability-identifier').text(ability.ability_id);
+            template.find('.ability-name').text(ability.name);
+            template.find('.ability-description').text(ability.description);
+            template.find('.ability-tactic').text(ability.tactic);
+            template.find('.ability-tech-id').text(ability.technique_id);
+            template.find('.ability-tech-name').text(ability.technique_name);
+            template.find('.ability-platforms').text(ability.platform.join(', '));
+            template.show();
+            phaseTemplate.append(template);
         });
+
+        phaseTemplate.show();
+        $('#pack-phases').append(phaseTemplate);
     }
 
     function addExecutorBlock(){
@@ -801,12 +794,12 @@
         this.insertAdjacentHTML('beforebegin',dropHTML);
         var dropElem = this.previousSibling;
         addDnDHandlers(dropElem);
+        $(dropElem).find('.ability-remove').click(function() {
+            removeAbility(event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id);
+        });
 
       }
       this.classList.remove('over');
-      $(this).find('.ability-remove').click(function() {
-            removeAbility(event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id);
-        });
       return false;
     }
 
