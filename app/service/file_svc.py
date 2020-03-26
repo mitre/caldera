@@ -34,6 +34,8 @@ class FileSvc(BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = headers.get('file')
+        if self.is_uuid4(payload):
+            display_name = payload = self.get_payload_name_from_uuid(payload)
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
@@ -170,6 +172,13 @@ class FileSvc(BaseService):
             'cd %s && %s %s go build %s -o %s -ldflags=\'%s\' %s' % (build_dir, _go_vars(arch, platform), cflags,
                                                                      buildmode, output, ldflags, src_fle)
         )
+
+    def get_payload_name_from_uuid(self, payload):
+        for t in ['standard_payloads', 'special_payloads']:
+            for k, v in self.get_config(prop=t, name='payloads').items():
+                if v['id'] == payload:
+                    return k
+        return payload
 
     """ PRIVATE """
 

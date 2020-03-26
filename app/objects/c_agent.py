@@ -1,3 +1,5 @@
+import re
+
 from base64 import b64decode
 from datetime import datetime
 from urllib.parse import urlparse
@@ -10,7 +12,7 @@ from app.utility.base_object import BaseObject
 class Agent(BaseObject):
 
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
-                    exe_name='#{exe_name}')
+                    exe_name='#{exe_name}', payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
 
     class AgentSchema(ma.Schema):
         paw = ma.fields.String()
@@ -141,9 +143,25 @@ class Agent(BaseObject):
         decoded_cmd = decoded_cmd.replace(self.RESERVED['agent_paw'], self.paw)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], self.location)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['exe_name'], self.exe_name)
+        decoded_cmd = self._replace_payload_data(decoded_cmd)
         return decoded_cmd
 
     def privileged_to_run(self, ability):
         if not ability.privilege or self.Privileges[self.privilege].value >= self.Privileges[ability.privilege].value:
             return True
         return False
+
+    """ PRIVATE """
+
+    def _replace_payload_data(self, decoded_cmd):
+        for uuid in re.findall(self.RESERVED['payload'], decoded_cmd):
+            if self.is_uuid4(uuid):
+                decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, self._get_payload_name_from_uuid(uuid))
+        return decoded_cmd
+
+    def _get_payload_name_from_uuid(self, payload):
+        for t in ['standard_payloads', 'special_payloads']:
+            for k, v in self.get_config(prop=t, name='payloads').items():
+                if v['id'] == payload:
+                    return k
+        return payload

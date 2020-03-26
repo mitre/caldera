@@ -346,12 +346,18 @@ class DataService(BaseService):
                 existing.technique_name = '(auto-generated)'
                 self.log.error('Fix technique name for ability: %s' % existing.ability_id)
             for payload in existing.payloads:
-                _, path = await self.get_service('file_svc').find_file_path(payload)
+                payload_name = payload
+                if self.is_uuid4(payload):
+                    payload_name = self.get_service('file_svc').get_payload_name_from_uuid(payload)
+                _, path = await self.get_service('file_svc').find_file_path(payload_name)
                 if not path:
                     self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
                     continue
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
-                    decoded_test = existing.replace(clean_ability.cleanup[0])
+                    if self.is_uuid4(payload):
+                        decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], '#{payload:%s}' % payload)
+                    else:
+                        decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], payload)
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
                         existing.cleanup.append(cleanup_command)

@@ -1,6 +1,7 @@
 import binascii
 import string
 import os
+import re
 import yaml
 import logging
 
@@ -90,6 +91,12 @@ class BaseWorld:
             return True
         except binascii.Error:
             return False
+
+    @staticmethod
+    def is_uuid4(s):
+        if re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL).match(s):
+            return True
+        return False
 
     @staticmethod
     async def walk_file_path(path, target):
