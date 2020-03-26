@@ -1,3 +1,4 @@
+import os
 import asyncio
 import json
 import logging
@@ -108,8 +109,8 @@ class RestApi(BaseWorld):
         dir_name = request.headers.get('Directory', None)
         if dir_name:
             return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
-        created_dir = request.headers.get('X-Request-ID', str(uuid.uuid4()))
-        saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
+        created_dir = os.path.normpath('/' + request.headers.get('X-Request-ID', str(uuid.uuid4())))
+        saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir[1:])
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
     async def download_file(self, request):
