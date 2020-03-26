@@ -94,13 +94,12 @@ class ContactService(BaseService):
         for link in [c for op in ops for c in op.chain
                      if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
             link.collect = datetime.now()
-            payload = link.ability.payload if link.ability.payload else ''
             instructions.append(Instruction(identifier=link.unique,
                                             sleep=link.jitter,
                                             command=link.command,
                                             executor=link.ability.executor,
                                             timeout=link.ability.timeout,
-                                            payload=payload))
+                                            payloads=link.ability.payloads))
         return instructions
 
     async def _get_bootstrap_instructions(self, agent):

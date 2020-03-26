@@ -26,7 +26,7 @@ class Ability(BaseObject):
         return cls(ability_id=json['ability_id'], tactic=json['tactic'], technique_id=json['technique_id'],
                    technique=json['technique_name'], name=json['name'], test=json['test'], variations=[],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
-                   platform=json['platform'], payload=json['payload'], parsers=parsers,
+                   platform=json['platform'], payloads=json['payloads'], parsers=parsers,
                    requirements=requirements, privilege=json['privilege'], timeout=json['timeout'], access=json['access'])
 
     @property
@@ -36,12 +36,12 @@ class Ability(BaseObject):
                                technique_id=self.technique_id, name=self.name,
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
-                               platform=self.platform, payload=self.payload, parsers=[p.display for p in self.parsers],
+                               platform=self.platform, payloads=self.payloads, parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
                                timeout=self.timeout, access=self.access.value, variations=[v.display for v in self.variations]))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
-                 description=None, cleanup=None, executor=None, platform=None, payload=None, parsers=None,
+                 description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
         super().__init__()
         self._test = test
@@ -54,7 +54,7 @@ class Ability(BaseObject):
         self.cleanup = [cleanup] if cleanup else []
         self.executor = executor
         self.platform = platform
-        self.payload = payload
+        self.payloads = payloads if payloads else []
         self.parsers = parsers
         self.requirements = requirements
         self.privilege = privilege
@@ -78,7 +78,7 @@ class Ability(BaseObject):
         existing.update('cleanup', self.cleanup)
         existing.update('executor', self.executor)
         existing.update('platform', self.platform)
-        existing.update('payload', self.payload)
+        existing.update('payloads', self.payloads)
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
         return existing
@@ -91,5 +91,5 @@ class Ability(BaseObject):
 
     def replace(self, encoded_cmd):
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
-        decoded_cmd = decoded_cmd.replace(self.RESERVED['payload'], self.payload)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['payload'], self.payloads[0])
         return decoded_cmd
