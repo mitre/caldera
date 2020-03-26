@@ -1,7 +1,6 @@
 #!/bin/bash
 
-SCRIPT=$(readlink -f "$0")
-CALDERA_DIR=$(dirname "$SCRIPT")
+CALDERA_DIR="$( cd "$( dirname "$0" )" >/dev/null 2>&1 && pwd )"
 USER=$(printf '%s\n' "${SUDO_USER:-$USER}")
 CRITICAL=1
 WARNING=0
