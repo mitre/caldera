@@ -14,19 +14,10 @@ from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
-from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
-from app.utility.base_world import BaseWorld
-
-
-@pytest.fixture(scope='session')
-def init_base_world():
-    with open('conf/default.yml') as c:
-        BaseWorld.apply_config('default', yaml.load(c, Loader=yaml.FullLoader))
-    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
 
 
 @pytest.fixture(scope='session')
