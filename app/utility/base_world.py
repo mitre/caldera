@@ -1,6 +1,7 @@
 import binascii
 import string
 import os
+import re
 import yaml
 import logging
 
@@ -17,6 +18,8 @@ class BaseWorld:
     """
 
     _app_configuration = dict()
+
+    re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
 
     @staticmethod
     def apply_config(name, config):
@@ -90,6 +93,12 @@ class BaseWorld:
             return True
         except binascii.Error:
             return False
+
+    @staticmethod
+    def is_uuid4(s):
+        if BaseWorld.re_base64.match(s):
+            return True
+        return False
 
     @staticmethod
     async def walk_file_path(path, target):

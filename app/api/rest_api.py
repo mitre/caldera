@@ -116,7 +116,8 @@ class RestApi(BaseWorld):
     async def download_file(self, request):
         try:
             payload, content, display_name = await self.file_svc.get_file(request.headers)
-            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name)])
+            headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % display_name),
+                            ('FILENAME', display_name)])
             return web.Response(body=content, headers=headers)
         except FileNotFoundError:
             return web.HTTPNotFound(body='File not found')

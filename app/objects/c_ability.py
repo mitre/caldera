@@ -89,7 +89,7 @@ class Ability(BaseObject):
                 return plugin
         return None
 
-    def replace(self, encoded_cmd):
+    def replace_cleanup(self, encoded_cmd, payload):
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
-        decoded_cmd = decoded_cmd.replace(self.RESERVED['payload'], self.payloads[0])
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['payload'], payload)
         return decoded_cmd
