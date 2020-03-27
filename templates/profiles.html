@@ -197,11 +197,10 @@
             </td>
         </tr>
         <tr>
-            <td style="width:10%"><b>payload:</b></td>
+            <td style="width:10%"><b>payloads:</b></td>
             <td>
-              <select id="ability-payload" class="ability-payload">
-                <option value="" disabled selected>Download a payload before running this ability (optional)</option>
-                {% for p in payloads %}
+              <select id="ability-payload" multiple="multiple">
+                {% for p in payloads|sort %}
                     <option value="{{ p }}">{{ p }}</option>
                 {% endfor %}}
               </select>
@@ -322,7 +321,7 @@
         let data = {};
         let platforms = {};
         let invalid = false;
-        $('#ttp-tests li').each(function() {
+        $('#ttp-tests > li').each(function() {
             let platform = $(this).find('#ability-platform').val();
 
             if(platforms[platform] === undefined) {
@@ -331,15 +330,15 @@
 
             let executor = $(this).find('#ability-executor').val();
             let command = $(this).find('#ability-command').val();
-            let payload = $(this).find('#ability-payload').val();
+            let payloads = $(this).find('#ability-payload').val();
             let cleanup = $(this).find('#ability-cleanup').val();
 
-            if(!name || !description || !command || !executor || !platform) {
+            if(!command || !executor || !platform) {
                 invalid = true;
             }
             let ex = {'command': command};
-            if(payload) {
-                ex['payload'] = payload;
+            if(payloads) {
+                ex['payloads'] = payloads;
             }
             if(cleanup) {
                 ex['cleanup'] = cleanup;
@@ -593,13 +592,22 @@
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();
+                let unique = aid.ability_id + ability.platform + ability.executor;
                 template.find('#ability-platform').val(ability.platform);
                 template.find('#ability-executor').val(ability.executor);
                 template.find('#ability-command').val(atob(ability.test));
-                template.find('#ability-cleanup').val(atob(ability.cleanup));
-                template.find('#ability-payload').val(ability.payload);
+                if(ability.cleanup[0] > 0) {
+                    template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
+                }
                 template.show();
+                template.attr('id', unique);
                 $('#ttp-tests').append(template);
+                let payloads = $('#'+unique).find('#ability-payload');
+                payloads.multiSelect({
+                    selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
+                    selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
+                    keepOrder: true });
+                payloads.multiSelect('select', ability.payloads);
             }
         });
     }

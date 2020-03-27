@@ -237,6 +237,7 @@ class DataService(BaseService):
             ab.tactic = ability.tactic
             ab.technique_id = ability.technique_id
             ab.technique_name = ability.technique_name
+            ab.payloads = ability.payloads
             await self.store(ab)
 
     async def _load_sources(self, plugin):
