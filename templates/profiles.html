@@ -170,6 +170,18 @@
     </center>
 </li>
 
+<li id="pack-template" class="ability-box" style="display: none" draggable="True">
+    <h4 id="name" style="margin:5px"></h4>
+    <b><p style="text-transform: uppercase;font-size:11px;opacity:0.7;">Pack</p></b>
+    <center>
+        <div>
+            <div class="topright" id="ability-rm">
+                <div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>
+            </div>
+        </div>
+    </center>
+</li>
+
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
         <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
@@ -428,14 +440,12 @@
     }
 
     function loadPackCallback(data){
-        let abilities = addPlatforms(data[0].listing);
-
-
-        abilities.forEach(function(key) {
-            abilityBox = buildAbility(key, 1);
-            $('#tempPhase' + 1).find('#profile-tests').append(abilityBox);
-            document.getElementById('phase-modal').style.display = 'none';
-        });
+        let packBox = buildPack(data[0]);
+        $('#tempPhase' + 1).find('#profile-tests').append(packBox);
+        document.getElementById('phase-modal').style.display = 'none';
+        rAdded = document.querySelectorAll('#profile-tests .ability-box');
+        listen_target = rAdded[rAdded.length - 1];
+        addDnDHandlers(listen_target);
     }
 
     function shiftPhasesDown(after, number) {
@@ -513,6 +523,21 @@
             let icon = $('<div class="tooltip"><span class="tooltiptext">Works on '+p+' ('+ exec +')</span><img src="/gui/img/'+p+'.png"/></div>');
             icon.appendTo(template.find('#icon-row'));
         });
+        template.show();
+        return template;
+    }
+
+    function buildPack(pack) {
+        let template = $("#pack-template").clone();
+        template.attr('id', "pack:" + pack.adversary_id);
+
+        template.find('#name').html(pack.name);
+
+        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
+        template.find('.ability-remove').click(function() {
+            removeAbility("pack:" + pack.adversary_id);
+        });
+
         template.show();
         return template;
     }
@@ -693,6 +718,9 @@
         let abilityBox = buildAbility(ability, phase);
         $('#tempPhase' + phase).find('#profile-tests').append(abilityBox);
         document.getElementById('phase-modal').style.display='none';
+        rAdded = document.querySelectorAll('#profile-tests .ability-box');
+        listen_target = rAdded[rAdded.length - 1];
+        addDnDHandlers(listen_target);
     }
 
     function addPackToPhase() {
