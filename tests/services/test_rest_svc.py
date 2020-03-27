@@ -20,7 +20,7 @@ def setup_rest_svc_test(loop, data_svc):
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
     )
     loop.run_until_complete(data_svc.store(
-        Adversary(adversary_id='123', name='test', description='test', phases=[]))
+        Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[]))
     )
     loop.run_until_complete(data_svc.store(
         Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0)
@@ -68,9 +68,9 @@ class TestRestSvc:
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
                                 'username': 'unknown', 'watchdog': 0, 'contact': 'unknown'}],
                 'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
-                              'phases': {1: []}},
-                'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished', 'phase': 0,
-                'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': []}
+                              'listing': []},
+                'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
+                'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'cursor': 0,'chain': []}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
@@ -92,7 +92,7 @@ class TestRestSvc:
 - id: 123
   name: test
   description: test
-  phases:
+  atomic_ordering:
         """
         with open('data/adversaries/123.yml', 'w') as f:
             f.write(data)
