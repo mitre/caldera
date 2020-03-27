@@ -356,7 +356,7 @@ class DataService(BaseService):
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                     if self.is_uuid4(payload):
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], '#{payload:%s}' % payload)
-                    else:
+                    else:  # Explain why the else is here
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], payload)
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:

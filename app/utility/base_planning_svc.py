@@ -44,7 +44,7 @@ class BasePlanningService(BaseService):
         :return: updated list of links
         """
         for link in links:
-            decoded_test = agent.replace(link.command)
+            decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, operation)

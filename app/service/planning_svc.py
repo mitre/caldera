@@ -125,7 +125,7 @@ class PlanningService(BasePlanningService):
             ability = (await self.get_service('data_svc').locate('abilities',
                                                                  match=dict(unique=link.ability.unique)))[0]
             for cleanup in ability.cleanup:
-                decoded_cmd = agent.replace(cleanup)
+                decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
                 lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                            ability=ability, score=0, jitter=2, status=link_status)

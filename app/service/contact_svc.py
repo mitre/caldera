@@ -111,7 +111,7 @@ class ContactService(BaseService):
         instructions = []
         for x, i in enumerate(await agent.capabilities(abilities)):
             new_id = 'bootstrap-%s-%d' % (agent.paw, x)
-            cmd = self.encode_string(agent.replace(i.test))
+            cmd = self.encode_string(agent.replace(i.test, file_svc=self.get_service('file_svc')))
             instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
         return instructions
 
