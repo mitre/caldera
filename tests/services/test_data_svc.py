@@ -11,10 +11,10 @@ class TestDataService:
 
     def test_no_duplicate_adversary(self, loop, data_svc):
         loop.run_until_complete(data_svc.store(
-            Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
+            Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=dict())
         ))
         loop.run_until_complete(data_svc.store(
-            Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
+            Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=dict())
         ))
         adversaries = loop.run_until_complete(data_svc.locate('adversaries'))
 
@@ -59,7 +59,7 @@ class TestDataService:
 
     def test_operation(self, loop, data_svc):
         adversary = loop.run_until_complete(data_svc.store(
-            Adversary(adversary_id='123', name='test', description='test adversary', phases=dict())
+            Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=dict())
         ))
         loop.run_until_complete(data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
 
