@@ -4,7 +4,7 @@ import glob
 import os.path
 import pickle
 from base64 import b64encode
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary

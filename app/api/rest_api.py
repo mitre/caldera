@@ -97,11 +97,7 @@ class RestApi(BaseWorld):
             )
             if index not in options[request.method]:
                 search = {**data, **access}
-                try:
-                    return web.json_response(await self.rest_svc.display_objects(index, search))
-                except Exception as e:
-                    temp = await self.rest_svc.display_objects(index, search)
-                    print(e)
+                return web.json_response(await self.rest_svc.display_objects(index, search))
             return web.json_response(await options[request.method][index](data))
         except ma.ValidationError as e:
             raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))

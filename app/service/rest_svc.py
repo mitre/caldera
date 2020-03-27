@@ -4,7 +4,6 @@ import glob
 import os
 import pathlib
 import uuid
-from collections import defaultdict
 from datetime import time
 
 import yaml
