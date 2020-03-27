@@ -133,6 +133,12 @@ class DataService(BaseService):
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
 
+    async def flush(self, object_name):
+        try:
+            del self.ram[object_name][:]
+        except Exception as e:
+            self.log.error('[!] FLUSH: %s' % e)
+
     """ PRIVATE """
 
     @staticmethod
@@ -237,7 +243,6 @@ class DataService(BaseService):
             ab.tactic = ability.tactic
             ab.technique_id = ability.technique_id
             ab.technique_name = ability.technique_name
-            ab.payloads = ability.payloads
             await self.store(ab)
 
     async def _load_sources(self, plugin):
@@ -317,6 +322,8 @@ class DataService(BaseService):
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
         ability.access = access
+        if ability_id == 'fcf71ee3-d1a9-4136-b919-9e5f6da43608':
+            return await self.store(ability)
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):

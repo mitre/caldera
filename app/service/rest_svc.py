@@ -75,7 +75,8 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
+        await self._services.get('data_svc').flush('abilities')
+        await self._services.get('data_svc').reload_data()
         return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
@@ -165,7 +166,7 @@ class RestService(BaseService):
     async def list_payloads(self):
         payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
         payload_dirs.extend(pathlib.Path.cwd() / 'plugins' / plugin.name / 'payloads'
-                            for plugin in await self.get_service('data_svc').locate('plugins'))
+                            for plugin in await self.get_service('data_svc').locate('plugins') if plugin.enabled)
         return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
                    if p.is_file() and not p.name.startswith('.'))
 
