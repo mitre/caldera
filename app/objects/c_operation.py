@@ -175,9 +175,9 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or (self.auto_close and self.generate_expired > 3 and
-                                            ((not self.atomic_enabled) or
-                                                 (self.cursor > len(self.adversary.atomic_ordering)))):
+        if await self.is_finished() or \
+                (self.auto_close and self.generate_expired > 3
+                 and ((not self.atomic_enabled) or (self.cursor > len(self.adversary.atomic_ordering)))):
             self.state = self.states['FINISHED']
             return True
         return False
