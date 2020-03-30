@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from app.utility.base_service import BaseService
-from app.utility.payload_encoder import xor_file
+from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
@@ -39,6 +39,9 @@ class FileSvc(BaseService):
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
+        if headers.get('xor_key'):
+            xor_key = headers['xor_key']
+            contents = xor_bytes(contents, xor_key.encode())
         if headers.get('name'):
             display_name = headers.get('name')
         return file_path, contents, display_name
