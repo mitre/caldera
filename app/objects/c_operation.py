@@ -235,7 +235,7 @@ class Operation(BaseObject):
     async def run(self, services):
         try:
             planner = await self._get_planning_module(services)
-            self.adversary = await self._adjust_adversary()
+            self.adversary = await self._setup_atomic()
             await self._run(planner)
 
             self.atomic_enabled = False
@@ -271,7 +271,7 @@ class Operation(BaseObject):
         return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
                                               stopping_conditions=self.planner.stopping_conditions)
 
-    async def _adjust_adversary(self):
+    async def _setup_atomic(self):
         if self.atomic_enabled:
             return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_atomic"),
                              name=(self.adversary.name + " - with atomic enabled"),
