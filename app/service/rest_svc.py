@@ -193,9 +193,9 @@ class RestService(BaseService):
               for agent in await op.active_agents() if agent.paw == paw]
         if abilities and op:
             agent = (await op[0].get_active_agent_by_paw(paw=paw))[0]
-            agent_abilities = await agent[0].capabilities(ability_set=abilities)
+            agent_abilities = await agent.capabilities(ability_set=abilities)
             if agent_abilities:
-                return await op[0].build_and_apply_custom_link(agent=agent[0], ability=agent_abilities[0])
+                return await op[0].build_and_apply_custom_link(agent=agent, ability=agent_abilities[0])
 
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
