@@ -1,7 +1,52 @@
+from collections import namedtuple
+
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
+from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_rule import Rule
+
+
+Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
+
+
+class AdjustmentSchema(ma.Schema):
+    ability_id = ma.fields.String()
+    trait = ma.fields.String()
+    value = ma.fields.String()
+    offset = ma.fields.Integer()
+
+    @ma.post_load()
+    def build_adjustment(self, data, **_):
+        return Adjustment(**data)
 
 
 class Source(BaseObject):
+
+    class SourceSchema(ma.Schema):
+        id = ma.fields.String()
+        name = ma.fields.String()
+        facts = ma.fields.List(ma.fields.Nested(Fact.FactSchema()))
+        rules = ma.fields.List(ma.fields.Nested(Rule.RuleSchema()))
+        adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema(), required=False))
+
+        @ma.pre_load
+        def fix_adjustments(self, in_data, **_):
+            x = []
+            raw_adjustments = in_data.pop('adjustments', {})
+            if raw_adjustments:
+                for ability_id, adjustments in raw_adjustments.items():
+                    for trait, block in adjustments.items():
+                        for change in block:
+                            x.append(dict(ability_id=ability_id, trait=trait, value=change.get('value'),
+                                          offset=change.get('offset')))
+            in_data['adjustments'] = x
+            return in_data
+
+        @ma.post_load()
+        def build_source(self, data, **_):
+            data['identifier'] = data.pop('id')
+            return Source(**data)
 
     @property
     def unique(self):
@@ -10,7 +55,7 @@ class Source(BaseObject):
     @property
     def display(self):
         return self.clean(
-            dict(id=self.id, name=self.name, facts=[f.display for f in self.facts], rules=[r.display for r in self.rules])
+            self.SourceSchema(exclude=('adjustments',)).dump(self)
         )
 
     def __init__(self, identifier, name, facts, rules=(), adjustments=()):
@@ -20,6 +65,10 @@ class Source(BaseObject):
         self.facts = facts
         self.rules = rules
         self.adjustments = adjustments
+
+    @classmethod
+    def load(cls, dict_obj):
+        return cls.SourceSchema().load(dict_obj)
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)

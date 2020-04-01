@@ -4,22 +4,18 @@ import glob
 import os.path
 import pickle
 from base64 import b64encode
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
-from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
-from app.objects.secondclass.c_rule import Rule
 from app.utility.base_service import BaseService
-
-Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class DataService(BaseService):
@@ -185,7 +181,7 @@ class DataService(BaseService):
                 await self._load_sources(plug)
                 await self._load_planners(plug)
         except Exception as e:
-            self.log.debug(repr(e))
+            self.log.debug(repr(e), exc_info=True)
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
@@ -213,8 +209,10 @@ class DataService(BaseService):
                             for e in name.split(','):
                                 technique_name = ab.get('technique', dict()).get('name')
                                 technique_id = ab.get('technique', dict()).get('attack_id')
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
-                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
+                                    'command') else None
+                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                    'cleanup') else None
                                 a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
                                                                technique_name=technique_name,
                                                                technique_id=technique_id,
@@ -228,7 +226,8 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access, repeatable=ab.get('repeatable', False),
+                                                               access=plugin.access,
+                                                               repeatable=ab.get('repeatable', False),
                                                                variations=info.get('variations', []))
                                 await self._update_extensions(a)
 
@@ -244,13 +243,7 @@ class DataService(BaseService):
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
             for src in self.strip_yml(filename):
-                source = Source(
-                    identifier=src['id'],
-                    name=src['name'],
-                    facts=[Fact(trait=f['trait'], value=str(f['value'])) for f in src.get('facts')],
-                    adjustments=await self._create_adjustments(src.get('adjustments')),
-                    rules=[Rule(**r) for r in src.get('rules', [])]
-                )
+                source = Source.load(src)
                 source.access = plugin.access
                 await self.store(source)
 
@@ -274,16 +267,6 @@ class DataService(BaseService):
                 await self.store(planner)
 
     @staticmethod
-    async def _create_adjustments(raw_adjustments):
-        x = []
-        if raw_adjustments:
-            for ability_id, adjustments in raw_adjustments.items():
-                for trait, block in adjustments.items():
-                    for change in block:
-                        x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
-        return x
-
-    @staticmethod
     async def _merge_phases(phases, new_phases):
         for phase, ids in new_phases.items():
             if phase in phases:
@@ -299,9 +282,10 @@ class DataService(BaseService):
         for adv in self.strip_yml(filename):
             return adv.get('phases')
 
-    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
-                              description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
+    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
+                              test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
+                              parsers=None, requirements=None, privilege=None, timeout=60, access=None,
+                              repeatable=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -330,7 +314,8 @@ class DataService(BaseService):
                                                                               v['function']))
 
     async def _verify_ability_set(self):
-        payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
+        payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(
+            ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for existing in await self.locate('abilities'):
             if not existing.name:
                 existing.name = '(auto-generated)'
@@ -358,7 +343,7 @@ class DataService(BaseService):
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                     if self.is_uuid4(payload):
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], '#{payload:%s}' % payload)
-                    else:  # Explain why the else is here
+                    else:
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], payload)
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:

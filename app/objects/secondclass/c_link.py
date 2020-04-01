@@ -114,8 +114,8 @@ class Link(BaseObject):
 
     async def _save_fact(self, operation, trait, score):
         if all(trait) and await self._is_new_trait(trait, operation.all_facts()):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=score, collected_by=self.paw,
-                                   technique_id=self.ability.technique_id))
+            self.facts.append(Fact.load(dict(trait=trait[0], value=trait[1], score=score, collected_by=self.paw,
+                                             technique_id=self.ability.technique_id)))
 
     async def _is_new_trait(self, trait, facts):
         return all(not self._trait_exists(trait, f) or self._is_new_host_trait(trait, f) for f in facts)

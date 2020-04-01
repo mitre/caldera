@@ -1,3 +1,5 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
 
 escape_ref = {
@@ -20,13 +22,24 @@ escape_ref = {
 
 class Fact(BaseObject):
 
+    class FactSchema(ma.Schema):
+        unique = ma.fields.String()
+        trait = ma.fields.String()
+        value = ma.fields.String()
+        score = ma.fields.Integer()
+        technique = ma.fields.String()
+
+        @ma.post_load()
+        def build_fact(self, data, **_):
+            return Fact(**data)
+
     @property
     def unique(self):
         return self.hash('%s%s' % (self.trait, self.value))
 
     @property
     def display(self):
-        return dict(unique=self.unique, trait=self.trait, value=self.value, score=self.score, tactic=self.technique_id)
+        return self.FactSchema().dump(self)
 
     def escaped(self, executor):
         if executor not in escape_ref:
@@ -43,3 +56,11 @@ class Fact(BaseObject):
         self.score = score
         self.collected_by = collected_by
         self.technique_id = technique_id
+
+    @classmethod
+    def from_dict(cls, dict_obj):
+        return cls(**cls.FactSchema().load(dict_obj))
+
+    @classmethod
+    def load(cls, dict_obj):
+        return cls.FactSchema().load(dict_obj)
