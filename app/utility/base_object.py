@@ -24,7 +24,7 @@ class BaseObject(BaseWorld):
             return self
 
     def update(self, field, value):
-        if value and (value != self.__getattribute__(field)):
+        if (value or type(value) == list) and (value != self.__getattribute__(field)):
             self.__setattr__(field, value)
 
     @staticmethod

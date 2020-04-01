@@ -64,13 +64,13 @@ span.psw {
 }
 .modal-content {
     margin: 5% auto 5% auto;
-    width: 70%;
+    width: 85%;
 }
 .modal p {
     color: #333;
 }
 .modal-box {
-    max-height: 70%;
+    max-height: 80%;
     overflow: auto;
     overflow-y: auto;
 }
