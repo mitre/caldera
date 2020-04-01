@@ -9,7 +9,7 @@ import marshmallow as ma
 from app.utility.base_object import BaseObject
 
 
-class AgentSchema(ma.Schema):
+class AgentFieldsSchema(ma.Schema):
 
     paw = ma.fields.String()
     group = ma.fields.String()
@@ -35,6 +35,9 @@ class AgentSchema(ma.Schema):
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
         return {k: v for k, v in in_data.items() if v is not None}
+
+
+class AgentSchema(AgentFieldsSchema):
 
     @ma.post_load
     def build_agent(self, data, **_):
@@ -127,12 +130,9 @@ class Agent(BaseObject):
         self.update('executors', kwargs.get('executors'))
 
     async def gui_modification(self, **kwargs):
-        update_fields = ('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')
-        loaded = AgentSchema(only=update_fields).load(kwargs)
-        for k in update_fields:
-            new_value = getattr(loaded, k)
-            if new_value:
-                self.update(k, new_value)
+        loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)
+        for k, v in loaded.items():
+            self.update(k, v)
 
     async def kill(self):
         self.update('watchdog', 1)
