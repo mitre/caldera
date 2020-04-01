@@ -44,7 +44,7 @@ class RestService(BaseService):
                 p[int(ability['phase'])].append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
             f.truncate()
-        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
+        await self._reload_data_directories()
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
@@ -75,8 +75,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        await self._services.get('data_svc').flush('abilities')
-        await self._services.get('data_svc').reload_data()
+        await self._reload_data_directories()
         return [a.display for a in await self._services.get('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
@@ -86,7 +85,7 @@ class RestService(BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
+        await self._reload_data_directories()
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):
@@ -249,6 +248,11 @@ class RestService(BaseService):
     async def _read_from_yaml(file_path):
         with open(file_path, 'r') as f:
             return yaml.load(f.read(), Loader=yaml.FullLoader)
+
+    async def _reload_data_directories(self):
+        plugins = [p for p in await self._services.get('data_svc').locate('plugins', match=dict(enabled=True))]
+        plugins.append(Plugin(data_dir='data'))
+        await self._services.get('data_svc').reload_data()
 
     @staticmethod
     async def _write_to_yaml(file_path, content):
