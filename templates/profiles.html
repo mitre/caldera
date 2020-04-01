@@ -646,6 +646,10 @@
         let template = $("#ttp-template").clone();
         template.show();
         $('#ttp-tests').prepend(template);
+        $('#ttp-tests').find('#ability-payload').multiSelect({
+            selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
+            selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
+            keepOrder: true });
     }
 
     function showPhaseModal(phase) {
