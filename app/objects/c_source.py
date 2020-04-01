@@ -3,8 +3,8 @@ from collections import namedtuple
 import marshmallow as ma
 
 from app.utility.base_object import BaseObject
-from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_rule import Rule
+from app.objects.secondclass.c_fact import FactSchema
+from app.objects.secondclass.c_rule import RuleSchema
 
 
 class AdjustmentSchema(ma.Schema):
@@ -24,8 +24,8 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 class SourceSchema(ma.Schema):
     id = ma.fields.String()
     name = ma.fields.String()
-    facts = ma.fields.List(ma.fields.Nested(Fact.FactSchema()))
-    rules = ma.fields.List(ma.fields.Nested(Rule.RuleSchema()))
+    facts = ma.fields.List(ma.fields.Nested(FactSchema()))
+    rules = ma.fields.List(ma.fields.Nested(RuleSchema()))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema(), required=False))
 
     @ma.pre_load
