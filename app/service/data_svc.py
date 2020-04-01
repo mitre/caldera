@@ -9,6 +9,7 @@ from collections import defaultdict, namedtuple
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_planner import Planner
+from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_parser import Parser
@@ -174,6 +175,7 @@ class DataService(BaseService):
         try:
             if not plugins:
                 plugins = [p for p in await self.locate('plugins') if p.data_dir]
+                plugins.append(Plugin(data_dir='data'))
             for plug in plugins:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
