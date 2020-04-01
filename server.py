@@ -7,7 +7,6 @@ import sys
 from aiohttp import web
 
 from app.api.rest_api import RestApi
-from app.objects.c_plugin import Plugin
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -50,7 +49,6 @@ def run_tasks(services):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins())
-    loop.run_until_complete(data_svc.load_data([Plugin(data_dir='data')]))
     loop.run_until_complete(data_svc.load_data())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
