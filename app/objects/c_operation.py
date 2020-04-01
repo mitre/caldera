@@ -11,6 +11,7 @@ from importlib import import_module
 from random import randint
 
 from app.objects.c_adversary import Adversary
+from app.objects.secondclass.c_link import Link
 from app.utility.base_object import BaseObject
 
 REDACTED = '**REDACTED**'
@@ -182,6 +183,11 @@ class Operation(BaseObject):
             return True
         return False
 
+    async def build_and_apply_custom_link(self, agent, ability):
+        link = Link(operation=self.id, command=ability.test, paw=agent.paw, ability=ability)
+        link.apply_id(agent.host)
+        return 'Assigned agent %s new task with ID=%s.' % (agent.paw, await self.apply(link=link))
+
     def link_status(self):
         return -3 if self.autonomous else -1
 
@@ -191,6 +197,9 @@ class Operation(BaseObject):
             if agent.last_seen > self.start:
                 active.append(agent)
         return active
+
+    async def get_active_agent_by_paw(self, paw):
+        return [a for a in await self.active_agents() if a.paw == paw]
 
     def report(self, file_svc, output=False, redacted=False):
         try:
