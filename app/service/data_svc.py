@@ -17,27 +17,9 @@ from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_rule import Rule
 from app.utility.base_service import BaseService
+from app.utility.base_world import TrackRecursion
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
-history = defaultdict(set)
-
-
-def track_recursion(f):
-    """
-    decorator to track recursive calls in stateless functions to prevent infinite loops
-    """
-    function_history = history[f.__name__]
-
-    async def call(*args, **kwargs):
-        key = str({'args': args, 'kwargs': kwargs})
-        if key in function_history:
-            function_history.clear()
-            raise Exception(f'infinite loop detected, function:{f.__name__}, inputs:{key}')
-        function_history.add(key)
-        ret = await f(*args, **kwargs)
-        function_history.remove(key)
-        return ret
-    return call
 
 
 class DataService(BaseService):
@@ -164,7 +146,6 @@ class DataService(BaseService):
         adv_pack = await self._grab_adversary(id=pack)
         if adv_pack:
             phases_new = (await self._load_adversary(adv_pack[0]))['phases']
-        if adv_pack and phases_new:
             for i, phase in phases_new.items():
                 phases.insert(current_phase + i, phase)
             return current_phase + i
@@ -219,7 +200,7 @@ class DataService(BaseService):
             except Exception as e:
                 self.log.debug(repr(e))
 
-    @track_recursion
+    @TrackRecursion
     async def _load_adversary(self, adv):
         phases = adv.get('phases', dict())
         for p in adv.get('packs', []):

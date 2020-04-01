@@ -9,6 +9,9 @@ from datetime import datetime
 from importlib import import_module
 from random import randint, choice
 from enum import Enum
+from collections import defaultdict
+from threading import get_ident
+from functools import partial
 
 
 class BaseWorld:
@@ -108,3 +111,27 @@ class BaseWorld:
     class Privileges(Enum):
         User = 0
         Elevated = 1
+
+
+class TrackRecursion:
+    """
+    decorator to track recursive calls in stateless functions to prevent infinite loops
+    """
+    def __init__(self, function):
+        self.f = function
+        self.history = defaultdict(set)
+
+    def __get__(self, caller_self, type=None):
+        modified_call = partial(self.__call__, caller_self)
+        return modified_call
+
+    async def __call__(self, *args, **kwargs):
+        thread_history = self.history[get_ident()]
+        key = str({'args': args, 'kwargs': kwargs})
+        if key in thread_history:
+            thread_history.clear()
+            raise Exception(f'infinite loop detected, function:{self.f.__name__}, inputs:{key}')
+        thread_history.add(key)
+        ret = await self.f(*args, **kwargs)
+        thread_history.remove(key)
+        return ret
