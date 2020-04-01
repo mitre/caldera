@@ -15,7 +15,6 @@ from app.objects.c_operation import Operation
 from app.objects.c_plugin import Plugin
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
@@ -190,14 +189,13 @@ class RestService(BaseService):
 
     async def task_agent_with_ability(self, paw=None, ability_id=None):
         abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id))
-        if abilities:
-            for op in await self.get_service('data_svc').locate('operations', match=dict(state='running')):
-                agent = [agent for agent in await op.active_agents() if agent.paw == paw]
-                if agent:
-                    ability = await agent[0].capabilities(ability_set=abilities)
-                    if ability:
-                        return await self._build_and_apply_custom_link(agent=agent[0], ability=ability[0],
-                                                                       operation_id=op.id)
+        agent = await self.get_service('data_svc').locate('agents', match=dict(paw=paw))
+        if abilities and agent:
+            agent_abilities = await agent[0].capabilities(ability_set=abilities)
+            op = [op for op in await self.get_service('data_svc').locate('operations', match=dict(state='running'))
+                  if agent[0] in await op.active_agents()]
+            if op and agent_abilities:
+                return await op[0].build_and_apply_custom_link(agent=agent[0], ability=agent_abilities[0])
 
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])
@@ -291,11 +289,6 @@ class RestService(BaseService):
             for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
                 potential_links.append(pl)
         return await self.get_service('planning_svc').sort_links(potential_links)
-
-    async def _build_and_apply_custom_link(self, agent, ability, operation_id):
-        link = Link(operation=operation_id, command=ability.test, paw=agent.paw, ability=ability)
-        link.apply_id(agent.host)
-        return 'Assigned agent %s new task with ID=%s.' % (agent.paw, await self.apply_potential_link(link=link))
 
     async def _construct_adversary_for_op(self, adversary_id):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))

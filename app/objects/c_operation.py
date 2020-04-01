@@ -11,6 +11,7 @@ from importlib import import_module
 from random import randint
 
 from app.objects.c_adversary import Adversary
+from app.objects.secondclass.c_link import Link
 from app.utility.base_object import BaseObject
 
 REDACTED = '**REDACTED**'
@@ -181,6 +182,11 @@ class Operation(BaseObject):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             return True
         return False
+
+    async def build_and_apply_custom_link(self, agent, ability):
+        link = Link(operation=self.id, command=ability.test, paw=agent.paw, ability=ability)
+        link.apply_id(agent.host)
+        return 'Assigned agent %s new task with ID=%s.' % (agent.paw, await self.apply(link=link))
 
     def link_status(self):
         return -3 if self.autonomous else -1
