@@ -42,6 +42,11 @@ Next run the install.sh script. See the i[nstall docs](https://caldera.readthedo
 ```
 ./install.sh
 ```
+Move to your installed python virtualenv withing calendra
+for Mac OS / Linux
+```
+source ./caldera/calderaenv/bin/activate
+```
 
 Finally, start the server. 
 ```
