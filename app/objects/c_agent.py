@@ -10,6 +10,7 @@ from app.utility.base_object import BaseObject
 
 
 class AgentSchema(ma.Schema):
+
     paw = ma.fields.String()
     group = ma.fields.String()
     architecture = ma.fields.String()
