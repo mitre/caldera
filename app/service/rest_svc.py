@@ -252,7 +252,7 @@ class RestService(BaseService):
     async def _reload_data_directories(self):
         plugins = [p for p in await self._services.get('data_svc').locate('plugins', match=dict(enabled=True))]
         plugins.append(Plugin(data_dir='data'))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').reload_data(plugins)
 
     @staticmethod
     async def _write_to_yaml(file_path, content):
