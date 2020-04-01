@@ -8,6 +8,7 @@ from app.objects.secondclass.c_rule import RuleSchema
 
 
 class AdjustmentSchema(ma.Schema):
+
     ability_id = ma.fields.String()
     trait = ma.fields.String()
     value = ma.fields.String()
@@ -22,6 +23,7 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
 class SourceSchema(ma.Schema):
+
     id = ma.fields.String()
     name = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))

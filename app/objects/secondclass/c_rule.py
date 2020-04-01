@@ -19,6 +19,7 @@ class RuleActionField(ma.fields.Field):
 
 
 class RuleSchema(ma.Schema):
+
     trait = ma.fields.String()
     match = ma.fields.String()
     action = RuleActionField()
