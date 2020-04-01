@@ -198,6 +198,9 @@ class Operation(BaseObject):
                 active.append(agent)
         return active
 
+    async def get_active_agent_by_paw(self, paw):
+        return [a for a in await self.active_agents() if a.paw == paw]
+
     def report(self, file_svc, output=False, redacted=False):
         try:
             report = dict(name=self.name, host_group=[a.display for a in self.agents],

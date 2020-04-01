@@ -189,12 +189,12 @@ class RestService(BaseService):
 
     async def task_agent_with_ability(self, paw=None, ability_id=None):
         abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id))
-        agent = await self.get_service('data_svc').locate('agents', match=dict(paw=paw))
-        if abilities and agent:
+        op = [op for op in await self.get_service('data_svc').locate('operations', match=dict(state='running'))
+              for agent in await op.active_agents() if agent.paw == paw]
+        if abilities and op:
+            agent = (await op[0].get_active_agent_by_paw(paw=paw))[0]
             agent_abilities = await agent[0].capabilities(ability_set=abilities)
-            op = [op for op in await self.get_service('data_svc').locate('operations', match=dict(state='running'))
-                  if agent[0] in await op.active_agents()]
-            if op and agent_abilities:
+            if agent_abilities:
                 return await op[0].build_and_apply_custom_link(agent=agent[0], ability=agent_abilities[0])
 
     async def get_link_pin(self, json_data):
