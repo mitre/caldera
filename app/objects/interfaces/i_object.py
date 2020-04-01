@@ -9,9 +9,5 @@ class FirstClassObjectInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def display(self):
-        pass
-
-    @abc.abstractmethod
     def store(self, ram):
         pass
