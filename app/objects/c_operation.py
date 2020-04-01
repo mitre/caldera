@@ -1,8 +1,8 @@
 import ast
 import asyncio
 import copy
-import re
 import logging
+import re
 import uuid
 from collections import defaultdict
 from datetime import datetime
@@ -10,7 +10,6 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
-from app.objects.c_adversary import Adversary
 from app.objects.secondclass.c_link import Link
 from app.utility.base_object import BaseObject
 
@@ -36,7 +35,7 @@ def redact_report(report):
     # adversary
     redacted['adversary']['name'] = REDACTED
     redacted['adversary']['description'] = REDACTED
-    for phase in redacted['adversary']['phases'].values():
+    for phase in redacted['adversary']['phases']:
         for step in phase:
             step['name'] = REDACTED
             step['description'] = REDACTED
@@ -79,7 +78,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, phases_enabled=True, obfuscator='plain-text', group=None, auto_close=True,
+                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
         self.id = id
@@ -93,8 +92,7 @@ class Operation(BaseObject):
         self.planner = planner
         self.state = state
         self.autonomous = autonomous
-        self.phases_enabled = phases_enabled
-        self.phase = 0
+        self.last_ran = None
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
@@ -173,7 +171,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or (self.auto_close and self.phase >= len(self.adversary.phases)):
+        if await self.is_finished() or (self.auto_close and self.last_ran == self.adversary.phases[-1]):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -236,10 +234,8 @@ class Operation(BaseObject):
     async def run(self, services):
         try:
             planner = await self._get_planning_module(services)
-            self.adversary = await self._adjust_adversary_phases()
             await self._run_phases(planner)
 
-            self.phases_enabled = False
             while not await self.is_closeable():
                 await asyncio.sleep(10)
                 await self._run_phases(planner)
@@ -252,13 +248,13 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _run_phases(self, planner):
-        for phase in self.adversary.phases:
+        for ability_id in self.adversary.phases:
             if not await self.is_closeable():
-                await planner.execute(phase)
+                await planner.execute(ability_id)
                 if planner.stopping_condition_met:
                     break
                 await self.wait_for_phase_completion()
-            self.phase = phase
+            self.last_ran = ability_id
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
@@ -271,14 +267,6 @@ class Operation(BaseObject):
         planner_params = ast.literal_eval(self.planner.params)
         return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
                                               stopping_conditions=self.planner.stopping_conditions)
-
-    async def _adjust_adversary_phases(self):
-        if not self.phases_enabled:
-            return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_phases_disabled"),
-                             name=(self.adversary.name + " - with phases disabled"),
-                             description=(self.adversary.name + " with phases disabled"),
-                             phases={1: [i for phase, ab in self.adversary.phases.items() for i in ab]})
-        return self.adversary
 
     async def _save_new_source(self, services):
         data = dict(
@@ -315,8 +303,7 @@ class Operation(BaseObject):
         return skipped_abilities
 
     def _get_all_possible_abilities_by_agent(self):
-        return {a.paw: {'all_abilities': [ab for p in self.adversary.phases
-                                          for ab in self.adversary.phases[p]]} for a in self.agents}
+        return {a.paw: {'all_abilities': [ab for ab in self.adversary.phases]} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL)

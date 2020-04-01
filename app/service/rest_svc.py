@@ -4,7 +4,6 @@ import glob
 import os
 import pathlib
 import uuid
-from collections import defaultdict
 from datetime import time
 
 import yaml
@@ -39,10 +38,8 @@ class RestService(BaseService):
             file_path = 'data/adversaries/%s.yml' % i
         with open(file_path, 'w+') as f:
             f.seek(0)
-            p = defaultdict(list)
-            for ability in data.pop('phases'):
-                p[int(ability['phase'])].append(ability['id'])
-            f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'), phases=dict(p))))
+            f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
+                                   phases=dict(data.pop('phases')))))
             f.truncate()
         await self._services.get('data_svc').reload_data([Plugin(data_dir='data')])
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
@@ -251,7 +248,7 @@ class RestService(BaseService):
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
                          jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
-                         phases_enabled=bool(int(data.pop('phases_enabled', 1))), obfuscator=data.pop('obfuscator', 'plain-text'),
+                         obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 
     @staticmethod
@@ -294,7 +291,7 @@ class RestService(BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', phases={1: []})
+        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', sequence=[])
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
         if implant_name:

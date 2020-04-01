@@ -8,13 +8,13 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=None):
+    async def get_links(self, operation, ability_id, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
         For an operation, phase and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
 
         :param operation:
-        :param phase:
+        :param ability_id:
         :param agent:
         :param trim: call trim_links() on list of links before returning
         :param planner:
@@ -25,17 +25,12 @@ class PlanningService(BasePlanningService):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
             return []
-        if phase:
-            abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
-        else:
-            abilities = [i for p, v in operation.adversary.phases.items() for i in v]
         links = []
         if agent:
-            links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            links.extend(await self.generate_and_trim_links(agent, operation, [ability_id], trim))
         else:
             for agent in operation.agents:
-                links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
-        self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
+                links.extend(await self.generate_and_trim_links(agent, operation, [ability_id], trim))
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):

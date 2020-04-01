@@ -11,10 +11,7 @@ class Adversary(BaseObject):
 
     @property
     def display(self):
-        phases = dict()
-        for k, v in self.phases.items():
-            phases[k] = [val.display for val in v]
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=phases)
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=self.phases)
 
     def __init__(self, adversary_id, name, description, phases):
         super().__init__()
@@ -34,11 +31,7 @@ class Adversary(BaseObject):
         return existing
 
     def has_ability(self, ability):
-        for _, v in self.phases.items():
-            for a in v:
-                if ability.unique == a.unique:
-                    return True
-        return False
+        return ability.ability_id in self.phases
 
     async def which_plugin(self):
         for plugin in os.listdir('plugins'):

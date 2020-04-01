@@ -4,7 +4,7 @@ import glob
 import os.path
 import pickle
 from base64 import b64encode
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -141,35 +141,6 @@ class DataService(BaseService):
             phase_dict[phase].append(ability)
         return phase_dict
 
-    async def _insert_pack_phases(self, pack, phases, current_phase, adversary):
-        phases_new = await self._add_adversary_packs(pack)
-        if phases_new:
-            for i, phase in phases_new.items():
-                phases.insert(current_phase + i, phase)
-            return current_phase + i
-        else:
-            self.log.error(
-                'Missing ability or pack (%s) for adversary: %s (%s)' % (pack, adversary['name'], adversary['id']))
-            return 0
-
-    async def _add_phases(self, phases, adversary):
-        pp = defaultdict(list)
-        phase_id = 0
-        while phase_id < len(phases):
-            for idx, step in enumerate(phases[phase_id]):
-                abilities = await self.locate('abilities', match=dict(ability_id=step))
-                if abilities:
-                    await self._add_phase_abilities(pp, phase_id + 1, abilities)
-                else:
-                    # insert this phase and shift down later abilities to new phase
-                    del phases[phase_id][idx]
-                    last_phase = await self._insert_pack_phases(step, phases, phase_id, adversary)
-                    if last_phase and idx < len(phases[phase_id]):
-                        phases.insert(last_phase + 1, [phases[phase_id][idx]])
-                        del phases[phase_id][idx + 1:]
-            phase_id += 1
-        return dict(pp)
-
     async def _load(self, plugins=()):
         try:
             if not plugins:
@@ -188,13 +159,7 @@ class DataService(BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
-                phases = adv.get('phases', dict())
-                for p in adv.get('packs', []):
-                    adv_pack = await self._add_adversary_packs(p)
-                    if adv_pack:
-                        await self._merge_phases(phases, adv_pack)
-                sorted_phases = [phases[x] for x in sorted(phases.keys())]
-                phases = await self._add_phases(sorted_phases, adv)
+                phases = [i for _, ability in adv['phases'].items() for i in ability]
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                       phases=phases)
                 adversary.access = plugin.access
@@ -280,14 +245,6 @@ class DataService(BaseService):
                     for change in block:
                         x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
         return x
-
-    @staticmethod
-    async def _merge_phases(phases, new_phases):
-        for phase, ids in new_phases.items():
-            if phase in phases:
-                phases[phase].extend(ids)
-            else:
-                phases[phase] = ids
 
     async def _add_adversary_packs(self, pack):
         _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack,
