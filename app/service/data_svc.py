@@ -209,10 +209,8 @@ class DataService(BaseService):
                             for e in name.split(','):
                                 technique_name = ab.get('technique', dict()).get('name')
                                 technique_id = ab.get('technique', dict()).get('attack_id')
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
-                                    'command') else None
-                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
-                                    'cleanup') else None
+                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
+                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
                                 a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
                                                                technique_name=technique_name,
                                                                technique_id=technique_id,
@@ -226,8 +224,7 @@ class DataService(BaseService):
                                                                requirements=ab.get('requirements', []),
                                                                privilege=ab[
                                                                    'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access,
-                                                               repeatable=ab.get('repeatable', False),
+                                                               access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                variations=info.get('variations', []))
                                 await self._update_extensions(a)
 
@@ -282,10 +279,9 @@ class DataService(BaseService):
         for adv in self.strip_yml(filename):
             return adv.get('phases')
 
-    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
-                              test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
-                              parsers=None, requirements=None, privilege=None, timeout=60, access=None,
-                              repeatable=False, variations=None):
+    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
+                              description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
+                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -314,8 +310,7 @@ class DataService(BaseService):
                                                                               v['function']))
 
     async def _verify_ability_set(self):
-        payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(
-            ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
+        payload_cleanup = await self.get_service('data_svc').locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for existing in await self.locate('abilities'):
             if not existing.name:
                 existing.name = '(auto-generated)'
@@ -343,7 +338,7 @@ class DataService(BaseService):
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                     if self.is_uuid4(payload):
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], '#{payload:%s}' % payload)
-                    else:
+                    else:  # Explain why the else is here
                         decoded_test = existing.replace_cleanup(clean_ability.cleanup[0], payload)
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
