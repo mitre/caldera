@@ -10,6 +10,7 @@ from tests import AsyncMock
 )
 class TestFileService:
 
+    @pytest.mark.skip
     @pytest.fixture
     def setup_mock_dataservice(self, mocker):
         pass
@@ -18,6 +19,7 @@ class TestFileService:
         with pytest.raises(KeyError):
             loop.run_until_complete(file_svc.get_file(headers=dict()))
 
+    @pytest.mark.skip('remove mocking')
     def test_get_file_special_payload(self, loop, mocker, file_svc):
         payload = 'unittestpayload'
         new_payload_name = 'utp'
@@ -35,6 +37,7 @@ class TestFileService:
         assert rcontent == payload_content
         assert payload in fp
 
+    @pytest.mark.skip('remove mocking')
     def test_save_get_file(self, loop, mocker, file_svc):
         filename = 'unittest-file-save-test'
         content = b'content!'
@@ -66,6 +69,7 @@ class TestFileService:
     def test_save_multipart_file_upload(self):
         pass
 
+    @pytest.mark.skip('remove mocking')
     def test_find_file_path_no_plugin(self, loop, mocker, file_svc):
         data_svc = mocker.Mock()
         data_svc.locate = AsyncMock(return_value=[])
@@ -81,11 +85,13 @@ class TestFileService:
         # delete file
         os.remove('./%s/%s' % (path, filename))
 
+    @pytest.mark.skip('remove mocking')
     def test_read_file_nonexistent_file(self, loop, mocker, file_svc):
         mocker.patch.object(file_svc, 'find_file_path', new_callable=AsyncMock, return_value=(None, None))
         with pytest.raises(FileNotFoundError):
             loop.run_until_complete(file_svc.read_file('non-existent-file-for-testing'))
 
+    @pytest.mark.skip('remove mocking')
     def test_find_file_path_plugin(self, loop, mocker, demo_plugin, tmpdir, file_svc):
         def walk_file_path_mock(path, name):
             if 'data' in path:
@@ -103,6 +109,7 @@ class TestFileService:
         assert plugin_name == plugin.name
         assert file_path == os.path.join('plugins', plugin.name, 'data', location)
 
+    @pytest.mark.skip('remove mocking')
     def test_read_file_noxor(self, loop, mocker, tmpdir, file_svc):
         plaintext_fn = 'read-file-nonxortest.txt'
         content = b'this is plaintext'
@@ -114,6 +121,7 @@ class TestFileService:
         assert name == plaintext_fn
         assert output == content
 
+    @pytest.mark.skip('remove mocking')
     def test_read_file_xor(self, loop, mocker, tmpdir, file_svc):
         plaintext_fn = 'xor-plaintext.txt'
         xortext_fn = "%s.xored" % plaintext_fn
@@ -138,6 +146,7 @@ class TestFileService:
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         assert output_data == output
 
+    @pytest.mark.skip('remove mocking')
     def test_add_special_payload(self, loop, mocker, file_svc):
         mocker.patch.dict(file_svc.special_payloads)
         payload_name = 'unittest12345'

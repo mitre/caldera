@@ -1,6 +1,5 @@
 tox
 pytest
 pytest-aiohttp
-pytest-mock
 coverage
 pre-commit
