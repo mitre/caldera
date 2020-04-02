@@ -257,10 +257,6 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
             for planner in self.strip_yml(filename):
                 planner = Planner.load(planner)
-                # planner = Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
-                #                   params=str(planner.get('params')), description=planner.get('description'),
-                #                   stopping_conditions=planner.get('stopping_conditions'),
-                #                   ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 planner.access = plugin.access
                 await self.store(planner)
 
