@@ -156,5 +156,6 @@ class Agent(BaseObject):
     def _replace_payload_data(self, decoded_cmd, file_svc):
         for uuid in re.findall(self.RESERVED['payload'], decoded_cmd):
             if self.is_uuid4(uuid):
-                decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, file_svc.get_payload_name_from_uuid(uuid))
+                _, display_name = file_svc.get_payload_name_from_uuid(uuid)
+                decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, display_name)
         return decoded_cmd
