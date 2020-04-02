@@ -1,19 +1,33 @@
 import os
 
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
-from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact, FactSchema
+
+
+class PlannerSchema(ma.Schema):
+    planner_id = ma.fields.String(data_key='id')
+    name = ma.fields.String()
+    module = ma.fields.String()
+    params = ma.fields.Dict()
+    description = ma.fields.String()
+    stopping_conditions = ma.fields.List(ma.fields.Nested(FactSchema()))
+    ignore_enforcement_modules = ma.fields.List(ma.fields.String())
+
+    @ma.post_load()
+    def build_planner(self, data, **_):
+        return Planner(**data)
 
 
 class Planner(BaseObject):
 
+    schema = PlannerSchema()
+    display_schema = PlannerSchema(exclude=['planner_id', 'ignore_enforcement_modules'])
+
     @property
     def unique(self):
         return self.hash(self.name)
-
-    @property
-    def display(self):
-        return dict(name=self.name, module=self.module, params=self.params, description=self.description,
-                    stopping_conditions=[fact.display for fact in self.stopping_conditions])
 
     def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None,
                  ignore_enforcement_modules=()):
