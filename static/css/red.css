@@ -1,4 +1,7 @@
 :root {
-  background-image: url('/gui/img/back-red.jpg');
+  background-image: url('/gui/img/back-red.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: black;
   --navbar-color: #750b20;
 }
