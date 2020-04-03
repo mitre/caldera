@@ -1,4 +1,5 @@
 import re
+import copy
 
 from base64 import b64decode
 from datetime import datetime
@@ -36,7 +37,6 @@ class Agent(BaseObject):
         host = ma.fields.String()
         watchdog = ma.fields.Integer()
         contact = ma.fields.String()
-        instructions = ma.fields.List(ma.fields.String())
 
         @ma.pre_load
         def remove_nulls(self, in_data, **_):
@@ -56,7 +56,7 @@ class Agent(BaseObject):
 
     @property
     def instructions(self):
-        i = self._instructions
+        i = copy.copy(self._instructions)
         self._instructions = []
         return i
 
@@ -168,8 +168,8 @@ class Agent(BaseObject):
         await self.task(abilities, file_svc)
 
     async def task(self, abilities, file_svc):
-        for x, i in enumerate(await self.capabilities(abilities)):
-            new_id = 'instruction-%s-%d' % (self.paw, x)
+        for i in await self.capabilities(abilities):
+            new_id = 'instruction-%s-%d' % (self.paw, self.generate_number(size=5))
             cmd = self.encode_string(self.replace(i.test, file_svc=file_svc))
             self._instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
 
