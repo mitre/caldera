@@ -11,14 +11,8 @@ class Adversary(BaseObject):
 
     @property
     def display(self):
-        desc_list = list()
-        for v in self.atomic_ordering:
-            if isinstance(v, list):
-                for x in v:
-                    desc_list.append(x.display)
-            else:
-                desc_list.append(v.display)
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, listing=desc_list)
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
+                    listing=[x.ability_id for x in self.atomic_ordering])
 
     def __init__(self, adversary_id, name, description, atomic_ordering):
         super().__init__()
@@ -38,10 +32,7 @@ class Adversary(BaseObject):
         return existing
 
     def has_ability(self, ability):
-        for a in self.atomic_ordering:
-            if ability.unique == a.unique:
-                return True
-        return False
+        return ability.ability_id in self.atomic_ordering
 
     async def which_plugin(self):
         for plugin in os.listdir('plugins'):

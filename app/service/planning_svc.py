@@ -25,10 +25,13 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if operation.atomic_enabled:
-            abilities = [v for v in operation.adversary.atomic_ordering
-                         if operation.adversary.atomic_ordering.index(v) <= (operation.cursor + 1)]
+            if operation.last_ran == None:
+                abilities = [operation.adversary.atomic_ordering[0]]
+            else:
+                abilities = operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(
+                    operation.last_ran) + 2)]
         else:
-            abilities = [v for v in operation.adversary.atomic_ordering][0]
+            abilities = operation.adversary.atomic_ordering
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))

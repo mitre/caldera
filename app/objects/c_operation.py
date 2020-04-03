@@ -10,7 +10,6 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
-from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
 
 REDACTED = '**REDACTED**'
@@ -64,7 +63,7 @@ class Operation(BaseObject):
                                source=self.source.display if self.source else '',
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, cursor=self.cursor, obfuscator=self.obfuscator,
+                               state=self.state, obfuscator=self.obfuscator,
                                autonomous=self.autonomous, finish=self.finish,
                                chain=[lnk.display for lnk in self.chain]))
 
@@ -92,7 +91,7 @@ class Operation(BaseObject):
         self.state = state
         self.autonomous = autonomous
         self.atomic_enabled = atomic_enabled
-        self.cursor = 0
+        self.last_ran = None
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
@@ -175,9 +174,11 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or \
-                (self.auto_close and self.generate_expired > 3
-                 and ((not self.atomic_enabled) or (self.cursor > len(self.adversary.atomic_ordering)))):
+        safety = ''
+        if self.last_ran is not None:
+            safety = self.last_ran.ability_id
+        if await self.is_finished() or (self.auto_close and self.generate_expired > 3) and \
+                ((not self.atomic_enabled) or (safety == self.adversary.atomic_ordering[-1].ability_id)):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -235,7 +236,6 @@ class Operation(BaseObject):
     async def run(self, services):
         try:
             planner = await self._get_planning_module(services)
-            self.adversary = await self._setup_atomic()
             await self._run(planner)
 
             self.atomic_enabled = False
@@ -251,13 +251,16 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _run(self, planner):
-        for cursor in self.adversary.atomic_ordering:
+        handle = self.adversary.atomic_ordering
+        if not self.atomic_enabled:
+            handle = [handle]
+        for ability in handle:
             if not await self.is_closeable():
-                await planner.execute(self.adversary.atomic_ordering.index(cursor))
+                await planner.execute(handle.index(ability))
                 if planner.stopping_condition_met:
                     break
                 await self.wait_for_completion()
-            self.cursor = self.adversary.atomic_ordering.index(cursor)
+            self.last_ran = ability
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
@@ -270,18 +273,6 @@ class Operation(BaseObject):
         planner_params = ast.literal_eval(self.planner.params)
         return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
                                               stopping_conditions=self.planner.stopping_conditions)
-
-    async def _setup_atomic(self):
-        if self.atomic_enabled:
-            return Adversary(adversary_id=(str(self.adversary.adversary_id) + "_atomic"),
-                             name=(self.adversary.name + " - with atomic enabled"),
-                             description=(self.adversary.name + " with atomic enabled"),
-                             atomic_ordering=self.adversary.atomic_ordering)
-        else:
-            return Adversary(adversary_id=(str(self.adversary.adversary_id)),
-                             name=(self.adversary.name),
-                             description=(self.adversary.name),
-                             atomic_ordering=[self.adversary.atomic_ordering])
 
     async def _save_new_source(self, services):
         data = dict(
