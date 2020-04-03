@@ -167,12 +167,6 @@ class DataService(BaseService):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 ordering = adv.get('atomic_ordering', dict())
-                for entry in ordering:
-                    if entry.startswith('pack'):
-                        adv_pack = await self._add_adversary_packs(entry[5:])
-                        if adv_pack:
-                            ordering[ordering.index(entry)] = adv_pack
-                            ordering = await self._merge_pack(ordering)
                 atomic_ordering = await self._link_abilities(ordering, adv)
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                       atomic_ordering=atomic_ordering)
@@ -260,25 +254,6 @@ class DataService(BaseService):
                     for change in block:
                         x.append(Adjustment(ability_id, trait, change.get('value'), change.get('offset')))
         return x
-
-    @staticmethod
-    async def _merge_pack(listing):
-        temp = []
-        for entry in listing:
-            if isinstance(entry, list):
-                for elm in entry:
-                    temp.append(elm)
-            else:
-                temp.append(entry)
-        return temp
-
-    async def _add_adversary_packs(self, pack):
-        _, filename = await self.get_service('file_svc').find_file_path('%s.yml' % pack,
-                                                                        location=os.path.join('data', 'adversaries'))
-        if filename is None:
-            return {}
-        for adv in self.strip_yml(filename):
-            return adv.get('atomic_ordering')
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
