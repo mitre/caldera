@@ -16,6 +16,7 @@ def report(func):
                    date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         args[0].report[agent.contact].append(log)
         return agent, instructions
+
     return wrapper
 
 
@@ -46,7 +47,7 @@ class ContactService(BaseService):
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
                 await self._save(Result(**result))
-            return agent, await self._get_instructions(agent.paw) + agent.instructions
+            return agent, await self._get_instructions(agent)
         agent = await self.get_service('data_svc').store(
             Agent.from_dict(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
                                  sleep_max=self.get_config(name='agents', prop='sleep_max'),
@@ -56,7 +57,7 @@ class ContactService(BaseService):
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
         await agent.bootstrap(self.get_service('data_svc'), self.get_service('file_svc'))
-        return agent, await self._get_instructions(agent.paw) + agent.instructions
+        return agent, await self._get_instructions(agent)
 
     async def build_filename(self):
         return self.get_config(name='agents', prop='implant_name')
@@ -89,19 +90,25 @@ class ContactService(BaseService):
         loop.create_task(contact.start())
         self.contacts.append(contact)
 
-    async def _get_instructions(self, paw):
+    async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
         for link in [c for op in ops for c in op.chain
-                     if c.paw == paw and not c.collect and c.status == c.states['EXECUTE']]:
-            link.collect = datetime.now()
-            instructions.append(Instruction(identifier=link.unique,
-                                            sleep=link.jitter,
-                                            command=link.command,
-                                            executor=link.ability.executor,
-                                            timeout=link.ability.timeout,
-                                            payloads=link.ability.payloads))
+                     if c.paw == agent.paw and not c.collect and c.status == c.states['EXECUTE']]:
+            instructions.append(self._convert_link_to_instruction(link))
+        for link in [l for l in agent.links if not l.collect]:
+            instructions.append(self._convert_link_to_instruction(link))
         return instructions
+
+    @staticmethod
+    def _convert_link_to_instruction(link):
+        link.collect = datetime.now()
+        return Instruction(identifier=link.unique,
+                           sleep=link.jitter,
+                           command=link.command,
+                           executor=link.ability.executor,
+                           timeout=link.ability.timeout,
+                           payloads=link.ability.payloads)
 
     async def _add_agent_to_operation(self, agent):
         """Determine which operation(s) incoming agent belongs to and
