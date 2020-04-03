@@ -31,7 +31,7 @@ class Fact(BaseObject):
     def escaped(self, executor):
         if executor not in escape_ref:
             return self.value
-        escaped_value = self.value
+        escaped_value = str(self.value)
         for char in escape_ref[executor]['special']:
             escaped_value = escaped_value.replace(char, (escape_ref[executor]['escape_prefix'] + char))
         return escaped_value
