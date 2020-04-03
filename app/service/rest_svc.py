@@ -189,7 +189,8 @@ class RestService(BaseService):
     async def task_agent_with_ability(self, paw, ability_id):
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             await agent.task(
-                await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id))
+                abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
+                file_svc=self.get_service('file_svc')
             )
 
     async def get_link_pin(self, json_data):
