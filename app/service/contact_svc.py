@@ -46,7 +46,7 @@ class ContactService(BaseService):
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
                 await self._save(Result(**result))
-            return agent, await self._get_instructions(agent.paw)
+            return agent, await self._get_instructions(agent.paw) + agent.instructions
         agent = await self.get_service('data_svc').store(
             Agent.from_dict(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
                                  sleep_max=self.get_config(name='agents', prop='sleep_max'),
@@ -55,9 +55,10 @@ class ContactService(BaseService):
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
-        return agent, await self._get_instructions(agent.paw) + await self._get_bootstrap_instructions(agent)
+        await agent.bootstrap(self.get_service('data_svc'), self.get_service('file_svc'))
+        return agent, await self._get_instructions(agent.paw) + agent.instructions
 
-    async def build_filename(self, platform):
+    async def build_filename(self):
         return self.get_config(name='agents', prop='implant_name')
 
     """ PRIVATE """
@@ -100,19 +101,6 @@ class ContactService(BaseService):
                                             executor=link.ability.executor,
                                             timeout=link.ability.timeout,
                                             payloads=link.ability.payloads))
-        return instructions
-
-    async def _get_bootstrap_instructions(self, agent):
-        data_svc = self._services.get('data_svc')
-        abilities = []
-        for i in self.get_config(name='agents', prop='bootstrap_abilities'):
-            for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
-                abilities.append(a)
-        instructions = []
-        for x, i in enumerate(await agent.capabilities(abilities)):
-            new_id = 'bootstrap-%s-%d' % (agent.paw, x)
-            cmd = self.encode_string(agent.replace(i.test, file_svc=self.get_service('file_svc')))
-            instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
         return instructions
 
     async def _add_agent_to_operation(self, agent):
