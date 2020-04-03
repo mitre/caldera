@@ -25,7 +25,7 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if operation.atomic_enabled:
-            if operation.last_ran == None:
+            if operation.last_ran is None:
                 abilities = [operation.adversary.atomic_ordering[0]]
             else:
                 abilities = operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(
