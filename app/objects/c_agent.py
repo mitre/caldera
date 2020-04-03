@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import marshmallow as ma
 
+from app.objects.secondclass.c_instruction import Instruction
 from app.utility.base_object import BaseObject
 
 
@@ -35,6 +36,7 @@ class Agent(BaseObject):
         host = ma.fields.String()
         watchdog = ma.fields.Integer()
         contact = ma.fields.String()
+        instructions = ma.fields.List(ma.fields.String())
 
         @ma.pre_load
         def remove_nulls(self, in_data, **_):
@@ -51,6 +53,12 @@ class Agent(BaseObject):
     @property
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
+
+    @property
+    def instructions(self):
+        i = self._instructions
+        self._instructions = []
+        return i
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
@@ -78,6 +86,7 @@ class Agent(BaseObject):
         self.sleep_max = int(sleep_max)
         self.watchdog = int(watchdog)
         self.contact = contact
+        self._instructions = []
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
 
     @classmethod
@@ -150,6 +159,19 @@ class Agent(BaseObject):
         if not ability.privilege or self.Privileges[self.privilege].value >= self.Privileges[ability.privilege].value:
             return True
         return False
+
+    async def bootstrap(self, data_svc, file_svc):
+        abilities = []
+        for i in self.get_config(name='agents', prop='bootstrap_abilities'):
+            for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
+                abilities.append(a)
+        await self.task(abilities, file_svc)
+
+    async def task(self, abilities, file_svc):
+        for x, i in enumerate(await self.capabilities(abilities)):
+            new_id = 'instruction-%s-%d' % (self.paw, x)
+            cmd = self.encode_string(self.replace(i.test, file_svc=file_svc))
+            self._instructions.append(Instruction(identifier=new_id, command=cmd, executor=i.executor))
 
     """ PRIVATE """
 
