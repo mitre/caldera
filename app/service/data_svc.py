@@ -208,29 +208,30 @@ class DataService(BaseService):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
-                    for pl, executors in ab['platforms'].items():
-                        for name, info in executors.items():
-                            for e in name.split(','):
-                                technique_name = ab.get('technique', dict()).get('name')
-                                technique_id = ab.get('technique', dict()).get('attack_id')
-                                encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
-                                cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
-                                a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
-                                                               technique_name=technique_name,
-                                                               technique_id=technique_id,
-                                                               test=encoded_test,
-                                                               description=ab.get('description') or '',
-                                                               executor=e, name=ab.get('name'), platform=pl,
-                                                               cleanup=cleanup_cmd,
-                                                               payloads=info.get('payloads'),
-                                                               parsers=info.get('parsers', []),
-                                                               timeout=info.get('timeout', 60),
-                                                               requirements=ab.get('requirements', []),
-                                                               privilege=ab[
-                                                                   'privilege'] if 'privilege' in ab.keys() else None,
-                                                               access=plugin.access, repeatable=ab.get('repeatable', False),
-                                                               variations=info.get('variations', []))
-                                await self._update_extensions(a)
+                    for platforms, executors in ab.get('platforms').items():
+                        for pl in platforms.split(','):
+                            for name, info in executors.items():
+                                for e in name.split(','):
+                                    technique_name = ab.get('technique', dict()).get('name')
+                                    technique_id = ab.get('technique', dict()).get('attack_id')
+                                    encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
+                                    cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
+                                    a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
+                                                                   technique_name=technique_name,
+                                                                   technique_id=technique_id,
+                                                                   test=encoded_test,
+                                                                   description=ab.get('description') or '',
+                                                                   executor=e, name=ab.get('name'), platform=pl,
+                                                                   cleanup=cleanup_cmd,
+                                                                   payloads=info.get('payloads'),
+                                                                   parsers=info.get('parsers', []),
+                                                                   timeout=info.get('timeout', 60),
+                                                                   requirements=ab.get('requirements', []),
+                                                                   privilege=ab[
+                                                                       'privilege'] if 'privilege' in ab.keys() else None,
+                                                                   access=plugin.access, repeatable=ab.get('repeatable', False),
+                                                                   variations=info.get('variations', []))
+                                    await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
         for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
