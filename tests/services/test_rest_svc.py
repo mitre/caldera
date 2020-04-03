@@ -66,7 +66,7 @@ class TestRestSvc:
                                 'server': '://None:None', 'location': 'unknown', 'pid': 0, 'ppid': 0, 'trusted': True,
                                 'sleep_min': 2, 'sleep_max': 8, 'executors': [], 'privilege': 'User',
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
-                                'username': 'unknown', 'watchdog': 0, 'contact': 'unknown', 'instructions': []}],
+                                'username': 'unknown', 'watchdog': 0, 'contact': 'unknown', 'links': []}],
                 'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
                               'phases': {1: []}},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished', 'phase': 0,
@@ -78,8 +78,6 @@ class TestRestSvc:
         operation[0].pop('id')
         operation[0]['host_group'][0].pop('last_seen')
         operation[0].pop('start')
-        print(want)
-        print(operation[0])
         assert want == operation[0]
 
     def test_delete_ability(self, loop, rest_svc, file_svc):
