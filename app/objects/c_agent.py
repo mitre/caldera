@@ -37,6 +37,7 @@ class Agent(BaseObject):
         host = ma.fields.String()
         watchdog = ma.fields.Integer()
         contact = ma.fields.String()
+        instructions = ma.fields.List(ma.fields.String)
 
         @ma.pre_load
         def remove_nulls(self, in_data, **_):
