@@ -71,7 +71,7 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     args = parser.parse_args()
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
-    BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/default.yml')[0])
+    BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/%s.yml' % config)[0])
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
 
