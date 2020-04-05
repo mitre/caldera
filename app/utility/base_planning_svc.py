@@ -27,28 +27,29 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, operation)
+        links[:] = await self.add_test_variants(links, agent, operation.all_facts(), operation.rules)
         links = await self.remove_links_missing_facts(links)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
 
-    async def add_test_variants(self, links, agent, operation):
+    async def add_test_variants(self, links, agent, facts=(), rules=()):
         """
         Create a list of all possible links for a given phase
 
         :param links:
         :param agent:
-        :param operation:
+        :param facts:
+        :param rules:
         :return: updated list of links
         """
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
-                relevant_facts = await self._build_relevant_facts(variables, operation)
-                good_facts = await RuleSet(rules=operation.rules).apply_rules(facts=relevant_facts[0])
+                relevant_facts = await self._build_relevant_facts(variables, facts)
+                good_facts = await RuleSet(rules=rules).apply_rules(facts=relevant_facts[0])
                 valid_facts = await self._trim_by_limit(decoded_test, good_facts)
                 for combo in list(itertools.product(*valid_facts)):
                     try:
@@ -130,12 +131,10 @@ class BasePlanningService(BaseService):
         return not fact['link_id']
 
     @staticmethod
-    async def _build_relevant_facts(variables, operation):
+    async def _build_relevant_facts(variables, facts):
         """
         Create a list of facts which are relevant to the given ability's defined variables
         """
-        facts = operation.all_facts()
-
         relevant_facts = []
         for v in variables:
             variable_facts = []

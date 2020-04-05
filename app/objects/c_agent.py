@@ -7,6 +7,7 @@ import marshmallow as ma
 
 from app.objects.secondclass.c_link import Link
 from app.utility.base_object import BaseObject
+from app.utility.base_planning_svc import BasePlanningService
 
 
 class Agent(BaseObject):
@@ -153,19 +154,17 @@ class Agent(BaseObject):
             return True
         return False
 
-    async def bootstrap(self, data_svc, file_svc):
+    async def bootstrap(self, data_svc):
         abilities = []
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
-        await self.task(abilities, file_svc)
+        await self.task(abilities)
 
-    async def task(self, abilities, file_svc):
+    async def task(self, abilities, facts=()):
         for i in await self.capabilities(abilities):
-            cmd = self.encode_string(self.replace(i.test, file_svc=file_svc))
-            link = Link(operation=None, command=cmd, paw=self.paw, ability=i)
-            link.apply_id(self.host)
-            self.links.append(link)
+            self.links.append(Link(operation=None, command=i.test, paw=self.paw, ability=i))
+        return await BasePlanningService().add_test_variants(links=self.links, agent=self, facts=facts)
 
     """ PRIVATE """
 
