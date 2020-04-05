@@ -56,7 +56,7 @@ class ContactService(BaseService):
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
-        await agent.bootstrap(self.get_service('data_svc'), self.get_service('file_svc'))
+        await agent.bootstrap(self.get_service('data_svc'))
         return agent, await self._get_instructions(agent)
 
     async def build_filename(self):

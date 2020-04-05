@@ -335,19 +335,19 @@ class DataService(BaseService):
         for existing in await self.locate('abilities'):
             if not existing.name:
                 existing.name = '(auto-generated)'
-                self.log.error('Fix name for ability: %s' % existing.ability_id)
+                self.log.warning('Fix name for ability: %s' % existing.ability_id)
             if not existing.description:
                 existing.description = '(auto-generated)'
-                self.log.error('Fix description for ability: %s' % existing.ability_id)
+                self.log.warning('Fix description for ability: %s' % existing.ability_id)
             if not existing.tactic:
                 existing.tactic = '(auto-generated)'
-                self.log.error('Fix tactic for ability: %s' % existing.ability_id)
+                self.log.warning('Fix tactic for ability: %s' % existing.ability_id)
             if not existing.technique_id:
                 existing.technique_id = '(auto-generated)'
-                self.log.error('Fix technique ID for ability: %s' % existing.ability_id)
+                self.log.warning('Fix technique ID for ability: %s' % existing.ability_id)
             if not existing.technique_name:
                 existing.technique_name = '(auto-generated)'
-                self.log.error('Fix technique name for ability: %s' % existing.ability_id)
+                self.log.warning('Fix technique name for ability: %s' % existing.ability_id)
             for payload in existing.payloads:
                 payload_name = payload
                 if self.is_uuid4(payload):
