@@ -78,8 +78,6 @@ class TestRestSvc:
         operation[0].pop('id')
         operation[0]['host_group'][0].pop('last_seen')
         operation[0].pop('start')
-        print(want)
-        print(operation[0])
         assert want == operation[0]
 
     def test_delete_ability(self, loop, rest_svc, file_svc):
