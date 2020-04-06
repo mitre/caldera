@@ -58,10 +58,9 @@ class AppService(BaseService):
         :param unique:
         :return:
         """
-        for op in await self._services.get('data_svc').locate('operations'):
-            exists = next((link for link in op.chain if link.unique == unique), None)
-            if exists:
-                return exists
+        operations = await self.get_service('data_svc').locate('operations')
+        agents = await self.get_service('data_svc').locate('agents')
+        return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
     async def run_scheduler(self):
         """
@@ -157,3 +156,10 @@ class AppService(BaseService):
             report = json.dumps(op.report(self.get_service('file_svc')))
             if report:
                 await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
+
+    @staticmethod
+    def _check_links_for_match(unique, links):
+        for ll in links:
+            exists = next((link for link in ll if link.unique == unique), None)
+            if exists:
+                return exists
