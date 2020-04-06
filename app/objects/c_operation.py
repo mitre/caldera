@@ -12,6 +12,7 @@ from random import randint
 
 from app.objects.c_adversary import Adversary
 from app.utility.base_object import BaseObject
+from app.utility.observer import Event
 
 REDACTED = '**REDACTED**'
 
@@ -115,6 +116,7 @@ class Operation(BaseObject):
 
     def add_link(self, link):
         self.chain.append(link)
+        Event('link added')
 
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []
