@@ -135,17 +135,13 @@ class DataService(BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     """ PRIVATE """
+
     async def _link_abilities(self, ordering, adversary):
-        atomics = []
-        for ability in ordering:
-            trigger = await self.locate('abilities', match=dict(ability_id=ability))
-            if trigger:
-                for variant in trigger:
-                    atomics.append(variant)
-            else:
-                self.log.error(
-                    'Missing ability (%s) for adversary: %s (%s)' % (ability, adversary['name'], adversary['id']))
-        return atomics
+        try:
+            return [v for ab in ordering for v in await self.locate('abilities', match=dict(ability_id=ab))]
+        except Exception as e:
+            self.log.error('Abilities missing from adversary %s (%s): %s' % (adversary['name'], adversary['id'], e))
+            return []
 
     async def _load(self, plugins=()):
         try:
