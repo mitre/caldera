@@ -249,7 +249,7 @@ class Operation(BaseObject):
 
     async def _run(self, planner):
         # The following is scope manipulation to force multiple loops of increasing sets of steps for atomic
-        # while forcing a single loop for a non-atomic 
+        # while forcing a single loop for a non-atomic
         handle = self.adversary.atomic_ordering
         if not self.atomic_enabled:
             handle = [handle]
