@@ -125,11 +125,12 @@
 
 <div id="phase-template" style="display: none;">
     <center>
-        <ul id="profile-tests" class="profile-tests"></ul>
+        <div class="grid" id="grid">
+        </div>
     </center>
 </div>
 
-<li id="ability-template" class="ability-box" style="display: none" draggable="True">
+<div id="ability-template" class="ability-box" style="display: none">
     <h4 id="name" style="margin:5px"></h4>
     <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
     <center>
@@ -143,7 +144,7 @@
             <div id="icon-row" class="icon-row"></div>
         </div>
     </center>
-</li>
+</div>
 
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
@@ -194,6 +195,7 @@
     <br>
 </li>
 
+<script src="/gui/js/muuri.min.js"></script>
 <script>
     $(document).ready(function () {
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
@@ -220,9 +222,9 @@
         if(!description){ warn('Please enter a description!'); return; }
 
         let abilities = [];
-        $('#profile-tests li').each(function() {
-            abilities.push({"id": $(this).attr('id')})
-        });
+        let listing = g_grid.getItems();
+        listing.forEach(function(entry){
+            abilities.push({"id": entry._element.id})});
         console.log(abilities);
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
             'i': identifier}, saveAdversaryCallback);
@@ -323,7 +325,7 @@
 
         $('.tempPhase').remove();
         $('.phase-headers').remove();
-        loadAtomicOrder(data[0].listing);
+        loadAtomicOrder(data[0].atomic_ordering);
     }
 
     function loadAtomicOrder(abilities) {
@@ -332,14 +334,31 @@
             template = addPhase(1);
         }
 
+        var packer = new Muuri.Packer();
+        var grid = new Muuri('.grid', {
+            dragEnabled: true,
+            layout: function (items, width, height) {
+            var fakeItems = items.map(item => {
+              return {
+                _width: Math.floor(item._width + item._marginLeft + item._marginRight),
+                _height: Math.floor(item._height + item._marginTop + item._marginBottom),
+                _marginLeft: 0,
+                _marginRight: 0,
+                _marginTop: 0,
+                _marginBottom: 0
+              }
+            });
+            var slots = [];
+            var options = {rounding: false};
+            return packer.getLayout(fakeItems, width, height, slots, options);}
+        });
+
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
             let abilityBox = buildAbility(a);
-            template.find('#profile-tests').append(abilityBox);
+            grid.add(abilityBox[0]);
         });
-        var ability_box = document.querySelectorAll('#profile-tests .ability-box');
-        [].forEach.call(ability_box, addDnDHandlers);
-
+        g_grid = grid;
     }
 
     function addPhase(number) {
@@ -455,8 +474,13 @@
         return [];
     }
 
-    function removeAbility(ability_id){
-        $('#'+ability_id).remove();
+    function removeAbility(ability){
+        var listing = g_grid.getItems();
+        listing.forEach(function(entry) {
+            if (entry._element.id === ability.ability_id) {
+                g_grid.remove(g_grid.getItems().indexOf(entry), {removeElements: true});
+            }
+        });
     }
 
     function populateTechniques(parentId, exploits){
@@ -594,12 +618,8 @@
         let parent = $('#phase-modal');
         let phase = $(parent).data('phase');
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
-        let abilityBox = buildAbility(ability, phase);
-        $('#tempPhase' + phase).find('#profile-tests').append(abilityBox);
-        document.getElementById('phase-modal').style.display='none';
-        rAdded = document.querySelectorAll('#profile-tests .ability-box');
-        listen_target = rAdded[rAdded.length - 1];
-        addDnDHandlers(listen_target);
+        let abilityBox = buildAbility(ability);
+        g_grid.add(abilityBox[0]);
     }
 
     function deleteProfile(){
@@ -633,80 +653,5 @@
         abList.prepend("<option disabled='disabled' selected>"+added.length+" abilities</option>");
     }
     //# sourceURL=profiles.js
-
-    // drag module code
-    var dragSrcEl = null;
-
-    function handleDragStart(e) {
-      // Target (this) element is the source node.
-      dragSrcEl = this;
-
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', this.outerHTML);
-
-      this.classList.add('dragElem');
-    }
-    function handleDragOver(e) {
-      if (e.preventDefault) {
-        e.preventDefault(); // Necessary. Allows us to drop.
-      }
-      this.classList.add('over');
-
-      e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
-
-      return false;
-    }
-
-    function handleDragEnter(e) {
-      // this / e.target is the current hover target.
-    }
-
-    function handleDragLeave(e) {
-      this.classList.remove('over');  // this / e.target is previous target element.
-    }
-
-    function handleDrop(e) {
-      // this/e.target is current target element.
-
-      if (e.stopPropagation) {
-        e.stopPropagation(); // Stops some browsers from redirecting.
-      }
-
-      // Don't do anything if dropping the same column we're dragging.
-      if (dragSrcEl != this) {
-        // Set the source column's HTML to the HTML of the column we dropped on.
-        //alert(this.outerHTML);
-        //dragSrcEl.innerHTML = this.innerHTML;
-        //this.innerHTML = e.dataTransfer.getData('text/html');
-        this.parentNode.removeChild(dragSrcEl);
-        var dropHTML = e.dataTransfer.getData('text/html');
-        this.insertAdjacentHTML('beforebegin',dropHTML);
-        var dropElem = this.previousSibling;
-        addDnDHandlers(dropElem);
-        $(dropElem).find('.ability-remove').click(function() {
-            removeAbility(event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id);
-        });
-
-      }
-      this.classList.remove('over');
-      return false;
-    }
-
-    function handleDragEnd(e) {
-      // this/e.target is the source node.
-      this.classList.remove('over');
-    }
-
-    function addDnDHandlers(elem) {
-      elem.addEventListener('dragstart', handleDragStart, false);
-      elem.addEventListener('dragenter', handleDragEnter, false);
-      elem.addEventListener('dragover', handleDragOver, false);
-      elem.addEventListener('dragleave', handleDragLeave, false);
-      elem.addEventListener('drop', handleDrop, false);
-      elem.addEventListener('dragend', handleDragEnd, false);
-
-    }
-
-
 
 </script>
