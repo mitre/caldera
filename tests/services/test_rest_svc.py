@@ -68,7 +68,7 @@ class TestRestSvc:
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
                                 'watchdog': 0, 'contact': 'unknown', 'links': []}],
                 'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
-                              'listing': []},
+                              'atomic_ordering': []},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
                 'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': []}
         internal_rest_svc = rest_svc(loop)
