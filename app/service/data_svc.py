@@ -162,7 +162,7 @@ class DataService(BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
-                ordering = adv.get('atomic_ordering', dict())
+                ordering = adv.get('atomic_ordering', list())
                 atomic_ordering = await self._link_abilities(ordering, adv)
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                       atomic_ordering=atomic_ordering)
