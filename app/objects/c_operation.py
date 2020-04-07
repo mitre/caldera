@@ -174,11 +174,8 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        safety = ''
-        if self.last_ran is not None:
-            safety = self.last_ran.ability_id
         if await self.is_finished() or (self.auto_close and self.generate_expired > 3) and \
-                ((not self.atomic_enabled) or (safety == self.adversary.atomic_ordering[-1].ability_id)):
+                ((not self.atomic_enabled) or (self.last_ran == self.adversary.atomic_ordering[-1])):
             self.state = self.states['FINISHED']
             return True
         return False
@@ -251,6 +248,8 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _run(self, planner):
+        # The following is scope manipulation to force multiple loops of increasing sets of steps for atomic
+        # while forcing a single loop for a non-atomic 
         handle = self.adversary.atomic_ordering
         if not self.atomic_enabled:
             handle = [handle]
