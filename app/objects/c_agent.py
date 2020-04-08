@@ -173,6 +173,9 @@ class Agent(BaseObject):
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
             self.links.append(valid)
 
+    def all_facts(self):
+        return [f for lnk in self.links for f in lnk.facts if f.score > 0]
+
     """ PRIVATE """
 
     def _replace_payload_data(self, decoded_cmd, file_svc):

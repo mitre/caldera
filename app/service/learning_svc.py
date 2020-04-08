@@ -38,33 +38,33 @@ class LearningService(BaseService):
                     self.model.add(variables)
         self.model = set(self.model)
 
-    async def learn(self, operation, link, blob):
+    async def learn(self, facts, link, blob):
         decoded_blob = b64decode(blob).decode('utf-8')
 
         found_facts = []
         for parser in self.parsers:
             try:
                 for fact in parser.parse(decoded_blob):
-                    await self._save_fact(link, operation, fact)
+                    await self._save_fact(link, facts, fact)
                     found_facts.append(fact)
             except Exception as e:
                 self.log.error(e)
-        await self._update_scores(link, operation, increment=len(found_facts))
+        await self._update_scores(link, facts, increment=len(found_facts))
         await self._build_relationships(link, found_facts)
 
     """ PRIVATE """
 
     @staticmethod
-    async def _update_scores(link, operation, increment):
+    async def _update_scores(link, facts, increment):
         for uf in link.facts:
-            for found_fact in operation.all_facts():
+            for found_fact in facts:
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
                     break
 
     @staticmethod
-    async def _save_fact(link, operation, fact):
-        if all(fact.trait) and not any(f.trait == fact.trait and f.value == fact.value for f in operation.all_facts()):
+    async def _save_fact(link, facts, fact):
+        if all(fact.trait) and not any(f.trait == fact.trait and f.value == fact.value for f in facts):
             fact.collected_by = link.paw
             fact.technique_id = link.ability.technique_id
             link.facts.append(fact)
