@@ -22,6 +22,7 @@ class TestLearningSvc:
         operation, link = setup_learning_service
         operation.add_link(link)
         loop.run_until_complete(learning_svc.learn(
+            operation=operation,
             link=link,
             blob=BaseWorld.encode_string('i contain 1 ip address 192.168.0.1 and one file /etc/host.txt. that is all.'))
         )
