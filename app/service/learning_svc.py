@@ -38,9 +38,8 @@ class LearningService(BaseService):
                     self.model.add(variables)
         self.model = set(self.model)
 
-    async def learn(self, link, blob):
+    async def learn(self, operation, link, blob):
         decoded_blob = b64decode(blob).decode('utf-8')
-        operation = (await self.get_service('data_svc').locate('operations', dict(id=link.operation)))[0]
 
         found_facts = []
         for parser in self.parsers:
