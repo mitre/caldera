@@ -24,7 +24,7 @@ class FactSchema(ma.Schema):
 
     unique = ma.fields.String()
     trait = ma.fields.String()
-    value = ma.fields.String()
+    value = ma.fields.Function(deserialize=lambda x: str(x))
     score = ma.fields.Integer()
     collected_by = ma.fields.String()
     technique_id = ma.fields.String()
@@ -37,6 +37,7 @@ class FactSchema(ma.Schema):
 class Fact(BaseObject):
 
     schema = FactSchema()
+    load_schema = FactSchema(exclude=['unique'])
 
     @property
     def unique(self):
