@@ -167,9 +167,11 @@ class Agent(BaseObject):
         await self.task(abilities)
 
     async def task(self, abilities, facts=()):
-        for i in await self.capabilities(abilities):
-            self.links.append(Link(operation=None, command=i.test, paw=self.paw, ability=i))
-        return await BasePlanningService().add_test_variants(links=self.links, agent=self, facts=facts)
+        bps = BasePlanningService()
+        potential_links = [Link(operation='task', command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
+        for valid in await bps.remove_links_missing_facts(
+                await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
+            self.links.append(valid)
 
     """ PRIVATE """
 
