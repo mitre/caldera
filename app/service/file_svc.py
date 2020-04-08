@@ -1,4 +1,6 @@
+import asyncio.subprocess
 import base64
+import copy
 import os
 
 from aiohttp import web
@@ -156,8 +158,7 @@ class FileSvc(BaseService):
             buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
         return buf
 
-    @staticmethod
-    async def compile_go(platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
+    async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.'):
         """
         Dynamically compile a go file
@@ -169,12 +170,27 @@ class FileSvc(BaseService):
         :param ldflags: A string of ldflags to use when building the go executable
         :param cflags: A string of CFLAGS to pass to the go compiler
         :param buildmode: GO compiler buildmode flag
+        :param build_dir: The path to build should take place in
         :return:
         """
-        os.system(
-            'cd %s && %s %s go build %s -o %s -ldflags=\'%s\' %s' % (build_dir, _go_vars(arch, platform), cflags,
-                                                                     buildmode, output, ldflags, src_fle)
-        )
+        env = copy.copy(os.environ)
+        env['GOARCH'] = arch
+        env['PLATFORM'] = platform
+        if cflags:
+            for cflag in cflags.split(' '):
+                name, value = cflag.split(':')
+                env[name] = value
+
+        build_mode_args = ['-buildmode', buildmode] if buildmode else []
+
+        process = await asyncio.subprocess.create_subprocess_exec('go', 'build', *build_mode_args, '-o', output,
+                                                                  '-ldflags', ldflags, src_fle,
+                                                                  cwd=build_dir, env=env,
+                                                                  stdout=asyncio.subprocess.PIPE,
+                                                                  stderr=asyncio.subprocess.PIPE)
+        command_output = await process.communicate()
+        if process.returncode != 0:
+            self.log.warning('Error while compiling {}: {}'.format(src_fle, command_output))
 
     def get_payload_name_from_uuid(self, payload):
         for t in ['standard_payloads', 'special_payloads']:
