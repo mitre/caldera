@@ -314,6 +314,12 @@
     left: 0;
     padding: 10px;
 }
+.topleftnum {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    padding: 5px;
+}
 .bottomleft {
     position: absolute;
     bottom: 2px;
@@ -599,7 +605,7 @@ table.dataTable input[type=text] {
 }
 .ability-box {
   position: absolute;
-  max-width: 200px;
+  min-width: 240px;
   max-height: 120px;
   margin: 5px;
   z-index: 1;
@@ -618,4 +624,7 @@ table.dataTable input[type=text] {
 }
 #ability-box.muuri-item-releasing .item-content {
   background: blueViolet;
+}
+.ability-order {
+    color: var(--secondary-font-color);
 }

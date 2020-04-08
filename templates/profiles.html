@@ -131,12 +131,15 @@
 </div>
 
 <div id="ability-template" class="ability-box" style="display: none">
-    <h4 id="name" style="margin:5px"></h4>
+    <h4 id="name" style="margin:5px; margin-top:5px;"></h4>
     <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
     <center>
         <div>
             <div class="topright" id="ability-rm">
                 <div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>
+            </div>
+            <div class="topleftnum">
+                <div class="ability-order">*</div>
             </div>
             <table class="bottomright">
                 <tr id="ability-metadata"></tr>
@@ -359,6 +362,19 @@
             grid.add(abilityBox[0]);
         });
         g_grid = grid;
+        g_grid.on('move', updateIndices).on('add', updateIndices).on('remove',updateIndices);
+        updateIndices();
+    }
+
+    function updateIndices() {
+        g_grid.getItems().forEach(function (item, i) {
+          var newId = i + 1;
+          item.getElement().setAttribute('data-id', newId);
+          item.getElement().querySelector('.ability-order').innerHTML = newId;
+          if (item._dragPlaceholder.isActive()) {
+            item._dragPlaceholder._element.querySelector('.ability-order').innerHTML = newId;
+          }
+        });
     }
 
     function addPhase(number) {
