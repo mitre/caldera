@@ -97,7 +97,6 @@ class Operation(BaseObject):
         self.visibility = visibility
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
-        self.generate_expired = 0
         if source:
             self.rules = source.rules
 
@@ -145,9 +144,6 @@ class Operation(BaseObject):
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
 
-    async def incr_ge(self):
-        self.generate_expired += 1
-
     async def wait_for_completion(self):
         for member in self.agents:
             if not member.trusted:
@@ -174,7 +170,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or (self.auto_close and self.generate_expired > 3) and \
+        if await self.is_finished() or self.auto_close and \
                 ((not self.atomic_enabled) or (self.last_ran == self.adversary.atomic_ordering[-1])):
             self.state = self.states['FINISHED']
             return True
