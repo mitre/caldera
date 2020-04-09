@@ -73,7 +73,11 @@
                 <option value="1" selected>Run autonomously</option>
                 <option value="0">Require manual approval</option>
               </select>
-              <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5" disabled="true">
+              <select name="phases" id="atomicEnabled" class="queueOption" style="opacity:0.5" disabled="true" onchange="$('#queuePlanner').toggle();">
+                <option value="1" selected>Force Atomic Ordering</option>
+                <option value="0">Prioritize Planner</option>
+              </select>
+              <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;display: none;" disabled="true">
                 {% for p in planners %}
                     <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                 {% endfor %}
@@ -82,10 +86,6 @@
                 {% for s in sources %}
                     <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                 {% endfor %}
-              </select>
-              <select name="phases" id="atomicEnabled" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="1">Force Atomic Ordering</option>
-                <option value="0" selected>Prioritize Planner</option>
               </select>
           </div>
 

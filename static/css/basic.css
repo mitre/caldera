@@ -602,6 +602,7 @@ table.dataTable input[type=text] {
   /* Control the height manually */
   /* In this case we limit it to two rows */
   height: 420px;
+    z-index: 0;
 }
 .ability-box {
   position: absolute;

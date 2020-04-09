@@ -322,7 +322,7 @@
     }
 
     function loadAdversaryCallback(data) {
-        stream('Profiles contain phases, which will run in order. Each phase contains abilities, or TTPs.');
+        stream('Profiles contain abilities which will run in atomic order by default. It contains abilities, or TTPs.');
         $('#profile-goal').val(data[0].name);
         $('#profile-description').val(data[0].description);
 
