@@ -35,6 +35,8 @@ class PlanningService(BasePlanningService):
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         self.log.debug('Generated %s usable links' % (len(links)))
+        if not operation.atomic_enabled and operation.auto_close and not links:
+            operation.state = operation.states['FINISHED']
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):

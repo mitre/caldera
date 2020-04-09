@@ -170,8 +170,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close and \
-                ((not self.atomic_enabled) or (self.last_ran == self.adversary.atomic_ordering[-1])):
+        if await self.is_finished() or self.auto_close and self._is_atomic_closeable():
             self.state = self.states['FINISHED']
             return True
         return False
@@ -278,6 +277,9 @@ class Operation(BaseObject):
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
+
+    def _is_atomic_closeable(self):
+        return self.atomic_enabled and self.last_ran == self.adversary.atomic_ordering[-1]
 
     def _get_ability_set_format_for_planner(self):
         if not self.atomic_enabled:
