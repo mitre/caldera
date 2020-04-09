@@ -248,14 +248,10 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _run(self, planner):
-        # The following is scope manipulation to force multiple loops of increasing sets of steps for atomic
-        # while forcing a single loop for a non-atomic
-        handle = self.adversary.atomic_ordering
-        if not self.atomic_enabled:
-            handle = [handle]
-        for ability in handle:
+        ability_set_format = self._get_ability_set_format_for_planner()
+        for ability in ability_set_format:
             if not await self.is_closeable():
-                await planner.execute(handle.index(ability))
+                await planner.execute(ability_set_format.index(ability))
                 if planner.stopping_condition_met:
                     break
                 await self.wait_for_completion()
@@ -286,6 +282,11 @@ class Operation(BaseObject):
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
+
+    def _get_ability_set_format_for_planner(self):
+        if not self.atomic_enabled:
+            return [self.adversary.atomic_ordering]
+        return self.adversary.atomic_ordering
 
     def _get_skipped_abilities_by_agent(self):
         abilities_by_agent = self._get_all_possible_abilities_by_agent()

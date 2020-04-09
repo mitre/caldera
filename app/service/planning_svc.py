@@ -25,11 +25,7 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if operation.atomic_enabled:
-            if operation.last_ran is None:
-                abilities = [operation.adversary.atomic_ordering[0]]
-            else:
-                abilities = operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(
-                    operation.last_ran) + 2)]
+            abilities = self._get_next_atomic_ability(operation=operation)
         else:
             abilities = operation.adversary.atomic_ordering
         links = []
@@ -79,6 +75,12 @@ class PlanningService(BasePlanningService):
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """
+
+    @staticmethod
+    def _get_next_atomic_ability(operation):
+        if operation.last_ran is None:
+            return [operation.adversary.atomic_ordering[0]]
+        return operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
 
     async def _check_completion(self, links, operation):
         if len(links) == 0:

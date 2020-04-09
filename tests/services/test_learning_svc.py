@@ -25,7 +25,6 @@ class TestLearningSvc:
             link=link,
             blob=BaseWorld.encode_string('i contain 1 ip address 192.168.0.1 and one file /etc/host.txt. that is all.'))
         )
-        print(link.facts)
         assert len(link.facts) == 2
 
     def test_build_relationships(self, loop, setup_learning_service, learning_svc):
