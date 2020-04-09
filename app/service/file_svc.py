@@ -175,17 +175,21 @@ class FileSvc(BaseService):
         """
         env = copy.copy(os.environ)
         env['GOARCH'] = arch
-        env['PLATFORM'] = platform
+        env['GOOS'] = platform
         if cflags:
             for cflag in cflags.split(' '):
                 name, value = cflag.split('=')
                 env[name] = value
 
-        build_mode_args = ['-buildmode', buildmode] if buildmode else []
+        args = ['go', 'build']
+        if buildmode:
+            args.append(buildmode)
+        if ldflags:
+            args.extend(['-ldflags', "{}".format(ldflags)])
 
-        process = await asyncio.subprocess.create_subprocess_exec('go', 'build', *build_mode_args, '-o', output,
-                                                                  '-ldflags', ldflags, src_fle,
-                                                                  cwd=build_dir, env=env,
+        args.extend(['-o', output, src_fle])
+
+        process = await asyncio.subprocess.create_subprocess_exec(*args, cwd=build_dir, env=env,
                                                                   stdout=asyncio.subprocess.PIPE,
                                                                   stderr=asyncio.subprocess.PIPE)
         command_output = await process.communicate()
