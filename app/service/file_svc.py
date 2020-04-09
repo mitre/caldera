@@ -178,7 +178,7 @@ class FileSvc(BaseService):
         env['PLATFORM'] = platform
         if cflags:
             for cflag in cflags.split(' '):
-                name, value = cflag.split(':')
+                name, value = cflag.split('=')
                 env[name] = value
 
         build_mode_args = ['-buildmode', buildmode] if buildmode else []
@@ -190,7 +190,7 @@ class FileSvc(BaseService):
                                                                   stderr=asyncio.subprocess.PIPE)
         command_output = await process.communicate()
         if process.returncode != 0:
-            self.log.warning('Error while compiling {}: {}'.format(src_fle, command_output))
+            self.log.warning('Problem building golang executable {}: {}'.format(src_fle, command_output))
 
     def get_payload_name_from_uuid(self, payload):
         for t in ['standard_payloads', 'special_payloads']:
