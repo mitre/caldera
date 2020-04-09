@@ -11,17 +11,15 @@ class Adversary(BaseObject):
 
     @property
     def display(self):
-        phases = dict()
-        for k, v in self.phases.items():
-            phases[k] = [val.display for val in v]
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description, phases=phases)
+        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
+                    atomic_ordering=[x.display for x in self.atomic_ordering])
 
-    def __init__(self, adversary_id, name, description, phases):
+    def __init__(self, adversary_id, name, description, atomic_ordering):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
-        self.phases = phases
+        self.atomic_ordering = atomic_ordering
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
@@ -30,14 +28,13 @@ class Adversary(BaseObject):
             return self.retrieve(ram['adversaries'], self.unique)
         existing.update('name', self.name)
         existing.update('description', self.description)
-        existing.update('phases', self.phases)
+        existing.update('atomic_ordering', self.atomic_ordering)
         return existing
 
     def has_ability(self, ability):
-        for _, v in self.phases.items():
-            for a in v:
-                if ability.unique == a.unique:
-                    return True
+        for a in self.atomic_ordering:
+            if ability.unique == a.unique:
+                return True
         return False
 
     async def which_plugin(self):

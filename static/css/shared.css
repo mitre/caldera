@@ -6,6 +6,7 @@
     --section-background: #1e1e1e;
     --font-color: white;
     --invert-percentage: 100%;
+    --secondary-font-color: firebrick;
 }
 body {
     background-size: 100% 100%;

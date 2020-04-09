@@ -8,13 +8,12 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, phase=None, agent=None, trim=True, planner=None, stopping_conditions=None):
+    async def get_links(self, operation, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
-        For an operation, phase and agent combination, create links (that can be executed).
+        For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
 
         :param operation:
-        :param phase:
         :param agent:
         :param trim: call trim_links() on list of links before returning
         :param planner:
@@ -25,17 +24,19 @@ class PlanningService(BasePlanningService):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
             return []
-        if phase:
-            abilities = [i for p, v in operation.adversary.phases.items() if p <= phase for i in v]
+        if operation.atomic_enabled:
+            abilities = self._get_next_atomic_ability(operation=operation)
         else:
-            abilities = [i for p, v in operation.adversary.phases.items() for i in v]
+            abilities = operation.adversary.atomic_ordering
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         else:
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
-        self.log.debug('Generated %s usable links for phase: %s' % (len(links), phase))
+        self.log.debug('Generated %s usable links' % (len(links)))
+        if not operation.atomic_enabled and operation.auto_close and not links:
+            operation.state = operation.states['FINISHED']
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -75,6 +76,12 @@ class PlanningService(BasePlanningService):
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """
+
+    @staticmethod
+    def _get_next_atomic_ability(operation):
+        if operation.last_ran is None:
+            return [operation.adversary.atomic_ordering[0]]
+        return operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
         """

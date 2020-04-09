@@ -196,6 +196,7 @@
     border: 0 none;
     position: relative;
     padding: 10px;
+    max-width: 25%;
 }
 .ability-box h4 {
     margin-left: 2%;
@@ -312,6 +313,12 @@
     top: 2px;
     left: 0;
     padding: 10px;
+}
+.topleftnum {
+    position: absolute;
+    top: -2px;
+    left: 0;
+    padding: 5px;
 }
 .bottomleft {
     position: absolute;
@@ -589,4 +596,36 @@ table.dataTable input[type=text] {
     height: 10px;
     margin: 0;
     line-height: 1px;
+}
+.grid {
+  position: relative;
+  /* Control the height manually */
+  /* In this case we limit it to two rows */
+  height: 420px;
+    z-index: 0;
+}
+.ability-box {
+  position: absolute;
+  min-width: 240px;
+  max-height: 120px;
+  margin: 5px;
+  z-index: 1;
+}
+.ability-box.muuri-item-hidden {
+  z-index: 0;
+}
+#ability-box.muuri-item-releasing {
+  z-index: 2;
+}
+#ability-box.muuri-item-dragging {
+  z-index: 3;
+}
+#ability-box.muuri-item-dragging .item-content {
+  background: blue;
+}
+#ability-box.muuri-item-releasing .item-content {
+  background: blueViolet;
+}
+.ability-order {
+    color: var(--secondary-font-color);
 }
