@@ -35,7 +35,6 @@ class PlanningService(BasePlanningService):
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         self.log.debug('Generated %s usable links' % (len(links)))
-        await self._check_completion(links, operation)
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -81,10 +80,6 @@ class PlanningService(BasePlanningService):
         if operation.last_ran is None:
             return [operation.adversary.atomic_ordering[0]]
         return operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
-
-    async def _check_completion(self, links, operation):
-        if len(links) == 0:
-            await operation.incr_ge()
 
     async def _check_stopping_conditions(self, operation, stopping_conditions):
         """
