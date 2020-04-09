@@ -333,11 +333,11 @@
     }
 
     function createMuuriGrid() {
-    	var packer = new Muuri.Packer();
+    	let packer = new Muuri.Packer();
         return new Muuri('.grid', {
             dragEnabled: true,
             layout: function (items, width, height) {
-            var fakeItems = items.map(item => {
+            let fakeItems = items.map(item => {
               return {
                 _width: Math.floor(item._width + item._marginLeft + item._marginRight),
                 _height: Math.floor(item._height + item._marginTop + item._marginBottom),
@@ -347,19 +347,14 @@
                 _marginBottom: 0
               }
             });
-            var slots = [];
-            var options = {rounding: false};
+            let slots = [];
+            let options = {rounding: false};
             return packer.getLayout(fakeItems, width, height, slots, options);}
         });
     }
 
     function loadAtomicOrder(abilities) {
-        let template = $("#tempPhase");
-        if (!template.length) {
-            template = addPhase(1);
-        }
-        var grid = createMuuriGrid();
-
+        let grid = createMuuriGrid();
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
             let abilityBox = buildAbility(a);
@@ -401,20 +396,6 @@
         $('#tempPhase' + number).prepend(phaseHeader);
         phaseHeader.show();
         return template;
-    }
-
-    function shiftPhasesDown(after, number) {
-        $('.tempPhase').each(function(idx, phaseDiv) {
-            let i = idx + 1;
-            if (i <= after) {
-                return;
-            }
-            let newi = i + number;
-            $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
-            $(phaseDiv).find('.phase-title').text('Phase ' + newi);
-            $(phaseDiv).find('.ability-box').data('phase', newi);
-            $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
-        });
     }
 
     function addPlatforms(abilities) {
@@ -495,7 +476,7 @@
     }
 
     function removeAbility(ability){
-        var listing = g_grid.getItems();
+        let listing = g_grid.getItems();
         listing.forEach(function(entry) {
             if (entry._element.id === ability.ability_id) {
                 g_grid.remove(g_grid.getItems().indexOf(entry), {removeElements: true});
@@ -510,12 +491,10 @@
 
         let tactic = $(parent).find('#ability-tactic-filter').find(":selected").data('tactic');
         let found = [];
-        let showing = [];
         exploits.forEach(function(ability) {
             if(ability.tactic.includes(tactic) && !found.includes(ability.technique_id)) {
                 found.push(ability.technique_id);
                 appendTechniqueToList(parentId, tactic, ability);
-                showing += 1;
             }
         });
     }
@@ -635,8 +614,6 @@
     });
 
     function addAbilityToPhase() {
-        let parent = $('#phase-modal');
-        let phase = $(parent).data('phase');
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
         let abilityBox = buildAbility(ability);
         g_grid.add(abilityBox[0]);
