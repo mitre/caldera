@@ -211,7 +211,7 @@
         $('#profile-description').val('');
         $('.tempPhase').remove();
         $('.phase-headers').remove();
-        addPhase(1);
+        loadAtomicOrder([]);
     }
 
     function saveAdversary() {
@@ -331,14 +331,9 @@
         loadAtomicOrder(data[0].atomic_ordering);
     }
 
-    function loadAtomicOrder(abilities) {
-        let template = $("#tempPhase");
-        if (!template.length) {
-            template = addPhase(1);
-        }
-
-        var packer = new Muuri.Packer();
-        var grid = new Muuri('.grid', {
+    function createMuuriGrid() {
+    	var packer = new Muuri.Packer();
+        return new Muuri('.grid', {
             dragEnabled: true,
             layout: function (items, width, height) {
             var fakeItems = items.map(item => {
@@ -355,6 +350,14 @@
             var options = {rounding: false};
             return packer.getLayout(fakeItems, width, height, slots, options);}
         });
+    }
+
+    function loadAtomicOrder(abilities) {
+        let template = $("#tempPhase");
+        if (!template.length) {
+            template = addPhase(1);
+        }
+        var grid = createMuuriGrid();
 
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
