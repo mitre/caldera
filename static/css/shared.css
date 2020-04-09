@@ -274,7 +274,7 @@ p[onclick] {
 }
 .advanced {}
 .section-border {
-    border-right: .5px var(--font-color) solid;
+
 }
 .section-profile pre {
     width: 90%;
@@ -397,7 +397,7 @@ p[onclick] {
     flex:37%;
     border-right: solid white 1px;
     line-height: 10px;
-    padding-right: 30;
+    padding-right: 30px;
 }
 .duk-home:last-child {
     border-right: 0;
