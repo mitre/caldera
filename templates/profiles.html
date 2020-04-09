@@ -354,6 +354,10 @@
     }
 
     function loadAtomicOrder(abilities) {
+        let template = $("#tempPhase");
+        if (!template.length) {
+            template = addPhase(1);
+        }
         let grid = createMuuriGrid();
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
