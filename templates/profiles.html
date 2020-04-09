@@ -54,6 +54,7 @@
                 <select id="ability-ability-filter" onchange="showAbility('phase-modal',  {{ exploits }})">
                     <option disabled selected>0 abilities</option>
                 </select>
+                <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', {{ exploits }});">
                 <br><br>
                 <div class="ability-attack row-simple">
                     <div class="column" style="flex:60%">
