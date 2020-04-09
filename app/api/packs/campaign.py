@@ -37,7 +37,7 @@ class CampaignPack(BaseWorld):
         abilities = await self.data_svc.locate('abilities', match=access)
         platforms = set([a.platform for a in abilities])
         executors = set([a.executor for a in abilities])
-        tactics = set([a.tactic.lower() for a in abilities])
+        tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
         payloads = await self.rest_svc.list_payloads()
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
                              key=lambda a: a['name'])

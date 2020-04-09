@@ -43,13 +43,13 @@
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
             <div class="column" style="flex:100%;">
-                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', {{ exploits }});">
+                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', {{ exploits | sort(attribute='technique_id') }});">
                     <option disabled selected>Choose a tactic</option>
                     {% for tactic in tactics %}
                         <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
                     {% endfor %}}
                 </select>
-                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', {{ exploits }});">
+                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', {{ exploits | sort(attribute='name') }});">
                     <option disabled selected>Choose a technique</option>
                 </select>
                 <select id="ability-ability-filter" onchange="showAbility('phase-modal',  {{ exploits }})">
