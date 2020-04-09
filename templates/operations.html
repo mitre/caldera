@@ -421,7 +421,7 @@
                 $("#togBtnHil").prop("checked", false);
             }
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.listing.length) *
+            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
                 100));
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
