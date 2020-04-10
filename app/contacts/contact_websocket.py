@@ -13,7 +13,7 @@ class WebSocket(BaseWorld):
 
     async def start(self):
         web_socket = self.get_config('app.contact.websocket')
-        await websockets.serve(self.handler.handle, '0.0.0.0', web_socket.split(':')[1])
+        await websockets.serve(self.handler.handle, *web_socket.split(':'))
 
 
 class Handler:
