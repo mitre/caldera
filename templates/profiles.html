@@ -199,6 +199,7 @@
     <br>
 </li>
 
+<script src="/gui/js/ability.js"></script>
 <script src="/gui/js/muuri.min.js"></script>
 <script>
     $(document).ready(function () {
@@ -333,11 +334,11 @@
     }
 
     function createMuuriGrid() {
-    	var packer = new Muuri.Packer();
+    	let packer = new Muuri.Packer();
         return new Muuri('.grid', {
             dragEnabled: true,
             layout: function (items, width, height) {
-            var fakeItems = items.map(item => {
+            let fakeItems = items.map(item => {
               return {
                 _width: Math.floor(item._width + item._marginLeft + item._marginRight),
                 _height: Math.floor(item._height + item._marginTop + item._marginBottom),
@@ -347,8 +348,8 @@
                 _marginBottom: 0
               }
             });
-            var slots = [];
-            var options = {rounding: false};
+            let slots = [];
+            let options = {rounding: false};
             return packer.getLayout(fakeItems, width, height, slots, options);}
         });
     }
@@ -358,8 +359,7 @@
         if (!template.length) {
             template = addPhase(1);
         }
-        var grid = createMuuriGrid();
-
+        let grid = createMuuriGrid();
         abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
             let abilityBox = buildAbility(a);
@@ -401,41 +401,6 @@
         $('#tempPhase' + number).prepend(phaseHeader);
         phaseHeader.show();
         return template;
-    }
-
-    function shiftPhasesDown(after, number) {
-        $('.tempPhase').each(function(idx, phaseDiv) {
-            let i = idx + 1;
-            if (i <= after) {
-                return;
-            }
-            let newi = i + number;
-            $(phaseDiv).attr('id', $(phaseDiv).attr('id').slice(0, -1) + newi);
-            $(phaseDiv).find('.phase-title').text('Phase ' + newi);
-            $(phaseDiv).find('.ability-box').data('phase', newi);
-            $(phaseDiv).find('.ability-add').attr('onclick', 'showPhaseModal('+newi+')');
-        });
-    }
-
-    function addPlatforms(abilities) {
-        let ab = [];
-        abilities.forEach(function(a) {
-            let exists = false;
-            for(let i in ab){
-                if(ab[i].ability_id === a.ability_id) {
-                    ab[i]['platform'].push(a.platform);
-                    ab[i]['executor'].push(a.executor);
-                    exists = true;
-                    break;
-                }
-            }
-            if(!exists) {
-                a['platform'] = [a.platform];
-                a['executor'] = [a.executor];
-                ab.push(a);
-            }
-        });
-        return ab;
     }
 
     function buildAbility(ability){
@@ -495,59 +460,12 @@
     }
 
     function removeAbility(ability){
-        var listing = g_grid.getItems();
+        let listing = g_grid.getItems();
         listing.forEach(function(entry) {
             if (entry._element.id === ability.ability_id) {
                 g_grid.remove(g_grid.getItems().indexOf(entry), {removeElements: true});
             }
         });
-    }
-
-    function populateTechniques(parentId, exploits){
-        exploits = addPlatforms(exploits);
-        let parent = $('#'+parentId);
-        $(parent).find('#ability-technique-filter').empty().append("<option disabled='disabled' selected>Choose a technique</option>");
-
-        let tactic = $(parent).find('#ability-tactic-filter').find(":selected").data('tactic');
-        let found = [];
-        let showing = [];
-        exploits.forEach(function(ability) {
-            if(ability.tactic.includes(tactic) && !found.includes(ability.technique_id)) {
-                found.push(ability.technique_id);
-                appendTechniqueToList(parentId, tactic, ability);
-                showing += 1;
-            }
-        });
-    }
-
-    function populateAbilities(parentId, exploits){
-        exploits = addPlatforms(exploits);
-        let parent = $('#'+parentId);
-        $(parent).find('#ability-ability-filter').empty();
-
-        let showing = [];
-        let attack_id = $(parent).find('#ability-technique-filter').find(":selected").data('technique');
-        exploits.forEach(function(ability) {
-            if(attack_id === ability.technique_id) {
-                appendAbilityToList(parentId, ability);
-                showing += 1;
-            }
-        });
-        $(parent).find('#ability-ability-filter').prepend("<option disabled='disabled' selected>"+showing.length+" abilities</option>");
-    }
-
-    function appendTechniqueToList(parentId, tactic, value) {
-        $('#'+parentId).find('#ability-technique-filter').append($("<option></option>")
-            .attr("value", value['technique_id'])
-            .data("technique", value['technique_id'])
-            .text(value['technique_id'] + ' | '+ value['technique_name']));
-    }
-
-    function appendAbilityToList(parentId, value) {
-        $('#'+parentId).find('#ability-ability-filter').append($("<option></option>")
-            .attr("value", value['name'])
-            .data("ability", value)
-            .text(value['name']));
     }
 
     function showAbility(parentId, exploits) {
@@ -635,8 +553,6 @@
     });
 
     function addAbilityToPhase() {
-        let parent = $('#phase-modal');
-        let phase = $(parent).data('phase');
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
         let abilityBox = buildAbility(ability);
         g_grid.add(abilityBox[0]);
@@ -653,25 +569,7 @@
             restRequest('DELETE', {"index": "adversaries", "adversary_id": adversary_id}, deleteCallback);
         }
     }
-    function searchAbilities(parent, abilities){
-    	let pElem = $('#'+parent);
-    	pElem.find('#ability-technique-filter').empty().append("<option disabled='disabled' selected>All Techniques</option>");;
-    	let abList = pElem.find('#ability-ability-filter');
-    	abList.empty();
-        let val = pElem.find('#ability-search-filter').val().toLowerCase();
-        let added = [];
-        if(val){
-            abilities.forEach(function(ab){
-                let cmd = atob(ab['test']);
-                if (cmd.toLowerCase().includes(val) && !added.includes(ab['ability_id'])){
-                	let composite = addPlatforms([ab]);
-                	added.push(ab['ability_id']);
-                    appendAbilityToList(parent, composite[0]);
-                }
-            });
-        }
-        abList.prepend("<option disabled='disabled' selected>"+added.length+" abilities</option>");
-    }
+
     //# sourceURL=profiles.js
 
 </script>
