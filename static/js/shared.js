@@ -127,8 +127,8 @@ function alphabetize_dropdown(obj) {
   }
 })(jQuery);
 
-window.onload = function checkBrowser(){
-    if(navigator.vendor !==  "Google Inc.") {
+function enableNotice(){
+    if($('#notice').css('display') === 'none'){
         $('#notice').css('display', 'block');
         $(window).scroll(function(){
             var sticky = $('.notice'),
@@ -137,19 +137,31 @@ window.onload = function checkBrowser(){
             if (scroll >= 100) sticky.addClass('.notice');
             else sticky.removeClass('.notice');
           });
+     }
+}
+
+function checkVersions(){
+    function evaluateVersions(data){
+        console.log(data)
+//        do stuff here with the data to format the message box
+        $('#notice').append(' You are running non-versioned code.');
+        enableNotice();
+    }
+    restRequest('POST', {'index':'versions'}, evaluateVersions);
+};
+
+function checkBrowser(){
+    if(navigator.vendor !==  "Google Inc.") {
+        $('#notice').html('Chrome is the only supported browser. Please change to that or some website components may not work.');
+        enableNotice();
     }
 };
 
-window.onload = function checkVersions(){
-    $('#version-notice').css('display', 'block');
-    $(window).scroll(function(){
-            var sticky = $('.version-notice'),
-                scroll = $(window).scrollTop();
+window.onload = function runChecks(){
+    checkBrowser()
+    checkVersions();
+}
 
-            if (scroll >= 100) sticky.addClass('.version-notice');
-            else sticky.removeClass('.version-notice');
-          });
-};
 
 $(document).ready(function () {
    stream('Welcome home. Go into the Agents tab to review your deployed agents.');
