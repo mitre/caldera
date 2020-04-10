@@ -60,10 +60,7 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
-        if variations:
-            self.variations = [Variation(description=v['description'], command=v['command']) for v in variations]
-        else:
-            self.variations = []
+        self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
         if access:
             self.access = self.Access(access)
 
