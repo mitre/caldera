@@ -33,7 +33,7 @@ class AgentFieldsSchema(ma.Schema):
     host = ma.fields.String()
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    links = ma.fields.List(ma.fields.String())
+    links = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.links])  # temp - replace with Nested(LinkSchema)
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):

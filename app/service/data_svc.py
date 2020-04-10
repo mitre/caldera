@@ -217,7 +217,6 @@ class DataService(DataServiceInterface, BaseService):
                                                                    self._app_configuration['payloads']
                                                                    ['extensions'][entry])
 
-    @staticmethod
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
                               requirements=None, privilege=None, timeout=60, access=None, repeatable=False, code=None,
