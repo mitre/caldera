@@ -55,12 +55,15 @@ class Ability(BaseObject):
         self.executor = executor
         self.platform = platform
         self.payloads = payloads if payloads else []
-        self.parsers = parsers
-        self.requirements = requirements
+        self.parsers = parsers if parsers else []
+        self.requirements = requirements if requirements else []
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
-        self.variations = [Variation(description=v['description'], command=v['command']) for v in variations]
+        if variations:
+            self.variations = [Variation(description=v['description'], command=v['command']) for v in variations]
+        else:
+            self.variations = []
         if access:
             self.access = self.Access(access)
 
