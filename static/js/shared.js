@@ -128,7 +128,7 @@ function alphabetize_dropdown(obj) {
 })(jQuery);
 
 window.onload = function checkBrowser(){
-    if(navigator.vendor !==  "Google Inc." && navigator.vendor !==  "Apple Computer, Inc.") {
+    if(navigator.vendor !==  "Google Inc.") {
         $('#notice').css('display', 'block');
         $(window).scroll(function(){
             var sticky = $('.notice'),
