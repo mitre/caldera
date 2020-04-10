@@ -162,12 +162,22 @@ class DataService(BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
-                ordering = adv.get('atomic_ordering', list())
+                if adv.get('phases'):
+                    ordering = await self._load_phase_adversary_variant(adv)
+                else:
+                    ordering = adv.get('atomic_ordering', list())
                 atomic_ordering = await self._link_abilities(ordering, adv)
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                       atomic_ordering=atomic_ordering)
                 adversary.access = plugin.access
                 await self.store(adversary)
+
+    @staticmethod
+    async def _load_phase_adversary_variant(adversary):
+        abilities = []
+        for v in adversary.get('phases').values():
+            abilities.extend(v)
+        return abilities
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
