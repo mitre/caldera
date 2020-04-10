@@ -150,6 +150,30 @@
     </center>
 </div>
 
+<div id="adv-profile-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <p style="text-align: center;">Include the abilities of another profile in this one. These abilities can be appended to the existing adversary profile.
+                </p>
+                <select id="adv-profile-filter">
+                    <option disabled selected>Choose a profile</option>
+                    {% for adv in adversaries %}
+                        <option value={{ adv.adversary_id }}>{{ adv.name }}</option>
+                    {% endfor %}}
+                </select>
+                <br><br>
+                <div style="width:30%;margin:0 auto;">
+                    <button type="button" class="button-success atomic-button" onclick="addAdvToCurrentProfile()">Add to adversary</button>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="document.getElementById('adv-profile-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
         <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
@@ -397,7 +421,8 @@
         }
         template.show();
         let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
-            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span><hr></h4>');
+            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            +'<span class="ability-add" onclick="showProfileModal('+number+')" style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span><hr></h4>');
         $('#tempPhase' + number).prepend(phaseHeader);
         phaseHeader.show();
         return template;
@@ -519,6 +544,11 @@
         document.getElementById("phase-modal").style.display="block";
     }
 
+    function showProfileModal(phase) {
+        $('#adv-profile-modal').data("phase", phase);
+        document.getElementById("adv-profile-modal").style.display="block";
+    }
+
     function freshId(){
         $('#ability-identifier').val(uuidv4());
     }
@@ -568,6 +598,20 @@
         if (confirm(`Are you sure you want to terminate this adversary?`)){
             restRequest('DELETE', {"index": "adversaries", "adversary_id": adversary_id}, deleteCallback);
         }
+    }
+
+    function addAdvToCurrentProfile() {
+        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-profile-filter').val()}, loadAdvProfileCallback);
+        document.getElementById('adv-profile-modal').style.display='none';
+	}
+
+	function loadAdvProfileCallback(data){
+        let atomic_order = data[0]['atomic_ordering'];
+        let abilities = addPlatforms(atomic_order);
+        for (let ab of abilities) {
+	        let abilityBox = buildAbility(ab);
+	        g_grid.add(abilityBox[0]);
+		}
     }
 
     //# sourceURL=profiles.js
