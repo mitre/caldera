@@ -4,6 +4,7 @@ import os
 import re
 import yaml
 import logging
+import subprocess
 
 from base64 import b64encode, b64decode
 from datetime import datetime
@@ -108,6 +109,29 @@ class BaseWorld:
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    @staticmethod
+    def get_version(path=None):
+        cmd = 'find %s -type f \\( -name "*.py" -o -name "*.html" \\) -exec md5 {} \\; | md5' % path
+        version_file = os.path.join(path, 'VERSION.txt')
+        if os.path.exists(version_file):
+            with open(version_file, 'r') as f:
+                version, master_version, md5 = f.read().split('-')
+            failed, output = subprocess.getstatusoutput(cmd)
+            if not failed and md5 == output:
+                return version, master_version
+        return 'unknown', 'unknown'
+
+    @staticmethod
+    def get_core_version():
+        cmd = 'find . -type f \\( -name "*.py" -o -name "*.html" \\) -not -path "./.tox/*" -not -path "./plugins/*" -exec md5 {} \\; | md5'
+        if os.path.exists('VERSION.txt'):
+            with open('VERSION.txt', 'r') as f:
+                version, md5 = f.read().split('-')
+            failed, output = subprocess.getstatusoutput(cmd)
+            if not failed and md5 == output:
+                return version
+        return 'unknown'
 
     class Access(Enum):
         APP = 0

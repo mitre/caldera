@@ -140,6 +140,17 @@ window.onload = function checkBrowser(){
     }
 };
 
+window.onload = function checkVersions(){
+    $('#version-notice').css('display', 'block');
+    $(window).scroll(function(){
+            var sticky = $('.version-notice'),
+                scroll = $(window).scrollTop();
+
+            if (scroll >= 100) sticky.addClass('.version-notice');
+            else sticky.removeClass('.version-notice');
+          });
+};
+
 $(document).ready(function () {
    stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
