@@ -512,7 +512,7 @@
                 template.find('#ability-platform').val(ability.platform);
                 template.find('#ability-executor').val(ability.executor);
                 template.find('#ability-command').val(atob(ability.test));
-                if(ability.cleanup[0] > 0) {
+                if(ability.cleanup[0]) {
                     template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
                 }
                 template.show();
