@@ -137,3 +137,7 @@ to add randomization to the behaviors on the target system.
 ## Training
 
 This plugin allows a user to gain a "User Certificate" which proves their ability to use CALDERA. This is the first of several certificates planned in the future. The plugin takes you through a capture-the-flag style certification course, covering all parts CALDERA.
+
+## Access
+
+This plugin allows you to task any agent with any ability from the database. It also allows you to conduct initial access attacks.
