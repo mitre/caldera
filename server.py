@@ -18,8 +18,10 @@ from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
 
 
-def setup_logger():
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+def setup_logger(level=logging.DEBUG):
+    logging.basicConfig(level=level,
+                        format='%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     for logger_name in logging.root.manager.loggerDict.keys():
         if logger_name in ('aiohttp.server', 'asyncio'):
             continue
@@ -64,12 +66,14 @@ def run_tasks(services):
 
 if __name__ == '__main__':
     sys.path.append('')
-    setup_logger()
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
+    parser.add_argument("-l", "--log", dest="logLevel", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help="Set the logging level", default='DEBUG')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
                         help='remove object_store on start')
     args = parser.parse_args()
+    setup_logger(getattr(logging, args.logLevel))
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
     BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/%s.yml' % config)[0])
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
