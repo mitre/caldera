@@ -3,6 +3,7 @@ import copy
 import glob
 import os.path
 import pickle
+import shutil
 from base64 import b64encode
 from collections import namedtuple
 
@@ -42,7 +43,10 @@ class DataService(BaseService):
         for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
-                    os.remove(f)
+                    try:
+                        os.remove(f)
+                    except IsADirectoryError:
+                        shutil.rmtree(f)
 
     async def save_state(self):
         """
