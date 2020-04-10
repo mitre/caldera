@@ -3,6 +3,9 @@ import asyncio
 import logging
 import pathlib
 import sys
+import subprocess
+import re
+import distutils.version
 
 from aiohttp import web
 
@@ -25,6 +28,26 @@ def setup_logger():
             continue
         else:
             logging.getLogger(logger_name).setLevel(100)
+
+
+def validate_environment():
+    versions = {
+        'python': ('python --version', r'([0-9\.]+)', '3.6.1'),
+        'go': ('go version', r'go([0-9\.]+)', '1.11')
+    }
+    try:
+        for exe, params in versions.items():
+            cmd, pattern, min_version = params
+            failed, output = subprocess.getstatusoutput(cmd)
+            if not failed:
+                version = re.search(pattern, output).group(1)
+                if distutils.version.StrictVersion(version) <= distutils.version.StrictVersion(min_version):
+                    logging.debug(f'installed {exe} version {version} is below the required minimum version {min_version}')
+                    return False
+    except Exception as e:
+        logging.debug(e)
+        return False
+    return True
 
 
 async def build_docs():
@@ -65,6 +88,9 @@ def run_tasks(services):
 if __name__ == '__main__':
     sys.path.append('')
     setup_logger()
+    if not validate_environment():
+        logging.debug('Environment is not properly configured for running Caldera, Exiting')
+        exit()
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
