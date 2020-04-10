@@ -42,8 +42,9 @@ def validate_environment():
             if not failed:
                 version = re.search(pattern, output).group(1)
                 if distutils.version.StrictVersion(version) <= distutils.version.StrictVersion(min_version):
-                    logging.debug(f'installed {exe} version {version} is below the required minimum version {min_version}')
-                    return False
+                    logging.error(f'installed {exe} version {version} is below the required minimum version {min_version}')
+                    logging.error('Environment is not properly configured for running Caldera, Exiting')
+                    sys.exit(1)
     except Exception as e:
         logging.debug(e)
         return False
@@ -88,9 +89,7 @@ def run_tasks(services):
 if __name__ == '__main__':
     sys.path.append('')
     setup_logger()
-    if not validate_environment():
-        logging.debug('Environment is not properly configured for running Caldera, Exiting')
-        exit()
+    validate_environment()
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
