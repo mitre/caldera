@@ -1,6 +1,5 @@
 import ast
 import asyncio
-import copy
 import logging
 import re
 import uuid
@@ -11,43 +10,6 @@ from importlib import import_module
 from random import randint
 
 from app.utility.base_object import BaseObject
-
-REDACTED = '**REDACTED**'
-
-
-def redact_report(report):
-    redacted = copy.deepcopy(report)
-    # host_group
-    for agent in redacted.get('host_group', []):
-        agent['group'] = REDACTED
-        agent['server'] = REDACTED
-        agent['location'] = REDACTED
-        agent['display_name'] = REDACTED
-        agent['host'] = REDACTED
-    # steps
-    steps = redacted.get('steps', dict())
-    for _, agent in steps.items():
-        for step in agent['steps']:
-            step['description'] = REDACTED
-            step['name'] = REDACTED
-            step['output'] = REDACTED
-    # adversary
-    redacted['adversary']['name'] = REDACTED
-    redacted['adversary']['description'] = REDACTED
-    for ability in redacted['adversary']['atomic_ordering']:
-        ability['name'] = REDACTED
-        ability['description'] = REDACTED
-    # facts
-    for fact in redacted.get('facts', []):
-        fact['unique'] = REDACTED
-        fact['value'] = REDACTED
-    # skipped_abilities
-    for s in redacted.get('skipped_abilities', []):
-        for _, ability_list in s.items():
-            for ability in ability_list:
-                ability['ability_name'] = REDACTED
-
-    return redacted
 
 
 class Operation(BaseObject):
@@ -219,8 +181,7 @@ class Operation(BaseObject):
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
-            if redacted:
-                return redact_report(report)
+
             return report
         except Exception:
             logging.error('Error saving operation report (%s)' % self.name)
