@@ -1,6 +1,5 @@
 import ast
 import asyncio
-import copy
 import logging
 import re
 import uuid
