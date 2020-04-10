@@ -187,12 +187,15 @@ class RestService(BaseService):
         return await operation.apply(link)
 
     async def task_agent_with_ability(self, paw, ability_id, facts=()):
+        new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
-            await agent.task(
+            links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
                 facts=facts
             )
+            new_links.extend(links)
+        return new_links
 
     async def get_link_pin(self, json_data):
         link = await self.get_service('app_svc').find_link(json_data['link'])

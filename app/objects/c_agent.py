@@ -169,9 +169,12 @@ class Agent(BaseObject):
     async def task(self, abilities, facts=()):
         bps = BasePlanningService()
         potential_links = [Link(operation='task', command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
+        links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
-            self.links.append(valid)
+            links.append(valid)
+        self.links.extend(links)
+        return links
 
     def all_facts(self):
         return [f for lnk in self.links for f in lnk.facts if f.score > 0]
