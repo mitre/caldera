@@ -13,3 +13,4 @@ Sphinx
 sphinx_rtd_theme
 recommonmark
 marshmallow
+dirhash

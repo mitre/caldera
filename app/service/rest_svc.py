@@ -240,7 +240,7 @@ class RestService(BaseService):
     async def retrieve_versions(self):
         app_svc = self.get_service('app_svc')
         plugins = await self.get_service('data_svc').locate('plugins')
-        plug_versions = [(p.name, p.version, p.compatible_core_version) for p in plugins]
+        plug_versions = {p.name: p.version for p in plugins}
         return dict(core=app_svc.version, plugins=plug_versions)
 
     """ PRIVATE """
