@@ -10,7 +10,6 @@
       <link rel="stylesheet" href="/gui/css/timeline.css">
       <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
 </head>
-
     <div class="navbar-buffer">
         <div class="navbar">
               <a href="/">Home</a>
@@ -22,6 +21,11 @@
                   <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
                 </div>
               </div>
+              {% if errors|length > 0 %}
+                  <a onclick="warn(JSON.stringify({{ errors }}))" style="float:right"><img src="/gui/img/errors.png"/></a>
+              {% else %}
+                  <a onclick="warn('Framework is in good shape!')" style="float:right"><img src="/gui/img/success.png"/></a>
+              {% endif %}
               <a href="/logout" style="float:right">Logout</a>
               <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
               <div class="subnav-right">
@@ -83,7 +87,6 @@
                 </div>
             </form>
         </div>
-
     </center>
 
     <div style="margin-bottom: 100px"></div>

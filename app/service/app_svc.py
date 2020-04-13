@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import os
+from collections import namedtuple
 from datetime import datetime, date
 
 import aiohttp_jinja2
@@ -18,6 +19,8 @@ from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
+Error = namedtuple('Error', 'name msg')
+
 
 class AppService(BaseService):
 
@@ -25,6 +28,7 @@ class AppService(BaseService):
         self.application = application
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
+        self.errors = []
 
     async def start_sniffer_untrusted_agents(self):
         """

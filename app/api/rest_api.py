@@ -1,7 +1,7 @@
-import os
 import asyncio
 import json
 import logging
+import os
 import uuid
 
 import marshmallow as ma
@@ -58,7 +58,7 @@ class RestApi(BaseWorld):
         if not access:
             return render_template('login.html', request, {})
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins])
+        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors)
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
