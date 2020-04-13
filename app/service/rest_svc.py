@@ -237,12 +237,6 @@ class RestService(BaseService):
             operation[0].autonomous = 0 if operation[0].autonomous else 1
             self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
 
-    async def retrieve_versions(self):
-        app_svc = self.get_service('app_svc')
-        plugins = await self.get_service('data_svc').locate('plugins')
-        plug_versions = {p.name: p.version for p in plugins}
-        return dict(core=app_svc.version, plugins=plug_versions)
-
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):

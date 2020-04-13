@@ -122,7 +122,7 @@ class BaseWorld:
             calculated_md5 = dirhash.dirhash(path, 'md5', ignore=ignore, match=included_extensions)
             if md5 == calculated_md5:
                 return version
-        return 'unknown'
+        return None
 
     class Access(Enum):
         APP = 0

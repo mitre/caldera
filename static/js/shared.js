@@ -141,13 +141,12 @@ function enableNotice(){
 }
 
 function checkVersions(){
-    function evaluateVersions(data){
-        console.log(data)
-//        do stuff here with the data to format the message box
+    var modified = true;
+//    check plugins for any versions === unknown
+    if(modified){
         $('#notice').append(' You are running non-versioned code.');
         enableNotice();
     }
-    restRequest('POST', {'index':'versions'}, evaluateVersions);
 };
 
 function checkBrowser(){

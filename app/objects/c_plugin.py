@@ -23,7 +23,7 @@ class Plugin(BaseObject):
         self.enabled = enabled
         self.data_dir = data_dir
         self.access = access if access else self.Access.APP
-        self.version = 'unknown'
+        self.version = self.get_version('plugins/%s' % self.name.lower())
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -40,7 +40,6 @@ class Plugin(BaseObject):
             self.description = plugin.description
             self.address = plugin.address
             self.access = getattr(self._load_module(), 'access', self.Access.APP)
-            self.version = self.get_version('plugins/%s' % self.name.lower())
             return True
         except Exception as e:
             logging.error('Error loading plugin=%s, %s' % (self.name, e))
