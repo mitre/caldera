@@ -22,7 +22,7 @@
                 </div>
               </div>
               {% if errors|length > 0 %}
-                  <a onclick="warn(JSON.stringify({{ errors }}))" style="float:right"><img src="/gui/img/errors.png"/></a>
+                  <a onclick="warn({{ errors }})" style="float:right"><img src="/gui/img/errors.png"/></a>
               {% else %}
                   <a onclick="warn('Framework is in good shape!')" style="float:right"><img src="/gui/img/success.png"/></a>
               {% endif %}

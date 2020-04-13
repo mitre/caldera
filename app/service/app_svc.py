@@ -24,11 +24,15 @@ Error = namedtuple('Error', 'name msg')
 
 class AppService(BaseService):
 
+    @property
+    def errors(self):
+        return [dict(e) for e in self._errors]
+
     def __init__(self, application):
         self.application = application
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
-        self.errors = []
+        self._errors = []
 
     async def start_sniffer_untrusted_agents(self):
         """
