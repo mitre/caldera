@@ -8,9 +8,10 @@ function tag_version(){
 
 function update_version(){
     git pull && git checkout master && git reset --hard origin/master
-    newHash=$(find . -type f \( -name "*.py" -o -name "*.html" \) -not -path "./plugins/*" -not -path "./.tox/*" -exec md5 {} \; | md5)
+    newHash=$(dirhash . -a md5 -m "*.py" -m "*.html")
+
     echo "${1}-${newHash}" > VERSION.txt
-    tag_version $1
+    #tag_version $1
 }
 
 read -p "[+] Enter a new version: " newVersion
