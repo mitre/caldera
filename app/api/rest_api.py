@@ -44,7 +44,7 @@ class RestApi(BaseWorld):
 
     @template('login.html', status=401)
     async def login(self, request):
-        return dict()
+        return dict(version=self.app_svc.read_version('.')[0])
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
