@@ -4,7 +4,6 @@ import os
 import re
 import yaml
 import logging
-import subprocess
 
 import dirhash
 
