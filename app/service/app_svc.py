@@ -136,12 +136,6 @@ class AppService(BaseService):
         await contact_svc.register(Html(self.get_services()))
         await contact_svc.register(Gist(self.get_services()))
 
-    @staticmethod
-    def read_version(p):
-        with open('%s/VERSION.txt' % p) as version_txt:
-            version = version_txt.read()
-            return version.split('-')
-
     """ PRIVATE """
 
     async def _save_configurations(self):
