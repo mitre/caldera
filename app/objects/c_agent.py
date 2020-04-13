@@ -106,7 +106,7 @@ class Agent(BaseObject):
     async def capabilities(self, ability_set):
         abilities = []
         if self.executors:
-            preferred = 'psh' if 'psh' in self.executors else self.executors[0]
+            preferred = self._get_preferred_executor()
             executors = self.executors
             for ai in set([pa.ability_id for pa in ability_set]):
                 total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
@@ -187,3 +187,10 @@ class Agent(BaseObject):
                 _, display_name = file_svc.get_payload_name_from_uuid(uuid)
                 decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, display_name)
         return decoded_cmd
+
+    def _get_preferred_executor(self):
+        if 'psh' in self.executors:
+            return 'psh'
+        elif 'sh' in self.executors:
+            return 'sh'
+        return self.executors[0]
