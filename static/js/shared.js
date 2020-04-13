@@ -140,11 +140,17 @@ function enableNotice(){
      }
 }
 
-function checkVersions(){
-    var modified = true;
-//    check plugins for any versions === unknown
+function checkVersions(plugins){
+    var modified = false;
+    var arr = [];
+    for(var index in plugins){
+        if(!plugins[index]['version']){
+            modified = true;
+            arr.push(plugins[index]['name']);
+        }
+    }
     if(modified){
-        $('#notice').append(' You are running non-versioned code.');
+        $('#notice').append(' You are running non-versioned code.  Affected plugins: ' + arr);
         enableNotice();
     }
 };
@@ -155,12 +161,6 @@ function checkBrowser(){
         enableNotice();
     }
 };
-
-window.onload = function runChecks(){
-    checkBrowser()
-    checkVersions();
-}
-
 
 $(document).ready(function () {
    stream('Welcome home. Go into the Agents tab to review your deployed agents.');

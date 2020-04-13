@@ -13,7 +13,7 @@ class Plugin(BaseObject):
 
     @property
     def display(self):
-        return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
+        return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address, version=self.version))
 
     def __init__(self, name='virtual', description=None, address=None, enabled=False, data_dir=None, access=None):
         super().__init__()
