@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 import pathlib
 import sys
 
@@ -50,7 +51,7 @@ def run_tasks(services):
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
-    loop.run_until_complete(app_svc.load_plugins())
+    loop.run_until_complete(app_svc.load_plugins(args.plugins))
     loop.run_until_complete(data_svc.load_data())
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
@@ -65,6 +66,8 @@ def run_tasks(services):
 
 
 if __name__ == '__main__':
+    def list_str(values):
+        return values.split(',')
     sys.path.append('')
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
@@ -72,6 +75,9 @@ if __name__ == '__main__':
                         help="Set the logging level", default='DEBUG')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
                         help='remove object_store on start')
+    parser.add_argument('-P', '--plugins', required=False, default=os.listdir('plugins'),
+                        help='Start up with a single plugin', type=list_str)
+
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
