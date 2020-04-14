@@ -25,12 +25,22 @@ class FileSvc(FileServiceInterface, BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
+        self.extensions = dict()
+        for entry in self._app_configuration['payloads']['extensions']:
+            self.add_extension(entry, self._app_configuration['payloads']['extensions'][entry])
 
     async def get_file(self, headers):
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
         display_name = payload = headers.get('file')
+        if any(payload.endswith(x) for x in self.extensions.keys()):
+            try:
+                target = '.' + payload.split('.')[-1]
+                payload, display_name = await self.extensions[target](headers)
+            except Exception as e:
+                self.log.error('Error linking extension handler=%s, %s' % (payload, e))
+                return "", "", ""
         if self.is_uuid4(payload):
             payload, display_name = self.get_payload_name_from_uuid(payload)
         if payload in self.special_payloads:
@@ -97,6 +107,27 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def add_special_payload(self, name, func):
         self.special_payloads[name] = func
+
+    def add_extension(self, ext, func):
+        """
+        Call a special function when payloads with specific extensions are downloaded
+
+        :param name:
+        :param func:
+        :return:
+        """
+        if callable(func):
+            self.extensions[ext] = func
+        else:
+            if len(func.split('.')) > 1:
+                try:
+                    mod = __import__('.'.join(func.split('.')[:-1]), fromlist=[func.split('.')[-1]])
+                    handle = getattr(mod, func.split('.')[-1])
+                    self.extensions[ext] = handle
+                except AttributeError as e:
+                    self.log.error("Unable to properly load {} for extension {} from string.".format(func, ext))
+            else:
+                self.log.warning("Unable to decipher target function from string {}.".format(func))
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.', loop=None):
