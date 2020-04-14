@@ -19,7 +19,6 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 Examples include agents, GUI interfaces, collections of TTPs and more. 
 
 ## Plugins
-### MITRE
 - **[Access](https://github.com/mitre/access)** 
 - **[Atomic](https://github.com/mitre/atomic)** 
 - **[Compass](https://github.com/mitre/compass)** 
