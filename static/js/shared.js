@@ -142,8 +142,10 @@ window.onerror = function(error, url, line) {
 
 function warn(errors){
     function formatErrors(errors){
+        $("#error-table").remove()
         var table = document.createElement("table");
         table.className = "warn-table"
+        table.id = 'error-table'
         for(var id in errors){
             var tr = document.createElement('tr');
             var td1 = document.createElement('td');
