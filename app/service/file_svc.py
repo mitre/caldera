@@ -189,12 +189,15 @@ class FileSvc(BaseService):
 
         args.extend(['-o', output, src_fle])
 
-        process = await asyncio.subprocess.create_subprocess_exec(*args, cwd=build_dir, env=env,
-                                                                  stdout=asyncio.subprocess.PIPE,
-                                                                  stderr=asyncio.subprocess.PIPE)
-        command_output = await process.communicate()
-        if process.returncode != 0:
-            self.log.warning('Problem building golang executable {}: {}'.format(src_fle, command_output))
+        try:
+            process = await asyncio.subprocess.create_subprocess_exec(*args, cwd=build_dir, env=env,
+                                                                      stdout=asyncio.subprocess.PIPE,
+                                                                      stderr=asyncio.subprocess.PIPE)
+            command_output = await process.communicate()
+            if process.returncode != 0:
+                self.log.warning('Problem building golang executable {}: {}'.format(src_fle, command_output))
+        except NotImplementedError as e:
+            self.log.warning("You are running this on Windows. Compiling GO currently doesn't work on Windows.")
 
     def get_payload_name_from_uuid(self, payload):
         for t in ['standard_payloads', 'special_payloads']:
