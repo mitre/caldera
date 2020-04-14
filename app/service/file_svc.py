@@ -196,7 +196,7 @@ class FileSvc(BaseService):
             command_output = await process.communicate()
             if process.returncode != 0:
                 self.log.warning('Problem building golang executable {}: {}'.format(src_fle, command_output))
-        except NotImplementedError as e:
+        except NotImplementedError:
             self.log.warning("You are running this on Windows. Compiling GO currently doesn't work on Windows.")
 
     def get_payload_name_from_uuid(self, payload):
