@@ -47,7 +47,7 @@ Finally, start the server.
 ```
 python server.py
 ```
-You can now navigate to 127.0.0.1:8888 in a browser and log in with either red team (red:admin) or blue team (blue:admin) credentials. 
+You can now navigate to 127.0.0.1:8888 in a browser and log in with either red team (red:admin) or blue team (blue:admin) credentials. Once you have everything running, we highly recommend going through the Training plugin to learn the ins-and-outs of the framework.
 
 > There is also a [Docker image](https://caldera.readthedocs.io/en/latest/Docker-deployment.html) for CALDERA.
 
