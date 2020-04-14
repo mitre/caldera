@@ -56,7 +56,7 @@ class RestApi(BaseWorld):
     async def landing(self, request):
         access = await self.auth_svc.get_permissions(request)
         if not access:
-            return render_template('login.html', request, {})
+            return render_template('login.html', request, dict(version=self.read_version()[0]))
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins])
         return render_template('%s.html' % access[0].name, request, data)
