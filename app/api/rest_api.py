@@ -59,7 +59,7 @@ class RestApi(BaseWorld):
         if not access:
             return render_template('login.html', request, {})
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
+        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request), version='2.6.6')
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
@@ -132,5 +132,5 @@ class RestApi(BaseWorld):
     def _request_errors(request):
         errors = []
         if 'Chrome' not in request.headers.get('User-Agent'):
-            errors.append(Error('browser', 'chrome not being used'))
+            errors.append(dict(Error('browser', 'chrome not being used')._asdict()))
         return errors

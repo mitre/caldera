@@ -19,14 +19,14 @@ from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
-Error = namedtuple('Error', 'name msg')
+Error = namedtuple('Error', ['name', 'msg'])
 
 
 class AppService(BaseService):
 
     @property
     def errors(self):
-        return [dict(e) for e in self._errors]
+        return [dict(e._asdict()) for e in self._errors]
 
     def __init__(self, application):
         self.application = application

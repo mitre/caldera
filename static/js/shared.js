@@ -140,7 +140,30 @@ window.onerror = function(error, url, line) {
     }
 };
 
-function warn(msg){
+function warn(errors){
+    function formatErrors(errors){
+        var table = document.createElement("table");
+        table.className = "warn-table"
+        for(var id in errors){
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td');
+            var td2 = document.createElement('td');
+            var text1 = document.createTextNode(errors[id]['name']);
+            var text2 = document.createTextNode(errors[id]['msg']);
+            td1.appendChild(text1);
+            td2.appendChild(text2);
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            table.appendChild(tr);
+        }
+        $("#alert-text").after(table)
+    }
     document.getElementById("alert-modal").style.display="block";
-    $("#alert-text").html(msg);
+    if(errors.length > 0){
+        $("#alert-text").html('Errors:  ');
+        formatErrors(errors);
+    }
+    else{
+        $("#alert-text").html("no errors to view");
+    }
 }

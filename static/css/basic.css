@@ -629,3 +629,21 @@ table.dataTable input[type=text] {
 .ability-order {
     color: var(--secondary-font-color);
 }
+.version {
+    height: 20px;
+    border-radius: 10px;
+    background-color: green;
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    padding-right: 10px;
+    padding-left: 10px;
+    border: 1px solid white;
+}
+.warn-table {
+    color: white;
+    align: center;
+}
+.warn-table td {
+    width: 50%;
+}
