@@ -3,10 +3,6 @@
 [![codecov](https://codecov.io/gh/mitre/caldera/branch/master/graph/badge.svg)](https://codecov.io/gh/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
-**[Sandcat](https://github.com/mitre/sandcat)**|**[Mock](https://github.com/mitre/mock)**|**[Manx](https://github.com/mitre/manx)**|**[SSL](https://github.com/mitre/SSL)**|**[Stockpile](https://github.com/mitre/stockpile)**|**[Atomic](https://github.com/mitre/atomic)**|**[Compass](https://github.com/mitre/compass)**|**[Access](https://github.com/mitre/access)**|**[Response](https://github.com/mitre/response)**
-:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
-[![Build Status](https://travis-ci.com/mitre/sandcat.svg?branch=master)](https://travis-ci.com/mitre/sandcat)|[![Build Status](https://travis-ci.com/mitre/mock.svg?branch=master)](https://travis-ci.com/mitre/mock)|[![Build Status](https://travis-ci.com/mitre/manx.svg?branch=master)](https://travis-ci.com/mitre/terminal)|[![Build Status](https://travis-ci.com/mitre/ssl.svg?branch=master)](https://travis-ci.com/mitre/ssl)|[![Build Status](https://travis-ci.com/mitre/stockpile.svg?branch=master)](https://travis-ci.com/mitre/stockpile)|[![Build Status](https://travis-ci.com/mitre/caltack.svg?branch=master)](https://travis-ci.com/mitre/atomic)|[![Build Status](https://travis-ci.com/mitre/compass.svg?branch=master)](https://travis-ci.com/mitre/compass)|[![Build Status](https://travis-ci.com/mitre/access.svg?branch=master)](https://travis-ci.com/mitre/access)|[![Build Status](https://travis-ci.com/mitre/response.svg?branch=master)](https://travis-ci.com/mitre/response)
-
 # CALDERA
 
 *Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/)*
@@ -21,6 +17,19 @@ The framework consists of two components:
 an asynchronous command-and-control (C2) server with a REST API and a web interface. 
 2) **Plugins**. These are separate repositories that hang off of the core framework, providing additional functionality. 
 Examples include agents, GUI interfaces, collections of TTPs and more. 
+
+## Plugins
+### MITRE
+- **[Access](https://github.com/mitre/access)** 
+- **[Atomic](https://github.com/mitre/atomic)** 
+- **[Compass](https://github.com/mitre/compass)** 
+- **[Manx](https://github.com/mitre/manx)** 
+- **[Mock](https://github.com/mitre/mock)** 
+- **[Response](https://github.com/mitre/response)** 
+- **[Sandcat](https://github.com/mitre/sandcat)** 
+- **[SSL](https://github.com/mitre/SSL)** 
+- **[Stockpile](https://github.com/mitre/stockpile)** 
+- **[Training](https://github.com/mitre/training)** 
 
 ## Requirements
 
