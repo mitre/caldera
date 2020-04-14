@@ -109,12 +109,6 @@ class BaseWorld:
                 return os.path.join(root, '%s.xored' % target)
         return None
 
-    @staticmethod
-    def read_version(p='.'):
-        with open('%s/VERSION.txt' % p) as version_txt:
-            version = version_txt.read()
-            return version.split('-')
-
     class Access(Enum):
         APP = 0
         RED = 1
