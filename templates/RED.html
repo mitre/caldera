@@ -22,9 +22,9 @@
                 </div>
               </div>
               {% if errors|length > 0 %}
-                  <a onclick="warn({{ errors }})" style="float:right"><img src="/gui/img/errors.png"/></a>
+                <a onclick="warn({{ errors }})" style="float:right"><img src="/gui/img/errors.png"/></a>
               {% else %}
-            <a onclick="warn([])" style="float:right"><div class="version">{{ version }}</div></a>
+                <a onclick="warn([])" style="float:right"><div class="version">{{ version }}</div></a>
               {% endif %}
               <a href="/logout" style="float:right">Logout</a>
               <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>

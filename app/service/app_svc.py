@@ -33,6 +33,7 @@ class AppService(BaseService):
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
         self._errors = []
+        self.version = None
 
     async def start_sniffer_untrusted_agents(self):
         """
