@@ -124,7 +124,7 @@ class FileSvc(FileServiceInterface, BaseService):
                     mod = __import__('.'.join(func.split('.')[:-1]), fromlist=[func.split('.')[-1]])
                     handle = getattr(mod, func.split('.')[-1])
                     self.extensions[ext] = handle
-                except AttributeError as e:
+                except AttributeError:
                     self.log.error("Unable to properly load {} for extension {} from string.".format(func, ext))
             else:
                 self.log.warning("Unable to decipher target function from string {}.".format(func))
