@@ -39,7 +39,7 @@ def aiohttp_client(loop, aiohttp_client):
         os.chdir(str(Path(__file__).parents[2]))
 
         await app_svc.register_contacts()
-        await app_svc.load_plugins()
+        await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         return app_svc.application
