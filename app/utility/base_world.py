@@ -5,6 +5,8 @@ import re
 import yaml
 import logging
 
+import dirhash
+
 from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
@@ -107,6 +109,19 @@ class BaseWorld:
                 return os.path.join(root, target)
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
+        return None
+
+    @staticmethod
+    def get_version(path='.'):
+        ignore = ['/plugins/', '/.tox/']
+        included_extensions = ['*.py', '*.html', '*.js', '*.go']
+        version_file = os.path.join(path, 'VERSION.txt')
+        if os.path.exists(version_file):
+            with open(version_file, 'r') as f:
+                version, md5 = f.read().strip().split('-')
+            calculated_md5 = dirhash.dirhash(path, 'md5', ignore=ignore, match=included_extensions)
+            if md5 == calculated_md5:
+                return version
         return None
 
     class Access(Enum):
