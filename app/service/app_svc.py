@@ -116,6 +116,8 @@ class AppService(BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
+            if not plugin.version:
+                self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
