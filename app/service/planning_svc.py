@@ -13,7 +13,8 @@ class PlanningService(BasePlanningService):
         """
         TODO
         """
-        gather(*[operation.apply(l) for l in await self.get_links(operation, bucket, agent)])  # dont have to use this as requires import, but wanted to see if worked
+        # dont have to use 'gather' as this as requires import, but wanted to see if worked
+        gather(*[operation.apply(l) for l in await self.get_links(operation, bucket, agent)])
         await operation.wait_for_completion()
 
     async def default_next_bucket(self, current_bucket, state_machine):
@@ -30,7 +31,7 @@ class PlanningService(BasePlanningService):
 
         :param operation:
         :param bucket:
-            'None' - no buckets, get all links for operation-agent
+            'None' - no buckets, get all links for given operation and agent
             'atomic' - no buckets, but resort to atomic ordering of links as specified in adversary
             '<bucket>' - get links for specified bucket
         :param agent:

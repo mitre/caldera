@@ -39,7 +39,7 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, atomic_enabled=False, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None, buckets_enabled=False):
+                 visibility=50, access=None):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -57,7 +57,6 @@ class Operation(BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.buckets_enabled = buckets_enabled
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
         if source:
@@ -205,14 +204,6 @@ class Operation(BaseObject):
         while planner.next_state != None and not planner.stopping_condition_met:
             await getattr(planner, planner.next_state)()
             await self.wait_for_completion()
-
-    #async def _run(self, planner):
-    #    # TODO: How would stopping conditions
-    #    if not await self.is_closeable():
-    #       await planner.execute()
-    #        if planner.stopping_condition_met:
-    #            return
-    #        await self.wait_for_completion()
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
