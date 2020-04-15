@@ -69,6 +69,28 @@
         </form>
     </div>
 
+    <div id="list-modal" class="modal">
+        <form class="modal-content">
+            <div class="container modal-box">
+                <div class="transparent-row">
+                    <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                    <ul id="info-list"></ul>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <li id="infolist-template" style="display: none">
+        <div class="infolist-item">
+            <div class="infolist-icon">
+                <img src="/gui/img/errors.png">
+            </div>
+            <div class="infolist-contents">
+                <p>text</p>
+            </div>
+        </div>
+    </li>
+
     <center>
         <div id="section-container"></div>
 

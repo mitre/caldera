@@ -141,31 +141,23 @@ window.onerror = function(error, url, line) {
 };
 
 function warn(errors){
-    function formatErrors(errors){
-        $("#error-table").remove()
-        var table = document.createElement("table");
-        table.className = "warn-table"
-        table.id = 'error-table'
-        for(var id in errors){
-            var tr = document.createElement('tr');
-            var td1 = document.createElement('td');
-            var td2 = document.createElement('td');
-            var text1 = document.createTextNode(errors[id]['name']);
-            var text2 = document.createTextNode(errors[id]['msg']);
-            td1.appendChild(text1);
-            td2.appendChild(text2);
-            tr.appendChild(td1);
-            tr.appendChild(td2);
-            table.appendChild(tr);
+    function add_element(txt, level){
+        let newitem = $("#infolist-template").clone();
+        newitem.show();
+        newitem.find(".infolist-contents p").html(txt)
+        if(!level){
+            newitem.find(".infolist-icon img").attr('src', '/gui/img/success.png')
         }
-        $("#alert-text").after(table)
+        $("#info-list").append(newitem);
     }
-    document.getElementById("alert-modal").style.display="block";
+    document.getElementById("list-modal").style.display="block";
+    $("#info-list").empty();
     if(errors.length > 0){
-        $("#alert-text").html('Errors:  ');
-        formatErrors(errors);
+        for(var id in errors){
+            add_element(errors[id].name + ": " + errors[id].msg, 1);
+        }
     }
     else{
-        $("#alert-text").html("no errors to view");
+        add_element("no errors to view", 0);
     }
 }
