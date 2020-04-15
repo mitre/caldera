@@ -127,19 +127,6 @@ function alphabetize_dropdown(obj) {
   }
 })(jQuery);
 
-window.onload = function checkBrowser(){
-    if(navigator.vendor !==  "Google Inc.") {
-        $('#notice').css('display', 'block');
-        $(window).scroll(function(){
-            var sticky = $('.notice'),
-                scroll = $(window).scrollTop();
-
-            if (scroll >= 100) sticky.addClass('.notice');
-            else sticky.removeClass('.notice');
-          });
-    }
-};
-
 $(document).ready(function () {
    stream('Welcome home. Go into the Agents tab to review your deployed agents.');
 });
@@ -156,4 +143,25 @@ window.onerror = function(error, url, line) {
 function warn(msg){
     document.getElementById("alert-modal").style.display="block";
     $("#alert-text").html(msg);
+}
+
+function display_errors(errors){
+    function add_element(txt, level){
+        let newitem = $("#infolist-template").clone();
+        newitem.show();
+        newitem.find(".infolist-contents p").html(txt)
+        if(!level){
+            newitem.find(".infolist-icon img").attr('src', '/gui/img/success.png')
+        }
+        $("#info-list").append(newitem);
+    }
+    document.getElementById("list-modal").style.display="block";
+    $("#info-list").empty();
+    if(errors.length > 0){
+        for(var id in errors){
+            add_element(errors[id].name + ": " + errors[id].msg, 1);
+        }
+    } else {
+        add_element("no errors to view", 0);
+    }
 }

@@ -139,6 +139,16 @@ pre {
     position: relative;
     border: 2px solid var(--navbar-color);
 }
+.transparent-row {
+    margin-top:50px;
+    text-align:center;
+    background-color: transparent;
+    background-size: cover;
+    padding:25px;
+    width: 95%;
+    display: flex;
+    position: relative;
+}
 .inner-row {
     border: none;
 }

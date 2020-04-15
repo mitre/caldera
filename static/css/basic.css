@@ -629,3 +629,54 @@ table.dataTable input[type=text] {
 .ability-order {
     color: var(--secondary-font-color);
 }
+.version {
+    height: 20px;
+    border-radius: 10px;
+    background-color: green;
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    padding-right: 10px;
+    padding-left: 10px;
+    border: 1px solid white;
+}
+
+#info-list {
+    min-width: 50%;
+    margin: auto;
+    list-style-type: none;
+}
+
+.infolist-item {
+    height: 3.5em;
+}
+
+.infolist-icon {
+    position: absolute;
+    height: 3em;
+    width: 3em;
+    background-color: #202025;
+    border-radius: 1.5em;
+}
+
+.infolist-icon img {
+    margin: 0.3em;
+    height: 2.4em;
+}
+
+.infolist-contents {
+    float: left:
+    height: 1.8em;
+    min-width: 50%;
+    margin-left :1.5em;
+    text-align: center;
+    border-radius: 0.3em;
+    background-color: #202025;
+    padding: 0.3em 1.5em 0.3em 1.8em;
+}
+
+.infolist-contents p {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    color: white;
+}
