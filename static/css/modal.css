@@ -59,8 +59,8 @@ span.psw {
     padding-top: 40px;
     overflow-y: scroll;
     height: 100%;
-    -webkit-backdrop-filter: blur(5px);
-    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px);
 }
 .modal-content {
     margin: 5% auto 5% auto;
