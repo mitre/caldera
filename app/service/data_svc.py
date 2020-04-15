@@ -197,6 +197,10 @@ class DataService(BaseService):
                                     technique_id = ab.get('technique', dict()).get('attack_id')
                                     encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
                                     cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
+                                    encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                                    payloads = info.get('payloads')
+                                    if encoded_code:
+                                        payloads = ab.get('payloads')
                                     a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
                                                                    technique_name=technique_name,
                                                                    technique_id=technique_id,
@@ -204,7 +208,10 @@ class DataService(BaseService):
                                                                    description=ab.get('description') or '',
                                                                    executor=e, name=ab.get('name'), platform=pl,
                                                                    cleanup=cleanup_cmd,
-                                                                   payloads=info.get('payloads'),
+                                                                   code=encoded_code,
+                                                                   language=info.get('language'),
+                                                                   build_target=info.get('build_target'),
+                                                                   payloads=payloads,
                                                                    parsers=info.get('parsers', []),
                                                                    timeout=info.get('timeout', 60),
                                                                    requirements=ab.get('requirements', []),
@@ -267,7 +274,8 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
+                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, code=None,
+                              language=None, build_target=None, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -279,8 +287,8 @@ class DataService(BaseService):
                             requirement[module]]
                 rs.append(Requirement(module=module, relationships=relation))
         ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
-                          technique_id=technique_id, technique=technique_name,
-                          executor=executor, platform=platform, description=description,
+                          technique_id=technique_id, technique=technique_name, code=code, language=language,
+                          executor=executor, platform=platform, description=description, build_target=build_target,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
         ability.access = access
