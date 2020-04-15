@@ -3,6 +3,7 @@ import copy
 import hashlib
 import json
 import os
+from collections import namedtuple
 from datetime import datetime, date
 
 import aiohttp_jinja2
@@ -18,13 +19,24 @@ from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.utility.base_service import BaseService
 
+Error = namedtuple('Error', ['name', 'msg'])
+
 
 class AppService(BaseService):
+
+    @property
+    def errors(self):
+        return [dict(e._asdict()) for e in self._errors]
 
     def __init__(self, application):
         self.application = application
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
+        self._errors = []
+        self.version = None
+        if not self.version:
+            self._errors.append(Error('core', 'Core code is not a release version'))
+            self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
         """
@@ -91,19 +103,21 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
-    async def load_plugins(self):
+    async def load_plugins(self, plugins):
         """
         Store all plugins in the data store
 
         :return:
         """
-        for plug in os.listdir('plugins'):
+        for plug in plugins:
             if plug.startswith('.'):
                 continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
+            if not plugin.version:
+                self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):

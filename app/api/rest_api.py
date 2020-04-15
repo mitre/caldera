@@ -1,7 +1,7 @@
-import os
 import asyncio
 import json
 import logging
+import os
 import uuid
 
 import marshmallow as ma
@@ -11,6 +11,7 @@ from aiohttp_jinja2 import template, render_template
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
+from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
@@ -56,9 +57,9 @@ class RestApi(BaseWorld):
     async def landing(self, request):
         access = await self.auth_svc.get_permissions(request)
         if not access:
-            return render_template('login.html', request, {})
+            return render_template('login.html', request, dict())
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins])
+        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request), version=self.app_svc.version)
         return render_template('%s.html' % access[0].name, request, data)
 
     """ API ENDPOINTS """
@@ -124,3 +125,12 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
+
+    """ PRIVATE """
+
+    @staticmethod
+    def _request_errors(request):
+        errors = []
+        if 'Chrome' not in request.headers.get('User-Agent'):
+            errors.append(dict(Error('browser', 'chrome not being used')._asdict()))
+        return errors

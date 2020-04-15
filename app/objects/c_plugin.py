@@ -23,6 +23,7 @@ class Plugin(BaseObject):
         self.enabled = enabled
         self.data_dir = data_dir
         self.access = access if access else self.Access.APP
+        self.version = None
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
