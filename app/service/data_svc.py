@@ -150,7 +150,7 @@ class DataService(BaseService):
     async def _load(self, plugins=()):
         try:
             if not plugins:
-                plugins = [p for p in await self.locate('plugins') if p.data_dir]
+                plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
                 plugins.append(Plugin(data_dir='data'))
             for plug in plugins:
                 await self._load_payloads(plug)

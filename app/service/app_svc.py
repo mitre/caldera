@@ -103,13 +103,13 @@ class AppService(BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
-    async def load_plugins(self):
+    async def load_plugins(self, plugins):
         """
         Store all plugins in the data store
 
         :return:
         """
-        for plug in os.listdir('plugins'):
+        for plug in plugins:
             if plug.startswith('.'):
                 continue
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
