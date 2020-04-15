@@ -4,6 +4,9 @@ import os
 import re
 import yaml
 import logging
+import importlib
+import subprocess
+import distutils.version
 
 from base64 import b64encode, b64decode
 from datetime import datetime
@@ -108,6 +111,27 @@ class BaseWorld:
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    @staticmethod
+    def check_requirement(params):
+        def parse_version(version_string, pattern=r'([0-9]+(?:\.[0-9]+)+)'):
+            groups = re.search(pattern, version_string)
+            if groups:
+                return groups[1]
+            return '0.0.0'
+
+        try:
+            if 'module' in params:
+                attr = params['attr'] if params.get('attr') else '__version__'
+                mod_version = getattr(importlib.import_module(params['module']), attr)
+                return distutils.version.StrictVersion(str(parse_version(mod_version))) >= distutils.version.StrictVersion(str(params['version']))
+            elif 'command' in params:
+                output = subprocess.check_output(params['command'].split(' '), shell=False)
+                v = parse_version(output.decode('utf-8'))
+                return distutils.version.StrictVersion(str(parse_version(output.decode('utf-8')))) >= distutils.version.StrictVersion(str(params['version']))
+        except Exception as e:
+            logging.getLogger('check_requirement').error(repr(e))
+        return False
 
     class Access(Enum):
         APP = 0
