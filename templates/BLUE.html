@@ -22,6 +22,11 @@
                         <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
                     </div>
                   </div>
+                  {% if errors|length > 0 %}
+                    <a onclick="display_errors({{ errors }})" style="float:right"><div class="version" style="background:red">{{ version }}</div></a>
+                  {% else %}
+                    <a onclick="display_errors([])" style="float:right"><div class="version">{{ version }}</div></a>
+                  {% endif %}
                   <a href="/logout" style="float:right">Logout</a>
                   <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
                   <div class="subnav-right">
@@ -60,6 +65,28 @@
                 </div>
             </form>
         </div>
+
+        <div id="list-modal" class="modal">
+            <form class="modal-content">
+                <div class="container modal-box">
+                    <div class="transparent-row">
+                        <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <ul id="info-list"></ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <li id="infolist-template" style="display: none">
+            <div class="infolist-item">
+                <div class="infolist-icon">
+                    <img src="/gui/img/errors.png">
+                </div>
+                <div class="infolist-contents">
+                    <p></p>
+                </div>
+            </div>
+        </li>
 
         <center>
             <div id="section-container"></div>

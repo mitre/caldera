@@ -30,9 +30,6 @@
 .navbar a:hover, .subnav-right:hover .subnavbtn {
   background-color: black;
 }
-.navbar a img {
-  height: 20px;
-}
 .subnav {
   float: left;
   overflow: hidden;

@@ -140,7 +140,12 @@ window.onerror = function(error, url, line) {
     }
 };
 
-function warn(errors){
+function warn(msg){
+    document.getElementById("alert-modal").style.display="block";
+    $("#alert-text").html(msg);
+}
+
+function display_errors(errors){
     function add_element(txt, level){
         let newitem = $("#infolist-template").clone();
         newitem.show();
@@ -156,8 +161,7 @@ function warn(errors){
         for(var id in errors){
             add_element(errors[id].name + ": " + errors[id].msg, 1);
         }
-    }
-    else{
+    } else {
         add_element("no errors to view", 0);
     }
 }

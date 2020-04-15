@@ -34,6 +34,9 @@ class AppService(BaseService):
         self.loop = asyncio.get_event_loop()
         self._errors = []
         self.version = None
+        if not self.version:
+            self._errors.append(Error('CALDERA core', 'Core code is not a release version'))
+            self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
         """
