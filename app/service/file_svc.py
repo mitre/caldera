@@ -24,9 +24,6 @@ class FileSvc(BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
-        self.extensions = dict()
-        for entry in self._app_configuration['payloads']['extensions']:
-            self.add_extension(entry, self._app_configuration['payloads']['extensions'][entry])
 
     async def get_file(self, headers):
         """
@@ -40,13 +37,8 @@ class FileSvc(BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = headers.get('file')
-        if any(payload.endswith(x) for x in self.extensions.keys()):
-            try:
-                target = '.' + payload.split('.')[-1]
-                payload, display_name = await self.extensions[target](headers)
-            except Exception as e:
-                self.log.error('Error linking extension handler=%s, %s' % (payload, e))
-                return "", "", ""
+        if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
+            payload, display_name = await self._operate_extension(payload, headers)
         if self.is_uuid4(payload):
             payload, display_name = self.get_payload_name_from_uuid(payload)
         if payload in self.special_payloads:
@@ -156,26 +148,16 @@ class FileSvc(BaseService):
         :param func:
         :return:
         """
-        self.special_payloads[name] = func
-
-    def add_extension(self, ext, func):
-        """
-        Call a special function when payloads with specific extensions are downloaded
-
-        :param name:
-        :param func:
-        :return:
-        """
         if callable(func):
-            self.extensions[ext] = func
+            self.special_payloads[name] = func
         else:
             if len(func.split('.')) > 1:
                 try:
                     mod = __import__('.'.join(func.split('.')[:-1]), fromlist=[func.split('.')[-1]])
                     handle = getattr(mod, func.split('.')[-1])
-                    self.extensions[ext] = handle
+                    self.special_payloads[name] = handle
                 except AttributeError:
-                    self.log.error("Unable to properly load {} for extension {} from string.".format(func, ext))
+                    self.log.error("Unable to properly load {} for payload {} from string.".format(func, name))
             else:
                 self.log.warning("Unable to decipher target function from string {}.".format(func))
 
@@ -247,6 +229,14 @@ class FileSvc(BaseService):
                                    iterations=2 ** 20,
                                    backend=default_backend())
         return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('encryption_key'), 'utf-8'))))
+
+    async def _operate_extension(self, payload, headers):
+        try:
+            target = '.' + payload.split('.')[-1]
+            payload, display_name = await self.special_payloads[target](headers)
+        except Exception as e:
+            self.log.error('Error linking extension handler=%s, %s' % (payload, e))
+            return "", ""
 
 
 def _go_vars(arch, platform):
