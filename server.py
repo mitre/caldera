@@ -42,7 +42,7 @@ async def start_server():
     app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
     runner = web.AppRunner(app_svc.application)
     await runner.setup()
-    await web.TCPSite(runner, '0.0.0.0', BaseWorld.get_config('port')).start()
+    await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
 
 def run_tasks(services):
