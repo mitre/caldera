@@ -1,3 +1,4 @@
+from asyncio import gather
 from app.objects.secondclass.c_link import Link
 from app.utility.base_planning_svc import BasePlanningService
 
@@ -8,12 +9,30 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def get_links(self, operation, agent=None, trim=True, planner=None, stopping_conditions=None):
+    async def bucket_exhaustion(self, bucket, operation, agent=None):
+        """
+        TODO
+        """
+        gather(*[operation.apply(l) for l in await self.get_links(operation, bucket, agent)])  # dont have to use this as requires import, but wanted to see if worked
+        await operation.wait_for_completion()
+
+    async def default_next_bucket(self, current_bucket, state_machine):
+        """
+        TODO
+        """
+        idx = (state_machine.index(current_bucket) + 1) % len(state_machine)  # loops
+        return state_machine[idx]
+       
+    async def get_links(self, operation, bucket=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
         For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
 
         :param operation:
+        :param bucket:
+            'None' - no buckets, get all links for operation-agent
+            'atomic' - no buckets, but resort to atomic ordering of links as specified in adversary
+            '<bucket>' - get links for specified bucket
         :param agent:
         :param trim: call trim_links() on list of links before returning
         :param planner:
@@ -24,9 +43,14 @@ class PlanningService(BasePlanningService):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
             return []
-        if operation.atomic_enabled:
+        if bucket == "atomic":
+            # atomic mode
             abilities = self._get_next_atomic_ability(operation=operation)
+        elif bucket:
+            # bucket 
+            abilities = [ab for ab in operation.adversary.atomic_ordering if ab.bucket == bucket]
         else:
+            # no mode
             abilities = operation.adversary.atomic_ordering
         links = []
         if agent:

@@ -39,7 +39,7 @@ class Operation(BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, atomic_enabled=False, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None):
+                 visibility=50, access=None, buckets_enabled=False):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -57,6 +57,7 @@ class Operation(BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
+        self.buckets_enabled = buckets_enabled
         self.chain, self.rules = [], []
         self.access = access if access else self.Access.APP
         if source:
@@ -189,12 +190,9 @@ class Operation(BaseObject):
     async def run(self, services):
         try:
             planner = await self._get_planning_module(services)
-            await self._run(planner)
-
-            self.atomic_enabled = False
+            await self._execute_planner(planner)
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-                await self._run(planner)
             await self._cleanup_operation(services)
             await self.close()
             await self._save_new_source(services)
@@ -203,15 +201,18 @@ class Operation(BaseObject):
 
     """ PRIVATE """
 
-    async def _run(self, planner):
-        ability_set_format = self._get_ability_set_format_for_planner()
-        for ability in ability_set_format:
-            if not await self.is_closeable():
-                await planner.execute(ability_set_format.index(ability))
-                if planner.stopping_condition_met:
-                    break
-                await self.wait_for_completion()
-            self.last_ran = ability
+    async def _execute_planner(self, planner):
+        while planner.next_state != None and not planner.stopping_condition_met:
+            await getattr(planner, planner.next_state)()
+            await self.wait_for_completion()
+
+    #async def _run(self, planner):
+    #    # TODO: How would stopping conditions
+    #    if not await self.is_closeable():
+    #       await planner.execute()
+    #        if planner.stopping_condition_met:
+    #            return
+    #        await self.wait_for_completion()
 
     async def _cleanup_operation(self, services):
         for member in self.agents:

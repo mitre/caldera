@@ -210,6 +210,7 @@ class DataService(BaseService):
                                                                    requirements=ab.get('requirements', []),
                                                                    privilege=ab[
                                                                        'privilege'] if 'privilege' in ab.keys() else None,
+                                                                    bucket=self._classify(ab),
                                                                    access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                    variations=info.get('variations', []))
                                     await self._update_extensions(a)
@@ -222,6 +223,11 @@ class DataService(BaseService):
             ab.technique_id = ability.technique_id
             ab.technique_name = ability.technique_name
             await self.store(ab)
+    
+    async def _classify(self, ability):
+        if 'bucket' in ability:
+            return ability['bucket'].lower()
+        return ability['tactic'].lower()
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -267,7 +273,7 @@ class DataService(BaseService):
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, variations=None):
+                              requirements=None, privilege=None, timeout=60, access=None, bucket=None, repeatable=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -282,7 +288,8 @@ class DataService(BaseService):
                           technique_id=technique_id, technique=technique_name,
                           executor=executor, platform=platform, description=description,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
+                          privilege=privilege, timeout=timeout, repeatable=repeatable,
+                          variations=variations, bucket=bucket)
         ability.access = access
         return await self.store(ability)
 
