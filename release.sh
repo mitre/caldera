@@ -18,7 +18,7 @@ read -p "[+] Enter a new version: " newVersion
 for d in plugins/* ; do
     read -p "[+] Release $d (y/n)?" CONT
     if [ "$CONT" = "n" ]; then
-        echo "[!] Not releasing ${d}"
+        echo "[!] Skipping ${d}..."
         continue
     fi
 
