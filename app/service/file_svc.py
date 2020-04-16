@@ -1,7 +1,8 @@
-import asyncio.subprocess
+import asyncio
 import base64
 import copy
 import os
+import subprocess
 
 from aiohttp import web
 from cryptography.fernet import Fernet
@@ -159,7 +160,7 @@ class FileSvc(BaseService):
         return buf
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
-                         build_dir='.'):
+                         build_dir='.', loop=None):
         """
         Dynamically compile a go file
 
@@ -189,15 +190,11 @@ class FileSvc(BaseService):
 
         args.extend(['-o', output, src_fle])
 
+        loop = loop if loop else asyncio.get_event_loop()
         try:
-            process = await asyncio.subprocess.create_subprocess_exec(*args, cwd=build_dir, env=env,
-                                                                      stdout=asyncio.subprocess.PIPE,
-                                                                      stderr=asyncio.subprocess.PIPE)
-            command_output = await process.communicate()
-            if process.returncode != 0:
-                self.log.warning('Problem building golang executable {}: {}'.format(src_fle, command_output))
-        except NotImplementedError:
-            self.log.warning("You are running this on Windows. Compiling GO currently doesn't work on Windows.")
+            await loop.run_in_executor(None, lambda: subprocess.check_output(args, cwd=build_dir, env=env))
+        except subprocess.CalledProcessError as e:
+            self.log.warning('Problem building golang executable {}: {} '.format(src_fle, e))
 
     def get_payload_name_from_uuid(self, payload):
         for t in ['standard_payloads', 'special_payloads']:
