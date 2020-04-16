@@ -4,5 +4,5 @@
 # B322: This is specific to Python 2 https://bandit.readthedocs.io/en/latest/blacklists/blacklist_calls.html#b322-input
 
 skips = B322
-targets = server.py,app/,plugins/
+targets = server.py,app/
 exclude = plugins/stockpile/payloads/,plugins/atomic/atomic-red-team
