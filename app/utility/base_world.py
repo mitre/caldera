@@ -127,7 +127,6 @@ class BaseWorld:
                 return distutils.version.StrictVersion(str(parse_version(mod_version))) >= distutils.version.StrictVersion(str(params['version']))
             elif 'command' in params:
                 output = subprocess.check_output(params['command'].split(' '), shell=False)
-                v = parse_version(output.decode('utf-8'))
                 return distutils.version.StrictVersion(str(parse_version(output.decode('utf-8')))) >= distutils.version.StrictVersion(str(params['version']))
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
