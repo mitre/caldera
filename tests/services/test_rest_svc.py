@@ -10,12 +10,12 @@ from app.utility.base_world import BaseWorld
 
 @pytest.fixture
 def setup_rest_svc_test(loop, data_svc):
-    BaseWorld.apply_config(name='default', config={'app.contact.http': '0.0.0.0',
-                                                   'plugins': ['sandcat', 'stockpile'],
-                                                   'crypt_salt': 'BLAH',
-                                                   'api_key': 'ADMIN123',
-                                                   'encryption_key': 'ADMIN123',
-                                                   'exfil_dir': '/tmp'})
+    BaseWorld.apply_config(name='main', config={'app.contact.http': '0.0.0.0',
+                                                'plugins': ['sandcat', 'stockpile'],
+                                                'crypt_salt': 'BLAH',
+                                                'api_key': 'ADMIN123',
+                                                'encryption_key': 'ADMIN123',
+                                                'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
     )
