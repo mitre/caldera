@@ -112,7 +112,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
 
-    if not args.insecure and not pathlib.Path('conf/{}.yml'.format(args.environment)).exists():
+    if args.insecure and args.environment not in ('default', 'local'):
+        args.environment = 'default'
+    elif not args.insecure and not pathlib.Path('conf/{}.yml'.format(args.environment)).exists():
         make_secure_config(args.environment)
 
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
