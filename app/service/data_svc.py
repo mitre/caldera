@@ -65,7 +65,9 @@ class DataService(BaseService):
         """
         if os.path.exists('data/object_store'):
             _, store = await self.get_service('file_svc').read_file('object_store', 'data')
-            ram = pickle.loads(store)
+            # Pickle is only used to load a local file that caldera creates. Pickled data is not
+            # received over the network.
+            ram = pickle.loads(store)  # nosec
             for key in ram.keys():
                 self.ram[key] = []
                 for c_object in ram[key]:
