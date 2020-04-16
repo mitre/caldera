@@ -10,6 +10,7 @@ from app.utility.base_object import BaseObject
 class Ability(BaseObject):
 
     RESERVED = dict(payload='#{payload}')
+    HOOKS = dict()
 
     @property
     def test(self):

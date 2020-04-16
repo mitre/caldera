@@ -198,9 +198,7 @@ class DataService(BaseService):
                                     encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
                                     cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
                                     encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                                    payloads = info.get('payloads')
-                                    if encoded_code:
-                                        payloads = ab.get('payloads')
+                                    payloads = ab.get('payloads') if encoded_code else info.get('payloads')
                                     a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
                                                                    technique_name=technique_name,
                                                                    technique_id=technique_id,

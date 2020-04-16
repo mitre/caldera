@@ -60,6 +60,15 @@ class Plugin(BaseObject):
             if destroyable:
                 await destroyable(services)
 
+    async def expand(self, services):
+        try:
+            if self.enabled:
+                expansion = getattr(self._load_module(), 'expansion', None)
+                if expansion:
+                    await expansion(services)
+        except Exception as e:
+            logging.error('Error expanding plugin=%s, %s' % (self.name, e))
+
     """ PRIVATE """
 
     def _load_module(self):
