@@ -1,4 +1,3 @@
-from asyncio import gather
 from app.objects.secondclass.c_link import Link
 from app.utility.base_planning_svc import BasePlanningService
 
@@ -13,8 +12,8 @@ class PlanningService(BasePlanningService):
         """
         TODO
         """
-        # dont have to use 'gather' as this as requires import, but wanted to see if worked
-        gather(*[operation.apply(l) for l in await self.get_links(operation, bucket, agent)])
+        for l in await self.get_links(operation, bucket, agent):
+            await operation.apply(l)
         await operation.wait_for_completion()
 
     async def default_next_bucket(self, current_bucket, state_machine):
@@ -45,13 +44,13 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if bucket == "atomic":
-            # atomic mode
+            # atomic mode - one additional link everytime called, in atomic order
             abilities = self._get_next_atomic_ability(operation=operation)
         elif bucket:
-            # bucket 
+            # bucket mode - get all links for specified bucket, w in underlying atomic order
             abilities = [ab for ab in operation.adversary.atomic_ordering if ab.bucket == bucket]
         else:
-            # no mode
+            # no mode -  get all links, still supplied in atomic order
             abilities = operation.adversary.atomic_ordering
         links = []
         if agent:

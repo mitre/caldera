@@ -132,7 +132,7 @@ class Operation(BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close and self._is_atomic_closeable():
+        if await self.is_finished() or self.auto_close:
             self.state = self.states['FINISHED']
             return True
         return False
@@ -201,8 +201,8 @@ class Operation(BaseObject):
     """ PRIVATE """
 
     async def _execute_planner(self, planner):
-        while planner.next_state != None and not planner.stopping_condition_met:
-            await getattr(planner, planner.next_state)()
+        while planner.next_bucket != None and not planner.stopping_condition_met:
+            await getattr(planner, planner.next_bucket)()
             await self.wait_for_completion()
 
     async def _cleanup_operation(self, services):
@@ -231,8 +231,8 @@ class Operation(BaseObject):
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
-    def _is_atomic_closeable(self):
-        return self.atomic_enabled and self.last_ran == self.adversary.atomic_ordering[-1]
+    #def _is_atomic_closeable(self):
+    #    return self.atomic_enabled and self.last_ran == self.adversary.atomic_ordering[-1]
 
     def _get_ability_set_format_for_planner(self):
         if not self.atomic_enabled:
