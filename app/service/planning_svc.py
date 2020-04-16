@@ -10,7 +10,8 @@ class PlanningService(BasePlanningService):
 
     async def bucket_exhaustion(self, bucket, operation, agent=None):
         """
-        TODO
+        Apply all links for specified bucket. Will block until all
+        links execute.
         """
         for l in await self.get_links(operation, bucket, agent):
             await operation.apply(l)
@@ -18,9 +19,10 @@ class PlanningService(BasePlanningService):
 
     async def default_next_bucket(self, current_bucket, state_machine):
         """
-        TODO
+        Returns next bucket as specified in planner's defined bucket
+        state machine. Loops from last bucket to first.
         """
-        idx = (state_machine.index(current_bucket) + 1) % len(state_machine)  # loops
+        idx = (state_machine.index(current_bucket) + 1) % len(state_machine)
         return state_machine[idx]
        
     async def get_links(self, operation, bucket=None, agent=None, trim=True, planner=None, stopping_conditions=None):
@@ -44,13 +46,13 @@ class PlanningService(BasePlanningService):
             planner.stopping_condition_met = True
             return []
         if bucket == "atomic":
-            # atomic mode - one additional link everytime called, in atomic order
+            # atomic mode - one additional link everytime called, in atomic adversary order
             abilities = self._get_next_atomic_ability(operation=operation)
         elif bucket:
-            # bucket mode - get all links for specified bucket, w in underlying atomic order
+            # bucket mode - get all links for specified bucket, in underlying atomic adversary order
             abilities = [ab for ab in operation.adversary.atomic_ordering if ab.bucket == bucket]
         else:
-            # no mode -  get all links, still supplied in atomic order
+            # no mode -  get all links, still supplied in atomic adversary order
             abilities = operation.adversary.atomic_ordering
         links = []
         if agent:
