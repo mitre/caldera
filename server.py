@@ -4,7 +4,9 @@ import logging
 import os
 import pathlib
 import sys
+import secrets
 
+import yaml
 from aiohttp import web
 
 from app.api.rest_api import RestApi
@@ -64,7 +66,32 @@ def run_tasks(services):
         logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('app_svc').teardown())
+        loop.run_until_complete(services.get('app_svc').teardown(main_config=args.environment))
+
+
+def make_secure_config(config_name):
+    logging.info('Generating new {}.yml configuration file'.format(args.environment))
+    with open('conf/default.yml', 'r') as fle:
+        config = yaml.safe_load(fle)
+    secret_options = ('api_key_blue', 'api_key_red', 'crypt_salt', 'encryption_key')
+    for option in secret_options:
+        config[option] = secrets.token_urlsafe()
+
+    config['users'] = dict(red=dict(red=secrets.token_urlsafe()),
+                           blue=dict(blue=secrets.token_urlsafe()))
+
+    config_path = 'conf/{}.yml'.format(args.environment)
+    with open(config_path, 'w') as fle:
+        yaml.dump(config, fle, default_flow_style=False)
+
+    msg = "\nGenerated new config with random secrets:\n"
+    for option in secret_options:
+        msg += "\t{}={}\n".format(option, config[option])
+    msg += '\nDefault Red and Blue user credentials:'
+    msg += '\n\tred:\n\t\t{}'.format(config['users']['red']['red'])
+    msg += '\n\tblue:\n\t\t{}'.format(config['users']['blue']['blue'])
+    msg += '\nThese values can be seen again and modified by opening the {} file\n'.format(config_path)
+    logging.info(msg)
 
 
 if __name__ == '__main__':
@@ -79,11 +106,17 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     parser.add_argument('-P', '--plugins', required=False, default=os.listdir('plugins'),
                         help='Start up with a single plugin', type=list_str)
+    parser.add_argument('--insecure', action='store_true', required=False, default=False,
+                        help='Start caldera with insecure default config values')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
+
+    if not args.insecure and not pathlib.Path('conf/{}.yml'.format(args.environment)).exists():
+        make_secure_config(args.environment)
+
     config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
-    BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/%s.yml' % config)[0])
+    BaseWorld.apply_config('main', BaseWorld.strip_yml('conf/%s.yml' % config)[0])
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
 

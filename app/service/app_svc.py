@@ -109,9 +109,9 @@ class AppService(AppServiceInterface, BaseService):
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
         return '%s-%s' % (name, platform), display_name
 
-    async def teardown(self):
+    async def teardown(self, main_config='default'):
         await self._destroy_plugins()
-        await self._save_configurations()
+        await self._save_configurations(main_config=main_config)
         await self._services.get('data_svc').save_state()
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
@@ -137,8 +137,11 @@ class AppService(AppServiceInterface, BaseService):
 
     """ PRIVATE """
 
-    async def _save_configurations(self):
-        for cfg in ['default', 'agents', 'payloads']:
+    async def _save_configurations(self, main_config='default'):
+        with open('conf/%s.yml' % main_config, 'w') as config:
+            config.write(yaml.dump(self.get_config(name='main')))
+
+        for cfg in ['agents', 'payloads']:
             with open('conf/%s.yml' % cfg, 'w') as config:
                 config.write(yaml.dump(self.get_config(name=cfg)))
 
