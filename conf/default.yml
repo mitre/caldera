@@ -23,10 +23,12 @@ reports_dir: /tmp
 requirements:
   go:
     command: go version
+    type: installed_program
     version: 1.11
   python:
     attr: version
     module: sys
+    type: python_module
     version: 3.6.1
 users:
   blue:

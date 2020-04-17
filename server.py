@@ -48,7 +48,7 @@ async def start_server():
 def run_tasks(services):
     loop = asyncio.get_event_loop()
     loop.create_task(build_docs())
-    loop.run_until_complete(app_svc.validate_requirements())
+    loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())

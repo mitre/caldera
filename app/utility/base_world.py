@@ -4,7 +4,6 @@ import os
 import re
 import yaml
 import logging
-import importlib
 import subprocess
 import distutils.version
 
@@ -114,20 +113,33 @@ class BaseWorld:
 
     @staticmethod
     def check_requirement(params):
+        def check_module_version(module, version, attr=None, **kwargs):
+            attr = attr if attr else '__version__'
+            mod_version = getattr(import_module(module), attr, '')
+            return compare_versions(mod_version, version)
+    
+        def check_program_version(command, version, **kwargs):
+            output = subprocess.check_output(command.split(' '), shell=False)
+            return compare_versions(output.decode('utf-8'), version)
+
+        def compare_versions(version_string, minimum_version):
+            version = parse_version(version_string)
+            return distutils.version.StrictVersion(version) >= distutils.version.StrictVersion(str(minimum_version))
+
         def parse_version(version_string, pattern=r'([0-9]+(?:\.[0-9]+)+)'):
             groups = re.search(pattern, version_string)
             if groups:
                 return groups[1]
             return '0.0.0'
 
+        checkers = {
+            'python_module': check_module_version,
+            'installed_program': check_program_version
+        }
+
         try:
-            if 'module' in params:
-                attr = params['attr'] if params.get('attr') else '__version__'
-                mod_version = getattr(importlib.import_module(params['module']), attr)
-                return distutils.version.StrictVersion(str(parse_version(mod_version))) >= distutils.version.StrictVersion(str(params['version']))
-            elif 'command' in params:
-                output = subprocess.check_output(params['command'].split(' '), shell=False)
-                return distutils.version.StrictVersion(str(parse_version(output.decode('utf-8')))) >= distutils.version.StrictVersion(str(params['version']))
+            requirement_type = params.get('type')
+            return checkers[requirement_type](**params)
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
         return False
