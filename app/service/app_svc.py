@@ -116,13 +116,13 @@ class AppService(BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
-            if not plugin.version:
-                self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.debug('Enabled plugin: %s' % plugin.name)
+                if not plugin.version:
+                    self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
