@@ -8,4 +8,4 @@ repos:
       rev: 1.6.2
       hooks:
         - id: bandit
-          entry: bandit -ll
+          entry: bandit -ll --exclude=tests/ --skips=B322
