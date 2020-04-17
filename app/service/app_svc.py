@@ -33,9 +33,9 @@ class AppService(BaseService):
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
         self._errors = []
-        self.version = None
+        self.version = self.get_version()
         if not self.version:
-            self._errors.append(Error('core', 'Core code is not a release version'))
+            self._errors.append(Error('core', 'code is not a release version'))
             self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
