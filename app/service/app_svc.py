@@ -129,7 +129,7 @@ class AppService(BaseService):
 
     async def retrieve_compiled_file(self, name, platform):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
-        signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        signature = hashlib.sha256(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename()
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
         return '%s-%s' % (name, platform), display_name

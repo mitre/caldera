@@ -18,7 +18,8 @@ class Parser:
     @staticmethod
     def _is_valid_ip(raw_ip):
         try:
-            if raw_ip in ['0.0.0.0', '127.0.0.1']:
+            # The following hardcoded addresses are not used to bind to an interface.
+            if raw_ip in ['0.0.0.0', '127.0.0.1']:  # nosec
                 return False
             ip_address(raw_ip)
         except BaseException:
