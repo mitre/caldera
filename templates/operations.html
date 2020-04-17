@@ -78,6 +78,7 @@
                 <option value="0">Prioritize Planner</option>
               </select>
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;display: none;" disabled="true">
+                    <option value="" class="queueOption" disabled selected>Select a planner</option>
                 {% for p in planners %}
                     <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                 {% endfor %}
@@ -360,13 +361,12 @@
             warn('Jitter must be of the form "min/max" (e.x. 4/8)');
             return;
         }
-        return {
+        let op = {
             "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
             "state":document.getElementById("queueState").value,
-            "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
             "atomic_enabled":document.getElementById("atomicEnabled").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
@@ -375,6 +375,11 @@
             "source":document.getElementById("queueSource").value,
             "visibility": document.getElementById("queueVisibility").value
         };
+        let planner = document.getElementById("queuePlanner").value;
+        if (planner) {
+        	op["planner"] = planner;
+        }
+        return op;
     }
 
     function changeCurrentOperationState(newState){
