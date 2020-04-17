@@ -66,7 +66,7 @@ def run_tasks(services):
         logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('app_svc').teardown(main_config=args.environment))
+        loop.run_until_complete(services.get('app_svc').teardown(main_config_file=args.environment))
 
 
 def make_secure_config(config_name):
