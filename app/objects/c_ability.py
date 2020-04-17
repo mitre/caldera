@@ -10,10 +10,15 @@ from app.utility.base_object import BaseObject
 class Ability(BaseObject):
 
     RESERVED = dict(payload='#{payload}')
+    HOOKS = dict()
 
     @property
     def test(self):
         return self.replace_app_props(self._test)
+
+    @test.setter
+    def test(self, cmd):
+        self._test = self.encode_string(cmd)
 
     @property
     def unique(self):
@@ -42,7 +47,8 @@ class Ability(BaseObject):
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
-                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None):
+                 requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None,
+                 language=None, code=None, build_target=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -60,6 +66,9 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
+        self.language = language
+        self.code = code
+        self.build_target = build_target
         self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
         if access:
             self.access = self.Access(access)
@@ -81,6 +90,9 @@ class Ability(BaseObject):
         existing.update('payloads', self.payloads)
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
+        existing.update('code', self.code)
+        existing.update('language', self.language)
+        existing.update('build_target', self.build_target)
         return existing
 
     async def which_plugin(self):

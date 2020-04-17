@@ -150,6 +150,10 @@ class AppService(BaseService):
         await contact_svc.register(Html(self.get_services()))
         await contact_svc.register(Gist(self.get_services()))
 
+    async def load_plugin_expansions(self, plugins=()):
+        for p in plugins:
+            await p.expand(services=self.get_services())
+
     """ PRIVATE """
 
     async def _save_configurations(self):
