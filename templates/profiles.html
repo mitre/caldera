@@ -451,9 +451,19 @@
         if(ability.payloads.length > 0) {
            template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
         }
-        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
+        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div><div class="ability-show">?</div>');
         template.find('.ability-remove').click(function() {
             removeAbility(ability);
+        });
+        template.find('.ability-show').click(function() {
+            let pModal = $('#phase-modal');
+            let tacList = pModal.find('#ability-tactic-filter');
+            let techList = pModal.find('#ability-technique-filter');
+            let abList = pModal.find('#ability-ability-filter');
+            tacList.val(ability['tactic']).change();
+            techList.val(ability['technique_id']).change();
+            abList.val(ability['name']).change();
+            showPhaseModal(1);
         });
 
         ability.platform.forEach(function(p, index) {

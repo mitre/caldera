@@ -119,6 +119,8 @@ class PlanningService(BasePlanningService):
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
         for a in await agent.capabilities(abilities):
+            if a.code and a.HOOKS:
+                await a.HOOKS[a.language](a)
             if a.test:
                 links.append(
                     Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,

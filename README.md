@@ -21,6 +21,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 ## Plugins
 - **[Access](https://github.com/mitre/access)** 
 - **[Atomic](https://github.com/mitre/atomic)** 
+- **[Builder](https://github.com/mitre/builder)** 
 - **[Compass](https://github.com/mitre/compass)** 
 - **[Manx](https://github.com/mitre/manx)** 
 - **[Mock](https://github.com/mitre/mock)** 

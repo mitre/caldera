@@ -42,7 +42,7 @@ async def start_server():
     app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
     runner = web.AppRunner(app_svc.application)
     await runner.setup()
-    await web.TCPSite(runner, '0.0.0.0', BaseWorld.get_config('port')).start()
+    await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
 
 def run_tasks(services):
@@ -54,6 +54,7 @@ def run_tasks(services):
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
     loop.run_until_complete(data_svc.load_data(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
+    loop.run_until_complete(app_svc.load_plugin_expansions(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())

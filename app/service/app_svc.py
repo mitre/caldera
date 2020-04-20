@@ -33,9 +33,9 @@ class AppService(BaseService):
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
         self._errors = []
-        self.version = None
+        self.version = self.get_version()
         if not self.version:
-            self._errors.append(Error('core', 'Core code is not a release version'))
+            self._errors.append(Error('core', 'code is not a release version'))
             self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
@@ -116,20 +116,20 @@ class AppService(BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
-            if not plugin.version:
-                self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.debug('Enabled plugin: %s' % plugin.name)
+                if not plugin.version:
+                    self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
-        signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        signature = hashlib.sha256(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename()
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
         return '%s-%s' % (name, platform), display_name
@@ -155,6 +155,10 @@ class AppService(BaseService):
             if not self.check_requirement(params):
                 self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
                 self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+
+    async def load_plugin_expansions(self, plugins=()):
+        for p in plugins:
+            await p.expand(services=self.get_services())
 
     """ PRIVATE """
 

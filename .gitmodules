@@ -34,3 +34,6 @@
 [submodule "plugins/training"]
 	path = plugins/training
 	url = https://github.com/mitre/training.git
+[submodule "plugins/builder"]
+	path = plugins/builder
+	url = https://github.com/mitre/builder.git

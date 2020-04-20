@@ -259,7 +259,7 @@ class RestService(BaseService):
     @staticmethod
     async def _read_from_yaml(file_path):
         with open(file_path, 'r') as f:
-            return yaml.load(f.read(), Loader=yaml.FullLoader)
+            return yaml.safe_load(f.read())
 
     @staticmethod
     async def _write_to_yaml(file_path, content):
