@@ -114,9 +114,9 @@ class FileSvc(FileServiceInterface, BaseService):
                     handle = getattr(mod, func.split('.')[-1])
                     self.special_payloads[name] = handle
                 except AttributeError:
-                    self.log.error("Unable to properly load {} for payload {} from string.".format(func, name))
+                    self.log.error('Unable to properly load {} for payload {} from string.'.format(func, name))
             else:
-                self.log.warning("Unable to decipher target function from string {}.".format(func))
+                self.log.warning('Unable to decipher target function from string {}.'.format(func))
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.', loop=None):
@@ -180,7 +180,7 @@ class FileSvc(FileServiceInterface, BaseService):
             payload, display_name = await self.special_payloads[target](headers)
         except Exception as e:
             self.log.error('Error linking extension handler=%s, %s' % (payload, e))
-            return "", ""
+            return
 
 
 def _go_vars(arch, platform):
