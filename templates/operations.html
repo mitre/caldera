@@ -361,22 +361,21 @@
             warn('Jitter must be of the form "min/max" (e.x. 4/8)');
             return;
         }
-        let op = {
+        return {
             "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
             "state":document.getElementById("queueState").value,
+            "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
             "atomic_enabled":document.getElementById("atomicEnabled").value,
-            "planner":document.getElementById("queuePlanner").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
             "visibility": document.getElementById("queueVisibility").value
         };
-        return op;
     }
 
     function changeCurrentOperationState(newState){
