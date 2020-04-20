@@ -47,6 +47,8 @@ class FileSvc(BaseService):
             contents = xor_bytes(contents, xor_key.encode())
         if headers.get('name'):
             display_name = headers.get('name')
+        if file_path.endswith('.xored'):
+            display_name = file_path.replace('.xored', '')
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir):
