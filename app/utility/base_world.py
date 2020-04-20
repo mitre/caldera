@@ -134,17 +134,16 @@ class BaseWorld:
                 return groups[1]
             return '0.0.0'
 
-        checkers = {
-            'python_module': check_module_version,
-            'installed_program': check_program_version
-        }
+        checkers = dict(
+            python_module=check_module_version,
+            installed_program=check_program_version
+        )
 
         try:
             requirement_type = params.get('type')
             return checkers[requirement_type](**params)
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
-        return False
 
     @staticmethod
     def get_version(path='.'):
