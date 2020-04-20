@@ -369,16 +369,13 @@
             "state":document.getElementById("queueState").value,
             "autonomous":document.getElementById("queueAuto").value,
             "atomic_enabled":document.getElementById("atomicEnabled").value,
+            "planner":document.getElementById("queuePlanner").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
             "visibility": document.getElementById("queueVisibility").value
         };
-        let planner = document.getElementById("queuePlanner").value;
-        if (planner) {
-        	op["planner"] = planner;
-        }
         return op;
     }
 
