@@ -117,7 +117,7 @@ class BaseWorld:
             attr = attr if attr else '__version__'
             mod_version = getattr(import_module(module), attr, '')
             return compare_versions(mod_version, version)
-    
+
         def check_program_version(command, version, **kwargs):
             output = subprocess.check_output(command.split(' '), shell=False)
             return compare_versions(output.decode('utf-8'), version)
