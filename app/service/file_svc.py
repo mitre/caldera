@@ -157,9 +157,9 @@ class FileSvc(BaseService):
                     handle = getattr(mod, func.split('.')[-1])
                     self.special_payloads[name] = handle
                 except AttributeError:
-                    self.log.error("Unable to properly load {} for payload {} from string.".format(func, name))
+                    self.log.error('Unable to properly load {} for payload {} from string.'.format(func, name))
             else:
-                self.log.warning("Unable to decipher target function from string {}.".format(func))
+                self.log.warning('Unable to decipher target function from string {}.'.format(func))
 
     def _save(self, filename, content):
         if self.encryptor and self.encrypt_output:
@@ -236,7 +236,7 @@ class FileSvc(BaseService):
             payload, display_name = await self.special_payloads[target](headers)
         except Exception as e:
             self.log.error('Error linking extension handler=%s, %s' % (payload, e))
-            return "", ""
+            return
 
 
 def _go_vars(arch, platform):
