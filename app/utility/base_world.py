@@ -146,6 +146,7 @@ class BaseWorld:
             logging.getLogger('check_requirement').error(repr(e))
         return False
 
+    @staticmethod
     def get_version(path='.'):
         ignore = ['/plugins/', '/.tox/']
         included_extensions = ['*.py', '*.html', '*.js', '*.go']
