@@ -1,10 +1,11 @@
 import logging
 from importlib import import_module
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Obfuscator(BaseObject):
+class Obfuscator(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):

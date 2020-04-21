@@ -5,9 +5,6 @@ aiohttp-security==0.4.0
 jinja2==2.10.3
 pyyaml>=5.1
 cryptography==2.8
-aioconsole==0.1.14
-termcolor==1.1.0
-pyfiglet==0.8.post1
 websockets==8.1
 Sphinx==2.4.4
 sphinx_rtd_theme==0.4.3

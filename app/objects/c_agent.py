@@ -5,12 +5,13 @@ from urllib.parse import urlparse
 
 import marshmallow as ma
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_link import Link
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 
 
-class Agent(BaseObject):
+class Agent(FirstClassObjectInterface, BaseObject):
 
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
                     exe_name='#{exe_name}', payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))

@@ -1,7 +1,8 @@
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Source(BaseObject):
+class Source(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):
