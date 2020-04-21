@@ -22,6 +22,7 @@ from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
+MIN_MODULE_LEN = 1
 
 
 class DataService(DataServiceInterface, BaseService):
@@ -36,7 +37,7 @@ class DataService(DataServiceInterface, BaseService):
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     try:
@@ -205,7 +206,9 @@ class DataService(DataServiceInterface, BaseService):
             payload_config = self.get_config(name='payloads')
             payload_config['standard_payloads'] = data[0]['standard_payloads']
             payload_config['special_payloads'] = data[0]['special_payloads']
+            payload_config['extensions'] = data[0]['extensions']
             await self._apply_special_payload_hooks(payload_config['special_payloads'])
+            await self._apply_special_extension_hooks(payload_config['extensions'])
             self.apply_config(name='payloads', config=payload_config)
 
     async def _load_planners(self, plugin):
@@ -259,6 +262,18 @@ class DataService(DataServiceInterface, BaseService):
     async def _prune_non_critical_data(self):
         self.ram.pop('plugins')
         self.ram.pop('obfuscators')
+
+    async def _apply_special_extension_hooks(self, special_extensions):
+        for k, v in special_extensions.items():
+            if len(v.split('.')) > MIN_MODULE_LEN:
+                try:
+                    mod = __import__('.'.join(v.split('.')[:-1]), fromlist=[v.split('.')[-1]])
+                    handle = getattr(mod, v.split('.')[-1])
+                    self.get_service('file_svc').special_payloads[k] = handle
+                except AttributeError:
+                    self.log.error('Unable to properly load {} for payload {} from string.'.format(k, v))
+            else:
+                self.log.warning('Unable to decipher target function from string {}.'.format(v))
 
     async def _apply_special_payload_hooks(self, special_payloads):
         for k, v in special_payloads.items():
