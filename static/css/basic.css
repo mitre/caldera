@@ -680,3 +680,7 @@ table.dataTable input[type=text] {
     margin-block-end: 0;
     color: white;
 }
+
+.goal-role {
+    width: 32%
+}

@@ -35,8 +35,14 @@ class RestService(RestServiceInterface, BaseService):
             p = list()
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
+            goals = list()
+            for goal in data.pop('goals'):
+                goal['count'] = int(goal['count'])
+                if goal['count'] < 0:
+                    goal['count'] = 2**20
+                goals.append(goal)
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p, goals=data.pop('goals'))))
+                                   atomic_ordering=p, goals=goals)))
             f.truncate()
         await self._services.get('data_svc').reload_data()
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
