@@ -15,6 +15,7 @@ from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_goal import Goal
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
@@ -94,6 +95,12 @@ class DataService(DataServiceInterface, BaseService):
 
     """ PRIVATE """
 
+    async def _load_goals(self, adversary):
+        listing = list()
+        for goal in adversary.get('goals'):
+            listing.append(Goal(target=goal['target'], value=goal['value'], count=goal['count']))
+        return listing
+
     async def _load(self, plugins=()):
         try:
             if not plugins:
@@ -114,12 +121,15 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
+                goals = list()
                 if adv.get('phases'):
                     atomic_ordering = await self._load_phase_adversary_variant(adv)
                 else:
                     atomic_ordering = adv.get('atomic_ordering', list())
+                if adv.get('goals'):
+                    goals = await self._load_goals(adv)
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                      atomic_ordering=atomic_ordering)
+                                      atomic_ordering=atomic_ordering, goals=goals)
                 adversary.access = plugin.access
                 await self.store(adversary)
 

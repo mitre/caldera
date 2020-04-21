@@ -128,6 +128,22 @@
     <center>
         <div class="grid" id="grid">
         </div>
+        <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+        <hr>
+        <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
+            <thead>
+                <tr>
+                    <td><b>target</b></td>
+                    <td><b>value</b></td>
+                    <td><b>count</b></td>
+                    <td></td>
+                </tr>
+            </thead>
+        </table>
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter count')">
+            &#10010;&nbsp;add goal
+        </p>
+    </div>
     </center>
 </div>
 
@@ -256,9 +272,15 @@
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
-        console.log(abilities);
+        let goals = [];
+        $("#goalTbl tr").not(":first").not(":last").each(function () {
+            let target = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            let count = $(this.cells[2]).text();
+            goals.push({'target':target,'value':value,"count":count});
+        });
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'i': identifier}, saveAdversaryCallback);
+            'i': identifier, 'goals': goals}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -357,6 +379,7 @@
         $('.tempPhase').remove();
         $('.phase-headers').remove();
         loadAtomicOrder(data[0].atomic_ordering);
+        loadGoals(data[0].goals);
     }
 
     function createMuuriGrid() {
@@ -627,5 +650,20 @@
     }
 
     //# sourceURL=profiles.js
+
+    function addGoalRow(target, value, count){
+        $('#goalTbl tr:last').after(
+            '<tr>' +
+                '<td><p contenteditable="true">'+target+'</p></td>' +
+                '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p contenteditable="true">'+count+'</p></td>' +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
+    }
+
+    function loadGoals(goallist){
+        goallist.forEach(function(e) {addGoalRow(e.target, e.value, e.count)})
+    }
 
 </script>

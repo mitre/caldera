@@ -10,6 +10,7 @@ from random import randint
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.objects.c_goals import Goals
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
@@ -60,6 +61,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.visibility = visibility
         self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
+        self.goals = Goals(adversary.goals)
         if source:
             self.rules = source.rules
 
@@ -144,7 +146,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     async def is_finished(self):
-        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
+        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']] or \
+                self.goals.satisfied(self.all_facts()):
             return True
         return False
 
