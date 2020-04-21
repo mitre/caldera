@@ -3,13 +3,14 @@ from app.utility.base_object import BaseObject
 
 
 class Goals(BaseObject):
-    def __init__(self, goal_list=list()):
+    def __init__(self, goal_list=None):
         super().__init__()
         self.to_fulfill = list()
-        for goal in goal_list:
-            new_goal = Goal(target=goal.target, value=goal.value, count=goal.count)
-            self.to_fulfill.append(new_goal)
-        if len(self.to_fulfill) == 0:
+        if goal_list:
+            for goal in goal_list:
+                new_goal = Goal(target=goal.target, value=goal.value, count=goal.count)
+                self.to_fulfill.append(new_goal)
+        else:
             self.to_fulfill.append(Goal(target='exhaustion', value='complete'))
 
     def satisfied(self, facts=None):
@@ -17,7 +18,7 @@ class Goals(BaseObject):
 
     @property
     def percentage(self):
-        return 100 * len([x for x in self.to_fulfill if x.satisfied is True]) / len(self.to_fulfill)
+        return 100 * len([x for x in self.to_fulfill if x.satisfied() is True]) / len(self.to_fulfill)
 
     def display(self):
         return dict(goal_list=[x.display for x in self.to_fulfill], percentage=self.percentage)

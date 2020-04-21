@@ -411,8 +411,7 @@
                 $("#togBtnHil").prop("checked", false);
             }
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
-                100));
+            changeProgress(OPERATION.finish, OPERATION.goals.percentage);
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
                 if(OPERATION.chain[i].status === -1) {
