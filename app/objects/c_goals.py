@@ -13,11 +13,11 @@ class Goals(BaseObject):
             self.to_fulfill.append(Goal(target='exhaustion', value='complete'))
 
     def satisfied(self, facts=None):
-        return not any(x.satisfied(facts) == False for x in self.to_fulfill)
+        return not any(x.satisfied(facts) is False for x in self.to_fulfill)
 
     @property
     def percentage(self):
-        return 100 * float(len([x for x in self.to_fulfill if x.satisfied == True])) / float(len(self.to_fulfill))
+        return 100 * len([x for x in self.to_fulfill if x.satisfied is True]) / len(self.to_fulfill)
 
     def display(self):
         return dict(goal_list=[x.display for x in self.to_fulfill], percentage=self.percentage)

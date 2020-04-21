@@ -91,7 +91,7 @@ def adversary():
             description = "description"
         if not phases:
             phases = dict()
-        return Adversary(adversary_id=adversary_id, name=name, description=description, phases=phases)
+        return Adversary(adversary_id=adversary_id, name=name, description=description, atomic_ordering=phases)
 
     return _generate_adversary
 
