@@ -24,6 +24,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 - **[Builder](https://github.com/mitre/builder)** 
 - **[Compass](https://github.com/mitre/compass)** 
 - **[GameBoard](https://github.com/mitre/gameboard)** 
+- **[Human](https://github.com/mitre/human)** 
 - **[Manx](https://github.com/mitre/manx)** 
 - **[Mock](https://github.com/mitre/mock)** 
 - **[Response](https://github.com/mitre/response)** 

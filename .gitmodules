@@ -37,3 +37,6 @@
 [submodule "plugins/builder"]
 	path = plugins/builder
 	url = https://github.com/mitre/builder.git
+[submodule "plugins/human"]
+	path = plugins/human
+	url = https://github.com/mitre/human.git
