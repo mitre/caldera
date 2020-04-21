@@ -76,9 +76,11 @@ class ContactService(BaseService):
                     link.output = True
                     self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
-                    if not operation:
+                    if not operation and not link.ability.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
                         loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link, result.output))
+                    elif not operation:
+                        loop.create_task(link.parse(None, result.output))
                     elif link.ability.parsers:
                         loop.create_task(link.parse(operation[0], result.output))
                     else:

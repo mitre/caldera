@@ -77,7 +77,8 @@ class Link(BaseObject):
             if self.status != 0:
                 return
             for parser in self.ability.parsers:
-                relationships = await self._parse_link_result(result, parser, operation.source)
+                source = operation.source if operation else None
+                relationships = await self._parse_link_result(result, parser, source)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
@@ -113,7 +114,8 @@ class Link(BaseObject):
             self.relationships.append(relationship)
 
     async def _save_fact(self, operation, trait, score):
-        if all(trait) and await self._is_new_trait(trait, operation.all_facts()):
+        all_facts = operation.all_facts() if operation else self.facts
+        if all(trait) and await self._is_new_trait(trait, all_facts):
             self.facts.append(Fact(trait=trait[0], value=trait[1], score=score, collected_by=self.paw,
                                    technique_id=self.ability.technique_id))
 
@@ -129,7 +131,8 @@ class Link(BaseObject):
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:
-            for found_fact in operation.all_facts():
+            all_facts = operation.all_facts() if operation else self.facts
+            for found_fact in all_facts:
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
                     break
