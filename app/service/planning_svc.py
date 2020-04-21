@@ -1,25 +1,15 @@
 from app.objects.secondclass.c_link import Link
+from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
 
 
-class PlanningService(BasePlanningService):
+class PlanningService(PlanningServiceInterface, BasePlanningService):
 
     def __init__(self):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
     async def get_links(self, operation, agent=None, trim=True, planner=None, stopping_conditions=None):
-        """
-        For an operation and agent combination, create links (that can be executed).
-        When no agent is supplied, links for all agents are returned
-
-        :param operation:
-        :param agent:
-        :param trim: call trim_links() on list of links before returning
-        :param planner:
-        :param stopping_conditions:
-        :return: a list of links
-        """
         if stopping_conditions and await self._check_stopping_conditions(operation, stopping_conditions):
             self.log.debug('Stopping conditions met. No more links will be generated!')
             planner.stopping_condition_met = True
@@ -40,14 +30,6 @@ class PlanningService(BasePlanningService):
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
-        """
-        For a given operation, create all cleanup links.
-        If agent is supplied, only return cleanup links for that agent.
-
-        :param operation:
-        :param agent:
-        :return: None
-        """
         links = []
         if agent:
             links.extend(await self._check_and_generate_cleanup_links(agent, operation))
@@ -57,9 +39,6 @@ class PlanningService(BasePlanningService):
         return reversed(links)
 
     async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
-        """
-        repeated subroutine
-        """
         agent_links = []
         if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
@@ -70,9 +49,6 @@ class PlanningService(BasePlanningService):
 
     @staticmethod
     async def sort_links(links):
-        """
-        Sort links by their score then by the order they are defined in an adversary profile
-        """
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """

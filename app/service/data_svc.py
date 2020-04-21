@@ -18,12 +18,13 @@ from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_rule import Rule
+from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
 Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 
-class DataService(BaseService):
+class DataService(DataServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
@@ -33,11 +34,6 @@ class DataService(BaseService):
 
     @staticmethod
     async def destroy():
-        """
-        Clear out all data
-
-        :return:
-        """
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
         for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources']:
@@ -49,11 +45,6 @@ class DataService(BaseService):
                         shutil.rmtree(f)
 
     async def save_state(self):
-        """
-        Save RAM database to file
-
-        :return:
-        """
         await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
@@ -76,65 +67,29 @@ class DataService(BaseService):
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
     async def apply(self, collection):
-        """
-        Add a new collection to RAM
-
-        :param collection:
-        :return:
-        """
         if collection not in self.ram:
             self.ram[collection] = []
 
     async def load_data(self, plugins=()):
-        """
-        Non-blocking read all the data sources to populate the object store
-
-        :return: None
-        """
         loop = asyncio.get_event_loop()
         loop.create_task(self._load(plugins))
 
     async def reload_data(self, plugins=()):
-        """
-        Blocking read all the data sources to populate the object store
-
-        :return: None
-        """
         await self._load(plugins)
 
     async def store(self, c_object):
-        """
-        Accept any c_object type and store it (create/update) in RAM
-
-        :param c_object:
-        :return: a single c_object
-        """
         try:
             return c_object.store(self.ram)
         except Exception as e:
             self.log.error('[!] can only store first-class objects: %s' % e)
 
     async def locate(self, object_name, match=None):
-        """
-        Find all c_objects which match a search. Return all c_objects if no match.
-
-        :param object_name:
-        :param match: dict()
-        :return: a list of c_object types
-        """
         try:
             return [obj for obj in self.ram[object_name] if obj.match(match)]
         except Exception as e:
             self.log.error('[!] LOCATE: %s' % e)
 
     async def remove(self, object_name, match):
-        """
-        Remove any c_objects which match a search
-
-        :param object_name:
-        :param match: dict()
-        :return:
-        """
         try:
             self.ram[object_name][:] = [obj for obj in self.ram[object_name] if not obj.match(match)]
         except Exception as e:

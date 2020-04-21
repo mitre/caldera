@@ -10,13 +10,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 
-class FileSvc(BaseService):
+class FileSvc(FileServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('file_svc', self)
@@ -26,13 +27,6 @@ class FileSvc(BaseService):
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
 
     async def get_file(self, headers):
-        """
-        Retrieve file
-        :param headers: headers dictionary. The `file` key is REQUIRED.
-        :type headers: dict or dict-equivalent
-        :return: File contents and optionally a display_name if the payload is a special payload
-        :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found
-        """
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
@@ -59,12 +53,6 @@ class FileSvc(BaseService):
         return path
 
     async def save_multipart_file_upload(self, request, target_dir):
-        """
-        Accept a multipart file via HTTP and save it to the server
-
-        :param request:
-        :param target_dir: The path of the directory to save the uploaded file to.
-        """
         try:
             reader = await request.multipart()
             while True:
@@ -79,13 +67,6 @@ class FileSvc(BaseService):
             self.log.debug('Exception uploading file: %s' % e)
 
     async def find_file_path(self, name, location=''):
-        """
-        Find the location on disk of a file by name.
-
-        :param name:
-        :param location:
-        :return: a tuple: the plugin the file is found in & the relative file path
-        """
         for plugin in await self.data_svc.locate('plugins', match=dict(enabled=True)):
             for subd in ['', 'data']:
                 file_path = await self.walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
@@ -97,13 +78,6 @@ class FileSvc(BaseService):
         return None, await self.walk_file_path('%s' % location, name)
 
     async def read_file(self, name, location='payloads'):
-        """
-        Open a file and read the contents
-
-        :param name:
-        :param location:
-        :return: a tuple (file_path, contents)
-        """
         _, file_name = await self.find_file_path(name, location=location)
         if file_name:
             if file_name.endswith('.xored'):
@@ -112,68 +86,18 @@ class FileSvc(BaseService):
         raise FileNotFoundError
 
     def read_result_file(self, link_id, location='data/results'):
-        """
-        Read a result file. If file encryption is enabled, this method will return the plaintext
-        content.
-
-        :param link_id: The id of the link to return results from.
-        :param location: The path to results directory.
-        :return:
-        """
         buf = self._read(os.path.join(location, link_id))
         return buf.decode('utf-8')
 
     def write_result_file(self, link_id, output, location='data/results'):
-        """
-        Writes the results of a link execution to disk. If file encryption is enabled,
-        the results file will contain ciphertext.
-
-        :param link_id: The link id of the result being written.
-        :param output: The content of the link's output.
-        :param location: The path to the results directory.
-        :return:
-        """
         output = bytes(output, encoding='utf-8')
         self._save(os.path.join(location, link_id), output)
 
     async def add_special_payload(self, name, func):
-        """
-        Call a special function when specific payloads are downloaded
-
-        :param name:
-        :param func:
-        :return:
-        """
         self.special_payloads[name] = func
-
-    def _save(self, filename, content):
-        if self.encryptor and self.encrypt_output:
-            content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
-        with open(filename, 'wb') as f:
-            f.write(content)
-
-    def _read(self, filename):
-        with open(filename, 'rb') as f:
-            buf = f.read()
-        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
-            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
-        return buf
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.', loop=None):
-        """
-        Dynamically compile a go file
-
-        :param platform:
-        :param output:
-        :param src_fle:
-        :param arch: Compile architecture selection (defaults to AMD64)
-        :param ldflags: A string of ldflags to use when building the go executable
-        :param cflags: A string of CFLAGS to pass to the go compiler
-        :param buildmode: GO compiler buildmode flag
-        :param build_dir: The path to build should take place in
-        :return:
-        """
         env = copy.copy(os.environ)
         env['GOARCH'] = arch
         env['GOOS'] = platform
@@ -206,6 +130,19 @@ class FileSvc(BaseService):
         return payload, payload
 
     """ PRIVATE """
+
+    def _save(self, filename, content):
+        if self.encryptor and self.encrypt_output:
+            content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
+        with open(filename, 'wb') as f:
+            f.write(content)
+
+    def _read(self, filename):
+        with open(filename, 'rb') as f:
+            buf = f.read()
+        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
+            buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
+        return buf
 
     def _get_encryptor(self):
         generated_key = PBKDF2HMAC(algorithm=hashes.SHA256(),

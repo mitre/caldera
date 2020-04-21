@@ -13,22 +13,17 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
+from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
 
-class RestService(BaseService):
+class RestService(RestServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
 
     async def persist_adversary(self, data):
-        """
-        Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
-
-        :param data:
-        :return: the ID of the created adversary
-        """
         i = data.pop('i')
         if not i:
             i = str(uuid.uuid4())
@@ -47,13 +42,6 @@ class RestService(BaseService):
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
-        """
-        Update a new planner from either the GUI or REST API with new stopping conditions.
-        This overwrites the existing YML file.
-
-        :param data:
-        :return: the ID of the created adversary
-        """
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
         planner_id = planner.planner_id
         file_path = await self._get_file_path(planner_id)
