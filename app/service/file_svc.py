@@ -15,6 +15,7 @@ from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
+MIN_MODULE_LEN = 1
 
 
 class FileSvc(FileServiceInterface, BaseService):
@@ -31,6 +32,8 @@ class FileSvc(FileServiceInterface, BaseService):
             raise KeyError('File key was not provided')
 
         display_name = payload = headers.get('file')
+        if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
+            payload, display_name = await self._operate_extension(payload, headers)
         if self.is_uuid4(payload):
             payload, display_name = self.get_payload_name_from_uuid(payload)
         if payload in self.special_payloads:
@@ -96,7 +99,28 @@ class FileSvc(FileServiceInterface, BaseService):
         self._save(os.path.join(location, link_id), output)
 
     async def add_special_payload(self, name, func):
-        self.special_payloads[name] = func
+        """
+        Call a special function when specific payloads are downloaded
+
+        :param name:
+        :param func:
+        :return:
+        """
+        if callable(func):  # Check to see if the passed function is already a callable function
+            self.special_payloads[name] = func
+        else:
+            # If not callable, that means we've been passed a module path to the payload/extension handler. Example:
+            # The func handler is stored in dict format of dict(donut='plugins.stockpile.app.donut.donut_handler')
+            # and this splits that module path to properly load and execute the donut_handler function in donut.py
+            if len(func.split('.')) > MIN_MODULE_LEN:
+                try:
+                    mod = __import__('.'.join(func.split('.')[:-1]), fromlist=[func.split('.')[-1]])
+                    handle = getattr(mod, func.split('.')[-1])
+                    self.special_payloads[name] = handle
+                except AttributeError:
+                    self.log.error('Unable to properly load {} for payload {} from string.'.format(func, name))
+            else:
+                self.log.warning('Unable to decipher target function from string {}.'.format(func))
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.', loop=None):
@@ -154,10 +178,17 @@ class FileSvc(FileServiceInterface, BaseService):
                                    backend=default_backend())
         return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('encryption_key'), 'utf-8'))))
 
+    async def _operate_extension(self, payload, headers):
+        try:
+            target = '.' + payload.split('.')[-1]
+            payload, display_name = await self.special_payloads[target](headers)
+        except Exception as e:
+            self.log.error('Error linking extension handler=%s, %s' % (payload, e))
+
 
 def _go_vars(arch, platform):
-    return "%s GOARCH=%s %s GOOS=%s" % (_get_header(), arch, _get_header(), platform)
+    return '%s GOARCH=%s %s GOOS=%s' % (_get_header(), arch, _get_header(), platform)
 
 
 def _get_header():
-    return "SET" if os.name == "nt" else ""
+    return 'SET' if os.name == 'nt' else ''

@@ -117,6 +117,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
+            await self._load_extensions()
         except Exception as e:
             self.log.debug(repr(e))
 
@@ -216,6 +217,12 @@ class DataService(DataServiceInterface, BaseService):
                                   ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
                 planner.access = plugin.access
                 await self.store(planner)
+
+    async def _load_extensions(self):
+        for entry in self._app_configuration['payloads']['extensions']:
+            await self.get_service('file_svc').add_special_payload(entry,
+                                                                   self._app_configuration['payloads']
+                                                                   ['extensions'][entry])
 
     @staticmethod
     async def _create_adjustments(raw_adjustments):
