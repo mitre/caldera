@@ -17,12 +17,13 @@ from app.contacts.contact_tcp import Tcp
 from app.contacts.contact_udp import Udp
 from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
+from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
 Error = namedtuple('Error', ['name', 'msg'])
 
 
-class AppService(BaseService):
+class AppService(AppServiceInterface, BaseService):
 
     @property
     def errors(self):
@@ -39,11 +40,6 @@ class AppService(BaseService):
             self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
-        """
-        Cyclic function that repeatedly checks if there are agents to be marked as untrusted
-
-        :return: None
-        """
         next_check = self.get_config(name='agents', prop='untrusted_timer')
         try:
             while True:
@@ -64,22 +60,11 @@ class AppService(BaseService):
             self.log.error(repr(e), exc_info=True)
 
     async def find_link(self, unique):
-        """
-        Locate a given link by its unique property
-
-        :param unique:
-        :return:
-        """
         operations = await self.get_service('data_svc').locate('operations')
         agents = await self.get_service('data_svc').locate('agents')
         return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
     async def run_scheduler(self):
-        """
-        Kick off all scheduled jobs, as their schedule determines
-
-        :return:
-        """
         while True:
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
@@ -94,21 +79,11 @@ class AppService(BaseService):
             await asyncio.sleep(interval)
 
     async def resume_operations(self):
-        """
-        Resume all unfinished operations
-
-        :return: None
-        """
         await asyncio.sleep(10)
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
     async def load_plugins(self, plugins):
-        """
-        Store all plugins in the data store
-
-        :return:
-        """
         for plug in plugins:
             if plug.startswith('.'):
                 continue

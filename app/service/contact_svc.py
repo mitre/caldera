@@ -5,6 +5,7 @@ from datetime import datetime
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.objects.secondclass.c_result import Result
+from app.service.interfaces.i_contact_svc import ContactServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
@@ -20,7 +21,7 @@ def report(func):
     return wrapper
 
 
-class ContactService(BaseService):
+class ContactService(ContactServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('contact_svc', self)
@@ -36,11 +37,6 @@ class ContactService(BaseService):
 
     @report
     async def handle_heartbeat(self, **kwargs):
-        """
-        Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-        :param kwargs: key/value pairs
-        :return: the agent object, instructions to execute
-        """
         results = kwargs.pop('results', [])
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
