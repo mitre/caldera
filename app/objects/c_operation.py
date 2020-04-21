@@ -9,10 +9,11 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Operation(BaseObject):
+class Operation(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):

@@ -2,10 +2,11 @@ import logging
 import os
 from importlib import import_module
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Plugin(BaseObject):
+class Plugin(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):

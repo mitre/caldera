@@ -1,7 +1,8 @@
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Schedule(BaseObject):
+class Schedule(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):

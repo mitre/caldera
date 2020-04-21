@@ -1,13 +1,14 @@
 import os
 from base64 import b64decode
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_variation import Variation
 from app.utility.base_object import BaseObject
 
 
-class Ability(BaseObject):
+class Ability(FirstClassObjectInterface, BaseObject):
 
     RESERVED = dict(payload='#{payload}')
     HOOKS = dict()
