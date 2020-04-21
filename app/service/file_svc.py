@@ -167,9 +167,9 @@ class FileSvc(FileServiceInterface, BaseService):
     async def _operate_extension(self, payload, headers):
         try:
             target = '.' + payload.split('.')[-1]
-            return await self.special_payloads[target](self.get_services() ,headers)
+            return await self.special_payloads[target](self.get_services(),headers)
         except Exception as e:
-            self.log.error('Error linking extension handler=%s, %s' % (payload, e))
+            self.log.error('Error loading extension handler=%s, %s' % (payload, e))
 
 
 def _go_vars(arch, platform):
