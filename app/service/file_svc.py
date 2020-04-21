@@ -15,6 +15,7 @@ from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
+MIN_MODULE_LEN = 1
 
 
 class FileSvc(FileServiceInterface, BaseService):
@@ -105,10 +106,13 @@ class FileSvc(FileServiceInterface, BaseService):
         :param func:
         :return:
         """
-        if callable(func):
+        if callable(func):  # Check to see if the passed function is already a callable function
             self.special_payloads[name] = func
         else:
-            if len(func.split('.')) > 1:
+            # If not callable, that means we've been passed a module path to the payload/extension handler. Example:
+            # The func handler is stored in dict format of dict(donut='plugins.stockpile.app.donut.donut_handler')
+            # and this splits that module path to properly load and execute the donut_handler function in donut.py
+            if len(func.split('.')) > MIN_MODULE_LEN:
                 try:
                     mod = __import__('.'.join(func.split('.')[:-1]), fromlist=[func.split('.')[-1]])
                     handle = getattr(mod, func.split('.')[-1])
@@ -180,12 +184,11 @@ class FileSvc(FileServiceInterface, BaseService):
             payload, display_name = await self.special_payloads[target](headers)
         except Exception as e:
             self.log.error('Error linking extension handler=%s, %s' % (payload, e))
-            return
 
 
 def _go_vars(arch, platform):
-    return "%s GOARCH=%s %s GOOS=%s" % (_get_header(), arch, _get_header(), platform)
+    return '%s GOARCH=%s %s GOOS=%s' % (_get_header(), arch, _get_header(), platform)
 
 
 def _get_header():
-    return "SET" if os.name == "nt" else ""
+    return 'SET' if os.name == 'nt' else ''
