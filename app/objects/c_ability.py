@@ -48,7 +48,7 @@ class Ability(BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None,
-                 language=None, code=None, build_target=None):
+                 language=None, code=None, build_target=None, in_memory=False):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -68,6 +68,7 @@ class Ability(BaseObject):
         self.repeatable = repeatable
         self.language = language
         self.code = code
+        self.in_memory = in_memory
         self.build_target = build_target
         self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
         if access:

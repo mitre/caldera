@@ -212,6 +212,7 @@ class DataService(BaseService):
                                                                    code=encoded_code,
                                                                    language=info.get('language'),
                                                                    build_target=info.get('build_target'),
+                                                                   in_memory=info.get('in_memory'),
                                                                    payloads=payloads,
                                                                    parsers=info.get('parsers', []),
                                                                    timeout=info.get('timeout', 60),
@@ -282,7 +283,7 @@ class DataService(BaseService):
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
                               requirements=None, privilege=None, timeout=60, access=None, repeatable=False, code=None,
-                              language=None, build_target=None, variations=None):
+                              language=None, build_target=None, in_memory=False, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -296,7 +297,7 @@ class DataService(BaseService):
         ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                           technique_id=technique_id, technique=technique_name, code=code, language=language,
                           executor=executor, platform=platform, description=description, build_target=build_target,
-                          cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
+                          cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs, in_memory=in_memory,
                           privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
         ability.access = access
         return await self.store(ability)
