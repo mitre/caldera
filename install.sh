@@ -98,6 +98,14 @@ function darwin_install_python() {
     install_wrapper "Python" python3 "brew install python" $CRITICAL
 }
 
+function darwin_install_or_upgrade_gcc() {
+    if brew ls --versions "gcc" >/dev/null; then
+        brew upgrade "gcc"
+    else
+        install_wrapper "GCC" gcc "brew install gcc" $WARNING
+    fi
+}
+
 function kali_install_go() {
     install_wrapper "GO" go "apt-get install -y golang-go" $WARNING
 }
@@ -109,6 +117,10 @@ function kali_install_python() {
 
 function ubuntu_install_go() {
     install_wrapper "GO" go "apt-get install -y software-properties-common && add-apt-repository -y ppa:longsleep/golang-backports && apt-get update -y && apt-get install -y golang-go" $WARNING
+}
+
+function ubuntu_install_gcc() {
+    install_wrapper "GCC" gcc "apt-get install -y build-essential" $WARNING
 }
 
 function ubuntu_install_mingw() {
@@ -128,6 +140,9 @@ function centos_install_go() {
     install_wrapper "GO" go "yum update -y && wget --no-check-certificate https://dl.google.com/go/go1.13.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.13.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin && ln -fs /usr/local/go/bin/go /usr/bin/go && source ~/.bash_profile" $WARNING
 }
 
+function centos_install_gcc() {
+    install_wrapper "GCC" gcc "yum install -y gcc" $WARNING
+}
 function centos_install_mingw() {
     install_wrapper "MinGW" x86_64-w64-mingw32-gcc "yum install -y mingw64-gcc" $WARNING
 }
@@ -180,6 +195,7 @@ function darwin() {
     initialize_log
     darwin_install_homebrew
     darwin_install_go
+    darwin_install_or_upgrade_gcc
     darwin_install_mingw
     darwin_install_python
     bash_set_random_conf_data_darwin
@@ -194,6 +210,7 @@ function ubuntu() {
     echo "[-] Installing on Ubuntu (Debian)..."
     initialize_log
     ubuntu_install_go
+    ubuntu_install_gcc
     ubuntu_install_mingw
     ubuntu_install_python
     bash_set_random_conf_data_linux
@@ -208,6 +225,7 @@ function kali() {
     echo "[-] Installing on Kali (Debian)..."
     initialize_log
     kali_install_go
+    ubuntu_install_gcc
     ubuntu_install_mingw
     kali_install_python
     bash_set_random_conf_data_linux
@@ -223,6 +241,7 @@ function centos() {
     initialize_log
     centos_install_core_tools
     centos_install_go
+    centos_install_gcc
     centos_install_mingw
     centos_install_python
     bash_set_random_conf_data_linux
