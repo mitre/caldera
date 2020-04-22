@@ -84,10 +84,11 @@ class TestRestSvc:
                               'atomic_ordering': [], 'goals': []},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
                 'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'goals': {'goal_list':
-                                                                                         [{'count': 1048576,
-                                                                                           'satisfied': False,
-                                                                                           'target': 'exhaustion',
-                                                                                           'value': 'complete'}],
+                                                                                     [{'count': 1048576,
+                                                                                       'satisfied': False,
+                                                                                       'target': 'exhaustion',
+                                                                                       'value': 'complete',
+                                                                                       'operator': None}],
                                                                                      'percentage': 0.0}, 'chain': [],
                 'atomic': False}
         internal_rest_svc = rest_svc(loop)
