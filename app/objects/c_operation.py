@@ -208,20 +208,24 @@ class Operation(BaseObject):
 
     async def _execute_atomically(self, services):
         """
-        Basic operation execution.
+        Default operation execution.
         
-        Operation will pull all links for adversary, executes them atomically
+        Operation will pull all links for adversary, executes them atomically,
         and in order as given from adversary.
+
+        Operation will progress to next ability even if current ability
+        cannot be executed. Will do a loop once through all abilities
+        enumerated in adversary.
         """
         while not self._is_atomic_closeable():
-            links = await services.get('planning_svc').get_links(self, bucket="atomic")
+            links = await services.get('planning_svc').get_links(self, buckets=["atomic"])
             if links:
                 await self.wait_for_links_completion([await self.apply(links[-1])])
-            await self._update_last_ran()
+            self._update_last_ran()
             if await self.is_finished():
                 return
 
-    async def _update_last_ran(self):
+    def _update_last_ran(self):
         """ """
         if self.last_ran is None:
             self.last_ran = self.adversary.atomic_ordering[0]

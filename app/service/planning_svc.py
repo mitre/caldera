@@ -10,10 +10,8 @@ class PlanningService(BasePlanningService):
 
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
-        Apply all links for specified bucket. 
-
-        Blocks until all links are completed, either after batch push, or 
-        seperately for every pushed link.
+        Apply all links for specified bucket. Blocks until all links are completed,
+        either after batch push, or seperately for every pushed link.
 
         :param planner:
         :param bucket:
@@ -69,8 +67,8 @@ class PlanningService(BasePlanningService):
             await getattr(planner, planner.next_bucket)()
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                    planner.operation)
-       
-    async def get_links(self, operation, bucket=None, agent=None, trim=True, planner=None, stopping_conditions=None):
+
+    async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
         For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
@@ -86,16 +84,19 @@ class PlanningService(BasePlanningService):
         :param stopping_conditions:
         :return: a list of links
         """
-        if bucket == "atomic":
+        if buckets == ["atomic"]:
             abilities = await self._get_next_atomic_ability(operation=operation)
         else:
             ao = operation.adversary.atomic_ordering
             abilities = await self.get_service('data_svc') \
                                   .locate('abilities', match=dict(ability_id=tuple(ao)))
-            if bucket:
-                # bucket specified - get all links for specified bucket,
+            if buckets:
+                # buckets specified - get all links for specified buckets,
                 # (still in underlying atomic adversary order)
-                abilities = [ab for ab in abilities if ab.bucket == bucket]
+                t = []
+                for bucket in buckets:
+                    t.append([ab for ab in abilities for b in ab.buckets if b == bucket])
+                abilities = t
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
