@@ -185,7 +185,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
             return report
         except Exception:
-            logging.error('Error saving operation report (%s)' % self.name)
+            logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
 
     async def run(self, services):
         try:
@@ -272,7 +272,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return {a.paw: {'all_abilities': self.adversary.atomic_ordering} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL)
+        variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []
         if ability.ability_id in agent_ran:
             return
         elif not agent.trusted:
