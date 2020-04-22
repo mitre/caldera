@@ -249,8 +249,8 @@ class RestService(BaseService):
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
-        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
-                         jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
+        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
+                         group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          atomic_enabled=bool(int(data.pop('atomic_enabled', 0))),
                          obfuscator=data.pop('obfuscator', 'plain-text'),

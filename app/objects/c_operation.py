@@ -23,6 +23,7 @@ class Operation(BaseObject):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
                                source=self.source.display if self.source else '',
+                               atomic=self.atomic,
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, obfuscator=self.obfuscator,
@@ -38,7 +39,7 @@ class Operation(BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, atomic_enabled=False, obfuscator='plain-text', group=None, auto_close=True,
+                 autonomous=True, atomic=False, obfuscator='plain-text', group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
         self.id = id
@@ -52,7 +53,7 @@ class Operation(BaseObject):
         self.planner = planner
         self.state = state
         self.autonomous = autonomous
-        self.atomic_enabled = atomic_enabled
+        self.atomic = atomic
         self.last_ran = None
         self.obfuscator = obfuscator
         self.auto_close = auto_close
@@ -188,8 +189,13 @@ class Operation(BaseObject):
 
     async def run(self, services):
         try:
-            planner = await self._get_planning_module(services)
-            await self._execute_planner(planner)
+            if self.atomic:
+                # atomic (basic) mode, operation handles simple execution
+                await self._execute_atomically(services)
+            else:
+                # planner present, operation cedes control to planner
+                planner = await self._get_planning_module(services)
+                await planner.execute()
             while not await self.is_closeable():
                 await asyncio.sleep(10)
             await self._cleanup_operation(services)
@@ -200,10 +206,30 @@ class Operation(BaseObject):
 
     """ PRIVATE """
 
-    async def _execute_planner(self, planner):
-        while planner.next_bucket != None and not planner.stopping_condition_met:
-            await getattr(planner, planner.next_bucket)()
-            await self.wait_for_completion()
+    async def _execute_atomically(self, services):
+        """
+        Basic operation execution.
+        
+        Operation will pull all links for adversary, executes them atomically
+        and in order as given from adversary.
+        """
+        while not self._is_atomic_closeable():
+            links = await services.get('planning_svc').get_links(self, bucket="atomic")
+            if links:
+                await self.wait_for_links_completion([await self.apply(links[-1])])
+            await self._update_last_ran()
+            if await self.is_finished():
+                return
+
+    async def _update_last_ran(self):
+        """ """
+        if self.last_ran is None:
+            self.last_ran = self.adversary.atomic_ordering[0]
+        elif self.last_ran != self.adversary.atomic_ordering[-1]:
+            self.last_ran = self.adversary.atomic_ordering[(self.adversary.atomic_ordering.index(self.last_ran) + 1)]
+
+    def _is_atomic_closeable(self):
+        return self.atomic and self.last_ran == self.adversary.atomic_ordering[-1]
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
@@ -230,14 +256,6 @@ class Operation(BaseObject):
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
-
-    #def _is_atomic_closeable(self):
-    #    return self.atomic_enabled and self.last_ran == self.adversary.atomic_ordering[-1]
-
-    def _get_ability_set_format_for_planner(self):
-        if not self.atomic_enabled:
-            return [self.adversary.atomic_ordering]
-        return self.adversary.atomic_ordering
 
     def _get_skipped_abilities_by_agent(self):
         abilities_by_agent = self._get_all_possible_abilities_by_agent()

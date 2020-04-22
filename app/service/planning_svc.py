@@ -8,14 +8,38 @@ class PlanningService(BasePlanningService):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
 
-    async def bucket_exhaustion(self, bucket, operation, agent=None):
+    async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
-        Apply all links for specified bucket. Will block until all
-        links execute.
+        Apply all links for specified bucket. 
+
+        Blocks until all links are completed, either after batch push, or 
+        seperately for every pushed link.
+
+        :param planner:
+        :param bucket:
+        :param operation:
+        :param agent:
+        :param batch: (bool) 'True' - push all bucket links immediately. Will check
+            if operation has been stopped(by user) after all bucket links complete.
+            'False' will push links one at a time, and wait for each to
+            complete. Will check if operation has been stopped(by user) after
+            each single link is completed.
+        :param condition_stop: (bool) check and respect stopping conditions
+        :return: =
         """
+        l_ids = []
         for l in await self.get_links(operation, bucket, agent):
-            await operation.apply(l)
-        await operation.wait_for_completion()
+            l_id = await operation.apply(l)
+            if batch:
+                l_ids.append(l_id)
+            else:
+                await self._bucket_execute(operation, planner, [l_id], condition_stop)
+                if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+                    return
+        if batch:
+            await self._bucket_execute(operation, planner, l_ids, condition_stop)
+            if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+                return
 
     async def default_next_bucket(self, current_bucket, state_machine):
         """
@@ -24,6 +48,27 @@ class PlanningService(BasePlanningService):
         """
         idx = (state_machine.index(current_bucket) + 1) % len(state_machine)
         return state_machine[idx]
+
+    async def add_ability_to_bucket(self, ability, bucket):
+        """Adds bucket tag to ability"""
+        await ability.add_bucket(bucket)
+
+    async def execute_planner(self, planner):
+        """
+        Default planner execution flow. Progress from bucket to bucket. Will stop
+        execution for these conditions:
+            - All buckets have been executed.
+            - Planner stopping conditions have been met.
+            - Operation was halted from external/UI input.
+
+        NOTE: Do NOT call wait-for-link-completion functions here. Let the planner
+        decide to do that within its bucket functions, and there are other
+        planning_svc utilities for the bucket functions to use to do so.
+        """
+        while planner.next_bucket != None and not planner.stopping_condition_met and not await planner.operation.is_finished():
+            await getattr(planner, planner.next_bucket)()
+            planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
+                                                                                   planner.operation)
        
     async def get_links(self, operation, bucket=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
@@ -32,28 +77,25 @@ class PlanningService(BasePlanningService):
 
         :param operation:
         :param bucket:
-            'None' - no buckets, get all links for given operation and agent
-            'atomic' - no buckets, but resort to atomic ordering of links as specified in adversary
-            '<bucket>' - get links for specified bucket
+            'atomic'- one additional link everytime called, in atomic adversary order
+            'None' - no buckets, get all links for given operation, agent, trim setting
+            '<bucket>' - get links for specified bucket for given trim setting
         :param agent:
         :param trim: call trim_links() on list of links before returning
         :param planner:
         :param stopping_conditions:
         :return: a list of links
         """
-        if stopping_conditions and await self._check_stopping_conditions(operation, stopping_conditions):
-            self.log.debug('Stopping conditions met. No more links will be generated!')
-            planner.stopping_condition_met = True
-            return []
         if bucket == "atomic":
-            # atomic mode - one additional link everytime called, in atomic adversary order
-            abilities = self._get_next_atomic_ability(operation=operation)
-        elif bucket:
-            # bucket mode - get all links for specified bucket, in underlying atomic adversary order
-            abilities = [ab for ab in operation.adversary.atomic_ordering if ab.bucket == bucket]
+            abilities = await self._get_next_atomic_ability(operation=operation)
         else:
-            # no mode -  get all links, still supplied in atomic adversary order
-            abilities = operation.adversary.atomic_ordering
+            ao = operation.adversary.atomic_ordering
+            abilities = await self.get_service('data_svc') \
+                                  .locate('abilities', match=dict(ability_id=tuple(ao)))
+            if bucket:
+                # bucket specified - get all links for specified bucket,
+                # (still in underlying atomic adversary order)
+                abilities = [ab for ab in abilities if ab.bucket == bucket]
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
@@ -61,8 +103,6 @@ class PlanningService(BasePlanningService):
             for agent in operation.agents:
                 links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         self.log.debug('Generated %s usable links' % (len(links)))
-        if not operation.atomic_enabled and operation.auto_close and not links:
-            operation.state = operation.states['FINISHED']
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -94,6 +134,24 @@ class PlanningService(BasePlanningService):
                 agent_links = await self.trim_links(operation, agent_links, agent)
         return agent_links
 
+    async def check_stopping_conditions(self, stopping_conditions, operation):
+        """
+        Checks whether an operation has collected the proper facts to trigger this planner's stopping
+        conditions
+
+        :return: True if all stopping conditions have been met, False if all stopping conditions have not
+        been met
+        """
+        for sc in stopping_conditions:
+            if not await self._stopping_condition_met(operation.all_facts(), sc):
+                return False
+        return True
+
+    async def update_stopping_condition_met(self, planner, operation):
+         if planner.stopping_conditions:
+            planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
+                                                                                  operation)
+
     @staticmethod
     async def sort_links(links):
         """
@@ -103,26 +161,25 @@ class PlanningService(BasePlanningService):
 
     """ PRIVATE """
 
-    @staticmethod
-    def _get_next_atomic_ability(operation):
+    async def _get_next_atomic_ability(self, operation):
+        """
+        """
         if operation.last_ran is None:
-            return [operation.adversary.atomic_ordering[0]]
-        return operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
+            ab_id = operation.adversary.atomic_ordering[0]
+            return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ab_id))
+        ab_ids = operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
+        return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(ab_ids)))
 
-    async def _check_stopping_conditions(self, operation, stopping_conditions):
-        """
-        Checks whether an operation has collected the proper facts to trigger this planner's stopping
-        conditions
+    async def _bucket_execute(self, operation, planner, links, condition_stop):
+        """repeated code used in bucket_exhaustion()"""
+        await operation.wait_for_links_completion(links)
+        await self.update_stopping_condition_met(planner, operation)
 
-        :param operation:
-        :param stopping_conditions:
-        :return: True if all stopping conditions have been met, False if all stopping conditions have not
-        been met
-        """
-        for sc in stopping_conditions:
-            if not await self._stopping_condition_met(operation.all_facts(), sc):
-                return False
-        return True
+    async def _stop_bucket_exhaustion(self, planner, operation, condition_stop):
+        """ """
+        if await operation.is_finished() or (condition_stop and planner.stopping_condition_met):
+            return True
+        return False
 
     @staticmethod
     async def _stopping_condition_met(facts, stopping_condition):
