@@ -1,3 +1,4 @@
+import operator
 from collections import defaultdict
 
 from aiohttp_jinja2 import template
@@ -41,7 +42,8 @@ class CampaignPack(BaseWorld):
         payloads = await self.rest_svc.list_payloads()
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
                              key=lambda a: a['name'])
-        return dict(adversaries=adversaries, exploits=[a.display for a in abilities], payloads=payloads,
+        exploits = sorted([a.display for a in abilities], key=operator.itemgetter('technique_id', 'name'))
+        return dict(adversaries=adversaries, exploits=exploits, payloads=payloads,
                     tactics=tactics, platforms=platforms, executors=executors)
 
     @check_authorization
