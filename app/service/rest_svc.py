@@ -40,6 +40,7 @@ class RestService(RestServiceInterface, BaseService):
                 goal['count'] = int(goal['count'])
                 if goal['count'] < 0:
                     goal['count'] = 2**20
+                goal['operator'] = goal['operator'].strip()
                 goals.append(goal)
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
                                    atomic_ordering=p, goals=goals)))

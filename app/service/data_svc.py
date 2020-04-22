@@ -98,7 +98,8 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_goals(self, adversary):
         listing = list()
         for goal in adversary.get('goals'):
-            listing.append(Goal(target=goal['target'], value=goal['value'], count=goal['count']))
+            listing.append(Goal(target=goal['target'], value=goal['value'], count=goal.get('count', 1),
+                                operator=goal.get('operator', '=')))
         return listing
 
     async def _load(self, plugins=()):

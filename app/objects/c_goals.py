@@ -8,7 +8,7 @@ class Goals(BaseObject):
         self.to_fulfill = list()
         if goal_list:
             for goal in goal_list:
-                new_goal = Goal(target=goal.target, value=goal.value, count=goal.count)
+                new_goal = Goal(target=goal.target, value=goal.value, count=goal.count, operator=goal.operator)
                 self.to_fulfill.append(new_goal)
         else:
             self.to_fulfill.append(Goal(target='exhaustion', value='complete'))

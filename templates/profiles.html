@@ -135,12 +135,13 @@
                 <tr>
                     <td class="goal-role"><b>target</b></td>
                     <td class="goal-role"><b>value</b></td>
-                    <td class="goal-role"><b>count (-1 or 1048576 = ∞)</b></td>
+                    <td class="goal-role"><b>operator</b></td>
+                    <td class="goal-role"><b>count (∞ = -1 / 1048576)</b></td>
                     <td></td>
                 </tr>
             </thead>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter count')">
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter operator', 'Enter count')">
             &#10010;&nbsp;add goal
         </p>
     </div>
@@ -276,8 +277,9 @@
         $("#goalTbl tr").not(":first").not(":last").each(function () {
             let target = $(this.cells[0]).text();
             let value = $(this.cells[1]).text();
-            let count = $(this.cells[2]).text();
-            goals.push({'target':target,'value':value,"count":count});
+            let operator = $(this.cells[2]).text();
+            let count = $(this.cells[3]).text();
+            goals.push({"target":target,"value":value, "operator":operator, "count":count});
         });
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
             'i': identifier, 'goals': goals}, saveAdversaryCallback);
@@ -651,11 +653,12 @@
 
     //# sourceURL=profiles.js
 
-    function addGoalRow(target, value, count){
+    function addGoalRow(target, value, operator, count){
         $('#goalTbl tr:last').after(
             '<tr>' +
                 '<td><p contenteditable="true">'+target+'</p></td>' +
                 '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p contenteditable="true">'+operator+'</p> </td>' +
                 '<td><p contenteditable="true">'+count+'</p></td>' +
                 '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
             '</tr>'
@@ -663,7 +666,7 @@
     }
 
     function loadGoals(goallist){
-        goallist.forEach(function(e) {addGoalRow(e.target, e.value, e.count)})
+        goallist.forEach(function(e) {addGoalRow(e.target, e.value, e.operator, e.count)})
     }
 
 </script>
