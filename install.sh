@@ -236,7 +236,7 @@ if [[ "$(uname)" == *"Darwin"* ]]; then
   darwin
 elif [[ "$(lsb_release -d)" == *"Ubuntu"* ]]; then
   ubuntu
-elif [[ "$(cat /etc/centos-release)" == *"CentOS"* ]]; then
+elif [[ "$(cat /etc/centos-release 2>/dev/null)" == *"CentOS"* ]]; then
   centos
 elif [[ "$(lsb_release -d)" == *"Fedora"* ]]; then
   centos
