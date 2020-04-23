@@ -4,6 +4,8 @@ import os
 import re
 import yaml
 import logging
+import subprocess
+import distutils.version
 
 import dirhash
 
@@ -110,6 +112,38 @@ class BaseWorld:
             if '%s.xored' % target in files:
                 return os.path.join(root, '%s.xored' % target)
         return None
+
+    @staticmethod
+    def check_requirement(params):
+        def check_module_version(module, version, attr=None, **kwargs):
+            attr = attr if attr else '__version__'
+            mod_version = getattr(import_module(module), attr, '')
+            return compare_versions(mod_version, version)
+
+        def check_program_version(command, version, **kwargs):
+            output = subprocess.check_output(command.split(' '), shell=False)
+            return compare_versions(output.decode('utf-8'), version)
+
+        def compare_versions(version_string, minimum_version):
+            version = parse_version(version_string)
+            return distutils.version.StrictVersion(version) >= distutils.version.StrictVersion(str(minimum_version))
+
+        def parse_version(version_string, pattern=r'([0-9]+(?:\.[0-9]+)+)'):
+            groups = re.search(pattern, version_string)
+            if groups:
+                return groups[1]
+            return '0.0.0'
+
+        checkers = dict(
+            python_module=check_module_version,
+            installed_program=check_program_version
+        )
+
+        try:
+            requirement_type = params.get('type')
+            return checkers[requirement_type](**params)
+        except Exception as e:
+            logging.getLogger('check_requirement').error(repr(e))
 
     @staticmethod
     def get_version(path='.'):

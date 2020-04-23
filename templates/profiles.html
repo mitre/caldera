@@ -42,19 +42,19 @@
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
             <div class="column" style="flex:100%;">
-                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', {{ exploits | sort(attribute='technique_id') }});">
+                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', exploits);">
                     <option disabled selected>Choose a tactic</option>
                     {% for tactic in tactics %}
                         <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
                     {% endfor %}}
                 </select>
-                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', {{ exploits | sort(attribute='name') }});">
+                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', exploits);">
                     <option disabled selected>Choose a technique</option>
                 </select>
-                <select id="ability-ability-filter" onchange="showAbility('phase-modal',  {{ exploits }})">
+                <select id="ability-ability-filter" onchange="showAbility('phase-modal', exploits)">
                     <option disabled selected>0 abilities</option>
                 </select>
-                <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', {{ exploits }});">
+                <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
                 <br><br>
                 <div class="ability-attack row-simple">
                     <div class="column" style="flex:60%">
@@ -226,6 +226,8 @@
 <script src="/gui/js/ability.js"></script>
 <script src="/gui/js/muuri.min.js"></script>
 <script>
+    var exploits = {{exploits | tojson}};
+
     $(document).ready(function () {
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
         addPhase(1);
