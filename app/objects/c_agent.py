@@ -167,7 +167,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def task(self, abilities, facts=(), operation='task'):
         bps = BasePlanningService()
-        potential_links = [Link(operation=operation, command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
+        potential_links = [Link(command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
         links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):

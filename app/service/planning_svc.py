@@ -99,7 +99,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 await a.HOOKS[a.language](a)
             if a.test:
                 links.append(
-                    Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,
+                    Link(command=a.test, paw=agent.paw, score=0, ability=a,
                          status=link_status, jitter=self.jitter(operation.jitter))
                 )
         return links
@@ -112,7 +112,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             for cleanup in ability.cleanup:
                 decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
-                lnk = Link(operation=operation.id, command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                lnk = Link(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                            ability=ability, score=0, jitter=2, status=link_status)
                 if lnk.command not in [l.command for l in links]:
                     lnk.apply_id(agent.host)

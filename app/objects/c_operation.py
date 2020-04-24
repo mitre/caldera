@@ -58,7 +58,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.chain, self.rules = [], []
+        self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules

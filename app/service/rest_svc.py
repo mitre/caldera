@@ -168,11 +168,12 @@ class RestService(RestServiceInterface, BaseService):
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        links = await self._build_potential_links(operation, agents, potential_abilities)
-        return dict(links=[l.display for l in links])
+        operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in operation.potential_links])
 
     async def apply_potential_link(self, link):
-        operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
+        all_operations = await self.get_service('data_svc').locate('operations')
+        operation = next((o for o in all_operations if any(lnk.id == link.id for lnk in o.potential_links)), None)
         return await operation.apply(link)
 
     async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):
