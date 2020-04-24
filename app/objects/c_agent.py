@@ -165,7 +165,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 abilities.append(a)
         await self.task(abilities)
 
-    async def task(self, abilities, facts=(), operation='task'):
+    async def task(self, abilities, facts=()):
         bps = BasePlanningService()
         potential_links = [Link(command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
         links = []
