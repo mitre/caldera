@@ -127,8 +127,8 @@ def agent():
 
 @pytest.fixture
 def link():
-    def _generate_link(operation, command, paw, ability, *args, **kwargs):
-        return Link(operation=operation, ability=ability, command=command, paw=paw, *args, **kwargs)
+    def _generate_link(command, paw, ability, *args, **kwargs):
+        return Link(ability=ability, command=command, paw=paw, *args, **kwargs)
 
     return _generate_link
 
