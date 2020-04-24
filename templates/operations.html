@@ -435,7 +435,7 @@
                     template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
                         'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                        'onclick="findResults(this,'+lnk+','+OPERATION.id+')"' +
+                        'onclick="findResults(this,'+lnk+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
@@ -602,7 +602,7 @@
         }
     }
 
-    function findResults(elem, lnk, opId){
+    function findResults(elem, lnk){
         function loadResults(data){
             if (data) {
                 let res = atob(data.output);
@@ -615,8 +615,7 @@
         }
         document.getElementById('more-modal').style.display='block';
         $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
-        let link_id = opId + '-' + lnk;
-        restRequest('POST', {'index':'result','link_id':link_id}, loadResults);
+        restRequest('POST', {'index':'result','link_id':lnk.toString()}, loadResults);
     }
 
     function downloadOperationReport() {
