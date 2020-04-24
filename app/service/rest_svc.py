@@ -35,13 +35,7 @@ class RestService(RestServiceInterface, BaseService):
             p = list()
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
-            goals = list()
-            for goal in data.pop('goals'):
-                goal['count'] = int(goal['count'])
-                if goal['count'] < 0:
-                    goal['count'] = 2**20
-                goal['operator'] = goal['operator'].strip()
-                goals.append(goal)
+            goals = [self._gen_goals(goal) for goal in data['goals']]
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
                                    atomic_ordering=p, goals=goals)))
             f.truncate()
@@ -275,6 +269,14 @@ class RestService(RestServiceInterface, BaseService):
         new_stopping_conditions = data.get('stopping_conditions')
         if new_stopping_conditions:
             return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
+
+    def _gen_goals(self, goal_data):
+        goal = goal_data
+        goal['count'] = int(goal['count'])
+        if goal['count'] < 0:
+            goal['count'] = 2 ** 20
+        goal['operator'] = goal['operator'].strip()
+        return goal
 
     async def _build_potential_abilities(self, operation):
         potential_abilities = []
