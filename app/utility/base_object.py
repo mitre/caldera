@@ -5,6 +5,10 @@ from app.utility.base_world import BaseWorld
 
 class BaseObject(BaseWorld):
 
+    schema = None
+    display_schema = None
+    load_schema = None
+
     def __init__(self):
         self._access = self.Access.APP
 
@@ -46,6 +50,16 @@ class BaseObject(BaseWorld):
     def access(self):
         return self._access
 
+    @property
+    def display(self):
+        if self.display_schema:
+            dumped = self.display_schema.dump(self)
+        elif self.schema:
+            dumped = self.schema.dump(self)
+        else:
+            raise NotImplementedError
+        return self.clean(dumped)
+
     @access.setter
     def access(self, value):
         self._access = value
@@ -58,3 +72,12 @@ class BaseObject(BaseWorld):
                     re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
                     decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
             return self.encode_string(decoded_test)
+
+    @classmethod
+    def load(cls, dict_obj):
+        if cls.load_schema:
+            return cls.load_schema.load(dict_obj)
+        elif cls.schema:
+            return cls.schema.load(dict_obj)
+        else:
+            raise NotImplementedError

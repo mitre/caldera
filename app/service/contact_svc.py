@@ -45,10 +45,10 @@ class ContactService(ContactServiceInterface, BaseService):
                 await self._save(Result(**result))
             return agent, await self._get_instructions(agent)
         agent = await self.get_service('data_svc').store(
-            Agent.from_dict(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
-                                 sleep_max=self.get_config(name='agents', prop='sleep_max'),
-                                 watchdog=self.get_config(name='agents', prop='watchdog'),
-                                 **kwargs))
+            Agent.load(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
+                            sleep_max=self.get_config(name='agents', prop='sleep_max'),
+                            watchdog=self.get_config(name='agents', prop='watchdog'),
+                            **kwargs))
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
