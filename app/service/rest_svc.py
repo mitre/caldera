@@ -225,8 +225,6 @@ class RestService(BaseService):
                     raise web.HTTPBadRequest(body='This operation has already finished.')
                 elif state not in op[0].states.values():
                     raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
-                elif state == op[0].states['FINISHED']:
-                    await op[0].close()
             except Exception as e:
                 self.log.error(repr(e))
         operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
