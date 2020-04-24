@@ -101,7 +101,9 @@ class Operation(BaseObject):
         self.add_link(link)
         return link.id
 
-    async def close(self):
+    async def close(self, services):
+        await self._cleanup_operation(services)
+        await self._save_new_source(services)
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
@@ -195,9 +197,7 @@ class Operation(BaseObject):
             while not await self.is_closeable():
                 await asyncio.sleep(10)
                 await self._run(planner)
-            await self._cleanup_operation(services)
-            await self.close()
-            await self._save_new_source(services)
+            await self.close(services)
         except Exception as e:
             logging.error(e, exc_info=True)
 
