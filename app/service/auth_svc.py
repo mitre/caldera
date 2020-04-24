@@ -14,6 +14,18 @@ from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.utility.base_service import BaseService
 
 
+def for_all_public_methods(decorator):
+    """class decorator -- adds decorator to all public methods"""
+
+    def decorate(cls):
+        for attr in cls.__dict__:
+            if callable(getattr(cls, attr)) and attr[0] != '_':
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+
+    return decorate
+
+
 def check_authorization(func):
     """
     Authorization Decorator
