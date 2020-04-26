@@ -144,22 +144,22 @@ class DataService(DataServiceInterface, BaseService):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
-                    for platforms, executors in ab.get('platforms').items():
+                    for platforms, executors in ab.pop('platforms', []).items():
                         for pl in platforms.split(','):
                             for name, info in executors.items():
                                 for e in name.split(','):
                                     technique_name = ab.get('technique', dict()).get('name')
-                                    technique_id = ab.get('technique', dict()).get('attack_id')
+                                    technique_id = ab.pop('technique', dict()).get('attack_id')
                                     encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
                                     cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
                                     encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                                    payloads = ab.get('payloads') if encoded_code else info.get('payloads')
-                                    a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
+                                    payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                                    a = await self._create_ability(ability_id=ab.pop('id', None), tactic=ab.pop('tactic', None),
                                                                    technique_name=technique_name,
                                                                    technique_id=technique_id,
                                                                    test=encoded_test,
-                                                                   description=ab.get('description') or '',
-                                                                   executor=e, name=ab.get('name'), platform=pl,
+                                                                   description=ab.pop('description', ''),
+                                                                   executor=e, name=ab.pop('name', ''), platform=pl,
                                                                    cleanup=cleanup_cmd,
                                                                    code=encoded_code,
                                                                    language=info.get('language'),
@@ -167,11 +167,10 @@ class DataService(DataServiceInterface, BaseService):
                                                                    payloads=payloads,
                                                                    parsers=info.get('parsers', []),
                                                                    timeout=info.get('timeout', 60),
-                                                                   requirements=ab.get('requirements', []),
-                                                                   privilege=ab[
-                                                                       'privilege'] if 'privilege' in ab.keys() else None,
-                                                                   access=plugin.access, repeatable=ab.get('repeatable', False),
-                                                                   variations=info.get('variations', []))
+                                                                   requirements=ab.pop('requirements', []),
+                                                                   privilege=ab.pop('privilege', None),
+                                                                   access=plugin.access, repeatable=ab.pop('repeatable', False),
+                                                                   variations=info.get('variations', []), **ab)
                                     await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
@@ -220,7 +219,7 @@ class DataService(DataServiceInterface, BaseService):
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
                               requirements=None, privilege=None, timeout=60, access=None, repeatable=False, code=None,
-                              language=None, build_target=None, variations=None):
+                              language=None, build_target=None, variations=None, **kwargs):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -235,7 +234,7 @@ class DataService(DataServiceInterface, BaseService):
                           technique_id=technique_id, technique=technique_name, code=code, language=language,
                           executor=executor, platform=platform, description=description, build_target=build_target,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
+                          privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations, **kwargs)
         ability.access = access
         return await self.store(ability)
 

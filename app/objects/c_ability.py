@@ -49,7 +49,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, access=None, variations=None,
-                 language=None, code=None, build_target=None):
+                 language=None, code=None, build_target=None, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -73,6 +73,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
         if access:
             self.access = self.Access(access)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
