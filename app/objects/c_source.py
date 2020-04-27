@@ -59,9 +59,9 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, identifier, name, facts, rules=(), adjustments=()):
+    def __init__(self, id, name, facts, rules=(), adjustments=()):
         super().__init__()
-        self.id = identifier
+        self.id = id
         self.name = name
         self.facts = facts
         self.rules = rules
