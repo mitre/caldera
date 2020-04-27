@@ -9,7 +9,7 @@
           Groups are collections of agents so hosts can be compromised simultaneously. You must deploy at
           least 1 agent in order to run an operation.
       </p>
-      <a class="blink" onclick="$('#delivery-modal').show();">Click here to deploy an agent</a>
+      <button type="button" class="button-orange atomic-button" onclick="$('#delivery-modal').show();">Click here to deploy an agent</button>
       <br><br>
 
       <div id="agent-optional" class="column sidebar-cutout sidebar-header">
@@ -184,7 +184,6 @@
         clearInterval(refresher);
     });
     $(document).ready(function () {
-        blink('.blink');
         let agentCnt = ($('#agent-table tr').length-1);
         if(agentCnt < 1){
             stream('Looks like you have no agents. You should deploy one now.');
@@ -331,14 +330,6 @@
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
-    }
-
-    function blink(selector){
-        $(selector).fadeOut('slow', function(){
-            $(this).fadeIn('slow', function(){
-                blink(this);
-            });
-        });
     }
 
     function displayCommand(){
