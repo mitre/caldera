@@ -23,7 +23,7 @@ class PlanningService(BasePlanningService):
             complete. Will check if operation has been stopped(by user) after
             each single link is completed.
         :param condition_stop: (bool) check and respect stopping conditions
-        :return: =
+        :return:
         """
         l_ids = []
         for l in await self.get_links(operation, bucket, agent):
@@ -60,13 +60,13 @@ class PlanningService(BasePlanningService):
             - Operation was halted from external/UI input.
 
         NOTE: Do NOT call wait-for-link-completion functions here. Let the planner
-        decide to do that within its bucket functions, and there are other
+        decide to do that within its bucket functions, and/or there are other
         planning_svc utilities for the bucket functions to use to do so.
         """
-        while planner.next_bucket != None and not planner.stopping_condition_met and not await planner.operation.is_finished():
+        while planner.next_bucket is not None and not planner.stopping_condition_met and not await planner.operation.is_finished():
             await getattr(planner, planner.next_bucket)()
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
-                                                                                   planner.operation)
+                                                                                  planner.operation)
 
     async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
@@ -91,7 +91,7 @@ class PlanningService(BasePlanningService):
             abilities = await self.get_service('data_svc') \
                                   .locate('abilities', match=dict(ability_id=tuple(ao)))
             if buckets:
-                # buckets specified - get all links for specified buckets,
+                # buckets specified - get all links for given buckets,
                 # (still in underlying atomic adversary order)
                 t = []
                 for bucket in buckets:
@@ -149,7 +149,7 @@ class PlanningService(BasePlanningService):
         return True
 
     async def update_stopping_condition_met(self, planner, operation):
-         if planner.stopping_conditions:
+        if planner.stopping_conditions:
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
 
@@ -164,6 +164,9 @@ class PlanningService(BasePlanningService):
 
     async def _get_next_atomic_ability(self, operation):
         """
+        Returns next ability for given operation adversary. Recursive calls
+        will return an even increasing list of past returned abilities, plus
+        additional next ability.
         """
         if operation.last_ran is None:
             ab_id = operation.adversary.atomic_ordering[0]
@@ -209,7 +212,7 @@ class PlanningService(BasePlanningService):
                          status=link_status, jitter=self.jitter(operation.jitter))
                 )
         return links
-
+    
     async def _generate_cleanup_links(self, operation, agent, link_status):
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:

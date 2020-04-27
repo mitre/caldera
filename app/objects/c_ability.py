@@ -27,7 +27,7 @@ class Ability(BaseObject):
                    technique=json['technique_name'], name=json['name'], test=json['test'], variations=[],
                    description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
                    platform=json['platform'], payloads=json['payloads'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], buckets=json["buckets"],
+                   requirements=requirements, privilege=json['privilege'], buckets=json['buckets'],
                    timeout=json['timeout'], access=json['access'])
 
     @property

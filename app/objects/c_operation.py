@@ -209,7 +209,7 @@ class Operation(BaseObject):
     async def _execute_atomically(self, services):
         """
         Default operation execution.
-        
+
         Operation will pull all links for adversary, executes them atomically,
         and in order as given from adversary.
 
@@ -218,7 +218,7 @@ class Operation(BaseObject):
         enumerated in adversary.
         """
         while not self._is_atomic_closeable():
-            links = await services.get('planning_svc').get_links(self, buckets=["atomic"])
+            links = await services.get('planning_svc').get_links(self, buckets=['atomic'])
             if links:
                 await self.wait_for_links_completion([await self.apply(links[-1])])
             self._update_last_ran()

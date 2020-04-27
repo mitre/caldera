@@ -203,7 +203,7 @@ class DataService(BaseService):
                                                                    requirements=ab.get('requirements', []),
                                                                    privilege=ab[
                                                                        'privilege'] if 'privilege' in ab.keys() else None,
-                                                                    buckets=await self._classify(ab),
+                                                                   buckets=await self._classify(ab),
                                                                    access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                    variations=info.get('variations', []))
                                     await self._update_extensions(a)
@@ -216,7 +216,7 @@ class DataService(BaseService):
             ab.technique_id = ability.technique_id
             ab.technique_name = ability.technique_name
             await self.store(ab)
-    
+
     async def _classify(self, ability):
         if 'buckets' in ability:
             return ability['buckets'].lower()
