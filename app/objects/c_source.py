@@ -46,7 +46,7 @@ class SourceSchema(ma.Schema):
 
     @ma.post_load()
     def build_source(self, data, **_):
-        data['identifier'] = data.pop('id')
+        data['id'] = data.pop('id')
         return Source(**data)
 
 
