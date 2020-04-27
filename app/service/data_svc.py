@@ -145,7 +145,6 @@ class DataService(DataServiceInterface, BaseService):
                     if ab.get('tactic') and ab.get('tactic') not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
                     for platforms, executors in ab.pop('platforms', []).items():
-                        for pl in platforms.split(','):
                             for name, info in executors.items():
                                 for e in name.split(','):
                                     technique_name = ab.get('technique', dict()).get('name')
@@ -154,23 +153,27 @@ class DataService(DataServiceInterface, BaseService):
                                     cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
                                     encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
                                     payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
-                                    a = await self._create_ability(ability_id=ab.pop('id', None), tactic=ab.pop('tactic', None),
-                                                                   technique_name=technique_name,
-                                                                   technique_id=technique_id,
-                                                                   test=encoded_test,
-                                                                   description=ab.pop('description', ''),
-                                                                   executor=e, name=ab.pop('name', ''), platform=pl,
-                                                                   cleanup=cleanup_cmd,
-                                                                   code=encoded_code,
-                                                                   language=info.get('language'),
-                                                                   build_target=info.get('build_target'),
-                                                                   payloads=payloads,
-                                                                   parsers=info.get('parsers', []),
-                                                                   timeout=info.get('timeout', 60),
-                                                                   requirements=ab.pop('requirements', []),
-                                                                   privilege=ab.pop('privilege', None),
-                                                                   access=plugin.access, repeatable=ab.pop('repeatable', False),
-                                                                   variations=info.get('variations', []), **ab)
+                                    ability_id=ab.pop('id', None)
+                                    tactic = ab.pop('tactic', None)
+                                    description = ab.pop('description', '')
+                                    ability_name = ab.pop('name', '')
+                                    requirements = ab.pop('requirements', [])
+                                    privilege = ab.pop('privilege', None)
+                                    repeatable = ab.pop('repeatable', False)
+                                    for pl in platforms.split(','):
+                                        a = await self._create_ability(ability_id=ability_id, tactic=tactic,
+                                                                       technique_name=technique_name,
+                                                                       technique_id=technique_id, test=encoded_test,
+                                                                       description=description, executor=e,
+                                                                       name=ability_name, platform=pl,
+                                                                       cleanup=cleanup_cmd, code=encoded_code,
+                                                                       language=info.get('language'),
+                                                                       build_target=info.get('build_target'),
+                                                                       payloads=payloads, parsers=info.get('parsers', []),
+                                                                       timeout=info.get('timeout', 60),
+                                                                       requirements=requirements, privilege=privilege,
+                                                                       access=plugin.access, repeatable=repeatable,
+                                                                       variations=info.get('variations', []), **ab)
                                     await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
