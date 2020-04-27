@@ -144,36 +144,38 @@ class DataService(DataServiceInterface, BaseService):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
                         self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                    technique_name = ab.get('technique', dict()).get('name')
+                    technique_id = ab.pop('technique', dict()).get('attack_id')
+                    ability_id = ab.pop('id', None)
+                    tactic = ab.pop('tactic', None)
+                    description = ab.pop('description', '')
+                    ability_name = ab.pop('name', '')
+                    privilege = ab.pop('privilege', None)
+                    repeatable = ab.pop('repeatable', False)
+                    requirements = ab.pop('requirements', [])
                     for platforms, executors in ab.pop('platforms', []).items():
-                            for name, info in executors.items():
-                                for e in name.split(','):
-                                    technique_name = ab.get('technique', dict()).get('name')
-                                    technique_id = ab.pop('technique', dict()).get('attack_id')
-                                    encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
-                                    cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
-                                    encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                                    payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
-                                    ability_id=ab.pop('id', None)
-                                    tactic = ab.pop('tactic', None)
-                                    description = ab.pop('description', '')
-                                    ability_name = ab.pop('name', '')
-                                    requirements = ab.pop('requirements', [])
-                                    privilege = ab.pop('privilege', None)
-                                    repeatable = ab.pop('repeatable', False)
-                                    for pl in platforms.split(','):
-                                        a = await self._create_ability(ability_id=ability_id, tactic=tactic,
-                                                                       technique_name=technique_name,
-                                                                       technique_id=technique_id, test=encoded_test,
-                                                                       description=description, executor=e,
-                                                                       name=ability_name, platform=pl,
-                                                                       cleanup=cleanup_cmd, code=encoded_code,
-                                                                       language=info.get('language'),
-                                                                       build_target=info.get('build_target'),
-                                                                       payloads=payloads, parsers=info.get('parsers', []),
-                                                                       timeout=info.get('timeout', 60),
-                                                                       requirements=requirements, privilege=privilege,
-                                                                       access=plugin.access, repeatable=repeatable,
-                                                                       variations=info.get('variations', []), **ab)
+                        for name, info in executors.items():
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
+                                'command') else None
+                            cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                'cleanup') else None
+                            encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                            payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                            for e in name.split(','):
+                                for pl in platforms.split(','):
+                                    a = await self._create_ability(ability_id=ability_id, tactic=tactic,
+                                                                   technique_name=technique_name,
+                                                                   technique_id=technique_id, test=encoded_test,
+                                                                   description=description, executor=e,
+                                                                   name=ability_name, platform=pl,
+                                                                   cleanup=cleanup_cmd, code=encoded_code,
+                                                                   language=info.get('language'),
+                                                                   build_target=info.get('build_target'),
+                                                                   payloads=payloads, parsers=info.get('parsers', []),
+                                                                   timeout=info.get('timeout', 60),
+                                                                   requirements=requirements, privilege=privilege,
+                                                                   access=plugin.access, repeatable=repeatable,
+                                                                   variations=info.get('variations', []), **ab)
                                     await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
