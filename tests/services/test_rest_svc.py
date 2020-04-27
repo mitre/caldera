@@ -29,7 +29,7 @@ def setup_rest_svc_test(loop, data_svc):
         Planner(planner_id='123', name='test', module='test', params=dict())
     ))
     loop.run_until_complete(data_svc.store(
-        Source(identifier='123', name='test', facts=[])
+        Source(id='123', name='test', facts=[])
     ))
 
 
