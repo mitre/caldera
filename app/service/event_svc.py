@@ -14,16 +14,15 @@ class EventService(EventServiceInterface, BaseService):
         self.ws_uri = 'ws://{}'.format(self.get_config('app.contact.websocket'))
 
     async def observe_event(self, event, callback):
-        ws_contact = [c for c in self.contact_svc.contacts if c.name == 'websocket']
+        ws_contact = self.contact_svc.get_contact('websocket')
         handle = _Handle(event, callback)
-        ws_contact[0].handler.handles.append(handle)
+        ws_contact.handler.handles.append(handle)
 
     async def fire_event(self, event, **callback_kwargs):
         uri = '{}/{}'.format(self.ws_uri, event)
         msg = json.dumps(callback_kwargs)
-        loop = asyncio.get_event_loop()
         async with websockets.connect(uri) as websocket:
-            loop.create_task(websocket.send(msg))
+            asyncio.get_event_loop().create_task(websocket.send(msg))
 
 
 class _Handle:

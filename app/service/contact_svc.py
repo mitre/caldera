@@ -59,6 +59,10 @@ class ContactService(ContactServiceInterface, BaseService):
     async def build_filename(self):
         return self.get_config(name='agents', prop='implant_name')
 
+    async def get_contact(self, name):
+        contact = [c for c in self.contacts if c.name == name]
+        return contact[0]
+
     """ PRIVATE """
 
     async def _save(self, result):
