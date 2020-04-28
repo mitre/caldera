@@ -99,8 +99,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def display_objects(self, object_name, data):
         results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
-        results = await self._explode_display_results(object_name, results)
-        return results
+        return await self._explode_display_results(object_name, results)
 
     async def display_result(self, data):
         link_id = data.pop('link_id')
