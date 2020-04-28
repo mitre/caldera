@@ -110,7 +110,7 @@ class ContactService(ContactServiceInterface, BaseService):
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
         payloads = [] if link.cleanup else link.ability.payloads
-        return Instruction(identifier=link.unique,
+        return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
                            executor=link.ability.executor,
