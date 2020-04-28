@@ -9,10 +9,11 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Operation(BaseObject):
+class Operation(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):
@@ -102,7 +103,9 @@ class Operation(BaseObject):
         self.add_link(link)
         return link.id
 
-    async def close(self):
+    async def close(self, services):
+        await self._cleanup_operation(services)
+        await self._save_new_source(services)
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
@@ -185,7 +188,7 @@ class Operation(BaseObject):
 
             return report
         except Exception:
-            logging.error('Error saving operation report (%s)' % self.name)
+            logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
 
     async def run(self, services):
         try:
@@ -198,9 +201,7 @@ class Operation(BaseObject):
                 await planner.execute()
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-            await self._cleanup_operation(services)
-            await self.close()
-            await self._save_new_source(services)
+            await self.close(services)
         except Exception as e:
             logging.error(e, exc_info=True)
 
@@ -285,7 +286,7 @@ class Operation(BaseObject):
         return {a.paw: {'all_abilities': self.adversary.atomic_ordering} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL)
+        variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []
         if ability.ability_id in agent_ran:
             return
         elif not agent.trusted:

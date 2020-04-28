@@ -21,7 +21,10 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 ## Plugins
 - **[Access](https://github.com/mitre/access)** 
 - **[Atomic](https://github.com/mitre/atomic)** 
+- **[Builder](https://github.com/mitre/builder)** 
 - **[Compass](https://github.com/mitre/compass)** 
+- **[GameBoard](https://github.com/mitre/gameboard)** 
+- **[Human](https://github.com/mitre/human)** 
 - **[Manx](https://github.com/mitre/manx)** 
 - **[Mock](https://github.com/mitre/mock)** 
 - **[Response](https://github.com/mitre/response)** 
@@ -41,7 +44,7 @@ These requirements are for the computer running the core framework:
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins.
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
 ```
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```

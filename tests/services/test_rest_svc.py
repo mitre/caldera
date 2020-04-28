@@ -29,7 +29,7 @@ def setup_rest_svc_test(loop, data_svc):
         Planner(planner_id='123', name='test', module='test', params=dict())
     ))
     loop.run_until_complete(data_svc.store(
-        Source(identifier='123', name='test', facts=[])
+        Source(id='123', name='test', facts=[])
     ))
 
 
@@ -64,9 +64,9 @@ class TestRestSvc:
         want = {'name': 'Test',
                 'host_group': [{'paw': '123', 'group': 'red', 'architecture': 'unknown', 'platform': 'unknown',
                                 'server': '://None:None', 'location': 'unknown', 'pid': 0, 'ppid': 0, 'trusted': True,
-                                'sleep_min': 2, 'sleep_max': 8, 'executors': (), 'privilege': 'User',
+                                'sleep_min': 2, 'sleep_max': 8, 'executors': [], 'privilege': 'User',
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
-                                'watchdog': 0, 'contact': 'unknown', 'links': []}],
+                                'watchdog': 0, 'contact': 'unknown', 'links': [], 'username': 'unknown'}],
                 'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
                               'atomic_ordering': []},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',

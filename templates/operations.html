@@ -78,6 +78,7 @@
                 <option value="0">Planner</option>
               </select>
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;display: none;" disabled="true">
+                    <option value="" class="queueOption" disabled selected>Select a planner</option>
                 {% for p in planners %}
                     <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                 {% endfor %}
@@ -107,18 +108,7 @@
               <h5>SCHEDULE</h5>
           </div>
           <div id="schedules-options" class="column sidebar-cutout" style="display: none;">
-              <select id="schedule-hour" class="avoid-alphabetizing" onchange="checkOpformValid()">
-                  <option selected disabled>Select hour</option>
-                  {% for n in range(23) %}
-                      <option value={{ n }} >Hour = {{ n }}</option>
-                  {% endfor %}
-              </select>
-              <select id="schedule-minute" class="avoid-alphabetizing" onchange="checkOpformValid()">
-                  <option selected disabled>Select minute</option>
-                  {% for n in range(60) %}
-                      <option value={{ n }} >Minute = {{ n }}</option>
-                  {% endfor %}
-              </select>
+              <input type="time" id="schedule-time" onchange="checkOpformValid()">
               <button id="scheduleBtn" type="button" style="opacity:0.5;width:40%;border-radius:0;" disabled="true"
               class="button-notready atomic-button" onclick="handleScheduleAction()">Schedule
                 </button>
@@ -334,9 +324,9 @@
 
     function handleScheduleAction(){
         let op = buildOperationObject();
-        let hour = parseInt(document.getElementById("schedule-hour").value);
-        let minute = parseInt(document.getElementById("schedule-minute").value);
-        restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule': {'hour': hour, 'minute': minute}}, doNothing);
+        let time = document.getElementById("schedule-time").value;
+        restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule':
+                {'hour': parseInt(time.split(":")[0]), 'minute': parseInt(time.split(":")[1])}}, doNothing);
         stream('New operation scheduled!');
     }
 
@@ -684,7 +674,7 @@
 
     function checkOpformValid(){
         validateFormState(($('#queueName').val()), '#opBtn');
-        validateFormState(($('#queueName').val()) && ($('#schedule-hour').prop('selectedIndex') !== 0) && ($('#schedule-minute').prop('selectedIndex') !== 0),
+        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""),
             '#scheduleBtn');
     }
     //# sourceURL=operations.js

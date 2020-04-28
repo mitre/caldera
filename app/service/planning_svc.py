@@ -1,13 +1,14 @@
 from app.objects.secondclass.c_link import Link
+from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
 
 
-class PlanningService(BasePlanningService):
+class PlanningService(PlanningServiceInterface, BasePlanningService):
 
     def __init__(self):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
-
+ 
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
         Apply all links for specified bucket. Blocks until all links are completed,
@@ -107,14 +108,6 @@ class PlanningService(BasePlanningService):
         return await self.sort_links(links)
 
     async def get_cleanup_links(self, operation, agent=None):
-        """
-        For a given operation, create all cleanup links.
-        If agent is supplied, only return cleanup links for that agent.
-
-        :param operation:
-        :param agent:
-        :return: None
-        """
         links = []
         if agent:
             links.extend(await self._check_and_generate_cleanup_links(agent, operation))
@@ -124,9 +117,6 @@ class PlanningService(BasePlanningService):
         return reversed(links)
 
     async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
-        """
-        repeated subroutine
-        """
         agent_links = []
         if agent.trusted:
             agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
@@ -206,6 +196,8 @@ class PlanningService(BasePlanningService):
     async def _generate_new_links(self, operation, agent, abilities, link_status):
         links = []
         for a in await agent.capabilities(abilities):
+            if a.code and a.HOOKS:
+                await a.HOOKS[a.language](a)
             if a.test:
                 links.append(
                     Link(operation=operation.id, command=a.test, paw=agent.paw, score=0, ability=a,

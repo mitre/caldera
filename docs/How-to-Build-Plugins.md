@@ -7,7 +7,12 @@ A plugin can be nearly anything, from a RAT/agent (like 54ndc47) to a new GUI or
 
 Plugins are stored in the plugins directory. If a plugin is also listed in the local.yml file, it will be loaded into CALDERA each time the server starts. A plugin is loaded through its hook.py file, which is "hooked" into the core system via the server.py (main) module.
 
-This walkthrough assumes you're pulling from the master branch.
+> When constructing your own plugins, you should avoid importing modules from the core code base, as these can change. 
+> There are two exceptions to this rule
+> 1. The services dict() passed to each plugin can be used freely. Only utilize the public functions on these services 
+> however. These functions will be defined on the services' corresponding interface.
+> 2. Any c_object that implements the FirstClassObjectInterface. Only call the functions on this interface, as the others
+> are subject to changing.
 
 ## Creating the structure
 

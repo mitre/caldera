@@ -5,10 +5,11 @@ from base64 import b64decode
 from importlib import import_module
 
 from app.objects.secondclass.c_relationship import Relationship
+from app.service.interfaces.i_learning_svc import LearningServiceInterface
 from app.utility.base_service import BaseService
 
 
-class LearningService(BaseService):
+class LearningService(LearningServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('learning_svc', self)
@@ -26,11 +27,6 @@ class LearningService(BaseService):
         return parsers
 
     async def build_model(self):
-        """
-        The model is a static set of all variables used inside all ability commands
-        This can be used to determine which facts - when found together - are more likely to be used together
-        :return:
-        """
         for ability in await self.get_service('data_svc').locate('abilities'):
             if ability.test:
                 variables = frozenset(re.findall(self.re_variable, self.decode_bytes(ability.test)))

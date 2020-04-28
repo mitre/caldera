@@ -75,7 +75,13 @@ function searchAbilities(parent, abilities){
     if(val){
         abilities.forEach(function(ab){
             let cmd = atob(ab['test']);
-            if (cmd.toLowerCase().includes(val) && !added.includes(ab['ability_id'])){
+            if (
+                (
+                    ab['name'].toLowerCase().includes(val) ||
+                    ab['description'].toLowerCase().includes(val) ||
+                    cmd.toLowerCase().includes(val)
+                ) && !added.includes(ab['ability_id'])
+            ){
                 let composite = addPlatforms([ab]);
                 added.push(ab['ability_id']);
                 appendAbilityToList(parent, composite[0]);

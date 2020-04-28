@@ -1,19 +1,25 @@
 import os
 from base64 import b64decode
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.objects.secondclass.c_variation import Variation
 from app.utility.base_object import BaseObject
 
 
-class Ability(BaseObject):
+class Ability(FirstClassObjectInterface, BaseObject):
 
     RESERVED = dict(payload='#{payload}')
+    HOOKS = dict()
 
     @property
     def test(self):
         return self.replace_app_props(self._test)
+
+    @test.setter
+    def test(self, cmd):
+        self._test = self.encode_string(cmd)
 
     @property
     def unique(self):
@@ -44,7 +50,7 @@ class Ability(BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
-                 variations=None):
+                 variations=None, language=None, code=None, build_target=None):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -62,6 +68,9 @@ class Ability(BaseObject):
         self.privilege = privilege
         self.timeout = timeout
         self.repeatable = repeatable
+        self.language = language
+        self.code = code
+        self.build_target = build_target
         self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
         self.buckets = buckets
         if access:
@@ -84,6 +93,9 @@ class Ability(BaseObject):
         existing.update('payloads', self.payloads)
         existing.update('privilege', self.privilege)
         existing.update('timeout', self.timeout)
+        existing.update('code', self.code)
+        existing.update('language', self.language)
+        existing.update('build_target', self.build_target)
         return existing
 
     async def which_plugin(self):

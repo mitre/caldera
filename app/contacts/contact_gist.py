@@ -98,8 +98,8 @@ class Gist(BaseWorld):
 
     async def _send_payloads(self, agent, instructions):
         for i in instructions:
-            if i.payload:
-                filename, payload_contents = await self._get_payload_content(i.payload, agent)
+            for p in i.payloads:
+                filename, payload_contents = await self._get_payload_content(p, agent)
                 await self._post_payloads(filename, payload_contents, '%s-%s' % (agent.paw, filename))
 
     async def _post_payloads(self, filename, payload_contents, paw):

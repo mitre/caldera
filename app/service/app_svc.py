@@ -17,12 +17,13 @@ from app.contacts.contact_tcp import Tcp
 from app.contacts.contact_udp import Udp
 from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
+from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
 Error = namedtuple('Error', ['name', 'msg'])
 
 
-class AppService(BaseService):
+class AppService(AppServiceInterface, BaseService):
 
     @property
     def errors(self):
@@ -33,17 +34,12 @@ class AppService(BaseService):
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
         self._errors = []
-        self.version = None
+        self.version = self.get_version()
         if not self.version:
-            self._errors.append(Error('core', 'Core code is not a release version'))
+            self._errors.append(Error('core', 'code is not a release version'))
             self.version = 'no version'
 
     async def start_sniffer_untrusted_agents(self):
-        """
-        Cyclic function that repeatedly checks if there are agents to be marked as untrusted
-
-        :return: None
-        """
         next_check = self.get_config(name='agents', prop='untrusted_timer')
         try:
             while True:
@@ -64,22 +60,11 @@ class AppService(BaseService):
             self.log.error(repr(e), exc_info=True)
 
     async def find_link(self, unique):
-        """
-        Locate a given link by its unique property
-
-        :param unique:
-        :return:
-        """
         operations = await self.get_service('data_svc').locate('operations')
         agents = await self.get_service('data_svc').locate('agents')
         return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
     async def run_scheduler(self):
-        """
-        Kick off all scheduled jobs, as their schedule determines
-
-        :return:
-        """
         while True:
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
@@ -94,21 +79,11 @@ class AppService(BaseService):
             await asyncio.sleep(interval)
 
     async def resume_operations(self):
-        """
-        Resume all unfinished operations
-
-        :return: None
-        """
         await asyncio.sleep(10)
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
     async def load_plugins(self, plugins):
-        """
-        Store all plugins in the data store
-
-        :return:
-        """
         for plug in plugins:
             if plug.startswith('.'):
                 continue
@@ -116,20 +91,20 @@ class AppService(BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
-            if not plugin.version:
-                self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
             if await plugin.load():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.debug('Enabled plugin: %s' % plugin.name)
+                if not plugin.version:
+                    self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform):
         _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
-        signature = hashlib.md5(open(path, 'rb').read()).hexdigest()
+        signature = hashlib.sha256(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename()
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
         return '%s-%s' % (name, platform), display_name
@@ -149,6 +124,16 @@ class AppService(BaseService):
         await contact_svc.register(WebSocket(self.get_services()))
         await contact_svc.register(Html(self.get_services()))
         await contact_svc.register(Gist(self.get_services()))
+
+    async def validate_requirements(self):
+        for requirement, params in self.get_config('requirements').items():
+            if not self.check_requirement(params):
+                self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
+                self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+
+    async def load_plugin_expansions(self, plugins=()):
+        for p in plugins:
+            await p.expand(services=self.get_services())
 
     """ PRIVATE """
 

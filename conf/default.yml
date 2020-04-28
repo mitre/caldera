@@ -9,6 +9,7 @@ app.contact.websocket: 0.0.0.0:7012
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp
+host: 0.0.0.0
 plugins:
 - sandcat
 - stockpile
@@ -20,6 +21,16 @@ plugins:
 - access
 port: 8888
 reports_dir: /tmp
+requirements:
+  go:
+    command: go version
+    type: installed_program
+    version: 1.11
+  python:
+    attr: version
+    module: sys
+    type: python_module
+    version: 3.6.1
 users:
   blue:
     blue: admin

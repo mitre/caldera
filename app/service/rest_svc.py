@@ -13,22 +13,17 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
+from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
 
-class RestService(BaseService):
+class RestService(RestServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
 
     async def persist_adversary(self, data):
-        """
-        Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
-
-        :param data:
-        :return: the ID of the created adversary
-        """
         i = data.pop('i')
         if not i:
             i = str(uuid.uuid4())
@@ -47,20 +42,13 @@ class RestService(BaseService):
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):
-        """
-        Update a new planner from either the GUI or REST API with new stopping conditions.
-        This overwrites the existing YML file.
-
-        :param data:
-        :return: the ID of the created adversary
-        """
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
         planner_id = planner.planner_id
         file_path = await self._get_file_path(planner_id)
         planner_dict = await self._read_from_yaml(file_path)
         planner_dict['stopping_conditions'] = self._get_stopping_conditions(data)
         await self._write_to_yaml(file_path, planner_dict)
-        planner.stopping_conditions = [Fact(trait=f.get('trait'), value=f.get('value'))
+        planner.stopping_conditions = [Fact.load(dict(trait=f.get('trait'), value=f.get('value')))
                                        for f in data['stopping_conditions']]
         await self.get_service('data_svc').store(planner)
 
@@ -187,13 +175,14 @@ class RestService(BaseService):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
         return await operation.apply(link)
 
-    async def task_agent_with_ability(self, paw, ability_id, facts=()):
+    async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
             links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
-                facts=facts
+                facts=facts,
+                operation=operation
             )
             new_links.extend(links)
         return new_links
@@ -225,8 +214,6 @@ class RestService(BaseService):
                     raise web.HTTPBadRequest(body='This operation has already finished.')
                 elif state not in op[0].states.values():
                     raise web.HTTPBadRequest(body='state must be one of {}'.format(op[0].states.values()))
-                elif state == op[0].states['FINISHED']:
-                    await op[0].close()
             except Exception as e:
                 self.log.error(repr(e))
         operation = await self.get_service('data_svc').locate('operations', match=dict(id=op_id))
@@ -243,7 +230,9 @@ class RestService(BaseService):
     async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group', '')
-        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.pop('planner', 'sequential')))
+        planner = await self.get_service('data_svc').locate('planners',
+                                                            match=dict(name=data.pop('planner') if not
+                                                                       data.get('planner') == '' else 'sequential'))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
@@ -259,7 +248,7 @@ class RestService(BaseService):
     @staticmethod
     async def _read_from_yaml(file_path):
         with open(file_path, 'r') as f:
-            return yaml.load(f.read(), Loader=yaml.FullLoader)
+            return yaml.safe_load(f.read())
 
     @staticmethod
     async def _write_to_yaml(file_path, content):

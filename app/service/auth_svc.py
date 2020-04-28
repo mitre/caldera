@@ -10,7 +10,20 @@ from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
 
+from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.utility.base_service import BaseService
+
+
+def for_all_public_methods(decorator):
+    """class decorator -- adds decorator to all public methods"""
+
+    def decorate(cls):
+        for attr in cls.__dict__:
+            if callable(getattr(cls, attr)) and attr[0] != '_':
+                setattr(cls, attr, decorator(getattr(cls, attr)))
+        return cls
+
+    return decorate
 
 
 def check_authorization(func):
@@ -28,7 +41,7 @@ def check_authorization(func):
     return helper
 
 
-class AuthService(BaseService):
+class AuthService(AuthServiceInterface, BaseService):
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
@@ -37,12 +50,6 @@ class AuthService(BaseService):
         self.log = self.add_service('auth_svc', self)
 
     async def apply(self, app, users):
-        """
-        Set up security on server boot
-        :param app:
-        :param users:
-        :return: None
-        """
         for group, u in users.items():
             self.log.debug('Created authentication group: %s' % group)
             for k, v in u.items():
@@ -57,11 +64,6 @@ class AuthService(BaseService):
 
     @staticmethod
     async def logout_user(request):
-        """
-        Log the user out
-        :param request:
-        :return: None
-        """
         await forget(request, web.Response())
         raise web.HTTPFound('/login')
 
@@ -82,11 +84,6 @@ class AuthService(BaseService):
         raise web.HTTPFound('/login')
 
     async def check_permissions(self, group, request):
-        """
-        Check if a request is allowed based on the user permissions
-        :param request:
-        :return: None
-        """
         try:
             if request.headers.get('KEY') == self.get_config('api_key_red') or \
                     request.headers.get('KEY') == self.get_config('api_key_blue'):

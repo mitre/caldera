@@ -5,6 +5,7 @@ from datetime import datetime
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
 from app.objects.secondclass.c_result import Result
+from app.service.interfaces.i_contact_svc import ContactServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
@@ -20,7 +21,7 @@ def report(func):
     return wrapper
 
 
-class ContactService(BaseService):
+class ContactService(ContactServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('contact_svc', self)
@@ -36,23 +37,19 @@ class ContactService(BaseService):
 
     @report
     async def handle_heartbeat(self, **kwargs):
-        """
-        Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-        :param kwargs: key/value pairs
-        :return: the agent object, instructions to execute
-        """
         results = kwargs.pop('results', [])
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
                 await self._save(Result(**result))
+                await self.get_service('event_svc').fire_event('link/completed', agent=agent.display, pid=result['pid'])
             return agent, await self._get_instructions(agent)
         agent = await self.get_service('data_svc').store(
-            Agent.from_dict(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
-                                 sleep_max=self.get_config(name='agents', prop='sleep_max'),
-                                 watchdog=self.get_config(name='agents', prop='watchdog'),
-                                 **kwargs))
+            Agent.load(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
+                            sleep_max=self.get_config(name='agents', prop='sleep_max'),
+                            watchdog=self.get_config(name='agents', prop='watchdog'),
+                            **kwargs))
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
@@ -61,6 +58,10 @@ class ContactService(BaseService):
 
     async def build_filename(self):
         return self.get_config(name='agents', prop='implant_name')
+
+    async def get_contact(self, name):
+        contact = [c for c in self.contacts if c.name == name]
+        return contact[0]
 
     """ PRIVATE """
 
@@ -76,9 +77,11 @@ class ContactService(BaseService):
                     link.output = True
                     self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('data_svc').locate('operations', dict(id=link.operation))
-                    if not operation:
+                    if not operation and not link.ability.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
                         loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link, result.output))
+                    elif not operation:
+                        loop.create_task(link.parse(None, result.output))
                     elif link.ability.parsers:
                         loop.create_task(link.parse(operation[0], result.output))
                     else:
@@ -106,7 +109,7 @@ class ContactService(BaseService):
     @staticmethod
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
-        return Instruction(identifier=link.unique,
+        return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
                            executor=link.ability.executor,

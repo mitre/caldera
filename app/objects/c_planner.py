@@ -1,10 +1,11 @@
 import os
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.objects.secondclass.c_fact import Fact
 
 
-class Planner(BaseObject):
+class Planner(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):
@@ -47,5 +48,5 @@ class Planner(BaseObject):
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:
-            return [Fact(trait, value) for sc in conditions for trait, value in sc.items()]
+            return [Fact.load(dict(trait=trait, value=value)) for sc in conditions for trait, value in sc.items()]
         return []

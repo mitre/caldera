@@ -1,9 +1,10 @@
 import os
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Adversary(BaseObject):
+class Adversary(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):

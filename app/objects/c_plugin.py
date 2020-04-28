@@ -2,10 +2,11 @@ import logging
 import os
 from importlib import import_module
 
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class Plugin(BaseObject):
+class Plugin(FirstClassObjectInterface, BaseObject):
 
     @property
     def unique(self):
@@ -23,7 +24,7 @@ class Plugin(BaseObject):
         self.enabled = enabled
         self.data_dir = data_dir
         self.access = access if access else self.Access.APP
-        self.version = None
+        self.version = self.get_version('plugins/%s' % self.name.lower())
 
     def store(self, ram):
         existing = self.retrieve(ram['plugins'], self.unique)
@@ -60,6 +61,15 @@ class Plugin(BaseObject):
             destroyable = getattr(self._load_module(), 'destroy', None)
             if destroyable:
                 await destroyable(services)
+
+    async def expand(self, services):
+        try:
+            if self.enabled:
+                expansion = getattr(self._load_module(), 'expansion', None)
+                if expansion:
+                    await expansion(services)
+        except Exception as e:
+            logging.error('Error expanding plugin=%s, %s' % (self.name, e))
 
     """ PRIVATE """
 
