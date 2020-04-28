@@ -248,6 +248,8 @@ class DataService(DataServiceInterface, BaseService):
                     self.get_service('file_svc').special_payloads[k] = handle
                 except AttributeError:
                     self.log.error('Unable to properly load {} for payload {} from string.'.format(k, v))
+                except ModuleNotFoundError:
+                    self.log.warning('Unable to properly load {} for payload {} due to failed import'.format(k, v))
             else:
                 self.log.warning('Unable to decipher target function from string {}.'.format(v))
 
