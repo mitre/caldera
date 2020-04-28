@@ -84,7 +84,7 @@ class PlanningService(BasePlanningService):
         :param stopping_conditions:
         :return: a list of links
         """
-        if buckets == ["atomic"]:
+        if buckets == ['atomic']:
             abilities = await self._get_next_atomic_ability(operation=operation)
         else:
             ao = operation.adversary.atomic_ordering
