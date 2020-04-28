@@ -109,7 +109,7 @@ class ContactService(ContactServiceInterface, BaseService):
     @staticmethod
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
-        return Instruction(identifier=link.unique,
+        return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
                            executor=link.ability.executor,
