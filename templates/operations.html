@@ -615,7 +615,7 @@
         }
         document.getElementById('more-modal').style.display='block';
         $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
-        restRequest('POST', {'index':'result','link_id':lnk.toString()}, loadResults);
+        restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
     }
 
     function downloadOperationReport() {

@@ -101,7 +101,7 @@ class RestService(RestServiceInterface, BaseService):
         return [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
 
     async def display_result(self, data):
-        link_id = data.pop('link_id')
+        link_id = str(data.pop('link_id'))
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
