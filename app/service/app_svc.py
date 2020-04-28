@@ -91,7 +91,7 @@ class AppService(AppServiceInterface, BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
-            if await plugin.load():
+            if await plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
