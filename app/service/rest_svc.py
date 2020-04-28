@@ -172,8 +172,7 @@ class RestService(RestServiceInterface, BaseService):
         return dict(links=[l.display for l in operation.potential_links])
 
     async def apply_potential_link(self, link):
-        all_operations = await self.get_service('data_svc').locate('operations')
-        operation = next((o for o in all_operations if any(lnk.id == link.id for lnk in o.potential_links)), None)
+        operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
     async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):

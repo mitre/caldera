@@ -124,10 +124,11 @@ class TestRestSvc:
         links = loop.run_until_complete(internal_rest_svc.get_potential_links('123', '123'))
         assert 1 == len(links['links'])
 
-    def test_apply_potential_link(self, loop, rest_svc, planning_svc, data_svc):
+    def test_apply_potential_link(self, loop, rest_svc, planning_svc, data_svc, app_svc):
         internal_rest_svc = rest_svc(loop)
         internal_rest_svc.add_service('planning_svc', planning_svc)
         internal_rest_svc.add_service('data_svc', data_svc)
+        internal_rest_svc.add_service('app_svc', app_svc)
         loop.run_until_complete(internal_rest_svc.get_potential_links('123', '123'))
         operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id='123'))).pop()
         link = operation.potential_links[0]

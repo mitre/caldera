@@ -64,6 +64,10 @@ class AppService(AppServiceInterface, BaseService):
         agents = await self.get_service('data_svc').locate('agents')
         return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
+    async def find_op_with_link(self, link_id):
+        operations = await self.get_service('data_svc').locate('operations', match=dict(state='running'))
+        return next((o for o in operations if o.has_link(link_id)), None)
+
     async def run_scheduler(self):
         while True:
             interval = 60
