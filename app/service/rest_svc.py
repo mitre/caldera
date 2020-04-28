@@ -252,7 +252,7 @@ class RestService(BaseService):
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
                          group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
-                         atomic=bool(int(data.pop('atomicEnabled', 0))),
+                         atomic=bool(int(data.pop('atomic_enabled', 0))),
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 

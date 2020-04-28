@@ -212,7 +212,7 @@ class PlanningService(BasePlanningService):
                          status=link_status, jitter=self.jitter(operation.jitter))
                 )
         return links
-    
+
     async def _generate_cleanup_links(self, operation, agent, link_status):
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:
