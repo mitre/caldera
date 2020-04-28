@@ -98,7 +98,15 @@ class RestService(RestServiceInterface, BaseService):
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
-        return [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        out = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        if object_name == 'adversaries':
+            temp = list()
+            for x in out[0]['atomic_ordering']:
+                h = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=x,
+                                                                                      access=data['access']))
+                temp.append(h[0].display)
+            out[0]['atomic_ordering'] = temp
+        return out
 
     async def display_result(self, data):
         link_id = data.pop('link_id')
