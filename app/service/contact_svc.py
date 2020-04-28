@@ -109,12 +109,13 @@ class ContactService(ContactServiceInterface, BaseService):
     @staticmethod
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
-        return Instruction(id=link.unique,
+        payloads = [] if link.cleanup else link.ability.payloads
+        return Instruction(identifier=link.unique,
                            sleep=link.jitter,
                            command=link.command,
                            executor=link.ability.executor,
                            timeout=link.ability.timeout,
-                           payloads=link.ability.payloads)
+                           payloads=payloads)
 
     async def _add_agent_to_operation(self, agent):
         """Determine which operation(s) incoming agent belongs to and
