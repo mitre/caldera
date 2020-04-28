@@ -11,7 +11,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
-    tsource = Source(identifier='123', name='test', facts=[], adjustments=[])
+    tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=tagent, adversary='hunter', source=tsource)
 
     loop.run_until_complete(data_svc.store(tability))

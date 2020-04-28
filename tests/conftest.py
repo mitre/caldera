@@ -30,7 +30,12 @@ def init_base_world():
 
 @pytest.fixture(scope='class')
 def app_svc():
-    return AppService(None)
+    async def _init_app_svc():
+        return AppService(None)
+
+    def _app_svc(loop):
+        return loop.run_until_complete(_init_app_svc())
+    return _app_svc
 
 
 @pytest.fixture(scope='class')

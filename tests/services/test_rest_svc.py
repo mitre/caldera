@@ -32,7 +32,7 @@ def setup_rest_svc_test(loop, data_svc):
         Planner(planner_id='123', name='test', module='test', params=dict())
     ))
 
-    source = Source(identifier='123', name='test', facts=[], adjustments=[])
+    source = Source(id='123', name='test', facts=[], adjustments=[])
     loop.run_until_complete(data_svc.store(source))
 
     loop.run_until_complete(data_svc.store(
@@ -128,7 +128,7 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(loop)
         internal_rest_svc.add_service('planning_svc', planning_svc)
         internal_rest_svc.add_service('data_svc', data_svc)
-        internal_rest_svc.add_service('app_svc', app_svc)
+        internal_rest_svc.add_service('app_svc', app_svc(loop))
         loop.run_until_complete(internal_rest_svc.get_potential_links('123', '123'))
         operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id='123'))).pop()
         link = operation.potential_links[0]
