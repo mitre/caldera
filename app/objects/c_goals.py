@@ -1,8 +1,9 @@
+from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_goal import Goal
 from app.utility.base_object import BaseObject
 
 
-class Goals(BaseObject):
+class Goals(FirstClassObjectInterface, BaseObject):
     def __init__(self, goal_list=None):
         super().__init__()
         self.to_fulfill = list()

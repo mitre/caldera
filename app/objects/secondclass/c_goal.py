@@ -15,6 +15,8 @@ class Goal(BaseObject):
             return lambda x, y: x >= y
         if operator == 'in':
             return lambda x, y: x in y
+        if operator == '*':
+            return lambda x, y: True
         return lambda x, y: x == y
 
     def satisfied(self, all_facts=None):
