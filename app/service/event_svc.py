@@ -14,7 +14,7 @@ class EventService(EventServiceInterface, BaseService):
         self.ws_uri = 'ws://{}'.format(self.get_config('app.contact.websocket'))
 
     async def observe_event(self, event, callback):
-        ws_contact = self.contact_svc.get_contact('websocket')
+        ws_contact = await self.contact_svc.get_contact('websocket')
         handle = _Handle(event, callback)
         ws_contact.handler.handles.append(handle)
 
