@@ -135,7 +135,7 @@ class DataService(DataServiceInterface, BaseService):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
-                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                        self.log.warning('Ability=%s has wrong tactic' % ab['id'])
                     for platforms, executors in ab.get('platforms').items():
                         for pl in platforms.split(','):
                             for name, info in executors.items():
@@ -280,7 +280,7 @@ class DataService(DataServiceInterface, BaseService):
                     payload_name, _ = self.get_service('file_svc').get_payload_name_from_uuid(payload)
                 _, path = await self.get_service('file_svc').find_file_path(payload_name)
                 if not path:
-                    self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
+                    self.log.warning('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
                     continue
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                     if self.is_uuid4(payload):
