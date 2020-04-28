@@ -2,33 +2,19 @@ import logging
 import os
 from importlib import import_module
 
-import marshmallow as ma
-
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
-class PluginSchema(ma.Schema):
-    name = ma.fields.String()
-    enabled = ma.fields.Boolean()
-    address = ma.fields.String()
-    description = ma.fields.String()
-    data_dir = ma.fields.String()
-    access = ma.fields.Integer()
-
-    @ma.post_load
-    def build_plugin(self, data, **_):
-        return Plugin(**data)
-
-
 class Plugin(FirstClassObjectInterface, BaseObject):
-
-    schema = PluginSchema()
-    display_schema = PluginSchema(only=['name', 'enabled', 'address'])
 
     @property
     def unique(self):
         return self.hash(self.name)
+
+    @property
+    def display(self):
+        return self.clean(dict(name=self.name, enabled=self.enabled, address=self.address))
 
     def __init__(self, name='virtual', description=None, address=None, enabled=False, data_dir=None, access=None):
         super().__init__()
@@ -49,7 +35,7 @@ class Plugin(FirstClassObjectInterface, BaseObject):
             existing.update('enabled', self.enabled)
         return existing
 
-    async def load_plugin(self):
+    async def load(self):
         try:
             plugin = self._load_module()
             self.description = plugin.description
