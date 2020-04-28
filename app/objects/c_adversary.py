@@ -13,7 +13,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     @property
     def display(self):
         return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
-                    atomic_ordering=[x.display for x in self.atomic_ordering])
+                    atomic_ordering=self.atomic_ordering)
 
     def __init__(self, adversary_id, name, description, atomic_ordering):
         super().__init__()

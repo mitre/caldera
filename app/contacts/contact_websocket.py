@@ -25,7 +25,7 @@ class Handler:
 
     async def handle(self, socket, path):
         try:
-            for handle in [h for h in self.handles if h.tag == path.split('/')[1]]:
+            for handle in [h for h in self.handles if path.split('/', 1)[1].startswith(h.tag)]:
                 await handle.run(socket, path, self.services)
         except Exception as e:
             self.log.debug(e)
