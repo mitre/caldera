@@ -12,6 +12,7 @@ from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
+from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
@@ -94,6 +95,7 @@ if __name__ == '__main__':
     auth_svc = AuthService()
     file_svc = FileSvc()
     learning_svc = LearningService()
+    event_svc = EventService()
     app_svc = AppService(application=web.Application())
 
     if args.fresh:

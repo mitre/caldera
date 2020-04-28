@@ -43,6 +43,7 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
                 await self._save(Result(**result))
+                await self.get_service('event_svc').fire_event('link/completed', agent=agent.display, pid=result['pid'])
             return agent, await self._get_instructions(agent)
         agent = await self.get_service('data_svc').store(
             Agent.load(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
@@ -57,6 +58,10 @@ class ContactService(ContactServiceInterface, BaseService):
 
     async def build_filename(self):
         return self.get_config(name='agents', prop='implant_name')
+
+    async def get_contact(self, name):
+        contact = [c for c in self.contacts if c.name == name]
+        return contact[0]
 
     """ PRIVATE """
 
