@@ -8,7 +8,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     def __init__(self):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
- 
+
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
         Apply all links for specified bucket. Blocks until all links are completed,
