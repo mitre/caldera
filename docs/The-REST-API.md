@@ -14,20 +14,29 @@ conf/default.yml file. Some examples below will use the header, others will not,
 
 Here are the available REST API functions:
 
-#### DELETE
+## Agents
 
-##### Agents
+#### DELETE
 
 Delete any agent. 
 ```bash
 curl -X DELETE http://localhost:8888/api/rest -d '{"index":"agents","paw":"$agent_paw"}'
 ```
 
-##### Operations
+## Operations
+
+#### DELETE
 
 Delete any operation.
 ```bash
 curl -X DELETE http://localhost:8888/api/rest -d '{"index":"operations","id":"$operation_id"}'
+```
+
+#### POST
+
+Change the state of any operation. In addition to finished, you can also use: paused, run_one_link or running.
+```bash
+curl -X POST -H "KEY:ADMIN123" http://localhost:8888/api/rest -d '{"index":"operation", "op_id":123, "state":"finished"}'
 ```
 
 #### PUT
@@ -50,11 +59,9 @@ Optionally, you can include:
 9) phases_enabled (defaults to *1*)
 10) auto_close (defaults to *0*)
 
-To learn more about these options, read the "What is an operation?" documentation section.
-                    
-#### POST
-        
-### /file/upload
+To learn more about these options, read the "What is an operation?" documentation section.           
+
+## /file/upload
 
 Files can be uploaded to CALDERA by POST'ing a file to the /file/upload endpoint. Uploaded files will be put in the exfil_dir location specified in the default.yml file.
 
@@ -63,7 +70,7 @@ Files can be uploaded to CALDERA by POST'ing a file to the /file/upload endpoint
 curl -F 'data=@path/to/file' http://localhost:8888/file/upload
 ```
 
-### /file/download
+## /file/download
 
 Files can be dowloaded from CALDERA through the /file/download endpoint. This endpoint requires an HTTP header called "file" with the file name as the value. When a file is requested, CALDERA will look inside each of the payload directories listed in the local.yml file until it finds a file matching the name.
 
