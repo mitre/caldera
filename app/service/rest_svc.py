@@ -98,7 +98,8 @@ class RestService(RestServiceInterface, BaseService):
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
-        return [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        return await self._explode_display_results(object_name, results)
 
     async def display_result(self, data):
         link_id = data.pop('link_id')
@@ -297,6 +298,14 @@ class RestService(RestServiceInterface, BaseService):
         self.set_config(name='agents', prop='sleep_max', value=sleep_max)
         self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
         self.set_config(name='agents', prop='watchdog', value=watchdog)
+
+    async def _explode_display_results(self, object_name, results):
+        if object_name == 'adversaries':
+            for adv in results:
+                adv['atomic_ordering'] = [ab.display for ab_id in adv['atomic_ordering'] for ab in
+                                          await self.get_service('data_svc').locate('abilities',
+                                                                                    match=dict(ability_id=ab_id))]
+        return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
         await self.get_service('data_svc').remove(ram_key, data)
