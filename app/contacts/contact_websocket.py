@@ -13,7 +13,10 @@ class WebSocket(BaseWorld):
 
     async def start(self):
         web_socket = self.get_config('app.contact.websocket')
-        await websockets.serve(self.handler.handle, *web_socket.split(':'))
+        try:
+            await websockets.serve(self.handler.handle, *web_socket.split(':'))
+        except OSError as e:
+            self.log.error("WebSocket error: {}".format(e))
 
 
 class Handler:

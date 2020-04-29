@@ -18,11 +18,19 @@ class EventService(EventServiceInterface, BaseService):
         handle = _Handle(event, callback)
         ws_contact.handler.handles.append(handle)
 
+    async def handle_exceptions(self, awaitable, event):
+        try:
+            return await awaitable
+        except websockets.exceptions.ConnectionClosedOK:
+            self.log.debug("No event handler registered for '{}'".format(event))
+        except Exception as e:
+            self.log.error("WebSocket error: {}".format(e), exc_info=True)
+
     async def fire_event(self, event, **callback_kwargs):
         uri = '{}/{}'.format(self.ws_uri, event)
         msg = json.dumps(callback_kwargs)
         async with websockets.connect(uri) as websocket:
-            asyncio.get_event_loop().create_task(websocket.send(msg))
+            asyncio.get_event_loop().create_task(self.handle_exceptions(websocket.send(msg), event))
 
 
 class _Handle:
