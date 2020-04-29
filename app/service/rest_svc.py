@@ -302,9 +302,9 @@ class RestService(RestServiceInterface, BaseService):
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':
             for adv in results:
-                adv['atomic_ordering'] = [(await self.get_service('data_svc')
-                                           .locate('abilities', match=dict(ability_id=ab)))[0].display
-                                          for ab in adv['atomic_ordering']]
+                adv['atomic_ordering'] = [ab.display for ab_id in adv['atomic_ordering'] for ab in
+                                          await self.get_service('data_svc').locate('abilities',
+                                                                                    match=dict(ability_id=ab_id))]
         return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
