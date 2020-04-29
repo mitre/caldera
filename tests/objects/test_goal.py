@@ -20,6 +20,7 @@ class TestGoal:
         test_goal1 = Goal(target='target', value=2, count=1, operator='>')
         test_goal2 = Goal(target='target', value=2, count=1, operator='<=')
         test_goal3 = Goal(target='target', value='tes', count=1, operator='in')
+        test_goal4 = Goal(target='target', value='', count=3, operator='*')
         test_facta = Fact(trait='target', value=1)
         test_factb = Fact(trait='target', value=2)
         test_factc = Fact(trait='target', value='test')
@@ -27,6 +28,7 @@ class TestGoal:
         assert test_goal2.satisfied(all_facts=[test_facta]) is False
         assert test_goal2.satisfied(all_facts=[test_facta, test_factb]) is True
         assert test_goal3.satisfied(all_facts=[test_factc]) is True
+        assert test_goal4.satisfied(all_facts=[test_facta, test_factb, test_factc]) is True
 
     def test_goals_satisfied(self):
         test_goal1 = Goal(target='target', value='value', count=1)
