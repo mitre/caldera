@@ -281,9 +281,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return skipped_abilities
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
-        abilities = [ab for ab_id in self.adversary.atomic_ordering
-                     for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]
-        return {a.paw: {'all_abilities': abilities} for a in self.agents}
+        return {a.paw: {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
+                                          for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]}
+                for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []
