@@ -158,7 +158,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def get_active_agent_by_paw(self, paw):
         return [a for a in await self.active_agents() if a.paw == paw]
 
-    def report(self, file_svc, output=False, redacted=False):
+    async def report(self, file_svc, data_svc, output=False, redacted=False):
         try:
             report = dict(name=self.name, host_group=[a.display for a in self.agents],
                           start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
@@ -183,7 +183,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
-            report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+            report['skipped_abilities'] = await self._get_skipped_abilities_by_agent(data_svc)
 
             return report
         except Exception:
@@ -260,8 +260,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
-    def _get_skipped_abilities_by_agent(self):
-        abilities_by_agent = self._get_all_possible_abilities_by_agent()
+    async def _get_skipped_abilities_by_agent(self, data_svc):
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(data_svc)
         skipped_abilities = []
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
@@ -280,8 +280,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
             skipped_abilities.append({agent.paw: list(agent_skipped.values())})
         return skipped_abilities
 
-    def _get_all_possible_abilities_by_agent(self):
-        return {a.paw: {'all_abilities': self.adversary.atomic_ordering} for a in self.agents}
+    async def _get_all_possible_abilities_by_agent(self, data_svc):
+        abilities = [ab for ab_id in self.adversary.atomic_ordering
+                     for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]
+        return {a.paw: {'all_abilities': abilities} for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []
