@@ -233,7 +233,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
             self.last_ran = self.adversary.atomic_ordering[(self.adversary.atomic_ordering.index(self.last_ran) + 1)]
 
     def _is_atomic_closeable(self):
-        return self.atomic and self.last_ran == self.adversary.atomic_ordering[-1]
+        if len(self.adversary.atomic_ordering):
+            return self.atomic and self.last_ran == self.adversary.atomic_ordering[-1]
+        else:
+            return True
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
