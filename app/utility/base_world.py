@@ -147,7 +147,7 @@ class BaseWorld:
 
     @staticmethod
     def get_version(path='.'):
-        ignore = ['/plugins/', '/.tox/']
+        ignore = ['/plugins/', '/.tox/', '_*/']
         included_extensions = ['*.py', '*.html', '*.js', '*.go']
         version_file = os.path.join(path, 'VERSION.txt')
         if os.path.exists(version_file):
