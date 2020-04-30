@@ -152,7 +152,7 @@ class AppService(AppServiceInterface, BaseService):
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
-            report = json.dumps(op.report(self.get_service('file_svc')))
+            report = json.dumps(await op.report(self.get_service('file_svc'), self.get_service('data_svc')))
             if report:
                 await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
 
