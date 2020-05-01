@@ -64,7 +64,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         decide to do that within its bucket functions, and/or there are other
         planning_svc utilities for the bucket functions to use to do so.
         """
-        while planner.next_bucket is not None and not planner.stopping_condition_met and not await planner.operation.is_finished():
+        while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
+                and not await planner.operation.is_finished():
             await getattr(planner, planner.next_bucket)()
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   planner.operation)
@@ -97,7 +98,9 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 t = []
                 for bucket in buckets:
                     t.append([ab for ab in abilities for b in ab.buckets if b == bucket])
-                abilities = t
+                if t == [[]]:   # account for situation where no abilities matching the bucket are found
+                    return list()
+                abilities = t[0]
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
