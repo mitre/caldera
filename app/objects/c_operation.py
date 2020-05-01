@@ -1,4 +1,3 @@
-import ast
 import asyncio
 import logging
 import re
@@ -24,6 +23,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
                                adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
                                source=self.source.display if self.source else '',
+                               atomic=self.atomic,
                                planner=self.planner.name if self.planner else '',
                                start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
                                state=self.state, obfuscator=self.obfuscator,
@@ -39,7 +39,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, atomic_enabled=False, obfuscator='plain-text', group=None, auto_close=True,
+                 autonomous=True, atomic=False, obfuscator='plain-text', group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
         self.id = id
@@ -53,12 +53,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.planner = planner
         self.state = state
         self.autonomous = autonomous
-        self.atomic_enabled = atomic_enabled
+        self.atomic = atomic
         self.last_ran = None
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.chain, self.rules = [], []
+        self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
@@ -76,6 +76,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def add_link(self, link):
         self.chain.append(link)
+
+    def has_link(self, link_id):
+        return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []
@@ -135,7 +138,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close and self._is_atomic_closeable():
+        if await self.is_finished() or self.auto_close:
             self.state = self.states['FINISHED']
             return True
         return False
@@ -158,7 +161,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def get_active_agent_by_paw(self, paw):
         return [a for a in await self.active_agents() if a.paw == paw]
 
-    def report(self, file_svc, output=False, redacted=False):
+    async def report(self, file_svc, data_svc, output=False, redacted=False):
         try:
             report = dict(name=self.name, host_group=[a.display for a in self.agents],
                           start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
@@ -183,7 +186,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
-            report['skipped_abilities'] = self._get_skipped_abilities_by_agent()
+            report['skipped_abilities'] = await self._get_skipped_abilities_by_agent(data_svc)
 
             return report
         except Exception:
@@ -191,28 +194,52 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def run(self, services):
         try:
-            planner = await self._get_planning_module(services)
-            await self._run(planner)
-
-            self.atomic_enabled = False
+            if self.atomic:
+                # atomic (basic) mode, operation handles simple execution
+                await self._execute_atomically(services)
+            else:
+                # planner present, operation cedes control to planner
+                planner = await self._get_planning_module(services)
+                await planner.execute()
             while not await self.is_closeable():
                 await asyncio.sleep(10)
-                await self._run(planner)
             await self.close(services)
         except Exception as e:
             logging.error(e, exc_info=True)
 
     """ PRIVATE """
 
-    async def _run(self, planner):
-        ability_set_format = self._get_ability_set_format_for_planner()
-        for ability in ability_set_format:
-            if not await self.is_closeable():
-                await planner.execute(ability_set_format.index(ability))
-                if planner.stopping_condition_met:
-                    break
-                await self.wait_for_completion()
-            self.last_ran = ability
+    async def _execute_atomically(self, services):
+        """
+        Default operation execution.
+
+        Operation will pull all links for adversary, executes them atomically,
+        and in order as given from adversary.
+
+        Operation will progress to next ability even if current ability
+        cannot be executed. Will do a loop once through all abilities
+        enumerated in adversary.
+        """
+        while not self._is_atomic_closeable():
+            links = await services.get('planning_svc').get_links(self, buckets=['atomic'])
+            if links:
+                await self.wait_for_links_completion([await self.apply(links[-1])])
+            self._update_last_ran()
+            if await self.is_finished():
+                return
+
+    def _update_last_ran(self):
+        """ """
+        if self.last_ran is None:
+            self.last_ran = self.adversary.atomic_ordering[0]
+        elif self.last_ran != self.adversary.atomic_ordering[-1]:
+            self.last_ran = self.adversary.atomic_ordering[(self.adversary.atomic_ordering.index(self.last_ran) + 1)]
+
+    def _is_atomic_closeable(self):
+        if len(self.adversary.atomic_ordering):
+            return self.atomic and self.last_ran == self.adversary.atomic_ordering[-1]
+        else:
+            return True
 
     async def _cleanup_operation(self, services):
         for member in self.agents:
@@ -222,8 +249,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
-        planner_params = ast.literal_eval(self.planner.params)
-        return planning_module.LogicalPlanner(self, services.get('planning_svc'), **planner_params,
+        return planning_module.LogicalPlanner(self, services.get('planning_svc'), **self.planner.params,
                                               stopping_conditions=self.planner.stopping_conditions)
 
     async def _save_new_source(self, services):
@@ -240,16 +266,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
-    def _is_atomic_closeable(self):
-        return self.atomic_enabled and self.last_ran == self.adversary.atomic_ordering[-1]
-
-    def _get_ability_set_format_for_planner(self):
-        if not self.atomic_enabled:
-            return [self.adversary.atomic_ordering]
-        return self.adversary.atomic_ordering
-
-    def _get_skipped_abilities_by_agent(self):
-        abilities_by_agent = self._get_all_possible_abilities_by_agent()
+    async def _get_skipped_abilities_by_agent(self, data_svc):
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(data_svc)
         skipped_abilities = []
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
@@ -268,8 +286,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
             skipped_abilities.append({agent.paw: list(agent_skipped.values())})
         return skipped_abilities
 
-    def _get_all_possible_abilities_by_agent(self):
-        return {a.paw: {'all_abilities': self.adversary.atomic_ordering} for a in self.agents}
+    async def _get_all_possible_abilities_by_agent(self, data_svc):
+        abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
+                     for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]}
+        return {a.paw: abilities for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []

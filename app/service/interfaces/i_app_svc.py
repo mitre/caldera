@@ -21,6 +21,14 @@ class AppServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def find_op_with_link(self, link_id):
+        """
+        Locate an operation with the given link ID
+        :param link_id:
+        :return: Operation or None
+        """
+
+    @abc.abstractmethod
     def run_scheduler(self, identifier):
         """
         Kick off all scheduled jobs, as their schedule determines

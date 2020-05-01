@@ -3,6 +3,8 @@ import pytest
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.c_adversary import Adversary
+from app.objects.c_obfuscator import Obfuscator
+from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
 from app.objects.c_source import Source
 from app.utility.base_world import BaseWorld
@@ -17,19 +19,30 @@ def setup_rest_svc_test(loop, data_svc):
                                                 'encryption_key': 'ADMIN123',
                                                 'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[]))
+        Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[],
+                executor='psh', platform='windows'))
     )
-    loop.run_until_complete(data_svc.store(
-        Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[]))
-    )
-    loop.run_until_complete(data_svc.store(
-        Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0)
-    ))
+    adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[])
+    loop.run_until_complete(data_svc.store(adversary))
+
+    agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
+    loop.run_until_complete(data_svc.store(agent))
+
     loop.run_until_complete(data_svc.store(
         Planner(planner_id='123', name='test', module='test', params=dict())
     ))
+
+    source = Source(id='123', name='test', facts=[], adjustments=[])
+    loop.run_until_complete(data_svc.store(source))
+
     loop.run_until_complete(data_svc.store(
-        Source(identifier='123', name='test', facts=[])
+        Operation(name='test', agents=[agent], adversary=adversary, id='123', source=source)
+    ))
+
+    loop.run_until_complete(data_svc.store(
+        Obfuscator(name='plain-text',
+                   description='Does no obfuscation to any command, instead running it in plain text',
+                   module='plugins.stockpile.app.obfuscators.plain_text')
     ))
 
 
@@ -62,15 +75,15 @@ class TestRestSvc:
 
     def test_create_operation(self, loop, rest_svc, data_svc):
         want = {'name': 'Test',
-                'host_group': [{'paw': '123', 'group': 'red', 'architecture': 'unknown', 'platform': 'unknown',
+                'host_group': [{'paw': '123', 'group': 'red', 'architecture': 'unknown', 'platform': 'windows',
                                 'server': '://None:None', 'location': 'unknown', 'pid': 0, 'ppid': 0, 'trusted': True,
-                                'sleep_min': 2, 'sleep_max': 8, 'executors': [], 'privilege': 'User',
+                                'sleep_min': 2, 'sleep_max': 8, 'executors': ['pwsh', 'psh'], 'privilege': 'User',
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
                                 'watchdog': 0, 'contact': 'unknown', 'links': [], 'username': 'unknown'}],
                 'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
                               'atomic_ordering': []},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
-                'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': []}
+                'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': [], 'atomic': False}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
@@ -103,3 +116,21 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(loop)
         response = loop.run_until_complete(internal_rest_svc.delete_agent(data=dict(paw='123')))
         assert 'Delete action completed' == response
+
+    def test_get_potential_links(self, loop, rest_svc, planning_svc, data_svc):
+        internal_rest_svc = rest_svc(loop)
+        internal_rest_svc.add_service('planning_svc', planning_svc)
+        internal_rest_svc.add_service('data_svc', data_svc)
+        links = loop.run_until_complete(internal_rest_svc.get_potential_links('123', '123'))
+        assert 1 == len(links['links'])
+
+    def test_apply_potential_link(self, loop, rest_svc, planning_svc, data_svc, app_svc):
+        internal_rest_svc = rest_svc(loop)
+        internal_rest_svc.add_service('planning_svc', planning_svc)
+        internal_rest_svc.add_service('data_svc', data_svc)
+        internal_rest_svc.add_service('app_svc', app_svc(loop))
+        loop.run_until_complete(internal_rest_svc.get_potential_links('123', '123'))
+        operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id='123'))).pop()
+        link = operation.potential_links[0]
+        loop.run_until_complete(internal_rest_svc.apply_potential_link(link))
+        assert 1 == len(operation.chain)

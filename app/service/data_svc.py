@@ -94,13 +94,6 @@ class DataService(DataServiceInterface, BaseService):
 
     """ PRIVATE """
 
-    async def _link_abilities(self, ordering, adversary):
-        try:
-            return [v for ab in ordering for v in await self.locate('abilities', match=dict(ability_id=ab))]
-        except Exception as e:
-            self.log.error('Abilities missing from adversary %s (%s): %s' % (adversary['name'], adversary['id'], e))
-            return []
-
     async def _load(self, plugins=()):
         try:
             if not plugins:
@@ -122,10 +115,9 @@ class DataService(DataServiceInterface, BaseService):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
                 if adv.get('phases'):
-                    ordering = await self._load_phase_adversary_variant(adv)
+                    atomic_ordering = await self._load_phase_adversary_variant(adv)
                 else:
-                    ordering = adv.get('atomic_ordering', list())
-                atomic_ordering = await self._link_abilities(ordering, adv)
+                    atomic_ordering = adv.get('atomic_ordering', list())
                 adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
                                       atomic_ordering=atomic_ordering)
                 adversary.access = plugin.access
@@ -143,7 +135,7 @@ class DataService(DataServiceInterface, BaseService):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
-                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                        self.log.warning('Ability=%s has wrong tactic' % ab['id'])
                     for platforms, executors in ab.get('platforms').items():
                         for pl in platforms.split(','):
                             for name, info in executors.items():
@@ -170,6 +162,7 @@ class DataService(DataServiceInterface, BaseService):
                                                                    requirements=ab.get('requirements', []),
                                                                    privilege=ab[
                                                                        'privilege'] if 'privilege' in ab.keys() else None,
+                                                                   buckets=await self._classify(ab),
                                                                    access=plugin.access, repeatable=ab.get('repeatable', False),
                                                                    variations=info.get('variations', []))
                                     await self._update_extensions(a)
@@ -182,6 +175,11 @@ class DataService(DataServiceInterface, BaseService):
             ab.technique_id = ability.technique_id
             ab.technique_name = ability.technique_name
             await self.store(ab)
+
+    async def _classify(self, ability):
+        if 'buckets' in ability:
+            return ability['buckets'].lower()
+        return [ability['tactic'].lower()]
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -204,10 +202,7 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
             for planner in self.strip_yml(filename):
-                planner = Planner(planner_id=planner.get('id'), name=planner.get('name'), module=planner.get('module'),
-                                  params=str(planner.get('params')), description=planner.get('description'),
-                                  stopping_conditions=planner.get('stopping_conditions'),
-                                  ignore_enforcement_modules=planner.get('ignore_enforcement_modules', ()))
+                planner = Planner.load(planner)
                 planner.access = plugin.access
                 await self.store(planner)
 
@@ -219,8 +214,8 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
                               description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, repeatable=False, code=None,
-                              language=None, build_target=None, variations=None):
+                              requirements=None, privilege=None, timeout=60, access=None, buckets=None, repeatable=False,
+                              code=None, language=None, build_target=None, variations=None):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
@@ -235,7 +230,8 @@ class DataService(DataServiceInterface, BaseService):
                           technique_id=technique_id, technique=technique_name, code=code, language=language,
                           executor=executor, platform=platform, description=description, build_target=build_target,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
-                          privilege=privilege, timeout=timeout, repeatable=repeatable, variations=variations)
+                          privilege=privilege, timeout=timeout, repeatable=repeatable,
+                          variations=variations, buckets=buckets)
         ability.access = access
         return await self.store(ability)
 
@@ -252,6 +248,8 @@ class DataService(DataServiceInterface, BaseService):
                     self.get_service('file_svc').special_payloads[k] = handle
                 except AttributeError:
                     self.log.error('Unable to properly load {} for payload {} from string.'.format(k, v))
+                except ModuleNotFoundError:
+                    self.log.warning('Unable to properly load {} for payload {} due to failed import'.format(k, v))
             else:
                 self.log.warning('Unable to decipher target function from string {}.'.format(v))
 
@@ -284,7 +282,7 @@ class DataService(DataServiceInterface, BaseService):
                     payload_name, _ = self.get_service('file_svc').get_payload_name_from_uuid(payload)
                 _, path = await self.get_service('file_svc').find_file_path(payload_name)
                 if not path:
-                    self.log.error('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
+                    self.log.warning('Payload referenced in %s but not found: %s' % (existing.ability_id, payload))
                     continue
                 for clean_ability in [a for a in payload_cleanup if a.executor == existing.executor]:
                     if self.is_uuid4(payload):

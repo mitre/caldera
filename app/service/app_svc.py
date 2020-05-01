@@ -64,6 +64,10 @@ class AppService(AppServiceInterface, BaseService):
         agents = await self.get_service('data_svc').locate('agents')
         return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
+    async def find_op_with_link(self, link_id):
+        operations = await self.get_service('data_svc').locate('operations', match=dict(state='running'))
+        return next((o for o in operations if o.has_link(link_id)), None)
+
     async def run_scheduler(self):
         while True:
             interval = 60
@@ -91,7 +95,7 @@ class AppService(AppServiceInterface, BaseService):
                 self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
                 exit(0)
             plugin = Plugin(name=plug)
-            if await plugin.load():
+            if await plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
@@ -152,7 +156,7 @@ class AppService(AppServiceInterface, BaseService):
         report = json.dumps(dict(self.get_service('contact_svc').report)).encode()
         await file_svc.save_file('contact_reports', report, r_dir)
         for op in await self.get_service('data_svc').locate('operations'):
-            report = json.dumps(op.report(self.get_service('file_svc')))
+            report = json.dumps(await op.report(self.get_service('file_svc'), self.get_service('data_svc')))
             if report:
                 await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
 

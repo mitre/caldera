@@ -14,16 +14,16 @@ class Link(BaseObject):
     @classmethod
     def from_json(cls, json):
         ability = Ability.from_json(json['ability'])
-        return cls(id=json['id'], pin=json['pin'], operation=json['operation'], command=json['command'],
+        return cls(id=json['id'], pin=json['pin'], command=json['command'],
                    paw=json['paw'], host=json['host'], ability=ability)
 
     @property
     def unique(self):
-        return self.hash('%s-%s' % (self.operation, self.id))
+        return self.hash('%s' % self.id)
 
     @property
     def display(self):
-        return self.clean(dict(id=self.id, operation=self.operation, paw=self.paw, command=self.command,
+        return self.clean(dict(id=self.id, paw=self.paw, command=self.command,
                                executor=self.ability.executor, status=self.status, score=self.score,
                                decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), pin=self.pin, pid=self.pid,
                                facts=[fact.display for fact in self.facts], unique=self.unique,
@@ -47,13 +47,12 @@ class Link(BaseObject):
                     DISCARD=-2,
                     PAUSE=-1)
 
-    def __init__(self, operation, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
+    def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
                  host=None):
         super().__init__()
         self.id = id
         self.command = command
         self.command_hash = None
-        self.operation = operation
         self.paw = paw
         self.host = host
         self.cleanup = cleanup

@@ -5,3 +5,5 @@ omit =
     *tests*
     *.tox*
     *venv*
+[html]
+directory = _htmlcov

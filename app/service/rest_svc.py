@@ -98,10 +98,11 @@ class RestService(RestServiceInterface, BaseService):
         return 'Delete action completed'
 
     async def display_objects(self, object_name, data):
-        return [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        return await self._explode_display_results(object_name, results)
 
     async def display_result(self, data):
-        link_id = data.pop('link_id')
+        link_id = str(data.pop('link_id'))
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
@@ -114,7 +115,8 @@ class RestService(RestServiceInterface, BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return op.report(self.get_service('file_svc'), output=data.get('agent_output'))
+        return await op.report(file_svc=self.get_service('file_svc'), data_svc=self.get_service('data_svc'),
+                               output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
@@ -168,11 +170,11 @@ class RestService(RestServiceInterface, BaseService):
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        links = await self._build_potential_links(operation, agents, potential_abilities)
-        return dict(links=[l.display for l in links])
+        operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in operation.potential_links])
 
     async def apply_potential_link(self, link):
-        operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
+        operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
     async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):
@@ -238,10 +240,10 @@ class RestService(RestServiceInterface, BaseService):
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
-        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary, group=group,
-                         jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
+        return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
+                         group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
-                         atomic_enabled=bool(int(data.pop('atomic_enabled', 0))),
+                         atomic=bool(int(data.pop('atomic_enabled', 0))),
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
 
@@ -297,6 +299,14 @@ class RestService(RestServiceInterface, BaseService):
         self.set_config(name='agents', prop='sleep_max', value=sleep_max)
         self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
         self.set_config(name='agents', prop='watchdog', value=watchdog)
+
+    async def _explode_display_results(self, object_name, results):
+        if object_name == 'adversaries':
+            for adv in results:
+                adv['atomic_ordering'] = [ab.display for ab_id in adv['atomic_ordering'] for ab in
+                                          await self.get_service('data_svc').locate('abilities',
+                                                                                    match=dict(ability_id=ab_id))]
+        return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
         await self.get_service('data_svc').remove(ram_key, data)
