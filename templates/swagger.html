@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="/gui/css/swagger-ui.css">
+</head>
+<body>
+<div id="swagger-ui"></div>
+
+<script src="/gui/js/swagger-ui-bundle.js"></script>
+<script src="/gui/js/swagger-ui-standalone-preset.js"></script>
+
+<script>
+window.onload = function() {
+  const ui = SwaggerUIBundle({
+    url: "/caldera_spec.yaml",
+    dom_id: '#swagger-ui',
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ]
+  })
+
+  window.ui = ui
+}
+</script>
+
+</body>
+</html>
