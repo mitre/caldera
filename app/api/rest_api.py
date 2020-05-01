@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 
+import apispec
 import marshmallow as ma
 from aiohttp import web
 from aiohttp_jinja2 import template, render_template
@@ -14,6 +15,7 @@ from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
+from app.utility.apispec_utils import CalderaApispecPlugin
 
 
 class RestApi(BaseWorld):
@@ -27,6 +29,12 @@ class RestApi(BaseWorld):
         self.rest_svc = services.get('rest_svc')
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
+        self.apispec = apispec.APISpec(
+            title='Caldera API',
+            version=self.get_version(),
+            openapi_version='3.0.2',
+            plugins=[CalderaApispecPlugin()]
+        )
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -35,11 +43,17 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('GET', '/docs/redoc', self.redoc_page)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
+        self.app_svc.application.router.add_route('GET', '/caldera_spec.yaml', self.swagger_spec)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        rest_route = self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        # self.apispec.components.schema('CalderaObject', component=dict(discriminator=dict(propertyName='index', mapping=dict(agent='Agent',
+        #                                                                                                                      planner='Planner'))))
+        self.apispec.path(view=rest_route, handler=self.rest_core)
+        print(self.apispec.to_yaml())
 
     """ BOILERPLATE """
 
@@ -62,10 +76,27 @@ class RestApi(BaseWorld):
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request), version=self.app_svc.version)
         return render_template('%s.html' % access[0].name, request, data)
 
+    @staticmethod
+    async def redoc_page(request):
+        return render_template('redoc.html', request, dict())
+
     """ API ENDPOINTS """
 
     @check_authorization
     async def rest_core(self, request):
+        """
+        Core handler for HTTP API.
+        ---
+        post:
+          description: Retrieve a caldera object.
+          responses:
+            200:
+              description: Return a caldera object
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/CalderaObjects'
+        """
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             data = dict(await request.json())
@@ -125,6 +156,9 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
+
+    async def swagger_spec(self, _):
+        return web.Response(body=self.apispec.to_yaml())
 
     """ PRIVATE """
 
