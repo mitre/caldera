@@ -13,6 +13,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_goal import Goal
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -274,7 +275,7 @@ class RestService(RestServiceInterface, BaseService):
         goal = goal_data
         goal['count'] = int(goal['count'])
         if goal['count'] < 0:
-            goal['count'] = 2 ** 20
+            goal['count'] = Goal.count
         goal['operator'] = goal['operator'].strip()
         return goal
 

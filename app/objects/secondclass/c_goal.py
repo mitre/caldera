@@ -2,6 +2,7 @@ from app.utility.base_object import BaseObject
 
 
 class Goal(BaseObject):
+    count = 2**20
 
     @staticmethod
     def parse_operator(operator):
@@ -33,10 +34,11 @@ class Goal(BaseObject):
         return dict(target=self.target, value=self.value, count=self.count,
                     operator=self.operator, satisfied=self.achieved)
 
-    def __init__(self, target, value, count=2**20, operator=None):
+    def __init__(self, target, value, count=None, operator=None):
         super().__init__()
         self.target = target
         self.value = value
-        self.count = count
+        if count is not None:
+            self.count = count
         self.achieved = False
         self.operator = operator
