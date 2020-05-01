@@ -98,9 +98,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 t = []
                 for bucket in buckets:
                     t.append([ab for ab in abilities for b in ab.buckets if b == bucket])
-                if t == [[]]:   # account for situation where no abilities matching the bucket are found
-                    return list()
-                abilities = t[0]
+                abilities = [ability for ab in t for ability in ab]
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
