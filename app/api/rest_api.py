@@ -44,15 +44,14 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         self.app_svc.application.router.add_route('GET', '/docs/redoc', self.redoc_page)
+        self.app_svc.application.router.add_route('GET', '/docs/swagger', self.swagger_page)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         self.app_svc.application.router.add_route('GET', '/caldera_spec.yaml', self.swagger_spec)
         # authorized API endpoints
         rest_route = self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
-        # self.apispec.components.schema('CalderaObject', component=dict(discriminator=dict(propertyName='index', mapping=dict(agent='Agent',
-        #                                                                                                                      planner='Planner'))))
-        self.apispec.path(view=rest_route, handler=self.rest_core)
+        self.apispec.path(aiohttp_resource=rest_route, handler=self.rest_core)
         print(self.apispec.to_yaml())
 
     """ BOILERPLATE """
@@ -80,6 +79,10 @@ class RestApi(BaseWorld):
     async def redoc_page(request):
         return render_template('redoc.html', request, dict())
 
+    @staticmethod
+    async def swagger_page(request):
+        return render_template('swagger.html', request, dict())
+
     """ API ENDPOINTS """
 
     @check_authorization
@@ -89,6 +92,11 @@ class RestApi(BaseWorld):
         ---
         post:
           description: Retrieve a caldera object.
+          requestBody:
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/CoreRequest'
           responses:
             200:
               description: Return a caldera object
@@ -96,6 +104,8 @@ class RestApi(BaseWorld):
                 application/json:
                   schema:
                     $ref: '#/components/schemas/CalderaObjects'
+        put:
+          description: Modify a caldera object.
         """
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
