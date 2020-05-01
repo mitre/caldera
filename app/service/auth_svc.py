@@ -38,6 +38,7 @@ def check_authorization(func):
         await args[0].auth_svc.check_permissions('app', args[1])
         result = await process(func, *args, **params)
         return result
+    helper.orig_docstring = func.__doc__
     return helper
 
 
