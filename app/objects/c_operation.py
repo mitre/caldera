@@ -58,7 +58,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
-        self.chain, self.rules = [], []
+        self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
@@ -76,6 +76,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def add_link(self, link):
         self.chain.append(link)
+
+    def has_link(self, link_id):
+        return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []

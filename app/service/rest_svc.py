@@ -102,7 +102,7 @@ class RestService(RestServiceInterface, BaseService):
         return await self._explode_display_results(object_name, results)
 
     async def display_result(self, data):
-        link_id = data.pop('link_id')
+        link_id = str(data.pop('link_id'))
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
             try:
@@ -170,11 +170,11 @@ class RestService(RestServiceInterface, BaseService):
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
-        links = await self._build_potential_links(operation, agents, potential_abilities)
-        return dict(links=[l.display for l in links])
+        operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
+        return dict(links=[l.display for l in operation.potential_links])
 
     async def apply_potential_link(self, link):
-        operation = (await self.get_service('data_svc').locate('operations', match=dict(id=link.operation)))[0]
+        operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
     async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):
