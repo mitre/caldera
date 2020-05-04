@@ -1,7 +1,16 @@
 import apispec
-import marshmallow
+import marshmallow as ma
 from apispec.ext.marshmallow import resolver, MarshmallowPlugin
 from apispec import yaml_utils
+
+
+class RequestSchema(ma.Schema):
+    index = ma.fields.String(required=True)
+
+
+class RequestOperationReport(RequestSchema):
+    op_id = ma.fields.String()
+    display_results = ma.fields.Bool()
 
 
 class CalderaApispecPlugin(MarshmallowPlugin):
@@ -12,7 +21,7 @@ class CalderaApispecPlugin(MarshmallowPlugin):
 
         # Automatically add all first class object schemas and create a polymorphic 'discriminator' schema
         # that references them. REF: https://swagger.io/docs/specification/data-models/inheritance-and-polymorphism/
-        schemas = [name for name in marshmallow.schema.class_registry._registry if
+        schemas = [name for name in ma.schema.class_registry._registry if
                    ('app.objects' in name and 'secondclass' not in name and 'Fields' not in name)]
         schema_names = [resolver(schema) for schema in schemas]
         # self.converter = OpenAPIConverter(spec.openapi_version, resolver, spec)
@@ -28,13 +37,12 @@ class CalderaApispecPlugin(MarshmallowPlugin):
         spec.components.schema('CoreAgentRequest', component=dict(type='object', required=['index'],
                                properties=(dict(id=dict(type='string'),
                                                 index=dict(type='string')))))
+        request_mapping = dict(operation='#/components/schemas/CoreOperationRequest',
+                               agent='#/components/schemas/CoreAgentRequest',
+                               )
         spec.components.schema('CoreRequest',
                                component=dict(type='object',
-                                              discriminator=dict(propertyName='index'),
-                                              oneOf=[
-                                                  {'$ref': '#/components/schemas/CoreOperationRequest'},
-                                                  {'$ref': '#/components/schemas/CoreAgentRequest'},
-                                              ]))
+                                              discriminator=dict(propertyName='index', mapping=request_mapping)))
 
     @staticmethod
     def _get_methods_for_view(route):
