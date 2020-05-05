@@ -22,7 +22,7 @@ class AdversarySchema(ma.Schema):
     @ma.pre_load
     def phase_to_atomic_ordering(self, adversary, **_):
         """
-        Convert legacy adversary 'phases' to atomic ordering'
+        Convert legacy adversary phases to atomic ordering
         """
         if 'phases' in adversary and 'atomic_ordering' in adversary:
             raise ma.ValidationError('atomic_ordering and phases cannot be used at the same time', 'phases', adversary)
