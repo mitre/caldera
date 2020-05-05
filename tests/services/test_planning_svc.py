@@ -14,7 +14,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=tagent, adversary=Adversary(name='test', description='test',
-                                                                           atomic_ordering=[], adversary_id='XYZ'),
+                                                                            atomic_ordering=[], adversary_id='XYZ'),
                            source=tsource)
     loop.run_until_complete(data_svc.store(tability))
 

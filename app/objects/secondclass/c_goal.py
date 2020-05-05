@@ -2,7 +2,8 @@ from app.utility.base_object import BaseObject
 
 
 class Goal(BaseObject):
-    count = 2**20
+
+    MAX_GOAL_COUNT = 2**20
 
     @staticmethod
     def parse_operator(operator):
@@ -38,7 +39,6 @@ class Goal(BaseObject):
         super().__init__()
         self.target = target
         self.value = value
-        if count is not None:
-            self.count = count
+        self.count = count if count is not None else self.MAX_GOAL_COUNT
         self.achieved = False
         self.operator = operator

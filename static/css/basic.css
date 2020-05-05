@@ -684,3 +684,7 @@ table.dataTable input[type=text] {
 .goal-role {
     width: 24%
 }
+
+.goal-table img {
+    margin: 5px 2px -4px;
+}
