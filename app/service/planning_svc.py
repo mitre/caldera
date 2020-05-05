@@ -97,8 +97,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 # (still in underlying atomic adversary order)
                 t = []
                 for bucket in buckets:
-                    t.append([ab for ab in abilities for b in ab.buckets if b == bucket])
-                abilities = [ability for ab in t for ability in ab]
+                    t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
+                abilities = t
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
