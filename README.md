@@ -64,6 +64,14 @@ You can find these credentials in the console logs the first time caldera starts
 You can also customize the default accounts or create new credentials by editing the `conf/local.yml`.
 Once you have everything running, we highly recommend going through the Training plugin to learn the ins-and-outs of the framework.
 
+If you're using caldera in a development or test environment, you can start the server with insecure
+default credentials:
+
+```
+# Start caldera with insecure default creds (admin:admin, red:admin, blue:admin)
+python server.py --insecure
+```
+
 > There is also a [Docker image](https://caldera.readthedocs.io/en/latest/Docker-deployment.html) for CALDERA.
 
 ## Video tutorial
