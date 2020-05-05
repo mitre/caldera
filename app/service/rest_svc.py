@@ -288,7 +288,7 @@ class RestService(RestServiceInterface, BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary.load(dict(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
+        return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
         if implant_name:
