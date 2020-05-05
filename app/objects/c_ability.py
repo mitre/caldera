@@ -71,7 +71,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.language = language
         self.code = code
         self.build_target = build_target
-        self.variations = [Variation(description=v['description'], command=v['command']) for v in variations] if variations else []
+        self.variations = [Variation.load(dict(description=v['description'], command=v['command'])) for v in variations] if variations else []
         self.buckets = buckets
         if access:
             self.access = self.Access(access)
