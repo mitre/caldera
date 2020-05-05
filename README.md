@@ -45,17 +45,17 @@ These requirements are for the computer running the core framework:
 ## Installation
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
-```
+```Bash
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
 Next run the install.sh script. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
-```
-./install.sh
+```Bash
+sudo ./install.sh
 ```
 
 Finally, start the server. 
-```
+```Bash
 python server.py
 ```
 You can now navigate to 127.0.0.1:8888 in a browser and log in with either red team (red:admin) or blue team (blue:admin) credentials. Once you have everything running, we highly recommend going through the Training plugin to learn the ins-and-outs of the framework.
