@@ -136,10 +136,10 @@
         <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
             <thead>
                 <tr>
-                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>target</b><img id="duk-target" src="/gui/img/duk.png"></td>
-                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>value</b><img id="duk-value" src="/gui/img/duk.png"></td>
-                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>operator</b><img id="duk-operator" src="/gui/img/duk.png"></td>
-                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>count (∞ = 1048576)</b><img id="duk-count" src="/gui/img/duk.png"></td>
+                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>target</b><img id="duk-target" src="/gui/img/duk.png" onclick="stream('Target fact for this Goal - any fact will do (ex. host.user.name).')"></td>
+                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>value</b><img id="duk-value" src="/gui/img/duk.png" onclick="stream('Target value for this Goal - any value will do (ex. Admin).')"></td>
+                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>operator</b><img id="duk-operator" src="/gui/img/duk.png" onclick="stream('Target count for this Goal - the number of times this Goal should be satisfied (ex. 1).')"></td>
+                    <td class="goal-role duk-icon duk-table-icon goal-table"><b>count (∞ = 1048576)</b><img id="duk-count" src="/gui/img/duk.png" onclick="stream('Target operator for this Goal - the logic operator to use when evaluating the Goal (ex. ==, >, in, * [any value for target fact]).')"></td>
                     <td></td>
                 </tr>
             </thead>
@@ -680,18 +680,5 @@
     function loadGoals(goallist){
         goallist.forEach(function(e) {addGoalRow(e.target, e.value, e.operator, e.count)})
     }
-
-    $('#duk-target').click(function() {
-		 stream('Target fact for this Goal - any fact will do (ex. host.user.name).')
-    });
-    $('#duk-value').click(function() {
-		 stream('Target value for this Goal - any value will do (ex. Admin).')
-    });
-    $('#duk-count').click(function() {
-		 stream('Target count for this Goal - the number of times this Goal should be satisfied (ex. 1).')
-    });
-    $('#duk-operator').click(function() {
-		 stream('Target operator for this Goal - the logic operator to use when evaluating the Goal (ex. ==, >, in, * [any value for target fact]).')
-    });
 
 </script>
