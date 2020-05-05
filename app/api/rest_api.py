@@ -71,7 +71,7 @@ class RestApi(BaseWorld):
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             if request.method == 'GET':
-                data = dict(index='default', path=request.path[10:])
+                data = dict(index='default', path=request.match_info['tail'])
             else:
                 data = dict(await request.json())
             index = data.pop('index')
