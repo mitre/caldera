@@ -271,11 +271,8 @@ class RestService(RestServiceInterface, BaseService):
         if new_stopping_conditions:
             return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
 
-    def _gen_goals(self, goal_data):
-        goal = goal_data
-        goal['count'] = int(goal['count'])
-        if goal['count'] < 0:
-            goal['count'] = Goal.count
+    def _gen_goals(self, goal):
+        goal['count'] = Goal.MAX_GOAL_COUNT if int(goal['count']) < 0 else int(goal['count'])
         goal['operator'] = goal['operator'].strip()
         return goal
 

@@ -128,8 +128,11 @@
     <center>
         <div class="grid" id="grid">
         </div>
-        <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
-        <hr>
+    </center>
+</div>
+
+<div id="goal-template" style="display: none;">
+    <center>
         <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
             <thead>
                 <tr>
@@ -141,10 +144,6 @@
                 </tr>
             </thead>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter operator', 'Enter count')">
-            &#10010;&nbsp;add goal
-        </p>
-    </div>
     </center>
 </div>
 
@@ -248,6 +247,7 @@
     $(document).ready(function () {
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
         addPhase(1);
+        addGoals(2);
     });
 
     function toggleAdversaryView() {
@@ -409,6 +409,7 @@
         let template = $("#tempPhase");
         if (!template.length) {
             template = addPhase(1);
+            addGoals(2);
         }
         let grid = createMuuriGrid();
         abilities = addPlatforms(abilities);
@@ -434,7 +435,21 @@
 
     function addPhase(number) {
         stream('Add abilities by selecting +add abilities. You can even create new abilities');
-        let template = $("#phase-template").clone();
+        let header = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
+            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            +'<span class="ability-add" onclick="showProfileModal('+number+')" style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span><hr></h4>');
+        return renderAdversaryTemplateClone("#phase-template", number, header);
+    }
+
+    function addGoals(number) {
+    	let header = $('<h4 class="phase-headers"><span class="phase-title">Goals'
+            +'</span><span class="ability-add" onclick="addGoalRow(\'Enter target\', \'Enter value\', \'Enter operator\', \'Enter count\')"'
+            +' style="">&#10010; add goal</span><hr></h4>');
+    	return renderAdversaryTemplateClone("#goal-template", number, header)
+    }
+
+    function renderAdversaryTemplateClone(elem, number, header){
+        let template = $(elem).clone();
         if(number == null) {
             let existingPhases = $('.tempPhase').length;
             number = existingPhases + 1;
@@ -447,11 +462,8 @@
             template.insertAfter('#tempPhase' + (number-1));
         }
         template.show();
-        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
-            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
-            +'<span class="ability-add" onclick="showProfileModal('+number+')" style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span><hr></h4>');
-        $('#tempPhase' + number).prepend(phaseHeader);
-        phaseHeader.show();
+        $('#tempPhase' + number).prepend(header);
+        header.show();
         return template;
     }
 
