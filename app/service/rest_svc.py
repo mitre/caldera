@@ -206,6 +206,7 @@ class RestService(RestServiceInterface, BaseService):
             enabled_plugins.append(data.get('value'))
         else:
             self.set_config('main', data.get('prop'), data.get('value'))
+        return self.get_config()
 
     async def update_operation(self, op_id, state=None, autonomous=None):
         async def validate(op):
@@ -287,7 +288,7 @@ class RestService(RestServiceInterface, BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[])
+        return Adversary.load(dict(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
         if implant_name:

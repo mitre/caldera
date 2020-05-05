@@ -1,19 +1,48 @@
 import os
 
+import marshmallow as ma
+
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
+class AdversarySchema(ma.Schema):
+
+    adversary_id = ma.fields.String()
+    name = ma.fields.String()
+    description = ma.fields.String()
+    atomic_ordering = ma.fields.List(ma.fields.String())
+
+    @ma.pre_load
+    def fix_id(self, adversary, **_):
+        if 'id' in adversary:
+            adversary['adversary_id'] = adversary.pop('id')
+        return adversary
+
+    @ma.pre_load
+    def phase_to_atomic_ordering(self, adversary, **_):
+        """
+        Convert legacy adversary 'phases' to atomic ordering'
+        """
+        if 'phases' in adversary and 'atomic_ordering' in adversary:
+            raise ma.ValidationError('atomic_ordering and phases cannot be used at the same time', 'phases', adversary)
+        elif 'phases' in adversary:
+            adversary['atomic_ordering'] = [ab_id for phase in adversary.get('phases', {}).values() for ab_id in phase]
+            del adversary['phases']
+        return adversary
+
+    @ma.post_load
+    def build_adversary(self, data, **_):
+        return Adversary(**data)
+
+
 class Adversary(FirstClassObjectInterface, BaseObject):
+
+    schema = AdversarySchema()
 
     @property
     def unique(self):
         return self.hash('%s' % self.adversary_id)
-
-    @property
-    def display(self):
-        return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
-                    atomic_ordering=self.atomic_ordering)
 
     def __init__(self, adversary_id, name, description, atomic_ordering):
         super().__init__()
