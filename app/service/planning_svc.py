@@ -64,7 +64,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         decide to do that within its bucket functions, and/or there are other
         planning_svc utilities for the bucket functions to use to do so.
         """
-        while planner.next_bucket is not None and not planner.stopping_condition_met and not await planner.operation.is_finished():
+        while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
+                and not await planner.operation.is_finished():
             await getattr(planner, planner.next_bucket)()
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   planner.operation)
@@ -96,7 +97,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 # (still in underlying atomic adversary order)
                 t = []
                 for bucket in buckets:
-                    t.append([ab for ab in abilities for b in ab.buckets if b == bucket])
+                    t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
                 abilities = t
         links = []
         if agent:
@@ -161,7 +162,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if operation.last_ran is None:
             ab_id = operation.adversary.atomic_ordering[0]
             return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ab_id))
-        ab_ids = operation.adversary.atomic_ordering[:(operation.adversary.atomic_ordering.index(operation.last_ran) + 2)]
+        ab_ids = operation.adversary.atomic_ordering[:(operation.last_ran + 2)]
         return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(ab_ids)))
 
     async def _bucket_execute(self, operation, planner, links, condition_stop):
