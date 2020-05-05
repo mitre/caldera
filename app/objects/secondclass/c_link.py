@@ -76,8 +76,8 @@ class Link(BaseObject):
             if self.status != 0:
                 return
             for parser in self.ability.parsers:
-                source = operation.source if operation else None
-                relationships = await self._parse_link_result(result, parser, source)
+                source_facts = operation.source.facts if operation else []
+                relationships = await self._parse_link_result(result, parser, source_facts)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
         except Exception as e:
@@ -92,9 +92,9 @@ class Link(BaseObject):
 
     """ PRIVATE """
 
-    async def _parse_link_result(self, result, parser, source):
+    async def _parse_link_result(self, result, parser, source_facts):
         blob = b64decode(result).decode('utf-8')
-        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs, source=source)
+        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs, source_facts=source_facts)
         p_inst = await self._load_module('Parser', parser_info)
         try:
             return p_inst.parse(blob=blob)
