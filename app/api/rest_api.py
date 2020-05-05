@@ -40,6 +40,8 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        self.app_svc.application.router.add_route('GET', '/api/rest/{tail:.*}', self.rest_core)
+
 
     """ BOILERPLATE """
 
@@ -68,9 +70,15 @@ class RestApi(BaseWorld):
     async def rest_core(self, request):
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
-            data = dict(await request.json())
+            if request.method == 'GET':
+                data = dict(index='default', path=request.path[10:])
+            else:
+                data = dict(await request.json())
             index = data.pop('index')
             options = dict(
+                GET=dict(
+                    default=lambda d: self.get_stuff(d)
+                ),
                 DELETE=dict(
                     agents=lambda d: self.rest_svc.delete_agent(d),
                     operations=lambda d: self.rest_svc.delete_operation(d),
@@ -125,6 +133,13 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
+
+    async def get_stuff(self, data):
+        params = data['path'].split('/')
+        sources = dict(
+            config=lambda: self.get_config()
+        )
+        return sources[params[0]]()
 
     """ PRIVATE """
 
