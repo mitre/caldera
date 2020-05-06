@@ -1,15 +1,25 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
+
+
+class VariationSchema(ma.Schema):
+
+    description = ma.fields.String()
+    command = ma.fields.String()
+
+    @ma.post_load
+    def build_variation(self, data, **_):
+        return Variation(**data)
 
 
 class Variation(BaseObject):
 
+    schema = VariationSchema()
+
     @property
     def command(self):
         return self.replace_app_props(self._command)
-
-    @property
-    def display(self):
-        return self.clean(dict(description=self.description, command=self.command))
 
     def __init__(self, description, command):
         super().__init__()
