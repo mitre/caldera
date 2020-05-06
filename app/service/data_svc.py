@@ -181,9 +181,7 @@ class DataService(DataServiceInterface, BaseService):
             await self.store(ab)
 
     async def _classify(self, ability, tactic):
-        if 'buckets' in ability:
-            return ability['buckets'].lower()
-        return tactic.lower()
+        return ability.pop('buckets', tactic).lower()
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
