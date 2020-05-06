@@ -71,13 +71,16 @@ class RestApi(BaseWorld):
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
             if request.method == 'GET':
-                data = dict(index='default', path=request.match_info['tail'])
+                data = dict(
+                    index='default',
+                    path=request.match_info['tail'].split('/')
+                )
             else:
                 data = dict(await request.json())
             index = data.pop('index')
             options = dict(
                 GET=dict(
-                    default=lambda d: self.get_stuff(d)
+                    default=lambda d: self.rest_svc.get_stuff(d)
                 ),
                 DELETE=dict(
                     agents=lambda d: self.rest_svc.delete_agent(d),
@@ -133,13 +136,6 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
-
-    async def get_stuff(self, data):
-        params = data['path'].split('/')
-        sources = dict(
-            config=lambda: self.get_config()
-        )
-        return sources[params[0]]()
 
     """ PRIVATE """
 

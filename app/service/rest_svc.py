@@ -227,6 +227,27 @@ class RestService(RestServiceInterface, BaseService):
             operation[0].autonomous = 0 if operation[0].autonomous else 1
             self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
 
+    async def get_stuff(self, data):
+        def deep_get(d, *keys):
+            if not keys:
+                return d
+            temp = d
+            for k in keys:
+                if not isinstance(temp, dict):
+                    return temp
+                temp = temp.get(k)
+            return temp
+
+        sources = dict(
+            config=lambda: self.get_config()
+        )
+
+        source = data['path'][0]
+        specifiers = data['path'][1:]
+        if source not in sources:
+            return None
+        return deep_get(sources[source](), *specifiers)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):
