@@ -323,6 +323,20 @@
             appendAbilityToList('phase-modal', a[0]);
             options.val(a[0].name);
         }
+        var $to_replace = -1;
+        $.each(exploits, function(i, ab) {
+            if (ab.ability_id === data[0].ability_id) {
+                $to_replace = i;
+                return false;
+            }
+        });
+        if ($to_replace != -1) {
+            $.each(data[0], function(key, value) {
+                exploits[$to_replace][key] = value;
+            });
+<!--            exploits[$to_replace] = data[0];-->
+<!--            options.find(":selected").data('ability', exploits[$to_replace]);-->
+        }
     }
 
     function removeBlock(element){
@@ -464,7 +478,7 @@
             let abList = pModal.find('#ability-ability-filter');
             tacList.val(ability['tactic']).change();
             techList.val(ability['technique_id']).change();
-            abList.val(ability['name']).change();
+            abList.val(ability['name']).data(ability).change();
             showPhaseModal(1);
         });
 
