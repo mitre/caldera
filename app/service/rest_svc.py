@@ -271,7 +271,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def _build_potential_abilities(self, operation):
         potential_abilities = []
-        for a in await self.get_service('data_svc').locate('abilities'):
+        for a in await self.get_service('data_svc').locate('abilities', match=dict(access=operation.access)):
             if not operation.adversary.has_ability(a):
                 potential_abilities.append(a)
         return potential_abilities
