@@ -19,19 +19,19 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 Examples include agents, GUI interfaces, collections of TTPs and more. 
 
 ## Plugins
-- **[Access](https://github.com/mitre/access)** 
-- **[Atomic](https://github.com/mitre/atomic)** 
-- **[Builder](https://github.com/mitre/builder)** 
-- **[Compass](https://github.com/mitre/compass)** 
-- **[GameBoard](https://github.com/mitre/gameboard)** 
-- **[Human](https://github.com/mitre/human)** 
-- **[Manx](https://github.com/mitre/manx)** 
-- **[Mock](https://github.com/mitre/mock)** 
-- **[Response](https://github.com/mitre/response)** 
-- **[Sandcat](https://github.com/mitre/sandcat)** 
-- **[SSL](https://github.com/mitre/SSL)** 
-- **[Stockpile](https://github.com/mitre/stockpile)** 
-- **[Training](https://github.com/mitre/training)** 
+- **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
+- **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
+- **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
+- **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
+- **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
+- **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
+- **[Manx](https://github.com/mitre/manx)** (shell functionality and reverse shell payloads)
+- **[Mock](https://github.com/mitre/mock)** (simulate agents in operations)
+- **[Response](https://github.com/mitre/response)** (incident response)
+- **[Sandcat](https://github.com/mitre/sandcat)** (default agent)
+- **[SSL](https://github.com/mitre/SSL)** (enable https for caldera)
+- **[Stockpile](https://github.com/mitre/stockpile)** (technique and profile storehouse)
+- **[Training](https://github.com/mitre/training)** (certification and training course)
 
 ## Requirements
 
