@@ -205,7 +205,7 @@ class RestService(RestServiceInterface, BaseService):
             enabled_plugins = self.get_config('plugins')
             enabled_plugins.append(data.get('value'))
         else:
-            self.set_config('default', data.get('prop'), data.get('value'))
+            self.set_config('main', data.get('prop'), data.get('value'))
 
     async def update_operation(self, op_id, state=None, autonomous=None):
         async def validate(op):

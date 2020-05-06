@@ -7,7 +7,7 @@ from app.utility.base_world import BaseWorld
 
 class TestBaseWorld:
 
-    default_config = dict(name='default', config={'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
+    default_config = dict(name='main', config={'app.contact.http': '0.0.0.0', 'plugins': ['sandcat', 'stockpile']})
 
     default_yaml = dict(test_dir=1, implant_name='unittesting', test_int=1234)
 
@@ -42,12 +42,12 @@ class TestBaseWorld:
 
     @pytest.mark.usefixtures('reset_config')
     def test_get_prop_from_config(self):
-        assert BaseWorld.get_config(name='default', prop='app.contact.http') == '0.0.0.0'
+        assert BaseWorld.get_config(name='main', prop='app.contact.http') == '0.0.0.0'
 
     @pytest.mark.usefixtures('reset_config')
     def test_set_prop_from_config(self):
-        BaseWorld.set_config(name='default', prop='newprop', value='unittest')
-        assert BaseWorld.get_config(name='default', prop='newprop') == 'unittest'
+        BaseWorld.set_config(name='main', prop='newprop', value='unittest')
+        assert BaseWorld.get_config(name='main', prop='newprop') == 'unittest'
 
     def test_encode_and_decode_string(self):
         plaintext = 'unit testing string'

@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import logging
 import os
-import pathlib
 import sys
 
 from aiohttp import web
@@ -18,6 +17,7 @@ from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
+from app.utility.config_generator import ensure_local_config
 
 
 def setup_logger(level=logging.DEBUG):
@@ -65,7 +65,7 @@ def run_tasks(services):
         logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
-        loop.run_until_complete(services.get('app_svc').teardown())
+        loop.run_until_complete(services.get('app_svc').teardown(main_config_file=args.environment))
 
 
 if __name__ == '__main__':
@@ -80,11 +80,21 @@ if __name__ == '__main__':
                         help='remove object_store on start')
     parser.add_argument('-P', '--plugins', required=False, default=os.listdir('plugins'),
                         help='Start up with a single plugin', type=list_str)
+    parser.add_argument('--insecure', action='store_true', required=False, default=False,
+                        help='Start caldera with insecure default config values. Equivalent to "-E default".')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
-    config = args.environment if pathlib.Path('conf/%s.yml' % args.environment).exists() else 'default'
-    BaseWorld.apply_config('default', BaseWorld.strip_yml('conf/%s.yml' % config)[0])
+
+    if args.insecure:
+        logging.warning('--insecure flag set. Caldera will use the default.yml config file.')
+        args.environment = 'default'
+    elif args.environment == 'local':
+        ensure_local_config()
+
+    main_config_path = 'conf/%s.yml' % args.environment
+    BaseWorld.apply_config('main', BaseWorld.strip_yml(main_config_path)[0])
+    logging.info('Using main config from %s' % main_config_path)
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
 

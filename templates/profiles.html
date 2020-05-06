@@ -118,7 +118,7 @@
                 </div>
             </div>
             <div class="imgcontainer">
-                <span onclick="document.getElementById('phase-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <span onclick="hidePhaseModal()" class="close" title="Close Modal">&times;</span>
             </div>
         </div>
     </form>
@@ -168,7 +168,7 @@
                 </div>
             </div>
             <div class="imgcontainer">
-                <span onclick="document.getElementById('adv-profile-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <span onclick="hideProfileModal()" class="close" title="Close Modal">&times;</span>
             </div>
         </div>
     </form>
@@ -553,12 +553,32 @@
     function showPhaseModal(phase) {
         $('#phase-modal').data("phase", phase);
         $('#ability-identifier').text(uuidv4());
+        $('body').keyup(function(e){
+            if(e.key == "Escape"){
+                hidePhaseModal();
+            }
+        });
         document.getElementById("phase-modal").style.display="block";
+    }
+
+    function hidePhaseModal() {
+        $("body").off("keyup");
+        document.getElementById("phase-modal").style.display="none";
     }
 
     function showProfileModal(phase) {
         $('#adv-profile-modal').data("phase", phase);
+        $('body').keyup(function(e){
+            if(e.key == "Escape"){
+                hideProfileModal();
+            }
+        });
         document.getElementById("adv-profile-modal").style.display="block";
+    }
+
+    function hideProfileModal() {
+        $("body").off("keyup");
+        document.getElementById("adv-profile-modal").style.display="none";
     }
 
     function freshId(){
@@ -614,7 +634,7 @@
 
     function addAdvToCurrentProfile() {
         restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-profile-filter').val()}, loadAdvProfileCallback);
-        document.getElementById('adv-profile-modal').style.display='none';
+        hideProfileModal();
 	}
 
 	function loadAdvProfileCallback(data){

@@ -220,24 +220,18 @@ class Operation(FirstClassObjectInterface, BaseObject):
         cannot be executed. Will do a loop once through all abilities
         enumerated in adversary.
         """
+        ability_iter = iter(range(len(self.adversary.atomic_ordering)))
         while not self._is_atomic_closeable():
             links = await services.get('planning_svc').get_links(self, buckets=['atomic'])
             if links:
                 await self.wait_for_links_completion([await self.apply(links[-1])])
-            self._update_last_ran()
+            self.last_ran = next(ability_iter)
             if await self.is_finished():
                 return
 
-    def _update_last_ran(self):
-        """ """
-        if self.last_ran is None:
-            self.last_ran = self.adversary.atomic_ordering[0]
-        elif self.last_ran != self.adversary.atomic_ordering[-1]:
-            self.last_ran = self.adversary.atomic_ordering[(self.adversary.atomic_ordering.index(self.last_ran) + 1)]
-
     def _is_atomic_closeable(self):
         if len(self.adversary.atomic_ordering):
-            return self.atomic and self.last_ran == self.adversary.atomic_ordering[-1]
+            return self.atomic and self.last_ran == (len(self.adversary.atomic_ordering) - 1)
         else:
             return True
 
