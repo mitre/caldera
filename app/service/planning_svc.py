@@ -67,8 +67,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
                 and not await planner.operation.is_finished():
             await getattr(planner, planner.next_bucket)()
-            planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
-                                                                                  planner.operation)
+            await self.update_stopping_condition_met(planner, planner.operation)
 
     async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None, stopping_conditions=None):
         """
