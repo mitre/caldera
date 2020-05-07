@@ -43,9 +43,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
                                technique_id=self.technique_id, name=self.name,
                                test=self.test, description=self.description, cleanup=self.cleanup,
                                executor=self.executor, unique=self.unique,
-                               platform=self.platform, payloads=self.payloads, parsers=[p.display for p in self.parsers],
+                               platform=self.platform, payloads=self.payloads,
+                               parsers=[p.display for p in self.parsers],
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout, buckets=self.buckets, access=self.access.value, variations=[v.display for v in self.variations]))
+                               timeout=self.timeout, buckets=self.buckets, access=self.access.value,
+                               variations=[v.display for v in self.variations], additional_info=self.additional_info))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
@@ -75,8 +77,9 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.buckets = buckets
         if access:
             self.access = self.Access(access)
+        self.additional_info = dict()
         for k, v in kwargs.items():
-            setattr(self, k, v)
+            self.additional_info[k] = v
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
