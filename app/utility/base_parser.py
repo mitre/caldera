@@ -50,7 +50,7 @@ class BaseParser:
         :param blob:
         :return:
         """
-        return [x for x in blob.split('\n') if x]
+        return [x.rstrip('\r') for x in blob.split('\n') if x]
 
     @staticmethod
     def ip(blob):
