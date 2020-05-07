@@ -331,11 +331,8 @@
             }
         });
         if ($to_replace != -1) {
-            $.each(data[0], function(key, value) {
-                exploits[$to_replace][key] = value;
-            });
-<!--            exploits[$to_replace] = data[0];-->
-<!--            options.find(":selected").data('ability', exploits[$to_replace]);-->
+            exploits[$to_replace] = data[0];
+            loadAdversary();
         }
     }
 
@@ -478,7 +475,7 @@
             let abList = pModal.find('#ability-ability-filter');
             tacList.val(ability['tactic']).change();
             techList.val(ability['technique_id']).change();
-            abList.val(ability['name']).data(ability).change();
+            abList.val(ability['name']).change();
             showPhaseModal(1);
         });
 
