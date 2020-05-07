@@ -13,14 +13,15 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     @property
     def display(self):
         return dict(adversary_id=self.adversary_id, name=self.name, description=self.description,
-                    atomic_ordering=self.atomic_ordering)
+                    atomic_ordering=self.atomic_ordering, objectives=[])
 
-    def __init__(self, adversary_id, name, description, atomic_ordering):
+    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
+        self.objective = objective if objective else None
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
@@ -30,6 +31,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('name', self.name)
         existing.update('description', self.description)
         existing.update('atomic_ordering', self.atomic_ordering)
+        existing.update('objective', self.objective)
         return existing
 
     def has_ability(self, ability):

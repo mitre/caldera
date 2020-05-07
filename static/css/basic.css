@@ -475,7 +475,7 @@ table.dataTable input[type=text] {
 }
 .op-control-text{
     text-transform: uppercase;
-    background-color: var(--navbar-background);
+    background-color: var(--theme-color);
     padding: 5px 5px 5px 5px;
     height: 30px;
     text-align: center;
@@ -665,7 +665,7 @@ table.dataTable input[type=text] {
 }
 
 .infolist-contents {
-    float: left:
+    float: left;
     height: 1.8em;
     min-width: 50%;
     margin-left :1.5em;
@@ -676,7 +676,16 @@ table.dataTable input[type=text] {
 }
 
 .infolist-contents p {
+    float: left;
     margin-block-start: 0;
     margin-block-end: 0;
     color: white;
+}
+
+.goal-role {
+    width: 24%
+}
+
+.goal-table img {
+    margin: 5px 2px -4px;
 }

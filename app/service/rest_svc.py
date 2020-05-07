@@ -67,14 +67,10 @@ class RestService(RestServiceInterface, BaseService):
         return [a.display for a in await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
-        if not file_path:
-            file_path = 'data/sources/%s.yml' % data.get('id')
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(yaml.dump(data))
-        await self._services.get('data_svc').reload_data()
-        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
+        return await self._persist_data(data, index='sources')
+
+    async def persist_objective(self, data):
+        return await self._persist_data(data, index='objectives')
 
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
@@ -299,6 +295,16 @@ class RestService(RestServiceInterface, BaseService):
         self.set_config(name='agents', prop='sleep_max', value=sleep_max)
         self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
         self.set_config(name='agents', prop='watchdog', value=watchdog)
+
+    async def _persist_data(self, data, index):
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
+        if not file_path:
+            file_path = 'data/%s/%s.yml' % (index, data.get('id'))
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(yaml.dump(data))
+        await self._services.get('data_svc').reload_data()
+        return [d.display for d in await self._services.get('data_svc').locate('%s' % index, dict(id=data.get('id')))]
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':
