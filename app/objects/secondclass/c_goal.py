@@ -46,7 +46,7 @@ class Goal(BaseObject):
             self.achieved = True
         return self.achieved
 
-    def __init__(self, target='exhaustion', value='complete', count=None, operator=None):
+    def __init__(self, target='exhaustion', value='complete', count=None, operator='=='):
         super().__init__()
         self.target = target
         self.value = value

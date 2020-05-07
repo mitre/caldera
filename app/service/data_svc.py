@@ -12,6 +12,7 @@ from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
+from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.secondclass.c_relationship import Relationship
@@ -34,7 +35,8 @@ class DataService(DataServiceInterface, BaseService):
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads',
+                  'data/objectives']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     try:
@@ -109,6 +111,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_objectives(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
+            await self._verify_data_sets()
             await self._load_extensions()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
@@ -301,3 +304,7 @@ class DataService(DataServiceInterface, BaseService):
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
                         existing.cleanup.append(cleanup_command)
+
+    async def _verify_data_sets(self):
+        if not await self.locate('objectives', match=dict(name='default')):
+            await self.store(Objective(id='705c3b7f-2a81-43da-ba6b-23c734dca944', name='default', goals=[Goal()]))

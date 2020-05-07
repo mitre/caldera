@@ -282,6 +282,8 @@ class RestService(RestServiceInterface, BaseService):
     async def _construct_adversary_for_op(self, adversary_id):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
+            if not adv.objective:
+                adv.objective = (await self.get_service('data_svc').locate('objectives', match=dict(name='default')))[0]
             return copy.deepcopy(adv[0])
         return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[])
 

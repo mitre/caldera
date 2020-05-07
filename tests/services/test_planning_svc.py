@@ -1,5 +1,6 @@
 import pytest
 
+from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
@@ -12,8 +13,9 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
-    toperation = operation(name='test1', agents=tagent, adversary='hunter', source=tsource)
-
+    toperation = operation(name='test1', agents=tagent, adversary=Adversary(name='test', description='test',
+                                                                            atomic_ordering=[], adversary_id='XYZ'),
+                           source=tsource)
     loop.run_until_complete(data_svc.store(tability))
 
     loop.run_until_complete(data_svc.store(
@@ -22,7 +24,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
                    module='plugins.stockpile.app.obfuscators.plain_text')
     ))
 
-    yield (tability, tagent, toperation)
+    yield tability, tagent, toperation
 
 
 class TestPlanningService:

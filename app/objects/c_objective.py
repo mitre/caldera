@@ -26,7 +26,7 @@ class Objective(FirstClassObjectInterface, BaseObject):
 
     @property
     def percentage(self):
-        return 100 * len([g for g in self.goals if g.satisfied() is True])
+        return 100 * (len([g for g in self.goals if g.satisfied() is True])/len(self.goals))
 
     def completed(self, facts=None):
         return not any(x.satisfied(facts) is False for x in self.goals)
