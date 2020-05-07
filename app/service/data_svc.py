@@ -306,5 +306,15 @@ class DataService(DataServiceInterface, BaseService):
                         existing.cleanup.append(cleanup_command)
 
     async def _verify_data_sets(self):
+        await self._verify_default_objective_exists()
+        await self._verify_adversary_profiles()
+
+    async def _verify_default_objective_exists(self):
         if not await self.locate('objectives', match=dict(name='default')):
             await self.store(Objective(id='705c3b7f-2a81-43da-ba6b-23c734dca944', name='default', goals=[Goal()]))
+
+    async def _verify_adversary_profiles(self):
+        default_objective = (await self.locate('objectives', match=dict(name='default')))[0]
+        for adv in await self.locate('adversaries'):
+            if not adv.objective:
+                adv.objective = default_objective

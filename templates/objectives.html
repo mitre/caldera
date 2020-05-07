@@ -146,6 +146,8 @@
     function clearObjectiveCanvas(){
         $('#goalTbl').find("tr:gt(0)").remove();
         $('#objective-adversaries').empty();
+        $('#profile-objective-name').prop('selectedIndex', 0);
+        $('#objective-name').text('Sample name');
     }
     //# sourceURL=objectives.js
 </script>
