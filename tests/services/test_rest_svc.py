@@ -80,7 +80,7 @@ class TestRestSvc:
                                 'sleep_min': 2, 'sleep_max': 8, 'executors': ['pwsh', 'psh'], 'privilege': 'User',
                                 'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
                                 'watchdog': 0, 'contact': 'unknown', 'links': [], 'username': 'unknown'}],
-                'adversary': {'adversary_id': 0, 'description': 'an empty adversary profile', 'name': 'ad-hoc',
+                'adversary': {'adversary_id': 'ad-hoc', 'description': 'an empty adversary profile', 'name': 'ad-hoc',
                               'atomic_ordering': []},
                 'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
                 'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': [], 'atomic': False}
