@@ -166,7 +166,7 @@ class DataService(DataServiceInterface, BaseService):
                                                                    payloads=payloads, parsers=info.get('parsers', []),
                                                                    timeout=info.get('timeout', 60),
                                                                    requirements=requirements, privilege=privilege,
-                                                                   buckets = await self._classify(ab, tactic),
+                                                                   buckets=await self._classify(ab, tactic),
                                                                    access=plugin.access, repeatable=repeatable,
                                                                    variations=info.get('variations', []), **ab)
                                     await self._update_extensions(a)
@@ -180,7 +180,8 @@ class DataService(DataServiceInterface, BaseService):
             ab.technique_name = ability.technique_name
             await self.store(ab)
 
-    async def _classify(self, ability, tactic):
+    @staticmethod
+    async def _classify(ability, tactic):
         return ability.pop('buckets', tactic).lower()
 
     async def _load_sources(self, plugin):
