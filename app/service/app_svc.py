@@ -129,11 +129,16 @@ class AppService(AppServiceInterface, BaseService):
         await contact_svc.register(Html(self.get_services()))
         await contact_svc.register(Gist(self.get_services()))
 
+    async def validate_requirement(self, requirement, params):
+        if not self.check_requirement(params):
+            self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
+            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+            return False
+        return True
+
     async def validate_requirements(self):
         for requirement, params in self.get_config('requirements').items():
-            if not self.check_requirement(params):
-                self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
-                self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+            await self.validate_requirement(requirement, params)
 
     async def load_plugin_expansions(self, plugins=()):
         for p in plugins:

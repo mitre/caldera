@@ -8,7 +8,7 @@ function tag_version(){
 
 function update_version(){
     git reset --hard origin/master && git checkout master && git pull
-    newHash=$(dirhash . -a md5 -i "/plugins/ /.tox/" -m "*.py *.html *.js *.go")
+    newHash=$(dirhash . -a md5 -i "/plugins/ .*/ _*/" -m "*.py *.html *.js *.go")
     echo "${1}-${newHash}" > VERSION.txt
     tag_version $1
 }
