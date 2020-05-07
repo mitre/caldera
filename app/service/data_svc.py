@@ -215,10 +215,10 @@ class DataService(DataServiceInterface, BaseService):
                                                                    self._app_configuration['payloads']
                                                                    ['extensions'][entry])
 
-    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
-                              description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, buckets=None, repeatable=False,
-                              code=None, language=None, build_target=None, variations=None, **kwargs):
+    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
+                              test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
+                              parsers=None,requirements=None, privilege=None, timeout=60, access=None, buckets=None,
+                              repeatable=False, code=None, language=None, build_target=None, variations=None, **kwargs):
         ps = []
         for module in parsers:
             pcs = [(ParserConfig(**m)) for m in parsers[module]]
