@@ -84,6 +84,12 @@
                                 <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
                             </tr>
                         </table>
+                        <div id="ability-additional-info" style="display: none">
+                            <p style="margin-top: 25; margin-bottom: 0;">Additional Info</p>
+                            <table id="additional-info-table" frame=void rules=rows style="border-spacing:2px;width:100%">
+                            </table>
+                        </div>
+
                     </div>
                     <div class="column" style="flex:10%">
                         <div>
@@ -509,6 +515,8 @@
         $('#ability-name').val('');
         $('#ability-description').val('');
         $('#ttp-tests').empty();
+        $('#ability-additional-info').find('#additional-info-table').empty();
+        $('#ability-additional-info').find('#additional-info-table').hide();
 
         let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
         $('#ability-identifier').val(aid.ability_id);
@@ -517,6 +525,17 @@
         $('#ability-tactic-name').val(aid.tactic);
         $('#ability-tech-id').val(aid.technique_id);
         $('#ability-tech-name').val(aid.technique_name);
+
+        if (Object.keys(aid.additional_info).length > 0) {
+            $.each(aid.additional_info, function(key, value) {
+                var $table_row = '<tr><td style="width:10%"><input type="text" class="key" placeholder="' + key + '"></td>' +
+                                 '<td><b>:</b></td>' +
+                                 '<td><input type="text" class="value" placeholder="' + value + '"></td></tr>';
+                $('#ability-additional-info').find('#additional-info-table').append($table_row);
+            });
+            $('#ability-additional-info').find('#additional-info-table').show();
+        }
+
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();
