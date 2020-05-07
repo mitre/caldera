@@ -10,6 +10,7 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
@@ -285,7 +286,8 @@ class RestService(RestServiceInterface, BaseService):
             if not adv.objective:
                 adv.objective = (await self.get_service('data_svc').locate('objectives', match=dict(name='default')))[0]
             return copy.deepcopy(adv[0])
-        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[])
+        return Adversary(adversary_id=0, name='ad-hoc', description='an empty adversary profile', atomic_ordering=[],
+                         objective=Objective(id='ad-hoc', name='ad-hoc'))
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
         if implant_name:

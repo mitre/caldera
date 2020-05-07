@@ -31,7 +31,7 @@ class Objective(FirstClassObjectInterface, BaseObject):
     def completed(self, facts=None):
         return not any(x.satisfied(facts) is False for x in self.goals)
 
-    def __init__(self, id, name, goals=None):
+    def __init__(self, id='', name='', goals=None):
         super().__init__()
         self.id = id
         self.name = name
