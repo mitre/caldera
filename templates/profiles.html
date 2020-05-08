@@ -91,7 +91,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
                     <div class="column" style="flex:10%">
                         <div>
@@ -112,6 +111,12 @@
                                <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
                                <input type="file" id="uploadPayloadFile" style="display: none">
                             </form>
+                        </div>
+                    </div>
+                    <div class="column" style="flex:10%">
+                        <div>
+                            <img src="/gui/img/executor.png">
+                            <p style="color:white;text-align: center;" onclick="addAdditionalInfo()">add info</p>
                         </div>
                     </div>
                     <br><br>
@@ -529,7 +534,7 @@
         $('#ability-tech-name').val(aid.technique_name);
 
         if (Object.keys(aid.additional_info).length > 0) {
-            var $table_row = '<tr><td><p style="text-align: right">Key</p></td><td></td><td><p>Value</p></td></tr>'
+            let $table_row = '<tr><td><p style="text-align: right">Key</p></td><td></td><td><p>Value</p></td></tr>'
             $('#ability-additional-info').find('#additional-info-table').append($table_row);
             $.each(aid.additional_info, function(key, value) {
                 $table_row = $('<tr><td><input type="text" class="key" style="text-align: right" value="' + key + '"></td>' +
@@ -574,6 +579,14 @@
             selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
             selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
             keepOrder: true });
+    }
+
+    function addAdditionalInfo(){
+        $table_row = $('<tr><td><input type="text" class="key" style="text-align: right" placeholder="key"></td>' +
+                                 '<td><b>:</b></td>' +
+                                 '<td><input type="text" class="value" placeholder="value"></td><td><div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div></td></tr>');
+        $("#additional-info-table").append($table_row);
+        $("#ability-additional-info").show();
     }
 
     function showPhaseModal(phase) {
