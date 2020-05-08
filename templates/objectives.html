@@ -26,7 +26,7 @@
       </div>
       <div id="addObjective"></div>
       <button id="objectiveBtn" type="button" class="button-success atomic-button"
-              onclick="viewAdversaries()">View Adversary Attachments
+              onclick="viewAdversaries()">View Adversary Assignments
       </button>
       <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
               onclick="saveObjective()">Save
@@ -52,7 +52,49 @@
         </p>
     </div>
   </div>
-</div>∂
+</div>
+
+<div id="objective-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('objective-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <table id="objective-assignments" class="assignments-table">
+                            <thead>
+                                <tr>
+                                    <th>Adversary</th>
+                                    <th>Objective Assignment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for a in adversaries %}
+                                <tr>
+                                    <td id="{{ a.id }}">{{ a.name }}</td>
+                                    <td id="{{ a.id }}-objective">
+                                        <select id="{{a.name}}-objective-assignment">
+                                            <option value="ad-hoc">Empty/Ad-Hoc</option>
+                                            {% for o in objectives %}
+                                                {% if a.objective.id == o.id %}
+                                                    <option value="{{ o.id }}" selected>{{ o.name }}</option>
+                                                {% else %}
+                                                    <option value="{{ o.id }}">{{ o.name }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </center>
+                    <button id="saveObjectiveAssignmentsBtn" type="button" class="button-success atomic-button" style="width: 30%;margin:0px;padding:0px;" onclick="saveObjectiveAssignments()">Save Assignments</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 
 <script>
     $(document).ready(function () {
@@ -149,5 +191,26 @@
         $('#profile-objective-name').prop('selectedIndex', 0);
         $('#objective-name').text('Sample name');
     }
+
+    function viewAdversaries(){
+        document.getElementById("objective-modal").style.display = "block";
+    }
+
+    function saveObjectiveAssignments() {
+	    function saveObjectiveAssignmentsCallback(data) {
+
+        }
+        let data = {};
+	    data['index'] = 'multi';
+	    data['object'] = 'adversaries';
+        data['contents'] = [];
+	    $("#objective-assignments tr").each(function () {
+            let id = $(this.cells[0]).attr('id');
+            let value = $(this.cells[1]);
+            data['contents'].push({'i':id,'value':value});
+        });
+        restRequest('PUT', data, saveObjectiveAssignmentsCallback)
+	}
+
     //# sourceURL=objectives.js
 </script>

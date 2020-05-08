@@ -39,8 +39,20 @@ class RestService(RestServiceInterface, BaseService):
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
                                    atomic_ordering=p)))
             f.truncate()
+        if not data.get('prevent_reload'):
+            await self._services.get('data_svc').reload_data()
+            return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
+
+    async def persist_multiple_objects(self, data):
+        obj = data.pop('object')
+        data['prevent_reload'] = True
+        opts = dict(
+            adversaries=lambda d: self.persist_adversary(d),
+        )
+        for d in data['contents']:
+            await opts[obj](d)
         await self._services.get('data_svc').reload_data()
-        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
+        return await self.display_objects(obj)
 
     async def update_planner(self, data):
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]

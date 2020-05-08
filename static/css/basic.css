@@ -689,3 +689,16 @@ table.dataTable input[type=text] {
 .goal-table img {
     margin: 5px 2px -4px;
 }
+
+.assignments-table {
+    width: 66%;
+}
+
+.assignments-table select {
+    width: 100%;
+}
+
+.assignments-table thead th {
+    color: var(--theme-color);
+    font-size: 18px;
+}

@@ -1,6 +1,5 @@
 import os
 
-from app.objects.c_objective import Objective
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
@@ -22,7 +21,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
-        self.objective = objective if objective else Objective()
+        self.objective = objective
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
