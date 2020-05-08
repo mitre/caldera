@@ -25,10 +25,15 @@
             {% endfor %}}
           </select>
       </div>
+      <div id="idInput" style="display: none;">
+          <input id="sourceId" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;">
+      </div>
       <div id="addSource"></div>
       <button id="sourceBtn" type="button" class="button-success atomic-button"
               onclick="viewRules()">View rules
       </button>
+      <button id="relationshipBtn" type="button" class="button-success atomic-button"
+              onclick="viewRelationships()">View Relationships</button>
       <button id="saveSourceBtn" type="button" class="button-success atomic-button"
               onclick="saveSource()">Save
       </button>
@@ -71,6 +76,24 @@
     </form>
 </div>
 
+<div id="relationship-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('relationship-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Relationships</span>
+                        <h3 id="relationship-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="source-relationships"></ul>
+                        <p style="color:white;text-align: right;" onclick="addRelationshipBlock()">&#10010;&nbsp;add relationship</p>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 <li id="rule-template" class="row-simple ttp-template" style="display: none;">
     <div class="column">
         <div class="dotted">
@@ -88,6 +111,28 @@
             <tr>
                 <td style="width:20%"><b>action:</b></td>
                 <td><input id="action" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+        </table>
+    </div>
+</li>
+
+<li id="relationship-template" class="row-simple ttp-template" style="display: none;">
+    <div class="column">
+        <div class="dotted">
+            <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        </div>
+        <table frame=void rules=rows style="border-spacing:20px;width:100%">
+            <tr>
+                <td style="width:20%"><b>source:</b></td>
+                <td><input id="source" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>edge:</b></td>
+                <td><input id="edge" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>target:</b></td>
+                <td><input id="target" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
             </tr>
         </table>
     </div>
@@ -123,6 +168,7 @@
     function toggleSourceView() {
         $('#viewSource').toggle();
         $('#addSource').toggle();
+        $('#idInput').toggle();
         clearFactCanvas();
     }
 
@@ -141,6 +187,7 @@
             source.data('id', data[0].id);
             applyRules(data[0].rules);
             source.html(data[0].name);
+            populateRelationships(data[0].relationships);
         }
         stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
@@ -227,6 +274,29 @@
         let template = $("#rule-template").clone();
         template.show();
         $('#source-rules').append(template);
+    }
+
+    function populateRelationships(relationships){
+        relationships.forEach(r => {
+            let template = $("#relationship-template").clone();
+            template.find('#source').val(r.source.trait+': '+r.source.value);
+            template.find('#edge').val(r.edge);
+            template.find('#target').val(r.target.trait+': '+r.target.value);
+            template.show();
+            $('#source-relationships').append(template);
+        });
+    }
+
+    function viewRelationships(){
+        document.getElementById("relationship-modal").style.display = "block";
+        let sourceName = $('#source-name').val();
+        $('#relationship-name').text(sourceName);
+    }
+
+    function addRelationshipBlock(){
+        let template = $("#relationship-template").clone();
+        template.show();
+        $('#source-relationships').append(template);
     }
 
     //# sourceURL=sources.js
