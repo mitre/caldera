@@ -536,6 +536,9 @@
                                  '<td><b>:</b></td>' +
                                  '<td><input type="text" class="value" value="' + value + '"></td><td><div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div></td></tr>');
                 $('#ability-additional-info').find('#additional-info-table').append($table_row);
+                $table_row.click(function(){
+                    var $row = $(this).remove();
+                });
             });
             $('#ability-additional-info').show();
         }
