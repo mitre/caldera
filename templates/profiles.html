@@ -85,8 +85,10 @@
                             </tr>
                         </table>
                         <div id="ability-additional-info" style="display: none">
-                            <p style="margin-top: 25; margin-bottom: 0;">Additional Info</p>
+                            <b style="margin-top: 25; margin-bottom: 0; text-align: right">Additional Info</b>
                             <table id="additional-info-table" frame=void rules=rows style="width:100%">
+                                <tbody>
+                                </tbody>
                             </table>
                         </div>
 
@@ -527,8 +529,10 @@
         $('#ability-tech-name').val(aid.technique_name);
 
         if (Object.keys(aid.additional_info).length > 0) {
+            var $table_row = '<tr><td><p style="text-align: right">Key</p></td><td><p>    </p></td><td><p>Value</p></td></tr>'
+            $('#ability-additional-info').find('#additional-info-table').append($table_row);
             $.each(aid.additional_info, function(key, value) {
-                var $table_row = '<tr><td style="width:10%"><input type="text" class="key" value="' + key + '"></td>' +
+                $table_row = '<tr><td><input type="text" class="key" style="text-align: right" value="' + key + '"></td>' +
                                  '<td><b>:</b></td>' +
                                  '<td><input type="text" class="value" value="' + value + '"></td></tr>';
                 $('#ability-additional-info').find('#additional-info-table').append($table_row);
