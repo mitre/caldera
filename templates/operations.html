@@ -539,7 +539,7 @@
         let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
         let link = linkDiv.data('link');
         let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
-        link.command = btoa(linkDiv.find('#potential-command').html());
+        link.command = btoa(linkDiv.find('#potential-command').text());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
         link["index"] = "link";
