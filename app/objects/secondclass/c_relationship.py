@@ -7,9 +7,9 @@ from app.objects.secondclass.c_fact import FactSchema
 class RelationshipSchema(ma.Schema):
 
     unique = ma.fields.String()
-    source = ma.fields.List(ma.fields.Nested(FactSchema()))
+    source = ma.fields.Nested(FactSchema())
     edge = ma.fields.String()
-    target = ma.fields.List(ma.fields.Nested(FactSchema()))
+    target = ma.fields.Nested(FactSchema())
     score = ma.fields.Integer()
 
     @ma.post_load()
