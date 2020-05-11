@@ -161,6 +161,7 @@ pre {
     flex: 50%;
     color: var(--font-color);
     margin: 30px;
+    max-width: 100%;
 }
 .button-row {
     color: white;
