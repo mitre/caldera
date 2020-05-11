@@ -27,8 +27,8 @@ class CampaignPack(BaseWorld):
     async def _section_agent(self, request):
         search = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         agents = [h.display for h in await self.data_svc.locate('agents', match=search)]
-        search.update(dict(tactic='command-and-control'))
-        abilities = await self.data_svc.locate('abilities', match=search)
+        ability_ids = tuple(self.get_config(name='agents', prop='deployments'))
+        abilities = await self.data_svc.locate('abilities', match=dict(ability_id=ability_ids))
         return dict(agents=agents, abilities=self._rollup_abilities(abilities))
 
     @check_authorization
