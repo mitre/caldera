@@ -1,19 +1,30 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
 
 
-class ParserConfigException(Exception):
-    pass
+class ParserConfigSchema(ma.Schema):
+
+    source = ma.fields.String()
+    edge = ma.fields.String()
+    target = ma.fields.String()
+    extra_attrs = ma.fields.Dict()
+
+    @ma.pre_load
+    def check_edge_target(self, in_data, **_):
+        if all(k in in_data.keys() for k in ['edge', 'target']) \
+                and (in_data['edge'] is None) and (in_data['target'] is not None):
+            raise ma.ValidationError('Target provided without an edge.')
+        return in_data
+
+    @ma.post_load()
+    def build_parserconfig(self, data, **_):
+        return ParserConfig(**data)
 
 
 class ParserConfig(BaseObject):
 
-    @classmethod
-    def from_json(cls, json):
-        return cls(source=json['source'], edge=json.get('edge'), target=json.get('target'))
-
-    @property
-    def display(self):
-        return self.clean(dict(source=self.source, edge=self.edge, target=self.target))
+    schema = ParserConfigSchema(unknown=ma.INCLUDE)
 
     def __init__(self, source, edge=None, target=None, **kwargs):
         super().__init__()
@@ -22,8 +33,3 @@ class ParserConfig(BaseObject):
         self.target = target
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self._validate()
-
-    def _validate(self):
-        if (self.edge is None) and (self.target is not None):
-            raise ParserConfigException('Target provided without an edge.')
