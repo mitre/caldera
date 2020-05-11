@@ -5,3 +5,7 @@ sleep_max: 60
 sleep_min: 30
 untrusted_timer: 90
 watchdog: 0
+deployments:
+  - 2f34977d-9558-4c12-abad-349716777c6b #54ndc47
+  - 356d1722-7784-40c4-822b-0cf864b0b36d #Manx
+  - 0ab383be-b819-41bf-91b9-1bd4404d83bf #Ragdoll
