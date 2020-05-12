@@ -341,7 +341,11 @@
         $('#ability-additional-info').find('#additional-info-table tr').each(function() {
             let key = $(this).find('.additional-key').val();
             if (key !== ''){
-                data[key] = $(this).find('.additional-value').val();
+                if (key in data){
+                    alert('Cannot save additional field! \'' + key + '\' in additional info is a reserved keyword.');
+                } else {
+                    data[key] = $(this).find('.additional-value').val();
+                }
             }
         });
 
