@@ -6,12 +6,18 @@ services:
 
     expose:
     - "8888"
+    - "7010"
+    - "7011"
+    - "7012"
 
     ports:
       - "8888:8888"
+      - "7010:7010"
+      - "7011:7011"
+      - "7012:7012"
     working_dir: /usr/src/app
 
     volumes:
       - ./:/usr/src/app
 
-    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py"
+    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py --fresh --insecure"
