@@ -8,7 +8,6 @@ class ParserConfigSchema(ma.Schema):
     source = ma.fields.String()
     edge = ma.fields.String()
     target = ma.fields.String()
-    extra_attrs = ma.fields.Dict()
 
     @ma.pre_load
     def check_edge_target(self, in_data, **_):
