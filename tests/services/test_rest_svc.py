@@ -40,9 +40,9 @@ def setup_rest_svc_test(loop, data_svc):
     ))
 
     loop.run_until_complete(data_svc.store(
-        Obfuscator.load(dict(name='plain-text',
-                             description='Does no obfuscation to any command, instead running it in plain text',
-                             module='plugins.stockpile.app.obfuscators.plain_text'))
+        Obfuscator(name='plain-text',
+                   description='Does no obfuscation to any command, instead running it in plain text',
+                   module='plugins.stockpile.app.obfuscators.plain_text')
     ))
 
 
