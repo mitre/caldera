@@ -38,7 +38,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     @property
     def display(self):
-        disp = self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic,
+        return self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic,
                                technique_name=self.technique_name,
                                technique_id=self.technique_id, name=self.name,
                                test=self.test, description=self.description, cleanup=self.cleanup,
@@ -48,11 +48,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
                                requirements=[r.display for r in self.requirements], privilege=self.privilege,
                                timeout=self.timeout, buckets=self.buckets, access=self.access.value,
                                variations=[v.display for v in self.variations], additional_info=self.additional_info))
-        additional_info = dict()
-        for key in [field for field in self.__dict__ if field not in disp]:
-            additional_info[key] = self.attr(key)
-        disp['additional_info'] = additional_info
-        return disp
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
@@ -84,7 +79,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.access = self.Access(access)
         self.additional_info = dict()
         for k, v in kwargs.items():
-            setattr(self, k, v)
+            self.additional_info[k] = v
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
