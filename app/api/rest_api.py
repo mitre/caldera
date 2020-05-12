@@ -42,7 +42,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/rest/{tail:.*}', self.rest_core)
 
-
     """ BOILERPLATE """
 
     @template('login.html', status=401)
