@@ -299,6 +299,14 @@
         let description = $('#ability-description').val();
         if(!description){ warn('Please enter a description!'); return; }
 
+        let additional_info = {};
+        $('#ability-additional-info').find('#additional-info-table tr').each(function() {
+            let key = $(this).find('.additional-key').val();
+            if (key !== ''){
+                additional_info[key] = $(this).find('.additional-value').val();
+            }
+        });
+
         let data = {};
         let platforms = {};
         let invalid = false;
@@ -337,6 +345,7 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
+        data['additional_info'] = additional_info;
         restRequest('PUT', data, saveAbilityCallback);
     }
 
