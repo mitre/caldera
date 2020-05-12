@@ -114,21 +114,9 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             for adv in self.strip_yml(filename):
-                if adv.get('phases'):
-                    atomic_ordering = await self._load_phase_adversary_variant(adv)
-                else:
-                    atomic_ordering = adv.get('atomic_ordering', list())
-                adversary = Adversary(adversary_id=adv['id'], name=adv['name'], description=adv['description'],
-                                      atomic_ordering=atomic_ordering)
+                adversary = Adversary.load(adv)
                 adversary.access = plugin.access
                 await self.store(adversary)
-
-    @staticmethod
-    async def _load_phase_adversary_variant(adversary):
-        abilities = []
-        for v in adversary.get('phases').values():
-            abilities.extend(v)
-        return abilities
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
@@ -221,7 +209,7 @@ class DataService(DataServiceInterface, BaseService):
                               repeatable=False, code=None, language=None, build_target=None, variations=None, **kwargs):
         ps = []
         for module in parsers:
-            pcs = [(ParserConfig(**m)) for m in parsers[module]]
+            pcs = [(ParserConfig.load(m)) for m in parsers[module]]
             ps.append(Parser(module=module, parserconfigs=pcs))
         rs = []
         for requirement in requirements:

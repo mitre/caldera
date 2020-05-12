@@ -10,7 +10,7 @@ class Parser(BaseObject):
 
     @classmethod
     def from_json(cls, json):
-        parserconfigs = [ParserConfig.from_json(r) for r in json['relationships']]
+        parserconfigs = [ParserConfig.load(r) for r in json['relationships']]
         return cls(module=json['module'], parserconfigs=parserconfigs)
 
     @property

@@ -1,10 +1,24 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
+
+
+class VisibilitySchema(ma.Schema):
+
+    score = ma.fields.Integer()
+    adjustments = ma.fields.List(ma.fields.Integer())
+
+    @ma.post_load
+    def build_visibility(self, data, **_):
+        return Visibility(**data)
 
 
 class Visibility(BaseObject):
 
     MIN_SCORE = 1
     MAX_SCORE = 100
+
+    schema = VisibilitySchema()
 
     @property
     def display(self):

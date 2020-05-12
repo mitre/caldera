@@ -49,10 +49,11 @@ Start by cloning this repository recursively, passing the desired version/releas
 git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x 
 ```
 
-Next run the install.sh script. See the i[nstall docs](https://caldera.readthedocs.io/en/latest/Install-script.html) for supported operating-systems.
+Next, install the PIP requirements:
 ```Bash
-sudo ./install.sh
+pip install -r requirements.txt
 ```
+> Additionally, you can run our [install script](https://caldera.readthedocs.io/en/latest/Install-script.html) which will install several more dependencies that super-power your CALDERA server instance.
 
 Finally, start the server. 
 ```Bash
