@@ -206,7 +206,7 @@ class DataService(DataServiceInterface, BaseService):
                               code=None, language=None, build_target=None, variations=None):
         ps = []
         for module in parsers:
-            pcs = [(ParserConfig(**m)) for m in parsers[module]]
+            pcs = [(ParserConfig.load(m)) for m in parsers[module]]
             ps.append(Parser(module=module, parserconfigs=pcs))
         rs = []
         for requirement in requirements:
