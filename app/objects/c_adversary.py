@@ -63,7 +63,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
 
     def has_ability(self, ability):
         for a in self.atomic_ordering:
-            if ability.unique == a.unique:
+            if ability == a:
                 return True
         return False
 
