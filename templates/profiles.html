@@ -191,7 +191,7 @@
 
 <table id="additional-info-row-template-holder" style="display:none">
     <tr id="additional-info-template">
-        <td><input type="text" class="additional-key" style="text-align: right" placeholder="key"></td>
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key"></td>
         <td><b>:</b></td>
         <td><input type="text" class="additional-value" placeholder="value"></td>
         <td><div class="ability-remove">
@@ -589,10 +589,14 @@
     }
 
     function addAdditionalInfo(){
-        let $table_row = $("#additional-info-row-template-holder").find("#additional-info-template").clone();
+        let $table_row = $('#additional-info-row-template-holder').find('#additional-info-template').clone();
         $('#ability-additional-info').find('#additional-info-table').append($table_row);
-        $table_row.find(".ability-remove").click(function(){
+        $('#ability-additional-info').show();
+        $table_row.find('.ability-remove').click(function(){
 <!--    TODO: if deleting last row, hide additional info div    -->
+            if ($('#additional-info-table tr').length == 1){
+                $('#ability-additional-info').hide();
+            }
             $(this).parent().parent().remove();
         });
         return $table_row;
