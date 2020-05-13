@@ -20,11 +20,6 @@ class AdversarySchema(ma.Schema):
             adversary['adversary_id'] = adversary.pop('id')
         return adversary
 
-    # @ma.pre_load
-    # def fix_hidden(self, adversary, **_):
-    #     adversary['hidden'] = adversary.pop('hidden', False)
-    #     return adversary
-
     @ma.pre_load
     def phase_to_atomic_ordering(self, adversary, **_):
         """
