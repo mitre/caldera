@@ -13,6 +13,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
+# from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -177,14 +178,13 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
-    async def task_agent_with_ability(self, paw, ability_id, facts=(), operation=None):
+    async def task_agent_with_ability(self, paw, ability_id, facts=()):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
             links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
-                facts=facts,
-                operation=operation
+                facts=facts
             )
             new_links.extend(links)
         return new_links
