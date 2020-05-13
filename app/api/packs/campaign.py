@@ -34,7 +34,7 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('profiles.html')
     async def _section_profiles(self, request):
-        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)), hidden=False)
         abilities = await self.data_svc.locate('abilities', match=access)
         platforms = set([a.platform for a in abilities])
         executors = set([a.executor for a in abilities])
@@ -49,7 +49,7 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('operations.html')
     async def _section_operations(self, request):
-        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)), hidden=False)
         hosts = [h.display for h in await self.data_svc.locate('agents', match=access)]
         groups = sorted(list(set(([h['group'] for h in hosts]))))
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],

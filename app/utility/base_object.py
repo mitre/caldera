@@ -11,6 +11,7 @@ class BaseObject(BaseWorld):
 
     def __init__(self):
         self._access = self.Access.APP
+        self.hidden = False
 
     def match(self, criteria):
         if not criteria:

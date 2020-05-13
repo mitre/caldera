@@ -12,12 +12,18 @@ class AdversarySchema(ma.Schema):
     name = ma.fields.String()
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
+    hidden = ma.fields.Boolean()
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
         if 'id' in adversary:
             adversary['adversary_id'] = adversary.pop('id')
         return adversary
+
+    # @ma.pre_load
+    # def fix_hidden(self, adversary, **_):
+    #     adversary['hidden'] = adversary.pop('hidden', False)
+    #     return adversary
 
     @ma.pre_load
     def phase_to_atomic_ordering(self, adversary, **_):
@@ -44,12 +50,13 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, adversary_id, name, description, atomic_ordering):
+    def __init__(self, adversary_id, name, description, atomic_ordering, hidden=False):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
+        self.hidden = hidden
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
