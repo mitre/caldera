@@ -25,9 +25,6 @@
             {% endfor %}}
           </select>
       </div>
-      <div id="idInput" style="display: none;">
-          <input id="sourceId" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;">
-      </div>
       <div id="addSource"></div>
       <button id="sourceBtn" type="button" class="button-success atomic-button"
               onclick="viewRules()">View rules
@@ -116,23 +113,22 @@
     </div>
 </li>
 
-<li id="relationship-template" class="row-simple ttp-template" style="display: none;">
+<li id="relationship-template" class="row-simple ttp-template" style="display: none; list-style-type:none;">
     <div class="column">
-        <div class="dotted">
-            <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
-        </div>
         <table frame=void rules=rows style="border-spacing:20px;width:100%">
             <tr>
                 <td style="width:20%"><b>source:</b></td>
-                <td><input id="source" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                <td><input id="sourceTrait" contenteditable="false" spellcheck="false" placeholder="trait" style="width:100%;padding:0 15px;"></td>
+                <td><input id="sourceValue" contenteditable="false" spellcheck="false" placeholder="value" style="width:100%;padding:0 15px;"></td>
             </tr>
             <tr>
                 <td style="width:20%"><b>edge:</b></td>
-                <td><input id="edge" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                <td><input id="edge" contenteditable="false" spellcheck="false" placeholder="edge" style="width:100%;padding:0 15px;"></td>
             </tr>
             <tr>
                 <td style="width:20%"><b>target:</b></td>
-                <td><input id="target" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+                <td><input id="targetTrait" contenteditable="false" spellcheck="false" placeholder="trait" style="width:100%;padding:0 15px;"></td>
+                <td><input id="targetValue" contenteditable="false" spellcheck="false" placeholder="value" style="width:100%;padding:0 15px;"></td>
             </tr>
         </table>
     </div>
@@ -168,13 +164,16 @@
     function toggleSourceView() {
         $('#viewSource').toggle();
         $('#addSource').toggle();
-        $('#idInput').toggle();
         clearFactCanvas();
     }
 
     function clearFactCanvas(){
         $('#factTbl').find("tr:gt(0)").remove();
         $('#source-rules').empty();
+        $('#source-relationships').empty();
+        if($('#source-name').data('id')){
+            $('#source-name').data('id', null);
+        }
     }
 
     function loadSource() {
@@ -221,6 +220,7 @@
         data['name'] = name;
         data['facts'] = [];
         data['rules'] = [];
+        data['relationships'] = []
 
         $("#factTbl tr").not(":first").each(function () {
             let trait = $(this.cells[0]).text();
@@ -246,6 +246,17 @@
             warn(invalidRules + ' invalid rules!');
             return;
         }
+        $('#source-relationships li').each(function() {
+            let sourceTrait = $(this).find('#sourceTrait').val();
+            let sourceValue = $(this).find('#sourceValue').val();
+            let edge = $(this).find('#edge').val();
+            let targetTrait = $(this).find('#targetTrait').val();
+            let targetValue = $(this).find('#targetValue').val();
+            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){
+                return;
+            }
+            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
+        });
         restRequest('PUT', data, saveSourceCallback);
     }
 
@@ -279,9 +290,11 @@
     function populateRelationships(relationships){
         relationships.forEach(r => {
             let template = $("#relationship-template").clone();
-            template.find('#source').val(r.source.trait+': '+r.source.value);
+            template.find('#sourceTrait').val(r.source.trait);
+            template.find('#sourceValue').val(r.source.value);
             template.find('#edge').val(r.edge);
-            template.find('#target').val(r.target.trait+': '+r.target.value);
+            template.find('#targetTrait').val(r.target.trait);
+            template.find('#targetValue').val(r.target.value);
             template.show();
             $('#source-relationships').append(template);
         });
