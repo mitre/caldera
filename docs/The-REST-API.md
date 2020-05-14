@@ -19,8 +19,24 @@ Here are the available REST API functions:
 #### DELETE
 
 Delete any agent. 
-```bash
-curl -X DELETE http://localhost:8888/api/rest -d '{"index":"agents","paw":"$agent_paw"}'
+```
+curl -H "key:$API_KEY" -X DELETE http://localhost:8888/api/rest -d '{"index":"agents","paw":"$agent_paw"}'
+```
+
+#### POST
+
+View the abilities a given agent could execute.
+```
+curl -H "key:$API_KEY" -X POST localhost:8888/plugin/access/abilities -d '{"paw":"$PAW"}'
+```
+
+Execute a given ability against an agent, outside the scope of an operation. 
+```
+curl -H "key:ADMIN123" -X POST localhost:8888/plugin/access/exploit -d '{"paw":"$PAW","ability_id":"$ABILITY_ID"}'```
+```
+> You can optionally POST a facts dictionary with key/value pairs to fill in any variables the chosen ability requires.
+```
+{"paw":"$PAW","ability_id":"$ABILITY_ID","facts":[{"trait":"username","value":"admin"},{"trait":"password", "value":"123"}]}
 ```
 
 ## Operations
