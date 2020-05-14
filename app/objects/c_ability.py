@@ -27,7 +27,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     @classmethod
     def from_json(cls, json):
-        parsers = [Parser.from_json(p) for p in json['parsers']]
+        parsers = [Parser.load(p) for p in json['parsers']]
         requirements = [Requirement.from_json(r) for r in json['requirements']]
         return cls(ability_id=json['ability_id'], tactic=json['tactic'], technique_id=json['technique_id'],
                    technique=json['technique_name'], name=json['name'], test=json['test'], variations=[],

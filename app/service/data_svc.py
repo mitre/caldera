@@ -12,7 +12,6 @@ from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
 from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_parserconfig import ParserConfig
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
@@ -206,8 +205,7 @@ class DataService(DataServiceInterface, BaseService):
                               code=None, language=None, build_target=None, variations=None):
         ps = []
         for module in parsers:
-            pcs = [(ParserConfig.load(m)) for m in parsers[module]]
-            ps.append(Parser(module=module, parserconfigs=pcs))
+            ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
         rs = []
         for requirement in requirements:
             for module in requirement:

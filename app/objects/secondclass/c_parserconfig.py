@@ -5,9 +5,12 @@ from app.utility.base_object import BaseObject
 
 class ParserConfigSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.INCLUDE
+
     source = ma.fields.String()
-    edge = ma.fields.String()
-    target = ma.fields.String()
+    edge = ma.fields.String(missing=None)
+    target = ma.fields.String(missing=None)
 
     @ma.pre_load
     def check_edge_target(self, in_data, **_):
@@ -23,7 +26,7 @@ class ParserConfigSchema(ma.Schema):
 
 class ParserConfig(BaseObject):
 
-    schema = ParserConfigSchema(unknown=ma.INCLUDE)
+    schema = ParserConfigSchema()
 
     def __init__(self, source, edge=None, target=None, **kwargs):
         super().__init__()
