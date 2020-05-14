@@ -234,7 +234,8 @@ class RestService(RestServiceInterface, BaseService):
         name = data.pop('name')
         group = data.pop('group', '')
         planner = await self.get_service('data_svc').locate('planners',
-                                                            match=dict(name=data.pop('planner', 'sequential')))
+                                                            match=dict(name=data.pop('planner') if not
+                                                                       data.get('planner') == '' else 'sequential'))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
