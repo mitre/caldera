@@ -93,7 +93,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     def all_relationships(self):
-        return [r for lnk in self.chain for r in lnk.relationships]
+        seeded_relationships = [r for r in self.source.relationships] if self.source else []
+        learned_relationships = [r for lnk in self.chain for r in lnk.relationships]
+        return seeded_relationships + learned_relationships
 
     async def apply(self, link):
         while self.state != self.states['RUNNING']:
@@ -248,10 +250,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                               stopping_conditions=self.planner.stopping_conditions)
 
     async def _save_new_source(self, services):
+        def fact_to_dict(f):
+            if f:
+                return dict(trait=f.trait, value=f.value, score=f.score)
         data = dict(
             id=str(uuid.uuid4()),
             name=self.name,
-            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in self.chain for f in link.facts]
+            facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
+            relationships=[dict(source=fact_to_dict(r.source), edge=r.edge, target=fact_to_dict(r.target), score=r.score) for link in self.chain for r in link.relationships]
         )
         await services.get('rest_svc').persist_source(data)
 

@@ -5,6 +5,7 @@ import marshmallow as ma
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_fact import FactSchema
 from app.objects.secondclass.c_rule import RuleSchema
+from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.utility.base_object import BaseObject
 
 
@@ -30,6 +31,7 @@ class SourceSchema(ma.Schema):
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     rules = ma.fields.List(ma.fields.Nested(RuleSchema()))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema(), required=False))
+    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):
@@ -59,13 +61,14 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, id, name, facts, rules=(), adjustments=()):
+    def __init__(self, id, name, facts, relationships=(), rules=(), adjustments=()):
         super().__init__()
         self.id = id
         self.name = name
         self.facts = facts
         self.rules = rules
         self.adjustments = adjustments
+        self.relationships = relationships
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)
@@ -75,4 +78,5 @@ class Source(FirstClassObjectInterface, BaseObject):
         existing.update('name', self.name)
         existing.update('facts', self.facts)
         existing.update('rules', self.rules)
+        existing.update('relationships', self.relationships)
         return existing

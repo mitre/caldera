@@ -29,7 +29,7 @@ class TestPlanningService:
 
     def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
-        operation.add_link(Link(command='', paw=agent.paw, ability=ability, status=0))
+        operation.add_link(Link.load(dict(command='', paw=agent.paw, ability=ability, status=0)))
         links = loop.run_until_complete(
             planning_svc.get_cleanup_links(operation=operation, agent=agent)
         )
