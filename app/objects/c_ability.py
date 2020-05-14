@@ -52,7 +52,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
-                 variations=None, language=None, code=None, build_target=None, **kwargs):
+                 variations=None, language=None, code=None, build_target=None, hidden=False, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -75,6 +75,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.build_target = build_target
         self.variations = [Variation.load(dict(description=v['description'], command=v['command'])) for v in variations] if variations else []
         self.buckets = buckets
+        self.hidden = hidden
         if access:
             self.access = self.Access(access)
         self.additional_info = dict()

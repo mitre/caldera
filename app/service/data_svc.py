@@ -132,6 +132,7 @@ class DataService(DataServiceInterface, BaseService):
                     privilege = ab.pop('privilege', None)
                     repeatable = ab.pop('repeatable', False)
                     requirements = ab.pop('requirements', [])
+                    hidden = ab.pop('hidden', False)
                     for platforms, executors in ab.pop('platforms', []).items():
                         for name, info in executors.items():
                             encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
@@ -155,7 +156,8 @@ class DataService(DataServiceInterface, BaseService):
                                                                    requirements=requirements, privilege=privilege,
                                                                    buckets=await self._classify(ab, tactic),
                                                                    access=plugin.access, repeatable=repeatable,
-                                                                   variations=info.get('variations', []), **ab)
+                                                                   variations=info.get('variations', []), hidden=hidden,
+                                                                   **ab)
                                     await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
