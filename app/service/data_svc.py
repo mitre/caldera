@@ -122,36 +122,40 @@ class DataService(DataServiceInterface, BaseService):
             for entries in self.strip_yml(filename):
                 for ab in entries:
                     if ab.get('tactic') and ab.get('tactic') not in filename:
-                        self.log.warning('Ability=%s has wrong tactic' % ab['id'])
-                    for platforms, executors in ab.get('platforms').items():
-                        for pl in platforms.split(','):
-                            for name, info in executors.items():
-                                for e in name.split(','):
-                                    technique_name = ab.get('technique', dict()).get('name')
-                                    technique_id = ab.get('technique', dict()).get('attack_id')
-                                    encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get('command') else None
-                                    cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get('cleanup') else None
-                                    encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                                    payloads = ab.get('payloads') if encoded_code else info.get('payloads')
-                                    a = await self._create_ability(ability_id=ab.get('id'), tactic=ab.get('tactic'),
+                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                    technique_name = ab.get('technique', dict()).get('name')
+                    technique_id = ab.pop('technique', dict()).get('attack_id')
+                    ability_id = ab.pop('id', None)
+                    tactic = ab.pop('tactic', None)
+                    description = ab.pop('description', '')
+                    ability_name = ab.pop('name', '')
+                    privilege = ab.pop('privilege', None)
+                    repeatable = ab.pop('repeatable', False)
+                    requirements = ab.pop('requirements', [])
+                    for platforms, executors in ab.pop('platforms', []).items():
+                        for name, info in executors.items():
+                            encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
+                                'command') else None
+                            cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                                'cleanup') else None
+                            encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                            payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                            for e in name.split(','):
+                                for pl in platforms.split(','):
+                                    a = await self._create_ability(ability_id=ability_id, tactic=tactic,
                                                                    technique_name=technique_name,
-                                                                   technique_id=technique_id,
-                                                                   test=encoded_test,
-                                                                   description=ab.get('description') or '',
-                                                                   executor=e, name=ab.get('name'), platform=pl,
-                                                                   cleanup=cleanup_cmd,
-                                                                   code=encoded_code,
+                                                                   technique_id=technique_id, test=encoded_test,
+                                                                   description=description, executor=e,
+                                                                   name=ability_name, platform=pl,
+                                                                   cleanup=cleanup_cmd, code=encoded_code,
                                                                    language=info.get('language'),
                                                                    build_target=info.get('build_target'),
-                                                                   payloads=payloads,
-                                                                   parsers=info.get('parsers', []),
+                                                                   payloads=payloads, parsers=info.get('parsers', []),
                                                                    timeout=info.get('timeout', 60),
-                                                                   requirements=ab.get('requirements', []),
-                                                                   privilege=ab[
-                                                                       'privilege'] if 'privilege' in ab.keys() else None,
-                                                                   buckets=await self._classify(ab),
-                                                                   access=plugin.access, repeatable=ab.get('repeatable', False),
-                                                                   variations=info.get('variations', []))
+                                                                   requirements=requirements, privilege=privilege,
+                                                                   buckets=await self._classify(ab, tactic),
+                                                                   access=plugin.access, repeatable=repeatable,
+                                                                   variations=info.get('variations', []), **ab)
                                     await self._update_extensions(a)
 
     async def _update_extensions(self, ability):
@@ -163,10 +167,9 @@ class DataService(DataServiceInterface, BaseService):
             ab.technique_name = ability.technique_name
             await self.store(ab)
 
-    async def _classify(self, ability):
-        if 'buckets' in ability:
-            return ability['buckets'].lower()
-        return [ability['tactic'].lower()]
+    @staticmethod
+    async def _classify(ability, tactic):
+        return ability.pop('buckets', tactic).lower()
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -199,10 +202,10 @@ class DataService(DataServiceInterface, BaseService):
                                                                    self._app_configuration['payloads']
                                                                    ['extensions'][entry])
 
-    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None, test=None,
-                              description=None, executor=None, platform=None, cleanup=None, payloads=None, parsers=None,
-                              requirements=None, privilege=None, timeout=60, access=None, buckets=None, repeatable=False,
-                              code=None, language=None, build_target=None, variations=None):
+    async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
+                              test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
+                              parsers=None, requirements=None, privilege=None, timeout=60, access=None, buckets=None,
+                              repeatable=False, code=None, language=None, build_target=None, variations=None, **kwargs):
         ps = []
         for module in parsers:
             ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
@@ -217,7 +220,7 @@ class DataService(DataServiceInterface, BaseService):
                           executor=executor, platform=platform, description=description, build_target=build_target,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable,
-                          variations=variations, buckets=buckets)
+                          variations=variations, buckets=buckets, **kwargs)
         ability.access = access
         return await self.store(ability)
 
