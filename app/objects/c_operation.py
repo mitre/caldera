@@ -8,27 +8,38 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
+import marshmallow as ma
+
+from app.objects.c_adversary import AdversarySchema
+from app.objects.c_agent import AgentSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
+class OperationSchema(ma.Schema):
+    id = ma.fields.Integer()
+    name = ma.fields.String()
+    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
+    adversary = ma.fields.Nested(AdversarySchema())
+    jitter = ma.fields.String()
+    atomic = ma.fields.Boolean()
+    planner = ma.fields.Function(lambda obj: obj.planner.name)
+    start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    state = ma.fields.String()
+    obfuscator = ma.fields.String()
+    autonomous = ma.fields.Integer()
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
+    auto_close = ma.fields.Boolean()
+    visibility = ma.fields.Integer()
+
+
 class Operation(FirstClassObjectInterface, BaseObject):
+
+    schema = OperationSchema()
 
     @property
     def unique(self):
         return self.hash('%s' % self.id)
-
-    @property
-    def display(self):
-        return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
-                               adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
-                               source=self.source.display if self.source else '',
-                               atomic=self.atomic,
-                               planner=self.planner.name if self.planner else '',
-                               start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, obfuscator=self.obfuscator,
-                               autonomous=self.autonomous, finish=self.finish,
-                               chain=[lnk.display for lnk in self.chain]))
 
     @property
     def states(self):
