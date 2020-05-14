@@ -12,7 +12,6 @@ from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
 from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
