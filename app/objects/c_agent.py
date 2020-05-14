@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_link import Link, LinkSchema
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 
@@ -33,7 +33,7 @@ class AgentFieldsSchema(ma.Schema):
     host = ma.fields.String()
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    links = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.links])  # temp - replace with Nested(LinkSchema)
+    links = ma.fields.List(ma.fields.Nested(LinkSchema()))
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -167,7 +167,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def task(self, abilities, facts=()):
         bps = BasePlanningService()
-        potential_links = [Link(command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
+        potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i)) for i in await self.capabilities(abilities)]
         links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
