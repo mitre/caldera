@@ -12,8 +12,8 @@ class RelationshipSchema(ma.Schema):
     target = ma.fields.Nested(FactSchema())
     score = ma.fields.Integer()
 
-    @ma.post_load()
-    def build_fact(self, data, **_):
+    @ma.post_load
+    def build_relationship(self, data, **_):
         return Relationship(**data)
 
 

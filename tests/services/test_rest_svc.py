@@ -75,15 +75,18 @@ class TestRestSvc:
 
     def test_create_operation(self, loop, rest_svc, data_svc):
         want = {'name': 'Test',
-                'host_group': [{'paw': '123', 'group': 'red', 'architecture': 'unknown', 'platform': 'windows',
-                                'server': '://None:None', 'location': 'unknown', 'pid': 0, 'ppid': 0, 'trusted': True,
-                                'sleep_min': 2, 'sleep_max': 8, 'executors': ['pwsh', 'psh'], 'privilege': 'User',
-                                'display_name': 'unknown$unknown', 'exe_name': 'unknown', 'host': 'unknown',
-                                'watchdog': 0, 'contact': 'unknown', 'links': [], 'username': 'unknown'}],
-                'adversary': {'adversary_id': 'ad-hoc', 'description': 'an empty adversary profile', 'name': 'ad-hoc',
-                              'atomic_ordering': [], 'hidden': False},
-                'jitter': '2/8', 'source': '', 'planner': 'test', 'state': 'finished',
-                'obfuscator': 'plain-text', 'autonomous': 1, 'finish': '', 'chain': [], 'atomic': False}
+                'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc', 'adversary_id': 'ad-hoc',
+                              'atomic_ordering': [], 'hidden': False}, 'state': 'finished', 'atomic': False,
+                'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
+                            'params': {},
+                            'ignore_enforcement_modules': [], 'id': '123'},
+                'jitter': '2/8',
+                'host_group': [
+                    {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown', 'username': 'unknown',
+                     'links': [], 'sleep_max': 8, 'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
+                     'sleep_min': 2, 'server': '://None:None', 'platform': 'windows', 'host': 'unknown', 'paw': '123',
+                     'pid': 0, 'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User'}],
+                'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
