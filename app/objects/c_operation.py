@@ -12,6 +12,7 @@ import marshmallow as ma
 
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
+from app.objects.c_planner import PlannerSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
@@ -23,7 +24,7 @@ class OperationSchema(ma.Schema):
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
     atomic = ma.fields.Boolean()
-    planner = ma.fields.Function(lambda obj: obj.planner.name)
+    planner = ma.fields.Nested(PlannerSchema())
     start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     state = ma.fields.String()
     obfuscator = ma.fields.String()
@@ -31,6 +32,10 @@ class OperationSchema(ma.Schema):
     chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
+
+    @ma.post_load
+    def build_planner(self, data, **_):
+        return Operation(**data)
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
