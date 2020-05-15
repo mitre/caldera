@@ -76,7 +76,7 @@ class TestRestSvc:
     def test_create_operation(self, loop, rest_svc, data_svc):
         want = {'name': 'Test',
                 'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc', 'adversary_id': 'ad-hoc',
-                              'atomic_ordering': []}, 'state': 'finished', 'atomic': False,
+                              'atomic_ordering': []}, 'state': 'finished',
                 'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
                             'params': {},
                             'ignore_enforcement_modules': [], 'id': '123'},
