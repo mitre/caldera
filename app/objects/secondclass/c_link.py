@@ -138,7 +138,8 @@ class Link(BaseObject):
         for relationship in relationships:
             await self._save_fact(operation, relationship.source, relationship.score)
             await self._save_fact(operation, relationship.target, relationship.score)
-            self.relationships.append(relationship)
+            if all((relationship.source.trait, relationship.edge, relationship.target.trait)):
+                self.relationships.append(relationship)
 
     async def _save_fact(self, operation, fact, score):
         all_facts = operation.all_facts() if operation else self.facts

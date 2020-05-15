@@ -66,9 +66,10 @@ class LearningService(LearningServiceInterface, BaseService):
             link.facts.append(fact)
 
     async def _build_relationships(self, link, facts):
+        sorted_facts = [f for f in facts if all((f.source.trait, f.target.trait, f.edge))]
         for relationship in self.model:
             matches = []
-            for fact in facts:
+            for fact in sorted_facts:
                 if fact.trait in relationship:
                     matches.append(fact)
             for pair in itertools.combinations(matches, r=2):
