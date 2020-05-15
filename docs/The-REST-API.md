@@ -66,7 +66,7 @@ Optionally, you can include:
 
 1) group (defaults to empty string)
 2) adversary_id (defaults to empty string)
-3) planner (defaults to *sequential*)
+3) planner (defaults to *batch*)
 4) source (defaults to *basic*')
 5) jitter (defaults to *2/8*)
 6) obfuscator (defaults to *plain-text*)
