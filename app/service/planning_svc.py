@@ -76,7 +76,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         :param operation:
         :param bucket:
-            'atomic'- one additional link everytime called, in atomic adversary order
             'None' - no buckets, get all links for given operation, agent, trim setting
             '<bucket>' - get links for specified bucket for given trim setting
         :param agent:
@@ -85,19 +84,16 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param stopping_conditions:
         :return: a list of links
         """
-        if buckets == ['atomic']:
-            abilities = await self._get_next_atomic_ability(operation=operation)
-        else:
-            ao = operation.adversary.atomic_ordering
-            abilities = await self.get_service('data_svc') \
-                                  .locate('abilities', match=dict(ability_id=tuple(ao)))
-            if buckets:
-                # buckets specified - get all links for given buckets,
-                # (still in underlying atomic adversary order)
-                t = []
-                for bucket in buckets:
-                    t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
-                abilities = t
+        ao = operation.adversary.atomic_ordering
+        abilities = await self.get_service('data_svc') \
+                              .locate('abilities', match=dict(ability_id=tuple(ao)))
+        if buckets:
+            # buckets specified - get all links for given buckets,
+            # (still in underlying atomic adversary order)
+            t = []
+            for bucket in buckets:
+                t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
+            abilities = t
         links = []
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
@@ -151,18 +147,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """
-
-    async def _get_next_atomic_ability(self, operation):
-        """
-        Returns next ability for given operation adversary. Recursive calls
-        will return an even increasing list of past returned abilities, plus
-        additional next ability.
-        """
-        if operation.last_ran is None:
-            ab_id = operation.adversary.atomic_ordering[0]
-            return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ab_id))
-        ab_ids = operation.adversary.atomic_ordering[:(operation.last_ran + 2)]
-        return await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(ab_ids)))
 
     async def _bucket_execute(self, operation, planner, links, condition_stop):
         """repeated code used in bucket_exhaustion()"""
