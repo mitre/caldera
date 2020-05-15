@@ -57,5 +57,5 @@ To use this:
 
 1) Enable the mock plugin and restart the server. Log in as a red user.
 2) In the Campaigns -> Agents tab, review the simulated agents that have been spun up
-3) Run an operation using any adversary against your simulated agents. Note how the operation runs non-deterministically. You can now go into the sequential.py planning module and adjust the logic which 
+3) Run an operation using any adversary against your simulated agents. Note how the operation runs non-deterministically. You can now go into the batch.py planning module and adjust the logic which 
 makes decisions on what to do when to test out different theories. 

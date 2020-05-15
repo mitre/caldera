@@ -3,33 +3,61 @@ from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
 
+import marshmallow as ma
+
 from app.objects.c_ability import Ability
-from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_visibility import Visibility
+from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
+
+
+class LinkSchema(ma.Schema):
+
+    class Meta:
+        unknown = ma.EXCLUDE
+
+    id = ma.fields.Integer(missing=None)
+    paw = ma.fields.String()
+    command = ma.fields.String()
+    status = ma.fields.Integer(missing=-3)
+    score = ma.fields.Integer(missing=0)
+    jitter = ma.fields.Integer(missing=0)
+    decide = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    pin = ma.fields.Integer(missing=0)
+    pid = ma.fields.String()
+    facts = ma.fields.List(ma.fields.Nested(FactSchema()))
+    unique = ma.fields.String()
+    collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
+    finish = ma.fields.String()
+    # temp - replace with Nested(AbilitySchema)
+    ability = ma.fields.Function(lambda obj: obj.ability.display,
+                                 lambda obj: obj if isinstance(obj, Ability) else Ability.from_json(obj))
+    cleanup = ma.fields.Integer(missing=0)
+    visibility = ma.fields.Nested(VisibilitySchema)
+    host = ma.fields.String(missing=None)
+    output = ma.fields.String()
+
+    @ma.post_load()
+    def build_link(self, data, **_):
+        return Link(**data)
+
+    @ma.pre_dump()
+    def prepare_link(self, data, **_):
+        # temp - can be simplified with AbilitySchema
+        data.executor = data.ability.executor if isinstance(data.ability, Ability) else data.ability['executor']
+        return data
 
 
 class Link(BaseObject):
 
-    @classmethod
-    def from_json(cls, json):
-        ability = Ability.from_json(json['ability'])
-        return cls(id=json['id'], pin=json['pin'], command=json['command'],
-                   paw=json['paw'], host=json['host'], ability=ability)
+    schema = LinkSchema()
+    display_schema = LinkSchema(exclude=['jitter'])
+    load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
+                                      'host', 'output'])
 
     @property
     def unique(self):
         return self.hash('%s' % self.id)
-
-    @property
-    def display(self):
-        return self.clean(dict(id=self.id, paw=self.paw, command=self.command,
-                               executor=self.ability.executor, status=self.status, score=self.score,
-                               decide=self.decide.strftime('%Y-%m-%d %H:%M:%S'), pin=self.pin, pid=self.pid,
-                               facts=[fact.display for fact in self.facts], unique=self.unique,
-                               collect=self.collect.strftime('%Y-%m-%d %H:%M:%S') if self.collect else '',
-                               finish=self.finish, ability=self.ability.display, cleanup=self.cleanup,
-                               visibility=self.visibility.display, host=self.host, output=self.output))
 
     @property
     def pin(self):
@@ -112,21 +140,21 @@ class Link(BaseObject):
             await self._save_fact(operation, relationship.target, relationship.score)
             self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, trait, score):
+    async def _save_fact(self, operation, fact, score):
         all_facts = operation.all_facts() if operation else self.facts
-        if all(trait) and await self._is_new_trait(trait, all_facts):
-            self.facts.append(Fact(trait=trait[0], value=trait[1], score=score, collected_by=self.paw,
+        if all([fact.trait, fact.value]) and await self._is_new_fact(fact, all_facts):
+            self.facts.append(Fact(trait=fact.trait, value=fact.value, score=score, collected_by=self.paw,
                                    technique_id=self.ability.technique_id))
 
-    async def _is_new_trait(self, trait, facts):
-        return all(not self._trait_exists(trait, f) or self._is_new_host_trait(trait, f) for f in facts)
+    async def _is_new_fact(self, fact, facts):
+        return all(not self._fact_exists(fact, f) or self._is_new_host_fact(fact, f) for f in facts)
 
     @staticmethod
-    def _trait_exists(trait, fact):
-        return trait[0] == fact.trait and trait[1] == fact.value
+    def _fact_exists(new_fact, fact):
+        return new_fact.trait == fact.trait and new_fact.value == fact.value
 
-    def _is_new_host_trait(self, trait, fact):
-        return trait[0][:5] == 'host.' and self.paw != fact.collected_by
+    def _is_new_host_fact(self, new_fact, fact):
+        return new_fact.trait[:5] == 'host.' and self.paw != fact.collected_by
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:

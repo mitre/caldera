@@ -1,7 +1,26 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
+from app.objects.secondclass.c_fact import FactSchema
+
+
+class RelationshipSchema(ma.Schema):
+
+    unique = ma.fields.String()
+    source = ma.fields.Nested(FactSchema())
+    edge = ma.fields.String()
+    target = ma.fields.Nested(FactSchema())
+    score = ma.fields.Integer()
+
+    @ma.post_load
+    def build_relationship(self, data, **_):
+        return Relationship(**data)
 
 
 class Relationship(BaseObject):
+
+    schema = RelationshipSchema()
+    load_schema = RelationshipSchema(exclude=['unique'])
 
     @property
     def unique(self):

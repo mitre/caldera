@@ -8,27 +8,43 @@ from enum import Enum
 from importlib import import_module
 from random import randint
 
+import marshmallow as ma
+
+from app.objects.c_adversary import AdversarySchema
+from app.objects.c_agent import AgentSchema
+from app.objects.c_planner import PlannerSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
 
+class OperationSchema(ma.Schema):
+    id = ma.fields.Integer()
+    name = ma.fields.String()
+    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
+    adversary = ma.fields.Nested(AdversarySchema())
+    jitter = ma.fields.String()
+    atomic = ma.fields.Boolean()
+    planner = ma.fields.Nested(PlannerSchema())
+    start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    state = ma.fields.String()
+    obfuscator = ma.fields.String()
+    autonomous = ma.fields.Integer()
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
+    auto_close = ma.fields.Boolean()
+    visibility = ma.fields.Integer()
+
+    @ma.post_load
+    def build_planner(self, data, **_):
+        return Operation(**data)
+
+
 class Operation(FirstClassObjectInterface, BaseObject):
+
+    schema = OperationSchema()
 
     @property
     def unique(self):
         return self.hash('%s' % self.id)
-
-    @property
-    def display(self):
-        return self.clean(dict(id=self.id, name=self.name, host_group=[a.display for a in self.agents],
-                               adversary=self.adversary.display if self.adversary else '', jitter=self.jitter,
-                               source=self.source.display if self.source else '',
-                               atomic=self.atomic,
-                               planner=self.planner.name if self.planner else '',
-                               start=self.start.strftime('%Y-%m-%d %H:%M:%S') if self.start else '',
-                               state=self.state, obfuscator=self.obfuscator,
-                               autonomous=self.autonomous, finish=self.finish,
-                               chain=[lnk.display for lnk in self.chain]))
 
     @property
     def states(self):
@@ -92,7 +108,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     def all_relationships(self):
-        return [r for lnk in self.chain for r in lnk.relationships]
+        seeded_relationships = [r for r in self.source.relationships] if self.source else []
+        learned_relationships = [r for lnk in self.chain for r in lnk.relationships]
+        return seeded_relationships + learned_relationships
 
     async def apply(self, link):
         while self.state != self.states['RUNNING']:
@@ -247,10 +265,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                               stopping_conditions=self.planner.stopping_conditions)
 
     async def _save_new_source(self, services):
+        def fact_to_dict(f):
+            if f:
+                return dict(trait=f.trait, value=f.value, score=f.score)
         data = dict(
             id=str(uuid.uuid4()),
             name=self.name,
-            facts=[dict(trait=f.trait, value=f.value, score=f.score) for link in self.chain for f in link.facts]
+            facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
+            relationships=[dict(source=fact_to_dict(r.source), edge=r.edge, target=fact_to_dict(r.target), score=r.score) for link in self.chain for r in link.relationships]
         )
         await services.get('rest_svc').persist_source(data)
 

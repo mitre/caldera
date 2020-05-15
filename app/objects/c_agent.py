@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_link import Link, LinkSchema
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 
@@ -33,7 +33,8 @@ class AgentFieldsSchema(ma.Schema):
     host = ma.fields.String()
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    links = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.links])  # temp - replace with Nested(LinkSchema)
+    links = ma.fields.List(ma.fields.Nested(LinkSchema()))
+    proxy_receivers = ma.fields.List(ma.fields.List(ma.fields.String()))
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -65,7 +66,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None):
+                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
+                 proxy_receivers=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -91,6 +93,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.contact = contact
         self.links = []
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
+        self.proxy_receivers = proxy_receivers if proxy_receivers else []
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -132,6 +135,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('architecture', kwargs.get('architecture'))
         self.update('platform', kwargs.get('platform'))
         self.update('executors', kwargs.get('executors'))
+        self.update('proxy_receivers', kwargs.get('proxy_receivers'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)
@@ -167,7 +171,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def task(self, abilities, facts=()):
         bps = BasePlanningService()
-        potential_links = [Link(command=i.test, paw=self.paw, ability=i) for i in await self.capabilities(abilities)]
+        potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i)) for i in await self.capabilities(abilities)]
         links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):

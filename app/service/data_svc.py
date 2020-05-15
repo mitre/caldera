@@ -12,8 +12,6 @@ from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
 from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_parserconfig import ParserConfig
-from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
@@ -209,14 +207,11 @@ class DataService(DataServiceInterface, BaseService):
                               repeatable=False, code=None, language=None, build_target=None, variations=None, **kwargs):
         ps = []
         for module in parsers:
-            pcs = [(ParserConfig.load(m)) for m in parsers[module]]
-            ps.append(Parser(module=module, parserconfigs=pcs))
+            ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
         rs = []
         for requirement in requirements:
             for module in requirement:
-                relation = [Relationship(source=r['source'], edge=r.get('edge'), target=r.get('target')) for r in
-                            requirement[module]]
-                rs.append(Requirement(module=module, relationships=relation))
+                rs.append(Requirement.load(dict(module=module, relationship_match=requirement[module])))
         ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                           technique_id=technique_id, technique=technique_name, code=code, language=language,
                           executor=executor, platform=platform, description=description, build_target=build_target,

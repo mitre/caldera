@@ -133,7 +133,7 @@ def agent():
 @pytest.fixture
 def link():
     def _generate_link(command, paw, ability, *args, **kwargs):
-        return Link(ability=ability, command=command, paw=paw, *args, **kwargs)
+        return Link.load(dict(ability=ability, command=command, paw=paw, *args, **kwargs))
 
     return _generate_link
 

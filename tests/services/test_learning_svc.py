@@ -12,7 +12,7 @@ def setup_learning_service(loop, data_svc, ability, operation, link):
     loop.run_until_complete(data_svc.store(tability))
     toperation = operation(name='sample', agents=None, adversary=None)
     loop.run_until_complete(data_svc.store(toperation))
-    tlink = link(ability=tability, command=None, paw=None)
+    tlink = link(ability=tability, command='', paw='')
     yield (toperation, tlink)
 
 
