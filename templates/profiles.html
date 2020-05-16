@@ -255,6 +255,27 @@
     <br>
 </li>
 
+<div id="popup-info-modal" class="modal">
+    <div class="modal-content">
+        <div class="container">
+            <div class="row duk-modal">
+                <span onclick="document.getElementById('popup-info-modal').style.display='none'" class="close"
+                      title="Close Modal">&times;</span>
+                <div class="column" style="flex:92%">
+                    <p style="color: white"></p>
+                        <div style="background-color: var(--primary-background);padding: 15px;border-radius: 25px">
+                            <h3 id="popup-info-modal-text"></h3>
+                            <h2 id="error-text"></h2>
+                        <br>
+                    </div>
+                    <button class="button-success atomic-button" style="width: 50%"
+                        onclick="document.getElementById('popup-info-modal').style.display='none'">Close</button>
+                </div>
+            </div>
+        </div>
+     </div>
+</div>
+
 <script src="/gui/js/ability.js"></script>
 <script src="/gui/js/muuri.min.js"></script>
 <script>
@@ -344,18 +365,27 @@
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
 
+        error = '';
         $('#ability-additional-info').find('#additional-info-table tr').each(function() {
             let key = $(this).find('.additional-key').val();
             if (key !== '' && !(key in data)){
                 data[key] = $(this).find('.additional-value').val();
             } else if (key in data){
-                alert('Cannot save additional field! \'' + key + '\' in additional info is a reserved keyword.');
+                error = 'Omitted additional field: \'' + key + '\'. This is a reserved keyword.';
             } else {
-                alert('Cannot save additional field! Key cannot be empty.');
+                error = 'Omitted additional field. Key cannot be empty.';
             }
         });
 
         restRequest('PUT', data, saveAbilityCallback);
+        message = 'Ability saved!';
+        displayAbilitySavedMessage(message, error);
+    }
+
+    function displayAbilitySavedMessage(message, error){
+        $('#popup-info-modal').find('#popup-info-modal-text').text(message);
+        $('#popup-info-modal').find('#error-text').text(error);
+        $('#popup-info-modal').show();
     }
 
     function saveAbilityCallback(data) {
