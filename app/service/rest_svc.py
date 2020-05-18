@@ -226,7 +226,7 @@ class RestService(RestServiceInterface, BaseService):
             self.log.debug('Changing operation=%s state to %s' % (op_id, state))
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
-            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(operation[0].autonomous)))
 
     """ PRIVATE """
 
