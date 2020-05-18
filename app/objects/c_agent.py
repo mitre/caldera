@@ -34,7 +34,7 @@ class AgentFieldsSchema(ma.Schema):
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
-    proxy_receivers = ma.fields.List(ma.fields.List(ma.fields.String()))
+    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -93,7 +93,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.contact = contact
         self.links = []
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
-        self.proxy_receivers = proxy_receivers if proxy_receivers else []
+        self.proxy_receivers = proxy_receivers if proxy_receivers else dict()
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
