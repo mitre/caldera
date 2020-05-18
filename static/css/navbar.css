@@ -3,8 +3,6 @@
   width:100%;
   top:0;
   z-index:1001;
-  right:5px;
-  left:5px;
 }
 .navbar {
   overflow: hidden;
@@ -35,7 +33,7 @@
   overflow: hidden;
 }
 .subnavbtn {
-  font-size: 15px;
+  font-size: 16px;
   border: none;
   outline: none;
   color: white;
@@ -78,6 +76,17 @@
 }
 .subnav-right:hover .subnav-content {
   display: block;
+}
+.version {
+    height: 17px;
+    border-radius: 10px;
+    background-color: green;
+    text-align: center;
+    line-height: 17px;
+    color: white;
+    padding-right: 10px;
+    padding-left: 10px;
+    border: 1px solid white;
 }
 .footer {
    position: fixed;
