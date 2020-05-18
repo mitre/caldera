@@ -1,7 +1,24 @@
+import marshmallow as ma
+
 from app.utility.base_object import BaseObject
 
 
+class InstructionSchema(ma.Schema):
+    id = ma.fields.String()
+    sleep = ma.fields.Int()
+    command = ma.fields.String()
+    executor = ma.fields.String()
+    timeout = ma.fields.Int()
+    payloads = ma.fields.List(ma.fields.String())
+
+    @ma.post_load
+    def build_instruction(self, data, **_):
+        return Instruction(**data)
+
+
 class Instruction(BaseObject):
+
+    schema = InstructionSchema()
 
     @property
     def display(self):
