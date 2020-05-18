@@ -53,7 +53,7 @@ Next, install the PIP requirements:
 ```Bash
 pip install -r requirements.txt
 ```
-> Additionally, you can run our [install script](https://caldera.readthedocs.io/en/latest/Install-script.html) which will install several more dependencies that super-power your CALDERA server instance.
+> Want to super-power your CALDERA server installation? Make sure GoLang (1.13+) is installed.
 
 Finally, start the server. 
 ```Bash
