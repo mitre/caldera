@@ -165,3 +165,51 @@ function display_errors(errors){
         add_element("no errors to view", 0);
     }
 }
+
+/* Nav bar */
+
+$('.subnav').hover(
+    function() {
+        // Open subnav on hover
+        // Check status using the nav-hovering class, z-index for priority
+        $(this).addClass('nav-hovering');
+        var subnav = $(this).find('.subnav-content');
+        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) + 1);
+
+        $(subnav).css('display', 'block');
+    }, function() {
+        // Close subav after 150 ms if no longer hovering
+        $(this).removeClass('nav-hovering');
+        var subnav = $(this).find('.subnav-content');
+        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) - 1);
+        
+        setTimeout(function(nav) {
+            if (!$(nav).hasClass('nav-hovering')) {
+                $(nav).find('.subnav-content').css('display', 'none');
+            }
+        }, 100, this);
+    }
+);
+
+$('.subnav-right').hover(
+    function() {
+        // Open subnav on hover
+        // Check status using the nav-hovering class, z-index for priority
+        $(this).addClass('nav-hovering');
+        var subnav = $(this).find('.subnav-content');
+        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) + 1);
+
+        $(subnav).css('display', 'block');
+    }, function() {
+        // Close subav after 150 ms if no longer hovering
+        $(this).removeClass('nav-hovering');
+        var subnav = $(this).find('.subnav-content');
+        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) - 1);
+        
+        setTimeout(function(nav) {
+            if (!$(nav).hasClass('nav-hovering')) {
+                $(nav).find('.subnav-content').css('display', 'none');
+            }
+        }, 100, this);
+    }
+);
