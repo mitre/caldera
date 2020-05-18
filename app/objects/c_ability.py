@@ -35,6 +35,7 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema)
     test = ma.fields.String()
+    hidden = ma.fields.Boolean()
 
     @ma.post_load
     def build_ability(self, data, **_):
