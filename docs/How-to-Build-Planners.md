@@ -56,6 +56,7 @@ The ```state_machine``` variable is a list enumerating the order of the planner 
 The ```next_bucket``` variable holds the next bucket to be executed, that is the next bucket (i.e. state) that the planner will enter and whose bucket method will control the planning logic until. Initially, we set ```next_bucket``` to the first bucket the planner will begin in. We will moidfy ```next_bucket``` from within our bucket methods in order to specify the next bucket to execute.
 
 **_Additional Planner class variables_**
+
 It is also important to note that a planner may define any required variables that it may need. For instance, many custom planners require information to be passed from one bucket (state) to another during execution. This is done simply by creating a class variable(s) to store information that will persist between bucket transitions and can be accessed within any bucket method.
 
 Now, lets the define the planner's entrypoint method ```execute()```. ```execute()``` is where the planner starts and where any runtime initialization is done.
