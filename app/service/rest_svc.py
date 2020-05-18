@@ -233,9 +233,7 @@ class RestService(RestServiceInterface, BaseService):
     async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group', '')
-        planner = await self.get_service('data_svc').locate('planners',
-                                                            match=dict(name=data.pop('planner') if not
-                                                                       data.get('planner') == '' else 'batch'))
+        planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.get('planner', 'atomic')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))

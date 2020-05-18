@@ -74,7 +74,6 @@
                 <option value="0">Require manual approval</option>
               </select>
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
-                    <option value="" class="queueOption" disabled selected>Select a planner</option>
                 {% for p in planners %}
                     <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                 {% endfor %}
