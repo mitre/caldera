@@ -15,6 +15,7 @@ class InstructionSchema(ma.Schema):
     def build_instruction(self, data, **_):
         return Instruction(**data)
 
+
 class Instruction(BaseObject):
 
     schema = InstructionSchema()
