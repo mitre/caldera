@@ -23,6 +23,13 @@ class ParserConfigSchema(ma.Schema):
     def build_parserconfig(self, data, **_):
         return ParserConfig(**data)
 
+    @ma.pre_dump()
+    def remove_nones(self, data, **_):
+        data.source = data.source if data.source else ''
+        data.edge = data.edge if data.edge else ''
+        data.target = data.target if data.target else ''
+        return data
+
 
 class ParserConfig(BaseObject):
 
