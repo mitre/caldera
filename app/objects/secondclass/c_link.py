@@ -31,7 +31,7 @@ class LinkSchema(ma.Schema):
     finish = ma.fields.String()
     # temp - replace with Nested(AbilitySchema)
     ability = ma.fields.Function(lambda obj: obj.ability.display,
-                                 lambda obj: obj if isinstance(obj, Ability) else Ability.from_json(obj))
+                                 lambda obj: obj if isinstance(obj, Ability) else Ability.load(obj))
     cleanup = ma.fields.Integer(missing=0)
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
