@@ -1,105 +1,105 @@
 <html>
 <head>
-      <title>Blue | Dashboard</title>
-      <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-      <link rel="stylesheet" href="/gui/css/blue.css">
-      <link rel="stylesheet" href="/gui/css/shared.css">
-      <link rel="stylesheet" href="/gui/css/navbar.css">
-      <link rel="stylesheet" href="/gui/css/modal.css">
-      <link rel="stylesheet" href="/gui/css/basic.css">
-      <link rel="stylesheet" href="/gui/css/timeline.css">
-      <link rel="stylesheet" href="/gui/css/multi-select.css">
-    </head>
-    <body>
-        <div class="navbar-buffer">
-            <div class="navbar">
-                  <a href="/">Home</a>
-                  <div class="subnav">
-                    <button class="subnavbtn">Protection <i class="fa fa-caret-down"></i></button>
-                    <div class="subnav-content">
-                        <a onclick="viewSection('agents', '/campaign/agents')">agents</a>
-                        <a onclick="viewSection('profiles', '/campaign/profiles')">defenders</a>
-                        <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
-                    </div>
-                  </div>
-                  {% if errors|length > 0 %}
-                    <a onclick="display_errors({{ errors }})" style="float:right"><div class="version" style="background:red">{{ version }}</div></a>
-                  {% else %}
-                    <a onclick="display_errors([])" style="float:right"><div class="version">{{ version }}</div></a>
-                  {% endif %}
-                  <a href="/logout" style="float:right">Logout</a>
-                  <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
-                  <div class="subnav-right">
-                    <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
-                        <div class="subnav-content subnav-content-right">
-                            {% for plugin in plugins %}
-                              {% if plugin.address %}
-                                  <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
-                              {% else %}
-                                  <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
-                              {% endif %}
-                            {% endfor %}
-                        </div>
-                  </div>
-              <div class="subnav-right">
-                <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
-                <div class="subnav-content subnav-content-right">
-                    <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
+    <title>Blue | Dashboard</title>
+    <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+    <link rel="stylesheet" href="/gui/css/blue.css">
+    <link rel="stylesheet" href="/gui/css/shared.css">
+    <link rel="stylesheet" href="/gui/css/navbar.css">
+    <link rel="stylesheet" href="/gui/css/modal.css">
+    <link rel="stylesheet" href="/gui/css/basic.css">
+    <link rel="stylesheet" href="/gui/css/timeline.css">
+    <link rel="stylesheet" href="/gui/css/multi-select.css">
+</head>
+<body>
+    <div class="navbar-buffer">
+        <div class="navbar">
+              <a href="/">Home</a>
+              <div class="subnav">
+                <button class="subnavbtn">Protection <i class="fa fa-caret-down"></i></button>
+                <div class="subnav-content">
+                    <a onclick="viewSection('agents', '/campaign/agents')">agents</a>
+                    <a onclick="viewSection('profiles', '/campaign/profiles')">defenders</a>
+                    <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
                 </div>
               </div>
+              {% if errors|length > 0 %}
+                  <a onclick="display_errors({{ errors }})" style="float:right"><div class="version" style="background:red">{{ version }}</div></a>
+              {% else %}
+                  <a onclick="display_errors([])" style="float:right"><div class="version">{{ version }}</div></a>
+              {% endif %}
+              <a href="/logout" style="float:right">Logout</a>
+              <a href="/docs/index.html" style="float:right" target="_blank">Docs</a>
+              <div class="subnav-right">
+                <button class="subnavbtn">Plugins <i class="fa fa-caret-down"></i></button>
+                    <div class="subnav-content subnav-content-right">
+                        {% for plugin in plugins %}
+                            {% if plugin.address %}
+                                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
+                            {% else %}
+                                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+              </div>
+          <div class="subnav-right">
+            <button class="subnavbtn">Advanced <i class="fa fa-caret-down"></i></button>
+            <div class="subnav-content subnav-content-right">
+                <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
             </div>
+          </div>
         </div>
-        <div id="main">
+    </div>
+    <div id="main">
 
-            <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
+        <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
 
-            <div id="alert-modal" class="modal">
-                <form class="modal-content">
-                    <div class="container modal-box">
-                        <div class="row duk-modal">
-                            <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                            <div class="column" style="flex:92%">
-                                <p id="alert-text" style="color: white"></p>
-                            </div>
+        <div id="alert-modal" class="modal">
+            <form class="modal-content">
+                <div class="container modal-box">
+                    <div class="row duk-modal">
+                        <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <div class="column" style="flex:92%">
+                            <p id="alert-text" style="color: white"></p>
                         </div>
-                    </div>
-                </form>
-            </div>
-
-            <div id="list-modal" class="modal">
-                <form class="modal-content">
-                    <div class="container modal-box">
-                        <div class="transparent-row">
-                            <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                            <ul id="info-list"></ul>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <li id="infolist-template" style="display: none">
-                <div class="infolist-item">
-                    <div class="infolist-icon">
-                        <img src="/gui/img/errors.png">
-                    </div>
-                    <div class="infolist-contents">
-                        <p></p>
                     </div>
                 </div>
-            </li>
-
-            <center>
-                <div id="section-container"></div>
-            </center>
-
+            </form>
         </div>
 
-        <div class="footer">
-            <p id="streamer"></p>
+        <div id="list-modal" class="modal">
+            <form class="modal-content">
+                <div class="container modal-box">
+                    <div class="transparent-row">
+                        <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <ul id="info-list"></ul>
+                    </div>
+                </div>
+            </form>
         </div>
 
-    </body>
+        <li id="infolist-template" style="display: none">
+            <div class="infolist-item">
+                <div class="infolist-icon">
+                    <img src="/gui/img/errors.png">
+                </div>
+                <div class="infolist-contents">
+                    <p></p>
+                </div>
+            </div>
+        </li>
+
+        <center>
+            <div id="section-container"></div>
+        </center>
+
+    </div>
+
+    <div class="footer">
+        <p id="streamer"></p>
+    </div>
+
     <script src="/gui/jquery/jquery.js"></script>
     <script src="/gui/jquery/jquery.multi-select.js"></script>
     <script src="/gui/js/shared.js"></script>
+</body>
 </html>
