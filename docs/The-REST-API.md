@@ -43,7 +43,7 @@ curl -H "key:ADMIN123" -X POST localhost:8888/plugin/access/exploit -d '{"paw":"
 
 #### DELETE
 
-Delete any operation.
+Delete any operation. Operation ID must be a integer.
 ```bash
 curl -X DELETE http://localhost:8888/api/rest -d '{"index":"operations","id":"$operation_id"}'
 ```
