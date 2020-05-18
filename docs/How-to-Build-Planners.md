@@ -11,12 +11,11 @@ CALDERA abilities are also tagged by the buckets they are in. By default, when a
 
 ## Creating a Planner
 
-Lets dive in to creating a planner, in order to see the level of flexibility and power found in the CALDERA planner component. For this example, we will implement a planner
-that will carry out the following state machine:
+Lets dive in to creating a planner in order to see the level of flexibility and power found in the CALDERA planner component. For this example, we will implement a planner that will carry out the following state machine:
 
-[insert pdf]
+![privileged persistence sm screenshot](/priveleged_persistence_sm_screenshot.png)
 
-The planner will consist of 5 buckets:  Privilege Escalation, Collection, Persistence, Discovery, and Lateral Movemnent. As implied by the state machine, this planner will use the underlying adversary abilities to attempt to spread to as many hosts as possible and establish persistence. If persistence is prevented by unsuccessful attempts to get required privilege access for a given host, then execute collection abilities immediately in case it loses access to the host.
+The planner will consist of 5 buckets:  _Privilege Escalation_, _Collection_, _Persistence_, _Discovery_, and _Lateral Movemnent_. As implied by the state machine, this planner will use the underlying adversary abilities to attempt to spread to as many hosts as possible and establish persistence. If persistence is prevented by unsuccessful attempts to get required privilege access for a given host, then execute collection abilities immediately in case it loses access to the host.
 
 We will create a python module called ```privileged_peristence.py``` and nest it under ```/app``` in the ```mitre/stockpile``` plugin.
 
@@ -114,12 +113,12 @@ Lets look at each of the bucket methods in detail:
 ```lateral_movement()```
 
 
-**_Additional Notes on Priveleged Persistance Planner_**
-- You may have noticed that the _priveleged persistence_ planner is only notionally more sophisticated than running certain default adversary profiles. This is correct. If you can find or create an adversary profile whose ability enumeration (i.e. order) can carry out your desired operational progression between abilities and can be executed in batch (by the default _batch_ planner) or in a sequentially atomic order (by _atmomic_ planner), it is advised to go that route. However, any decision logic above those simple planners will have to be implemented in a new planner.
+**_Additional Notes on ```privelged_persistance``` Planner_**
+- You may have noticed that the _priveleged_persistence_ planner is only notionally more sophisticated than running certain default adversary profiles. This is correct. If you can find or create an adversary profile whose ability enumeration (i.e. order) can carry out your desired operational progression between abilities and can be executed in batch (by the default _batch_ planner) or in a sequentially atomic order (by _atmomic_ planner), it is advised to go that route. However, any decision logic above those simple planners will have to be implemented in a new planner.
 - The _priveleged persistence_ planner did not have explicit logic to handle multiple agents
 
 
-## Planning Service Utilities very useful to custom planners
+## Planning Service Utilities (that are very useful to custom planners)
 
 ```exhaust_bucket()```
 
