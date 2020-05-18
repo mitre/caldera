@@ -4,8 +4,8 @@ from base64 import b64decode
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_parser import Parser, ParserSchema
-from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
+from app.objects.secondclass.c_parser import ParserSchema
+from app.objects.secondclass.c_requirement import RequirementSchema
 from app.objects.secondclass.c_variation import Variation, VariationSchema
 from app.utility.base_object import BaseObject
 from app.utility.base_world import AccessSchema
