@@ -85,7 +85,7 @@ class TestRestSvc:
                     {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown', 'username': 'unknown',
                      'links': [], 'sleep_max': 8, 'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
                      'sleep_min': 2, 'server': '://None:None', 'platform': 'windows', 'host': 'unknown', 'paw': '123',
-                     'pid': 0, 'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User', 'proxy_receivers': []}],
+                     'pid': 0, 'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User', 'proxy_receivers': {}}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
