@@ -25,9 +25,9 @@ class ParserConfigSchema(ma.Schema):
 
     @ma.pre_dump()
     def remove_nones(self, data, **_):
-        data.source = data.source if data.source else ''
-        data.edge = data.edge if data.edge else ''
-        data.target = data.target if data.target else ''
+        data.source = data.source or ''
+        data.edge = data.edge or ''
+        data.target = data.target or ''
         return data
 
 
