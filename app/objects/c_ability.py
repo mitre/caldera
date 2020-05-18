@@ -1,14 +1,50 @@
 import os
 from base64 import b64decode
 
+import marshmallow as ma
+
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_requirement import Requirement
-from app.objects.secondclass.c_variation import Variation
+from app.objects.secondclass.c_parser import ParserSchema
+from app.objects.secondclass.c_requirement import RequirementSchema
+from app.objects.secondclass.c_variation import Variation, VariationSchema
 from app.utility.base_object import BaseObject
+from app.utility.base_world import AccessSchema
+
+
+class AbilitySchema(ma.Schema):
+    ability_id = ma.fields.String()
+    tactic = ma.fields.String()
+    technique_name = ma.fields.String()
+    technique_id = ma.fields.String()
+    name = ma.fields.String()
+    description = ma.fields.String()
+    cleanup = ma.fields.List(ma.fields.String())
+    executor = ma.fields.String()
+    platform = ma.fields.String()
+    payloads = ma.fields.List(ma.fields.String())
+    parsers = ma.fields.List(ma.fields.Nested(ParserSchema))
+    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema))
+    privilege = ma.fields.String()
+    timeout = ma.fields.Int()
+    repeatable = ma.fields.Bool()
+    language = ma.fields.String()
+    code = ma.fields.String()
+    build_target = ma.fields.String()
+    variations = ma.fields.List(ma.fields.Nested(VariationSchema))
+    buckets = ma.fields.List(ma.fields.String())
+    additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
+    access = ma.fields.Nested(AccessSchema)
+    test = ma.fields.String()
+
+    @ma.post_load
+    def build_ability(self, data, **_):
+        return Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
+
+    schema = AbilitySchema()
+    display_schema = AbilitySchema(exclude=['repeatable', 'language', 'code', 'build_target'])  # may need to fix for id=self.unique
 
     RESERVED = dict(payload='#{payload}')
     HOOKS = dict()
@@ -24,30 +60,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
     @property
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
-
-    @classmethod
-    def from_json(cls, json):
-        parsers = [Parser.load(p) for p in json['parsers']]
-        requirements = [Requirement.load(r) for r in json['requirements']]
-        return cls(ability_id=json['ability_id'], tactic=json['tactic'], technique_id=json['technique_id'],
-                   technique=json['technique_name'], name=json['name'], test=json['test'], variations=[],
-                   description=json['description'], cleanup=json['cleanup'], executor=json['executor'],
-                   platform=json['platform'], payloads=json['payloads'], parsers=parsers,
-                   requirements=requirements, privilege=json['privilege'], buckets=json['buckets'],
-                   timeout=json['timeout'], access=json['access'])
-
-    @property
-    def display(self):
-        return self.clean(dict(id=self.unique, ability_id=self.ability_id, tactic=self.tactic,
-                               technique_name=self.technique_name,
-                               technique_id=self.technique_id, name=self.name,
-                               test=self.test, description=self.description, cleanup=self.cleanup,
-                               executor=self.executor, unique=self.unique,
-                               platform=self.platform, payloads=self.payloads,
-                               parsers=[p.display for p in self.parsers],
-                               requirements=[r.display for r in self.requirements], privilege=self.privilege,
-                               timeout=self.timeout, buckets=self.buckets, access=self.access.value,
-                               variations=[v.display for v in self.variations], additional_info=self.additional_info))
 
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,

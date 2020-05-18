@@ -39,11 +39,23 @@ curl -H "key:ADMIN123" -X POST localhost:8888/plugin/access/exploit -d '{"paw":"
 {"paw":"$PAW","ability_id":"$ABILITY_ID","facts":[{"trait":"username","value":"admin"},{"trait":"password", "value":"123"}]}
 ```
 
+## Adversaries
+
+View all abilities for a specific adversary_id (the UUID of the adversary).
+```
+curl -H 'KEY: ADMIN123' 'http://localhost:8888/api/rest' -H 'Content-Type: application/json' -d '{"index":"adversaries","adversary_id":"$adversary_id"}'
+```
+
+View all abilities for all adversaries.
+```
+curl -H 'KEY: ADMIN123' 'http://localhost:8888/api/rest' -H 'Content-Type: application/json' -d '{"index":"adversaries"}'
+```
+
 ## Operations
 
 #### DELETE
 
-Delete any operation.
+Delete any operation. Operation ID must be a integer.
 ```bash
 curl -X DELETE http://localhost:8888/api/rest -d '{"index":"operations","id":"$operation_id"}'
 ```

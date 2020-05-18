@@ -31,7 +31,7 @@ class LinkSchema(ma.Schema):
     finish = ma.fields.String()
     # temp - replace with Nested(AbilitySchema)
     ability = ma.fields.Function(lambda obj: obj.ability.display,
-                                 lambda obj: obj if isinstance(obj, Ability) else Ability.from_json(obj))
+                                 lambda obj: obj if isinstance(obj, Ability) else Ability.load(obj))
     cleanup = ma.fields.Integer(missing=0)
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
@@ -138,7 +138,8 @@ class Link(BaseObject):
         for relationship in relationships:
             await self._save_fact(operation, relationship.source, relationship.score)
             await self._save_fact(operation, relationship.target, relationship.score)
-            self.relationships.append(relationship)
+            if all((relationship.source.trait, relationship.edge, relationship.target.trait)):
+                self.relationships.append(relationship)
 
     async def _save_fact(self, operation, fact, score):
         all_facts = operation.all_facts() if operation else self.facts
