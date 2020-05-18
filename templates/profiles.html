@@ -87,20 +87,20 @@
 
                     </div>
                     <div class="column" style="flex:40%">
-                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden">
-                            <div class="column" style="float: left; margin: 15px">
+                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
                                     <img src="/gui/img/recycle.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 15px">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
                                     <img src="/gui/img/executor.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 15px">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
                                     <img src="/gui/img/payload.png">
                                     <form id="uploadPayloadForm">
@@ -109,7 +109,7 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 15px">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
                                     <img src="/gui/img/additional-fields.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
@@ -117,11 +117,9 @@
                             </div>
                         </div>
                         <br>
-                        <div id="ability-additional-info" style="display: none">
-                            <b style="margin-top: 25; margin-bottom: 0; margin-right: 26px; text-align: right">Additional Info</b>
-                            <br>
-                            <div style="margin-top:5px"><text style="margin-right: 4em;margin-left: -26px; text-decoration: underline">Key</text><text style="text-decoration: underline">Val</text></div>
-                            <table id="additional-info-table" frame=void rules=rows style="width:100%">
+                        <div id="ability-additional-info" style="display: flex">
+                            <div style="flex: 15%; display: flex; justify-content: center; align-items: center;"><b>Info:</b></div>
+                            <table id="additional-info-table" frame=void rules=rows style="flex:85%">
                                 <tbody>
                                 </tbody>
                             </table>
