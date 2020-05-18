@@ -133,8 +133,8 @@
             <br>
             <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
             <br><br>
-            <div id="myProgress" style="text-align: left">
-              <div id="myBar">0%</div>
+            <div id="operationProgress" style="text-align: left">
+              <div id="operationProgressBar">0%</div>
             </div>
             <br>
             <table class="legend">
@@ -635,17 +635,22 @@
     }
 
     function changeProgress(finish, percent) {
-        if(percent >= 100) {
-            percent = 100;
-            if(!finish) {
-                percent = 99;
+        // Calculate percentage
+        if (percent >= 100) {
+            if (finish) {
+                percent = 100;
+            } else {
+                    percent = 99;
             }
+        } else if (isNaN(percent)) {
+            percent = 0;
         }
-        let elem = document.getElementById("myBar");
-        elem.style.width = percent + "%";
-        elem.innerHTML = percent + "%";
-    }
 
+        // Set progress bar
+        $('.operationProgressBar').width(percent + '%');
+        $('.operationProgressBar').html(percent + '%');
+    }
+    
     function resetMoreModal() {
         let modal = $('#more-modal');
         modal.hide();

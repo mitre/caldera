@@ -548,12 +548,12 @@ table.dataTable input[type=text] {
 .legend .queued {
     background-color: grey;
 }
-#myProgress {
+#operationProgress {
   width: 75%;
   border-radius: 25px;
   background-color: grey;
 }
-#myBar {
+#operationProgressBar {
   width: 10%;
   height: 30px;
   border-radius: 25px;
