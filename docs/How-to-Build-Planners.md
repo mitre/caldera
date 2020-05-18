@@ -13,7 +13,7 @@ CALDERA abilities are also tagged by the buckets they are in. By default, when a
 
 Lets dive in to creating a planner in order to see the level of flexibility and power found in the CALDERA planner component. For this example, we will implement a planner that will carry out the following state machine:
 
-![privileged persistence sm screenshot](/priveleged_persistence_sm_screenshot.png)
+![privileged persistence sm screenshot](privileged_persistence_sm_screenshot.png)
 
 The planner will consist of 5 buckets:  _Privilege Escalation_, _Collection_, _Persistence_, _Discovery_, and _Lateral Movemnent_. As implied by the state machine, this planner will use the underlying adversary abilities to attempt to spread to as many hosts as possible and establish persistence. If persistence is prevented by unsuccessful attempts to get required privilege access for a given host, then execute collection abilities immediately in case it loses access to the host.
 
