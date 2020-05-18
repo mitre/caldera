@@ -6,14 +6,15 @@ import yaml
 import logging
 import subprocess
 import distutils.version
-
-import dirhash
-
 from base64 import b64encode, b64decode
 from datetime import datetime
 from importlib import import_module
 from random import randint, choice
 from enum import Enum
+
+import dirhash
+import marshmallow as ma
+import marshmallow_enum as ma_enum
 
 
 class BaseWorld:
@@ -166,3 +167,11 @@ class BaseWorld:
     class Privileges(Enum):
         User = 0
         Elevated = 1
+
+
+class AccessSchema(ma.Schema):
+    access = ma_enum.EnumField(BaseWorld.Access)
+
+
+class PrivilegesSchema(ma.Schema):
+    privilege = ma_enum.EnumField(BaseWorld.Privileges)
