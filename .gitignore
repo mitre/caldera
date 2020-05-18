@@ -36,3 +36,4 @@ htmlcov/
 .coverage
 .coverage.*
 *,cover
+_*/
