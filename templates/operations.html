@@ -313,8 +313,22 @@
     }
 
     function deleteOperation(){
-        let data = {'index': 'operations', 'id': parseInt($('#operation-list option:selected').attr('value'))};
-        restRequest('DELETE', data, window.location.reload());
+        function deleteCallback(data){
+            // Remove operation from main view
+            $('.op-selected').css('visibility', 'hidden');
+            
+            // Remove operation from sidebar dropdown
+            $('#operation-list option[value="' + operation_id + '"]').remove();
+            $('#operationDefault').prop('selected', true);
+
+            // Change sidebar button color
+            checkOpBtns();
+
+            stream(data);
+        }
+        let operation_id = parseInt($('#operation-list option:selected').attr('value'));
+        let data = {'index': 'operations', 'id': operation_id};
+        restRequest('DELETE', data, deleteCallback);
     }
 
     function handleScheduleAction(){
