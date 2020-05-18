@@ -23,7 +23,6 @@ class OperationSchema(ma.Schema):
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
-    atomic = ma.fields.Boolean()
     planner = ma.fields.Nested(PlannerSchema())
     start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     state = ma.fields.String()
@@ -55,7 +54,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     FINISHED='finished')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, atomic=False, obfuscator='plain-text', group=None, auto_close=True,
+                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
                  visibility=50, access=None):
         super().__init__()
         self.id = id
@@ -69,7 +68,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.planner = planner
         self.state = state
         self.autonomous = autonomous
-        self.atomic = atomic
         self.last_ran = None
         self.obfuscator = obfuscator
         self.auto_close = auto_close
@@ -212,13 +210,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def run(self, services):
         try:
-            if self.atomic:
-                # atomic (basic) mode, operation handles simple execution
-                await self._execute_atomically(services)
-            else:
-                # planner present, operation cedes control to planner
-                planner = await self._get_planning_module(services)
-                await planner.execute()
+            # Operation cedes control to planner
+            planner = await self._get_planning_module(services)
+            await planner.execute()
             while not await self.is_closeable():
                 await asyncio.sleep(10)
             await self.close(services)
@@ -226,32 +220,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
             logging.error(e, exc_info=True)
 
     """ PRIVATE """
-
-    async def _execute_atomically(self, services):
-        """
-        Default operation execution.
-
-        Operation will pull all links for adversary, executes them atomically,
-        and in order as given from adversary.
-
-        Operation will progress to next ability even if current ability
-        cannot be executed. Will do a loop once through all abilities
-        enumerated in adversary.
-        """
-        ability_iter = iter(range(len(self.adversary.atomic_ordering)))
-        while not self._is_atomic_closeable():
-            links = await services.get('planning_svc').get_links(self, buckets=['atomic'])
-            if links:
-                await self.wait_for_links_completion([await self.apply(links[-1])])
-            self.last_ran = next(ability_iter)
-            if await self.is_finished():
-                return
-
-    def _is_atomic_closeable(self):
-        if len(self.adversary.atomic_ordering):
-            return self.atomic and self.last_ran == (len(self.adversary.atomic_ordering) - 1)
-        else:
-            return True
 
     async def _cleanup_operation(self, services):
         for member in self.agents:

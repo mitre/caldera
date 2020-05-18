@@ -73,11 +73,7 @@
                 <option value="1" selected>Run autonomously</option>
                 <option value="0">Require manual approval</option>
               </select>
-              <select name="atomic" id="atomicEnabled" class="queueOption" style="opacity:0.5;" disabled="true" onchange="$('#queuePlanner').toggle();">
-                <option value="1" selected>Atomic mode</option>
-                <option value="0">Planner</option>
-              </select>
-              <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;display: none;" disabled="true">
+              <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
                     <option value="" class="queueOption" disabled selected>Select a planner</option>
                 {% for p in planners %}
                     <option value="{{ p.name }}">Use {{ p.name }} planner</option>
@@ -358,7 +354,6 @@
             "state":document.getElementById("queueState").value,
             "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
-            "atomic_enabled":document.getElementById("atomicEnabled").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
