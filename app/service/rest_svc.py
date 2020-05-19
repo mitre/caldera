@@ -4,7 +4,7 @@ import glob
 import os
 import pathlib
 import uuid
-from datetime import time
+from datetime import time, datetime
 
 import yaml
 from aiohttp import web
@@ -13,7 +13,6 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-# from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -223,6 +222,7 @@ class RestService(RestServiceInterface, BaseService):
         if state:
             await validate(operation)
             operation[0].state = state
+            operation[0].finish = datetime.now()
             self.log.debug('Changing operation=%s state to %s' % (op_id, state))
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
