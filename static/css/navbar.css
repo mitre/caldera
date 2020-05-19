@@ -60,11 +60,6 @@
   background-color: black;
   color: white;
 }
-
-.subnav:hover .subnav-content {
-  display: block;
-}
-
 .subnav-right {
   float: right;
   overflow: hidden;
