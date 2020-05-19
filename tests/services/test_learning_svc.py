@@ -1,4 +1,5 @@
 import pytest
+from app.objects.c_adversary import Adversary
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
 
@@ -10,10 +11,11 @@ def setup_learning_service(loop, data_svc, ability, operation, link):
                        platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                        variations=[])
     loop.run_until_complete(data_svc.store(tability))
-    toperation = operation(name='sample', agents=None, adversary=None)
+    toperation = operation(name='sample', agents=None, adversary=Adversary(name='sample', adversary_id='XYZ',
+                                                                           atomic_ordering=[], description='test'))
     loop.run_until_complete(data_svc.store(toperation))
     tlink = link(ability=tability, command='', paw='')
-    yield (toperation, tlink)
+    yield toperation, tlink
 
 
 class TestLearningSvc:

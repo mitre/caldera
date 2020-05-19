@@ -8,6 +8,7 @@ from base64 import b64encode
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
@@ -24,14 +25,14 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     try:
@@ -100,6 +101,7 @@ class DataService(DataServiceInterface, BaseService):
             for plug in plugins:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
+                await self._load_objectives(plug)
             await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
@@ -176,6 +178,13 @@ class DataService(DataServiceInterface, BaseService):
                 source = Source.load(src)
                 source.access = plugin.access
                 await self.store(source)
+
+    async def _load_objectives(self, plugin):
+        for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
+            for src in self.strip_yml(filename):
+                objective = Objective.load(src)
+                objective.access = plugin.access
+                await self.store(objective)
 
     async def _load_payloads(self, plugin):
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):

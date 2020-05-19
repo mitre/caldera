@@ -3,6 +3,7 @@ import os
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
+from app.objects.c_objective import ObjectiveSchema
 from app.utility.base_object import BaseObject
 
 
@@ -12,6 +13,7 @@ class AdversarySchema(ma.Schema):
     name = ma.fields.String()
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
+    objective = ma.fields.Nested(ObjectiveSchema)
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -44,12 +46,13 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, adversary_id, name, description, atomic_ordering):
+    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
+        self.objective = objective
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
@@ -59,6 +62,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('name', self.name)
         existing.update('description', self.description)
         existing.update('atomic_ordering', self.atomic_ordering)
+        existing.update('objective', self.objective)
         return existing
 
     def has_ability(self, ability):
