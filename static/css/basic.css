@@ -475,7 +475,6 @@ table.dataTable input[type=text] {
 }
 .op-control-text{
     text-transform: uppercase;
-    background-color: var(--navbar-background);
     padding: 5px 5px 5px 5px;
     height: 30px;
     text-align: center;
@@ -654,7 +653,7 @@ table.dataTable input[type=text] {
 }
 
 .infolist-contents {
-    float: left:
+    float: left;
     height: 1.8em;
     min-width: 50%;
     margin-left :1.5em;
@@ -668,4 +667,10 @@ table.dataTable input[type=text] {
     margin-block-start: 0;
     margin-block-end: 0;
     color: white;
+}
+.dark-select {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border-radius: 25px;
+    border: none;
 }
