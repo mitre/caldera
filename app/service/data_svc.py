@@ -131,7 +131,7 @@ class DataService(DataServiceInterface, BaseService):
                     privilege = ab.pop('privilege', None)
                     repeatable = ab.pop('repeatable', False)
                     requirements = ab.pop('requirements', [])
-                    for platforms, executors in ab.pop('platforms', []).items():
+                    for platforms, executors in ab.pop('platforms', dict()).items():
                         for name, info in executors.items():
                             encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
                                 'command') else None
