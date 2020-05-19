@@ -1,16 +1,9 @@
 #!/bin/bash
 
-function tag_version(){
-    git add VERSION.txt
-    git commit -m "Upgrading VERSION to ${1}. Release notes to follow." && git push origin master
-    git tag $1 && git push origin $1
-}
-
 function update_version(){
     git reset --hard origin/master && git checkout master && git pull
     newHash=$(dirhash . -a md5 -i "/plugins/ .*/ _*/" -m "*.py *.html *.js *.go")
     echo "${1}-${newHash}" > VERSION.txt
-    tag_version $1
 }
 
 read -p "[+] Enter a new version: " newVersion
