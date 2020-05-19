@@ -149,6 +149,14 @@
                   <td class="visibility">visible</td>
               </tr>
             </table>
+            <br>
+            <div>
+                <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
+                  {% for o in obfuscators %}
+                    <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                  {% endfor %}
+              </select>
+            </div>
         </center>
       </div>
       <div id="content">
@@ -381,6 +389,13 @@
         restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
+    function updateObfuscation() {
+        let op_id = $('#operation-list option:selected').attr('value');
+        let newObfuscation = $('#currentObfuscation').val();
+        stream('Changing operation obfuscation to '+newObfuscation);
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+    }
+
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
@@ -418,6 +433,7 @@
             } else {
                 $("#togBtnHil").prop("checked", false);
             }
+            $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
             changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
                 100));

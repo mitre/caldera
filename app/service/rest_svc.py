@@ -208,7 +208,7 @@ class RestService(RestServiceInterface, BaseService):
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
-    async def update_operation(self, op_id, state=None, autonomous=None):
+    async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None):
         async def validate(op):
             try:
                 if not len(op):
@@ -227,6 +227,9 @@ class RestService(RestServiceInterface, BaseService):
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
             self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(operation[0].autonomous)))
+        if obfuscator:
+            operation[0].obfuscator = obfuscator
+            self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
 
     """ PRIVATE """
 
