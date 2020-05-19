@@ -89,7 +89,7 @@ For our planner, no further runtime initialization is required in the ```execute
         await self.planning_svc.exhaust_bucket(self, 'collection', self.operation)
         self.next_bucket = 'discovery'
 
-   async def discovery(self):
+    async def discovery(self):
         await self.planning_svc.exhaust_bucket(self, 'discovery', self.operation)
         lateral_movement_unlocked = bool(len(self.planning_svc.get_links(operation, bucket=['lateral_movement'])))
         if lateral_movement_unlocked:
@@ -107,14 +107,14 @@ Lets look at each of the bucket methods in detail:
 
 ```privilege_escalation()``` - We first use ```get_links()```  from the planning service to retrieve all available links (ability commands) for abilities tagged as _privilege escalation_ , from the set of abilities in the underlying adversary. We then push these links to the agent with ```apply()```. We then wait for these links to complete with ```wait_for_links_completion()```. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was actually successful (Note: this assumes the privilege escalation abilities we are using were modified to create aforementioned facts). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
 
-```persistence()```, ```collection()```, ```lateral_movement()``` - These buckets have no complex logic, we just want to execute all links available and are tagged as for the given bucket. We can just use planning service utility ```exhaust_bucket()``` to apply all links for a given bucket tag and wait for their completion. Before exiting, we set the next bucket as desired.
+```persistence()```, ```collection()```, ```lateral_movement()``` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can also just use planning service utility ```exhaust_bucket()``` to apply all links for a given bucket tag and wait for their completion. Before exiting, we set the next bucket as desired.
 
-```discovery()``` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed _lateral movement_ bucket. We use ```get_links()``` to determine if the _discovery_ links that were just executed ended up unlocking links tagged as _lateral movement_. From there we set the next bucket accordingly. 
+```discovery()``` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use ```get_links()``` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly. 
 
 
 **_Additional Notes on Privileged Persistance Planner_**
 - You may have noticed that the _privileged_persistence_ planner is only notionally more sophisticated than running certain default adversary profiles. This is correct. If you can find or create an adversary profile whose ability enumeration (i.e. order) can carry out your desired operational progression between abilities and can be executed in batch (by the default _batch_ planner) or in a sequentially atomic order (by _atmomic_ planner), it is advised to go that route. However, any decision logic above those simple planners will have to be implemented in a new planner.
-- The _priveleged persistence_ planner did not have explicit logic to handle multiple agents
+- The _privileged persistence_ planner did not have explicit logic to handle multiple agents. We just assumed the planner buckets would only have to handle a single active agent given the available ability links returned from the planning service. 
 
 ## A Minimal Planner
 
