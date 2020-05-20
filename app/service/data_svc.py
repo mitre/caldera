@@ -12,6 +12,7 @@ from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
+from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
@@ -108,6 +109,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_sources(plug)
                 await self._load_planners(plug)
             await self._load_extensions()
+            await self._verify_data_sets()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
 
@@ -287,3 +289,16 @@ class DataService(DataServiceInterface, BaseService):
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
                         existing.cleanup.append(cleanup_command)
+
+    async def _verify_data_sets(self):
+        await self._verify_default_objective_exists()
+        await self._verify_adversary_profiles()
+
+    async def _verify_default_objective_exists(self):
+        if not await self.locate('objectives', match=dict(name='default')):
+            await self.store(Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default', goals=[Goal()]))
+
+    async def _verify_adversary_profiles(self):
+        for adv in await self.locate('adversaries'):
+            if not adv.objective:
+                adv.objective = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
