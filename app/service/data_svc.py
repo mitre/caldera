@@ -170,7 +170,7 @@ class DataService(DataServiceInterface, BaseService):
 
     @staticmethod
     async def _classify(ability, tactic):
-        return ability.pop('buckets', tactic).lower()
+        return ability.pop('buckets', [tactic])
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
