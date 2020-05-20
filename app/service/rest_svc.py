@@ -177,12 +177,13 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
-    async def task_agent_with_ability(self, paw, ability_id, facts=()):
+    async def task_agent_with_ability(self, paw, ability_id, obfuscator, facts=()):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
             links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
+                obfuscator=obfuscator,
                 facts=facts
             )
             new_links.extend(links)

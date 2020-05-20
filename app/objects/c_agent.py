@@ -167,15 +167,16 @@ class Agent(FirstClassObjectInterface, BaseObject):
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
-        await self.task(abilities)
+        await self.task(abilities, obfuscator='plain-text')
 
-    async def task(self, abilities, facts=()):
+    async def task(self, abilities, obfuscator, facts=()):
         bps = BasePlanningService()
         potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i)) for i in await self.capabilities(abilities)]
         links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
             links.append(valid)
+        links = await bps.obfuscate_commands(self, obfuscator, links)
         self.links.extend(links)
         return links
 
