@@ -3,7 +3,6 @@ import os
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.c_objective import ObjectiveSchema
 from app.utility.base_object import BaseObject
 
 
@@ -13,7 +12,7 @@ class AdversarySchema(ma.Schema):
     name = ma.fields.String()
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
-    objective = ma.fields.Nested(ObjectiveSchema)
+    objective = ma.fields.String()
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
