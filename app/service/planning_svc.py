@@ -32,13 +32,16 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if batch:
                 l_ids.append(l_id)
             else:
-                await self._bucket_execute(operation, planner, [l_id], condition_stop)
-                if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+                if self.execute_links(planner, operation, [l_id], condition_stop):
                     return
         if batch:
-            await self._bucket_execute(operation, planner, l_ids, condition_stop)
-            if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+            if self.execute_links(planner, operation, l_ids, condition_stop):
                 return
+
+    async def execute_links(self, planner, operation, link_ids, condition_stop):
+        """Making repeated code available to other planners"""
+        await self._bucket_execute(operation, planner, link_ids, condition_stop)
+        return await self._stop_bucket_exhaustion(planner, operation, condition_stop)
 
     async def default_next_bucket(self, current_bucket, state_machine):
         """
