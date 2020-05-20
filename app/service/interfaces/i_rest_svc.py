@@ -95,7 +95,7 @@ class RestServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def task_agent_with_ability(self, paw, ability_id, facts):
+    def task_agent_with_ability(self, paw, ability_id, obfuscator, facts):
         pass
 
     @abc.abstractmethod
