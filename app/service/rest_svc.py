@@ -223,7 +223,7 @@ class RestService(RestServiceInterface, BaseService):
         if state:
             await validate(operation)
             operation[0].state = state
-            operation[0].finish = datetime.now()
+            operation[0].finish = self.get_current_timestamp()
             self.log.debug('Changing operation=%s state to %s' % (op_id, state))
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
