@@ -63,7 +63,10 @@ profile variable. You can prove this by
 echo $profile
 ```
 
-To resolve this error, you'll need to look at your operating system's base64 man page - or search online.
+To resolve this error, simply change the line to (note the only difference is '-w 0'):
+```
+profile=$(echo '{"server":"http://127.0.0.1:8888","platform":"darwin","executors":["sh"]}' | base64 -w 0)
+```
 
 > The paw property returned back from the server represents a unique identifier for your new agent. Each
 time you call the /beacon endpoint without this paw, a new agent will be created on the server - so you should ensure
