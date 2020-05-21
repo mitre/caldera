@@ -4,7 +4,7 @@ import glob
 import os
 import pathlib
 import uuid
-from datetime import time
+from datetime import time, datetime
 
 import yaml
 from aiohttp import web
@@ -13,7 +13,6 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-# from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -178,12 +177,13 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
-    async def task_agent_with_ability(self, paw, ability_id, facts=()):
+    async def task_agent_with_ability(self, paw, ability_id, obfuscator, facts=()):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
             links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
+                obfuscator=obfuscator,
                 facts=facts
             )
             new_links.extend(links)
@@ -208,7 +208,7 @@ class RestService(RestServiceInterface, BaseService):
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
-    async def update_operation(self, op_id, state=None, autonomous=None):
+    async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None):
         async def validate(op):
             try:
                 if not len(op):
@@ -223,10 +223,14 @@ class RestService(RestServiceInterface, BaseService):
         if state:
             await validate(operation)
             operation[0].state = state
+            operation[0].finish = datetime.now()
             self.log.debug('Changing operation=%s state to %s' % (op_id, state))
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
-            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(operation[0].autonomous)))
+        if obfuscator:
+            operation[0].obfuscator = obfuscator
+            self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
 
     """ PRIVATE """
 
@@ -306,6 +310,9 @@ class RestService(RestServiceInterface, BaseService):
                                           await self.get_service('data_svc').locate('abilities',
                                                                                     match=dict(ability_id=ab_id))
                                           if not ab.hidden]
+                adv['objective'] = [ab.display for ab in
+                                    await self.get_service('data_svc').locate('objectives',
+                                                                              match=dict(id=adv['objective']))][0]
         return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):

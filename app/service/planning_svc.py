@@ -69,7 +69,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             await getattr(planner, planner.next_bucket)()
             await self.update_stopping_condition_met(planner, planner.operation)
 
-    async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None, stopping_conditions=None):
+    async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None):
         """
         For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
@@ -81,7 +81,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param agent:
         :param trim: call trim_links() on list of links before returning
         :param planner:
-        :param stopping_conditions:
         :return: a list of links
         """
         ao = operation.adversary.atomic_ordering

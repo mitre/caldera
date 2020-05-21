@@ -133,8 +133,8 @@
             <br>
             <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
             <br><br>
-            <div id="myProgress" style="text-align: left">
-              <div id="myBar">0%</div>
+            <div id="operationProgress" style="text-align: left">
+              <div id="operationProgressBar">0%</div>
             </div>
             <br>
             <table class="legend">
@@ -149,6 +149,14 @@
                   <td class="visibility">visible</td>
               </tr>
             </table>
+            <br>
+            <div>
+                <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
+                  {% for o in obfuscators %}
+                    <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                  {% endfor %}
+              </select>
+            </div>
         </center>
       </div>
       <div id="content">
@@ -313,8 +321,22 @@
     }
 
     function deleteOperation(){
-        let data = {'index': 'operations', 'id': parseInt($('#operation-list option:selected').attr('value'))};
-        restRequest('DELETE', data, window.location.reload());
+        function deleteCallback(data){
+            // Remove operation from main view
+            $('.op-selected').css('visibility', 'hidden');
+            
+            // Remove operation from sidebar dropdown
+            $('#operation-list option[value="' + operation_id + '"]').remove();
+            $('#operationDefault').prop('selected', true);
+
+            // Change sidebar button color
+            checkOpBtns();
+
+            stream(data);
+        }
+        let operation_id = parseInt($('#operation-list option:selected').attr('value'));
+        let data = {'index': 'operations', 'id': operation_id};
+        restRequest('DELETE', data, deleteCallback);
     }
 
     function handleScheduleAction(){
@@ -367,6 +389,13 @@
         restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
+    function updateObfuscation() {
+        let op_id = $('#operation-list option:selected').attr('value');
+        let newObfuscation = $('#currentObfuscation').val();
+        stream('Changing operation obfuscation to '+newObfuscation);
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+    }
+
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
@@ -404,6 +433,7 @@
             } else {
                 $("#togBtnHil").prop("checked", false);
             }
+            $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
             changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
                 100));
@@ -621,17 +651,22 @@
     }
 
     function changeProgress(finish, percent) {
-        if(percent >= 100) {
-            percent = 100;
-            if(!finish) {
-                percent = 99;
+        // Calculate percentage
+        if (percent >= 100) {
+            if (finish) {
+                percent = 100;
+            } else {
+                    percent = 99;
             }
+        } else if (isNaN(percent)) {
+            percent = 0;
         }
-        let elem = document.getElementById("myBar");
-        elem.style.width = percent + "%";
-        elem.innerHTML = percent + "%";
-    }
 
+        // Set progress bar
+        $('.operationProgressBar').width(percent + '%');
+        $('.operationProgressBar').html(percent + '%');
+    }
+    
     function resetMoreModal() {
         let modal = $('#more-modal');
         modal.hide();

@@ -8,9 +8,11 @@ from base64 import b64encode
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
+from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
@@ -24,14 +26,14 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     try:
@@ -100,12 +102,14 @@ class DataService(DataServiceInterface, BaseService):
             for plug in plugins:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
+                await self._load_objectives(plug)
             await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
             await self._load_extensions()
+            await self._verify_data_sets()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
 
@@ -132,7 +136,7 @@ class DataService(DataServiceInterface, BaseService):
                     repeatable = ab.pop('repeatable', False)
                     requirements = ab.pop('requirements', [])
                     hidden = ab.pop('hidden', False)
-                    for platforms, executors in ab.pop('platforms', []).items():
+                    for platforms, executors in ab.pop('platforms', dict()).items():
                         for name, info in executors.items():
                             encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
                                 'command') else None
@@ -170,7 +174,7 @@ class DataService(DataServiceInterface, BaseService):
 
     @staticmethod
     async def _classify(ability, tactic):
-        return ability.pop('buckets', tactic).lower()
+        return ability.pop('buckets', [tactic])
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -178,6 +182,13 @@ class DataService(DataServiceInterface, BaseService):
                 source = Source.load(src)
                 source.access = plugin.access
                 await self.store(source)
+
+    async def _load_objectives(self, plugin):
+        for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
+            for src in self.strip_yml(filename):
+                objective = Objective.load(src)
+                objective.access = plugin.access
+                await self.store(objective)
 
     async def _load_payloads(self, plugin):
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
@@ -280,3 +291,16 @@ class DataService(DataServiceInterface, BaseService):
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
                         existing.cleanup.append(cleanup_command)
+
+    async def _verify_data_sets(self):
+        await self._verify_default_objective_exists()
+        await self._verify_adversary_profiles()
+
+    async def _verify_default_objective_exists(self):
+        if not await self.locate('objectives', match=dict(name='default')):
+            await self.store(Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default', goals=[Goal()]))
+
+    async def _verify_adversary_profiles(self):
+        for adv in await self.locate('adversaries'):
+            if not adv.objective:
+                adv.objective = '495a9828-cab1-44dd-a0ca-66e58177d8cc'

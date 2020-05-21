@@ -13,6 +13,7 @@ class AdversarySchema(ma.Schema):
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
     hidden = ma.fields.Boolean()
+    objective = ma.fields.String()
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -45,12 +46,13 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, adversary_id, name, description, atomic_ordering, hidden=False):
+    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None, hidden=False):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
+        self.objective = objective
         self.hidden = hidden
 
     def store(self, ram):
@@ -61,6 +63,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('name', self.name)
         existing.update('description', self.description)
         existing.update('atomic_ordering', self.atomic_ordering)
+        existing.update('objective', self.objective)
         return existing
 
     def has_ability(self, ability):

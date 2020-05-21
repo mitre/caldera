@@ -34,7 +34,7 @@ class AgentFieldsSchema(ma.Schema):
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
-    proxy_receivers = ma.fields.List(ma.fields.List(ma.fields.String()))
+    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -93,7 +93,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.contact = contact
         self.links = []
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
-        self.proxy_receivers = proxy_receivers if proxy_receivers else []
+        self.proxy_receivers = proxy_receivers if proxy_receivers else dict()
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -167,15 +167,16 @@ class Agent(FirstClassObjectInterface, BaseObject):
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 abilities.append(a)
-        await self.task(abilities)
+        await self.task(abilities, obfuscator='plain-text')
 
-    async def task(self, abilities, facts=()):
+    async def task(self, abilities, obfuscator, facts=()):
         bps = BasePlanningService()
         potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i)) for i in await self.capabilities(abilities)]
         links = []
         for valid in await bps.remove_links_missing_facts(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
             links.append(valid)
+        links = await bps.obfuscate_commands(self, obfuscator, links)
         self.links.extend(links)
         return links
 

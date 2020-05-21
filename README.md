@@ -57,10 +57,10 @@ pip install -r requirements.txt
 
 Finally, start the server. 
 ```Bash
-python server.py --fresh --insecure
+python server.py --insecure
 ```
 
-> There is also a [Docker image](https://caldera.readthedocs.io/en/latest/Docker-deployment.html) for CALDERA.
+Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
 
 ## Video tutorial
 

@@ -4,7 +4,7 @@ import string
 import uuid
 import yaml
 
-
+from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
@@ -91,7 +91,7 @@ def adversary():
             description = "description"
         if not phases:
             phases = dict()
-        return Adversary(adversary_id=adversary_id, name=name, description=description, phases=phases)
+        return Adversary(adversary_id=adversary_id, name=name, description=description, atomic_ordering=phases)
 
     return _generate_adversary
 
@@ -120,6 +120,16 @@ def operation():
 def demo_operation(loop, data_svc, operation, adversary):
     tadversary = loop.run_until_complete(data_svc.store(adversary()))
     return operation(name='my first op', agents=[], adversary=tadversary)
+
+
+@pytest.fixture
+def obfuscator(loop, data_svc):
+    loop.run_until_complete(data_svc.store(
+        Obfuscator(name='plain-text',
+                   description='Does no obfuscation to any command, instead running it in plain text',
+                   module='plugins.stockpile.app.obfuscators.plain_text')
+        )
+    )
 
 
 @pytest.fixture
