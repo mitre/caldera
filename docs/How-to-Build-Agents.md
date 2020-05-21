@@ -37,6 +37,7 @@ won't know which ones are valid to send.
 * **server**: The location (IP or FQDN) of the C2 server  
 * **platform**: The operating system
 * **host**: The hostname of the machine
+* **group**: Either red or blue. This determines if your agent will be used as a red or blue agent.
 * **username**: The username running the agent
 * **architecture**: The architecture of the host
 * **executors**: A list of executors allowed on the host
@@ -55,6 +56,14 @@ profile=$(echo '{"server":"http://127.0.0.1:8888","platform":"darwin","executors
 curl -s -X POST -d $profile localhost:8888/beacon | base64 --decode
 ...{"paw": "dcoify", sleep": 59, "watchdog": 0, "instructions": "[...]"}
 ```
+
+If you get a malformed base64 error, that means the operating system you are using is adding an empty space to the 
+profile variable. You can prove this by 
+```
+echo $profile
+```
+
+To resolve this error, you'll need to look at your operating system's base64 man page - or search online.
 
 > The paw property returned back from the server represents a unique identifier for your new agent. Each
 time you call the /beacon endpoint without this paw, a new agent will be created on the server - so you should ensure
