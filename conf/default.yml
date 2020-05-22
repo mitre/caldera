@@ -19,6 +19,7 @@ plugins:
 - gameboard
 - training
 - access
+- atomic
 port: 8888
 reports_dir: /tmp
 requirements:
