@@ -48,15 +48,6 @@
     text-align: center;
     color: var(--font-color);
 }
-.version {
-    height: 17px;
-    border-radius: 10px;
-    background-color: green;
-    text-align: center;
-    line-height: 17px;
-    color: white;
-    padding: 5px;
-}
 .footer {
    position: fixed;
    left: 0;
