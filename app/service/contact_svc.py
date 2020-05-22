@@ -76,6 +76,14 @@ class ContactService(ContactServiceInterface, BaseService):
                 if result.output:
                     link.output = True
                     self.get_service('file_svc').write_result_file(result.id, result.output)
+
+                    # check if the ability has any applicable post processing hooks
+                    if link.ability.HOOKS:
+                        if link.ability.executor in link.ability.HOOKS:
+                            processed_output = await link.ability.HOOKS[link.ability.executor].postprocess(result.output)
+                            if processed_output:
+                                # replace result's output with post-processed output
+                                result.output = processed_output
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.ability.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
@@ -90,6 +98,9 @@ class ContactService(ContactServiceInterface, BaseService):
                 self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
+
+    async def _postprocess_link_result(self, result, ability):
+        pass
 
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()
