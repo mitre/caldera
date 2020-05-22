@@ -18,14 +18,11 @@
     </div>
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <br><br>
+        <br>
         <center>
-            {% if errors|length > 0 %}
-              <a onclick="display_errors({{ errors }})"><div class="version" style="background:red">{{ version }}</div></a>
-            {% else %}
-              <a onclick="display_errors([])"><div class="version">{{ version }}</div></a>
-            {% endif %}
+            <img src="/gui/img/back-red.png"/>
         </center>
+        <br>
         <div class="nav-header">
             <p>Protection</p>
         </div>
@@ -35,6 +32,7 @@
         <div class="nav-header">
             <p>Administrative</p>
         </div>
+        <a onclick="display_errors({{ errors }})">Startup errors</a>
         <a href="/docs/index.html" target="_blank">Docs</a>
         <a href="/logout">Log out</a>
         <div class="nav-header">
