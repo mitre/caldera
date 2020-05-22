@@ -19,6 +19,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 Examples include agents, GUI interfaces, collections of TTPs and more. 
 
 ## Plugins
+
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
@@ -67,6 +68,7 @@ Once started, you should log into http://localhost:8888 using the credentials re
 Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
 
 ## Contributing
+
 Refer to our [contributor documentation](CONTRIBUTING.md).
 
 ## Licensing
