@@ -33,7 +33,7 @@
 }
 .sidenav img {
   height: 80px;
-  border-radius: 30%;
+  border-radius: 45%;
 }
 @media screen and (max-height: 450px) {
   .sidenav {padding-top: 5px;}
@@ -47,15 +47,6 @@
     padding: 1px;
     text-align: center;
     color: var(--font-color);
-}
-.version {
-    height: 17px;
-    border-radius: 10px;
-    background-color: green;
-    text-align: center;
-    line-height: 17px;
-    color: white;
-    padding: 5px;
 }
 .footer {
    position: fixed;

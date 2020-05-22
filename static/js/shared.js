@@ -158,12 +158,11 @@ function display_errors(errors){
     }
     document.getElementById("list-modal").style.display="block";
     $("#info-list").empty();
-    if(errors.length > 0){
-        for(var id in errors){
-            add_element(errors[id].name + ": " + errors[id].msg, 1);
-        }
-    } else {
+    if(errors.length === 0) {
         add_element("no errors to view", 0);
+    }
+    for(let id in errors){
+        add_element(errors[id].name + ": " + errors[id].msg, 1);
     }
 }
 
