@@ -1,6 +1,6 @@
 tox
-pytest
-pytest-aiohttp
+pytest==5.4.2
+pytest-aiohttp==0.3.0
 coverage
 pre-commit
 safety

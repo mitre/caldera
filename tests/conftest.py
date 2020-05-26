@@ -55,7 +55,6 @@ def rest_svc():
     as the test. This mitigates the issue where the service's calls to `asyncio.get_event_loop`
     would result in a RuntimeError indicating that there is no currentevent loop in the main
     thread.
-    :param loop: Test's event loop (from the `loop` fixture)
     """
     async def _init_rest_svc():
         return RestService()
@@ -86,7 +85,7 @@ def adversary():
         if not adversary_id:
             adversary_id = uuid.uuid4()
         if not name:
-            name = ''.join(random.choice(string.ascii_uppercase) for x in range(10))
+            name = ''.join(random.choice(string.ascii_uppercase) for _ in range(10))
         if not description:
             description = "description"
         if not phases:
@@ -151,9 +150,9 @@ def link():
 @pytest.fixture
 def demo_plugin():
     def _generate_plugin(enabled=False, gui=False, data_dir=None, access=None):
-        name = ''.join(random.choice(string.ascii_lowercase) for x in range(10))
-        description = 'this is a good description'
+        name = ''.join(random.choice(string.ascii_lowercase) for _ in range(10))
+        desc = 'this is a good description'
         address = '/plugin/%s/gui' % name if gui else None
-        return Plugin(name=name, description=description, address=address, enabled=enabled, data_dir=data_dir, access=access)
+        return Plugin(name=name, description=desc, address=address, enabled=enabled, data_dir=data_dir, access=access)
 
     return _generate_plugin
