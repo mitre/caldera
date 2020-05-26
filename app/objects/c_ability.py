@@ -13,31 +13,33 @@ from app.utility.base_world import AccessSchema
 
 class AbilitySchema(ma.Schema):
     ability_id = ma.fields.String()
-    tactic = ma.fields.String()
-    technique_name = ma.fields.String()
-    technique_id = ma.fields.String()
-    name = ma.fields.String()
-    description = ma.fields.String()
-    cleanup = ma.fields.List(ma.fields.String())
-    executor = ma.fields.String()
-    platform = ma.fields.String()
-    payloads = ma.fields.List(ma.fields.String())
-    parsers = ma.fields.List(ma.fields.Nested(ParserSchema))
-    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema))
-    privilege = ma.fields.String()
-    timeout = ma.fields.Int()
-    repeatable = ma.fields.Bool()
-    language = ma.fields.String()
-    code = ma.fields.String()
-    build_target = ma.fields.String()
-    variations = ma.fields.List(ma.fields.Nested(VariationSchema))
-    buckets = ma.fields.List(ma.fields.String())
+    tactic = ma.fields.String(missing=None)
+    technique_name = ma.fields.String(missing=None)
+    technique_id = ma.fields.String(missing=None)
+    name = ma.fields.String(missing=None)
+    description = ma.fields.String(missing=None)
+    cleanup = ma.fields.List(ma.fields.String(), missing=None)
+    executor = ma.fields.String(missing=None)
+    platform = ma.fields.String(missing=None)
+    payloads = ma.fields.List(ma.fields.String(), missing=None)
+    parsers = ma.fields.List(ma.fields.Nested(ParserSchema), missing=None)
+    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
+    privilege = ma.fields.String(missing=None)
+    timeout = ma.fields.Int(missing=60)
+    repeatable = ma.fields.Bool(missing=None)
+    language = ma.fields.String(missing=None)
+    code = ma.fields.String(missing=None)
+    build_target = ma.fields.String(missing=None)
+    variations = ma.fields.List(ma.fields.Nested(VariationSchema), missing=None)
+    buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema)
-    test = ma.fields.String()
+    access = ma.fields.Nested(AccessSchema, missing=None)
+    test = ma.fields.String(missing=None)
 
     @ma.post_load
     def build_ability(self, data, **_):
+        if 'technique_name' in data:
+            data['technique'] = data.pop('technique_name')
         return Ability(**data)
 
 
@@ -85,8 +87,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.language = language
         self.code = code
         self.build_target = build_target
-        self.variations = [Variation.load(dict(description=v['description'], command=v['command'])) for v in variations] if variations else []
-        self.buckets = buckets
+        self.variations = get_variations(variations)
+        self.buckets = buckets if buckets else []
         if access:
             self.access = self.Access(access)
         self.additional_info = dict()
@@ -129,3 +131,17 @@ class Ability(FirstClassObjectInterface, BaseObject):
     async def add_bucket(self, bucket):
         if bucket not in self.buckets:
             self.buckets.append(bucket)
+
+
+def get_variations(data):
+    variations = []
+    if data:
+        for v in data:
+            if isinstance(v, Variation):
+                description = v.description
+                command = v.command
+            else:
+                description = v['description']
+                command = v['command']
+            variations.append(Variation.load(dict(description=description, command=command)))
+    return variations
