@@ -84,26 +84,45 @@
                                 <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
                             </tr>
                         </table>
+
                     </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/recycle.png">
-                            <p style="color:white;text-align: center;" onclick="freshId()">generate new id</p>
+                    <div class="column" style="flex:40%">
+                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/recycle.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/executor.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/payload.png">
+                                    <form id="uploadPayloadForm">
+                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
+                                       <input type="file" id="uploadPayloadFile" style="display: none">
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/additional-fields.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/executor.png">
-                            <p style="color:white;text-align: center;" onclick="addExecutorBlock()">add executor</p>
-                        </div>
-                    </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/payload.png">
-                            <form id="uploadPayloadForm">
-                               <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
-                               <input type="file" id="uploadPayloadFile" style="display: none">
-                            </form>
+                        <br>
+                        <div id="ability-additional-info" style="display: flex">
+                            <div style="flex: 15%; display: flex; justify-content: center; align-items: center;"><b>Info:</b></div>
+                            <table id="additional-info-table" frame=void rules=rows style="flex:85%">
+                                <tbody>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <br><br>
@@ -112,9 +131,6 @@
                 <div style="float:right;">
                     <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
                     <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
-                    <div id="ability-flashy-holder">
-                        <span id="message"></span>
-                    </div>
                 </div>
             </div>
             <div class="imgcontainer">
@@ -173,6 +189,17 @@
         </div>
     </form>
 </div>
+
+<table id="additional-info-row-template-holder" style="display:none">
+    <tr id="additional-info-template">
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key"></td>
+        <td><b>:</b></td>
+        <td><input type="text" class="additional-value" placeholder="value"></td>
+        <td><div class="ability-remove">
+            <div style="font-size:8px;">&#x274C;</div>
+        </div></td>
+    </tr>
+</table>
 
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
@@ -300,6 +327,14 @@
             }
             platforms[platform][executor] = ex;
         });
+        $('#ability-additional-info').find('#additional-info-table tr').each(function() {
+            let key = $(this).find('.additional-key').val();
+            if (key !== '' && !(key in data)){
+                data[key] = $(this).find('.additional-value').val();
+            } else {
+                invalid = true;
+            }
+        });
         if(invalid) {
             alert('Missing required data!');
             return;
@@ -315,7 +350,6 @@
     }
 
     function saveAbilityCallback(data) {
-        stream('Ability saved!');
         let options = $('#phase-modal').find('#ability-ability-filter');
         let ability = options.find(":selected").data('ability');
         if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
@@ -334,6 +368,7 @@
             exploits[$to_replace] = data[0];
             loadAdversary();
         }
+        alert('Ability saved!');
     }
 
     function removeBlock(element){
@@ -520,6 +555,8 @@
         $('#ability-name').val('');
         $('#ability-description').val('');
         $('#ttp-tests').empty();
+        $('#ability-additional-info').find('#additional-info-table').empty();
+        $('#ability-additional-info').hide();
 
         let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
         $('#ability-identifier').val(aid.ability_id);
@@ -528,6 +565,16 @@
         $('#ability-tactic-name').val(aid.tactic);
         $('#ability-tech-id').val(aid.technique_id);
         $('#ability-tech-name').val(aid.technique_name);
+
+        if (Object.keys(aid.additional_info).length > 0) {
+            $.each(aid.additional_info, function(key, value) {
+                let $table_row = addAdditionalInfo();
+                $table_row.find(".additional-key").val(key);
+                $table_row.find(".additional-value").val(value);
+            });
+            $('#ability-additional-info').show();
+        }
+
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();
@@ -559,6 +606,19 @@
             selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
             selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
             keepOrder: true });
+    }
+
+    function addAdditionalInfo(){
+        let $table_row = $('#additional-info-row-template-holder').find('#additional-info-template').clone();
+        $('#ability-additional-info').find('#additional-info-table').append($table_row);
+        $('#ability-additional-info').show();
+        $table_row.find('.ability-remove').click(function(){
+            if ($('#additional-info-table tr').length == 1){
+                $('#ability-additional-info').hide();
+            }
+            $(this).parent().parent().remove();
+        });
+        return $table_row;
     }
 
     function showPhaseModal(phase) {

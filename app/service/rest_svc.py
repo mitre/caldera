@@ -4,7 +4,7 @@ import glob
 import os
 import pathlib
 import uuid
-from datetime import time, datetime
+from datetime import time
 
 import yaml
 from aiohttp import web
