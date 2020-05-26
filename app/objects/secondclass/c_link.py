@@ -5,7 +5,7 @@ from importlib import import_module
 
 import marshmallow as ma
 
-from app.objects.c_ability import Ability
+from app.objects.c_ability import Ability, AbilitySchema
 from app.objects.secondclass.c_fact import Fact, FactSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
@@ -29,13 +29,18 @@ class LinkSchema(ma.Schema):
     unique = ma.fields.String()
     collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
     finish = ma.fields.String()
-    # temp - replace with Nested(AbilitySchema)
-    ability = ma.fields.Function(lambda obj: obj.ability.display,
-                                 lambda obj: obj if isinstance(obj, Ability) else Ability.load(obj))
+    ability = ma.fields.Nested(AbilitySchema())
     cleanup = ma.fields.Integer(missing=0)
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
+
+    @ma.pre_load()
+    def fix_ability(self, link, **_):
+        if 'ability' in link and isinstance(link['ability'], Ability):
+            link_input = link.pop('ability')
+            link['ability'] = link_input.schema.dump(link_input)
+        return link
 
     @ma.post_load()
     def build_link(self, data, **_):
