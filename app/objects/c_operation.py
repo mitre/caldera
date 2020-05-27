@@ -14,8 +14,7 @@ import marshmallow as ma
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
 from app.objects.c_planner import PlannerSchema
-from app.objects.c_objective import ObjectiveSchema, Objective
-from app.objects.secondclass.c_goal import Goal
+from app.objects.c_objective import ObjectiveSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
@@ -217,11 +216,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def run(self, services):
         # load objective
-        if self.adversary.objective is not None:
-            obj = await services.get('data_svc').locate('objectives', match=dict(id=self.adversary.objective))
-            self.objective = deepcopy(obj[0])
-        else:
-            self.objective = Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default', goals=[Goal()])
+        obj = await services.get('data_svc').locate('objectives', match=dict(id=self.adversary.objective))
+        if obj == []:
+            obj = await services.get('data_svc').locate('objectives', match=dict(name='default'))
+        self.objective = deepcopy(obj[0])
         try:
             # Operation cedes control to planner
             planner = await self._get_planning_module(services)
