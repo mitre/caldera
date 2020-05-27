@@ -3,6 +3,7 @@ import logging
 import re
 import uuid
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 from enum import Enum
 from importlib import import_module
@@ -13,6 +14,7 @@ import marshmallow as ma
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
 from app.objects.c_planner import PlannerSchema
+from app.objects.c_objective import ObjectiveSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 
@@ -31,6 +33,7 @@ class OperationSchema(ma.Schema):
     chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
+    objective = ma.fields.Nested(ObjectiveSchema())
 
     @ma.post_load
     def build_planner(self, data, **_):
@@ -72,6 +75,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.obfuscator = obfuscator
         self.auto_close = auto_close
         self.visibility = visibility
+        self.objective = None
         self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
         if source:
@@ -160,7 +164,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     async def is_finished(self):
-        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
+        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']] \
+                or self.objective.completed(self.all_facts()):
             return True
         return False
 
@@ -182,7 +187,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
             report = dict(name=self.name, host_group=[a.display for a in self.agents],
                           start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                           steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
-                          jitter=self.jitter, facts=[f.display for f in self.all_facts()])
+                          jitter=self.jitter, objectives=self.objective.display,
+                          facts=[f.display for f in self.all_facts()])
             agents_steps = {a.paw: {'steps': []} for a in self.agents}
             for step in self.chain:
                 step_report = dict(ability_id=step.ability.ability_id,
@@ -209,6 +215,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
             logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
 
     async def run(self, services):
+        # load objective
+        obj = await services.get('data_svc').locate('objectives', match=dict(id=self.adversary.objective))
+        if obj == []:
+            obj = await services.get('data_svc').locate('objectives', match=dict(name='default'))
+        self.objective = deepcopy(obj[0])
         try:
             # Operation cedes control to planner
             planner = await self._get_planning_module(services)
