@@ -29,7 +29,7 @@ class AppServiceInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def run_scheduler(self, identifier):
+    def run_scheduler(self):
         """
         Kick off all scheduled jobs, as their schedule determines
         :return:

@@ -49,7 +49,7 @@ class Plugin(FirstClassObjectInterface, BaseObject):
             existing.update('enabled', self.enabled)
         return existing
 
-    async def load_plugin(self):
+    def load_plugin(self):
         try:
             plugin = self._load_module()
             self.description = plugin.description
@@ -58,7 +58,7 @@ class Plugin(FirstClassObjectInterface, BaseObject):
             return True
         except Exception as e:
             logging.error('Error loading plugin=%s, %s' % (self.name, e))
-            return True
+            return False
 
     async def enable(self, services):
         try:
