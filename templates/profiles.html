@@ -145,6 +145,13 @@
         <div class="grid" id="grid">
         </div>
     </center>
+    <hr>
+     <select id="objective-existing">
+        <option value="" disabled selected>Select an Objective</option>
+            {% for obj in objectives %}
+                <option id="objective-{{ obj.id }}" value="{{ obj.id }}">{{ obj.name }}</option>
+            {% endfor %}}
+     </select>
 </div>
 
 <div id="ability-template" class="ability-box" style="display: none">
@@ -279,13 +286,14 @@
         let description = $('#profile-description').val();
         if(!description){ warn('Please enter a description!'); return; }
 
+        let objective = $('#objective-existing')[0].value;
         let abilities = [];
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
         console.log(abilities);
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'i': identifier}, saveAdversaryCallback);
+            'i': identifier,"objective":objective}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -402,7 +410,9 @@
 
         $('.tempPhase').remove();
         $('.phase-headers').remove();
+        console.log(data[0]);
         loadAtomicOrder(data[0].atomic_ordering);
+        $('#objective-existing')[0].value = data[0].objective.id;
     }
 
     function createMuuriGrid() {
