@@ -76,16 +76,12 @@ class ContactService(ContactServiceInterface, BaseService):
                 link.status = int(result.status)
                 if result.output:
                     link.output = True
-                    self.get_service('file_svc').write_result_file(result.id, result.output)
-
                     # check if the ability has any applicable post processing hooks
-                    if link.ability.HOOKS:
-                        if link.ability.executor in link.ability.HOOKS:
-                            processed_output = await self._postprocess_link_result(result.output, link.ability)
-                            if processed_output:
-                                # replace result's output with post-processed output
-                                result.output = processed_output
-
+                    if link.ability.HOOKS and link.ability.executor in link.ability.HOOKS:
+                        processed_output = await self._postprocess_link_result(result.output, link.ability)
+                        if processed_output:
+                            result.output = processed_output
+                    self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.ability.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
@@ -102,9 +98,10 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug('save_results exception: %s' % e)
 
     async def _postprocess_link_result(self, result, ability):
-        blob = b64decode(result).decode('utf-8')
-        processed_output = await ability.HOOKS[ability.executor].postprocess(blob)
-        return b64encode(processed_output).encode('utf-8')
+        try:
+            return str(b64encode((await ability.HOOKS[ability.executor].postprocess(b64decode(result))).encode('utf-8')), 'utf-8')
+        except Exception as e:
+            self.log.error("Unable to postprocess link result. Error: %s" % str(e))
 
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()
