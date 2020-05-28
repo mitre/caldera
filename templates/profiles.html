@@ -56,7 +56,7 @@
                 </select>
                 <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
                 <br><br>
-                <div class="ability-attack row-simple">
+                <div id="ability-manager" class="ability-attack row-simple">
                     <div class="column" style="flex:60%">
                         <table frame=void rules=rows style="border-spacing:2px;width:100%">
                             <tr>
@@ -129,7 +129,7 @@
                 </div>
                 <ul id="ttp-tests"></ul>
                 <div style="float:right;">
-                    <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
+                    <button id="ability-save" type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
                     <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
                 </div>
             </div>
@@ -246,6 +246,10 @@
             <td style="width:10%"><b>cleanup:</b></td>
             <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
         </tr>
+        <tr>
+            <td style="width:10%"><b>timeout:</b></td>
+            <td><textarea id="ability-timeout" spellcheck="false" contenteditable="true" placeholder="Enter number of seconds to timeout this command (optional)"></textarea></td>
+        </tr>
     </table>
     <br>
 </li>
@@ -314,6 +318,7 @@
             let command = $(this).find('#ability-command').val();
             let payloads = $(this).find('#ability-payload').val();
             let cleanup = $(this).find('#ability-cleanup').val();
+            let timeout = $(this).find('#ability-timeout').val();
 
             if(!command || !executor || !platform) {
                 invalid = true;
@@ -324,6 +329,9 @@
             }
             if(cleanup) {
                 ex['cleanup'] = cleanup;
+            }
+            if(timeout) {
+                ex['timeout'] = parseInt(timeout);
             }
             platforms[platform][executor] = ex;
         });
@@ -346,6 +354,7 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
+        $('#ability-save').text('WAIT...');
         restRequest('PUT', data, saveAbilityCallback);
     }
 
@@ -582,6 +591,7 @@
                 template.find('#ability-platform').val(ability.platform);
                 template.find('#ability-executor').val(ability.executor);
                 template.find('#ability-command').val(atob(ability.test));
+                template.find('#ability-timeout').val(ability.timeout);
                 if(ability.cleanup[0]) {
                     template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
                 }

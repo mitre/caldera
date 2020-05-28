@@ -92,6 +92,46 @@ class DataService(DataServiceInterface, BaseService):
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
 
+    async def load_ability_file(self, filename, access):
+        for entries in self.strip_yml(filename):
+            for ab in entries:
+                if ab.get('tactic') and ab.get('tactic') not in filename:
+                    self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                technique_name = ab.get('technique', dict()).get('name')
+                technique_id = ab.pop('technique', dict()).get('attack_id')
+                ability_id = ab.pop('id', None)
+                tactic = ab.pop('tactic', None)
+                description = ab.pop('description', '')
+                ability_name = ab.pop('name', '')
+                privilege = ab.pop('privilege', None)
+                repeatable = ab.pop('repeatable', False)
+                requirements = ab.pop('requirements', [])
+                for platforms, executors in ab.pop('platforms', dict()).items():
+                    for name, info in executors.items():
+                        encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
+                            'command') else None
+                        cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                            'cleanup') else None
+                        encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                        payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                        for e in name.split(','):
+                            for pl in platforms.split(','):
+                                a = await self._create_ability(ability_id=ability_id, tactic=tactic,
+                                                               technique_name=technique_name,
+                                                               technique_id=technique_id, test=encoded_test,
+                                                               description=description, executor=e,
+                                                               name=ability_name, platform=pl,
+                                                               cleanup=cleanup_cmd, code=encoded_code,
+                                                               language=info.get('language'),
+                                                               build_target=info.get('build_target'),
+                                                               payloads=payloads, parsers=info.get('parsers', []),
+                                                               timeout=info.get('timeout', 60),
+                                                               requirements=requirements, privilege=privilege,
+                                                               buckets=await self._classify(ab, tactic),
+                                                               access=access, repeatable=repeatable,
+                                                               variations=info.get('variations', []), **ab)
+                                await self._update_extensions(a)
+
     """ PRIVATE """
 
     async def _load(self, plugins=()):
@@ -122,44 +162,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
-            for entries in self.strip_yml(filename):
-                for ab in entries:
-                    if ab.get('tactic') and ab.get('tactic') not in filename:
-                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
-                    technique_name = ab.get('technique', dict()).get('name')
-                    technique_id = ab.pop('technique', dict()).get('attack_id')
-                    ability_id = ab.pop('id', None)
-                    tactic = ab.pop('tactic', None)
-                    description = ab.pop('description', '')
-                    ability_name = ab.pop('name', '')
-                    privilege = ab.pop('privilege', None)
-                    repeatable = ab.pop('repeatable', False)
-                    requirements = ab.pop('requirements', [])
-                    for platforms, executors in ab.pop('platforms', dict()).items():
-                        for name, info in executors.items():
-                            encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
-                                'command') else None
-                            cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
-                                'cleanup') else None
-                            encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                            payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
-                            for e in name.split(','):
-                                for pl in platforms.split(','):
-                                    a = await self._create_ability(ability_id=ability_id, tactic=tactic,
-                                                                   technique_name=technique_name,
-                                                                   technique_id=technique_id, test=encoded_test,
-                                                                   description=description, executor=e,
-                                                                   name=ability_name, platform=pl,
-                                                                   cleanup=cleanup_cmd, code=encoded_code,
-                                                                   language=info.get('language'),
-                                                                   build_target=info.get('build_target'),
-                                                                   payloads=payloads, parsers=info.get('parsers', []),
-                                                                   timeout=info.get('timeout', 60),
-                                                                   requirements=requirements, privilege=privilege,
-                                                                   buckets=await self._classify(ab, tactic),
-                                                                   access=plugin.access, repeatable=repeatable,
-                                                                   variations=info.get('variations', []), **ab)
-                                    await self._update_extensions(a)
+            asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access))
 
     async def _update_extensions(self, ability):
         for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
