@@ -153,16 +153,17 @@ class AppService(AppServiceInterface, BaseService):
             await p.expand(services=self.get_services())
 
     async def watch_ability_files(self):
+        await asyncio.sleep(int(self.get_config('ability_refresh')))
         plugins = [p for p in await self.get_service('data_svc').locate('plugins', dict(enabled=True)) if p.data_dir]
         plugins.append(Plugin(data_dir='data'))
         while True:
             for p in plugins:
                 files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir) for fle in f if
-                         time.time() - os.stat(os.path.join(rt, fle)).st_mtime < 60)
+                         time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
                 for f in files:
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
-            await asyncio.sleep(60)
+            await asyncio.sleep(int(self.get_config('ability_refresh')))
 
     """ PRIVATE """
 
