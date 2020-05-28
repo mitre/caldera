@@ -10,6 +10,7 @@ class ObjectiveSchema(ma.Schema):
     id = ma.fields.String()
     name = ma.fields.String()
     goals = ma.fields.List(ma.fields.Nested(GoalSchema()))
+    percentage = ma.fields.Float()
 
     @ma.post_load
     def build_objective(self, data, **_):
@@ -26,7 +27,9 @@ class Objective(FirstClassObjectInterface, BaseObject):
 
     @property
     def percentage(self):
-        return 100 * (len([g for g in self.goals if g.satisfied() is True])/len(self.goals))
+        if len(self.goals) > 0:
+            return 100 * (len([g for g in self.goals if g.satisfied() is True])/len(self.goals))
+        return 0
 
     def completed(self, facts=None):
         return not any(x.satisfied(facts) is False for x in self.goals)

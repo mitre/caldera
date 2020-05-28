@@ -435,8 +435,7 @@
             }
             $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
-                100));
+            changeProgress(OPERATION.finish, parseInt(OPERATION.objective.percentage));
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
                 if(OPERATION.chain[i].status === -1) {
@@ -663,8 +662,8 @@
         }
 
         // Set progress bar
-        $('.operationProgressBar').width(percent + '%');
-        $('.operationProgressBar').html(percent + '%');
+        $('#operationProgressBar').width(percent + '%');
+        $('#operationProgressBar').html(percent + '%');
     }
     
     function resetMoreModal() {

@@ -106,7 +106,7 @@ if __name__ == '__main__':
     file_svc = FileSvc()
     learning_svc = LearningService()
     event_svc = EventService()
-    app_svc = AppService(application=web.Application())
+    app_svc = AppService(application=web.Application(client_max_size=5120**2))
 
     if args.fresh:
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())

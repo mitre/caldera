@@ -88,20 +88,27 @@ class AppService(AppServiceInterface, BaseService):
             self.loop.create_task(op.run(self.get_services()))
 
     async def load_plugins(self, plugins):
-        for plug in plugins:
-            if plug.startswith('.'):
-                continue
-            if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
-                exit(0)
-            plugin = Plugin(name=plug)
-            if await plugin.load_plugin():
+        def trim(p):
+            if p.startswith('.'):
+                return False
+            return True
+
+        async def load(p):
+            plugin = Plugin(name=p)
+            if plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.debug('Enabled plugin: %s' % plugin.name)
                 if not plugin.version:
                     self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
+
+        for plug in filter(trim, plugins):
+            if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
+                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
+                exit(0)
+            asyncio.get_event_loop().create_task(load(plug))
+
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
