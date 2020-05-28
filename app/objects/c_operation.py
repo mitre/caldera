@@ -96,7 +96,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.chain.append(link)
 
     def has_link(self, link_id):
-        return any(lnk.id == int(link_id) for lnk in self.potential_links + self.chain)
+        return any(str(lnk.id) == str(link_id) for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
         seeded_facts = [f for f in self.source.facts] if self.source else []
