@@ -165,7 +165,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']] \
-                or self.objective.completed(self.all_facts()):
+                or (self.objective and self.objective.completed(self.all_facts())):
             return True
         return False
 
