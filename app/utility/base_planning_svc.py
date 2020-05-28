@@ -149,11 +149,10 @@ class BasePlanningService(BaseService):
         """
         for req_inst in link.ability.requirements:
             if req_inst.module not in operation.planner.ignore_enforcement_modules:
-                for rel_match in req_inst.relationship_match:
-                    requirements_info = dict(module=req_inst.module, enforcements=rel_match)
-                    requirement = await self.load_module('Requirement', requirements_info)
-                    if not await requirement.enforce(link, operation):
-                        return False
+                requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationship_match[0])
+                requirement = await self.load_module('Requirement', requirements_info)
+                if not await requirement.enforce(link, operation):
+                    return False
         return True
 
     async def _trim_by_limit(self, decoded_test, facts):
