@@ -10,12 +10,13 @@ from aiohttp_jinja2 import template, render_template
 
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
-from app.objects.c_adversary import AdversarySchema
+from app.objects.c_adversary import AdversarySchema, Adversary
+from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
-from app.utility.apispec_utils import CalderaApiDocs, apidocs, response_schema
+from app.utility.apispec_utils import CalderaApiDocs, apidocs, response_schema, PolymorphicSchema
 
 
 class RestApi(BaseWorld):
@@ -30,12 +31,6 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
         self.apidoc_generator = CalderaApiDocs(self.app_svc.application)
-        # self.apispec = apispec.APISpec(
-        #     title='Caldera API',
-        #     version=self.get_version(),
-        #     openapi_version='3.0.2',
-        #     plugins=[CalderaApispecPlugin()]
-        # )
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -88,6 +83,12 @@ class RestApi(BaseWorld):
 
     """ API ENDPOINTS """
 
+    @apidocs(summary='Core path for HTTP API Calls.', methods=['GET', 'POST', 'PUT'],
+             description='Takes many object types as input and outputs many object types.'
+                         'Include an "index" field in the request body to specify which object'
+                         'to perform an operation on.')
+    @response_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
+                                       mapping=dict(adversaries=Adversary, operations=Operation)))
     @check_authorization
     async def rest_core(self, request):
         """

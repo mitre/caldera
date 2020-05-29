@@ -4,14 +4,45 @@ from collections import defaultdict
 import apispec
 import marshmallow as ma
 import yaml
-from apispec.ext.marshmallow import resolver, MarshmallowPlugin
-from apispec import yaml_utils
+from apispec.ext.marshmallow import MarshmallowPlugin
 
 from app.utility.base_world import BaseWorld
 
 
 def recursive_default_dict():
+    """
+    Factory for arbitrarily deeply nested dicts.
+    """
     return defaultdict(recursive_default_dict)
+
+
+class PolymorphicSchema:
+
+    def __init__(self, name, discriminator, mapping):
+        self.name = name
+        self.discriminator = discriminator
+        self.mapping = mapping
+
+    def insert_into_apispec(self, spec_obj: apispec.APISpec):
+        converter = self._get_marshmallow_converter(spec_obj)
+        mapping = dict()
+        for property_name, obj_def in self.mapping.items():
+            if getattr(obj_def, 'display_schema', None):
+                schema = obj_def.display_schema
+            elif getattr(obj_def, 'schema', None):
+                schema = obj_def.schema
+            else:
+                schema = obj_def
+            for ref_path in converter.resolve_nested_schema(schema).values():
+                mapping[property_name] = ref_path
+
+        return dict(discriminator=dict(propertyName=self.discriminator, mapping=mapping))
+
+    @staticmethod
+    def _get_marshmallow_converter(spec: apispec.APISpec) -> MarshmallowPlugin.Converter:
+        for plugin in spec.plugins:
+            if isinstance(plugin, MarshmallowPlugin):
+                return plugin.converter
 
 
 class ApiInfo:
@@ -95,9 +126,9 @@ class CalderaApiDocs(BaseWorld):
             for method in api_info.methods:
                 method = method.lower()
                 if api_info.response_schema:
-                    operations[method]["responses"]["200"]["content"]["application/json"]["schema"] = api_info.response_schema
+                    operations[method]["responses"]["200"]["content"]["application/json"]["schema"] = self._schema_hook(api_info.response_schema)
                 if api_info.request_schema:
-                    operations[method]["requestBody"]["content"]["application/json"]["schema"] = api_info.request_schema
+                    operations[method]["requestBody"]["content"]["application/json"]["schema"] = self._schema_hook(api_info.request_schema)
                 operations[method]["summary"] = api_info.summary
                 operations[method]["description"] = api_info.description
 
@@ -105,6 +136,12 @@ class CalderaApiDocs(BaseWorld):
                               description=api_info.description,
                               path=route.resource.canonical,
                               operations=operations)
+
+    def _schema_hook(self, schema):
+        if isinstance(schema, PolymorphicSchema):
+            return schema.insert_into_apispec(self.apispec)
+        else:
+            return schema
 
 
 class RequestSchema(ma.Schema):
@@ -114,48 +151,3 @@ class RequestSchema(ma.Schema):
 class RequestOperationReport(RequestSchema):
     op_id = ma.fields.String()
     display_results = ma.fields.Bool()
-
-
-class CalderaApispecPlugin(MarshmallowPlugin):
-    """APISpec plugin for Caldera."""
-
-    def init_spec(self, spec: apispec.APISpec):
-        super().init_spec(spec)
-
-        # Automatically add all first class object schemas and create a polymorphic 'discriminator' schema
-        # that references them. REF: https://swagger.io/docs/specification/data-models/inheritance-and-polymorphism/
-        schemas = [name for name in ma.schema.class_registry._registry if
-                   ('app.objects' in name and 'secondclass' not in name and 'Fields' not in name)]
-        schema_names = [resolver(schema) for schema in schemas]
-        # self.converter = OpenAPIConverter(spec.openapi_version, resolver, spec)
-        for schema in schemas:
-            self.converter.resolve_nested_schema(schema)
-        schema_mapping = {name.lower(): '#/components/schemas/%s' % name for name in schema_names}
-        spec.components.schema('CalderaObjects',
-                               component=dict(type='object',
-                                              discriminator=dict(propertyName='index', mapping=schema_mapping)))
-        spec.components.schema('CoreOperationRequest', component=dict(type='object', required=['index', 'op_id'],
-                               properties=(dict(op_id=dict(type='string'),
-                                                index=dict(type='string')))))
-        spec.components.schema('CoreAgentRequest', component=dict(type='object', required=['index'],
-                               properties=(dict(id=dict(type='string'),
-                                                index=dict(type='string')))))
-        request_mapping = dict(operation='#/components/schemas/CoreOperationRequest',
-                               agent='#/components/schemas/CoreAgentRequest',
-                               )
-        spec.components.schema('CoreRequest',
-                               component=dict(type='object',
-                                              discriminator=dict(propertyName='index', mapping=request_mapping)))
-
-    @staticmethod
-    def _get_methods_for_view(route):
-        if route.method == '*':
-            raise NotImplementedError('Cannot infer appropriate methods from aiohttp routes added with "*".')
-        else:
-            return [route.method.lower()]
-
-    def path_helper(self, operations, *, aiohttp_resource, handler, **kwargs):
-        """Path helper that allows passing a aiohttp ReosourceRoute object."""
-        handler_docstring = getattr(handler, 'orig_docstring', handler.__doc__)
-        operations.update(yaml_utils.load_operations_from_docstring(handler_docstring))
-        return aiohttp_resource.resource.canonical
