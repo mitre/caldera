@@ -95,8 +95,7 @@ class ContactService(ContactServiceInterface, BaseService):
 
     async def _postprocess_link_result(self, result, ability):
         if ability.HOOKS and ability.executor in ability.HOOKS:
-            processed_output = self.encode_string(await ability.HOOKS[ability.executor].postprocess(b64decode(result)))
-            return processed_output
+            return self.encode_string(await ability.HOOKS[ability.executor].postprocess(b64decode(result)))
         return result
 
     async def _start_c2_channel(self, contact):
