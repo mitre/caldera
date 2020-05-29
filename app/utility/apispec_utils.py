@@ -23,8 +23,7 @@ class PolymorphicSchema:
     def __init__(self, name, discriminator, mapping):
         """
         The schemas included in mapping can be either marshmallow schemas or
-        caldera objects (subclasses of BaseObject). If objects are used, then
-        the object's display schema will be preferred.
+        caldera objects (subclasses of BaseObject).
         """
         self.name = name
         self.discriminator = discriminator
@@ -39,9 +38,7 @@ class PolymorphicSchema:
         mapping = dict()
         refs = []
         for property_name, obj_def in self.mapping.items():
-            if getattr(obj_def, 'display_schema', None):
-                schema = obj_def.display_schema
-            elif getattr(obj_def, 'schema', None):
+            if getattr(obj_def, 'schema', None):
                 schema = obj_def.schema
             else:
                 schema = obj_def
