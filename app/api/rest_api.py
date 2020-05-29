@@ -4,18 +4,18 @@ import logging
 import os
 import uuid
 
-import apispec
 import marshmallow as ma
 from aiohttp import web
 from aiohttp_jinja2 import template, render_template
 
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
+from app.objects.c_adversary import AdversarySchema
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
-from app.utility.apispec_utils import CalderaApispecPlugin
+from app.utility.apispec_utils import CalderaApiDocs, apidocs, response_schema
 
 
 class RestApi(BaseWorld):
@@ -29,12 +29,13 @@ class RestApi(BaseWorld):
         self.rest_svc = services.get('rest_svc')
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
-        self.apispec = apispec.APISpec(
-            title='Caldera API',
-            version=self.get_version(),
-            openapi_version='3.0.2',
-            plugins=[CalderaApispecPlugin()]
-        )
+        self.apidoc_generator = CalderaApiDocs(self.app_svc.application)
+        # self.apispec = apispec.APISpec(
+        #     title='Caldera API',
+        #     version=self.get_version(),
+        #     openapi_version='3.0.2',
+        #     plugins=[CalderaApispecPlugin()]
+        # )
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
@@ -50,9 +51,11 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         self.app_svc.application.router.add_route('GET', '/caldera_spec.yaml', self.swagger_spec)
         # authorized API endpoints
-        rest_route = self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
-        self.apispec.path(aiohttp_resource=rest_route, handler=self.rest_core)
-        print(self.apispec.to_yaml())
+        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        self.app_svc.application.router.add_route('GET', '/api/adversary', self.get_adversary)
+
+        self.apidoc_generator.build_spec()
+        print(self.apidoc_generator.yaml_spec)
 
     """ BOILERPLATE """
 
@@ -167,8 +170,13 @@ class RestApi(BaseWorld):
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
 
+    @apidocs(methods=['GET'], summary="Get an adversary object", description='lallalal falallala words n stuff')
+    @response_schema(AdversarySchema)
+    async def get_adversary(self, request):
+        return web.json_response({})
+
     async def swagger_spec(self, _):
-        return web.Response(body=self.apispec.to_yaml())
+        return web.Response(body=self.apidoc_generator.yaml_spec)
 
     """ PRIVATE """
 

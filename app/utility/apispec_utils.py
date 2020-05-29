@@ -1,7 +1,110 @@
+import json
+from collections import defaultdict
+
 import apispec
 import marshmallow as ma
+import yaml
 from apispec.ext.marshmallow import resolver, MarshmallowPlugin
 from apispec import yaml_utils
+
+from app.utility.base_world import BaseWorld
+
+
+def recursive_default_dict():
+    return defaultdict(recursive_default_dict)
+
+
+class ApiInfo:
+
+    def __init__(self):
+        self.summary = None
+        self.description = None
+        self.methods = []
+        self.request_schema = None
+        self.response_schema = None
+
+
+def apidocs(summary=None, description=None, methods=None):
+    """
+    Decorator for adding api info to paths.
+    """
+    def wrapper(func):
+        if not hasattr(func, '__api_info__'):
+            func.__api_info__ = ApiInfo()
+        func.__api_info__.summary = summary
+        func.__api_info__.description = description
+        func.__api_info__.methods = methods
+        return func
+    return wrapper
+
+
+def request_schema(schema):
+    """
+    Decorator for adding request body schemas.
+    """
+    def wrapper(func):
+        if not hasattr(func, '__api_info__'):
+            func.__api_info__ = ApiInfo()
+        func.__api_info__.request_schema = schema
+        return func
+    return wrapper
+
+
+def response_schema(schema):
+    """
+    Decorator for adding response body schemas.
+    """
+    def wrapper(func):
+        if not hasattr(func, '__api_info__'):
+            func.__api_info__ = ApiInfo()
+        func.__api_info__.response_schema = schema
+        return func
+    return wrapper
+
+
+class CalderaApiDocs(BaseWorld):
+    def __init__(self, aiohttp_app):
+        self.aiohttp_app = aiohttp_app
+        self.apispec = apispec.APISpec(
+            title='Caldera API',
+            version=self.get_version(),
+            openapi_version='3.0.2',
+            plugins=[MarshmallowPlugin()],
+        )
+
+    @property
+    def spec(self):
+        return self.apispec.to_dict()
+
+    @property
+    def yaml_spec(self):
+        # Contortions until we write a yaml representer to support recursive default dict
+        return yaml.safe_dump(json.loads(self.json_spec), default_flow_style=False)
+
+    @property
+    def json_spec(self):
+        return json.dumps(self.spec)
+
+    def build_spec(self):
+        for route in self.aiohttp_app.router.routes():
+            if not hasattr(route.handler, '__api_info__'):
+                continue
+
+            api_info = route.handler.__api_info__  # type: ApiInfo
+            operations = recursive_default_dict()
+            for method in api_info.methods:
+                method = method.lower()
+                if api_info.response_schema:
+                    operations[method]["responses"]["200"]["content"]["application/json"]["schema"] = api_info.response_schema
+                if api_info.request_schema:
+                    operations[method]["requestBody"]["content"]["application/json"]["schema"] = api_info.request_schema
+                operations[method]["summary"] = api_info.summary
+                operations[method]["description"] = api_info.description
+
+            self.apispec.path(summary=api_info.summary,
+                              description=api_info.description,
+                              path=route.resource.canonical,
+                              operations=operations)
 
 
 class RequestSchema(ma.Schema):
@@ -53,6 +156,6 @@ class CalderaApispecPlugin(MarshmallowPlugin):
 
     def path_helper(self, operations, *, aiohttp_resource, handler, **kwargs):
         """Path helper that allows passing a aiohttp ReosourceRoute object."""
-        handler_docstring = getattr(handler, 'orig_docstring', handler)
+        handler_docstring = getattr(handler, 'orig_docstring', handler.__doc__)
         operations.update(yaml_utils.load_operations_from_docstring(handler_docstring))
         return aiohttp_resource.resource.canonical
