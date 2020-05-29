@@ -10,8 +10,12 @@ from aiohttp_jinja2 import template, render_template
 
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
+from app.objects.c_ability import Ability
 from app.objects.c_adversary import AdversarySchema, Adversary
+from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
+from app.objects.c_planner import Planner
+from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
@@ -70,7 +74,8 @@ class RestApi(BaseWorld):
         if not access:
             return render_template('login.html', request, dict())
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request), version=self.app_svc.version)
+        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request),
+                    version=self.app_svc.version)
         return render_template('%s.html' % access[0].name, request, data)
 
     @staticmethod
@@ -88,9 +93,13 @@ class RestApi(BaseWorld):
                          'Include an "index" field in the request body to specify which object'
                          'to perform an operation on.')
     @response_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
-                                       mapping=dict(adversaries=Adversary, operations=Operation)))
-    @request_schema(PolymorphicSchema(name='CoreRequest', discriminator='index',
-                                      mapping=dict(adversaries=Adversary, operations=Operation)))
+                                       mapping=dict(adversaries=Adversary, operations=Operation,
+                                                    agents=Agent, abilities=Ability, sources=Source,
+                                                    planners=Planner, chain=Link, links=Link)))
+    @request_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
+                                      mapping=dict(adversaries=Adversary, operations=Operation,
+                                                   agents=Agent, abilities=Ability, sources=Source,
+                                                   planners=Planner, chain=Link, links=Link)))
     @check_authorization
     async def rest_core(self, request):
         """
