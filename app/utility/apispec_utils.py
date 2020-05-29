@@ -26,6 +26,7 @@ class PolymorphicSchema:
     def insert_into_apispec(self, spec_obj: apispec.APISpec):
         converter = self._get_marshmallow_converter(spec_obj)
         mapping = dict()
+        refs = []
         for property_name, obj_def in self.mapping.items():
             if getattr(obj_def, 'display_schema', None):
                 schema = obj_def.display_schema
@@ -33,10 +34,13 @@ class PolymorphicSchema:
                 schema = obj_def.schema
             else:
                 schema = obj_def
-            for ref_path in converter.resolve_nested_schema(schema).values():
+            for name, ref_path in converter.resolve_nested_schema(schema).items():
                 mapping[property_name] = ref_path
+                refs.append({name: ref_path})
 
-        return dict(discriminator=dict(propertyName=self.discriminator, mapping=mapping))
+        return dict(anyOf=refs)
+        # Alternate way of handling polymorphism that's not as visualized as nicely in redoc:
+        # return dict(discriminator=dict(propertyName=self.discriminator, mapping=mapping))
 
     @staticmethod
     def _get_marshmallow_converter(spec: apispec.APISpec) -> MarshmallowPlugin.Converter:
@@ -128,7 +132,7 @@ class CalderaApiDocs(BaseWorld):
                 if api_info.response_schema:
                     operations[method]["responses"]["200"]["content"]["application/json"]["schema"] = self._schema_hook(api_info.response_schema)
                 if api_info.request_schema:
-                    operations[method]["requestBody"]["content"]["application/json"]["schema"] = self._schema_hook(api_info.request_schema)
+                    operations[method]["requestBody"]["content"]["application/json"]["schema"]["allOf"] = [self._schema_hook(api_info.request_schema)]
                 operations[method]["summary"] = api_info.summary
                 operations[method]["description"] = api_info.description
 

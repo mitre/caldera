@@ -16,7 +16,7 @@ from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
-from app.utility.apispec_utils import CalderaApiDocs, apidocs, response_schema, PolymorphicSchema
+from app.utility.apispec_utils import CalderaApiDocs, apidocs, response_schema, PolymorphicSchema, request_schema
 
 
 class RestApi(BaseWorld):
@@ -89,27 +89,12 @@ class RestApi(BaseWorld):
                          'to perform an operation on.')
     @response_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
                                        mapping=dict(adversaries=Adversary, operations=Operation)))
+    @request_schema(PolymorphicSchema(name='CoreRequest', discriminator='index',
+                                      mapping=dict(adversaries=Adversary, operations=Operation)))
     @check_authorization
     async def rest_core(self, request):
         """
         Core handler for HTTP API.
-        ---
-        post:
-          description: Retrieve a caldera object.
-          requestBody:
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/CoreRequest'
-          responses:
-            200:
-              description: Return a caldera object
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/CalderaObjects'
-        put:
-          description: Modify a caldera object.
         """
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
