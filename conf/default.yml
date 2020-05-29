@@ -9,6 +9,7 @@ app.contact.websocket: 0.0.0.0:7012
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp
+ability_refresh: 60
 host: 0.0.0.0
 plugins:
 - sandcat
@@ -19,6 +20,7 @@ plugins:
 - gameboard
 - training
 - access
+- atomic
 port: 8888
 reports_dir: /tmp
 requirements:

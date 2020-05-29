@@ -60,6 +60,7 @@ def run_tasks(services):
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
     loop.create_task(learning_svc.build_model())
+    loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
     try:
         logging.info('All systems ready.')
@@ -106,7 +107,7 @@ if __name__ == '__main__':
     file_svc = FileSvc()
     learning_svc = LearningService()
     event_svc = EventService()
-    app_svc = AppService(application=web.Application())
+    app_svc = AppService(application=web.Application(client_max_size=5120**2))
 
     if args.fresh:
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())

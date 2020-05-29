@@ -75,6 +75,7 @@ function viewSection(name, address){
         newSection.html(plugin);
         $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
     }
+    closeNav();
     restRequest('GET', null, display, address);
 }
 
@@ -157,59 +158,17 @@ function display_errors(errors){
     }
     document.getElementById("list-modal").style.display="block";
     $("#info-list").empty();
-    if(errors.length > 0){
-        for(var id in errors){
-            add_element(errors[id].name + ": " + errors[id].msg, 1);
-        }
-    } else {
+    if(errors.length === 0) {
         add_element("no errors to view", 0);
+    }
+    for(let id in errors){
+        add_element(errors[id].name + ": " + errors[id].msg, 1);
     }
 }
 
-/* Nav bar */
-
-$('.subnav').hover(
-    function() {
-        // Open subnav on hover
-        // Check status using the nav-hovering class, z-index for priority
-        $(this).addClass('nav-hovering');
-        var subnav = $(this).find('.subnav-content');
-        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) + 1);
-
-        $(subnav).css('display', 'block');
-    }, function() {
-        // Close subav after 150 ms if no longer hovering
-        $(this).removeClass('nav-hovering');
-        var subnav = $(this).find('.subnav-content');
-        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) - 1);
-        
-        setTimeout(function(nav) {
-            if (!$(nav).hasClass('nav-hovering')) {
-                $(nav).find('.subnav-content').css('display', 'none');
-            }
-        }, 100, this);
-    }
-);
-
-$('.subnav-right').hover(
-    function() {
-        // Open subnav on hover
-        // Check status using the nav-hovering class, z-index for priority
-        $(this).addClass('nav-hovering');
-        var subnav = $(this).find('.subnav-content');
-        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) + 1);
-
-        $(subnav).css('display', 'block');
-    }, function() {
-        // Close subav after 150 ms if no longer hovering
-        $(this).removeClass('nav-hovering');
-        var subnav = $(this).find('.subnav-content');
-        $(subnav).css('zIndex', parseInt($(subnav).css('zIndex')) - 1);
-        
-        setTimeout(function(nav) {
-            if (!$(nav).hasClass('nav-hovering')) {
-                $(nav).find('.subnav-content').css('display', 'none');
-            }
-        }, 100, this);
-    }
-);
+function openNav() {
+  document.getElementById("mySidenav").style.width = "250px";
+}
+function closeNav() {
+  document.getElementById("mySidenav").style.width = "0";
+}

@@ -74,7 +74,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.username = username
         self.group = group
         self.architecture = architecture
-        self.platform = platform
+        self.platform = platform.lower()
         url = urlparse(server)
         self.server = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
         self.location = location

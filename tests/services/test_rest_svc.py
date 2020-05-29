@@ -5,6 +5,8 @@ from app.objects.c_agent import Agent
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_operation import Operation
+from app.objects.c_objective import Objective
+from app.objects.secondclass.c_goal import Goal
 from app.objects.c_planner import Planner
 from app.objects.c_source import Source
 from app.utility.base_world import BaseWorld
@@ -27,6 +29,10 @@ def setup_rest_svc_test(loop, data_svc):
 
     agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
     loop.run_until_complete(data_svc.store(agent))
+
+    loop.run_until_complete(data_svc.store(
+        Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default', goals=[Goal()])
+    ))
 
     loop.run_until_complete(data_svc.store(
         Planner(planner_id='123', name='test', module='test', params=dict())
@@ -82,11 +88,14 @@ class TestRestSvc:
                             'ignore_enforcement_modules': [], 'id': '123'},
                 'jitter': '2/8',
                 'host_group': [
-                    {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown', 'username': 'unknown',
-                     'links': [], 'sleep_max': 8, 'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
-                     'sleep_min': 2, 'server': '://None:None', 'platform': 'windows', 'host': 'unknown', 'paw': '123',
-                     'pid': 0, 'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User', 'proxy_receivers': {}}],
-                'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'obfuscator': 'plain-text'}
+                    {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown',
+                     'username': 'unknown', 'links': [], 'sleep_max': 8, 'exe_name': 'unknown',
+                     'executors': ['pwsh', 'psh'], 'ppid': 0, 'sleep_min': 2, 'server': '://None:None',
+                     'platform': 'windows', 'host': 'unknown', 'paw': '123', 'pid': 0,
+                     'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
+                     'proxy_receivers': {}}],
+                'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
+                'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
