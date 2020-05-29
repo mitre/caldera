@@ -11,7 +11,7 @@ from aiohttp_jinja2 import template, render_template
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
 from app.objects.c_ability import Ability
-from app.objects.c_adversary import AdversarySchema, Adversary
+from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
@@ -51,7 +51,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/caldera_spec.yaml', self.swagger_spec)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
-        self.app_svc.application.router.add_route('GET', '/api/adversary', self.get_adversary)
 
         self.apidoc_generator.build_spec()
         print(self.apidoc_generator.yaml_spec)
@@ -90,16 +89,16 @@ class RestApi(BaseWorld):
 
     @apidocs(summary='Core path for HTTP API Calls.', methods=['GET', 'POST', 'PUT'],
              description='Takes many object types as input and outputs many object types.'
-                         'Include an "index" field in the request body to specify which object'
-                         'to perform an operation on.')
+                         'Requests must include an "index" field in the request body to specify which object'
+                         'type to perform an operation on.')
     @response_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
                                        mapping=dict(adversaries=Adversary, operations=Operation,
                                                     agents=Agent, abilities=Ability, sources=Source,
-                                                    planners=Planner, chain=Link, links=Link)))
-    @request_schema(PolymorphicSchema(name='CoreResponse', discriminator='index',
+                                                    planners=Planner, links=Link)))
+    @request_schema(PolymorphicSchema(name='CoreRequest', discriminator='index',
                                       mapping=dict(adversaries=Adversary, operations=Operation,
                                                    agents=Agent, abilities=Ability, sources=Source,
-                                                   planners=Planner, chain=Link, links=Link)))
+                                                   planners=Planner, links=Link)))
     @check_authorization
     async def rest_core(self, request):
         """
@@ -164,11 +163,6 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
-
-    @apidocs(methods=['GET'], summary="Get an adversary object", description='lallalal falallala words n stuff')
-    @response_schema(AdversarySchema)
-    async def get_adversary(self, request):
-        return web.json_response({})
 
     async def swagger_spec(self, _):
         return web.Response(body=self.apidoc_generator.yaml_spec)

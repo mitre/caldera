@@ -2,7 +2,6 @@ import json
 from collections import defaultdict
 
 import apispec
-import marshmallow as ma
 import yaml
 from apispec.ext.marshmallow import MarshmallowPlugin
 
@@ -17,13 +16,25 @@ def recursive_default_dict():
 
 
 class PolymorphicSchema:
+    """
+    Wraps multiple marshmallow schemas to help apispec convert them to OpenAPI spec components.
+    """
 
     def __init__(self, name, discriminator, mapping):
+        """
+        The schemas included in mapping can be either marshmallow schemas or
+        caldera objects (subclasses of BaseObject). If objects are used, then
+        the object's display schema will be preferred.
+        """
         self.name = name
         self.discriminator = discriminator
         self.mapping = mapping
 
     def insert_into_apispec(self, spec_obj: apispec.APISpec):
+        """
+        Inserts all child schemas into the given APISpec. Returns a
+        polymorphic schema that references the child schemas.
+        """
         converter = self._get_marshmallow_converter(spec_obj)
         mapping = dict()
         refs = []
@@ -50,6 +61,9 @@ class PolymorphicSchema:
 
 
 class ApiInfo:
+    """
+    Simple class to hold API info annotations on aiohttp handlers.
+    """
 
     def __init__(self):
         self.summary = None
@@ -146,12 +160,3 @@ class CalderaApiDocs(BaseWorld):
             return schema.insert_into_apispec(self.apispec)
         else:
             return schema
-
-
-class RequestSchema(ma.Schema):
-    index = ma.fields.String(required=True)
-
-
-class RequestOperationReport(RequestSchema):
-    op_id = ma.fields.String()
-    display_results = ma.fields.Bool()
