@@ -30,8 +30,10 @@
       <button type="button" class="button-success atomic-button" onclick="deleteProfile()">Delete profile</button>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
-        <div id="row"><input id="profile-goal" type="text" placeholder="enter a profile name">
-            <img id='objective-img' style="display: none" src="/gui/img/compass.png" onclick="showObjectiveModal()"></div>
+        <div id="row">
+            <input id="profile-goal" type="text" placeholder="enter a profile name">
+            <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
+        </div>
         <input id="objective-select" type="text" style="display:none" disabled>
         <input id="profile-description" type="text" placeholder="enter a profile description">
         <br><br>
@@ -318,7 +320,6 @@
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
-        console.log(abilities);
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
             'i': identifier,"objective":objective}, saveAdversaryCallback);
     }
@@ -442,7 +443,6 @@
 
         $('.tempPhase').remove();
         $('.phase-headers').remove();
-        console.log(data[0]);
         loadAtomicOrder(data[0].atomic_ordering);
         $('#objective-existing')[0].value = data[0].objective.id;
         handleObjectiveSelection(data[0].objective.id);
