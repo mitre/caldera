@@ -93,7 +93,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.access = self.Access(access)
         self.additional_info = dict()
         for k, v in kwargs.items():
-            self.additional_info[k] = v
+            if k == 'additional_info':
+                for k2, v2 in v.items():
+                    self.additional_info[k2] = v2
+            else:
+                self.additional_info[k] = v
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
