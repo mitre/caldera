@@ -25,6 +25,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def persist_adversary(self, data):
         i = data.pop('i')
+        obj_default = (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0]
         if not i:
             i = str(uuid.uuid4())
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
@@ -36,7 +37,7 @@ class RestService(RestServiceInterface, BaseService):
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p)))
+                                   atomic_ordering=p, objective=data.pop('objective', obj_default))))
             f.truncate()
         await self._services.get('data_svc').reload_data()
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]

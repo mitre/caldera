@@ -299,7 +299,8 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _verify_default_objective_exists(self):
         if not await self.locate('objectives', match=dict(name='default')):
-            await self.store(Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default', goals=[Goal()]))
+            await self.store(Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default',
+                                       description='This is a default objective that runs forever.', goals=[Goal()]))
 
     async def _verify_adversary_profiles(self):
         for adv in await self.locate('adversaries'):
