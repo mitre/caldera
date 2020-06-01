@@ -76,6 +76,16 @@ class RestService(RestServiceInterface, BaseService):
         await self._services.get('data_svc').reload_data()
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
+    async def persist_objective(self, data):
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
+        if not file_path:
+            file_path = 'data/objectives/%s.yml' % data.get('id')
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(yaml.dump(data))
+        await self._services.get('data_svc').reload_data()
+        return [o.display for o in await self._services.get('data_svc').locate('objectives', dict(id=data.get('id')))]
+
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
         return 'Delete action completed'

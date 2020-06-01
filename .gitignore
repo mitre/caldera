@@ -1,3 +1,4 @@
+plugins/*
 *.pyc
 *.crt
 *.exe

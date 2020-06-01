@@ -1,0 +1,257 @@
+<div id="Objectives" class="section-profile">
+  <div class="advanced row">
+      <div class="topleft duk-icon"><img onclick="removeSection('objectives')" src="/gui/img/x.png"></div>
+      <div class="bottomright duk-icon"><img onclick="toggleSidebar('objectives-sidebar')" src="/gui/img/expand.png"></div>
+      <div id="objectives-sidebar"  class="column section-border" style="flex:25%">
+      <img src="/gui/img/facts.png">
+      <h4>Objectives</h4>
+      <br>
+      <div class="toggle">
+        <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleObjectiveView()">
+          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+        </label>
+      </div>
+      <br>
+      <p class="section-description">
+          Objectives are groups of goals that an adversary will accomplish.
+      </p>
+      <br>
+      <div id="viewObjective">
+          <select id="profile-objective-name" style="margin-top:-15px" onchange="loadObjective();">
+            <option value="" disabled selected>Select an existing objective</option>
+            {% for o in objectives %}
+                <option value="{{ o.id }}">{{ o.name }}</option>
+            {% endfor %}}
+          </select>
+      </div>
+      <div id="addObjective"></div>
+      <button id="objectiveBtn" type="button" class="button-success atomic-button"
+              onclick="viewAdversaries()">View Adversary Assignments
+      </button>
+      <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
+              onclick="saveObjective()">Save
+      </button>
+    </div>
+    <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+        <h4 id="objective-name" contenteditable="true" class="advGoal">Sample name</h4>
+        <hr>
+        <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
+            <thead>
+                <tr>
+                    //THIS BLOCK NEEDS CHANGING
+                    <td><b>trait</b></td>
+                    <td><b>value</b></td>
+                    <td></td>
+                </tr>
+            </thead>
+        </table>
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
+            &#10010;&nbsp;add row
+        </p>
+    </div>
+  </div>
+</div>
+
+<div id="objective-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('objective-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                //THIS BLOCK NEEDS CHANGING
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Rules</span>
+                        <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="source-rules"></ul>
+                        <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
+                        <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+        stream('New objectives will be created after each operation, containing the intelligence that was learned.')
+    });
+    let refresher = setInterval(refresh, 15000);
+    $('.section-profile').bind('destroyed', function() {
+        console.log('objectives refresh off');
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function objectiveCallback(data){
+            data.forEach(function(s) {
+                let found = false;
+                $("#profile-objective-name > option").each(function() {
+                    if($(this).val() === s.id) {
+                        found = true;
+                    }
+                });
+                if(!found){
+                    $('#profile-objective-name').append('<option value="'+s.id+'">'+s.name+'</option>');
+                }
+            });
+        }
+        restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
+    }
+
+    //THIS BLOCK NEEDS CHANGING
+    function toggleObjectiveView() {
+        $('#viewObjective').toggle();
+        $('#addObjective').toggle();
+        clearFactCanvas();
+    }
+
+    //THIS BLOCK NEEDS CHANGING
+    function clearFactCanvas(){
+        $('#factTbl').find("tr:gt(0)").remove();
+        $('#source-rules').empty();
+        $('#source-relationships').empty();
+        if($('#source-name').data('id')){
+            $('#source-name').data('id', null);
+        }
+    }
+
+    //THIS BLOCK NEEDS CHANGING
+    function loadObjective() {
+        function loadObjectiveCallback(data) {
+            clearFactCanvas();
+            let source = $('#source-name');
+            data[0].facts.forEach(f => {
+                addFactRow(f.trait, f.value);
+            });
+            source.data('id', data[0].id);
+            applyRules(data[0].rules);
+            source.html(data[0].name);
+            populateRelationships(data[0].relationships);
+        }
+        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
+        restRequest('POST', {'index':'sources', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
+    }
+
+    //THIS BLOCK NEEDS CHANGING
+    function addFactRow(trait, value){
+        $('#factTbl tr:last').after(
+            '<tr>' +
+                '<td><p contenteditable="true">'+trait+'</p></td>' +
+                '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
+    }
+
+    function saveObjective(){
+        function saveObjectiveCallback(data) {
+            stream('New objective saved!');
+        }
+        let objective = $('#objective-name');
+        let name = objective.text();
+        let id = objective.data('id');
+        if(!name){ warn('Please enter a name!'); return; }
+        if(!id) {
+            id = uuidv4();
+            objective.data('id', id);
+        }
+        let data = {};
+        data['index'] = 'objectives';
+        data['id'] = id;
+        data['name'] = name;
+        data['goals'] = [];
+
+        //THIS BLOCK NEEDS CHANGING
+        $("#factTbl tr").not(":first").each(function () {
+            let trait = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            data['facts'].push({'trait':trait,'value':value});
+        });
+        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
+
+        let invalidRules = 0;
+        $('#source-rules li').each(function() {
+            let trait = $(this).find('#trait').val();
+            let match = $(this).find('#match').val();
+            let action = $(this).find('#action').val();
+            if(trait === undefined || match === undefined || action === undefined){
+                return;
+            }
+            if(action !== 'ALLOW' && action !== 'DENY') {
+                invalidRules += 1;
+            }
+            data['rules'].push({'trait': trait, 'match': match, 'action': action});
+        });
+        if(invalidRules > 0) {
+            warn(invalidRules + ' invalid rules!');
+            return;
+        }
+        $('#source-relationships li').each(function() {
+            let sourceTrait = $(this).find('#sourceTrait').val();
+            let sourceValue = $(this).find('#sourceValue').val();
+            let edge = $(this).find('#edge').val();
+            let targetTrait = $(this).find('#targetTrait').val();
+            let targetValue = $(this).find('#targetValue').val();
+            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){
+                return;
+            }
+            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
+        });
+        restRequest('PUT', data, saveSourceCallback);
+    }
+
+    function viewRules(){
+        document.getElementById("source-modal").style.display = "block";
+        let sourceName = $('#source-name').val();
+        $('#rules-name').text(sourceName);
+    }
+
+    function applyRules(rules){
+        rules.forEach(r => {
+            let template = $("#rule-template").clone();
+            template.find('#trait').val(r.trait);
+            template.find('#match').val(r.match);
+            if(r.action === 0) {
+                template.find('#action').val('DENY');
+            } else if (r.action === 1) {
+                template.find('#action').val('ALLOW');
+            }
+            template.show();
+            $('#source-rules').append(template);
+        });
+    }
+
+    function addRuleBlock(){
+        let template = $("#rule-template").clone();
+        template.show();
+        $('#source-rules').append(template);
+    }
+
+    function populateRelationships(relationships){
+        relationships.forEach(r => {
+            let template = $("#relationship-template").clone();
+            template.find('#sourceTrait').val(r.source.trait);
+            template.find('#sourceValue').val(r.source.value);
+            template.find('#edge').val(r.edge);
+            template.find('#targetTrait').val(r.target.trait);
+            template.find('#targetValue').val(r.target.value);
+            template.show();
+            $('#source-relationships').append(template);
+        });
+    }
+
+    function viewRelationships(){
+        document.getElementById("relationship-modal").style.display = "block";
+        let sourceName = $('#source-name').val();
+        $('#relationship-name').text(sourceName);
+    }
+
+    function addRelationshipBlock(){
+        let template = $("#relationship-template").clone();
+        template.show();
+        $('#source-relationships').append(template);
+    }
+
+    //# sourceURL=sources.js
+</script>

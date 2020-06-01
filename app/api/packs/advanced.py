@@ -18,6 +18,7 @@ class AdvancedPack(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/advanced/planners', self._section_planners)
         self.app_svc.application.router.add_route('GET', '/advanced/contacts', self._section_contacts)
         self.app_svc.application.router.add_route('GET', '/advanced/obfuscators', self._section_obfuscators)
+        self.app_svc.application.router.add_route('GET', '/advanced/objectives', self._section_objectives)
         self.app_svc.application.router.add_route('GET', '/advanced/configurations', self._section_configurations)
 
     """ PRIVATE """
@@ -39,6 +40,14 @@ class AdvancedPack(BaseWorld):
     async def _section_obfuscators(self, request):
         obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         return dict(obfuscators=obfuscators)
+
+    @check_authorization
+    @template('objectives.html')
+    async def _section_objectives(self, request):
+        access = await self.auth_svc.get_permissions(request)
+        return dict(objectives=[o.display for o in await self.data_svc.locate('objectives', match=access)],
+                    adversaries=sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                                       key=lambda a: a['name']))
 
     @check_authorization
     @template('configurations.html')

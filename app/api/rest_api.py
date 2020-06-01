@@ -81,6 +81,7 @@ class RestApi(BaseWorld):
                     adversaries=lambda d: self.rest_svc.persist_adversary(d),
                     abilities=lambda d: self.rest_svc.persist_ability(d),
                     sources=lambda d: self.rest_svc.persist_source(d),
+                    #objectives=lamda d: self.rest_svc.persist_objective(d),
                     planners=lambda d: self.rest_svc.update_planner(d),
                     agents=lambda d: self.rest_svc.update_agent_data(d),
                     chain=lambda d: self.rest_svc.update_chain_data(d),
