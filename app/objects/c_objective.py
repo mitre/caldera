@@ -48,5 +48,6 @@ class Objective(FirstClassObjectInterface, BaseObject):
             ram['objectives'].append(self)
             return self.retrieve(ram['objectives'], self.unique)
         existing.update('name', self.name)
+        existing.update('description', self.description)
         existing.update('goals', self.goals)
         return existing
