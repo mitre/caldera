@@ -9,6 +9,7 @@ class ObjectiveSchema(ma.Schema):
 
     id = ma.fields.String()
     name = ma.fields.String()
+    description = ma.fields.String()
     goals = ma.fields.List(ma.fields.Nested(GoalSchema()))
     percentage = ma.fields.Float()
 
@@ -34,10 +35,11 @@ class Objective(FirstClassObjectInterface, BaseObject):
     def completed(self, facts=None):
         return not any(x.satisfied(facts) is False for x in self.goals)
 
-    def __init__(self, id='', name='', goals=None):
+    def __init__(self, id='', name='', description='', goals=None):
         super().__init__()
         self.id = id
         self.name = name
+        self.description = description
         self.goals = goals if goals else []
 
     def store(self, ram):
@@ -46,5 +48,6 @@ class Objective(FirstClassObjectInterface, BaseObject):
             ram['objectives'].append(self)
             return self.retrieve(ram['objectives'], self.unique)
         existing.update('name', self.name)
+        existing.update('description', self.description)
         existing.update('goals', self.goals)
         return existing

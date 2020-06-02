@@ -29,7 +29,48 @@ When deploying a 54ndc47 agent, there are optional parameters you can use when y
 
 * **Server**: This is the location of CALDERA. The agent must have connectivity to this host/port. 
 * **Group**: This is the group name that you would like the agent to join when it starts. The group does not have to exist. A default group of my_group will be used if none is passed in.
-* **v**: Use `-v` to see verbose output from sandcat.  Otherwise, sandcat will run silently. 
+* **v**: Use `-v` to see verbose output from sandcat.  Otherwise, sandcat will run silently.
+
+### Extensions
+In order to keep the agent code lightweight, the default 54ndc47 agent binary ships with limited basic functionality.
+Users can dynamically compile additional features, referred to as "gocat extensions". Each extension adds to the 
+existing `gocat` module code to provide functionality such as peer-to-peer proxy implementations, additional
+executors, and additional C2 contact protocols. 
+
+To request particular gocat extensions, users can 
+include the `gocat-extensions` HTTP header when asking the C2 to compile an agent. The header value
+must be a comma-separated list of requested extensions. The server will include the extensions in
+the binary if they exist and if their dependencies are met (i.e. if extension A requires a particular
+Golang module that is not installed on the server, then extension A will not be included).
+
+Below is an example powershell snippet to request the C2 server to include the `proxy_http` and `shells` 
+extensions:
+```
+$url="http://192.168.137.1:8888/file/download"; # change server IP/port as needed
+$wc=New-Object System.Net.WebClient;
+$wc.Headers.add("platform","windows"); # specifying Windows build
+$wc.Headers.add("file","sandcat.go"); # requesting sandcat binary
+$wc.Headers.add("gocat-extensions","proxy_http,shells"); # requesting the extensions
+$output="C:\Users\Public\sandcat.exe"; # specify destination filename
+$wc.DownloadFile($url,$output); # download
+```
+
+The following features are included in the stock agent:
+- `HTTP` C2 contact protocol
+- `psh` powershell executor (Windows)
+- `sh` shell executor (Linux/Mac)
+
+Additional functionality can be found in the following gocat extensions:
+- `gist` extension provides the Github gist C2 contact protocol.
+- `shells` extension provides the `cmd` (Windows cmd), `osascript` (Mac Osascript), and 
+`pwsh` (Windows powershell core) executors.
+- `shellcode` extension provides the shellcode executors.
+- `proxy_http` extension provides the `HTTP` peer-to-peer proxy receiver.
+- `proxy_smb_pipe` extension provides the `SmbPipe` peer-to-peer proxy client and receiver for Windows (peer-to-peer
+communication via SMB named pipes).
+- `donut` extension provides the Donut functionality to execute various assemblies in memory. 
+See https://github.com/TheWover/donut for additional information.
+- `shared` extension provides the C sharing functionality for 54ndc47.
 
 #### Customizing Default Options & Execution Without CLI Options
 
