@@ -53,7 +53,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
 
         self.apidoc_generator.build_spec()
-        print(self.apidoc_generator.yaml_spec)
 
     """ BOILERPLATE """
 
