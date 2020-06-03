@@ -30,7 +30,11 @@
       <button type="button" class="button-success atomic-button" onclick="deleteProfile()">Delete profile</button>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
-        <input id="profile-goal" type="text" placeholder="enter a profile name">
+        <div id="row">
+            <input id="profile-goal" type="text" placeholder="enter a profile name">
+            <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
+        </div>
+        <input id="objective-select" type="text" style="display:none" disabled>
         <input id="profile-description" type="text" placeholder="enter a profile description">
         <br><br>
         <div id="dummy"></div>
@@ -166,6 +170,32 @@
     </center>
 </div>
 
+<div id="adv-objective-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <p style="text-align: center;">Specify an objective for this adversary.</p>
+                 <select id="objective-existing">
+                    <option value="" disabled selected>Select an Objective</option>
+                        {% for obj in objectives %}
+                            <option id="objective-{{ obj.id }}" value="{{ obj.id }}">{{ obj.name }}</option>
+                        {% endfor %}}
+                 </select>
+                <br><br>
+                <hr> <br>
+                <input id="objective-description" type="text" placeholder="Select an Objective" disabled>
+                <div style="width:30%;margin:0 auto;">
+                    <button type="button" class="button-success atomic-button"
+                            onclick="linkObjective()">Link to adversary</button>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="hideObjectiveModal()" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
 <div id="adv-profile-modal" class="modal">
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
@@ -189,6 +219,7 @@
         </div>
     </form>
 </div>
+
 
 <table id="additional-info-row-template-holder" style="display:none">
     <tr id="additional-info-template">
@@ -271,6 +302,7 @@
         $('.tempPhase').remove();
         $('.phase-headers').remove();
         loadAtomicOrder([]);
+        clearObjective();
     }
 
     function saveAdversary() {
@@ -283,13 +315,13 @@
         let description = $('#profile-description').val();
         if(!description){ warn('Please enter a description!'); return; }
 
+        let objective = $('#objective-select').val();
         let abilities = [];
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
-        console.log(abilities);
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'i': identifier}, saveAdversaryCallback);
+            'i': identifier,"objective":objective}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -412,6 +444,9 @@
         $('.tempPhase').remove();
         $('.phase-headers').remove();
         loadAtomicOrder(data[0].atomic_ordering);
+        $('#objective-existing')[0].value = data[0].objective.id;
+        handleObjectiveSelection(data[0].objective.id);
+        linkObjective();
     }
 
     function createMuuriGrid() {
@@ -477,9 +512,13 @@
             template.insertAfter('#tempPhase' + (number-1));
         }
         template.show();
-        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
-            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
-            +'<span class="ability-add" onclick="showProfileModal('+number+')" style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span><hr></h4>');
+        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering</span>' +
+            '<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            +'<span class="ability-add" onclick="showProfileModal('+number+')" ' +
+            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span>' +
+            '<span class="ability-add" onclick="showObjectiveModal()" ' +
+            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; link objective</span>' +
+            '<hr></h4>');
         $('#tempPhase' + number).prepend(phaseHeader);
         phaseHeader.show();
         return template;
@@ -657,9 +696,23 @@
         document.getElementById("adv-profile-modal").style.display="block";
     }
 
+    function showObjectiveModal() {
+        $('body').keyup(function(e){
+            if(e.key == "Escape"){
+                hideObjectiveModal();
+            }
+        });
+        document.getElementById("adv-objective-modal").style.display="block";
+    }
+
     function hideProfileModal() {
         $("body").off("keyup");
         document.getElementById("adv-profile-modal").style.display="none";
+    }
+
+    function hideObjectiveModal(){
+        $("body").off("keyup");
+        document.getElementById("adv-objective-modal").style.display="none";
     }
 
     function freshId(){
@@ -694,6 +747,28 @@
             }
         }
     });
+
+    $('#objective-existing').on('change', function (){
+        handleObjectiveSelection($('#objective-existing').val());
+    });
+
+    function handleObjectiveSelection(id) {
+       restRequest('POST', {'index':'objectives', 'id': id}, requestObjectiveCallback);
+    }
+
+    function requestObjectiveCallback(data){
+        $('#objective-description')[0].value = data[0]['description'];
+    }
+
+    function linkObjective() {
+        $('#objective-select')[0].value = $('#objective-existing').val();
+        $('#objective-img')[0].style="";
+    }
+
+    function clearObjective() {
+        $('#objective-select')[0].value = '';
+        $('#objective-img')[0].style="display:none";
+    }
 
     function addAbilityToPhase() {
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');

@@ -674,3 +674,10 @@ table.dataTable input[type=text] {
     border-radius: 25px;
     border: none;
 }
+
+#objective-img {
+    margin-top: -5%;
+    margin-left: 90%;
+    height: 25px;
+    border: 2px solid var(--navbar-color);
+}

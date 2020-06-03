@@ -131,6 +131,10 @@
                         <td>Executors</td>
                         <td><p id="modal-executors"></p></td>
                     </tr>
+                    <tr>
+                        <td>Peer-to-Peer Proxy Receivers</td>
+                        <td><p id="modal-peer_receivers"></p></td>
+                    </tr>
                 </table>
                 <br>
                 <button type="button" class="button-warn" onclick="killAgent()">Kill Agent</button>
@@ -311,6 +315,7 @@
         function agentInfoCallback(data){
             let parent = $('#agent-modal');
             let agent = data[0];
+            let peer_receivers = "<table>";
             parent.find('#modal-paw').html(agent['paw']);
             parent.find('#modal-contact').html(agent['contact']);
             parent.find('#modal-host').html(agent['host']);
@@ -327,6 +332,20 @@
             parent.find('#modal-ppid').html(agent['ppid']);
             parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
             parent.find('#modal-watchdog').html(agent['watchdog']);
+            for (var key in agent['proxy_receivers']) {
+                peer_receivers += "<tr>";
+                peer_receivers += "<td><p>" + key + "  </p></td>";
+                peer_receivers += "<td><p></p></td>";
+                peer_receivers += "</tr>";
+                for (i = 0; i < agent['proxy_receivers'][key].length; i++) {
+                    peer_receivers += "<tr>";
+                    peer_receivers += "<td><p></p></td>";
+                    peer_receivers += "<td><p>" + agent['proxy_receivers'][key][i] + "</p></td>";
+                    peer_receivers += "</tr>";
+                };
+            };
+            peer_receivers += "</table>";
+            parent.find('#modal-peer_receivers').html(peer_receivers);
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)

@@ -158,7 +158,7 @@ class AppService(AppServiceInterface, BaseService):
         plugins.append(Plugin(data_dir='data'))
         while True:
             for p in plugins:
-                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir) for fle in f if
+                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities') for fle in f if
                          time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
                 for f in files:
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
