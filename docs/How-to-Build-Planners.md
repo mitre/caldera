@@ -29,9 +29,8 @@ class LogicalPlanner:
         self.planning_svc = planning_svc
         self.stopping_conditions = stopping_conditions
         self.stopping_condition_met = False
-        self.state_machine = ['privilege_escalation', 'persistence', 'discovery', 'lateral_movement']
+        self.state_machine = ['privilege_escalation', 'persistence', 'collection', 'discovery', 'lateral_movement']
         self.next_bucket = 'privilege_escalation'
-
 ```
 
 Breaking this down:
@@ -71,8 +70,8 @@ It is also important to note that a planner may define any required variables th
 
 ```python
     async def privilege_escalation(self):
-        ability_links = self.planning_svc.get_links(operation, buckets=['privilege escalation'])
-        paw = ability_links[0].paw
+        ability_links = await self.planning_svc.get_links(self.operation, buckets=['privilege escalation'])
+        paw = ability_links[0].paw if ability_links else None
         link_ids = [await self.operation.apply(l) for l in ability_links]
         await self.operation.wait_for_links_completion(link_ids)
         successful = self.operation.has_fact('{}.privilege.root'.format(paw), True) or self.operation.has_fact('{}.privilege.admin'.format(paw), True)
@@ -91,12 +90,12 @@ It is also important to note that a planner may define any required variables th
 
     async def discovery(self):
         await self.planning_svc.exhaust_bucket(self, 'discovery', self.operation)
-        lateral_movement_unlocked = bool(len(self.planning_svc.get_links(operation, bucket=['lateral_movement'])))
+        lateral_movement_unlocked = bool(len(await self.planning_svc.get_links(self.operation, buckets=['lateral_movement'])))
         if lateral_movement_unlocked:
             self.next_bucket = await self.planning_svc.default_next_bucket('discovery', self.state_machine)
         else:
             # planner will transtion from this bucket to being done
-            self.next = None
+            self.next_bucket = None
 
     async def lateral_movement(self):
         await self.planning_svc.exhaust_bucket(self, 'lateral_movement', self.operation)
