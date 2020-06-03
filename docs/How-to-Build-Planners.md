@@ -17,7 +17,7 @@ Let's dive into creating a planner to see the power and flexibility of the CALDE
 
 The planner will consist of 5 buckets:  _Privilege Escalation_, _Collection_, _Persistence_, _Discovery_, and _Lateral Movemnent_. As implied by the state machine, this planner will use the underlying adversary abilities to attempt to spread to as many hosts as possible and establish persistence. As an additional feature, if an agent cannot obtain persistence due to unsuccessful privilege escalation attempts, then the agent will execute collection abilities immediately in case it loses access to the host.
 
-We will create a python module called ```privileged_peristence.py``` and nest it under ```/app``` in the ```mitre/stockpile``` plugin.
+We will create a python module called `privileged_peristence.py` and nest it under `/app` in the `mitre/stockpile` plugin.
 
 **_First, lets build the static initialization of the planner:_**
 
@@ -42,29 +42,33 @@ Breaking this down:
         self.stopping_conditions = stopping_conditions
         self.stopping_condition_met = False
 ```
-The ```__init__()``` method for a planner must take and store the required arguments for the ```operation``` instance, ```planning_svc``` handle, and any supplied ```stopping_conditions```.  Additionally, ```self.stopping_condition_met```, which is used to control when to stop bucket execution, is initially set to False.
+
+The `__init__()` method for a planner must take and store the required arguments for the `operation` instance, `planning_svc` handle, and any supplied `stopping_conditions`.  Additionally, `self.stopping_condition_met`, which is used to control when to stop bucket execution, is initially set to False.
 
 ```python
         self.state_machine = ['privilege_escalation', 'persistence', 'discovery', 'lateral_movement']
 ```
-The ```self.state_machine``` variable is an optional list enumerating the base line order of the planner state machine. This ordered list **_does not_** control the bucket execution order, but is used to define a base line state machine that we can refer back to in our decision logic. This will be demonstrated in our example below when we create the bucket methods.
+
+The `self.state_machine` variable is an optional list enumerating the base line order of the planner state machine. This ordered list **_does not_** control the bucket execution order, but is used to define a base line state machine that we can refer back to in our decision logic. This will be demonstrated in our example below when we create the bucket methods.
 
 ```python
         self.next_bucket = 'privilege_escalation'
 ```
-The ```self.next_bucket``` variable holds the next bucket to be executed. This is the next bucket that the planner will enter and whose bucket method will next control the planning logic. Initially, we set ```self.next_bucket``` to the first bucket the planner will begin in. We will moidfy ```self.next_bucket``` from within our bucket methods in order to specify the next bucket to execute.
+
+The `self.next_bucket` variable holds the next bucket to be executed. This is the next bucket that the planner will enter and whose bucket method will next control the planning logic. Initially, we set `self.next_bucket` to the first bucket the planner will begin in. We will moidfy `self.next_bucket` from within our bucket methods in order to specify the next bucket to execute.
 
 _Additional Planner class variables_
 
 It is also important to note that a planner may define any required variables that it may need. For instance, many custom planners require information to be passed from one bucket to another during execution. This can be done by creating class variables to store information which can be accessed within any bucket method and will persist between bucket transitions.
 
-**_Now, lets the define the planner's entrypoint method: ```execute()```_**
+**_Now, lets the define the planner's entrypoint method: `execute`_**
 
 ```python
     async def execute(self):
         await self.planning_svc.execute_planner(self)
 ```
-```execute()``` is where the planner starts and where any runtime initialization is done. ```execute_planner()``` works by executing the bucket specified by ```self.next_bucket``` until the ```self.stopping_condition_met``` variable is set to True. For our planner, no further runtime initialization is required in the ```execute()``` method.
+
+`execute` is where the planner starts and where any runtime initialization is done. `execute_planner` works by executing the bucket specified by `self.next_bucket` until the `self.stopping_condition_met` variable is set to True. For our planner, no further runtime initialization is required in the `execute` method.
 
 **_Finally, lets create our bucket methods:_**
 
@@ -106,14 +110,14 @@ These bucket methods are where all inter-bucket transitions and intra-bucket log
 
 Lets look at each of the bucket methods in detail:
 
-```privilege_escalation()``` - We first use ```get_links()``` planning service utility to retrieve all abilities (links) tagged as _privilege escalation_ from the operation adversary. We then push these links to the agent with ```apply()``` and wait for these links to complete with ```wait_for_links_completion()```, both from the operation utility. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was actually successful (Note: this assumes the privilege escalation abilities we are using were modified to create aforementioned facts). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
+`privilege_escalation` - We first use `get_links` planning service utility to retrieve all abilities (links) tagged as _privilege escalation_ from the operation adversary. We then push these links to the agent with `apply` and wait for these links to complete with `wait_for_links_completion()`, both from the operation utility. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was actually successful (Note: this assumes the privilege escalation abilities we are using were modified to create aforementioned facts). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
 
-```persistence()```, ```collection()```, ```lateral_movement()``` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can use the ```exhaust_bucket()``` planning service utility to apply all links for the given bucket tag. Before exiting, we set the next bucket as desired. Note that in the ```persistence()``` bucket we use the ```default_next_bucket()``` planning service utility, which will automatically choose the next bucket after "persistence" in the provided ```self.state_machine``` ordered list.
+`persistence()`, `collection()`, `lateral_movement()` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can use the `exhaust_bucket()` planning service utility to apply all links for the given bucket tag. Before exiting, we set the next bucket as desired. Note that in the `persistence()` bucket we use the `default_next_bucket()` planning service utility, which will automatically choose the next bucket after "persistence" in the provided `self.state_machine` ordered list.
 
-```discovery()``` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use ```get_links()``` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly. 
-
+`discovery()` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use `get_links()` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly.
 
 **_Additional Notes on Privileged Persistance Planner_**
+
 - You may have noticed that the _privileged_persistence_ planner is only notionally more sophisticated than running certain default adversary profiles. This is correct. If you can find or create an adversary profile whose ability enumeration (i.e. order) can carry out your desired operational progression between abilities and can be executed in batch (by the default _batch_ planner) or in a sequentially atomic order (by _atmomic_ planner), it is advised to go that route. However, any decision logic above those simple planners will have to be implemented in a new planner.
 - The _privileged persistence_ planner did not have explicit logic to handle multiple agents. We just assumed the planner buckets would only have to handle a single active agent given the available ability links returned from the planning service. 
 
@@ -141,37 +145,37 @@ class LogicalPlanner:
 
 ## Planning Service Utilities
 
-Within a planner, these utilites are available from ```self.planning_svc```.
+Within a planner, these utilites are available from `self.planning_svc`.
 
-```exhaust_bucket()```
+`exhaust_bucket()`
 
-```default_next_bucket()```
+`default_next_bucket()`
 
-```add_ability_to_next_bucket()```
+`add_ability_to_next_bucket()`
 
-```execute_planner()```
+`execute_planner()`
 
-```get_links()```
+`get_links()`
 
-```get_cleanup_links()```
+`get_cleanup_links()`
 
-```check_stopping_conditions()```
+`check_stopping_conditions()`
 
-```upgrade_stopping_conditions()```
+`upgrade_stopping_conditions()`
 
 
 ## Operation Utilities
 
-Within a planner, these utilities are available from ```self.operation```.
+Within a planner, these utilities are available from `self.operation`.
 
-```apply()```
+`apply()`
 
-```wait_for_links_completion()```
+`wait_for_links_completion()`
 
-```all_facts()```
+`all_facts()`
 
-```has_fact()```
+`has_fact()`
 
-```all_relationships()```
+`all_relationships()`
 
-```active_agents()```
+`active_agents()`
