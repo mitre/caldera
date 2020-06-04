@@ -45,8 +45,8 @@ class AdvancedPack(BaseWorld):
     @template('objectives.html')
     async def _section_objectives(self, request):
         access = await self.auth_svc.get_permissions(request)
-        return dict(objectives=[o.display for o in await self.data_svc.locate('objectives', match=access)],
-                    adversaries=sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+        return dict(objectives=[o.display for o in await self.data_svc.locate('objectives', match=dict(access=tuple(access)))],
+                    adversaries=sorted([a.display for a in await self.data_svc.locate('adversaries', match=dict(access=tuple(access)))],
                                        key=lambda a: a['name']))
 
     @check_authorization

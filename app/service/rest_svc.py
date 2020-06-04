@@ -10,6 +10,7 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
@@ -38,8 +39,16 @@ class RestService(RestServiceInterface, BaseService):
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
                                    atomic_ordering=p)))
             f.truncate()
-        await self._services.get('data_svc').reload_data()
-        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
+        if not data.get('prevent_reload'):
+            await self._services.get('data_svc').reload_data()
+            return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
+
+    async def persist_multiple_objects(self, data):
+        obj = data.pop('object')
+        data['prevent_reload'] = True
+        opts = dict(
+            adversaries=lambda d: self.persist_adversary(d),
+        )
 
     async def update_planner(self, data):
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
@@ -69,12 +78,12 @@ class RestService(RestServiceInterface, BaseService):
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/sources/%s.yml' % data.get('id')
+            file_path = 'data/objectives/%s.yml' % data.get('id')
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
         await self._services.get('data_svc').reload_data()
-        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
+        return [s.display for s in await self._services.get('data_svc').locate('objectives', dict(id=data.get('id')))]
 
     async def persist_objective(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -98,7 +107,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def delete_operation(self, data):
         await self.get_service('data_svc').remove('operations', data)
-        await self.get_service('data_svc').remove('sources', dict(id=str(data.get('id'))))
+        await self.get_service('data_svc').remove('objectives', dict(id=str(data.get('id'))))
         for f in glob.glob('data/results/*'):
             if '%s-' % data.get('id') in f:
                 os.remove(f)
@@ -250,11 +259,11 @@ class RestService(RestServiceInterface, BaseService):
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.get('planner', 'atomic')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
-        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
+        objectives = await self.get_service('data_svc').locate('objectives', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
-                         group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
+                         group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(objectives), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))

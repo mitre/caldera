@@ -45,7 +45,7 @@
                 </tr>
             </thead>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addTargetRow('Enter trait', 'Enter value')">
             &#10010;&nbsp;add row
         </p>
     </div>
@@ -62,7 +62,7 @@
                     <center>
                         <span>Rules</span>
                         <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
-                        <ul id="source-rules"></ul>
+                        <ul id="objective-rules"></ul>
                         <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
                         <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
                     </center>
@@ -99,159 +99,67 @@
         restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
     }
 
-    //THIS BLOCK NEEDS CHANGING
-    function toggleObjectiveView() {
-        $('#viewObjective').toggle();
-        $('#addObjective').toggle();
-        clearFactCanvas();
-    }
-
-    //THIS BLOCK NEEDS CHANGING
-    function clearFactCanvas(){
-        $('#factTbl').find("tr:gt(0)").remove();
-        $('#source-rules').empty();
-        $('#source-relationships').empty();
-        if($('#source-name').data('id')){
-            $('#source-name').data('id', null);
-        }
-    }
+//    //THIS BLOCK NEEDS CHANGING
+//    function toggleObjectiveView() {
+//        $('#viewObjective').toggle();
+//        $('#addObjective').toggle();
+//        clearTargetCanvas();
+//    }
 
     //THIS BLOCK NEEDS CHANGING
     function loadObjective() {
         function loadObjectiveCallback(data) {
-            clearFactCanvas();
-            let source = $('#source-name');
-            data[0].facts.forEach(f => {
-                addFactRow(f.trait, f.value);
+            clearTargetCanvas();
+            let objective = $('#objective-name');
+            data[0].targets.forEach(f => {
+                addTargetRow(f.trait, f.value);
             });
-            source.data('id', data[0].id);
+            objective.data('id', data[0].id);
             applyRules(data[0].rules);
-            source.html(data[0].name);
+            objective.html(data[0].name);
             populateRelationships(data[0].relationships);
         }
         stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'sources', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
+        restRequest('POST', {'index':'objectives', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
     }
 
-    //THIS BLOCK NEEDS CHANGING
-    function addFactRow(trait, value){
-        $('#factTbl tr:last').after(
-            '<tr>' +
-                '<td><p contenteditable="true">'+trait+'</p></td>' +
-                '<td><p contenteditable="true">'+value+'</p></td>' +
-                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
-            '</tr>'
-        )
-    }
+//    function saveObjective(){
+//        function saveObjectiveCallback(data) {
+//            stream('New objective saved!');
+//        }
+//        let objective = $('#objective-name');
+//        let name = objective.text();
+//        let id = objective.data('id');
+//        if(!name){ warn('Please enter a name!'); return; }
+//        if(!id) {
+//            id = uuidv4();
+//            objective.data('id', id);
+//        }
+//        let data = {};
+//        data['index'] = 'objectives';
+//        data['id'] = id;
+//        data['name'] = name;
+//        data['goals'] = [];
 
-    function saveObjective(){
-        function saveObjectiveCallback(data) {
-            stream('New objective saved!');
-        }
-        let objective = $('#objective-name');
-        let name = objective.text();
-        let id = objective.data('id');
-        if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
-            id = uuidv4();
-            objective.data('id', id);
-        }
-        let data = {};
-        data['index'] = 'objectives';
-        data['id'] = id;
-        data['name'] = name;
-        data['goals'] = [];
 
-        //THIS BLOCK NEEDS CHANGING
-        $("#factTbl tr").not(":first").each(function () {
-            let trait = $(this.cells[0]).text();
-            let value = $(this.cells[1]).text();
-            data['facts'].push({'trait':trait,'value':value});
-        });
-        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
+//        let invalidRules = 0;
+//        $('#objective-rules li').each(function() {
+//            let trait = $(this).find('#trait').val();
+//            let match = $(this).find('#match').val();
+//            let action = $(this).find('#action').val();
+//            if(trait === undefined || match === undefined || action === undefined){
+//                return;
+//            }
+//            if(action !== 'ALLOW' && action !== 'DENY') {
+//                invalidRules += 1;
+//            }
+//            data['rules'].push({'trait': trait, 'match': match, 'action': action});
+//        });
+//        if(invalidRules > 0) {
+//            warn(invalidRules + ' invalid rules!');
+//            return;
+//        }
 
-        let invalidRules = 0;
-        $('#source-rules li').each(function() {
-            let trait = $(this).find('#trait').val();
-            let match = $(this).find('#match').val();
-            let action = $(this).find('#action').val();
-            if(trait === undefined || match === undefined || action === undefined){
-                return;
-            }
-            if(action !== 'ALLOW' && action !== 'DENY') {
-                invalidRules += 1;
-            }
-            data['rules'].push({'trait': trait, 'match': match, 'action': action});
-        });
-        if(invalidRules > 0) {
-            warn(invalidRules + ' invalid rules!');
-            return;
-        }
-        $('#source-relationships li').each(function() {
-            let sourceTrait = $(this).find('#sourceTrait').val();
-            let sourceValue = $(this).find('#sourceValue').val();
-            let edge = $(this).find('#edge').val();
-            let targetTrait = $(this).find('#targetTrait').val();
-            let targetValue = $(this).find('#targetValue').val();
-            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){
-                return;
-            }
-            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
-        });
-        restRequest('PUT', data, saveSourceCallback);
-    }
 
-    function viewRules(){
-        document.getElementById("source-modal").style.display = "block";
-        let sourceName = $('#source-name').val();
-        $('#rules-name').text(sourceName);
-    }
-
-    function applyRules(rules){
-        rules.forEach(r => {
-            let template = $("#rule-template").clone();
-            template.find('#trait').val(r.trait);
-            template.find('#match').val(r.match);
-            if(r.action === 0) {
-                template.find('#action').val('DENY');
-            } else if (r.action === 1) {
-                template.find('#action').val('ALLOW');
-            }
-            template.show();
-            $('#source-rules').append(template);
-        });
-    }
-
-    function addRuleBlock(){
-        let template = $("#rule-template").clone();
-        template.show();
-        $('#source-rules').append(template);
-    }
-
-    function populateRelationships(relationships){
-        relationships.forEach(r => {
-            let template = $("#relationship-template").clone();
-            template.find('#sourceTrait').val(r.source.trait);
-            template.find('#sourceValue').val(r.source.value);
-            template.find('#edge').val(r.edge);
-            template.find('#targetTrait').val(r.target.trait);
-            template.find('#targetValue').val(r.target.value);
-            template.show();
-            $('#source-relationships').append(template);
-        });
-    }
-
-    function viewRelationships(){
-        document.getElementById("relationship-modal").style.display = "block";
-        let sourceName = $('#source-name').val();
-        $('#relationship-name').text(sourceName);
-    }
-
-    function addRelationshipBlock(){
-        let template = $("#relationship-template").clone();
-        template.show();
-        $('#source-relationships').append(template);
-    }
-
-    //# sourceURL=sources.js
+    //# objectiveURL=objectives.js
 </script>
