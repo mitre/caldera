@@ -27,7 +27,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :return:
         """
         l_ids = []
-        for l in await self.get_links(operation, bucket, agent):
+        for l in await self.get_links(operation, [bucket], agent):
             l_id = await operation.apply(l)
             if batch:
                 l_ids.append(l_id)
