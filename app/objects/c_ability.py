@@ -92,11 +92,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         if access:
             self.access = self.Access(access)
         self.additional_info = additional_info or dict()
-        self.load_additional_info(**kwargs)
-
-    def load_additional_info(self, **kwargs):
-        for k, v in kwargs.items():
-            self.additional_info[k] = v
+        self.additional_info.update(**kwargs)
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
