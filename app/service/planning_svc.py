@@ -12,7 +12,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
         Apply all links for specified bucket. Blocks until all links are completed,
-        either after batch push, or seperately for every pushed link.
+        either after batch push, or separately for every pushed link.
 
         :param planner:
         :param bucket:
