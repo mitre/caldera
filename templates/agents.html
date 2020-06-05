@@ -135,6 +135,10 @@
                         <td>Peer-to-Peer Proxy Receivers</td>
                         <td><p id="modal-peer_receivers"></p></td>
                     </tr>
+                    <tr>
+                        <td>Peer-to-Peer Proxy Chain</td>
+                        <td><p id="modal-peer_chain"></p></td>
+                    </tr>
                 </table>
                 <br>
                 <button type="button" class="button-warn" onclick="killAgent()">Kill Agent</button>
@@ -315,7 +319,8 @@
         function agentInfoCallback(data){
             let parent = $('#agent-modal');
             let agent = data[0];
-            let peer_receivers = "<table>";
+            let peer_receivers = "";
+            let peer_chain = "";
             parent.find('#modal-paw').html(agent['paw']);
             parent.find('#modal-contact').html(agent['contact']);
             parent.find('#modal-host').html(agent['host']);
@@ -332,20 +337,55 @@
             parent.find('#modal-ppid').html(agent['ppid']);
             parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
             parent.find('#modal-watchdog').html(agent['watchdog']);
-            for (var key in agent['proxy_receivers']) {
-                peer_receivers += "<tr>";
-                peer_receivers += "<td><p>" + key + "  </p></td>";
-                peer_receivers += "<td><p></p></td>";
-                peer_receivers += "</tr>";
-                for (i = 0; i < agent['proxy_receivers'][key].length; i++) {
+
+            // Set up peer-to-peer proxy receiver information display.
+            if (Object.keys(agent['proxy_receivers']).length == 0) {
+                peer_receivers = "No local peer-to-peer proxy receivers active.";
+            } else {
+                peer_receivers = "<table>";
+                for (var key in agent['proxy_receivers']) {
                     peer_receivers += "<tr>";
+                    peer_receivers += "<td><i>" + key + "  </i></td>";
                     peer_receivers += "<td><p></p></td>";
-                    peer_receivers += "<td><p>" + agent['proxy_receivers'][key][i] + "</p></td>";
                     peer_receivers += "</tr>";
+                    for (i = 0; i < agent['proxy_receivers'][key].length; i++) {
+                        peer_receivers += "<tr>";
+                        peer_receivers += "<td><p></p></td>";
+                        peer_receivers += "<td><p>" + agent['proxy_receivers'][key][i] + "</p></td>";
+                        peer_receivers += "</tr>";
+                    };
                 };
+                peer_receivers += "</table>";
             };
-            peer_receivers += "</table>";
+
+            // Set up peer-to-peer proxy chain information display.
+            let proxy_chain_length = agent['proxy_chain'].length;
+            if (proxy_chain_length == 0) {
+                peer_chain = "Not using peer agents to reach C2.";
+            } else {
+                // Header row
+                peer_chain = "<table cellspacing=\"15\">";
+                peer_chain += "<tr>";
+                peer_chain += "<th style=\"color:white\"><i>Hop Index</i></th>"
+                peer_chain += "<th style=\"color:white\"><i>Peer Paw</i></th>"
+                peer_chain += "<th style=\"color:white\"><i>Peer Receiver Address</i></th>";
+                peer_chain += "<th style=\"color:white\"><i>Peer Receiver Protocol</i></th>";
+                peer_chain += "</tr>";
+
+                // Proxy chain rows
+                for (i = 0; i < proxy_chain_length; i++) {
+                    peer_chain += "<tr>";
+                    peer_chain += "<td style=\"text-align:center\"><i>" + i + "</i></td>"
+                    for (j = 0; j < agent['proxy_chain'][i].length; j++) {
+                        peer_chain += "<td><p>" + agent['proxy_chain'][i][j] + "</p></td>";
+                    }
+                    peer_chain += "</tr>";
+                };
+                peer_chain += "</table>";
+            };
+
             parent.find('#modal-peer_receivers').html(peer_receivers);
+            parent.find('#modal-peer_chain').html(peer_chain);
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
