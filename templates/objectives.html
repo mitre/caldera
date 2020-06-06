@@ -35,17 +35,18 @@
     <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
         <h4 id="objective-name" contenteditable="true" class="advGoal">Sample name</h4>
         <hr>
-        <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
+        <table id="goalTbl" class="obfuscation-table" border=1 frame=void goals=rows>
             <thead>
                 <tr>
-                    //THIS BLOCK NEEDS CHANGING
-                    <td><b>trait</b></td>
+                    <td><b>target</b></td>
                     <td><b>value</b></td>
+                    <td><b>count</b></td>
+                    <td><b>operator</b></td>
                     <td></td>
                 </tr>
             </thead>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addTargetRow('Enter trait', 'Enter value')">
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', <count-will-increment>, 'Enter operator')">
             &#10010;&nbsp;add row
         </p>
     </div>
@@ -57,14 +58,13 @@
         <div class="container modal-box">
             <div class="row ability-viewer">
                 <span onclick="document.getElementById('objective-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                //THIS BLOCK NEEDS CHANGING
                 <div class="column" style="flex:100%">
                     <center>
-                        <span>Rules</span>
-                        <h3 id="rules-name" style="margin-top:2px;text-align:center"></h3>
-                        <ul id="objective-rules"></ul>
-                        <p style="color:white;text-align: right;" onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
-                        <p style="font-size:12px;text-align:right">* Rules run in top-down order, in the same way as iptables</p>
+                        <span>Goals</span>
+                        <h3 id="goals-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="objective-goals"></ul>
+                        <p style="color:white;text-align: right;" onclick="addGoalBlock()">&#10010;&nbsp;add goal</p>
+                        <p style="font-size:12px;text-align:right">* Goals run in top-down order, in the same way as iptables</p>
                     </center>
                 </div>
             </div>
@@ -74,7 +74,7 @@
 
 <script>
     $(document).ready(function () {
-        stream('New objectives will be created after each operation, containing the intelligence that was learned.')
+        stream('New objectives will be created to automate adversary actions to achieve goals.')
     });
     let refresher = setInterval(refresh, 15000);
     $('.section-profile').bind('destroyed', function() {
@@ -84,82 +84,120 @@
 
     function refresh(){
         function objectiveCallback(data){
-            data.forEach(function(s) {
+            data.forEach(function(o) {
                 let found = false;
                 $("#profile-objective-name > option").each(function() {
-                    if($(this).val() === s.id) {
+                    if($(this).val() === o.id) {
                         found = true;
                     }
                 });
                 if(!found){
-                    $('#profile-objective-name').append('<option value="'+s.id+'">'+s.name+'</option>');
+                    $('#profile-objective-name').append('<option value="'+o.id+'">'+o.name+'</option>');
                 }
             });
         }
         restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
     }
 
-//    //THIS BLOCK NEEDS CHANGING
-//    function toggleObjectiveView() {
-//        $('#viewObjective').toggle();
-//        $('#addObjective').toggle();
-//        clearTargetCanvas();
-//    }
+    function toggleObjectiveView() {
+        $('#viewObjective').toggle();
+        $('#addObjective').toggle();
+        clearGoalCanvas();
+    }
 
-    //THIS BLOCK NEEDS CHANGING
+    function clearGoalCanvas(){
+        $('#goalTbl').find("tr:gt(0)").remove();
+        $('#objective-goals').empty();
+        if($('#objective-name').data('id')){
+            $('#objective-name').data('id', null);
+        }
+    }
+
     function loadObjective() {
         function loadObjectiveCallback(data) {
-            clearTargetCanvas();
+            clearGoalCanvas();
             let objective = $('#objective-name');
-            data[0].targets.forEach(f => {
-                addTargetRow(f.trait, f.value);
+            data[0].goals.forEach(g => {
+                addGoalRow(g.target, g.value, g.count, g.operator);
             });
             objective.data('id', data[0].id);
-            applyRules(data[0].rules);
+            applyGoals(data[0].goals);
             objective.html(data[0].name);
-            populateRelationships(data[0].relationships);
         }
-        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
+        stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'objectives', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
     }
 
-//    function saveObjective(){
-//        function saveObjectiveCallback(data) {
-//            stream('New objective saved!');
-//        }
-//        let objective = $('#objective-name');
-//        let name = objective.text();
-//        let id = objective.data('id');
-//        if(!name){ warn('Please enter a name!'); return; }
-//        if(!id) {
-//            id = uuidv4();
-//            objective.data('id', id);
-//        }
-//        let data = {};
-//        data['index'] = 'objectives';
-//        data['id'] = id;
-//        data['name'] = name;
-//        data['goals'] = [];
+    function addGoalRow(target, value){
+        $('#goalTbl tr:last').after(
+            '<tr>' +
+                '<td><p contenteditable="true">'+target+'</p></td>' +
+                '<td><p contenteditable="true">'+value+'</p></td>' +
+                '<td><p contenteditable="true">'+count+'</p></td>' +
+                '<td><p contenteditable="true">'+operator+'</p></td>' +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
+    }
 
+    function saveObjective(){
+        function saveObjectiveCallback(data) {
+            stream('New objective saved!');
+        }
+        let objective = $('#objective-name');
+        let name = objective.text();
+        let id = objective.data('id');
+        if(!name){ warn('Please enter a name!'); return; }
+        if(!id) {
+            id = uuidv4();
+            objective.data('id', id);
+        }
+        let data = {};
+        data['index'] = 'objectives';
+        data['target'] = target;
+        data['value'] = value;
+        data['count'] = count;
+        data['operator'] = operator;
+        data['goals'] = [];
 
-//        let invalidRules = 0;
-//        $('#objective-rules li').each(function() {
-//            let trait = $(this).find('#trait').val();
-//            let match = $(this).find('#match').val();
-//            let action = $(this).find('#action').val();
-//            if(trait === undefined || match === undefined || action === undefined){
-//                return;
-//            }
-//            if(action !== 'ALLOW' && action !== 'DENY') {
-//                invalidRules += 1;
-//            }
-//            data['rules'].push({'trait': trait, 'match': match, 'action': action});
-//        });
-//        if(invalidRules > 0) {
-//            warn(invalidRules + ' invalid rules!');
-//            return;
-//        }
+        $("#goalTbl tr").not(":first").each(function () {
+            let target = $(this.cells[0]).text();
+            let value = $(this.cells[1]).text();
+            let count = $(this.cells[2]).text();
+            let operator = $(this.cells[3]).text();
+            data['goals'].push({'target':target,'value':value,'count':count,'operator':operator});
+        });
+        if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
 
-
+<!--        let invalidRules = 0;-->
+<!--        $('#source-rules li').each(function() {-->
+<!--            let trait = $(this).find('#trait').val();-->
+<!--            let match = $(this).find('#match').val();-->
+<!--            let action = $(this).find('#action').val();-->
+<!--            if(trait === undefined || match === undefined || action === undefined){-->
+<!--                return;-->
+<!--            }-->
+<!--            if(action !== 'ALLOW' && action !== 'DENY') {-->
+<!--                invalidRules += 1;-->
+<!--            }-->
+<!--            data['rules'].push({'trait': trait, 'match': match, 'action': action});-->
+<!--        });-->
+<!--        if(invalidRules > 0) {-->
+<!--            warn(invalidRules + ' invalid rules!');-->
+<!--            return;-->
+<!--        }-->
+<!--        $('#source-relationships li').each(function() {-->
+<!--            let sourceTrait = $(this).find('#sourceTrait').val();-->
+<!--            let sourceValue = $(this).find('#sourceValue').val();-->
+<!--            let edge = $(this).find('#edge').val();-->
+<!--            let targetTrait = $(this).find('#targetTrait').val();-->
+<!--            let targetValue = $(this).find('#targetValue').val();-->
+<!--            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){-->
+<!--                return;-->
+<!--            }-->
+<!--            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});-->
+<!--        });-->
+<!--        restRequest('PUT', data, saveSourceCallback);-->
+    }
     //# objectiveURL=objectives.js
 </script>

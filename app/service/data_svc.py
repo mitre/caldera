@@ -102,11 +102,11 @@ class DataService(DataServiceInterface, BaseService):
             for plug in plugins:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
-                await self._load_objectives(plug)
             await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
+                await self._load_objectives(plug)
                 await self._load_planners(plug)
             await self._load_extensions()
             await self._verify_data_sets()
