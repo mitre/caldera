@@ -35,6 +35,7 @@ class AgentFieldsSchema(ma.Schema):
     contact = ma.fields.String()
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
+    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -67,7 +68,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None):
+                 proxy_receivers=None, proxy_chain=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -94,6 +95,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.links = []
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
         self.proxy_receivers = proxy_receivers if proxy_receivers else dict()
+        self.proxy_chain = proxy_chain if proxy_chain else []
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -136,6 +138,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('platform', kwargs.get('platform'))
         self.update('executors', kwargs.get('executors'))
         self.update('proxy_receivers', kwargs.get('proxy_receivers'))
+        self.update('proxy_chain', kwargs.get('proxy_chain'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)

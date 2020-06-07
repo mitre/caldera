@@ -12,7 +12,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """
         Apply all links for specified bucket. Blocks until all links are completed,
-        either after batch push, or seperately for every pushed link.
+        either after batch push, or separately for every pushed link.
 
         :param planner:
         :param bucket:
@@ -27,7 +27,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :return:
         """
         l_ids = []
-        for l in await self.get_links(operation, bucket, agent):
+        for l in await self.get_links(operation, [bucket], agent):
             l_id = await operation.apply(l)
             if batch:
                 l_ids.append(l_id)

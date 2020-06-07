@@ -8,6 +8,7 @@ from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
+from app.service.contact_svc import ContactService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
@@ -46,6 +47,11 @@ def data_svc():
 @pytest.fixture(scope='class')
 def file_svc():
     return FileSvc()
+
+
+@pytest.fixture(scope='class')
+def contact_svc():
+    return ContactService()
 
 
 @pytest.fixture(scope='class')
@@ -156,3 +162,27 @@ def demo_plugin():
         return Plugin(name=name, description=desc, address=address, enabled=enabled, data_dir=data_dir, access=access)
 
     return _generate_plugin
+
+
+@pytest.fixture
+def agent_profile():
+    def _agent_profile(paw=None, group='red', platform='linux', executors=None, privilege='Elevated'):
+        if not executors:
+            executors = ['sh']
+        return dict(
+            server='http://127.0.0.1:8888',
+            username='username',
+            group=group,
+            host='hostname',
+            platform=platform,
+            architecture='x86_64',
+            location='/path/to/agent',
+            pid=random.randint(2, 32768),
+            ppid=random.randint(2, 32768),
+            executors=executors,
+            privilege=privilege,
+            exe_name='agent-exe-name',
+            paw=paw
+        )
+
+    return _agent_profile
