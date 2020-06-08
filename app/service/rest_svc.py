@@ -243,13 +243,21 @@ class RestService(RestServiceInterface, BaseService):
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
-        allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
+        allowed = self._get_allowed_from_access(access)
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
                          group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
+
+    def _get_allowed_from_access(self, access):
+        if self.Access.HIDDEN in access['access']:
+            return self.Access.HIDDEN
+        elif self.Access.BLUE in access['access']:
+            return self.Access.BLUE
+        else:
+            return self.Access.RED
 
     @staticmethod
     async def _read_from_yaml(file_path):

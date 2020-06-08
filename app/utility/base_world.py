@@ -163,6 +163,7 @@ class BaseWorld:
         APP = 0
         RED = 1
         BLUE = 2
+        HIDDEN = 3
 
     class Privileges(Enum):
         User = 0
