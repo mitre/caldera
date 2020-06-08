@@ -2,7 +2,6 @@ import asyncio
 import copy
 import glob
 import hashlib
-import inspect
 import json
 import os
 import time
@@ -14,12 +13,6 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 
-# from app.contacts.contact_gist import Gist
-# from app.contacts.contact_html import Html
-# from app.contacts.contact_http import Http
-# from app.contacts.contact_tcp import Tcp
-# from app.contacts.contact_udp import Udp
-# from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
@@ -135,20 +128,8 @@ class AppService(AppServiceInterface, BaseService):
         contact_svc = self.get_service('contact_svc')
         for contact_file in glob.iglob('app/contacts/*.py'):
             contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
-            contact_module = import_module(contact_module_name)
-            classes_found = inspect.getmembers(contact_module, inspect.isclass)
-            for classname in range(0, len(classes_found)):
-                if not any(exclude in classes_found[classname][0] for exclude in ("BaseWorld", "Session", "Handle")):
-                    contact_class_name = classes_found[classname][0]
-                    contact_class = getattr(import_module(contact_module_name), contact_class_name)
-                    await contact_svc.register(contact_class(self.get_services()))
-
-        # await contact_svc.register(Http(self.get_services()))
-        # await contact_svc.register(Udp(self.get_services()))
-        # await contact_svc.register(Tcp(self.get_services()))
-        # await contact_svc.register(WebSocket(self.get_services()))
-        # await contact_svc.register(Html(self.get_services()))
-        # await contact_svc.register(Gist(self.get_services()))
+            contact_class = getattr(import_module(contact_module_name), 'Contact')
+            await contact_svc.register(contact_class(self.get_services()))
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):

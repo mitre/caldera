@@ -6,7 +6,7 @@ from aiohttp import web
 from app.utility.base_world import BaseWorld
 
 
-class Http(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'http'
