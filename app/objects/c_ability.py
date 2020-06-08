@@ -98,8 +98,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.additional_info[k] = v
 
     def __getattr__(self, item):
-        if item in self.additional_info:
-            return self.additional_info[item]
+        try:
+            return super().__getattribute__('additional_info')[item]
+        except KeyError:
+            raise AttributeError(item)
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
