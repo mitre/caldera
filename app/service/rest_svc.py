@@ -63,8 +63,9 @@ class RestService(RestServiceInterface, BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
+        access = (await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id'))))[0].access
         await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))
-        await self.get_service('data_svc').reload_data()
+        await self.get_service('data_svc').load_ability_file(file_path, access)
         return [a.display for a in await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
