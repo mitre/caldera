@@ -35,7 +35,6 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema, missing=None)
     test = ma.fields.String(missing=None)
-    cve = ma.fields.String(missing=None)
 
     @ma.post_load
     def build_ability(self, data, **_):
@@ -67,7 +66,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
-                 variations=None, language=None, code=None, build_target=None, cve=None, **kwargs):
+                 variations=None, language=None, code=None, build_target=None, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -90,7 +89,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.build_target = build_target
         self.variations = get_variations(variations)
         self.buckets = buckets if buckets else []
-        self.cve = cve
         if access:
             self.access = self.Access(access)
         self.additional_info = dict()
@@ -123,7 +121,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('code', self.code)
         existing.update('language', self.language)
         existing.update('build_target', self.build_target)
-        existing.update('cve', self.cve)
         return existing
 
     async def which_plugin(self):
