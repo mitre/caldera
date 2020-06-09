@@ -40,13 +40,13 @@
                 <tr>
                     <td><b>target</b></td>
                     <td><b>value</b></td>
-                    <td><b>count</b></td>
                     <td><b>operator</b></td>
+                    <td><b>count</b></td>
                     <td></td>
                 </tr>
             </thead>
         </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', <count-will-increment>, 'Enter operator')">
+        <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter operator', '<count-will-increment>')">
             &#10010;&nbsp;add row
         </p>
     </div>
@@ -118,7 +118,7 @@
             clearGoalCanvas();
             let objective = $('#objective-name');
             data[0].goals.forEach(g => {
-                addGoalRow(g.target, g.value, g.count, g.operator);
+                addGoalRow(g.target, g.value, g.operator, g.count);
             });
             objective.data('id', data[0].id);
             applyGoals(data[0].goals);
@@ -128,13 +128,13 @@
         restRequest('POST', {'index':'objectives', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
     }
 
-    function addGoalRow(target, value){
+    function addGoalRow(target, value, operator, count){
         $('#goalTbl tr:last').after(
             '<tr>' +
                 '<td><p contenteditable="true">'+target+'</p></td>' +
                 '<td><p contenteditable="true">'+value+'</p></td>' +
-                '<td><p contenteditable="true">'+count+'</p></td>' +
                 '<td><p contenteditable="true">'+operator+'</p></td>' +
+                '<td><p contenteditable="true">'+count+'</p></td>' +
                 '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
             '</tr>'
         )
@@ -156,48 +156,40 @@
         data['index'] = 'objectives';
         data['target'] = target;
         data['value'] = value;
-        data['count'] = count;
         data['operator'] = operator;
+        data['count'] = count;
         data['goals'] = [];
 
         $("#goalTbl tr").not(":first").each(function () {
             let target = $(this.cells[0]).text();
             let value = $(this.cells[1]).text();
-            let count = $(this.cells[2]).text();
-            let operator = $(this.cells[3]).text();
-            data['goals'].push({'target':target,'value':value,'count':count,'operator':operator});
+            let operator = $(this.cells[2]).text();
+            let count = $(this.cells[3]).text();
+            data['goals'].push({'target':target,'value':value,'operator':operator,'count':count});
         });
         if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
 
-<!--        let invalidRules = 0;-->
-<!--        $('#source-rules li').each(function() {-->
-<!--            let trait = $(this).find('#trait').val();-->
-<!--            let match = $(this).find('#match').val();-->
-<!--            let action = $(this).find('#action').val();-->
-<!--            if(trait === undefined || match === undefined || action === undefined){-->
-<!--                return;-->
-<!--            }-->
-<!--            if(action !== 'ALLOW' && action !== 'DENY') {-->
-<!--                invalidRules += 1;-->
-<!--            }-->
-<!--            data['rules'].push({'trait': trait, 'match': match, 'action': action});-->
-<!--        });-->
-<!--        if(invalidRules > 0) {-->
-<!--            warn(invalidRules + ' invalid rules!');-->
-<!--            return;-->
-<!--        }-->
-<!--        $('#source-relationships li').each(function() {-->
-<!--            let sourceTrait = $(this).find('#sourceTrait').val();-->
-<!--            let sourceValue = $(this).find('#sourceValue').val();-->
-<!--            let edge = $(this).find('#edge').val();-->
-<!--            let targetTrait = $(this).find('#targetTrait').val();-->
-<!--            let targetValue = $(this).find('#targetValue').val();-->
-<!--            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){-->
-<!--                return;-->
-<!--            }-->
-<!--            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});-->
-<!--        });-->
-<!--        restRequest('PUT', data, saveSourceCallback);-->
+        let invalidGoals = 0;
+        $('#objective-goals li').each(function() {
+            let target = $(this).find('#target').val();
+            let value = $(this).find('#value').val();
+            let operator = $(this).find('#operator').val();
+            let count = $(this).find('#count').val();
+            if(target === undefined || value === undefined || operator ===undefined || count === undefined){
+                return;
+            }
+            if( !== 'ALLOW' && action !== 'DENY') {
+                invalidGoals += 1;
+            }
+            data['goals'].push({'target': target, 'value': value, 'operator': operator, 'count': count});
+        });
+        if(invalidGoals > 0) {
+            warn(invalidGoals + ' invalid goals!');
+            return;
+        }
+        });
+        restRequest('PUT', data, saveSourceCallback);
     }
+
     //# objectiveURL=objectives.js
 </script>
