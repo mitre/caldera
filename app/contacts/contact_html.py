@@ -5,7 +5,7 @@ from aiohttp_jinja2 import template
 from app.utility.base_world import BaseWorld
 
 
-class Html(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'html'
