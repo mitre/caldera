@@ -128,7 +128,7 @@ class AppService(AppServiceInterface, BaseService):
         contact_svc = self.get_service('contact_svc')
         for contact_file in glob.iglob('app/contacts/*.py'):
             contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
-            contact_class = getattr(import_module(contact_module_name), 'Contact')
+            contact_class = import_module(contact_module_name).Contact
             await contact_svc.register(contact_class(self.get_services()))
 
     async def validate_requirement(self, requirement, params):
