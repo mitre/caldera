@@ -175,7 +175,7 @@
             let value = $(this).find('#value').val();
             let operator = $(this).find('#operator').val();
             let count = $(this).find('#count').val();
-            if(target === undefined || value === undefined || operator ===undefined || count === undefined){
+            if(target === undefined || value === undefined || operator ===undefined || count === undefined) {
                 return;
             }
             if(action !== 'ALLOW' && action !== 'DENY') {
@@ -187,7 +187,7 @@
             warn(invalidGoals + ' invalid goals!');
             return;
         }
-        });
+
         restRequest('PUT', data, saveSourceCallback);
     }
 
