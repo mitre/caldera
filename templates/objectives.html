@@ -178,7 +178,7 @@
             if(target === undefined || value === undefined || operator ===undefined || count === undefined){
                 return;
             }
-            if( !== 'ALLOW' && action !== 'DENY') {
+            if(action !== 'ALLOW' && action !== 'DENY') {
                 invalidGoals += 1;
             }
             data['goals'].push({'target': target, 'value': value, 'operator': operator, 'count': count});

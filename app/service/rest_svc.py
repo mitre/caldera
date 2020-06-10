@@ -78,12 +78,12 @@ class RestService(RestServiceInterface, BaseService):
     async def persist_source(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
-            file_path = 'data/objectives/%s.yml' % data.get('id')
+            file_path = 'data/sources/%s.yml' % data.get('id')
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
         await self._services.get('data_svc').reload_data()
-        return [s.display for s in await self._services.get('data_svc').locate('objectives', dict(id=data.get('id')))]
+        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def persist_objective(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
@@ -107,7 +107,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def delete_operation(self, data):
         await self.get_service('data_svc').remove('operations', data)
-        await self.get_service('data_svc').remove('objectives', dict(id=str(data.get('id'))))
+        await self.get_service('data_svc').remove('sources', dict(id=str(data.get('id'))))
         for f in glob.glob('data/results/*'):
             if '%s-' % data.get('id') in f:
                 os.remove(f)
@@ -259,7 +259,7 @@ class RestService(RestServiceInterface, BaseService):
         planner = await self.get_service('data_svc').locate('planners', match=dict(name=data.get('planner', 'atomic')))
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
-        objectives = await self.get_service('data_svc').locate('objectives', match=dict(name=data.pop('source', 'basic')))
+        sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
