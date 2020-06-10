@@ -28,7 +28,7 @@ def setup_logger(level=logging.DEBUG):
         if logger_name in ('aiohttp.server', 'asyncio'):
             continue
         else:
-            logging.getLogger(logger_name).setLevel(0)
+            logging.getLogger(logger_name).setLevel(100)
 
 
 async def start_server():
