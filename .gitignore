@@ -18,8 +18,8 @@ calderaenv/
 .env
 conf/*.yml
 !conf/default.yml
-docs/_build
-docs/_generated
+plugins/caldera-docs/sphinx-docs/_build
+plugins/caldera-docs/sphinx-docs/_generated
 data/object_store
 data/results/*
 !data/results/.gitkeep

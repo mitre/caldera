@@ -28,19 +28,11 @@ def setup_logger(level=logging.DEBUG):
         if logger_name in ('aiohttp.server', 'asyncio'):
             continue
         else:
-            logging.getLogger(logger_name).setLevel(100)
-
-
-async def build_docs():
-    process = await asyncio.create_subprocess_exec('sphinx-build', 'docs/', 'docs/_build/html',
-                                                   '-b', 'html', '-c', 'docs/',
-                                                   stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    await process.communicate()
+            logging.getLogger(logger_name).setLevel(0)
 
 
 async def start_server():
     await auth_svc.apply(app_svc.application, BaseWorld.get_config('users'))
-    app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
     runner = web.AppRunner(app_svc.application)
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
@@ -48,7 +40,6 @@ async def start_server():
 
 def run_tasks(services):
     loop = asyncio.get_event_loop()
-    loop.create_task(build_docs())
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
