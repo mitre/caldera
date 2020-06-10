@@ -42,4 +42,4 @@
 	url = https://github.com/mitre/human.git
 [submodule "plugins/fieldmanual"]
 	path = plugins/fieldmanual
-	url = git@github.com:mitre/fieldmanual.git
+	url = https://github.com/mitre/fieldmanual.git
