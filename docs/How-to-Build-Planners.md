@@ -117,9 +117,7 @@ These bucket methods are where all inter-bucket transitions and intra-bucket log
 Lets look at each of the bucket methods in detail:
 
 * `privilege_escalation()` - We first use `get_links` planning service utility to retrieve all abilities (links) tagged as _privilege escalation_ from the operation adversary. We then push these links to the agent with `apply` and wait for these links to complete with `wait_for_links_completion()`, both from the operation utility. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was successful (Note: this assumes the privilege escalation abilities we are using create custom facts in the format "{paw}.privilege.root" or "{paw}.privilege.admin" with values of `True` or `False`). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
-
 * `persistence()`, `collection()`, `lateral_movement()` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can use the `exhaust_bucket()` planning service utility to apply all links for the given bucket tag. Before exiting, we set the next bucket as desired. Note that in the `persistence()` bucket we use the `default_next_bucket()` planning service utility, which will automatically choose the next bucket after "persistence" in the provided `self.state_machine` ordered list.
-
 * `discovery()` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use `get_links()` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly.
 
 **_Additional Notes on Privileged Persistence Planner_**
@@ -148,7 +146,7 @@ This will create a planner in CALDERA which will call the module we've created a
 
 ### Using the Planner
 
-To use the planner, create an Operation and select the "Use privileged_persistence planner" option in the planner dropdown (under Autonomous). Any selected planner will use the abilities in the selected adversary profile during the operation. Since abilities are automatically added to buckets which correlate to MITRE ATT&CK tactics, any abilities with the following tactics will be executed by the privileged_persistence planner: privilege_escalation, persistence, collection, discovery, and lateral_movement. 
+To use the planner, create an Operation and select the "Use privileged_persistence planner" option in the planner dropdown (under Autonomous). Any selected planner will use the abilities in the selected adversary profile during the operation. Since abilities are automatically added to buckets which correlate to MITRE ATT&CK tactics, any abilities with the following tactics will be executed by the privileged_persistence planner: _privilege_escalation_, _persistence_, _collection_, _discovery_, and _lateral_movement_.
 
 ## A Minimal Planner
 
