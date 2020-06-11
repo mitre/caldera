@@ -17,9 +17,11 @@ Let's dive into creating a planner to see the power and flexibility of the CALDE
 
 The planner will consist of 5 buckets:  _Privilege Escalation_, _Collection_, _Persistence_, _Discovery_, and _Lateral Movemnent_. As implied by the state machine, this planner will use the underlying adversary abilities to attempt to spread to as many hosts as possible and establish persistence. As an additional feature, if an agent cannot obtain persistence due to unsuccessful privilege escalation attempts, then the agent will execute collection abilities immediately in case it loses access to the host.
 
-### Creating the Python Module
+This document will walk through creating three basic components of a planner module (initialization, entrypoint method, and bucket methods), creating the planner data object, and applying the planner to a new operation.  
 
-We will create a python module called `privileged_persistence.py` and nest it under `app/` in the `mitre/stockpile` plugin: at `plugins/stockpile/app/privileged_persistence.py`.
+### Creating the Python Module 
+
+We will create a python module called `privileged_persistence.py` and nest it under `app/` in the `mitre/stockpile` plugin at `plugins/stockpile/app/privileged_persistence.py`. 
 
 **_First, lets build the static initialization of the planner:_**
 
@@ -144,7 +146,9 @@ ignore_enforcement_modules: []
 
 This will create a planner in CALDERA which will call the module we've created at `plugins.stockpile.app.privileged_persistence`.
 
-To use the planner, create an Operation and select the "Use privileged_persistence planner" option in the planner dropdown (under Autonomous).
+### Using the Planner
+
+To use the planner, create an Operation and select the "Use privileged_persistence planner" option in the planner dropdown (under Autonomous). Any selected planner will use the abilities in the selected adversary profile during the operation. Since abilities are automatically added to buckets which correlate to MITRE ATT&CK tactics, any abilities with the following tactics will be executed by the privileged_persistence planner: privilege_escalation, persistence, collection, discovery, and lateral_movement. 
 
 ## A Minimal Planner
 
@@ -172,7 +176,7 @@ class LogicalPlanner:
 Within a planner, these utilities are available from `self.planning_svc`:
 
 * `exhaust_bucket()` - Apply all links for specified bucket. Blocks execution until all links are completed, either after batch push, or separately for every pushed link. Allows a single agent to be specified.
-* `execute_links()` - 
+* `execute_links()` - Wait for links to complete and update stopping conditions.
 * `default_next_bucket()` - Returns next bucket as specified in the given state machine. If the current bucket is the last in the list, the bucket order loops from last bucket to first. Used in the above example to advance to the next bucket in the persistence and discovery buckets.
 * `add_ability_to_next_bucket()` - Applies a custom bucket to an ability. This can be used to organize abilities into buckets that aren't standard MITRE ATT&CK tactics.
 * `execute_planner()` - Executes the default planner execution flow, progressing from bucket to bucket. Execution will stop if: all buckets have been executed (`self.next_bucket` is set to `None`), planner stopping conditions have been met, or the operation is halted.
