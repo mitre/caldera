@@ -5,6 +5,8 @@ import os
 import pathlib
 import uuid
 from datetime import time
+from datafile.extractfile import dataFile
+from structurediff import DataComparison
 
 import yaml
 from aiohttp import web
@@ -61,6 +63,17 @@ class RestService(RestServiceInterface, BaseService):
                                        for f in data['stopping_conditions']]
         await self.get_service('data_svc').store(planner)
 
+    async def diff_yml(self, file_path, data):
+        orig_file = dataFile(file_path)
+        print(orig_file)
+        tmp_fp = './tmp.yml'
+        tmp_fp.seek(0)
+        tmp_fp.write(yaml.dump([data]))
+        new_file = dataFile(tmp_fp)
+        yml_diff = DataComparison(orig_file, new_file)
+        print(yml_diff)
+        return 'Done'
+
     async def persist_ability(self, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
@@ -70,6 +83,7 @@ class RestService(RestServiceInterface, BaseService):
             file_path = '%s/%s.yml' % (d, data.get('id'))
         with open(file_path, 'w+') as f:
             f.seek(0)
+            self.diff_yml(f, [data])
             f.write(yaml.dump([data]))
         await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))
         await self.get_service('data_svc').reload_data()

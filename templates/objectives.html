@@ -1,38 +1,38 @@
 <div id="Objectives" class="section-profile">
-  <div class="advanced row">
-      <div class="topleft duk-icon"><img onclick="removeSection('objectives')" src="/gui/img/x.png"></div>
-      <div class="bottomright duk-icon"><img onclick="toggleSidebar('objectives-sidebar')" src="/gui/img/expand.png"></div>
-      <div id="objectives-sidebar"  class="column section-border" style="flex:25%">
-      <img src="/gui/img/facts.png">
-      <h4>Objectives</h4>
-      <br>
-      <div class="toggle">
-        <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleObjectiveView()">
-          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
-        </label>
-      </div>
-      <br>
-      <p class="section-description">
+    <div class="advanced row">
+        <div class="topleft duk-icon"><img onclick="removeSection('objectives')" src="/gui/img/x.png"></div>
+        <div class="bottomright duk-icon"><img onclick="toggleSidebar('objectives-sidebar')" src="/gui/img/expand.png"></div>
+        <div id="objectives-sidebar"  class="column section-border" style="flex:25%">
+        <img src="/gui/img/facts.png">
+        <h4>Objectives</h4>
+        <br>
+        <div class="toggle">
+            <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleObjectiveView()">
+            <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+            </label>
+            </div>
+        <br>
+        <p class="section-description">
           Objectives are groups of goals that an adversary will accomplish.
-      </p>
-      <br>
-      <div id="viewObjective">
-          <select id="profile-objective-name" style="margin-top:-15px" onchange="loadObjective();">
+        </p>
+        <br>
+        <div id="viewObjective">
+            <select id="profile-objective-name" style="margin-top:-15px" onchange="loadObjective();">
             <option value="" disabled selected>Select an existing objective</option>
             {% for o in objectives %}
                 <option value="{{ o.id }}">{{ o.name }}</option>
             {% endfor %}}
-          </select>
-      </div>
-      <div id="addObjective"></div>
-      <button id="objectiveBtn" type="button" class="button-success atomic-button"
-              onclick="viewAdversaries()">View Adversary Assignments
-      </button>
-      <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
+            </select>
+        </div>
+        <div id="addObjective"></div>
+        <button id="objectiveBtn" type="button" class="button-success atomic-button"
+              onclick="viewAssignments()">View Adversary Assignments
+        </button>
+        <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
               onclick="saveObjective()">Save
-      </button>
-    </div>
-    <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
+        </button>
+        </div>
+        <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
         <h4 id="objective-name" contenteditable="true" class="advGoal">Sample name</h4>
         <hr>
         <table id="goalTbl" class="obfuscation-table" border=1 frame=void goals=rows>
@@ -49,8 +49,8 @@
         <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow('Enter target', 'Enter value', 'Enter operator', '<count-will-increment>')">
             &#10010;&nbsp;add row
         </p>
+        </div>
     </div>
-  </div>
 </div>
 
 <div id="objective-modal" class="modal">
@@ -72,11 +72,47 @@
     </form>
 </div>
 
+<div id="assignments-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('assignments-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Adversary-Objective Assignments</span>
+                        <h3 id="assignment-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="objective-assignments"></ul>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<li id="assignments-template" class="row-simple ttp-template" style="display: none;">
+    <div class="column">
+        <div class="dotted">
+            <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        </div>
+        <table frame=void rules=rows style="border-spacing:20px;width:100%">
+            <tr>
+                <td style="width:20%"><b>adversary:</b></td>
+                <td><input id="assignmentAdversary" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>objective:</b></td>
+                <td><input id="assignmentObjective" contenteditable="false" spellcheck="false" style="width:100%;padding:0 15px;"></td>
+            </tr>
+        </table>
+    </div>
+</li>
+
 <script>
     $(document).ready(function () {
         stream('New objectives will be created to automate adversary actions to achieve goals.')
     });
     let refresher = setInterval(refresh, 15000);
+    let adversariesinfo = setInterval(refresh, 15000);
     $('.section-profile').bind('destroyed', function() {
         console.log('objectives refresh off');
         clearInterval(refresher);
@@ -123,6 +159,7 @@
             objective.data('id', data[0].id);
             applyGoals(data[0].goals);
             objective.html(data[0].name);
+            populateAssignments();
         }
         stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'objectives', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
@@ -187,8 +224,32 @@
             warn(invalidGoals + ' invalid goals!');
             return;
         }
+        restRequest('PUT', data, saveObjectiveCallback);
+    }
 
-        restRequest('PUT', data, saveSourceCallback);
+    function viewAssignments(){
+        document.getElementById("assignments-modal").style.display = "block";
+        let objectiveName = $('#objective-name').val();
+        $('#assignment-name').text(objectiveName);
+    }
+
+    function populateAssignments() {
+        function populateAssignmentsCallback(data) {
+            let objective = $('#objective-name');
+<!--  callback data goes here          let assignment_list = $();-->
+        }
+
+        assignment_list.forEach(a => {
+            let template = $("#assignments-template").clone();
+            template.find('#assignmentAdversary').val(a.adversary.name);
+            template.find('#assignmentObjective').val(a.objective.name);
+            template.show();
+            $('#objective-assignments').append(template);
+        });
+
+        //# restRequest('POST', {'index':'objectives'}, loagAssignmentsCallback, '/api/rest');
+        restRequest('POST', {'index':'adversaries', 'objective': objective}, populateAssignmentsCallback);
+        //# restRequest('POST', {'index':'adversaries', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
 
     //# objectiveURL=objectives.js
