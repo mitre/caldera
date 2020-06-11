@@ -35,7 +35,7 @@ class LogicalPlanner:
         self.next_bucket = 'privilege_escalation'
 ```
 
-Breaking this down:
+Look closer at these lines:
 
 ```python
     def __init__(self, operation, planning_svc, stopping_conditions=()):
@@ -45,10 +45,12 @@ Breaking this down:
         self.stopping_condition_met = False
 ```
 
-The `__init__()` method for a planner must take and store the required arguments for the `operation` instance, `planning_svc` handle, and any supplied `stopping_conditions`.  Additionally, `self.stopping_condition_met`, which is used to control when to stop bucket execution, is initially set to False.
+The `__init__()` method for a planner must take and store the required arguments for the `operation` instance, `planning_svc` handle, and any supplied `stopping_conditions`.
+ 
+Additionally, `self.stopping_condition_met`, which is used to control when to stop bucket execution, is initially set to `False`. During bucket execution, this property will be set to `True` if any facts gathered by the operation exactly match (both trait and value) any of the facts provided in `stopping_conditions`. When this occurs, the operation will  
 
 ```python
-        self.state_machine = ['privilege_escalation', 'persistence', 'discovery', 'lateral_movement']
+        self.state_machine = ['privilege_escalation', 'persistence', 'collection', 'discovery', 'lateral_movement']
 ```
 
 The `self.state_machine` variable is an optional list enumerating the base line order of the planner state machine. This ordered list **_does not_** control the bucket execution order, but is used to define a base line state machine that we can refer back to in our decision logic. This will be demonstrated in our example below when we create the bucket methods.
@@ -112,11 +114,11 @@ These bucket methods are where all inter-bucket transitions and intra-bucket log
 
 Lets look at each of the bucket methods in detail:
 
-`privilege_escalation` - We first use `get_links` planning service utility to retrieve all abilities (links) tagged as _privilege escalation_ from the operation adversary. We then push these links to the agent with `apply` and wait for these links to complete with `wait_for_links_completion()`, both from the operation utility. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was actually successful (Note: this assumes the privilege escalation abilities we are using were modified to create aforementioned facts). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
+* `privilege_escalation()` - We first use `get_links` planning service utility to retrieve all abilities (links) tagged as _privilege escalation_ from the operation adversary. We then push these links to the agent with `apply` and wait for these links to complete with `wait_for_links_completion()`, both from the operation utility. After the links complete, we check for the creation of custom facts that indicate the privilege escalation was successful (Note: this assumes the privilege escalation abilities we are using create custom facts in the format "{paw}.privilege.root" or "{paw}.privilege.admin" with values of `True` or `False`). If privilege escalation was successful, set the next bucket to be executed to _persistence_, otherwise _collection_.
 
-`persistence()`, `collection()`, `lateral_movement()` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can use the `exhaust_bucket()` planning service utility to apply all links for the given bucket tag. Before exiting, we set the next bucket as desired. Note that in the `persistence()` bucket we use the `default_next_bucket()` planning service utility, which will automatically choose the next bucket after "persistence" in the provided `self.state_machine` ordered list.
+* `persistence()`, `collection()`, `lateral_movement()` - These buckets have no complex logic, we just want to execute all links available and are tagged for the given bucket. We can use the `exhaust_bucket()` planning service utility to apply all links for the given bucket tag. Before exiting, we set the next bucket as desired. Note that in the `persistence()` bucket we use the `default_next_bucket()` planning service utility, which will automatically choose the next bucket after "persistence" in the provided `self.state_machine` ordered list.
 
-`discovery()` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use `get_links()` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly.
+* `discovery()` - This bucket starts by running all _discovery_ ability links available. Then we utilize a useful trick to determine if the planner should proceed to the _lateral movement_ bucket. We use `get_links()` to determine if the _discovery_ links that were just executed ended up unlocking ability links for _lateral movement_. From there we set the next bucket accordingly.
 
 **_Additional Notes on Privileged Persistence Planner_**
 
@@ -163,42 +165,31 @@ class LogicalPlanner:
         # Implement Planner Logic
         #
         return
-
 ```
 
 ## Planning Service Utilities
 
-Within a planner, these utilites are available from `self.planning_svc`.
+Within a planner, these utilities are available from `self.planning_svc`:
 
-`exhaust_bucket()`
-
-`default_next_bucket()`
-
-`add_ability_to_next_bucket()`
-
-`execute_planner()`
-
-`get_links()`
-
-`get_cleanup_links()`
-
-`check_stopping_conditions()`
-
-`upgrade_stopping_conditions()`
+* `exhaust_bucket()` - Apply all links for specified bucket. Blocks execution until all links are completed, either after batch push, or separately for every pushed link. Allows a single agent to be specified.
+* `execute_links()` - 
+* `default_next_bucket()` - Returns next bucket as specified in the given state machine. If the current bucket is the last in the list, the bucket order loops from last bucket to first. Used in the above example to advance to the next bucket in the persistence and discovery buckets.
+* `add_ability_to_next_bucket()` - Applies a custom bucket to an ability. This can be used to organize abilities into buckets that aren't standard MITRE ATT&CK tactics.
+* `execute_planner()` - Executes the default planner execution flow, progressing from bucket to bucket. Execution will stop if: all buckets have been executed (`self.next_bucket` is set to `None`), planner stopping conditions have been met, or the operation is halted.
+* `get_links()` - For an operation and agent combination, create links (that can be executed). When no agent is supplied, links for all agents in an operation are returned. Uses `operation.all_facts()` to determine if an ability has been unlocked. Used in the above example in the discovery bucket to determine if any lateral movement abilities have been unlocked.
+* `get_cleanup_links()` - Generates cleanup links for a given operation, to be run when a operation is completed.
+* `generate_and_trim_links()` - Creates new links based on provided operation, agent, and abilities. Optionally, trim links using `trim_links()` to return only valid links with completed facts. Facts are selected from the operation using `operation.all_facts()`.
+* `check_stopping_conditions()` - Checks the collected operation facts against the stopping conditions set by the planner.
+* `update_stopping_condition_met()` - Update a planner's `stopping_condition_met` property if with the results of `check_stopping_conditions()`. 
 
 
 ## Operation Utilities
 
-Within a planner, these utilities are available from `self.operation`.
+Within a planner, all public utilities are available from `self.operation`. The follow may assist in planner development:
 
-`apply()`
-
-`wait_for_links_completion()`
-
-`all_facts()`
-
-`has_fact()`
-
-`all_relationships()`
-
-`active_agents()`
+* `apply()` - Add a link to the operation.
+* `wait_for_links_completion()` - Wait for started links to be completed
+* `all_facts()` - Return a list of all facts collected during an operation. These will include both learned and seeded (from the operation source) facts.
+* `has_fact()` - Search an operation for a fact with a particular trait and value.
+* `all_relationships()` - Return a list of all relationships collected during an operation.
+* `active_agents()` - Find all agents in the operation that have been seen since operation start.
