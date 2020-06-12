@@ -10,7 +10,6 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
-from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
@@ -42,13 +41,6 @@ class RestService(RestServiceInterface, BaseService):
         if not data.get('prevent_reload'):
             await self._services.get('data_svc').reload_data()
             return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
-
-    async def persist_multiple_objects(self, data):
-        obj = data.pop('object')
-        data['prevent_reload'] = True
-        opts = dict(
-            adversaries=lambda d: self.persist_adversary(d),
-        )
 
     async def update_planner(self, data):
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
