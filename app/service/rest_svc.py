@@ -56,29 +56,36 @@ class RestService(RestServiceInterface, BaseService):
                                        for f in data['stopping_conditions']]
         await self.get_service('data_svc').store(planner)
 
-    async def persist_ability(self, data):
+    async def persist_ability(self, access, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
             d = 'data/abilities/%s' % data.get('tactic')
             if not os.path.exists(d):
                 os.makedirs(d)
             file_path = '%s/%s.yml' % (d, data.get('id'))
+            allowed = self._get_allowed_from_access(access)
+        else:
+            allowed = (await self.get_service('data_svc').locate('abilities',
+                                                                 dict(ability_id=data.get('id'))))[0].access
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        access = (await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id'))))[0].access
         await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))
-        await self.get_service('data_svc').load_ability_file(file_path, access)
-        return [a.display for a in await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
+        await self.get_service('data_svc').load_ability_file(file_path, allowed)
+        return [a.display for a in
+                await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
-    async def persist_source(self, data):
+    async def persist_source(self, access, data):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
         if not file_path:
             file_path = 'data/sources/%s.yml' % data.get('id')
+            allowed = self._get_allowed_from_access(access)
+        else:
+            allowed = (await self.get_service('data_svc').locate('sources', dict(id=data.get('id'))))[0].access
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(data))
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').load_source_file(file_path, allowed)
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=data.get('id')))]
 
     async def delete_agent(self, data):

@@ -138,6 +138,12 @@ class DataService(DataServiceInterface, BaseService):
             adversary.access = access
             await self.store(adversary)
 
+    async def load_source_file(self, filename, access):
+        for src in self.strip_yml(filename):
+            source = Source.load(src)
+            source.access = access
+            await self.store(source)
+
     """ PRIVATE """
 
     async def _load(self, plugins=()):
@@ -182,6 +188,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
+            await self.load_source_file(filename, plugin.access)
             for src in self.strip_yml(filename):
                 source = Source.load(src)
                 source.access = plugin.access
