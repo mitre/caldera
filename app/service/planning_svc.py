@@ -110,11 +110,10 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         :param operation: Operation to generate links for
         :type operation: Operation
-        :param buckets: Buckets containing abilities, defaults to None
-            'None' - no buckets, get all links for given operation,
-                agent, trim setting
-            '<buckets>' - get links for specified buckets for given
-                operation and trim setting
+        :param buckets: Buckets containing abilities. If 'None', get all links 
+            for given operation, agent, and trim setting. If a list of buckets
+            if provided, then get links for specified buckets for given
+            operation and trim setting. Defaults to None.
         :type buckets: list(string), optional
         :param agent: Agent to generate links for, defaults to None
         :type agent: Agent, optional
