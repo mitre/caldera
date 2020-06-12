@@ -30,7 +30,9 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             stopped (by user) after each single link is completed.
             Defaults to False
         :type batch: bool, optional
-        :param condition_stop: Check and respect stopping conditions,
+        :param condition_stop: Enable stopping of execution if stopping
+            conditions are met. If set to False, the bucket will
+            continue execution even if stopping conditions are met.
             defaults to True
         :type condition_stop: bool, optional
         """
@@ -40,11 +42,11 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if batch:
                 l_ids.append(l_id)
             else:
-                await self._bucket_execute(operation, planner, [l_id], condition_stop)
+                await self._bucket_execute(operation, planner, [l_id])
                 if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
                     return
         if batch:
-            await self._bucket_execute(operation, planner, l_ids, condition_stop)
+            await self._bucket_execute(operation, planner, l_ids)
             if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
                 return
 
@@ -99,7 +101,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             await getattr(planner, planner.next_bucket)()
             await self.update_stopping_condition_met(planner, planner.operation)
 
-    async def get_links(self, operation, buckets=None, agent=None, trim=True, planner=None):
+    async def get_links(self, operation, buckets=None, agent=None, trim=True):
         """Generate links for use in an operation
 
         For an operation and agent combination, create links (that can
@@ -236,7 +238,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
     """ PRIVATE """
 
-    async def _bucket_execute(self, operation, planner, links, condition_stop):
+    async def _bucket_execute(self, operation, planner, links):
         """Wait for operation links to complete and update planner
 
         Blocks execution until all links from the operation are
