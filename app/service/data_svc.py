@@ -189,10 +189,6 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
             await self.load_source_file(filename, plugin.access)
-            for src in self.strip_yml(filename):
-                source = Source.load(src)
-                source.access = plugin.access
-                await self.store(source)
 
     async def _load_objectives(self, plugin):
         for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
