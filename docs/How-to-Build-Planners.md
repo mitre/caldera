@@ -190,7 +190,7 @@ Within a planner, these utilities are available from `self.planning_svc`:
 Within a planner, all public utilities are available from `self.operation`. The follow may assist in planner development:
 
 * `apply()` - Add a link to the operation.
-* `wait_for_links_completion()` - Wait for started links to be completed
+* `wait_for_links_completion()` - Wait for started links to be completed.
 * `all_facts()` - Return a list of all facts collected during an operation. These will include both learned and seeded (from the operation source) facts.
 * `has_fact()` - Search an operation for a fact with a particular trait and value.
 * `all_relationships()` - Return a list of all relationships collected during an operation.
