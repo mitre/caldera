@@ -1,22 +1,18 @@
 import asyncio
 import copy
+import glob
 import hashlib
 import json
 import os
 import time
 from collections import namedtuple
 from datetime import datetime, date
+from importlib import import_module
 
 import aiohttp_jinja2
 import jinja2
 import yaml
 
-from app.contacts.contact_gist import Gist
-from app.contacts.contact_html import Html
-from app.contacts.contact_http import Http
-from app.contacts.contact_tcp import Tcp
-from app.contacts.contact_udp import Udp
-from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
@@ -130,12 +126,10 @@ class AppService(AppServiceInterface, BaseService):
 
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')
-        await contact_svc.register(Http(self.get_services()))
-        await contact_svc.register(Udp(self.get_services()))
-        await contact_svc.register(Tcp(self.get_services()))
-        await contact_svc.register(WebSocket(self.get_services()))
-        await contact_svc.register(Html(self.get_services()))
-        await contact_svc.register(Gist(self.get_services()))
+        for contact_file in glob.iglob('app/contacts/*.py'):
+            contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+            contact_class = import_module(contact_module_name).Contact
+            await contact_svc.register(contact_class(self.get_services()))
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):

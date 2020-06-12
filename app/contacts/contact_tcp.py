@@ -7,7 +7,7 @@ from app.utility.base_world import BaseWorld
 from plugins.manx.app.c_session import Session
 
 
-class Tcp(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'tcp'

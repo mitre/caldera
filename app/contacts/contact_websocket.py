@@ -3,7 +3,7 @@ import websockets
 from app.utility.base_world import BaseWorld
 
 
-class WebSocket(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'websocket'

@@ -24,7 +24,7 @@ class BaseObject(BaseWorld):
             else:
                 if self.__getattribute__(k) == v:
                     criteria_matches.append(True)
-        if len(criteria_matches) == len(criteria) and all(criteria_matches):
+        if len(criteria_matches) >= len(criteria) and all(criteria_matches):
             return self
 
     def update(self, field, value):

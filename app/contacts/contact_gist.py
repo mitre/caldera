@@ -18,7 +18,7 @@ def api_access(func):
     return process
 
 
-class Gist(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'gist'

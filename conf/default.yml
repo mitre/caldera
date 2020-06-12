@@ -1,3 +1,4 @@
+ability_refresh: 60
 api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
 app.contact.gist: API_KEY
@@ -9,7 +10,6 @@ app.contact.websocket: 0.0.0.0:7012
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp
-ability_refresh: 60
 host: 0.0.0.0
 plugins:
 - sandcat
@@ -21,6 +21,7 @@ plugins:
 - training
 - access
 - atomic
+- fieldmanual
 port: 8888
 reports_dir: /tmp
 requirements:
