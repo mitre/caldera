@@ -23,7 +23,7 @@ class RestService(RestServiceInterface, BaseService):
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
 
-    async def persist_adversary(self, data):
+    async def persist_adversary(self, access, data):
         i = data.pop('i')
         obj_default = (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0]
         if not i:
@@ -31,15 +31,18 @@ class RestService(RestServiceInterface, BaseService):
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
         if not file_path:
             file_path = 'data/adversaries/%s.yml' % i
+            allowed = self._get_allowed_from_access(access)
+        else:
+            allowed = (await self.get_service('data_svc').locate('adversaries', dict(adversary_id=i)))[0].access
         with open(file_path, 'w+') as f:
             f.seek(0)
             p = list()
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p, objective=data.pop('objective', obj_default))))
+                                   atomic_ordering=p, objective=data.pop('objective', obj_default.id))))
             f.truncate()
-        await self._services.get('data_svc').reload_data()
+        await self._services.get('data_svc').load_adversary_file(file_path, allowed)
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
 
     async def update_planner(self, data):

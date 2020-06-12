@@ -79,7 +79,7 @@ class RestApi(BaseWorld):
                     adversaries=lambda d: self.rest_svc.delete_adversary(d)
                 ),
                 PUT=dict(
-                    adversaries=lambda d: self.rest_svc.persist_adversary(d),
+                    adversaries=lambda d: self.rest_svc.persist_adversary(access, d),
                     abilities=lambda d: self.rest_svc.persist_ability(d),
                     sources=lambda d: self.rest_svc.persist_source(d),
                     planners=lambda d: self.rest_svc.update_planner(d),
