@@ -630,7 +630,7 @@
             if (data) {
                 let res = atob(data.output);
                 $.each(data.link.facts, function (k, v) {
-                    let regex = new RegExp(v.value, "g");
+                    let regex = new RegExp(String.raw`${v.value}`, "g");
                     res = res.replace(regex, "<span class='highlight'>" + v.value + "</span>");
                 });
                 $('#resultView').html(res);
