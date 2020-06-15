@@ -94,6 +94,12 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.additional_info = additional_info or dict()
         self.additional_info.update(**kwargs)
 
+    def __getattr__(self, item):
+        try:
+            return super().__getattribute__('additional_info')[item]
+        except KeyError:
+            raise AttributeError(item)
+
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
         if not existing:
