@@ -45,13 +45,14 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None):
+    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None, tags=None):
         super().__init__()
         self.adversary_id = adversary_id
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
         self.objective = objective
+        self.tags = set(tags) if tags else set()
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)

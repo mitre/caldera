@@ -31,6 +31,11 @@ class BaseObject(BaseWorld):
         if (value or type(value) == list) and (value != self.__getattribute__(field)):
             self.__setattr__(field, value)
 
+    def search_tags(self, value):
+        tags = getattr(self, 'tags', None)
+        if tags and value in tags:
+            return True
+
     @staticmethod
     def retrieve(collection, unique):
         return next((i for i in collection if i.unique == unique), None)
