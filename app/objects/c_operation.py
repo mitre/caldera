@@ -54,7 +54,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     RUN_ONE_LINK='run_one_link',
                     PAUSED='paused',
                     OUT_OF_TIME='out_of_time',
-                    FINISHED='finished')
+                    FINISHED='finished',
+                    CLEANUP='cleanup')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
@@ -164,7 +165,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     async def is_finished(self):
-        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME']] \
+        if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
                 or (self.objective and self.objective.completed(self.all_facts())):
             return True
         return False

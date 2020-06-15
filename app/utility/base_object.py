@@ -19,10 +19,10 @@ class BaseObject(BaseWorld):
         for k, v in criteria.items():
             if type(v) is tuple:
                 for val in v:
-                    if self.__getattribute__(k) == val:
+                    if getattr(self, k) == val:
                         criteria_matches.append(True)
             else:
-                if self.__getattribute__(k) == v:
+                if getattr(self, k) == v:
                     criteria_matches.append(True)
         if len(criteria_matches) >= len(criteria) and all(criteria_matches):
             return self

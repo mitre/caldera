@@ -119,7 +119,7 @@
       <div class="op-dets">
         <center>
             <div class="op-control-container">
-                <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('finished')">&#9632;</button></span>
+                <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
                 <span title="Pause Operation" class="op-control-item"><button id="op-control-pause" onclick="changeCurrentOperationState('paused')">&#2405;</button></span>
                 <span title="Run One Step" class="op-control-item"><button id="run-one-link" onclick="changeCurrentOperationState('run_one_link')">&#9658;&#10072;</button></span>
                 <span title="Run Operation" class="op-control-item"><button id="op-control-run" onclick="changeCurrentOperationState('running')">&#9658;</button></span>
@@ -630,7 +630,7 @@
             if (data) {
                 let res = atob(data.output);
                 $.each(data.link.facts, function (k, v) {
-                    let regex = new RegExp(v.value, "g");
+                    let regex = new RegExp(String.raw`${v.value}`, "g");
                     res = res.replace(regex, "<span class='highlight'>" + v.value + "</span>");
                 });
                 $('#resultView').html(res);
