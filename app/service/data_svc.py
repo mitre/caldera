@@ -8,9 +8,11 @@ from base64 import b64encode
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
+from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
 from app.service.interfaces.i_data_svc import DataServiceInterface
@@ -24,14 +26,14 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads']:
+        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
             for f in glob.glob('%s/*' % d):
                 if not f.startswith('.'):
                     try:
@@ -90,6 +92,46 @@ class DataService(DataServiceInterface, BaseService):
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
 
+    async def load_ability_file(self, filename, access):
+        for entries in self.strip_yml(filename):
+            for ab in entries:
+                if ab.get('tactic') and ab.get('tactic') not in filename:
+                    self.log.error('Ability=%s has wrong tactic' % ab['id'])
+                technique_name = ab.get('technique', dict()).get('name')
+                technique_id = ab.pop('technique', dict()).get('attack_id')
+                ability_id = ab.pop('id', None)
+                tactic = ab.pop('tactic', None)
+                description = ab.pop('description', '')
+                ability_name = ab.pop('name', '')
+                privilege = ab.pop('privilege', None)
+                repeatable = ab.pop('repeatable', False)
+                requirements = ab.pop('requirements', [])
+                for platforms, executors in ab.pop('platforms', dict()).items():
+                    for name, info in executors.items():
+                        encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
+                            'command') else None
+                        cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
+                            'cleanup') else None
+                        encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                        payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                        for e in name.split(','):
+                            for pl in platforms.split(','):
+                                a = await self._create_ability(ability_id=ability_id, tactic=tactic,
+                                                               technique_name=technique_name,
+                                                               technique_id=technique_id, test=encoded_test,
+                                                               description=description, executor=e,
+                                                               name=ability_name, platform=pl,
+                                                               cleanup=cleanup_cmd, code=encoded_code,
+                                                               language=info.get('language'),
+                                                               build_target=info.get('build_target'),
+                                                               payloads=payloads, parsers=info.get('parsers', []),
+                                                               timeout=info.get('timeout', 60),
+                                                               requirements=requirements, privilege=privilege,
+                                                               buckets=await self._classify(ab, tactic),
+                                                               access=access, repeatable=repeatable,
+                                                               variations=info.get('variations', []), **ab)
+                                await self._update_extensions(a)
+
     """ PRIVATE """
 
     async def _load(self, plugins=()):
@@ -100,12 +142,14 @@ class DataService(DataServiceInterface, BaseService):
             for plug in plugins:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
+                await self._load_objectives(plug)
             await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
                 await self._load_sources(plug)
                 await self._load_planners(plug)
             await self._load_extensions()
+            await self._verify_data_sets()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
 
@@ -118,44 +162,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
-            for entries in self.strip_yml(filename):
-                for ab in entries:
-                    if ab.get('tactic') and ab.get('tactic') not in filename:
-                        self.log.error('Ability=%s has wrong tactic' % ab['id'])
-                    technique_name = ab.get('technique', dict()).get('name')
-                    technique_id = ab.pop('technique', dict()).get('attack_id')
-                    ability_id = ab.pop('id', None)
-                    tactic = ab.pop('tactic', None)
-                    description = ab.pop('description', '')
-                    ability_name = ab.pop('name', '')
-                    privilege = ab.pop('privilege', None)
-                    repeatable = ab.pop('repeatable', False)
-                    requirements = ab.pop('requirements', [])
-                    for platforms, executors in ab.pop('platforms', []).items():
-                        for name, info in executors.items():
-                            encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
-                                'command') else None
-                            cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
-                                'cleanup') else None
-                            encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
-                            payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
-                            for e in name.split(','):
-                                for pl in platforms.split(','):
-                                    a = await self._create_ability(ability_id=ability_id, tactic=tactic,
-                                                                   technique_name=technique_name,
-                                                                   technique_id=technique_id, test=encoded_test,
-                                                                   description=description, executor=e,
-                                                                   name=ability_name, platform=pl,
-                                                                   cleanup=cleanup_cmd, code=encoded_code,
-                                                                   language=info.get('language'),
-                                                                   build_target=info.get('build_target'),
-                                                                   payloads=payloads, parsers=info.get('parsers', []),
-                                                                   timeout=info.get('timeout', 60),
-                                                                   requirements=requirements, privilege=privilege,
-                                                                   buckets=await self._classify(ab, tactic),
-                                                                   access=plugin.access, repeatable=repeatable,
-                                                                   variations=info.get('variations', []), **ab)
-                                    await self._update_extensions(a)
+            asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access))
 
     async def _update_extensions(self, ability):
         for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
@@ -168,7 +175,7 @@ class DataService(DataServiceInterface, BaseService):
 
     @staticmethod
     async def _classify(ability, tactic):
-        return ability.pop('buckets', tactic).lower()
+        return ability.pop('buckets', [tactic])
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
@@ -176,6 +183,13 @@ class DataService(DataServiceInterface, BaseService):
                 source = Source.load(src)
                 source.access = plugin.access
                 await self.store(source)
+
+    async def _load_objectives(self, plugin):
+        for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
+            for src in self.strip_yml(filename):
+                objective = Objective.load(src)
+                objective.access = plugin.access
+                await self.store(objective)
 
     async def _load_payloads(self, plugin):
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
@@ -278,3 +292,17 @@ class DataService(DataServiceInterface, BaseService):
                     cleanup_command = self.encode_string(decoded_test)
                     if cleanup_command not in existing.cleanup:
                         existing.cleanup.append(cleanup_command)
+
+    async def _verify_data_sets(self):
+        await self._verify_default_objective_exists()
+        await self._verify_adversary_profiles()
+
+    async def _verify_default_objective_exists(self):
+        if not await self.locate('objectives', match=dict(name='default')):
+            await self.store(Objective(id='495a9828-cab1-44dd-a0ca-66e58177d8cc', name='default',
+                                       description='This is a default objective that runs forever.', goals=[Goal()]))
+
+    async def _verify_adversary_profiles(self):
+        for adv in await self.locate('adversaries'):
+            if not adv.objective:
+                adv.objective = '495a9828-cab1-44dd-a0ca-66e58177d8cc'

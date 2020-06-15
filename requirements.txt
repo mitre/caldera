@@ -6,7 +6,7 @@ jinja2==2.10.3
 pyyaml>=5.1
 cryptography==2.8
 websockets==8.1
-Sphinx==2.4.4
+Sphinx==3.0.4
 sphinx_rtd_theme==0.4.3
 recommonmark==0.6.0
 marshmallow==3.5.1

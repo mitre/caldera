@@ -5,7 +5,7 @@ from app.contacts.handles.h_beacon import Handle
 from app.utility.base_world import BaseWorld
 
 
-class Udp(BaseWorld):
+class Contact(BaseWorld):
 
     def __init__(self, services):
         self.name = 'udp'

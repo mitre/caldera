@@ -40,3 +40,6 @@
 [submodule "plugins/human"]
 	path = plugins/human
 	url = https://github.com/mitre/human.git
+[submodule "plugins/fieldmanual"]
+	path = plugins/fieldmanual
+	url = https://github.com/mitre/fieldmanual.git

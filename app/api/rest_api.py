@@ -40,6 +40,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
 
     """ BOILERPLATE """
 
@@ -102,6 +103,15 @@ class RestApi(BaseWorld):
                 search = {**data, **access}
                 return web.json_response(await self.rest_svc.display_objects(index, search))
             return web.json_response(await options[request.method][index](data))
+        except ma.ValidationError as e:
+            raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
+        except Exception as e:
+            self.log.error(repr(e), exc_info=True)
+
+    @check_authorization
+    async def rest_core_info(self, request):
+        try:
+            return web.json_response(await self.rest_svc.display_objects(request.match_info['index'], dict(request.query)))
         except ma.ValidationError as e:
             raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
         except Exception as e:

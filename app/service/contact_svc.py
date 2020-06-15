@@ -1,6 +1,7 @@
 import asyncio
 from collections import defaultdict
 from datetime import datetime
+from base64 import b64decode
 
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_instruction import Instruction
@@ -75,6 +76,7 @@ class ContactService(ContactServiceInterface, BaseService):
                 link.status = int(result.status)
                 if result.output:
                     link.output = True
+                    result.output = await self._postprocess_link_result(result.output, link.ability)
                     self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.ability.parsers:
@@ -83,13 +85,18 @@ class ContactService(ContactServiceInterface, BaseService):
                     elif not operation:
                         loop.create_task(link.parse(None, result.output))
                     elif link.ability.parsers:
-                        loop.create_task(link.parse(operation[0], result.output))
+                        loop.create_task(link.parse(operation, result.output))
                     else:
-                        loop.create_task(self.get_service('learning_svc').learn(operation[0].all_facts(), link, result.output))
+                        loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link, result.output))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
             self.log.debug('save_results exception: %s' % e)
+
+    async def _postprocess_link_result(self, result, ability):
+        if ability.HOOKS and ability.executor in ability.HOOKS:
+            return self.encode_string(await ability.HOOKS[ability.executor].postprocess(b64decode(result)))
+        return result
 
     async def _start_c2_channel(self, contact):
         loop = asyncio.get_event_loop()

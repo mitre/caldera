@@ -37,18 +37,35 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type condition_stop: bool, optional
         """
         l_ids = []
-        for l in await self.get_links(operation, bucket, agent):
+        for l in await self.get_links(operation, [bucket], agent):
             l_id = await operation.apply(l)
             if batch:
                 l_ids.append(l_id)
             else:
-                await self._bucket_execute(operation, planner, [l_id])
-                if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+                if await self.execute_links(planner, operation, [l_id], condition_stop):
                     return
         if batch:
-            await self._bucket_execute(operation, planner, l_ids)
-            if await self._stop_bucket_exhaustion(planner, operation, condition_stop):
+            if await self.execute_links(planner, operation, l_ids, condition_stop):
                 return
+
+    async def execute_links(self, planner, operation, link_ids, condition_stop):
+        """Apply links to operation and wait for completion
+        
+        Optionally, stop bucket execution if stopping conditions are met
+        
+        :param planner: Planner to check for stopping conditions on
+        :type planner: LogicalPlanner
+        :param operation: Operation running links
+        :type operation: Operation
+        :param link_ids: Links IDS to wait for
+        :type link_ids: list(string)
+        :param condition_stop: Check and respect stopping conditions
+        :type condition_stop: bool, optional
+        :return: True if planner stopping conditions are met
+        :rtype: bool
+        """
+        await self._bucket_execute(operation, planner, link_ids, condition_stop)
+        return await self._stop_bucket_exhaustion(planner, operation, condition_stop)
 
     async def default_next_bucket(self, current_bucket, state_machine):
         """Returns next bucket in the state machine

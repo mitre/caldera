@@ -31,16 +31,8 @@ def setup_logger(level=logging.DEBUG):
             logging.getLogger(logger_name).setLevel(100)
 
 
-async def build_docs():
-    process = await asyncio.create_subprocess_exec('sphinx-build', 'docs/', 'docs/_build/html',
-                                                   '-b', 'html', '-c', 'docs/',
-                                                   stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
-    await process.communicate()
-
-
 async def start_server():
     await auth_svc.apply(app_svc.application, BaseWorld.get_config('users'))
-    app_svc.application.router.add_static('/docs/', 'docs/_build/html', append_version=True)
     runner = web.AppRunner(app_svc.application)
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
@@ -48,7 +40,6 @@ async def start_server():
 
 def run_tasks(services):
     loop = asyncio.get_event_loop()
-    loop.create_task(build_docs())
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
@@ -60,6 +51,7 @@ def run_tasks(services):
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
     loop.create_task(learning_svc.build_model())
+    loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
     try:
         logging.info('All systems ready.')
@@ -106,7 +98,7 @@ if __name__ == '__main__':
     file_svc = FileSvc()
     learning_svc = LearningService()
     event_svc = EventService()
-    app_svc = AppService(application=web.Application())
+    app_svc = AppService(application=web.Application(client_max_size=5120**2))
 
     if args.fresh:
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())

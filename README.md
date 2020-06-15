@@ -5,7 +5,7 @@
 
 # CALDERA
 
-*Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/)*
+*Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/).*
 
 CALDERA is a cyber security framework designed to easily run autonomous breach-and-simulation exercises. It can also be used to run manual red-team engagements or automated incident response.
 
@@ -19,6 +19,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 Examples include agents, GUI interfaces, collections of TTPs and more. 
 
 ## Plugins
+
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
@@ -57,17 +58,18 @@ pip install -r requirements.txt
 
 Finally, start the server. 
 ```Bash
-python server.py --fresh --insecure
+python server.py --insecure
 ```
 
-> There is also a [Docker image](https://caldera.readthedocs.io/en/latest/Docker-deployment.html) for CALDERA.
+Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
 
 ## Video tutorial
 
 Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
 
 ## Contributing
-Refer to our [contributor documentation](CONTRIBUTING.md)
+
+Refer to our [contributor documentation](CONTRIBUTING.md).
 
 ## Licensing
 

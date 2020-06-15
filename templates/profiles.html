@@ -30,7 +30,11 @@
       <button type="button" class="button-success atomic-button" onclick="deleteProfile()">Delete profile</button>
     </div>
     <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
-        <input id="profile-goal" type="text" placeholder="enter a profile name">
+        <div id="row">
+            <input id="profile-goal" type="text" placeholder="enter a profile name">
+            <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
+        </div>
+        <input id="objective-select" type="text" style="display:none" disabled>
         <input id="profile-description" type="text" placeholder="enter a profile description">
         <br><br>
         <div id="dummy"></div>
@@ -56,7 +60,7 @@
                 </select>
                 <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
                 <br><br>
-                <div class="ability-attack row-simple">
+                <div id="ability-manager" class="ability-attack row-simple">
                     <div class="column" style="flex:60%">
                         <table frame=void rules=rows style="border-spacing:2px;width:100%">
                             <tr>
@@ -84,37 +88,53 @@
                                 <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
                             </tr>
                         </table>
+
                     </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/recycle.png">
-                            <p style="color:white;text-align: center;" onclick="freshId()">generate new id</p>
+                    <div class="column" style="flex:40%">
+                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/recycle.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/executor.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/payload.png">
+                                    <form id="uploadPayloadForm">
+                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
+                                       <input type="file" id="uploadPayloadFile" style="display: none">
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                                <div>
+                                    <img src="/gui/img/additional-fields.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/executor.png">
-                            <p style="color:white;text-align: center;" onclick="addExecutorBlock()">add executor</p>
-                        </div>
-                    </div>
-                    <div class="column" style="flex:10%">
-                        <div>
-                            <img src="/gui/img/payload.png">
-                            <form id="uploadPayloadForm">
-                               <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
-                               <input type="file" id="uploadPayloadFile" style="display: none">
-                            </form>
+                        <br>
+                        <div id="ability-additional-info" style="display: flex">
+                            <div style="flex: 15%; display: flex; justify-content: center; align-items: center;"><b>Info:</b></div>
+                            <table id="additional-info-table" frame=void rules=rows style="flex:85%">
+                                <tbody>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <br><br>
                 </div>
                 <ul id="ttp-tests"></ul>
                 <div style="float:right;">
-                    <button type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
+                    <button id="ability-save" type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
                     <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
-                    <div id="ability-flashy-holder">
-                        <span id="message"></span>
-                    </div>
                 </div>
             </div>
             <div class="imgcontainer">
@@ -150,6 +170,32 @@
     </center>
 </div>
 
+<div id="adv-objective-modal" class="modal">
+    <form class="modal-content">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column" style="flex:100%;">
+                <p style="text-align: center;">Specify an objective for this adversary.</p>
+                 <select id="objective-existing">
+                    <option value="" disabled selected>Select an Objective</option>
+                        {% for obj in objectives %}
+                            <option id="objective-{{ obj.id }}" value="{{ obj.id }}">{{ obj.name }}</option>
+                        {% endfor %}}
+                 </select>
+                <br><br>
+                <hr> <br>
+                <input id="objective-description" type="text" placeholder="Select an Objective" disabled>
+                <div style="width:30%;margin:0 auto;">
+                    <button type="button" class="button-success atomic-button"
+                            onclick="linkObjective()">Link to adversary</button>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="hideObjectiveModal()" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </form>
+</div>
+
 <div id="adv-profile-modal" class="modal">
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
@@ -173,6 +219,18 @@
         </div>
     </form>
 </div>
+
+
+<table id="additional-info-row-template-holder" style="display:none">
+    <tr id="additional-info-template">
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key"></td>
+        <td><b>:</b></td>
+        <td><input type="text" class="additional-value" placeholder="value"></td>
+        <td><div class="ability-remove">
+            <div style="font-size:8px;">&#x274C;</div>
+        </div></td>
+    </tr>
+</table>
 
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
@@ -219,6 +277,10 @@
             <td style="width:10%"><b>cleanup:</b></td>
             <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
         </tr>
+        <tr>
+            <td style="width:10%"><b>timeout:</b></td>
+            <td><textarea id="ability-timeout" spellcheck="false" contenteditable="true" placeholder="Enter number of seconds to timeout this command (optional)"></textarea></td>
+        </tr>
     </table>
     <br>
 </li>
@@ -240,6 +302,7 @@
         $('.tempPhase').remove();
         $('.phase-headers').remove();
         loadAtomicOrder([]);
+        clearObjective();
     }
 
     function saveAdversary() {
@@ -252,13 +315,13 @@
         let description = $('#profile-description').val();
         if(!description){ warn('Please enter a description!'); return; }
 
+        let objective = $('#objective-select').val();
         let abilities = [];
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
-        console.log(abilities);
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'i': identifier}, saveAdversaryCallback);
+            'i': identifier,"objective":objective}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -287,6 +350,7 @@
             let command = $(this).find('#ability-command').val();
             let payloads = $(this).find('#ability-payload').val();
             let cleanup = $(this).find('#ability-cleanup').val();
+            let timeout = $(this).find('#ability-timeout').val();
 
             if(!command || !executor || !platform) {
                 invalid = true;
@@ -298,7 +362,18 @@
             if(cleanup) {
                 ex['cleanup'] = cleanup;
             }
+            if(timeout) {
+                ex['timeout'] = parseInt(timeout);
+            }
             platforms[platform][executor] = ex;
+        });
+        $('#ability-additional-info').find('#additional-info-table tr').each(function() {
+            let key = $(this).find('.additional-key').val();
+            if (key !== '' && !(key in data)){
+                data[key] = $(this).find('.additional-value').val();
+            } else {
+                invalid = true;
+            }
         });
         if(invalid) {
             alert('Missing required data!');
@@ -311,11 +386,11 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
+        $('#ability-save').text('WAIT...');
         restRequest('PUT', data, saveAbilityCallback);
     }
 
     function saveAbilityCallback(data) {
-        stream('Ability saved!');
         let options = $('#phase-modal').find('#ability-ability-filter');
         let ability = options.find(":selected").data('ability');
         if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
@@ -334,6 +409,7 @@
             exploits[$to_replace] = data[0];
             loadAdversary();
         }
+        alert('Ability saved!');
     }
 
     function removeBlock(element){
@@ -368,6 +444,9 @@
         $('.tempPhase').remove();
         $('.phase-headers').remove();
         loadAtomicOrder(data[0].atomic_ordering);
+        $('#objective-existing')[0].value = data[0].objective.id;
+        handleObjectiveSelection(data[0].objective.id);
+        linkObjective();
     }
 
     function createMuuriGrid() {
@@ -433,9 +512,13 @@
             template.insertAfter('#tempPhase' + (number-1));
         }
         template.show();
-        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering'
-            +'</span><span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
-            +'<span class="ability-add" onclick="showProfileModal('+number+')" style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span><hr></h4>');
+        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering</span>' +
+            '<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            +'<span class="ability-add" onclick="showProfileModal('+number+')" ' +
+            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span>' +
+            '<span class="ability-add" onclick="showObjectiveModal()" ' +
+            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; link objective</span>' +
+            '<hr></h4>');
         $('#tempPhase' + number).prepend(phaseHeader);
         phaseHeader.show();
         return template;
@@ -520,6 +603,8 @@
         $('#ability-name').val('');
         $('#ability-description').val('');
         $('#ttp-tests').empty();
+        $('#ability-additional-info').find('#additional-info-table').empty();
+        $('#ability-additional-info').hide();
 
         let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
         $('#ability-identifier').val(aid.ability_id);
@@ -528,6 +613,16 @@
         $('#ability-tactic-name').val(aid.tactic);
         $('#ability-tech-id').val(aid.technique_id);
         $('#ability-tech-name').val(aid.technique_name);
+
+        if (Object.keys(aid.additional_info).length > 0) {
+            $.each(aid.additional_info, function(key, value) {
+                let $table_row = addAdditionalInfo();
+                $table_row.find(".additional-key").val(key);
+                $table_row.find(".additional-value").val(value);
+            });
+            $('#ability-additional-info').show();
+        }
+
         exploits.forEach(function(ability) {
             if(aid.ability_id === ability.ability_id) {
                 let template = $("#ttp-template").clone();
@@ -535,6 +630,7 @@
                 template.find('#ability-platform').val(ability.platform);
                 template.find('#ability-executor').val(ability.executor);
                 template.find('#ability-command').val(atob(ability.test));
+                template.find('#ability-timeout').val(ability.timeout);
                 if(ability.cleanup[0]) {
                     template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
                 }
@@ -559,6 +655,19 @@
             selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
             selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
             keepOrder: true });
+    }
+
+    function addAdditionalInfo(){
+        let $table_row = $('#additional-info-row-template-holder').find('#additional-info-template').clone();
+        $('#ability-additional-info').find('#additional-info-table').append($table_row);
+        $('#ability-additional-info').show();
+        $table_row.find('.ability-remove').click(function(){
+            if ($('#additional-info-table tr').length == 1){
+                $('#ability-additional-info').hide();
+            }
+            $(this).parent().parent().remove();
+        });
+        return $table_row;
     }
 
     function showPhaseModal(phase) {
@@ -587,9 +696,23 @@
         document.getElementById("adv-profile-modal").style.display="block";
     }
 
+    function showObjectiveModal() {
+        $('body').keyup(function(e){
+            if(e.key == "Escape"){
+                hideObjectiveModal();
+            }
+        });
+        document.getElementById("adv-objective-modal").style.display="block";
+    }
+
     function hideProfileModal() {
         $("body").off("keyup");
         document.getElementById("adv-profile-modal").style.display="none";
+    }
+
+    function hideObjectiveModal(){
+        $("body").off("keyup");
+        document.getElementById("adv-objective-modal").style.display="none";
     }
 
     function freshId(){
@@ -624,6 +747,28 @@
             }
         }
     });
+
+    $('#objective-existing').on('change', function (){
+        handleObjectiveSelection($('#objective-existing').val());
+    });
+
+    function handleObjectiveSelection(id) {
+       restRequest('POST', {'index':'objectives', 'id': id}, requestObjectiveCallback);
+    }
+
+    function requestObjectiveCallback(data){
+        $('#objective-description')[0].value = data[0]['description'];
+    }
+
+    function linkObjective() {
+        $('#objective-select')[0].value = $('#objective-existing').val();
+        $('#objective-img')[0].style="";
+    }
+
+    function clearObjective() {
+        $('#objective-select')[0].value = '';
+        $('#objective-img')[0].style="display:none";
+    }
 
     function addAbilityToPhase() {
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');

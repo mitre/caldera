@@ -119,7 +119,7 @@
       <div class="op-dets">
         <center>
             <div class="op-control-container">
-                <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('finished')">&#9632;</button></span>
+                <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
                 <span title="Pause Operation" class="op-control-item"><button id="op-control-pause" onclick="changeCurrentOperationState('paused')">&#2405;</button></span>
                 <span title="Run One Step" class="op-control-item"><button id="run-one-link" onclick="changeCurrentOperationState('run_one_link')">&#9658;&#10072;</button></span>
                 <span title="Run Operation" class="op-control-item"><button id="op-control-run" onclick="changeCurrentOperationState('running')">&#9658;</button></span>
@@ -133,8 +133,8 @@
             <br>
             <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
             <br><br>
-            <div id="myProgress" style="text-align: left">
-              <div id="myBar">0%</div>
+            <div id="operationProgress" style="text-align: left">
+              <div id="operationProgressBar">0%</div>
             </div>
             <br>
             <table class="legend">
@@ -149,6 +149,14 @@
                   <td class="visibility">visible</td>
               </tr>
             </table>
+            <br>
+            <div>
+                <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
+                  {% for o in obfuscators %}
+                    <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                  {% endfor %}
+              </select>
+            </div>
         </center>
       </div>
       <div id="content">
@@ -381,6 +389,13 @@
         restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
     }
 
+    function updateObfuscation() {
+        let op_id = $('#operation-list option:selected').attr('value');
+        let newObfuscation = $('#currentObfuscation').val();
+        stream('Changing operation obfuscation to '+newObfuscation);
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+    }
+
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
@@ -418,9 +433,9 @@
             } else {
                 $("#togBtnHil").prop("checked", false);
             }
+            $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt((OPERATION.chain.length / OPERATION.adversary.atomic_ordering.length) *
-                100));
+            changeProgress(OPERATION.finish, parseInt(OPERATION.objective.percentage));
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
                 if(OPERATION.chain[i].status === -1) {
@@ -615,7 +630,7 @@
             if (data) {
                 let res = atob(data.output);
                 $.each(data.link.facts, function (k, v) {
-                    let regex = new RegExp(v.value, "g");
+                    let regex = new RegExp(String.raw`${v.value}`, "g");
                     res = res.replace(regex, "<span class='highlight'>" + v.value + "</span>");
                 });
                 $('#resultView').html(res);
@@ -635,17 +650,22 @@
     }
 
     function changeProgress(finish, percent) {
-        if(percent >= 100) {
-            percent = 100;
-            if(!finish) {
-                percent = 99;
+        // Calculate percentage
+        if (percent >= 100) {
+            if (finish) {
+                percent = 100;
+            } else {
+                    percent = 99;
             }
+        } else if (isNaN(percent)) {
+            percent = 0;
         }
-        let elem = document.getElementById("myBar");
-        elem.style.width = percent + "%";
-        elem.innerHTML = percent + "%";
-    }
 
+        // Set progress bar
+        $('#operationProgressBar').width(percent + '%');
+        $('#operationProgressBar').html(percent + '%');
+    }
+    
     function resetMoreModal() {
         let modal = $('#more-modal');
         modal.hide();

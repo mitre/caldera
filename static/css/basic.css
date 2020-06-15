@@ -475,7 +475,6 @@ table.dataTable input[type=text] {
 }
 .op-control-text{
     text-transform: uppercase;
-    background-color: var(--navbar-background);
     padding: 5px 5px 5px 5px;
     height: 30px;
     text-align: center;
@@ -548,12 +547,12 @@ table.dataTable input[type=text] {
 .legend .queued {
     background-color: grey;
 }
-#myProgress {
+#operationProgress {
   width: 75%;
   border-radius: 25px;
   background-color: grey;
 }
-#myBar {
+#operationProgressBar {
   width: 10%;
   height: 30px;
   border-radius: 25px;
@@ -629,17 +628,6 @@ table.dataTable input[type=text] {
 .ability-order {
     color: var(--secondary-font-color);
 }
-.version {
-    height: 20px;
-    border-radius: 10px;
-    background-color: green;
-    text-align: center;
-    line-height: 20px;
-    color: white;
-    padding-right: 10px;
-    padding-left: 10px;
-    border: 1px solid white;
-}
 
 #info-list {
     min-width: 50%;
@@ -665,7 +653,7 @@ table.dataTable input[type=text] {
 }
 
 .infolist-contents {
-    float: left:
+    float: left;
     height: 1.8em;
     min-width: 50%;
     margin-left :1.5em;
@@ -679,4 +667,17 @@ table.dataTable input[type=text] {
     margin-block-start: 0;
     margin-block-end: 0;
     color: white;
+}
+.dark-select {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border-radius: 25px;
+    border: none;
+}
+
+#objective-img {
+    margin-top: -5%;
+    margin-left: 90%;
+    height: 25px;
+    border: 2px solid var(--navbar-color);
 }

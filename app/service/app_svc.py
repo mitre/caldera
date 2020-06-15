@@ -1,21 +1,18 @@
 import asyncio
 import copy
+import glob
 import hashlib
 import json
 import os
+import time
 from collections import namedtuple
 from datetime import datetime, date
+from importlib import import_module
 
 import aiohttp_jinja2
 import jinja2
 import yaml
 
-from app.contacts.contact_gist import Gist
-from app.contacts.contact_html import Html
-from app.contacts.contact_http import Http
-from app.contacts.contact_tcp import Tcp
-from app.contacts.contact_udp import Udp
-from app.contacts.contact_websocket import WebSocket
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
@@ -88,20 +85,27 @@ class AppService(AppServiceInterface, BaseService):
             self.loop.create_task(op.run(self.get_services()))
 
     async def load_plugins(self, plugins):
-        for plug in plugins:
-            if plug.startswith('.'):
-                continue
-            if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
-                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
-                exit(0)
-            plugin = Plugin(name=plug)
-            if await plugin.load_plugin():
+        def trim(p):
+            if p.startswith('.'):
+                return False
+            return True
+
+        async def load(p):
+            plugin = Plugin(name=p)
+            if plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.debug('Enabled plugin: %s' % plugin.name)
                 if not plugin.version:
                     self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
+
+        for plug in filter(trim, plugins):
+            if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
+                self.log.error('Problem locating the "%s" plugin. Ensure code base was cloned recursively.' % plug)
+                exit(0)
+            asyncio.get_event_loop().create_task(load(plug))
+
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
@@ -122,12 +126,10 @@ class AppService(AppServiceInterface, BaseService):
 
     async def register_contacts(self):
         contact_svc = self.get_service('contact_svc')
-        await contact_svc.register(Http(self.get_services()))
-        await contact_svc.register(Udp(self.get_services()))
-        await contact_svc.register(Tcp(self.get_services()))
-        await contact_svc.register(WebSocket(self.get_services()))
-        await contact_svc.register(Html(self.get_services()))
-        await contact_svc.register(Gist(self.get_services()))
+        for contact_file in glob.iglob('app/contacts/*.py'):
+            contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+            contact_class = import_module(contact_module_name).Contact
+            await contact_svc.register(contact_class(self.get_services()))
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):
@@ -143,6 +145,19 @@ class AppService(AppServiceInterface, BaseService):
     async def load_plugin_expansions(self, plugins=()):
         for p in plugins:
             await p.expand(services=self.get_services())
+
+    async def watch_ability_files(self):
+        await asyncio.sleep(int(self.get_config('ability_refresh')))
+        plugins = [p for p in await self.get_service('data_svc').locate('plugins', dict(enabled=True)) if p.data_dir]
+        plugins.append(Plugin(data_dir='data'))
+        while True:
+            for p in plugins:
+                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities') for fle in f if
+                         time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
+                for f in files:
+                    self.log.debug('[%s] Reloading %s' % (p.name, f))
+                    await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
+            await asyncio.sleep(int(self.get_config('ability_refresh')))
 
     """ PRIVATE """
 

@@ -13,7 +13,6 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
-# from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -26,6 +25,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def persist_adversary(self, data):
         i = data.pop('i')
+        obj_default = (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0]
         if not i:
             i = str(uuid.uuid4())
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
@@ -37,7 +37,7 @@ class RestService(RestServiceInterface, BaseService):
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p)))
+                                   atomic_ordering=p, objective=data.pop('objective', obj_default.id))))
             f.truncate()
         await self._services.get('data_svc').reload_data()
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
@@ -63,8 +63,9 @@ class RestService(RestServiceInterface, BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
+        access = (await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id'))))[0].access
         await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))
-        await self.get_service('data_svc').reload_data()
+        await self.get_service('data_svc').load_ability_file(file_path, access)
         return [a.display for a in await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
 
     async def persist_source(self, data):
@@ -178,12 +179,13 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
-    async def task_agent_with_ability(self, paw, ability_id, facts=()):
+    async def task_agent_with_ability(self, paw, ability_id, obfuscator, facts=()):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
             self.log.debug('Tasking %s with %s' % (paw, ability_id))
             links = await agent.task(
                 abilities=await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ability_id)),
+                obfuscator=obfuscator,
                 facts=facts
             )
             new_links.extend(links)
@@ -208,7 +210,7 @@ class RestService(RestServiceInterface, BaseService):
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
-    async def update_operation(self, op_id, state=None, autonomous=None):
+    async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None):
         async def validate(op):
             try:
                 if not len(op):
@@ -223,10 +225,15 @@ class RestService(RestServiceInterface, BaseService):
         if state:
             await validate(operation)
             operation[0].state = state
+            if state == operation[0].states['FINISHED']:
+                operation[0].finish = self.get_current_timestamp()
             self.log.debug('Changing operation=%s state to %s' % (op_id, state))
         if autonomous:
             operation[0].autonomous = 0 if operation[0].autonomous else 1
-            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(autonomous)))
+            self.log.debug('Toggled operation=%s autonomous to %s' % (op_id, bool(operation[0].autonomous)))
+        if obfuscator:
+            operation[0].obfuscator = obfuscator
+            self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
 
     """ PRIVATE """
 
@@ -237,13 +244,21 @@ class RestService(RestServiceInterface, BaseService):
         adversary = await self._construct_adversary_for_op(data.pop('adversary_id', ''))
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
-        allowed = self.Access.BLUE if self.Access.BLUE in access['access'] else self.Access.RED
+        allowed = self._get_allowed_from_access(access)
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
                          group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
+
+    def _get_allowed_from_access(self, access):
+        if self.Access.HIDDEN in access['access']:
+            return self.Access.HIDDEN
+        elif self.Access.BLUE in access['access']:
+            return self.Access.BLUE
+        else:
+            return self.Access.RED
 
     @staticmethod
     async def _read_from_yaml(file_path):
@@ -304,6 +319,10 @@ class RestService(RestServiceInterface, BaseService):
                 adv['atomic_ordering'] = [ab.display for ab_id in adv['atomic_ordering'] for ab in
                                           await self.get_service('data_svc').locate('abilities',
                                                                                     match=dict(ability_id=ab_id))]
+                adv['objective'] = [ab.display for ab in
+                                    await self.get_service('data_svc').locate('objectives',
+                                                                              match=dict(id=adv['objective']))][0]
+
         return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
