@@ -50,9 +50,9 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
     async def execute_links(self, planner, operation, link_ids, condition_stop):
         """Apply links to operation and wait for completion
-        
+
         Optionally, stop bucket execution if stopping conditions are met
-        
+
         :param planner: Planner to check for stopping conditions on
         :type planner: LogicalPlanner
         :param operation: Operation running links
@@ -127,7 +127,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         :param operation: Operation to generate links for
         :type operation: Operation
-        :param buckets: Buckets containing abilities. If 'None', get all links 
+        :param buckets: Buckets containing abilities. If 'None', get all links
             for given operation, agent, and trim setting. If a list of buckets
             if provided, then get links for specified buckets for given
             operation and trim setting. Defaults to None.
