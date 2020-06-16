@@ -86,12 +86,9 @@ class DataService(DataServiceInterface, BaseService):
         except Exception as e:
             self.log.error('[!] LOCATE: %s' % e)
 
-    async def search(self, value, object_name=None):
+    async def search(self, value, object_name):
         try:
-            if object_name:
-                return [obj for obj in self.ram[object_name] if obj.search_tags(value)]
-            else:
-                return {obj_name: [obj for obj in objects if obj.search_tags(value)] for obj_name, objects in self.ram.items()}
+            return [obj for obj in self.ram[object_name] if obj.search_tags(value)]
         except Exception as e:
             self.log.error('[!] SEARCH: %s' % e)
 
