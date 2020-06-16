@@ -254,7 +254,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
             relationships=[dict(source=fact_to_dict(r.source), edge=r.edge, target=fact_to_dict(r.target), score=r.score) for link in self.chain for r in link.relationships]
         )
-        await services.get('rest_svc').persist_source(data)
+        await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
     async def update_operation(self, services):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)

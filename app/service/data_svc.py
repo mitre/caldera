@@ -138,6 +138,18 @@ class DataService(DataServiceInterface, BaseService):
                                                                variations=info.get('variations', []), **ab)
                                 await self._update_extensions(a)
 
+    async def load_adversary_file(self, filename, access):
+        for adv in self.strip_yml(filename):
+            adversary = Adversary.load(adv)
+            adversary.access = access
+            await self.store(adversary)
+
+    async def load_source_file(self, filename, access):
+        for src in self.strip_yml(filename):
+            source = Source.load(src)
+            source.access = access
+            await self.store(source)
+
     """ PRIVATE """
 
     async def _load(self, plugins=()):
@@ -161,10 +173,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
-            for adv in self.strip_yml(filename):
-                adversary = Adversary.load(adv)
-                adversary.access = plugin.access
-                await self.store(adversary)
+            await self.load_adversary_file(filename, plugin.access)
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
@@ -185,10 +194,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
-            for src in self.strip_yml(filename):
-                source = Source.load(src)
-                source.access = plugin.access
-                await self.store(source)
+            await self.load_source_file(filename, plugin.access)
 
     async def _load_objectives(self, plugin):
         for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):

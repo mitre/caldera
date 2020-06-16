@@ -4,9 +4,10 @@ import abc
 class RestServiceInterface(abc.ABC):
 
     @abc.abstractmethod
-    def persist_adversary(self, data):
+    def persist_adversary(self, access, data):
         """
         Save a new adversary from either the GUI or REST API. This writes a new YML file into the core data/ directory.
+        :param access
         :param data:
         :return: the ID of the created adversary
         """
@@ -23,11 +24,11 @@ class RestServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def persist_ability(self, data):
+    def persist_ability(self, access, data):
         pass
 
     @abc.abstractmethod
-    def persist_source(self, data):
+    def persist_source(self, access, data):
         pass
 
     @abc.abstractmethod
