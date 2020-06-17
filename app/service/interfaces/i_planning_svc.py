@@ -4,15 +4,14 @@ import abc
 class PlanningServiceInterface(abc.ABC):
 
     @abc.abstractmethod
-    def get_links(self, operation, agent, trim, planner, stopping_conditions):
+    def get_links(self, operation, buckets, agent, trim):
         """
         For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
         :param operation:
+        :param buckets:
         :param agent:
         :param trim: call trim_links() on list of links before returning
-        :param planner:
-        :param stopping_conditions:
         :return: a list of links
         """
         pass
