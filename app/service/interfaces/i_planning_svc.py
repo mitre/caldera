@@ -9,10 +9,9 @@ class PlanningServiceInterface(abc.ABC):
         For an operation and agent combination, create links (that can be executed).
         When no agent is supplied, links for all agents are returned
         :param operation:
+        :param buckets:
         :param agent:
         :param trim: call trim_links() on list of links before returning
-        :param planner:
-        :param stopping_conditions:
         :return: a list of links
         """
         pass
