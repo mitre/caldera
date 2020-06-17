@@ -32,7 +32,8 @@ class Relationship(BaseObject):
 
     @property
     def display(self):
-        return self.clean(dict(source=self.source, edge=self.edge, target=self.target, score=self.score))
+        return self.clean(dict(source=self.source, edge=self.edge,
+                               target=[self.target if self.target else 'Not Used'][0], score=self.score))
 
     def __init__(self, source, edge=None, target=None, score=1):
         super().__init__()
