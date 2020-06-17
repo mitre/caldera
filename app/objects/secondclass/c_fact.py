@@ -24,7 +24,7 @@ class FactSchema(ma.Schema):
 
     unique = ma.fields.String()
     trait = ma.fields.String()
-    value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x))
+    value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
     score = ma.fields.Integer()
     collected_by = ma.fields.String()
     technique_id = ma.fields.String()
