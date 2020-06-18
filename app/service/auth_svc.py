@@ -122,9 +122,9 @@ class AuthService(AuthServiceInterface, BaseService):
 
     async def _ldap_login(self, username, password):
         server = ldap3.Server(self.ldap_config.get('server'))
-        domain = self.ldap_config.get('domain')
+        dn = self.ldap_config.get('dn')
         userattr = self.ldap_config.get('userattr') or 'uid'
-        userstring = '{}={},{}'.format(userattr, username, domain)
+        userstring = '{}={},{}'.format(userattr, username, dn)
         with ldap3.Connection(server, user=userstring, password=password) as conn:
             if conn.bind():
                 return True
