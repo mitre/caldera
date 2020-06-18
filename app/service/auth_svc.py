@@ -9,6 +9,7 @@ from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
+import ldap3
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.utility.base_service import BaseService
@@ -48,6 +49,7 @@ class AuthService(AuthServiceInterface, BaseService):
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
+        self.ldap_config = self.get_config('ldap')
 
     async def apply(self, app, users):
         for group, u in users.items():
@@ -74,13 +76,19 @@ class AuthService(AuthServiceInterface, BaseService):
         :return: the response/location of where the user is trying to navigate
         """
         data = await request.post()
-        verified = await self._check_credentials(request.app.user_map, data.get('username'), data.get('password'))
-        response = web.HTTPFound('/')
+        username = data.get('username')
+        password = data.get('password')
+        if self.ldap_config:
+            verified = await self._ldap_login(username, password)
+        else:
+            verified = await self._check_credentials(request.app.user_map, username, password)
+
         if verified:
-            self.log.debug('%s logging in:' % data.get('username'))
-            await remember(request, response, data.get('username'))
+            self.log.debug('%s logging in:' % username)
+            response = web.HTTPFound('/')
+            await remember(request, response, username)
             raise response
-        self.log.debug('%s failed login attempt: ' % data.get('username'))
+        self.log.debug('%s failed login attempt: ' % username)
         raise web.HTTPFound('/login')
 
     async def check_permissions(self, group, request):
@@ -111,6 +119,17 @@ class AuthService(AuthServiceInterface, BaseService):
         if not user:
             return False
         return user.password == password
+
+    async def _ldap_login(self, username, password):
+        server = ldap3.Server(self.ldap_config.get('server'))
+        domain = self.ldap_config.get('domain')
+        userattr = self.ldap_config.get('userattr') or 'uid'
+        userstring = '{}={},{}'.format(userattr, username, domain)
+        with ldap3.Connection(server, user=userstring, password=password) as conn:
+            if conn.bind():
+                return True
+            else:
+                return False
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
