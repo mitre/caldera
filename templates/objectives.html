@@ -35,7 +35,7 @@
         <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
         <h4 id="objective-name" contenteditable="true" class="advGoal">Sample name</h4>
         <hr>
-        <table id="goalTbl" class="obfuscation-table" border=1 frame=void goals=rows>
+        <table id="goalTbl" class="obfuscation-table" border=1 frame=void rules=rows>
             <thead>
                 <tr>
                     <td><b>target</b></td>
@@ -246,7 +246,6 @@
             $('#objective-assignments').append(template);
         });
 
-        //# restRequest('POST', {'index':'objectives'}, loagAssignmentsCallback, '/api/rest');
         restRequest('POST', {'index':'adversaries', 'objective': objective}, populateAssignmentsCallback);
         //# restRequest('POST', {'index':'adversaries', 'id': $('#profile-source-name').val()}, loadSourceCallback);
     }
