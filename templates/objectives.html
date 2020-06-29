@@ -158,7 +158,6 @@
             });
             objective.data('id', data[0].id);
             objective.html(data[0].name);
-            populateAssignments();
         }
         stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
         restRequest('POST', {'index':'objectives', 'id': $('#profile-objective-name').val()}, loadObjectiveCallback);
@@ -227,6 +226,7 @@
     }
 
     function viewAssignments(){
+        populateAssignments();
         document.getElementById("assignments-modal").style.display = "block";
         let objectiveName = $('#objective-name').val();
         $('#assignment-name').text(objectiveName);
@@ -235,19 +235,18 @@
     function populateAssignments() {
         function populateAssignmentsCallback(data) {
             let objective = $('#objective-name');
-<!--  callback data goes here          let assignment_list = $();-->
-        }
+            let assignment_list = data[0]
 
-        assignment_list.forEach(a => {
+        assignment_list.forEach(adversary => {
             let template = $("#assignments-template").clone();
-            template.find('#assignmentAdversary').val(a.adversary.name);
-            template.find('#assignmentObjective').val(a.objective.name);
+            template.find('#assignmentAdversary').val(adversary.name);
+            template.find('#assignmentObjective').val(adversary.objective);
             template.show();
             $('#objective-assignments').append(template);
-        });
+            });
+        }
 
-        restRequest('POST', {'index':'adversaries', 'objective': objective}, populateAssignmentsCallback);
-        //# restRequest('POST', {'index':'adversaries', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+        restRequest('POST', {'index':'adversaries'}, populateAssignmentsCallback);
     }
 
     //# objectiveURL=objectives.js
