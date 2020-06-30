@@ -39,8 +39,11 @@ class RestService(RestServiceInterface, BaseService):
             p = list()
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
+            obj = data.pop('objective', obj_default.id)
+            if len(await self.get_service('data_svc').locate('objectives', match=dict(id=obj))) == 0:
+                obj = obj_default.id
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p, objective=data.pop('objective', obj_default.id))))
+                                   atomic_ordering=p, objective=obj)))
             f.truncate()
         await self._services.get('data_svc').load_adversary_file(file_path, allowed)
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
