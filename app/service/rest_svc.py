@@ -40,7 +40,7 @@ class RestService(RestServiceInterface, BaseService):
             for ability in data.pop('atomic_ordering'):
                 p.append(ability['id'])
             obj = data.pop('objective', obj_default.id)
-            if len([ab for ab in await self.get_service('data_svc').locate('objectives', match=dict(id=obj))]) == 0:
+            if len(await self.get_service('data_svc').locate('objectives', match=dict(id=obj))) == 0:
                 obj = obj_default.id
             f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
                                    atomic_ordering=p, objective=obj)))
