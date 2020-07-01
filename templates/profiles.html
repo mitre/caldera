@@ -321,7 +321,7 @@
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
         restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'i': identifier,"objective":objective}, saveAdversaryCallback);
+            'id': identifier,"objective":objective}, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {

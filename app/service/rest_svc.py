@@ -24,26 +24,30 @@ class RestService(RestServiceInterface, BaseService):
         self.loop = asyncio.get_event_loop()
 
     async def persist_adversary(self, access, data):
-        i = data.pop('i')
-        obj_default = (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0]
-        if not i:
-            i = str(uuid.uuid4())
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % i, location='data')
-        if not file_path:
-            file_path = 'data/adversaries/%s.yml' % i
-            allowed = self._get_allowed_from_access(access)
+        data['atomic_ordering'] = [list(ab_dict.values())[0] for ab_dict in data['atomic_ordering']]
+        if not data['id']:
+            data['id'] = str(uuid.uuid4())
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data['id'], location='data')
+        if file_path:
+            # exists
+            current_adversary = (await self.get_service('data_svc').locate('adversaries', dict(adversary_id=data['id'])))[0]
+            allowed = current_adversary.access
+            current_adversary = dict(current_adversary.display)
+            current_adversary['id'] = current_adversary.pop('adversary_id')   # match on-disk yaml format
+            current_adversary.update(data)
+            data = current_adversary
         else:
-            allowed = (await self.get_service('data_svc').locate('adversaries', dict(adversary_id=i)))[0].access
+            # new
+            file_path = 'data/adversaries/%s.yml' % data['id']
+            allowed = self._get_allowed_from_access(access)
+            data['objective'] = data.get('objective',
+                                         (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0])
         with open(file_path, 'w+') as f:
             f.seek(0)
-            p = list()
-            for ability in data.pop('atomic_ordering'):
-                p.append(ability['id'])
-            f.write(yaml.dump(dict(id=i, name=data.pop('name'), description=data.pop('description'),
-                                   atomic_ordering=p, objective=data.pop('objective', obj_default.id))))
+            f.write(yaml.dump(data))
             f.truncate()
         await self._services.get('data_svc').load_adversary_file(file_path, allowed)
-        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=i))]
+        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=data["id"]))]
 
     async def update_planner(self, data):
         planner = (await self.get_service('data_svc').locate('planners', dict(name=data['name'])))[0]
@@ -57,20 +61,52 @@ class RestService(RestServiceInterface, BaseService):
         await self.get_service('data_svc').store(planner)
 
     async def persist_ability(self, access, data):
+        """[summary]
+
+        The model/format of 'data' is most similar to the ability yaml file definition, with a few exceptions:
+            - 'platforms' sub-dict has sub executor keys split out versus a joined csv string; latter is how it is in yaml file
+            - 'platforms' executor sub-dicts dont have a 'parsers' field; currently parsers are not modifiable via UI
+            - 'platforms' executor sub-dicts have a 'timeout' field which is not present in yaml definition of ability
+        
+        'data' format is as it would be of the yaml ability file on disk, except the 'platforms' dict
+        is different, as the sub-keys are not koiend and the 'parsers' field is missing
+
+        Since a defined ability (yaml file) is loaded and then split up to create as many ability versions as there are unique
+        (platform, executor) pairings, its easier to just load yaml ability file, update with what is supplied by 'data'.
+        Then reload ability yaml file, where it will be re-split and create multiple ability versions.
+        """
+        self.log.debug(f"\n>>> New is: {data}")
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % data.get('id'), location='data')
-        if not file_path:
+        # remove added fields, i.e .those added once loaded and not in original yaml definition
+        if file_path:
+            # exists
+            # steps:
+            #  - on new, stash timeouts and then drop from new
+            #  - on new, combine executors that are the same under common platform
+            #  - on current, stash parsers and then drop from current
+            #  - update current with new
+            #  - on current, add back in parsers
+            #  - data =current
+            #  - save data to disk, load back in, reset timeouts on loaded abilities to that stored
+            current_ability_on_disk = dict(self.strip_yml(file_path)[0][0])
+            allowed = (await self.get_service('data_svc').locate('abilities',
+                                                                 dict(ability_id=data.get('id'))))[0].access
+            self.log.debug(f"\n >>>Current is: {current_ability_on_disk}")
+            current_ability_on_disk.update(data)
+            data = current_ability_on_disk
+        else:
+            # new
             d = 'data/abilities/%s' % data.get('tactic')
             if not os.path.exists(d):
                 os.makedirs(d)
             file_path = '%s/%s.yml' % (d, data.get('id'))
             allowed = self._get_allowed_from_access(access)
-        else:
-            allowed = (await self.get_service('data_svc').locate('abilities',
-                                                                 dict(ability_id=data.get('id'))))[0].access
+        self.log.debug(f"\nfinal is {data}\n")
+        return
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([data]))
-        await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))
+        await self.get_service('data_svc').remove('abilities', dict(ability_id=data.get('id')))    # Why does it have to be removed first
         await self.get_service('data_svc').load_ability_file(file_path, allowed)
         return [a.display for a in
                 await self.get_service('data_svc').locate('abilities', dict(ability_id=data.get('id')))]
