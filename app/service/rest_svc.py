@@ -488,7 +488,7 @@ class RestService(RestServiceInterface, BaseService):
                     parsers[platform][executor] = d['parsers']
                     del ability["platforms"][platform][executor]['parsers']
         return ability, parsers
-    
+
     async def _add_parsers_to_ability(self, ability, parsers):
         """Add parsers back into an ability (where the ability is
         not an ability object but just the loaded dict from yaml
