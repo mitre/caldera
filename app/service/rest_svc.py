@@ -28,7 +28,7 @@ class RestService(RestServiceInterface, BaseService):
         For bulk, supply dict of form {"bulk": [{<adversary>}, {<adversary>},...]}.
         """
         if data.get('bulk', False):
-            data = data['bulk'] 
+            data = data['bulk']
         else:
             data = [data]
         r = []
@@ -52,7 +52,7 @@ class RestService(RestServiceInterface, BaseService):
         For bulk, supply dict of form {"bulk": [{<ability>}, {<ability>},...]}.
         """
         if data.get('bulk', False):
-            data = data['bulk'] 
+            data = data['bulk']
         else:
             data = [data]
         r = []
@@ -65,7 +65,7 @@ class RestService(RestServiceInterface, BaseService):
         For bulk, supply dict of form {"bulk": [{<sourc>}, {<source>},...]}.
         """
         if data.get('bulk', False):
-            data = data['bulk'] 
+            data = data['bulk']
         else:
             data = [data]
         r = []
@@ -355,7 +355,7 @@ class RestService(RestServiceInterface, BaseService):
             file_path = 'data/adversaries/%s.yml' % adv['id']
             allowed = self._get_allowed_from_access(access)
             adv['objective'] = adv.get('objective',
-                                        (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0])
+                                       (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0])
             final = adv
         # verfiy objective is valid
         if len(await self.get_service('data_svc').locate('objectives', match=dict(id=final['objective']))) == 0:
@@ -369,7 +369,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def _persist_ability(self, access, ab):
         """Persist ability.
-        
+
         The model/format of the incoming ability (i.e. 'ab') is most similar to the ability
         yaml file definition, with a few exceptions:
           - 'platforms' sub-dict has sub executor keys split out versus a joined csv string
@@ -396,7 +396,7 @@ class RestService(RestServiceInterface, BaseService):
             # exists
             current_ability = dict(self.strip_yml(file_path)[0][0])
             allowed = (await self.get_service('data_svc').locate('abilities',
-                                                                dict(ability_id=ab['id'])))[0].access
+                                                                 dict(ability_id=ab['id'])))[0].access
             current_ability, current_parsers = await self._strip_parsers_from_ability(current_ability)
             current_ability.update(new_ability)
             final = await self._add_parsers_to_ability(current_ability, current_parsers)
@@ -415,7 +415,7 @@ class RestService(RestServiceInterface, BaseService):
         await self.get_service('data_svc').load_ability_file(file_path, allowed)
         await self._restore_exec_timeouts(final['id'], new_ability_exec_timeouts)
         return [a.display for a in
-                    await self.get_service('data_svc').locate('abilities', dict(ability_id=final['id']))]
+                await self.get_service('data_svc').locate('abilities', dict(ability_id=final['id']))]
 
     async def _persist_source(self, access, source):
         if not source.get('id') or not source['id']:
@@ -471,7 +471,6 @@ class RestService(RestServiceInterface, BaseService):
                 else:
                     platforms[platform][executor] = d
         ability['platforms'] = platforms
-        
         return ability, exec_timeouts
 
     async def _strip_parsers_from_ability(self, ability):
@@ -497,7 +496,7 @@ class RestService(RestServiceInterface, BaseService):
         """
         for platform, executors in ability['platforms'].items():
             if parsers.get(platform, False):
-                for executor, d in executors.items():
+                for executor, _ in executors.items():
                     if parsers[platform].get(executor, False):
                         ability['platforms'][platform][executor]['parsers'] = parsers[platform][executor]
         return ability
