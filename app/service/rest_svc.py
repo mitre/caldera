@@ -61,7 +61,7 @@ class RestService(RestServiceInterface, BaseService):
         return r
 
     async def persist_source(self, access, data):
-        """Persist sources. Accepts single srouce or bulk set of sources.
+        """Persist sources. Accepts single source or bulk set of sources.
         For bulk, supply dict of form {"bulk": [{<sourc>}, {<source>},...]}.
         """
         if data.get('bulk', False):
@@ -331,17 +331,18 @@ class RestService(RestServiceInterface, BaseService):
         return 'Delete action completed'
 
     async def _persist_adversary(self, access, adv):
-        """
+        """Persist adversary.
+
         Current policy for 'objective' field of adversary: If there isn't an
         objective when an adversary is loaded from disk, it gets assigned a
         default one, which will then get written out if the adversary is
         explicitly saved. Newly created adversaries will also be given default
         objective if created without one.
         """
+        if not adv.get('id') or not adv['id']:
+            adv['id'] = str(uuid.uuid4())
         obj_default = (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0]
         adv['atomic_ordering'] = [list(ab_dict.values())[0] for ab_dict in adv['atomic_ordering']]
-        if not adv['id']:
-            adv['id'] = str(uuid.uuid4())
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % adv['id'], location='data')
         if file_path:
             # exists
@@ -367,9 +368,9 @@ class RestService(RestServiceInterface, BaseService):
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))]
 
     async def _persist_ability(self, access, ab):
-        """Persist ability
+        """Persist ability.
         
-        The model/format of the incoming ability (i.e. 'data') is most similar to the ability
+        The model/format of the incoming ability (i.e. 'ab') is most similar to the ability
         yaml file definition, with a few exceptions:
           - 'platforms' sub-dict has sub executor keys split out versus a joined csv string
           - 'platforms' executor sub-dicts dont have a 'parsers' field
@@ -377,22 +378,25 @@ class RestService(RestServiceInterface, BaseService):
 
         Update Strategy:
             'new' ability is the ability dict that is supplied
-            'current' ability is the ability as read in directly from yaml file
+            'current' ability is the ability dict as read in directly from yaml file
             ------------
             - on new ability, stash executor timeouts and then drop from new ability
             - on new ability, combine executors that are the same under common platform
             - on current ability, stash parsers and then drop from current ability
             - update current ability with new ability
+            - add parsers back in to current ability
             - save current ability to disk, then re-load ability from file
             - check/set executor timeouts on loaded abilities
         """
+        if not ab.get('id') or not ab['id']:
+            ab['id'] = str(uuid.uuid4())
         new_ability, new_ability_exec_timeouts = await self._prep_new_ability(ab)
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % ab.get('id'), location='data')
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % ab['id'], location='data')
         if file_path:
             # exists
             current_ability = dict(self.strip_yml(file_path)[0][0])
             allowed = (await self.get_service('data_svc').locate('abilities',
-                                                                dict(ability_id=ab.get('id'))))[0].access
+                                                                dict(ability_id=ab['id'])))[0].access
             current_ability, current_parsers = await self._strip_parsers_from_ability(current_ability)
             current_ability.update(new_ability)
             final = await self._add_parsers_to_ability(current_ability, current_parsers)
@@ -401,19 +405,21 @@ class RestService(RestServiceInterface, BaseService):
             d = 'data/abilities/%s' % new_ability.get('tactic')
             if not os.path.exists(d):
                 os.makedirs(d)
-            file_path = '%s/%s.yml' % (d, new_ability.get('id'))
+            file_path = '%s/%s.yml' % (d, new_ability['id'])
             allowed = self._get_allowed_from_access(access)
             final = new_ability
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([final]))
-        await self.get_service('data_svc').remove('abilities', dict(ability_id=final.get('id')))    # Why does it have to be removed first
+        await self.get_service('data_svc').remove('abilities', dict(ability_id=final['id']))
         await self.get_service('data_svc').load_ability_file(file_path, allowed)
-        await self._restore_exec_timeouts(final.get('id'), new_ability_exec_timeouts)
+        await self._restore_exec_timeouts(final['id'], new_ability_exec_timeouts)
         return [a.display for a in
-                    await self.get_service('data_svc').locate('abilities', dict(ability_id=final.get('id')))]
+                    await self.get_service('data_svc').locate('abilities', dict(ability_id=final['id']))]
 
     async def _persist_source(self, access, source):
+        if not source.get('id') or not source['id']:
+            source['id'] = str(uuid.uuid4())
         _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % source['id'], location='data')
         if file_path:
             # exists
@@ -440,13 +446,14 @@ class RestService(RestServiceInterface, BaseService):
         Return modified ability dict, and a seperate dict of the executor timeouts.
         """
         ability = copy.deepcopy(ab)
+        # remove and store executor timeouts
         exec_timeouts = {}
         for platform, executors in ability['platforms'].items():
             exec_timeouts[platform] = {}
             for executor, d in executors.items():
                 exec_timeouts[platform][executor] = d['timeout']
                 del ability['platforms'][platform][executor]['timeout']
-
+        # Combine executors under common CSV keys if they are the same
         platforms = {}
         for platform, executors in ability['platforms'].items():
             platforms[platform] = {}
@@ -468,9 +475,9 @@ class RestService(RestServiceInterface, BaseService):
         return ability, exec_timeouts
 
     async def _strip_parsers_from_ability(self, ability):
-        """Remove the parsers sub-dict from an ability (where the
-        ability is not an ability object but just the loaded dict from
-        yaml ability file)
+        """Remove the parsers sub-dict from the executors of an ability
+        (where the ability is not an ability object but just the loaded
+        dict from yaml ability file)
 
         Return ability (minus parsers) and parsers as seperate dict
         """
@@ -484,9 +491,9 @@ class RestService(RestServiceInterface, BaseService):
         return ability, parsers
     
     async def _add_parsers_to_ability(self, ability, parsers):
-        """Add parsers back into an ability (where the
-        ability is not an ability object but just the loaded dict from
-        yaml ability file)
+        """Add parsers back into an ability (where the ability is
+        not an ability object but just the loaded dict from yaml
+        ability file)
         """
         for platform, executors in ability['platforms'].items():
             if parsers.get(platform, False):
@@ -496,8 +503,7 @@ class RestService(RestServiceInterface, BaseService):
         return ability
 
     async def _restore_exec_timeouts(self, ability_id, exec_timeouts):
-        """[summary]
-        """
+        """For the supplied ability, set corresponding executor timeouts."""
         abilities = await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id))
         for ab in abilities:
             ab.timeout = exec_timeouts[ab.platform][ab.executor]
