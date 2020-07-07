@@ -379,9 +379,9 @@ class RestService(RestServiceInterface, BaseService):
             'new' ability is the ability dict that is supplied
             'current' ability is the ability as read in directly from yaml file
             ------------
-            - on new ability, stash executor timeouts and then drop
+            - on new ability, stash executor timeouts and then drop from new ability
             - on new ability, combine executors that are the same under common platform
-            - on current ability, stash parsers and then drop
+            - on current ability, stash parsers and then drop from current ability
             - update current ability with new ability
             - save current ability to disk, then re-load ability from file
             - check/set executor timeouts on loaded abilities
@@ -403,7 +403,7 @@ class RestService(RestServiceInterface, BaseService):
                 os.makedirs(d)
             file_path = '%s/%s.yml' % (d, new_ability.get('id'))
             allowed = self._get_allowed_from_access(access)
-            final = ab
+            final = new_ability
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump([final]))
@@ -432,22 +432,23 @@ class RestService(RestServiceInterface, BaseService):
         await self._services.get('data_svc').load_source_file(file_path, allowed)
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=final['id']))]
 
-    async def _prep_new_ability(self, ability):
+    async def _prep_new_ability(self, ab):
         """Take an ability dict, supplied by frontend, extract executor timeouts,
         and combine executor sub-dicts that are equivalent under a single CSV
         formed key under the parent platform.
 
         Return modified ability dict, and a seperate dict of the executor timeouts.
         """
+        ability = copy.deepcopy(ab)
         exec_timeouts = {}
-        for platform, executors in ability["platforms"].items():
+        for platform, executors in ability['platforms'].items():
             exec_timeouts[platform] = {}
             for executor, d in executors.items():
-                exec_timeouts[platform][executor] = d["timeout"]
-                del ability["platforms"][platform][executor]["timeout"]
+                exec_timeouts[platform][executor] = d['timeout']
+                del ability['platforms'][platform][executor]['timeout']
 
         platforms = {}
-        for platform, executors in ability["platforms"].items():
+        for platform, executors in ability['platforms'].items():
             platforms[platform] = {}
             for executor, d in executors.items():
                 match = False
@@ -456,13 +457,13 @@ class RestService(RestServiceInterface, BaseService):
                         match = executor_1
                         break
                 if match:
-                    combined_key = ",".join([match, executor])
+                    combined_key = ','.join([match, executor])
                     platforms[platform][combined_key] = d
                     # and remove previous single key in set
                     del platforms[platform][match]
                 else:
                     platforms[platform][executor] = d
-        ability["platforms"] = platforms
+        ability['platforms'] = platforms
         
         return ability, exec_timeouts
 
@@ -491,7 +492,7 @@ class RestService(RestServiceInterface, BaseService):
             if parsers.get(platform, False):
                 for executor, d in executors.items():
                     if parsers[platform].get(executor, False):
-                        ability[platform][executor]['parsers'] = parsers[platform][executor]
+                        ability['platforms'][platform][executor]['parsers'] = parsers[platform][executor]
         return ability
 
     async def _restore_exec_timeouts(self, ability_id, exec_timeouts):
@@ -500,4 +501,4 @@ class RestService(RestServiceInterface, BaseService):
         abilities = await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id))
         for ab in abilities:
             ab.timeout = exec_timeouts[ab.platform][ab.executor]
-            self.get_service('data_svc').store(ab)
+            await self.get_service('data_svc').store(ab)
