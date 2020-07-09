@@ -73,6 +73,19 @@ class RestService(RestServiceInterface, BaseService):
             r.extend(await self._persist_source(access, source))
         return r
 
+    async def persist_objective(self, access, data):
+        """Persist objectives. Accepts single objective or a bulk set of objectives.
+        For bulk, supply dict of form {"bulk": [{objective}, ...]}.
+        """
+        if data.get('bulk', False):
+            data = data['bulk']
+        else:
+            data = [data]
+        r = []
+        for obj in data:
+            r.extend(await self._persist_objective(access, obj))
+        return r
+
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
         return 'Delete action completed'
@@ -441,6 +454,25 @@ class RestService(RestServiceInterface, BaseService):
             f.write(yaml.dump(final))
         await self._services.get('data_svc').load_source_file(file_path, allowed)
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=final['id']))]
+
+    async def _persist_objective(self, access, objective):
+        if not objective.get('id') or not objective['id']:
+            objective['id'] = str(uuid.uuid4())
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % objective['id'], location='data')
+        if file_path:
+            current_objective = dict(self.strip_yml(file_path)[0])
+            allowed = (await self.get_service('data_svc').locate('objectives', dict(id=objective['id'])))[0].access
+            current_objective.update(objective)
+            final = objective
+        else:
+            file_path = 'data/objectives/%s.yml' % objective['id']
+            allowed = self._get_allowed_from_access(access)
+            final = objective
+        with open(file_path, 'w+') as f:
+            f.seek(0)
+            f.write(yaml.dump(final))
+        await self._services.get('data_svc').load_objective_file(file_path, allowed)
+        return [o.display for o in await self._services.get('data_svc').locate('objectives', dict(id=final['id']))]
 
     async def _prep_new_ability(self, ab):
         """Take an ability dict, supplied by frontend, extract executor timeouts,

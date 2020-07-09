@@ -150,6 +150,12 @@ class DataService(DataServiceInterface, BaseService):
             source.access = access
             await self.store(source)
 
+    async def load_objective_file(self, filename, access):
+        for src in self.strip_yml(filename):
+            obj = Objective.load(src)
+            obj.access = access
+            await self.store(obj)
+
     """ PRIVATE """
 
     async def _load(self, plugins=()):
