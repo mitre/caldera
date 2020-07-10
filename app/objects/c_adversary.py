@@ -13,6 +13,7 @@ class AdversarySchema(ma.Schema):
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
     objective = ma.fields.String()
+    tags = ma.fields.List(ma.fields.String())
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -63,6 +64,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('description', self.description)
         existing.update('atomic_ordering', self.atomic_ordering)
         existing.update('objective', self.objective)
+        existing.update('tags', self.tags)
         return existing
 
     def has_ability(self, ability):
