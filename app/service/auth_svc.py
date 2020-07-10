@@ -10,7 +10,7 @@ from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
 import ldap3
-from ldap3.core.exceptions import LDAPAttributeError
+from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.utility.base_service import BaseService
@@ -131,14 +131,17 @@ class AuthService(AuthServiceInterface, BaseService):
         user_attr = self.ldap_config.get('user_attr') or 'uid'
         user_string = '%s=%s,%s' % (user_attr, username, dn)
 
-        with ldap3.Connection(server, user=user_string, password=password) as conn:
-            if conn.bind():
-                if username not in self.user_map:
-                    group = await self._ldap_get_group(conn, dn, username, user_attr)
-                    await self.create_user(username, None, group)
-                return True
-            else:
-                return False
+        try:
+            with ldap3.Connection(server, user=user_string, password=password) as conn:
+                if conn.bind():
+                    if username not in self.user_map:
+                        group = await self._ldap_get_group(conn, dn, username, user_attr)
+                        await self.create_user(username, None, group)
+                    return True
+        except LDAPException:
+            self.log.error('Unable to connect to LDAP server')
+
+        return False
 
     async def _ldap_get_group(self, connection, dn, username, user_attr):
         group_attr = self.ldap_config.get('group_attr') or 'objectClass'
