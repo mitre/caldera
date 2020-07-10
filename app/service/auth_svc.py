@@ -54,10 +54,10 @@ class AuthService(AuthServiceInterface, BaseService):
 
     async def apply(self, app, users):
         if users:
-            for group, u in users.items():
+            for group, user in users.items():
                 self.log.debug('Created authentication group: %s' % group)
-                for k, v in u.items():
-                    await self.create_user(k, v, group)
+                for username, password in user.items():
+                    await self.create_user(username, password, group)
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
@@ -129,7 +129,7 @@ class AuthService(AuthServiceInterface, BaseService):
         server = ldap3.Server(self.ldap_config.get('server'))
         dn = self.ldap_config.get('dn')
         user_attr = self.ldap_config.get('user_attr') or 'uid'
-        user_string = '{}={},{}'.format(user_attr, username, dn)
+        user_string = '%s=%s,%s' % (user_attr, username, dn)
 
         with ldap3.Connection(server, user=user_string, password=password) as conn:
             if conn.bind():
@@ -145,9 +145,9 @@ class AuthService(AuthServiceInterface, BaseService):
         red_group_name = self.ldap_config.get('red_group') or 'red'
 
         try:
-            connection.search(dn, '({}={})'.format(user_attr, username), attributes=[group_attr])
+            connection.search(dn, '(%s=%s)' % (user_attr, username), attributes=[group_attr])
         except LDAPAttributeError:
-            self.log.error('Invalid group_attr in config: {}'.format(group_attr))
+            self.log.error('Invalid group_attr in config: %s' % group_attr)
             return 'blue'
 
         groups_result = connection.entries[0][group_attr].value
