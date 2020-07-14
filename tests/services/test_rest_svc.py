@@ -110,6 +110,25 @@ class TestRestSvc:
         response = loop.run_until_complete(internal_rest_svc.delete_ability(data=dict(ability_id='123')))
         assert 'Delete action completed' == response
 
+    def test_persist_objective_single_new(self, loop, rest_svc, file_svc):
+        internal_rest_svc = rest_svc(loop)
+        req = {
+                "name": "test",
+                "description": "test objective",
+                "goals": [
+                    {
+                        "count": 1,
+                        "operator": "*",
+                        "target": "host.user.name",
+                        "value": "NA"
+                    }
+                ]
+            }
+        objs = loop.run_until_complete(internal_rest_svc.persist_objective({'access': [BaseWorld.Access.RED]}, req))
+        # clear out subobject difference
+        objs[0]['goals'][0].pop('achieved')
+        assert req.items() <= objs[0].items()
+
     def test_delete_adversary(self, loop, rest_svc, file_svc):
         internal_rest_svc = rest_svc(loop)
         data = """
