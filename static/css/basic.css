@@ -156,6 +156,14 @@
     text-align: left;
     padding-bottom: 20px;
 }
+.pane-header-editable input,
+.fillable-table input {
+    background-color: inherit;
+    border: none;
+    color: var(--font-color);
+    text-align: left;
+    padding: 0;
+}
 .op-selected {
     visibility: hidden;
 }

@@ -1,0 +1,252 @@
+<div id="objectives" class="section-profile">
+    <div class="advanced row">
+        <div class="topleft duk-icon"><img onclick="removeSection('objectives')" src="/gui/img/x.png"></div>
+        <div class="bottomright duk-icon"><img onclick="toggleSidebar('objectives-sidebar')" src="/gui/img/expand.png"></div>
+        <div id="objectives-sidebar"  class="column section-border" style="flex:25%">
+        <img src="/gui/img/facts.png">
+        <h4>Objectives</h4>
+        <br>
+        <div class="toggle">
+            <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleObjectiveView()">
+            <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
+            </label>
+            </div>
+        <br>
+        <p class="section-description">
+          Objectives are groups of goals that an adversary will accomplish.
+        </p>
+        <br>
+        <div id="viewObjective">
+            <select id="objective-list" style="margin-top:-15px" onchange="loadObjective();">
+                <option value="" disabled selected>Select an existing objective</option>
+                {% for o in objectives %}
+                    <option value="{{ o.id }}">{{ o.name }}</option>
+                {% endfor %}}
+            </select>
+        </div>
+        <div id="addObjective"></div>
+        <button id="objectiveBtn" type="button" class="button-success atomic-button"
+              onclick="viewAssignments()">View Adversary Assignments
+        </button>
+        <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
+              onclick="saveObjective()">Save
+        </button>
+        </div>
+        <div class="column pane-header-editable" style="flex:75%;text-align:left">
+            <input id="objective-name" type="text" name="objective-name" placeholder="enter an objective name" />
+            <input id="objective-description" type="text" name="objective-description" placeholder="enter a objective description" />
+            <hr/>
+            <table id="goalTbl" class="obfuscation-table fillable-table" border=1 frame=void rules=rows>
+                <thead>
+                    <tr>
+                        <td><b>target</b></td>
+                        <td><b>operator</b></td>
+                        <td><b>value</b></td>
+                        <td><b>count</b></td>
+                        <td></td>
+                    </tr>
+                </thead>
+            </table>
+            <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow()">
+                &#10010;&nbsp;add row
+            </p>
+        </div>
+    </div>
+</div>
+
+<div id="objective-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('objective-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Goals</span>
+                        <h3 id="goals-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="objective-goals"></ul>
+                        <p style="color:white;text-align: right;" onclick="addGoalBlock()">&#10010;&nbsp;add goal</p>
+                        <p style="font-size:12px;text-align:right">* Goals run in top-down order, in the same way as iptables</p>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="assignments-modal" class="modal">
+    <form class="modal-content" style="width:50%;">
+        <div class="container modal-box">
+            <div class="row ability-viewer">
+                <span onclick="document.getElementById('assignments-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                <div class="column" style="flex:100%">
+                    <center>
+                        <span>Adversary-Objective Assignments</span>
+                        <h3 id="assignment-name" style="margin-top:2px;text-align:center"></h3>
+                        <ul id="objective-assignments"></ul>
+                    </center>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<li class="row-simple assignment-template" style="display: none;">
+    <div class="column">
+        <table frame=void rules=rows style="border-spacing:20px;width:100%">
+            <tr>
+                <td style="width:20%"><b>adversary:</b></td>
+                <td class="assignmentAdversary"></td>
+            </tr>
+            <tr>
+                <td style="width:20%"><b>objective:</b></td>
+                <td class="assignmentObjective"></td>
+            </tr>
+        </table>
+    </div>
+</li>
+
+<script>
+    $(document).ready(function () {
+        stream('New objectives will be created to automate adversary actions to achieve goals.')
+    });
+    let refresher = setInterval(refresh, 15000);
+    let adversariesinfo = setInterval(refresh, 15000);
+    $('.section-profile').bind('destroyed', function() {
+        console.log('objectives refresh off');
+        clearInterval(refresher);
+    });
+
+    function refresh(){
+        function objectiveCallback(data){
+            data.forEach(function(o) {
+                let found = false;
+                $("#objective-list > option").each(function() {
+                    if($(this).val() === o.id) {
+                        found = true;
+                    }
+                });
+                if(!found){
+                    $('#objective-list').append('<option value="'+o.id+'">'+o.name+'</option>');
+                }
+            });
+        }
+        restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
+    }
+
+    function toggleObjectiveView() {
+        $('#viewObjective').toggle();
+        $('#addObjective').toggle();
+        $('#objectiveBtn').toggle();
+        $('#objective-list').val('');
+        clearGoalCanvas();
+    }
+
+    function clearGoalCanvas(){
+        $('#goalTbl').find("tr:gt(0)").remove();
+        $('#objective-goals').empty();
+        $('#objective-name').data('id', null);
+        $('#objective-name').val('');
+        $('#objective-description').val('');
+    }
+
+    function loadObjective() {
+        function loadObjectiveCallback(data) {
+            clearGoalCanvas();
+            let objective = $('#objective-name');
+            data[0].goals.forEach(g => {
+                addGoalRow(g.target, g.operator, g.value, g.count);
+            });
+            objective.data('id', data[0].id);
+            objective.val(data[0].name);
+            $('#objective-description').val(data[0].description);
+        }
+        stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
+        restRequest('POST', {'index':'objectives', 'id': $('#objective-list').val()}, loadObjectiveCallback);
+    }
+
+    function addGoalRow(target, operator, value, count) {
+        let resTarget = ((target) ? `<input type="text" placeholder="Enter target" name="target" value="${target}" required>` : '<input type="text" placeholder="Enter target" name="target" required>');
+        let resOperator = ((operator) ? `<input type="text" placeholder="Enter operator" value="${operator}" required>` : '<input type="text" placeholder="Enter operator" required>');
+        let resValue = ((value) ? `<input type="text" placeholder="Enter value" value="${value}" required>` : '<input type="text" placeholder="Enter value" required>');
+        let resCount = ((operator) ? `<input type="number" placeholder="Enter count" value="${count}" required>` : '<input type="number" placeholder="Enter count" required>');
+        $('#goalTbl tr:last').after(
+            '<tr>' +
+                `<td>${resTarget}</td>` +
+                `<td>${resOperator}</td>` +
+                `<td>${resValue}</td>` +
+                `<td>${resCount}</td>` +
+                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+            '</tr>'
+        )
+    }
+
+    function saveObjective(){
+        function saveObjectiveCallback(data) {
+            stream('New objective saved!');
+        }
+        let objective = $('#objective-name');
+        let name = objective.val();
+        let id = objective.data('id');
+        let description = $('#objective-description');
+        if(!name){ warn('Please enter a name!'); return; }
+        if(!id) {
+            id = uuidv4();
+            objective.data('id', id);
+        }
+        let data = {};
+        data['index'] = 'objectives';
+        data['name'] = name;
+        data['description'] = description.val();
+        data['goals'] = [];
+
+        $("#goalTbl tr").not(":first").each(function (index, value) {
+            let rowdata = {
+                'target': this.cells[0].children[0].value,
+                'operator': this.cells[1].children[0].value,
+                'value': this.cells[2].children[0].value,
+                'count': this.cells[3].children[0].value
+            }
+            $.each(rowdata, function(key, val) {
+                console.log(`${key} = ${val}`)
+                if(!val) { warn(`Goal ${index+1} is missing ${key}`); return; }
+            })
+            data['goals'].push(rowdata);
+        });
+        if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
+
+        restRequest('PUT', data, saveObjectiveCallback);
+    }
+
+    function viewAssignments(){
+        populateAssignments();
+        document.getElementById("assignments-modal").style.display = "block";
+        let objectiveName = $('#objective-name').val();
+        $('#assignment-name').text(objectiveName);
+    }
+
+    function populateAssignments() {
+        $("#objective-assignments").empty();
+        function populateAssignmentsCallback(data) {
+            if(data.length == 0) {
+                $('#objective-assignments').append("<li>No assignments</li>");
+            }
+            data.forEach(adversary => {
+                let template = $(".assignment-template").clone();
+                template.removeClass("assignment-template");
+                template.data("adversary_id", adversary.adversary_id);
+                template.find(".assignmentAdversary").text(adversary.name);
+                template.find(".assignmentObjective").text(adversary.objective.id + " - " + adversary.objective.name);
+                template.show();
+                $('#objective-assignments').append(template);
+            });
+        }
+
+        let activeId = $("#objective-list").val()
+        if(activeId)
+            restRequest('POST', {'index':'adversaries', 'objective': activeId}, populateAssignmentsCallback);
+        else
+            restRequest('POST', {'index':'adversaries'}, populateAssignmentsCallback);
+    }
+
+    //# objectiveURL=objectives.js
+</script>

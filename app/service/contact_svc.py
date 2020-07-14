@@ -75,8 +75,6 @@ class ContactService(ContactServiceInterface, BaseService):
             link = await self.get_service('app_svc').find_link(result.id)
             if link:
                 link.pid = int(result.pid)
-                link.finish = self.get_service('data_svc').get_current_timestamp()
-                link.status = int(result.status)
                 if result.output:
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link.ability)
@@ -91,6 +89,8 @@ class ContactService(ContactServiceInterface, BaseService):
                         loop.create_task(link.parse(operation, result.output))
                     else:
                         loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link, result.output))
+                link.finish = self.get_service('data_svc').get_current_timestamp()
+                link.status = int(result.status)
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
