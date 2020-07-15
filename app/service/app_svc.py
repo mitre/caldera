@@ -62,8 +62,16 @@ class AppService(AppServiceInterface, BaseService):
         return self._check_links_for_match(unique, [op.chain for op in operations] + [a.links for a in agents])
 
     async def find_op_with_link(self, link_id):
+        """
+        Retrieves the operation that a link_id belongs to. Will search currently running
+        operations first.
+        """
         operations = await self.get_service('data_svc').locate('operations', match=dict(state='running'))
-        return next((o for o in operations if o.has_link(link_id)), None)
+        op = next((o for o in operations if o.has_link(link_id)), None)
+        if not op:
+            operations = await self.get_service('data_svc').locate('operations', match=dict())
+            op = next((o for o in operations if o.has_link(link_id)), None)
+        return op
 
     async def run_scheduler(self):
         while True:
