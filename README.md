@@ -51,13 +51,14 @@ git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x
 
 Next, install the PIP requirements:
 ```Bash
-pip install -r requirements.txt
+sudo apt install -y python-pip3
+pip3 install -r requirements.txt
 ```
 > Want to super-power your CALDERA server installation? Make sure GoLang (1.13+) is installed.
 
 Finally, start the server. 
 ```Bash
-python server.py --insecure
+python3 server.py --insecure
 ```
 
 Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
