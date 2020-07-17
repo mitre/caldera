@@ -58,7 +58,7 @@ class Link(BaseObject):
     schema = LinkSchema()
     display_schema = LinkSchema(exclude=['jitter'])
     load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
-                                      'host', 'output'])
+                                      'output'])
 
     @property
     def unique(self):
