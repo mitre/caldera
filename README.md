@@ -61,6 +61,8 @@ Finally, start the server.
 python server.py --insecure
 ```
 
+> Remember, you need to use Python 3, so your command may actually be python3 server.py --insecure
+
 Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
 
 ## Video tutorial
