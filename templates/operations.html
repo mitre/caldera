@@ -505,8 +505,10 @@
     }
 
     function potentialLinksCallback(data){
+        $('#potential-agent-filter option:selected').data(data);
         tacticFilter = $('#potential-link-tactic-filter option:selected').attr('value')
         techniqueFilter = $('#potential-link-technique-filter option:selected').attr('value')
+        $('#potential-links').empty()
         for(let i=0; i<data.links.length; i++){
             let link = data.links[i];
             let template = $("#potential-link-template").clone();
@@ -544,11 +546,11 @@
     function updateTacticFilter() {
         $('#potential-link-technique-filter').children('option:not(:first)').remove();
         $('#potential-link-technique-filter').append($("<option></option>").text("-- any --"));/**/
-        fetchPotentialLinks();
+        potentialLinksCallback($('#potential-agent-filter option:selected').data());
     }
 
     function updateTechniqueFilter() {
-        fetchPotentialLinks();
+        potentialLinksCallback($('#potential-agent-filter option:selected').data());
     }
 
     function closePotentialLinksModal() {
