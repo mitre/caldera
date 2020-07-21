@@ -2,22 +2,16 @@ version: '3'
 
 services:
   caldera:
-    image: python:3
-
-    expose:
-    - "8888"
-    - "7010"
-    - "7011"
-    - "7012"
-
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args: 
+        WIN_BUILD: "false" #WIN_BUILD is used to enable windows build in sandcat plugin
+    image: caldera:latest
     ports:
       - "8888:8888"
       - "7010:7010"
-      - "7011:7011"
+      - "7011:7011/udp"
       - "7012:7012"
-    working_dir: /usr/src/app
-
     volumes:
       - ./:/usr/src/app
-
-    command: /bin/bash -c "pip install --no-cache-dir -r requirements.txt && python server.py --fresh --insecure"
