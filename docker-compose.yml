@@ -16,3 +16,4 @@ services:
       - "7012:7012"
     volumes:
       - ./:/usr/src/app
+    command: --fresh --insecure
