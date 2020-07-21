@@ -184,7 +184,7 @@
 </div>
 
 <div id="potential-modal" class="modal">
-    <form class="modal-content" style="width:100%;">
+    <div class="modal-content" style="width:100%;">
         <div class="container section-profile row ability-viewer modal-box">
             <div class="column control-width" style="flex:100%;">
                 <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
@@ -205,7 +205,7 @@
                 <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
             </div>
         </div>
-    </form>
+    </div>
 </div>
 
 <div id="loop-modal" class="modal section-profile">
@@ -510,7 +510,7 @@
         for(let i=0; i<data.links.length; i++){
             let link = data.links[i];
             let template = $("#potential-link-template").clone();
-            let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+            let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
             if(!(tacticFilter === '-- any --' || typeof tacticFilter === 'undefined') && !(tacticFilter === ("tactic-" + link.ability.tactic)))
                 continue;
             if(!(techniqueFilter === '-- any --' || typeof techniqueFilter === 'undefined') && !(techniqueFilter === ("technique-"+link.ability.technique_id)))
@@ -561,12 +561,12 @@
     function addLink(l) {
         let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
         let link = linkDiv.data('link');
-        let uniqueLinkId = 'potential-link-template-'+link.executor+'-'+link.ability.id;
+        let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
         link.command = btoa(linkDiv.find('#potential-command').text());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
         link["index"] = "link";
-        restRequest('PUT', link, doNothing, '/api/rest');
+        restRequest('PUT', link, refresh, '/api/rest');
     }
 
     function updatePotentialLinkCount(){
