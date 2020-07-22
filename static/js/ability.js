@@ -12,9 +12,10 @@ function addPlatforms(abilities) {
             }
         }
         if(!exists) {
-            a['platform'] = [a.platform];
-            a['executor'] = [a.executor];
-            ab.push(a);
+            a_copy = Object.assign({}, a)
+            a_copy['platform'] = [a.platform];
+            a_copy['executor'] = [a.executor];
+            ab.push(a_copy);
         }
     });
     return ab;
