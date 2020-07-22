@@ -327,6 +327,7 @@
     function saveAdversaryCallback(data) {
         stream('Adversary saved!');
         appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'view-'+data[0].adversary_id);
+        $('#profile-existing-name').val(data[0].adversary_id);
         appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
     }
 
