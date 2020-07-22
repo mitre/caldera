@@ -163,6 +163,10 @@
                             <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
                         {% endfor %}}
                     </select>
+                    <br>
+                    <select id="chosen-platform" onchange="filterCommands()" style="width:33%;">
+                        <option selected value="">All platforms</option>
+                    </select>
                     <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
                     <ul id="variations"></ul>
                 </div>
@@ -399,10 +403,31 @@
                     variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description, v.command));
                 });
             });
+            populatePlatforms(data);
+        }
+        function populatePlatforms(data){
+            $("#chosen-platform").empty();
+            $("#chosen-platform").append("<option selected value=''>All platforms</option>");
+            data.forEach(function(ability) {
+                if ($("#chosen-platform option[value='" + ability.platform + "']").length == 0) {
+                    $("#chosen-platform").append('<option value="' + ability.platform + '">' + ability.platform + '</option>')
+                }
+            });
         }
         let variations = $('#variations');
         variations.empty();
         restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
+    }
+
+    function filterCommands(){
+        let platform = $("#chosen-platform").val();
+        $(".variation-template").each(function() {
+            if ($(this).data('platform') == platform || platform == '') {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
     }
 
     function buildAbilityTemplate(platform, executor, description, command){
@@ -410,6 +435,7 @@
         template.find('#description').text(description + ' ('+executor+')');
         template.find('#command').text(atob(command));
         template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
+        template.data('platform', platform);
         template.show();
         return template;
     }
