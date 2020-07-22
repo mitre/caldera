@@ -421,7 +421,7 @@
 
     function filterCommands(){
         let platform = $("#chosen-platform").val();
-        $(".variation-template").each(function() {
+        $("#command-variation").each(function() {
             if ($(this).data('platform') == platform || platform == '') {
                 $(this).show();
             } else {
@@ -432,6 +432,7 @@
 
     function buildAbilityTemplate(platform, executor, description, command){
         let template = $('#variation-template').clone();
+        template.attr('id', 'command-variation');
         template.find('#description').text(description + ' ('+executor+')');
         template.find('#command').text(atob(command));
         template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
