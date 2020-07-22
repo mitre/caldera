@@ -1,0 +1,23 @@
+# common
+**/README.md
+**/CONTRIBUTING.md
+docker-compose.yml
+Dockerfile
+
+# git
+**/.git
+**/.gitattributes
+**/.gitignore
+**/.gitmodules
+**/.github
+
+# dev
+tests/
+**/.codecov.yml
+**/.coveragerc
+**/.flake8
+**/.pre-commit-config.yaml
+**/.travis.yml
+**/release.sh
+**/requirements-dev.txt
+**/tox.ini
