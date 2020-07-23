@@ -451,8 +451,9 @@ class RestService(RestServiceInterface, BaseService):
         for platform, executors in ability['platforms'].items():
             exec_timeouts[platform] = {}
             for executor, d in executors.items():
-                exec_timeouts[platform][executor] = d['timeout']
-                del ability['platforms'][platform][executor]['timeout']
+                exec_timeouts[platform][executor] = d.get('timeout', 60)
+                if 'timeout' in ability['platforms'][platform][executor]:
+                    del ability['platforms'][platform][executor]['timeout']
         # Combine executors under common CSV keys if they are the same
         platforms = {}
         for platform, executors in ability['platforms'].items():
