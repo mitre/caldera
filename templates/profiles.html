@@ -59,6 +59,7 @@
                     <option disabled selected>0 abilities</option>
                 </select>
                 <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
+                <button id="reset-ability-modal-button" type="button" class="atomic-button" style="width:115px;height:30px;padding-top:8px;color:black;background-color:firebrick" onclick="clearPhaseModal()">Reset Fields</button>
                 <br><br>
                 <div id="ability-manager" class="ability-attack row-simple">
                     <div class="column" style="flex:60%">
@@ -687,6 +688,23 @@
         document.getElementById("phase-modal").style.display="none";
     }
 
+    function clearPhaseModal() {
+        $('#ability-tactic-filter option:selected').removeAttr('selected');
+        $('#ability-tactic-filter option:first').remove();
+        $('#ability-tactic-filter').prepend('<option disabled selected>Choose a tactic</option>');
+        $('#ability-technique-filter').empty();
+        $('#ability-technique-filter').append('<option disabled selected>Choose a technique</option>');
+        $('#ability-ability-filter').empty();
+        $('#ability-ability-filter').append('<option disabled selected>0 abilities</option>');
+        $('#ability-identifier').val('');
+        $('#ability-name').val('');
+        $('#ability-description').val('');
+        $('#ability-tactic-name').val('');
+        $('#ability-tech-id').val('');
+        $('#ability-tech-name').val('');
+        $('#ttp-tests').empty();
+    }
+
     function showProfileModal(phase) {
         $('#adv-profile-modal').data("phase", phase);
         $('body').keyup(function(e){
@@ -775,6 +793,8 @@
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
         let abilityBox = buildAbility(ability);
         g_grid.add(abilityBox[0]);
+        clearPhaseModal();
+        hidePhaseModal();
     }
 
     function deleteProfile(){
