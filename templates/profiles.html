@@ -241,9 +241,9 @@
         <tr>
             <td style="width:10%"><b>platform:</b></td>
             <td>
-              <select id="ability-platform">
+              <select id="ability-platform" onchange="filterExecutors(this)">
                 <option value="" disabled selected>Select a platform</option>
-                    {% for platform in platforms %}
+                    {% for platform, executors in platforms.items() %}
                         <option value="{{ platform }}">{{ platform }}</option>
                     {% endfor %}
               </select>
@@ -254,9 +254,6 @@
             <td>
               <select id="ability-executor">
                 <option value="" disabled selected>Select an executor</option>
-                    {% for executor in executors %}
-                        <option value="{{ executor }}">{{ executor }}</option>
-                    {% endfor %}
               </select>
             </td>
         </tr>
@@ -290,6 +287,7 @@
 <script src="/gui/js/muuri.min.js"></script>
 <script>
     var exploits = {{exploits | tojson}};
+    var platforms = {{platforms | tojson}};
 
     $(document).ready(function () {
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
@@ -646,6 +644,17 @@
                     keepOrder: true });
                 payloads.multiSelect('select', ability.payloads);
             }
+        });
+    }
+
+    function filterExecutors(elem) {
+        let ttpTable = $(elem).parent().parent().parent();
+        let platform = $(elem).val();
+        let executorSelect = $(ttpTable).find('#ability-executor');
+        $(executorSelect).empty();
+        $(executorSelect).append('<option value="" disabled selected>Select an executor</option>');
+        $.each(platforms[platform], function(i, executor) {
+            $(executorSelect).append('<option value="' + executor + '">' + executor + '</option>-->');
         });
     }
 

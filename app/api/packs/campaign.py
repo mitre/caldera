@@ -37,8 +37,14 @@ class CampaignPack(BaseWorld):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=access)
         objs = await self.data_svc.locate('objectives', match=access)
-        platforms = set([a.platform for a in abilities])
-        executors = set([a.executor for a in abilities])
+        platforms = dict()
+        for a in abilities:
+            if a.platform in platforms:
+                platforms[a.platform].add(a.executor)
+            else:
+                platforms[a.platform] = set([a.executor])
+        for p in platforms:
+            platforms[p] = list(platforms[p])
         tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
         payloads = await self.rest_svc.list_payloads()
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
@@ -46,7 +52,7 @@ class CampaignPack(BaseWorld):
         exploits = sorted([a.display for a in abilities], key=operator.itemgetter('technique_id', 'name'))
         objectives = sorted([a.display for a in objs], key=operator.itemgetter('id', 'name'))
         return dict(adversaries=adversaries, exploits=exploits, payloads=payloads,
-                    tactics=tactics, platforms=platforms, executors=executors, objectives=objectives)
+                    tactics=tactics, platforms=platforms, objectives=objectives)
 
     @check_authorization
     @template('operations.html')
