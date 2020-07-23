@@ -94,19 +94,19 @@
                         <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
-                                    <img src="/gui/img/recycle.png">
+                                    <img onclick="freshId()" style="cursor:pointer" src="/gui/img/recycle.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
                                 </div>
                             </div>
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
-                                    <img src="/gui/img/executor.png">
+                                    <img onclick="addExecutorBlock()" style="cursor:pointer" src="/gui/img/executor.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
                                 </div>
                             </div>
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
-                                    <img src="/gui/img/payload.png">
+                                    <label for="uploadPayloadFile"><img style="cursor:pointer" src="/gui/img/payload.png"></label>
                                     <form id="uploadPayloadForm">
                                        <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
                                        <input type="file" id="uploadPayloadFile" style="display: none">
@@ -115,7 +115,7 @@
                             </div>
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
-                                    <img src="/gui/img/additional-fields.png">
+                                    <img onclick="addAdditionalInfo()" style="cursor:pointer" src="/gui/img/additional-fields.png">
                                     <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
                                 </div>
                             </div>
