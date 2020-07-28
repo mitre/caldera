@@ -142,12 +142,16 @@ class RestService(RestServiceInterface, BaseService):
 
     async def create_schedule(self, access, data):
         operation = await self._build_operation_object(access, data['operation'])
-        scheduled = await self.get_service('data_svc').store(
-            Schedule(name=operation.name,
-                     schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
-                     task=operation)
-        )
-        self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
+        schedules = await self.get_service('data_svc').locate('schedules', match=dict(name=operation.name))
+        if schedules:
+            self.log.debug('A scheduled operation with the name "%s" already exists, skipping' % operation.name)
+        else:
+            scheduled = await self.get_service('data_svc').store(
+                Schedule(name=operation.name,
+                         schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
+                         task=operation)
+            )
+            self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
 
     async def list_payloads(self):
         payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
