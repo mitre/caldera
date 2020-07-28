@@ -421,7 +421,7 @@
 
     function filterCommands(){
         let platform = $("#chosen-platform").val();
-        $("#command-variation").each(function() {
+        $("#variations").children().each(function() {
             if ($(this).data('platform') == platform || platform == '') {
                 $(this).show();
             } else {
