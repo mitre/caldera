@@ -64,7 +64,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :return: True if planner stopping conditions are met
         :rtype: bool
         """
-        await self._bucket_execute(operation, planner, link_ids, condition_stop)
+        await self._bucket_execute(operation, planner, link_ids)
         return await self._stop_bucket_exhaustion(planner, operation, condition_stop)
 
     async def default_next_bucket(self, current_bucket, state_machine):
