@@ -37,16 +37,20 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type condition_stop: bool, optional
         """
         l_ids = []
-        for l in await self.get_links(operation, [bucket], agent):
-            l_id = await operation.apply(l)
+        while True:
+            links =  await self.get_links(operation, [bucket], agent)
+            if len(links) == 0:
+                break
+            for l in links:
+                l_id = await operation.apply(l)
+                if batch:
+                    l_ids.append(l_id)
+                else:
+                    if await self.execute_links(planner, operation, [l_id], condition_stop):
+                        return
             if batch:
-                l_ids.append(l_id)
-            else:
-                if await self.execute_links(planner, operation, [l_id], condition_stop):
+                if await self.execute_links(planner, operation, l_ids, condition_stop):
                     return
-        if batch:
-            if await self.execute_links(planner, operation, l_ids, condition_stop):
-                return
 
     async def execute_links(self, planner, operation, link_ids, condition_stop):
         """Apply links to operation and wait for completion
