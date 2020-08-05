@@ -38,7 +38,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         l_ids = []
         while True:
-            links =  await self.get_links(operation, [bucket], agent)
+            links = await self.get_links(operation, [bucket], agent)
             if len(links) == 0:
                 break
             for l in links:
