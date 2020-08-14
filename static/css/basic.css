@@ -522,30 +522,30 @@ table.dataTable input[type=text] {
     color: white;
 }
 .legend .failure {
-    background-color: red;
+    background-color: #CC3311; //red 
 }
 .legend .success {
-    background-color: green;
+    background-color: #44AA99; //teal
 }
 .legend .timeout {
     background-color: cornflowerblue;
 }
 .legend .collected {
-    background-color: darkgoldenrod;
+    background-color: #999933; //olive
 }
 .legend .untrusted {
     background-color: white;
     color: black;
 }
 .legend .visibility {
-    background-color: #F012BE;
+    background-color: #EE3377; //magenta
     color: white;
 }
 .legend .discarded {
     background-color: var(--primary-background);
 }
 .legend .queued {
-    background-color: grey;
+    background-color: #555555; //dark grey
 }
 #operationProgress {
   width: 75%;

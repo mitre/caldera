@@ -69,19 +69,19 @@ a:hover {
   content: "";
 }
 .timeline .queued:after {
-  box-shadow: 0 0 0 0.2em grey;
+  box-shadow: 0 0 0 0.2em #555555; // darkgrey
 }
 .timeline .failure:after {
-  box-shadow: 0 0 0 0.2em red;
+  box-shadow: 0 0 0 0.2em #CC3311; // red
 }
 .timeline .success:after {
-  box-shadow: 0 0 0 0.2em rgb(28, 202, 0);
+  box-shadow: 0 0 0 0.2em #44AA99;
 }
 .timeline .timeout:after {
   box-shadow: 0 0 0 0.2em cornflowerblue;
 }
 .timeline .collected:after {
-  box-shadow: 0 0 0 0.2em darkgoldenrod;
+  box-shadow: 0 0 0 0.2em #999933; // olive
 }
 .timeline .untrusted:after {
   box-shadow: 0 0 0 0.2em white;
