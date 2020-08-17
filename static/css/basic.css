@@ -531,7 +531,7 @@ table.dataTable input[type=text] {
     background-color: cornflowerblue;
 }
 .legend .collected {
-    background-color: #999933; //olive
+    background-color: #FFB000; //orange
 }
 .legend .untrusted {
     background-color: white;
