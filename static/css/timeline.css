@@ -81,7 +81,7 @@ a:hover {
   box-shadow: 0 0 0 0.2em cornflowerblue;
 }
 .timeline .collected:after {
-  box-shadow: 0 0 0 0.2em #999933; // olive
+  box-shadow: 0 0 0 0.2em #FFB000; //orange
 }
 .timeline .untrusted:after {
   box-shadow: 0 0 0 0.2em white;
