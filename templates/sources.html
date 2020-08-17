@@ -227,7 +227,6 @@
             let value = $(this.cells[1]).text();
             data['facts'].push({'trait':trait,'value':value});
         });
-        if(data['facts'].length === 0) { warn('Please enter some facts!'); return; }
 
         let invalidRules = 0;
         $('#source-rules li').each(function() {
@@ -246,6 +245,7 @@
             warn(invalidRules + ' invalid rules!');
             return;
         }
+        if(data['facts'].length === 0 && data['rules'].length === 0) { warn('Sources must have at least one rule or one fact specified'); return; }
         $('#source-relationships li').each(function() {
             let sourceTrait = $(this).find('#sourceTrait').val();
             let sourceValue = $(this).find('#sourceValue').val();
@@ -257,6 +257,7 @@
             }
             data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
         });
+        if(data['relationships'].length > 0 && data['facts'].length === 0) { warn('Relationships require at least one fact to be specified.'); return; }
         restRequest('PUT', data, saveSourceCallback);
     }
 
