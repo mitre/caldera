@@ -105,6 +105,20 @@ $(document).ready(function () {
             observer.observe(this, {childList: true});
         }
     });
+    $(document).keyup(function(e){
+        if(e.key == "Escape"){
+            $('.modal').hide();
+            document.getElementById("mySidenav").style.width = "0px";
+        }
+    });
+    $('body').click(function(event) {
+        if(!$(event.target).closest('.modal-content').length && $(event.target).is('.modal')) {
+            $('.modal').hide();
+        }
+        if(!$(event.target).closest('#mySidenav').length && !$(event.target).is('.navbar span')) {
+            document.getElementById("mySidenav").style.width = "0px";
+        }
+    });
 });
 
 function alphabetize_dropdown(obj) {
