@@ -52,7 +52,7 @@ git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x
 
 Next, install the PIP requirements:
 ```Bash
-sudo apt install -y python-pip3
+sudo apt install -y python3-pip
 pip3 install -r requirements.txt
 ```
 > Want to super-power your CALDERA server installation? Make sure GoLang (1.13+) is installed.
