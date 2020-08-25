@@ -474,6 +474,24 @@
                 }
             }
         }
+        function updateGroups(data) {
+            // Update the group dropdown list with new agent groups
+            var options = $('#queueGroup option');
+            var groups = $.map(options, function(option) {
+                if (option.value) {
+                    return option.value;
+                }
+            });
+            $.each(data, function(index, agent) {
+                if ($.inArray(agent.group, groups) === -1) {
+                    var newOption = $('<option></option>')
+                        .attr('id', 'qgroup-' + agent.group)
+                        .attr('value', agent.group)
+                        .text(agent.group);
+                    $('#queueGroup').append(newOption);
+                }
+            });
+        }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
             let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
@@ -483,6 +501,7 @@
             stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
             restRequest('POST', postData, operationCallback, '/api/rest');
         }
+        restRequest('POST', {'index':'agents'}, updateGroups);
     }
 
     function applyOperationAgents(operation) {
