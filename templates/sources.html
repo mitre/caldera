@@ -238,7 +238,7 @@
             data['rules'].push({'trait': trait, 'match': match, 'action': action});
         });
         if(invalidRules > 0) {
-            warn(invalidRules + ' invalid rules!');
+            warn(invalidRules + ' invalid rules! Action must be either ALLOW or DENY.');
             return;
         }
         if(data['facts'].length === 0 && data['rules'].length === 0) { warn('Sources must have at least one rule or one fact specified'); return; }
