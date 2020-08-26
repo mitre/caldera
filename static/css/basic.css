@@ -299,6 +299,22 @@
 #pack-phases td {
     padding: 5px 8px;
 }
+#factTbl {
+    table-layout: fixed;
+}
+#factTbl th:nth-child(1) {
+    width: 15%;
+}
+#factTbl th:nth-child(2) {
+    width: 80%;
+}
+#factTbl th:nth-child(3) {
+    width: 5%;
+}
+#factTbl td p {
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
 #source-rules li {
     list-style-type:none;
 }
