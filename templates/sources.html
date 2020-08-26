@@ -199,7 +199,7 @@
             '<tr>' +
                 '<td><p contenteditable="true">' + trait + '</p></td>' +
                 '<td><p contenteditable="true">' + value + '</p></td>' +
-                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+                '<td><p onclick="$(this).closest(\'tr\').remove()">&#x274C;</p></td>'+
             '</tr>'
         )
     }
