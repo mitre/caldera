@@ -49,8 +49,8 @@ function populateAbilities (parentId, abilities) {
     let techniqueAbilities = [];
     let attack_id = $(parent).find('#ability-technique-filter').find(':selected').data('technique');
     abilities.forEach(function (ability) {
-        if (attack_id === ability.technique_id) {
-            techniqueAbilities.push(ability)
+        if (ability.technique_id === attack_id) {
+            techniqueAbilities.push(ability);
         }
     });
 
