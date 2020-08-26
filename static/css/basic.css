@@ -299,9 +299,25 @@
 #pack-phases td {
     padding: 5px 8px;
 }
+.source-modal h3 {
+    text-align: center;
+    margin: 2px 0 20px;
+}
+.source-modal ul {
+    padding: 0 5%;
+}
+.source-modal .column > p {
+    width: 93%;
+    color: white;
+    text-align: right;
+}
+.source-modal .column > p.source-note {
+    font-size: 12px;
+}
 .source-row {
-    list-style-type: none;
+    width: 100%;
     margin: 2em auto;
+    list-style-type: none;
 }
 .source-row table {
     width: 100%;
@@ -315,47 +331,26 @@
     width: 100%;
     padding: 0 15px;
 }
-#source-rules li td:nth-child(1) {
+#source-rules td:nth-child(1) {
     width: 15%;
 }
-#source-rules li td:nth-child(2) {
+#source-rules td:nth-child(2) {
     width: 85%;
 }
-#source-rules li td:nth-child(3) {
+#source-rules td:nth-child(3) {
     width: 5%;
 }
-#source-relationships li td:nth-child(1) {
+#source-relationships td:nth-child(1) {
     width: 10%;
 }
-#source-relationships li td:nth-child(2) {
+#source-relationships td:nth-child(2) {
     width: 25%;
 }
-#source-relationships li td:nth-child(3) {
+#source-relationships td:nth-child(3) {
     width: 60%;
 }
-#source-relationships li td:nth-child(4) {
+#source-relationships td:nth-child(4) {
     width: 5%;
-}
-#rule-modal h3 {
-    text-align: center;
-    margin: 2px 0 20px;
-}
-#rule-modal .column > p {
-    width: 95%;
-    color: white;
-    text-align: right;
-}
-#rule-modal .column > p.source-note {
-    font-size: 12px;
-}
-#relationship-modal h3 {
-    text-align: center;
-    margin: 2px 0 20px;
-}
-#relationship-modal .column > p {
-    width: 95%;
-    color: white;
-    text-align: right;
 }
 .topright {
     position: absolute;
