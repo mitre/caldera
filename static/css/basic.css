@@ -299,8 +299,63 @@
 #pack-phases td {
     padding: 5px 8px;
 }
-#source-rules li {
-    list-style-type:none;
+.source-row {
+    list-style-type: none;
+    margin: 2em auto;
+}
+.source-row table {
+    width: 100%;
+    table-layout: fixed;
+}
+.source-row p {
+    font-size: 11px;
+    text-align: center;
+}
+.source-row input {
+    width: 100%;
+    padding: 0 15px;
+}
+#source-rules li td:nth-child(1) {
+    width: 15%;
+}
+#source-rules li td:nth-child(2) {
+    width: 85%;
+}
+#source-rules li td:nth-child(3) {
+    width: 5%;
+}
+#source-relationships li td:nth-child(1) {
+    width: 10%;
+}
+#source-relationships li td:nth-child(2) {
+    width: 25%;
+}
+#source-relationships li td:nth-child(3) {
+    width: 60%;
+}
+#source-relationships li td:nth-child(4) {
+    width: 5%;
+}
+#rule-modal h3 {
+    text-align: center;
+    margin: 2px 0 20px;
+}
+#rule-modal .column > p {
+    width: 95%;
+    color: white;
+    text-align: right;
+}
+#rule-modal .column > p.source-note {
+    font-size: 12px;
+}
+#relationship-modal h3 {
+    text-align: center;
+    margin: 2px 0 20px;
+}
+#relationship-modal .column > p {
+    width: 95%;
+    color: white;
+    text-align: right;
 }
 .topright {
     position: absolute;
