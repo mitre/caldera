@@ -561,6 +561,9 @@ table.dataTable input[type=text] {
   line-height: 30px; /* To center it vertically */
   color: black;
 }
+.default-option {
+    color: gray;
+}
 .dotted {
     border: 1px solid white;
 }
