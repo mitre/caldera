@@ -305,7 +305,7 @@
         $('#addOperation').toggle();
 
         if ($('#togBtnOp').is(':checked')) {
-            stream('OK, provide at least a name. Click the headers below to reveal optional properties.');
+            stream('Operation name required. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
