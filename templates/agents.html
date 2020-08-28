@@ -25,7 +25,7 @@
           <h5>IMPLANT NAME</h5>
       </div>
       <div id="agent-implant-options" class="column sidebar-cutout" style="display: none">
-          <input id="globalImplantName" type="text" placeholder="Random filename"/>
+          <input id="globalImplantName" type="text" placeholder="Agent filename"/>
       </div>
       <div id="agent-bootstrap" class="column sidebar-cutout sidebar-header">
           <h5>BOOTSTRAP ABILITIES</h5>
@@ -207,15 +207,15 @@
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
         $("#agent-optional").click(function(){
-            stream('Timer changes will affect new incoming agents only');
+            stream('Timer changes will affect agents on next beacon.');
             $("#agent-options").slideToggle("slow");
         });
         $("#agent-implant").click(function(){
-            stream('Add a random filename for new agents when they are downloaded');
+            stream('Choose a filename for new agents, without an extension.');
             $("#agent-implant-options").slideToggle("slow");
         });
         $("#agent-bootstrap").click(function(){
-            stream('Add a new ability ID to be run on a new agent beacon');
+            stream('Add a new ability ID to be run on a new agent beacon.');
             $("#agent-bootstrap-options").slideToggle("slow");
         });
     });
