@@ -214,23 +214,23 @@
         }
         $("#agent-beacon").click(function(){
             stream('Set the minimum and maximum seconds the agent will take to beacon home. Timer changes will affect agents after their next beacon.');
-            $("#agent-beacon-options").slideToggle("slow");
+            $("#agent-beacon-options").slideToggle();
         });
         $("#agent-watchdog").click(function(){
             stream('Set the number of seconds to wait before killing the agent, once the server is unreachable. Set 0 for infinite. Timer changes will affect agents after their next beacon.');
-            $("#agent-watchdog-options").slideToggle("slow");
+            $("#agent-watchdog-options").slideToggle();
         });
         $("#agent-untrusted").click(function(){
             stream('Set the number of seconds the server will wait before marking a missing agent as untrusted. Timer changes will affect agents after their next beacon.');
-            $("#agent-untrusted-options").slideToggle("slow");
+            $("#agent-untrusted-options").slideToggle();
         });
         $("#agent-implant").click(function(){
             stream('Choose a filename for new agents, without an extension.');
-            $("#agent-implant-options").slideToggle("slow");
+            $("#agent-implant-options").slideToggle();
         });
         $("#agent-bootstrap").click(function(){
             stream('Comma-separated list of ability IDs to be run on a new agent beacon. UUIDs will be validated against current ability list.');
-            $("#agent-bootstrap-options").slideToggle("slow");
+            $("#agent-bootstrap-options").slideToggle();
         });
     });
     function refresh(){
