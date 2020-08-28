@@ -10,32 +10,28 @@
           least 1 agent in order to run an operation.
       </p>
       <button type="button" class="button-orange atomic-button" onclick="$('#delivery-modal').show();">Click here to deploy an agent</button>
-      <br><br>
-
-      <div id="agent-optional" class="column sidebar-cutout sidebar-header">
+      <div id="agent-optional" class="sidebar-header">
           <h5>GLOBAL TIMERS</h5>
       </div>
-      <div id="agent-options" class="column sidebar-cutout" style="display: none">
+      <div id="agent-options" class="sidebar-cutout" style="display: none">
           <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)"/>
           <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)"/>
           <input id="globalWatchdog" type="text" placeholder="Watchdog (seconds)"/>
           <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
       </div>
-      <div id="agent-implant" class="column sidebar-cutout sidebar-header">
+      <div id="agent-implant" class="sidebar-header">
           <h5>IMPLANT NAME</h5>
       </div>
-      <div id="agent-implant-options" class="column sidebar-cutout" style="display: none">
+      <div id="agent-implant-options" class="sidebar-cutout" style="display: none">
           <input id="globalImplantName" type="text" placeholder="Agent filename"/>
       </div>
-      <div id="agent-bootstrap" class="column sidebar-cutout sidebar-header">
+      <div id="agent-bootstrap" class="sidebar-header">
           <h5>BOOTSTRAP ABILITIES</h5>
       </div>
-      <div id="agent-bootstrap-options" class="column sidebar-cutout" style="display: none">
+      <div id="agent-bootstrap-options" class="sidebar-cutout" style="display: none">
           <input id="globalBootstrap" type="text" placeholder="Add a new bootstrap ability ID"/>
       </div>
-
-      <br>
-      <button id="addGroupBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
+      <button id="saveAgentBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
     <div class="column" style="flex:75%">
         <span style="text-align:left">You have <span id="agent-cnt">{{ agents|length}}</span></span> agents</h4>
