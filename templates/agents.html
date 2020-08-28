@@ -10,26 +10,36 @@
           least 1 agent in order to run an operation.
       </p>
       <button type="button" class="button-orange atomic-button" onclick="$('#delivery-modal').show();">Click here to deploy an agent</button>
-      <div id="agent-optional" class="sidebar-header">
-          <h5>GLOBAL TIMERS</h5>
+      <div id="agent-beacon" class="sidebar-header">
+          <h5>Beacon Timer</h5>
       </div>
-      <div id="agent-options" class="sidebar-cutout" style="display: none">
-          <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)"/>
-          <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)"/>
-          <input id="globalWatchdog" type="text" placeholder="Watchdog (seconds)"/>
-          <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)"/>
+      <div id="agent-beacon-options" class="sidebar-cutout" style="display: none">
+          <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)" value="{{ agent_config.sleep_min }}" />
+          <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)" value="{{ agent_config.sleep_max }}" />
+      </div>
+      <div id="agent-watchdog" class="sidebar-header">
+          <h5>Watchdog Timer</h5>
+      </div>
+      <div id="agent-watchdog-options" class="sidebar-cutout" style="display: none">
+          <input id="globalWatchdog" type="text" placeholder="Watchdog (seconds)" value="{{ agent_config.watchdog }}" />
+      </div>
+      <div id="agent-untrusted" class="sidebar-header">
+          <h5>Untrusted Timer</h5>
+      </div>
+      <div id="agent-untrusted-options" class="sidebar-cutout" style="display: none">
+          <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)" value="{{ agent_config.untrusted_timer }}" />
       </div>
       <div id="agent-implant" class="sidebar-header">
-          <h5>IMPLANT NAME</h5>
+          <h5>Implant Name</h5>
       </div>
       <div id="agent-implant-options" class="sidebar-cutout" style="display: none">
-          <input id="globalImplantName" type="text" placeholder="Agent filename"/>
+          <input id="globalImplantName" type="text" placeholder="Agent filename" value="{{ agent_config.implant_name }}" />
       </div>
       <div id="agent-bootstrap" class="sidebar-header">
-          <h5>BOOTSTRAP ABILITIES</h5>
+          <h5>Bootstrap Abilities</h5>
       </div>
       <div id="agent-bootstrap-options" class="sidebar-cutout" style="display: none">
-          <input id="globalBootstrap" type="text" placeholder="Add a new bootstrap ability ID"/>
+          <input id="globalBootstrap" type="text" placeholder="Bootstrap ability IDs" value="{{ agent_config.bootstrap_abilities | join(', ') }}"/>
       </div>
       <button id="saveAgentBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
@@ -202,16 +212,24 @@
         } else {
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
-        $("#agent-optional").click(function(){
-            stream('Timer changes will affect agents on next beacon.');
-            $("#agent-options").slideToggle("slow");
+        $("#agent-beacon").click(function(){
+            stream('Set the minimum and maximum seconds the agent will take to beacon home. Timer changes will affect agents after their next beacon.');
+            $("#agent-beacon-options").slideToggle("slow");
+        });
+        $("#agent-watchdog").click(function(){
+            stream('Set the number of seconds to wait before killing the agent, once the server is unreachable. Set 0 for infinite. Timer changes will affect agents after their next beacon.');
+            $("#agent-watchdog-options").slideToggle("slow");
+        });
+        $("#agent-untrusted").click(function(){
+            stream('Set the number of seconds the server will wait before marking a missing agent as untrusted. Timer changes will affect agents after their next beacon.');
+            $("#agent-untrusted-options").slideToggle("slow");
         });
         $("#agent-implant").click(function(){
             stream('Choose a filename for new agents, without an extension.');
             $("#agent-implant-options").slideToggle("slow");
         });
         $("#agent-bootstrap").click(function(){
-            stream('Add a new ability ID to be run on a new agent beacon.');
+            stream('Comma-separated list of ability IDs to be run on a new agent beacon. UUIDs will be validated against current ability list.');
             $("#agent-bootstrap-options").slideToggle("slow");
         });
     });
@@ -274,18 +292,18 @@
         restRequest('PUT', data, closeAgentModal);
     }
 
-    function saveGlobalAgent(){
+    function saveGlobalAgent() {
         let globalBootstrap = $('#globalBootstrap').val();
         let globalImplantName = $('#globalImplantName').val();
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
         let globalWatchdog = $('#globalWatchdog').val();
         let globalUntrusted = $('#globalUntrusted').val();
-        let d = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
+        let data = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
             "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
             "bootstrap_abilities":globalBootstrap};
         stream('Agent configuration has been updated!');
-        restRequest('PUT', d, doNothing);
+        restRequest('PUT', data, doNothing);
     }
 
     function killAgent(){
