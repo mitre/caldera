@@ -771,3 +771,23 @@ table.dataTable input[type=text] {
     height: 25px;
     border: 2px solid var(--navbar-color);
 }
+
+/* Adversaries/Profiles */
+
+.adversary-sidebar-option {
+    padding: 20px 0 0;
+}
+
+#profile-existing-name {
+    margin: 0 0 20px;
+}
+
+#adversary-add {
+    display: none;
+}
+
+#adversary-content {
+    flex: 75%;
+    visibility: hidden;
+    text-align: left;
+}
