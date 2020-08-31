@@ -768,7 +768,7 @@
     }
 
     function filterExecutors(elem) {
-        let ttpTable = $(elem).parent().parent().parent();
+        let ttpTable = $(elem).closest('table');
         let platform = $(elem).val();
         let executorSelect = $(ttpTable).find('#ability-executor');
         $(executorSelect).empty();
