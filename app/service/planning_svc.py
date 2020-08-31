@@ -124,6 +124,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if publish_transitions:
                 await self.publish_event(event='bucket',
                                          msg=f'Transitioned to "{planner.next_bucket}" bucket.',
+                                         operation_id=planner.operation.id,
+                                         operation_name=planner.operation.name,
                                          ts=str(datetime.datetime.now()))
             await getattr(planner, planner.next_bucket)()
             await self.update_stopping_condition_met(planner, planner.operation)
