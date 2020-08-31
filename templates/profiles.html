@@ -381,8 +381,9 @@
 
     function checkAbilityButtons() {
         // Enable / Disable Save and Add to Adversary buttons
-        let valid = validateAbility()
-        let uniqueAbility = ($('#tempPhase1').find('#' + $('#ability-identifier').val()).length === 0);
+        let valid = validateAbility();
+        let uniqueAbility = ($('#ability-identifier').val() === "" ||
+                             $('#tempPhase1').find('#' + $('#ability-identifier').val()).length === 0);
         validateFormState(valid, '#ability-save');
         validateFormState((valid && uniqueAbility), '#ability-add-to-adv');
     }
@@ -500,12 +501,10 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
-        $('#ability-save').text('WAIT...');
         restRequest('PUT', data, saveAbilityCallback);
     }
 
     function saveAbilityCallback(data) {
-        console.log(data);
         let options = $('#phase-modal').find('#ability-ability-filter');
         let ability = options.find(':selected').data('ability');
         if (!ability || (ability && ability.ability_id != data[0].ability_id)) {
@@ -524,7 +523,7 @@
             exploits[$to_replace] = data[0];
             loadAdversary();
         }
-        alert('Ability saved!');
+        stream('Ability saved!');
     }
 
     function appendToSelect(field, identifier, value, optionId) {
@@ -628,7 +627,7 @@
         }
         template.show();
         let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering</span>' +
-            '<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            '<span class="ability-add" onclick="showPhaseModal('+number+'); checkAbilityButtons()">&#10010; add ability</span>'
             +'<span class="ability-add" onclick="showProfileModal('+number+')" ' +
             'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span>' +
             '<span class="ability-add" onclick="showObjectiveModal()" ' +
@@ -918,6 +917,7 @@
     }
 
     function addAbilityToPhase() {
+        saveAbility();
         let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
         let abilityBox = buildAbility(ability);
         g_grid.add(abilityBox[0]);
