@@ -1,3 +1,5 @@
+import datetime
+
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
@@ -8,6 +10,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     def __init__(self):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
+        self.root_event_channel = 'planner'
 
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """Apply all links for specified bucket
@@ -42,16 +45,15 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if batch:
                 l_ids.append(l_id)
             else:
-                if await self.execute_links(planner, operation, [l_id], condition_stop):
+                if await self.wait_for_links_and_monitor(planner, operation, [l_id], condition_stop):
                     return
         if batch:
-            if await self.execute_links(planner, operation, l_ids, condition_stop):
+            if await self.wait_for_links_and_monitor(planner, operation, l_ids, condition_stop):
                 return
 
-    async def execute_links(self, planner, operation, link_ids, condition_stop):
-        """Apply links to operation and wait for completion
-
-        Optionally, stop bucket execution if stopping conditions are met
+    async def wait_for_links_and_monitor(self, planner, operation, link_ids, condition_stop):
+        """Wait for link completion, update stopping conditions and  
+        (optionally) stop bucket execution if stopping conditions are met.
 
         :param planner: Planner to check for stopping conditions on
         :type planner: LogicalPlanner
@@ -64,7 +66,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :return: True if planner stopping conditions are met
         :rtype: bool
         """
-        await self._bucket_execute(operation, planner, link_ids, condition_stop)
+        await operation.wait_for_links_completion(link_ids)
+        await self.update_stopping_condition_met(planner, operation)
         return await self._stop_bucket_exhaustion(planner, operation, condition_stop)
 
     async def default_next_bucket(self, current_bucket, state_machine):
@@ -94,11 +97,11 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         await ability.add_bucket(bucket)
 
-    async def execute_planner(self, planner):
-        """Default planner execution flow.
+    async def execute_planner(self, planner, publish_transitions=True):
+        """Execute planner.
 
         This method will run the planner, progressing from bucket to
-        bucket.
+        bucket, as specified by the planner.
 
         Will stop execution for these conditions:
             - All buckets have been executed.
@@ -112,9 +115,16 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         :param planner: Planner to run
         :type planner: LogicalPlanner
+        :param publish_transitions: flag to publish bucket transitions as
+          events to the event service
+        :type publish tranitions: bool
         """
         while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
                 and not await planner.operation.is_finished():
+            if publish_transitions:
+                await self.publish_event(event='bucket',
+                                         msg=f'Transitioned to "{planner.next_bucket}" bucket.',
+                                         ts=str(datetime.datetime.now()))
             await getattr(planner, planner.next_bucket)()
             await self.update_stopping_condition_met(planner, planner.operation)
 
@@ -241,6 +251,24 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
 
+    async def publish_event(self, event=None, **callback_kwargs):
+        """Proxy access to event service to fire any events related to
+        planner operation.
+
+        All events are nested under 'planner/' scope
+
+        :param event: event name/tag
+        :type event: str
+        :param callback_kwargs: keyword args to pass to event handler
+        :type callback_kwargs: keyword args
+
+        """
+        if event: 
+            event_path = '/'.join([self.root_event_channel, event])
+        else:
+            event_path = self.root_event_channel
+        return await self.get_service('event_svc').fire_event(event_path, **callback_kwargs)
+
     @staticmethod
     async def sort_links(links):
         """Sort links by score and atomic ordering in adversary profile
@@ -254,29 +282,13 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
     """ PRIVATE """
 
-    async def _bucket_execute(self, operation, planner, links):
-        """Wait for operation links to complete and update planner
-
-        Blocks execution until all links from the operation are
-        completed. Once links are completed, update the planner's
-        `stopping_condition_met` property.
-
-        :param operation: Operation to wait for links on
-        :type operation: Operation
-        :param planner: Planner to check stopping conditions and update
-        :type planner: LogicalPlanner
-        :param links: Links IDs to wait for
-        :type links: list(string)
-        """
-        await operation.wait_for_links_completion(links)
-        await self.update_stopping_condition_met(planner, operation)
-
     async def _stop_bucket_exhaustion(self, planner, operation, condition_stop):
-        """Determine whether to continue running the bucket or not
+        """Determine whether to continue running the bucket.
 
-        Check if the operation is finished. If `condition_stop` is True,
-        also check that at least one of the planner's stopping
-        conditions has been met.
+        Returns True if:
+            - Operation is finished
+            - If `condition_stop` is True, and one of the planner's
+            stopping conditions has been met.
 
         :param planner: Planner to check stopping conditions and update
         :type planner: LogicalPlanner
