@@ -382,9 +382,9 @@
     function checkAbilityButtons() {
         // Enable / Disable Save and Add to Adversary buttons
         let valid = validateAbility()
-        console.log(valid);
+        let uniqueAbility = ($('#tempPhase1').find('#' + $('#ability-identifier').val()).length === 0);
         validateFormState(valid, '#ability-save');
-        validateFormState(valid, '#ability-add-to-adv');
+        validateFormState((valid && uniqueAbility), '#ability-add-to-adv');
     }
 
     function validateAbility() {
