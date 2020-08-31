@@ -1,5 +1,5 @@
 .navbar {
-  margin: 25px;
+  padding: 25px;
 }
 .sidenav {
   height: 100%;
@@ -10,7 +10,8 @@
   left: 0;
   background-color: #111;
   overflow-x: hidden;
-  transition: 0.5s;
+  white-space: nowrap;
+  transition: 0.4s;
   padding-top: 10px;
 }
 .sidenav a {
@@ -27,8 +28,8 @@
 }
 .sidenav .closebtn {
   position: absolute;
-  top: 0;
-  right: 25px;
+  top: 5px;
+  right: 5px;
   font-size: 36px;
   margin-left: 50px;
 }
