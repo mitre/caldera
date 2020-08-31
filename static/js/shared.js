@@ -186,3 +186,7 @@ function openNav() {
 function closeNav() {
   document.getElementById("mySidenav").style.width = "0";
 }
+
+function isUuid(data) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89AB][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data);
+}

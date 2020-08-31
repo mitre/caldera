@@ -68,19 +68,19 @@
                         <table frame=void rules=rows style="border-spacing:2px;width:100%">
                             <tr>
                                 <td style="width:10%"><b>id:</b></td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" onkeyup="checkAbilityButtons()"></td>
                             </tr>
                             <tr>
                                 <td style="width:10%"><b>name:</b></td>
-                                <td><input type="text" id="ability-name" placeholder="Name"></td>
+                                <td><input type="text" id="ability-name" placeholder="Name (required)" onkeyup="checkAbilityButtons()"></td>
                             </tr>
                             <tr>
                                 <td style="width:10%"><b>description:</b></td>
-                                <td><input type="text" id="ability-description" placeholder="Description"></td>
+                                <td><input type="text" id="ability-description" placeholder="Description (required)" onkeyup="checkAbilityButtons()"></td>
                             </tr>
                             <tr>
                                 <td style="width:10%"><b>tactic:</b></td>
-                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
+                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" onkeyup="checkAbilityButtons()"></td>
                             <tr>
                             <tr>
                                 <td style="width:10%"><b>technique id:</b></td>
@@ -118,8 +118,8 @@
                             </div>
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>
-                                    <img onclick="addAdditionalInfo()" style="cursor:pointer" src="/gui/img/additional-fields.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
+                                    <img onclick="addAdditionalInfo(); checkAbilityButtons()" style="cursor:pointer" src="/gui/img/additional-fields.png">
+                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo(); checkAbilityButtons()">add info</p>
                                 </div>
                             </div>
                         </div>
@@ -136,8 +136,8 @@
                 </div>
                 <ul id="ttp-tests"></ul>
                 <div style="float:right;">
-                    <button id="ability-save" type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
-                    <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
+                    <button id="ability-save" type="button" class="button-notready atomic-button" onclick="saveAbility()">Save</button>
+                    <button id="ability-add-to-adv" type="button" class="button-notready atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
                 </div>
             </div>
             <div class="imgcontainer">
@@ -229,7 +229,7 @@
 
 <table id="additional-info-row-template-holder" style="display:none">
     <tr id="additional-info-template">
-        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key"></td>
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key" onkeyup="checkAbilityButtons()"></td>
         <td><b>:</b></td>
         <td><input type="text" class="additional-value" placeholder="value"></td>
         <td><div class="ability-remove">
@@ -240,13 +240,13 @@
 
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
-        <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        <b><p style="color:white" onclick="removeBlock($(this)); checkAbilityButtons()">remove</p></b>
     </div>
     <table frame=void rules=rows style="border-spacing:5px;width:100%">
         <tr>
             <td style="width:10%"><b>platform:</b></td>
             <td>
-              <select id="ability-platform" onchange="filterExecutors(this)">
+              <select id="ability-platform" onchange="filterExecutors(this); checkAbilityButtons()">
                 <option value="" disabled selected>Select a platform</option>
                     {% for platform, executors in platforms.items() %}
                         <option value="{{ platform }}">{{ platform }}</option>
@@ -257,7 +257,7 @@
         <tr>
             <td style="width:10%"><b>executor:</b></td>
             <td>
-              <select id="ability-executor">
+              <select id="ability-executor" onchange="checkAbilityButtons()">
                 <option value="" disabled selected>Select an executor</option>
               </select>
             </td>
@@ -274,7 +274,7 @@
         </tr>
         <tr>
             <td style="width:10%"><b>command:</b></td>
-            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
+            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute" onkeyup="checkAbilityButtons()"></textarea></td>
         </tr>
         <tr>
             <td style="width:10%"><b>cleanup:</b></td>
@@ -377,19 +377,93 @@
         }
     }
 
+    function checkAbilityButtons() {
+        // Enable / Disable Save and Add to Adversary buttons
+        let valid = validateAbility()
+        console.log(valid);
+        validateFormState(valid, '#ability-save');
+        validateFormState(valid, '#ability-add-to-adv');
+    }
+
+    function validateAbility() {
+        // Enable Save and Add to Adversary buttons if the ability has:
+        // - No ID, or GUID ID
+        // - Name
+        // - Description
+        // - Tactic is not empty and only contains alphanumeric and hyphens
+        // - Platform / executor / command
+        // - Unique, non-empty keys in additional info
+        let valid = true;
+
+        // Validate ID
+        let abilityId = $('#ability-identifier').val();
+        if (abilityId.length !== 0 && !isUuid(abilityId)) {
+            valid = false;
+        }
+
+        // Ability details missing data
+        if (valid) {
+            if (
+                $('#ability-name').val().length === 0
+                || $('#ability-description').val().length === 0
+            ) {
+                valid = false;
+            }
+        }
+
+        // Validate tactic
+        if (valid) {
+            let abilityTactic = $('#ability-tactic-name').val();
+            if (abilityId.length !== 0 && !(/^[0-9a-z\-]+$/i.test(abilityTactic))) {
+                valid = false;
+            }
+        }
+
+        // Platform / executor / command missing data
+        if (valid) {
+            $('#ttp-tests > li').each(function() {
+                let platform = $(this).find('#ability-platform').val();
+                let executor = $(this).find('#ability-executor').val();
+                let command = $(this).find('#ability-command').val();
+                if (!command || !executor || !platform) {
+                    valid = false;
+                }
+            });
+        }
+
+        // Additional info missing data
+        if (valid) {
+            let additionalInfo = {};
+            $('#ability-additional-info').find('#additional-info-table tr').each(function() {
+                let key = $(this).find('.additional-key').val();
+                if (key !== '' && !(key in additionalInfo)) {
+                    additionalInfo[key] = $(this).find('.additional-value').val();
+                } else {
+                    valid = false;
+                }
+            });
+        }
+
+        return valid;
+    }
+
     function saveAbility() {
-        let name = $('#ability-name').val();
-        if(!name){ warn('Please enter an ability name!'); return; }
-        let description = $('#ability-description').val();
-        if(!description){ warn('Please enter a description!'); return; }
+        if (!validateAbility()) {
+            warn('Missing required data!');
+            stream('Missing required data!');
+            return;
+        }
 
         let data = {};
         let platforms = {};
-        let invalid = false;
+
+        let name = $('#ability-name').val();
+        let description = $('#ability-description').val();
+
         $('#ttp-tests > li').each(function() {
             let platform = $(this).find('#ability-platform').val();
 
-            if(platforms[platform] === undefined) {
+            if (platforms[platform] === undefined) {
                 platforms[platform] = {};
             }
 
@@ -399,33 +473,24 @@
             let cleanup = $(this).find('#ability-cleanup').val();
             let timeout = $(this).find('#ability-timeout').val();
 
-            if(!command || !executor || !platform) {
-                invalid = true;
-            }
             let ex = {'command': command};
-            if(payloads) {
+            if (payloads) {
                 ex['payloads'] = payloads;
             }
-            if(cleanup) {
+            if (cleanup) {
                 ex['cleanup'] = cleanup;
             }
-            if(timeout) {
+            if (timeout) {
                 ex['timeout'] = parseInt(timeout);
             }
             platforms[platform][executor] = ex;
         });
         $('#ability-additional-info').find('#additional-info-table tr').each(function() {
             let key = $(this).find('.additional-key').val();
-            if (key !== '' && !(key in data)){
+            if (key !== '' && !(key in data)) {
                 data[key] = $(this).find('.additional-value').val();
-            } else {
-                invalid = true;
             }
         });
-        if(invalid) {
-            alert('Missing required data!');
-            return;
-        }
         data['index'] = 'abilities';
         data['id'] = $('#ability-identifier').val();
         data['name'] = name;
@@ -438,9 +503,10 @@
     }
 
     function saveAbilityCallback(data) {
+        console.log(data);
         let options = $('#phase-modal').find('#ability-ability-filter');
-        let ability = options.find(":selected").data('ability');
-        if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
+        let ability = options.find(':selected').data('ability');
+        if (!ability || (ability && ability.ability_id != data[0].ability_id)) {
             let a = addPlatforms([data[0]]);
             appendAbilityToList('phase-modal', a[0]);
             options.val(a[0].name);
@@ -460,7 +526,7 @@
     }
 
     function removeBlock(element){
-        element.parent().parent().parent().remove();
+        element.closest('li').remove();
     }
 
     function appendToSelect(field, identifier, value, optionId) {
@@ -697,6 +763,8 @@
                 payloads.multiSelect('select', ability.payloads);
             }
         });
+
+        checkAbilityButtons();
     }
 
     function filterExecutors(elem) {
@@ -729,6 +797,7 @@
                 $('#ability-additional-info').hide();
             }
             $(this).parent().parent().remove();
+            checkAbilityButtons();
         });
         return $table_row;
     }
