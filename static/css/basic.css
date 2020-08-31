@@ -791,3 +791,17 @@ table.dataTable input[type=text] {
     visibility: hidden;
     text-align: left;
 }
+
+#ability-button-row {
+    float: right;
+    width: 40%;
+    padding-right: 5%;
+}
+
+#ability-button-row button {
+    padding: 0 20px;
+}
+
+#ttp-tests {
+    width: 100%;
+}
