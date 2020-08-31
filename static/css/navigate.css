@@ -42,11 +42,12 @@
   .sidenav a {font-size: 14px;}
 }
 .nav-header {
+    width: 250px;
     background-color: var(--navbar-color);
 }
 .nav-header p {
     font-size: 16px;
-    padding: 1px;
+    padding: 2px;
     text-align: center;
     color: var(--font-color);
 }
