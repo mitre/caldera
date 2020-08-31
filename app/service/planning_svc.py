@@ -52,7 +52,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 return
 
     async def wait_for_links_and_monitor(self, planner, operation, link_ids, condition_stop):
-        """Wait for link completion, update stopping conditions and  
+        """Wait for link completion, update stopping conditions and
         (optionally) stop bucket execution if stopping conditions are met.
 
         :param planner: Planner to check for stopping conditions on
@@ -263,7 +263,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type callback_kwargs: keyword args
 
         """
-        if event: 
+        if event:
             event_path = '/'.join([self.root_event_channel, event])
         else:
             event_path = self.root_event_channel
