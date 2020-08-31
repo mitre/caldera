@@ -454,7 +454,7 @@ class RestService(RestServiceInterface, BaseService):
             return []
 
         # Validate tactic, used for directory creation
-        tactic_match = re.compile('^[a-zA-Z0-9\-]+$')
+        tactic_match = re.compile(r'^[a-zA-Z0-9\-]+$')
         if not ab.get('tactic') or not tactic_match.match(ab.get('tactic')):
             self.log.debug('Invalid ability tactic "{}". Tactics can only contain alphanumeric characters and hyphens.'
                            .format(ab.get('tactic')))
