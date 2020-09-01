@@ -136,7 +136,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if publish_transitions:
             await _publish_bucket_transition("(planner completed)")
 
-
     async def get_links(self, operation, buckets=None, agent=None, trim=True):
         """Generate links for use in an operation
 
