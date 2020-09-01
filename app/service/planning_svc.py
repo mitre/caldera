@@ -119,16 +119,23 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
           events to the event service
         :type publish tranitions: bool
         """
+        async def _publish_bucket_transition(bucket):
+            """ subroutine to publish bucket transitions to event_svc"""
+            await self.publish_event(event='bucket',
+                                     msg=f'Bucket transition: {bucket}',
+                                     operation_id=planner.operation.id,
+                                     operation_name=planner.operation.name,
+                                     ts=str(datetime.datetime.now()))
+
         while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
                 and not await planner.operation.is_finished():
             if publish_transitions:
-                await self.publish_event(event='bucket',
-                                         msg=f'Transitioned to "{planner.next_bucket}" bucket.',
-                                         operation_id=planner.operation.id,
-                                         operation_name=planner.operation.name,
-                                         ts=str(datetime.datetime.now()))
+                await _publish_bucket_transition(planner.next_bucket)
             await getattr(planner, planner.next_bucket)()
             await self.update_stopping_condition_met(planner, planner.operation)
+        if publish_transitions:
+            await _publish_bucket_transition("(planner completed)")
+
 
     async def get_links(self, operation, buckets=None, agent=None, trim=True):
         """Generate links for use in an operation
