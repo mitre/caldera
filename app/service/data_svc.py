@@ -112,6 +112,7 @@ class DataService(DataServiceInterface, BaseService):
                 privilege = ab.pop('privilege', None)
                 repeatable = ab.pop('repeatable', False)
                 requirements = ab.pop('requirements', [])
+                allow_privesc_exit = ab.pop('allow_privesc_exit', False)
                 for platforms, executors in ab.pop('platforms', dict()).items():
                     for name, info in executors.items():
                         encoded_test = b64encode(info['command'].strip().encode('utf-8')).decode() if info.get(
@@ -135,7 +136,8 @@ class DataService(DataServiceInterface, BaseService):
                                                                requirements=requirements, privilege=privilege,
                                                                buckets=await self._classify(ab, tactic),
                                                                access=access, repeatable=repeatable,
-                                                               variations=info.get('variations', []), **ab)
+                                                               variations=info.get('variations', []),
+                                                               allow_privesc_exit=allow_privesc_exit, **ab)
                                 await self._update_extensions(a)
 
     async def load_adversary_file(self, filename, access):
@@ -230,7 +232,8 @@ class DataService(DataServiceInterface, BaseService):
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
                               test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
                               parsers=None, requirements=None, privilege=None, timeout=60, access=None, buckets=None,
-                              repeatable=False, code=None, language=None, build_target=None, variations=None, **kwargs):
+                              repeatable=False, code=None, language=None, build_target=None, variations=None,
+                              allow_privesc_exit=False, **kwargs):
         ps = []
         for module in parsers:
             ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
@@ -243,7 +246,7 @@ class DataService(DataServiceInterface, BaseService):
                           executor=executor, platform=platform, description=description, build_target=build_target,
                           cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable,
-                          variations=variations, buckets=buckets, **kwargs)
+                          variations=variations, buckets=buckets, allow_privesc_exit=allow_privesc_exit, **kwargs)
         ability.access = access
         return await self.store(ability)
 

@@ -34,6 +34,7 @@ class OperationSchema(ma.Schema):
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
+    allow_privesc_exit = ma.fields.Boolean()
 
     @ma.post_load
     def build_planner(self, data, **_):
@@ -59,7 +60,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None):
+                 visibility=50, access=None, allow_privesc_exit=True):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
@@ -79,6 +80,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.objective = None
         self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
+
+        # Allow nonelevated agents to exit the operation after certain privilege escalation abilities.
+        self.allow_privesc_exit = allow_privesc_exit
+        self.exited_agent_paws = set() # Agents that have left the operation and cannot re-join.
         if source:
             self.rules = source.rules
 
@@ -147,17 +152,37 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def wait_for_links_completion(self, link_ids):
         """
-        Wait for started links to be completed
+        Wait for started links to be completed.
+        Remove nonprivileged agents from the operation if requested.
+
         :param link_ids:
         :return: None
         """
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish or link.can_ignore():
+            while not (link.finish or link.can_ignore()):
                 await asyncio.sleep(5)
                 if not member.trusted:
                     break
+        await self.prune_privesc_agents(link_ids)
+
+    async def prune_privesc_agents(self, link_ids):
+        """
+        If the operation is set to prune nonprivileged agents after successfully completing certain
+        privilege escalation abilities, go through each provided completed link, check if the associated
+        ability allows the calling agent to exit the operation,
+        and remove the agent from the operation if requested.
+        """
+        if self.allow_privesc_exit:
+            for link_id in link_ids:
+                link = [link for link in self.chain if link.id == link_id][0]
+                if link.ability.allow_privesc_exit and link.finish and not link.can_ignore() and link.status == 0:
+                    calling_agent = [member for member in self.agents if member.paw == link.paw][0]
+                    if calling_agent.privilege == "User":
+                        logging.debug("Removing agent %s from operation" % calling_agent.paw)
+                        self.exited_agent_paws.add(calling_agent.paw)
+                        self.agents = [agent for agent in self.agents if agent.paw != calling_agent.paw]
 
     async def is_closeable(self):
         if await self.is_finished() or self.auto_close:
@@ -258,7 +283,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
     async def update_operation(self, services):
-        self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
+        group_agents = await services.get('rest_svc').construct_agents_for_group(self.group)
+        self.agents = [agent for agent in group_agents if agent.paw not in self.exited_agent_paws]
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]

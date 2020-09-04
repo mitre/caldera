@@ -269,6 +269,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type links: list(string)
         """
         await operation.wait_for_links_completion(links)
+        await operation.prune_privesc_agents(links)
         await self.update_stopping_condition_met(planner, operation)
 
     async def _stop_bucket_exhaustion(self, planner, operation, condition_stop):
