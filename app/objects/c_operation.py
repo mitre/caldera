@@ -60,7 +60,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None, allow_privesc_exit=True):
+                 visibility=50, access=None, allow_privesc_exit=False):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
