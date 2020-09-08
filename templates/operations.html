@@ -85,6 +85,17 @@
               </select>
           </div>
 
+          <div id="privesc" class="column sidebar-cutout sidebar-header">
+              <h5>PRIVILEGE ESCALATION</h5>
+          </div>
+          <div id="privesc-options" class="column sidebar-cutout" style="display: none;">
+              <select name="removeAfterPrivEsc" id="queueRemoveAfterPrivEsc" class="queueOption" style="opacity:0.5" disabled="true">
+                <option value="0" selected>Keep all agents after priv esc</option>
+                <option value="1">Remove non-privileged agent from operation after spawning an elevated agent.</option>
+              </select>
+          </div>
+
+
           <div id="stealth" class="column sidebar-cutout sidebar-header">
               <h5>STEALTH</h5>
           </div>
@@ -298,6 +309,10 @@
             stream('Autonomous options allow you to configure how much manual intervention you want.');
             $("#autonomous-options").slideToggle("slow");
         });
+        $("#privesc").click(function(){
+            stream('Privilege escalation options allow you to configure whether or not to keep an agent in the operation after elevating on the same host.');
+            $("#privesc-options").slideToggle("slow");
+        });
     });
 
     function toggleOperationView() {
@@ -380,7 +395,8 @@
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
-            "visibility": document.getElementById("queueVisibility").value
+            "visibility": document.getElementById("queueVisibility").value,
+            "priv_esc_exit": document.getElementById("queueRemoveAfterPrivEsc").value
         };
     }
 
