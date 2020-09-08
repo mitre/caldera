@@ -35,7 +35,7 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema, missing=None)
     test = ma.fields.String(missing=None)
-    allow_privesc_exit = ma.fields.Bool()
+    spawns_elevated_agent = ma.fields.Bool()
 
     @ma.post_load
     def build_ability(self, data, **_):
@@ -68,7 +68,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
                  variations=None, language=None, code=None, build_target=None, additional_info=None, tags=None,
-                 allow_privesc_exit=False, **kwargs):
+                 spawns_elevated_agent=False, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -91,7 +91,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.build_target = build_target
         self.variations = get_variations(variations)
         self.buckets = buckets if buckets else []
-        self.allow_privesc_exit = allow_privesc_exit
+        self.spawns_elevated_agent = spawns_elevated_agent
         if access:
             self.access = self.Access(access)
         self.additional_info = additional_info or dict()

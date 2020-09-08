@@ -35,6 +35,7 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     allow_privesc_exit = ma.fields.Boolean()
+    exited_agent_paws = ma.fields.List(ma.fields.String())
 
     @ma.post_load
     def build_planner(self, data, **_):
@@ -83,7 +84,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
         # Allow nonelevated agents to exit the operation after certain privilege escalation abilities.
         self.allow_privesc_exit = allow_privesc_exit
-        self.exited_agent_paws = set() # Agents that have left the operation and cannot re-join.
+        self.exited_agent_paws = [] # Agents that have left the operation and cannot re-join.
         if source:
             self.rules = source.rules
 
@@ -169,19 +170,19 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def prune_privesc_agents(self, link_ids):
         """
-        If the operation is set to prune nonprivileged agents after successfully completing certain
-        privilege escalation abilities, go through each provided completed link, check if the associated
+        If the operation is set to prune nonprivileged agents after successfully completing
+        privilege escalation abilities that spawn new agents, go through each provided completed link, check if the associated
         ability allows the calling agent to exit the operation,
         and remove the agent from the operation if requested.
         """
         if self.allow_privesc_exit:
             for link_id in link_ids:
                 link = [link for link in self.chain if link.id == link_id][0]
-                if link.ability.allow_privesc_exit and link.finish and not link.can_ignore() and link.status == 0:
+                if link.ability.spawns_elevated_agent and link.finish and not link.can_ignore() and link.status == 0:
                     calling_agent = [member for member in self.agents if member.paw == link.paw][0]
                     if calling_agent.privilege == "User":
-                        logging.debug("Removing agent %s from operation" % calling_agent.paw)
-                        self.exited_agent_paws.add(calling_agent.paw)
+                        logging.debug("Removing nonprivileged agent %s from operation" % calling_agent.paw)
+                        self.exited_agent_paws.append(calling_agent.paw)
                         self.agents = [agent for agent in self.agents if agent.paw != calling_agent.paw]
 
     async def is_closeable(self):
