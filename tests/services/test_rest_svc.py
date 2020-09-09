@@ -95,7 +95,7 @@ class TestRestSvc:
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
                      'proxy_receivers': {}, 'proxy_chain': []}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
-                'obfuscator': 'plain-text'}
+                'obfuscator': 'plain-text', 'exited_agent_paws': [], 'allow_privesc_exit': False}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),

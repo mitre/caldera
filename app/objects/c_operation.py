@@ -84,7 +84,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
         # Allow nonelevated agents to exit the operation after certain privilege escalation abilities.
         self.allow_privesc_exit = allow_privesc_exit
-        self.exited_agent_paws = [] # Agents that have left the operation and cannot re-join.
+        self.exited_agent_paws = []  # Agents that have left the operation and cannot re-join.
         if source:
             self.rules = source.rules
 
