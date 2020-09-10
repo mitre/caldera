@@ -340,6 +340,8 @@
     bottom: 0;
     right: 0;
     padding: 10px;
+    display: flex;
+    z-index: 1;
 }
 .phase-headers {
     text-align: left;
