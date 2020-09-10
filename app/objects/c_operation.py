@@ -154,7 +154,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def wait_for_links_completion(self, link_ids):
         """
         Wait for started links to be completed.
-        Remove nonprivileged agents from the operation if requested.
+        Remove nonelevated agents from the operation if requested and if they spawned new elevated agents via
+        privilege escalation.
 
         :param link_ids:
         :return: None
@@ -166,14 +167,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 await asyncio.sleep(5)
                 if not member.trusted:
                     break
-        await self.prune_privesc_agents(link_ids)
+        await self.prune_nonelevated_privesc_agents(link_ids)
 
-    async def prune_privesc_agents(self, link_ids):
+    async def prune_nonelevated_privesc_agents(self, link_ids):
         """
-        If the operation is set to prune nonprivileged agents after successfully completing
-        privilege escalation abilities that spawn new agents, go through each provided completed link, check if the associated
-        ability allows the calling agent to exit the operation,
-        and remove the agent from the operation if requested.
+        If the operation is set to prune non-elevated agents after successfully spawning new elevated agents,
+        go through each provided completed link, check if the associated ability spawns elevated agents,
+        and remove the calling agent from the operation if the calling agent is non-elevated.
         """
         if self.allow_privesc_exit:
             for link_id in link_ids:
