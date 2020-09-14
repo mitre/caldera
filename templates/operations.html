@@ -438,9 +438,7 @@
             applyOperationAgents(OPERATION);
             changeProgress(OPERATION.finish, parseInt(OPERATION.objective.percentage));
             clearTimeline();
-            let status = [];
             for(let i=0; i<OPERATION.chain.length; i++){
-                status.push(OPERATION.chain[i].status)
                 if(OPERATION.chain[i].status === -1) {
                     $('#hil-linkId').html(OPERATION.chain[i].unique);
                     $('#hil-paw').html(OPERATION.chain[i].paw);
@@ -478,7 +476,7 @@
             if(OPERATION.state == "running" && OPERATION.chain.length == 0) {
                 stream("No abilities were ran. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
             }
-            if(OPERATION.state == "running" && status.every(function(s, idx) { return s != -3 })) {
+            else if(OPERATION.state == "running" && OPERATION.chain.every(function(link, idx) { return link.status != -3 })) {
                 stream("Abilities exhausted. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
             }
         }
