@@ -100,3 +100,45 @@ span.psw {
 #alert-modal {
     z-index: 120;
 }
+.tab-title {
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 45px;
+    margin: 0px;
+    width: 200px;
+    cursor: pointer;
+}
+.tab-title:hover {
+    color: #750b20;
+}
+.tab-line {
+    height: 4px;
+    border-width: 0px;
+    background-color: transparent;
+    width: 85%;
+}
+.active {
+    color: #750b20;
+}
+
+hr.active {
+    background-color: #750b20;
+}
+.config-arg {
+    padding: 5px;
+    margin: 10px;
+    text-align: left;
+}
+label {
+    color: white;
+}
+.conf-arg {
+    vertical-align: initial;
+}
+.cmd-box {
+    padding: 10px;
+    margin: 10px;
+    border-style: solid;
+    border-width: thin;
+    border-color: rgba(255, 255, 255, 0.5);
+}
