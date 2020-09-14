@@ -563,6 +563,9 @@ table.dataTable input[type=text] {
   line-height: 30px; /* To center it vertically */
   color: black;
 }
+#resultCmd {
+    overflow-wrap: anywhere;
+}
 .dotted {
     border: 1px solid white;
 }
