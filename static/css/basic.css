@@ -302,11 +302,14 @@
 #factTbl {
     table-layout: fixed;
 }
+#factTbl th {
+    text-align: left;
+}
 #factTbl th:nth-child(1) {
-    width: 15%;
+    width: 20;
 }
 #factTbl th:nth-child(2) {
-    width: 80%;
+    width: 75%;
 }
 #factTbl th:nth-child(3) {
     width: 5%;
