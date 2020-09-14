@@ -105,6 +105,20 @@ a:hover {
     display: none;
     cursor: pointer;
 }
+.tactic-find-result.tactic-no-facts {
+  display: block;
+  font-size: 17px;
+  margin-right: .14em;
+}
+.tactic-no-facts:before {
+  content: "\2605";
+}
+.tactic-find-result.tactic-has-facts {
+  display: block;
+}
+.tactic-has-facts:before {
+  content: "\2b50";
+}
 .member-infos {
   padding: 10px;
   text-align: left;
@@ -130,8 +144,7 @@ a:hover {
   display: inline-block;
   font-size: 13px;
 }
-.tooltip .tooltiptext {
-  visibility: hidden;
+.tooltiptext {
   width: 120px;
   background-color: black;
   color: #fff;
@@ -141,13 +154,7 @@ a:hover {
 
   /* Position the tooltip */
   position: absolute;
-  z-index: 1;
-  top: -5px;
-  left: 105%;
   font-size: 13px;
-}
-.tooltip:hover .tooltiptext {
-  visibility: visible;
 }
 
 .cleanup ul{
