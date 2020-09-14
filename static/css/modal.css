@@ -135,10 +135,3 @@ label {
 .conf-arg {
     vertical-align: initial;
 }
-.cmd-box {
-    padding: 10px;
-    margin: 10px;
-    border-style: solid;
-    border-width: thin;
-    border-color: rgba(255, 255, 255, 0.5);
-}

@@ -203,8 +203,8 @@
                                     <option selected disabled>All executors</option>
                                 </select>
                                 <table id="conf-arguments" style="margin-left:10px;"></table>
-                                <div id="cmd-box" class="cmd-box" style="display: none">
-                                    <code id="conf-command"></code>
+                                <div style="padding: 10px; margin: 10px">
+                                    <p id="conf-command" style="font-size: 13px; font-style: italic; color: white"></p>
                                 </div>
                             </div>
                         </div>
@@ -501,7 +501,6 @@
             $("#conf-chosen-executor").append("<option selected disabled>All executors</option>");
             $("#conf-arguments").empty();
             $("#conf-command").empty();
-            $("#cmd-box").hide();
             agentData = data['platforms'];
             appConfig = data['app_config'];
             for (var platform in agentData) {
@@ -518,7 +517,6 @@
         $("#conf-chosen-executor").append("<option selected disabled >All executors</option>");
         $("#conf-arguments").empty();
         $("#conf-command").empty();
-        $("#cmd-box").hide();
         for (var executor in agentData[platformSelect.value]) {
             if ($("#conf-chosen-executor option[value='" + executor + "']").length == 0) {
                 let optionHTML = $('<option value="' + executor + '">' + executor + '</option>')
@@ -557,7 +555,6 @@
             command = command.replace(arg[0], inputValue);
         })
         $("#conf-command").html(command);
-        $("#cmd-box").show();
     }
 
     //# sourceURL=agents.js
