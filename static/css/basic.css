@@ -306,7 +306,7 @@
     text-align: left;
 }
 #factTbl th:nth-child(1) {
-    width: 20;
+    width: 20%;
 }
 #factTbl th:nth-child(2) {
     width: 75%;
