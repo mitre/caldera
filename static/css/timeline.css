@@ -105,6 +105,20 @@ a:hover {
     display: none;
     cursor: pointer;
 }
+.tactic-find-result.tactic-no-facts {
+  display: block;
+  font-size: 17px;
+  margin-right: .14em;
+}
+.tactic-no-facts:before {
+  content: "\2605";
+}
+.tactic-find-result.tactic-has-facts {
+  display: block;
+}
+.tactic-has-facts:before {
+  content: "\2b50";
+}
 .member-infos {
   padding: 10px;
   text-align: left;
