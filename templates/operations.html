@@ -473,6 +473,12 @@
                     refreshUpdatableFields(OPERATION.chain[i], existing);
                 }
             }
+            if(OPERATION.state == "running" && OPERATION.chain.length == 0) {
+                stream("No abilities were ran. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
+            }
+            else if(OPERATION.state == "running" && OPERATION.chain.every(function(link, idx) { return link.status != -3 })) {
+                stream("Abilities exhausted. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
+            }
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
