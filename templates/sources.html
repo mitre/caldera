@@ -41,14 +41,16 @@
         <table id="factTbl" class="obfuscation-table" border=1 frame=void rules=rows>
             <thead>
                 <tr>
-                    <td><b>trait</b></td>
-                    <td><b>value</b></td>
-                    <td></td>
+                    <th><b>trait</b></th>
+                    <th><b>value</b></th>
+                    <th></th>
                 </tr>
             </thead>
+            <tbody>
+            </tbody>
         </table>
         <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
-            &#10010;&nbsp;add row
+            &#10010;&nbsp;add fact
         </p>
     </div>
   </div>
@@ -168,7 +170,7 @@
     }
 
     function clearFactCanvas(){
-        $('#factTbl').find("tr:gt(0)").remove();
+        $('#factTbl tbody tr').remove();
         $('#source-rules').empty();
         $('#source-relationships').empty();
         if($('#source-name').data('id')){
@@ -193,11 +195,11 @@
     }
 
     function addFactRow(trait, value){
-        $('#factTbl tr:last').after(
+        $('#factTbl tbody').append(
             '<tr>' +
-                '<td><p contenteditable="true">'+trait+'</p></td>' +
-                '<td><p contenteditable="true">'+value+'</p></td>' +
-                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
+                '<td><p contenteditable="true">' + trait + '</p></td>' +
+                '<td><p contenteditable="true">' + value + '</p></td>' +
+                '<td><p onclick="$(this).closest(\'tr\').remove()">&#x274C;</p></td>'+
             '</tr>'
         )
     }
@@ -222,7 +224,7 @@
         data['rules'] = [];
         data['relationships'] = []
 
-        $("#factTbl tr").not(":first").each(function () {
+        $('#factTbl tbody tr').each(function () {
             let trait = $(this.cells[0]).text();
             let value = $(this.cells[1]).text();
             data['facts'].push({'trait':trait,'value':value});
