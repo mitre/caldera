@@ -460,7 +460,7 @@
                         'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                         'onclick="findResults(this,'+lnk+')"' +
-                        'data-encoded-cmd="'+OPERATION.chain[i].command+'"'+'>&#9733;</span>' +
+                        'data-encoded-cmd="'+OPERATION.chain[i].command+'"></span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
                     refreshUpdatableFields(OPERATION.chain[i], template, true);
@@ -472,6 +472,12 @@
                     let existing = $("#op_id_"+OPERATION.chain[i].id);
                     refreshUpdatableFields(OPERATION.chain[i], existing);
                 }
+            }
+            if(OPERATION.state == "running" && OPERATION.chain.length == 0) {
+                stream("No abilities were ran. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
+            }
+            else if(OPERATION.state == "running" && OPERATION.chain.every(function(link, idx) { return link.status != -3 })) {
+                stream("Abilities exhausted. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
             }
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
@@ -587,10 +593,12 @@
         }
         if(chain.finish && chain.output) {
             let resultStar = div.find('#'+chain.id+'-rs');
-            resultStar.css('display', 'block');
             if(chain.facts.length > 0){
                 stream('Click the stars to view command output. Gold ones mean information was learned.');
-                resultStar.html('&#11088;');
+                resultStar.removeClass('tactic-no-facts');
+                resultStar.addClass('tactic-has-facts');
+            } else {
+                resultStar.addClass('tactic-no-facts');
             }
             div.find('#'+chain.id+'-rm').remove();
         }

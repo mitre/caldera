@@ -14,4 +14,4 @@ dirhash==0.1.1
 docker==4.2.0
 donut-shellcode==0.9.2
 marshmallow-enum==1.5.1
-ldap3==2.7
+ldap3==2.8.1
