@@ -63,6 +63,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
 
+    @property
+    def raw_command(self):
+        return self.decode_bytes(self._test)
+
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,

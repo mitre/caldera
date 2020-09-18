@@ -13,7 +13,6 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
 from app.objects.c_source import Source
-from app.objects.c_plugin import Plugin
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_rest_svc import RestServiceInterface
@@ -251,17 +250,8 @@ class RestService(RestServiceInterface, BaseService):
             self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
 
     async def get_agent_configuration(self, data):
-        plugins = [p for p in await self.get_service('data_svc').locate('plugins', dict(enabled=True)) if p.data_dir]
-        plugins.append(Plugin(data_dir='data'))
-        ab_yml = platforms = None
-        for p in plugins:
-            files = [os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities')
-                     for fle in f if data['ability_id'] in fle]
-            for f in files:
-                ab_yml = self.strip_yml(f)
-        for entries in ab_yml:
-            for ab in entries:
-                platforms = ab.get('platforms', dict())
+        abilities = await self.get_service('data_svc').locate('abilities', data)
+        platforms = {ability.platform: {ability.executor: {'command': ability.raw_command}} for ability in abilities}
 
         app_config = {k: v for k, v in self.get_config().items() if k.startswith('app.')}
 
