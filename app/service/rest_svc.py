@@ -10,7 +10,9 @@ import yaml
 from aiohttp import web
 
 from app.objects.c_adversary import Adversary
+from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
+from app.objects.c_source import Source
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_rest_svc import RestServiceInterface
@@ -381,7 +383,7 @@ class RestService(RestServiceInterface, BaseService):
             f.seek(0)
             f.write(yaml.dump(final))
             f.truncate()
-        await self._services.get('data_svc').load_adversary_file(file_path, allowed)
+        await self._services.get('data_svc').load_yaml_file(Adversary, file_path, allowed)
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))]
 
     async def _persist_ability(self, access, ab):
@@ -452,7 +454,7 @@ class RestService(RestServiceInterface, BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(final))
-        await self._services.get('data_svc').load_source_file(file_path, allowed)
+        await self._services.get('data_svc').load_yaml_file(Source, file_path, allowed)
         return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=final['id']))]
 
     async def _persist_objective(self, access, objective):
@@ -471,7 +473,7 @@ class RestService(RestServiceInterface, BaseService):
         with open(file_path, 'w+') as f:
             f.seek(0)
             f.write(yaml.dump(final))
-        await self._services.get('data_svc').load_objective_file(file_path, allowed)
+        await self._services.get('data_svc').load_yaml_file(Objective, file_path, allowed)
         return [o.display for o in await self._services.get('data_svc').locate('objectives', dict(id=final['id']))]
 
     async def _prep_new_ability(self, ab):
