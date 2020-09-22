@@ -343,7 +343,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type agent: list(Ability)
         :param link_status: Link status, referencing link state dict
         :type link_status: int
-        :return: Cleanup links for agent
+        :return: Links for agent
         :rtype: list(Link)
         """
         links = []
