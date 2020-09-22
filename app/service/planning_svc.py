@@ -333,7 +333,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         return agent_cleanup_links
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
-        """Generate cleanup links with given status
+        """Generate links with given status
 
         :param operation: Operation to generate links on
         :type operation: Operation
