@@ -151,9 +151,9 @@ class DataService(DataServiceInterface, BaseService):
         warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
         await self.load_yaml_file(Objective, filename, access)
 
-    async def load_yaml_file(self, cls, filename, access):
+    async def load_yaml_file(self, object_class, filename, access):
         for src in self.strip_yml(filename):
-            obj = cls.load(src)
+            obj = object_class.load(src)
             obj.access = access
             await self.store(obj)
 
