@@ -220,10 +220,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
-            for planner in self.strip_yml(filename):
-                planner = Planner.load(planner)
-                planner.access = plugin.access
-                await self.store(planner)
+            await self.load_yaml_file(Planner, filename, plugin.access)
 
     async def _load_extensions(self):
         for entry in self._app_configuration['payloads']['extensions']:
