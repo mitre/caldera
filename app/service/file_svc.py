@@ -47,8 +47,8 @@ class FileSvc(FileServiceInterface, BaseService):
             display_name = file_path.replace('.xored', '')
         return file_path, contents, display_name
 
-    async def save_file(self, filename, payload, target_dir):
-        self._save(os.path.join(target_dir, filename), payload)
+    async def save_file(self, filename, payload, target_dir, encrypt=True):
+        self._save(os.path.join(target_dir, filename), payload, encrypt)
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
@@ -143,8 +143,8 @@ class FileSvc(FileServiceInterface, BaseService):
 
     """ PRIVATE """
 
-    def _save(self, filename, content):
-        if self.encryptor and self.encrypt_output:
+    def _save(self, filename, content, encrypt=True):
+        if encrypt and (self.encryptor and self.encrypt_output):
             content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)
         with open(filename, 'wb') as f:
             f.write(content)

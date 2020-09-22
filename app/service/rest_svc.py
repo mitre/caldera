@@ -373,17 +373,12 @@ class RestService(RestServiceInterface, BaseService):
             # new
             file_path = 'data/adversaries/%s.yml' % adv['id']
             allowed = self._get_allowed_from_access(access)
-            adv['objective'] = adv.get('objective',
-                                       (await self._services.get('data_svc').locate('objectives', match=dict(name='default')))[0])
+            adv['objective'] = adv.get('objective', obj_default)
             final = adv
         # verfiy objective is valid
         if len(await self.get_service('data_svc').locate('objectives', match=dict(id=final['objective']))) == 0:
             final['objective'] = obj_default.id
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(yaml.dump(final))
-            f.truncate()
-        await self._services.get('data_svc').load_yaml_file(Adversary, file_path, allowed)
+        await self._save_and_refresh_item(file_path, Adversary, final, allowed)
         return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))]
 
     async def _persist_ability(self, access, ab):
@@ -427,9 +422,7 @@ class RestService(RestServiceInterface, BaseService):
             file_path = '%s/%s.yml' % (d, new_ability['id'])
             allowed = self._get_allowed_from_access(access)
             final = new_ability
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(yaml.dump([final]))
+        await self.get_service('file_svc').save_file(file_path, yaml.dump([final], encoding='utf-8'), '', encrypt=False)
         await self.get_service('data_svc').remove('abilities', dict(ability_id=final['id']))
         await self.get_service('data_svc').load_ability_file(file_path, allowed)
         await self._restore_exec_timeouts(final['id'], new_ability_exec_timeouts)
@@ -437,44 +430,30 @@ class RestService(RestServiceInterface, BaseService):
                 await self.get_service('data_svc').locate('abilities', dict(ability_id=final['id']))]
 
     async def _persist_source(self, access, source):
-        if not source.get('id') or not source['id']:
-            source['id'] = str(uuid.uuid4())
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % source['id'], location='data')
-        if file_path:
-            # exists
-            current_source = dict(self.strip_yml(file_path)[0])
-            allowed = (await self.get_service('data_svc').locate('sources', dict(id=source['id'])))[0].access
-            current_source.update(source)
-            final = source
-        else:
-            # new
-            file_path = 'data/sources/%s.yml' % source['id']
-            allowed = self._get_allowed_from_access(access)
-            final = source
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(yaml.dump(final))
-        await self._services.get('data_svc').load_yaml_file(Source, file_path, allowed)
-        return [s.display for s in await self._services.get('data_svc').locate('sources', dict(id=final['id']))]
+        return await self._persist_item(access, 'sources', Source, source)
 
     async def _persist_objective(self, access, objective):
-        if not objective.get('id') or not objective['id']:
-            objective['id'] = str(uuid.uuid4())
-        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % objective['id'], location='data')
+        return await self._persist_item(access, 'objectives', Objective, objective)
+
+    async def _persist_item(self, access, object_class_name, object_class, item):
+        if not item.get('id') or not item['id']:
+            item['id'] = str(uuid.uuid4())
+        _, file_path = await self.get_service('file_svc').find_file_path('%s.yml' % item['id'], location='data')
         if file_path:
-            current_objective = dict(self.strip_yml(file_path)[0])
-            allowed = (await self.get_service('data_svc').locate('objectives', dict(id=objective['id'])))[0].access
-            current_objective.update(objective)
-            final = objective
+            current_item = dict(self.strip_yml(file_path)[0])
+            allowed = (await self.get_service('data_svc').locate(object_class_name, dict(id=item['id'])))[0].access
+            current_item.update(item)
+            final = item
         else:
-            file_path = 'data/objectives/%s.yml' % objective['id']
+            file_path = 'data/%s/%s.yml' % (object_class_name, item['id'])
             allowed = self._get_allowed_from_access(access)
-            final = objective
-        with open(file_path, 'w+') as f:
-            f.seek(0)
-            f.write(yaml.dump(final))
-        await self._services.get('data_svc').load_yaml_file(Objective, file_path, allowed)
-        return [o.display for o in await self._services.get('data_svc').locate('objectives', dict(id=final['id']))]
+            final = item
+        await self._save_and_refresh_item(file_path, object_class, final, allowed)
+        return [i.display for i in await self.get_service('data_svc').locate(object_class_name, dict(id=final['id']))]
+
+    async def _save_and_refresh_item(self, file_path, object_class, final, allowed):
+        await self.get_service('file_svc').save_file(file_path, yaml.dump(final, encoding='utf-8'), '', encrypt=False)
+        await self.get_service('data_svc').load_yaml_file(object_class, file_path, allowed)
 
     async def _prep_new_ability(self, ab):
         """Take an ability dict, supplied by frontend, extract executor timeouts,
