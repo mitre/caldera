@@ -205,10 +205,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_objectives(self, plugin):
         for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
-            for src in self.strip_yml(filename):
-                objective = Objective.load(src)
-                objective.access = plugin.access
-                await self.store(objective)
+            await self.load_yaml_file(Objective, filename, plugin.access)
 
     async def _load_payloads(self, plugin):
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
