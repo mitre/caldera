@@ -67,7 +67,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Welcome to the system')
     parser.add_argument('-E', '--environment', required=False, default='local', help='Select an env. file to use')
     parser.add_argument("-l", "--log", dest="logLevel", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                        help="Set the logging level", default='DEBUG')
+                        help="Set the logging level", default='INFO')
     parser.add_argument('--fresh', action='store_true', required=False, default=False,
                         help='remove object_store on start')
     parser.add_argument('-P', '--plugins', required=False, default=os.listdir('plugins'),
