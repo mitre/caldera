@@ -21,8 +21,6 @@ from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
 
 
-
-
 def setup_logger(level=logging.DEBUG):
     logging.basicConfig(level=level,
                         format='%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s',
@@ -40,20 +38,12 @@ async def start_server():
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
-def sighandler(signum,frame):
+def sighandler(signum, frame):
     raise KeyboardInterrupt
 
-
 def run_tasks(services):
-
-
-
+    signal.signal(signal.SIGTERM, sighandler)
     loop = asyncio.get_event_loop()
-
-    
-    signal.signal(signal.SIGTERM,sighandler)
-    signal.signal(signal.SIGKILL,sighandler)
-
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
