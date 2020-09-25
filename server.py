@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+import signal
 
 from aiohttp import web
 
@@ -18,6 +19,8 @@ from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
+
+
 
 
 def setup_logger(level=logging.DEBUG):
@@ -37,9 +40,20 @@ async def start_server():
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
+def sighandler(signum,frame):
+    raise KeyboardInterrupt
+
 
 def run_tasks(services):
+
+
+
     loop = asyncio.get_event_loop()
+
+    
+    signal.signal(signal.SIGTERM,sighandler)
+    signal.signal(signal.SIGKILL,sighandler)
+
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
