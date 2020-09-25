@@ -299,6 +299,25 @@
 #pack-phases td {
     padding: 5px 8px;
 }
+#factTbl {
+    table-layout: fixed;
+}
+#factTbl th {
+    text-align: left;
+}
+#factTbl th:nth-child(1) {
+    width: 20%;
+}
+#factTbl th:nth-child(2) {
+    width: 75%;
+}
+#factTbl th:nth-child(3) {
+    width: 5%;
+}
+#factTbl td p {
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
 #source-rules li {
     list-style-type:none;
 }
@@ -340,6 +359,8 @@
     bottom: 0;
     right: 0;
     padding: 10px;
+    display: flex;
+    z-index: 1;
 }
 .phase-headers {
     text-align: left;
@@ -560,6 +581,12 @@ table.dataTable input[type=text] {
   text-align: center; /* To center it horizontally (if you want) */
   line-height: 30px; /* To center it vertically */
   color: black;
+}
+.default-option {
+    color: gray;
+}
+#resultCmd {
+    overflow-wrap: anywhere;
 }
 .dotted {
     border: 1px solid white;
