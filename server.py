@@ -40,19 +40,13 @@ async def start_server():
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
-def sighandler(signum,frame):
+def sighandler(signum, frame):
     raise KeyboardInterrupt
 
 
 def run_tasks(services):
-
-
-
-    loop = asyncio.get_event_loop()
-
-    
     signal.signal(signal.SIGTERM,sighandler)
-
+    loop = asyncio.get_event_loop()
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
