@@ -52,7 +52,6 @@ def run_tasks(services):
 
     
     signal.signal(signal.SIGTERM,sighandler)
-    signal.signal(signal.SIGKILL,sighandler)
 
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
