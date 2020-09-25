@@ -38,8 +38,10 @@ async def start_server():
     await runner.setup()
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
+
 def sighandler(signum, frame):
     raise KeyboardInterrupt
+
 
 def run_tasks(services):
     signal.signal(signal.SIGTERM, sighandler)
