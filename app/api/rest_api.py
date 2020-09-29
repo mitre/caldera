@@ -111,7 +111,10 @@ class RestApi(BaseWorld):
     @check_authorization
     async def rest_core_info(self, request):
         try:
-            return web.json_response(await self.rest_svc.display_objects(request.match_info['index'], dict(request.query)))
+            if request.match_info['index'] == 'save_state':
+                return web.json_response(await self.rest_svc.save_state())
+            else:
+                return web.json_response(await self.rest_svc.display_objects(request.match_info['index'], dict(request.query)))
         except ma.ValidationError as e:
             raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
         except Exception as e:

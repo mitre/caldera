@@ -98,6 +98,9 @@ class RestService(RestServiceInterface, BaseService):
         results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
         return await self._explode_display_results(object_name, results)
 
+    async def save_state(self):
+        return await self.get_service('data_svc').save_state_while_running()
+    
     async def display_result(self, data):
         link_id = str(data.pop('link_id'))
         link = await self.get_service('app_svc').find_link(link_id)

@@ -4,6 +4,7 @@ import glob
 import os.path
 import pickle
 import shutil
+import datetime
 from base64 import b64encode
 
 from app.objects.c_ability import Ability
@@ -40,6 +41,19 @@ class DataService(DataServiceInterface, BaseService):
                         os.remove(f)
                     except IsADirectoryError:
                         shutil.rmtree(f)
+
+    async def save_state_while_running(self):
+        
+        datetime_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename='object_store_backup_'+datetime_str
+        ram=copy.deepcopy(self.ram)
+        ram.pop('plugins')
+        ram.pop('obfuscators')
+
+        await self.get_service('file_svc').save_file(filename, pickle.dumps(ram), 'data')
+
+        return {'backup_file':filename}
+
 
     async def save_state(self):
         await self._prune_non_critical_data()
