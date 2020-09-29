@@ -64,36 +64,36 @@
                 <button id="reset-ability-modal-button" type="button" class="atomic-button" style="width:115px;height:30px;padding-top:8px;color:black;background-color:firebrick" onclick="clearPhaseModal()">Reset Fields</button>
                 <br><br>
                 <div id="ability-manager" class="ability-attack row-simple">
-                    <div class="column" style="flex:60%">
-                        <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                    <div class="column ability-fields">
+                        <table frame=void rules=rows>
                             <tr>
-                                <td style="width:10%"><b>id:</b></td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" onkeyup="checkAbilityButtons()"></td>
+                                <td>id:</td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" onkeyup="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>name:</b></td>
-                                <td><input type="text" id="ability-name" placeholder="Name (required)" onkeyup="checkAbilityButtons()"></td>
+                                <td>name:</td>
+                                <td><input type="text" id="ability-name" placeholder="Name (required)" onkeyup="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>description:</b></td>
-                                <td><input type="text" id="ability-description" placeholder="Description (required)" onkeyup="checkAbilityButtons()"></td>
+                                <td>description:</td>
+                                <td><input type="text" id="ability-description" placeholder="Description (required)" onkeyup="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>tactic:</b></td>
-                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" onkeyup="checkAbilityButtons()"></td>
+                                <td>tactic:</td>
+                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" onkeyup="checkAbilityButtons()" /></td>
                             <tr>
                             <tr>
-                                <td style="width:10%"><b>technique id:</b></td>
-                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
+                                <td>technique id:</td>
+                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>technique:</b></td>
-                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
+                                <td>technique:</td>
+                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name" /></td>
                             </tr>
                         </table>
 
                     </div>
-                    <div class="column" style="flex:40%">
+                    <div class="column ability-additional-fields">
                         <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
                             <div class="column" style="float: left; margin: 0px; flex:20%">
                                 <div>

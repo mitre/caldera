@@ -792,6 +792,25 @@ table.dataTable input[type=text] {
     text-align: left;
 }
 
+#ability-manager .ability-fields {
+    flex: 60%;
+}
+
+#ability-manager .ability-additional-fields {
+    flex: 40%;
+}
+
+#ability-manager table {
+    border-spacing: 2px;
+    width: 100%;
+}
+
+
+#ability-manager table td:nth-child(1) {
+    width: 8em;
+    font-weight: bold;
+}
+
 #ability-button-row {
     float: right;
     width: 40%;
