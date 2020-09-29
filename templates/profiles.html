@@ -47,7 +47,7 @@
 <div id="phase-modal" class="modal">
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
-            <div class="column" style="flex:100%;">
+            <div class="column">
                 <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', exploits);">
                     <option disabled selected>Choose a tactic</option>
                     {% for tactic in tactics %}
@@ -60,11 +60,11 @@
                 <select id="ability-ability-filter" onchange="showAbility('phase-modal', exploits)">
                     <option disabled selected>0 abilities</option>
                 </select>
-                <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
-                <button id="reset-ability-modal-button" type="button" class="atomic-button" style="width:115px;height:30px;padding-top:8px;color:black;background-color:firebrick" onclick="clearPhaseModal()">Reset Fields</button>
+                <input id="ability-search-filter" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
+                <button id="reset-ability-modal-button" type="button" class="atomic-button" onclick="clearPhaseModal()">Reset Fields</button>
                 <br><br>
                 <div id="ability-manager" class="ability-attack row-simple">
-                    <div class="column ability-fields">
+                    <div id="ability-manager-fields" class="column">
                         <table frame=void rules=rows>
                             <tr>
                                 <td>id:</td>
@@ -93,40 +93,39 @@
                         </table>
 
                     </div>
-                    <div class="column ability-additional-fields">
-                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                    <div id="ability-manager-additional" class="column">
+                        <div id="row-simple">
+                            <div class="column">
                                 <div>
-                                    <img onclick="freshId()" style="cursor:pointer" src="/gui/img/recycle.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
+                                    <img onclick="freshId()" src="/gui/img/recycle.png">
+                                    <p onclick="freshId()">generate new id</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <img onclick="addExecutorBlock()" style="cursor:pointer" src="/gui/img/executor.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
+                                    <img onclick="addExecutorBlock()" src="/gui/img/executor.png">
+                                    <p onclick="addExecutorBlock()">add executor</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <label for="uploadPayloadFile"><img style="cursor:pointer" src="/gui/img/payload.png"></label>
+                                    <label for="uploadPayloadFile"><img src="/gui/img/payload.png"></label>
                                     <form id="uploadPayloadForm">
                                        <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
                                        <input type="file" id="uploadPayloadFile" style="display: none">
                                     </form>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <img onclick="addAdditionalInfo(); checkAbilityButtons()" style="cursor:pointer" src="/gui/img/additional-fields.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo(); checkAbilityButtons()">add info</p>
+                                    <img onclick="addAdditionalInfo(); checkAbilityButtons()" src="/gui/img/additional-fields.png">
+                                    <p onclick="addAdditionalInfo(); checkAbilityButtons()">add info</p>
                                 </div>
                             </div>
                         </div>
-                        <br>
-                        <div id="ability-additional-info" style="display: flex">
-                            <div style="flex: 15%; display: flex; justify-content: center; align-items: center;"><b>Info:</b></div>
-                            <table id="additional-info-table" frame=void rules=rows style="flex:85%">
+                        <div id="ability-additional-info" style="display: none">
+                            <div>info:</div>
+                            <table id="additional-info-table" frame=void rules=rows>
                                 <tbody>
                                 </tbody>
                             </table>

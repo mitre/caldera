@@ -792,22 +792,71 @@ table.dataTable input[type=text] {
     text-align: left;
 }
 
-#ability-manager .ability-fields {
+#phase-modal .container > .column {
+    flex: 100%;
+}
+
+#ability-search-filter {
+    width: 60%;
+}
+
+#reset-ability-modal-button {
+    width: 115px;
+    height: 30px;
+    padding-top: 8px;
+    color: black;
+    background-color: firebrick;
+}
+
+#ability-manager-fields {
     flex: 60%;
 }
 
-#ability-manager .ability-additional-fields {
-    flex: 40%;
-}
-
-#ability-manager table {
+#ability-manager-fields table {
     border-spacing: 2px;
     width: 100%;
 }
 
-
-#ability-manager table td:nth-child(1) {
+#ability-manager-fields table td:nth-child(1) {
     width: 8em;
+    font-weight: bold;
+}
+
+#ability-manager-additional {
+    flex: 40%;
+}
+
+#ability-manager-additional #row-simple {
+    display: flex;
+    overflow: hidden;
+}
+
+#ability-manager-additional .column {
+    float: left;
+    flex: 20%;
+    margin: 0px;
+}
+
+#ability-manager-additional .column p {
+    padding-top: 4px;
+    text-align: center;
+    color: white;
+}
+
+#ability-manager-additional .column img {
+    cursor: pointer;
+}
+
+#ability-additional-info {
+    display: flex;
+    margin-top: 1em;
+}
+
+#ability-additional-info div {
+    display: flex;
+    flex: 5em;
+    justify-content: center;
+    align-items: center;
     font-weight: bold;
 }
 
