@@ -30,6 +30,80 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
 
 class TestPlanningService:
 
+    def test_add_ability_to_bucket(self, loop, setup_planning_test, planning_svc):
+        b1 = 'salvador'
+        b2 = 'hardin'
+        a, _, _ = setup_planning_test
+        loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b1))
+        assert a.buckets == [b1]
+        loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b2))
+        assert a.buckets == [b1, b2]
+
+    def test_default_next_bucket(self, loop, planning_svc):
+        sm = ['alpha', 'bravo', 'charlie']
+        assert loop.run_until_complete(planning_svc.default_next_bucket(sm[0], sm)) == sm[1]
+        assert loop.run_until_complete(planning_svc.default_next_bucket(sm[1], sm)) == sm[2]
+        assert loop.run_until_complete(planning_svc.default_next_bucket(sm[2], sm)) == sm [0]    # loops around
+
+    def test_stopping_condition_met(self, loop, planning_svc, fact):
+        facts = [
+            fact(trait='m.b.k', value='michael'),
+            fact(trait='l.r.k', value='laura')
+        ]
+        stopping_condition = fact(trait='c.p.k', value='cole')
+
+        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) == False
+        facts.append(stopping_condition)
+        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) == True
+
+    def test_check_stopping_conditions(self, loop, fact, link, setup_planning_test, planning_svc):
+        ability, agent, operation = setup_planning_test
+        operation.source.facts = []
+        stopping_conditions = [fact(trait='s.o.f.', value='seldon')]
+
+        # first verify stopping conditions not met
+        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) == False
+        # add stopping condition to a fact, then to a link, then the link to the operation
+        l0 = link(command='test', paw='0', ability=ability)
+        l1 = link(command='test1', paw='1', ability=ability)
+        loop.run_until_complete(l1._save_fact(operation, stopping_conditions[0], 1))  # directly attach fact to link
+        operation.add_link(l0)
+        operation.add_link(l1)
+        # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
+        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) == True
+
+    def test_update_stopping_condition_met(self, loop, fact, link, setup_planning_test, planning_svc):
+        ability, agent, operation = setup_planning_test
+        stopping_condition = fact(trait='t.c.t', value='boss')
+        class PlannerStub():
+            stopping_conditions = [stopping_condition]
+            stopping_condition_met = False
+        p = PlannerStub()
+
+        # first call should not result in 'met' flag being flipped
+        loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
+        assert p.stopping_condition_met == False
+        # add stopping condition to a fact, then to a link, then the link to the operation
+        l1 = link(command='test1', paw='1', ability=ability)
+        loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1))  # directly attach fact to link
+        operation.add_link(l1)
+        # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
+        loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
+        assert p.stopping_condition_met == True
+
+    def test_sort_links(self, loop, link, planning_svc, setup_planning_test):
+        a, _, _ = setup_planning_test
+        l1 = link(command="m", paw="1", ability=a, score=1)
+        l2 = link(command="a", paw="2", ability=a, score=2)
+        l3 = link(command="l", paw="3", ability=a, score=3)
+        sl = loop.run_until_complete(planning_svc.sort_links([l2, l1, l3]))
+        assert sl[0] == l3
+        assert sl[1] == l2
+        assert sl[2] == l1
+
+    def test_stop_bucket_execution(self, loop, setup_planning_svc, planning_svc):
+        assert 0
+
     def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
         operation.add_link(Link.load(dict(command='', paw=agent.paw, ability=ability, status=0)))
