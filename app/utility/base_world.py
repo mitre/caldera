@@ -122,7 +122,7 @@ class BaseWorld:
             return compare_versions(mod_version, version)
 
         def check_program_version(command, version, **kwargs):
-            output = subprocess.check_output(command.split(' '), shell=False)
+            output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False)
             return compare_versions(output.decode('utf-8'), version)
 
         def compare_versions(version_string, minimum_version):

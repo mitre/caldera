@@ -29,6 +29,10 @@ requirements:
     command: go version
     type: installed_program
     version: 1.11
+  metasploit:
+    command: msfconsole -v
+    type: installed_program
+    version: 4.0
   python:
     attr: version
     module: sys
