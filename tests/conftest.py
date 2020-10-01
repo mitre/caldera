@@ -153,12 +153,14 @@ def link():
 
     return _generate_link
 
+
 @pytest.fixture
 def fact():
     def _generate_fact(trait, *args, **kwargs):
         return Fact(trait=trait, *args, **kwargs)
 
     return _generate_fact
+
 
 @pytest.fixture
 def demo_plugin():
