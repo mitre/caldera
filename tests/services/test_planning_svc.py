@@ -43,7 +43,7 @@ class TestPlanningService:
         sm = ['alpha', 'bravo', 'charlie']
         assert loop.run_until_complete(planning_svc.default_next_bucket(sm[0], sm)) == sm[1]
         assert loop.run_until_complete(planning_svc.default_next_bucket(sm[1], sm)) == sm[2]
-        assert loop.run_until_complete(planning_svc.default_next_bucket(sm[2], sm)) == sm [0]    # loops around
+        assert loop.run_until_complete(planning_svc.default_next_bucket(sm[2], sm)) == sm[0]    # loops around
 
     def test_stopping_condition_met(self, loop, planning_svc, fact):
         facts = [
@@ -75,6 +75,7 @@ class TestPlanningService:
     def test_update_stopping_condition_met(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
         stopping_condition = fact(trait='t.c.t', value='boss')
+
         class PlannerStub():
             stopping_conditions = [stopping_condition]
             stopping_condition_met = False
@@ -103,8 +104,10 @@ class TestPlanningService:
 
     def test_stop_bucket_execution(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
+
         class PlannerStub:
             stopping_condition_met = False
+
         p = PlannerStub()
         operation.state = operation.states['RUNNING']
 
@@ -136,15 +139,15 @@ class TestPlanningService:
                 self.stopping_conditions = [sc]
                 self.calls = []
                 self.operation = operation
-            
+
             async def one(self):
                 self.calls.append('one')
                 self.next_bucket = 'two'
-            
+
             async def two(self):
                 self.calls.append('two')
                 self.next_bucket = 'three'
-            
+
             async def three(self):
                 self.calls.append('three')
                 self.next_bucket = None  # stopping execution here
@@ -152,7 +155,7 @@ class TestPlanningService:
             async def four(self):
                 self.calls.append('four')
                 self.next_bucket = None
-            
+
         # case 1 - let planner run until it stops itself after bucket 'three'
         p = PlannerFake(operation)
         loop.run_until_complete(planning_svc.execute_planner(p))
