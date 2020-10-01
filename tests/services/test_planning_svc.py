@@ -52,9 +52,9 @@ class TestPlanningService:
         ]
         stopping_condition = fact(trait='c.p.k', value='cole')
 
-        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) == False
+        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) is False
         facts.append(stopping_condition)
-        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) == True
+        assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) is True
 
     def test_check_stopping_conditions(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
@@ -62,7 +62,7 @@ class TestPlanningService:
         stopping_conditions = [fact(trait='s.o.f.', value='seldon')]
 
         # first verify stopping conditions not met
-        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) == False
+        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) is False
         # add stopping condition to a fact, then to a link, then the link to the operation
         l0 = link(command='test', paw='0', ability=ability)
         l1 = link(command='test1', paw='1', ability=ability)
@@ -70,7 +70,7 @@ class TestPlanningService:
         operation.add_link(l0)
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
-        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) == True
+        assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) is True
 
     def test_update_stopping_condition_met(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
@@ -82,27 +82,101 @@ class TestPlanningService:
 
         # first call should not result in 'met' flag being flipped
         loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
-        assert p.stopping_condition_met == False
+        assert p.stopping_condition_met is False
         # add stopping condition to a fact, then to a link, then the link to the operation
         l1 = link(command='test1', paw='1', ability=ability)
         loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1))  # directly attach fact to link
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
         loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
-        assert p.stopping_condition_met == True
+        assert p.stopping_condition_met is True
 
     def test_sort_links(self, loop, link, planning_svc, setup_planning_test):
         a, _, _ = setup_planning_test
-        l1 = link(command="m", paw="1", ability=a, score=1)
-        l2 = link(command="a", paw="2", ability=a, score=2)
-        l3 = link(command="l", paw="3", ability=a, score=3)
+        l1 = link(command='m', paw='1', ability=a, score=1)
+        l2 = link(command='a', paw='2', ability=a, score=2)
+        l3 = link(command='l', paw='3', ability=a, score=3)
         sl = loop.run_until_complete(planning_svc.sort_links([l2, l1, l3]))
         assert sl[0] == l3
         assert sl[1] == l2
         assert sl[2] == l1
 
-    def test_stop_bucket_execution(self, loop, setup_planning_svc, planning_svc):
-        assert 0
+    def test_stop_bucket_execution(self, loop, setup_planning_test, planning_svc):
+        ability, agent, operation = setup_planning_test
+        class PlannerStub:
+            stopping_condition_met = False
+        p = PlannerStub()
+        operation.state = operation.states['RUNNING']
+
+        # case 1 - operation running, planner stop condition not met
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is False
+        # case 2 - operation running, planner stop condition met
+        p.stopping_condition_met = True
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
+        # case 3 - operaton finished, planner stop condition not met
+        operation.state = operation.states['FINISHED']
+        p.stopping_condition_met = False
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
+        # case 4 - operation finished, planner stop condition met
+        p.stopping_condition_met = True
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
+        # case 5 - case 2 with condition stop off
+        operation.state = operation.states['RUNNING']
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, False)) is False
+
+    def test_execute_planner(self, loop, fact, link, setup_planning_test, planning_svc, monkeypatch):
+        ability, agent, operation = setup_planning_test
+        sc = fact(trait='j.g.b', value='good')
+
+        class PlannerFake:
+            def __init__(self, operation):
+                self.state_machine = ['one', 'two', 'three', 'four']
+                self.next_bucket = 'one'
+                self.stopping_condition_met = False
+                self.stopping_conditions = [sc]
+                self.calls = []
+                self.operation = operation
+            
+            async def one(self):
+                self.calls.append('one')
+                self.next_bucket = 'two'
+            
+            async def two(self):
+                self.calls.append('two')
+                self.next_bucket = 'three'
+            
+            async def three(self):
+                self.calls.append('three')
+                self.next_bucket = None  # stopping execution here
+
+            async def four(self):
+                self.calls.append('four')
+                self.next_bucket = None
+            
+        # case 1 - let planner run until it stops itself after bucket 'three'
+        p = PlannerFake(operation)
+        loop.run_until_complete(planning_svc.execute_planner(p))
+        assert p.calls == ['one', 'two', 'three']
+
+        # case 2 - start planner but then hijack operation after bucket 'two and flag that stopping condition
+        # been found, thus stopping the planner when it attempt to proceed to next bucket
+        async def stub_update_stopping_condition_met(planner, operation):
+            if planner.calls == ['one', 'two']:
+                planner.stopping_condition_met = True
+        monkeypatch.setattr(planning_svc, 'update_stopping_condition_met', stub_update_stopping_condition_met)
+        p = PlannerFake(operation)
+        loop.run_until_complete(planning_svc.execute_planner(p))
+        assert p.calls == ['one', 'two']
+
+        # case 3 - start planner but then hijack operation and set it to 'FINISH' state, thus
+        # stopping the planner when it attempts to proceed to next bucket
+        async def stub_update_stopping_condition_met_1(planner, operation):
+            if planner.calls == ['one']:
+                operation.state = operation.states['FINISHED']
+        monkeypatch.setattr(planning_svc, 'update_stopping_condition_met', stub_update_stopping_condition_met_1)
+        p = PlannerFake(operation)
+        loop.run_until_complete(planning_svc.execute_planner(p))
+        assert p.calls == ['one']
 
     def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation = setup_planning_test
