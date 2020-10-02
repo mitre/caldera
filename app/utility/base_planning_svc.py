@@ -80,8 +80,16 @@ class BasePlanningService(BaseService):
         """
         completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
+
+        fil = lambda x: x if any('remote.host.fqdn' in y.trait for y in x.used) else None
+        # filter for any links that use remote.host.fqdn, so we can avoid submitting multiple lateral movement
+        # requests across a multiple agents (race condition)
+        lat = [fil(k) for k in operation.chain]
+        lat_links = [(x.command_hash if x.command_hash else x.command) for x in lat if x != None]
+
         return [l for l in links if l.ability.repeatable or
-                (l.command_hash if l.command_hash else l.command) not in completed_links]
+                ((l.command_hash if l.command_hash else l.command) not in completed_links
+                 and (l.command_hash if l.command_hash else l.command not in lat_links))]
 
     @staticmethod
     async def remove_links_missing_facts(links):
