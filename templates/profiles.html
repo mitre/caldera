@@ -135,7 +135,7 @@
                 </div>
                 <div id="ability-button-row" class="row-simple">
                     <button id="ability-save" type="button" class="button-notready atomic-button" onclick="saveAbility()">Save</button>
-                    <button id="ability-add-to-adv" type="button" class="button-notready atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
+                    <button id="ability-add-to-adv" type="button" class="button-notready atomic-button" onclick="saveAbility(true)">Add to Adversary</button>
                 </div>
                 <div class="row-simple">
                     <ul id="ttp-tests"></ul>
@@ -423,14 +423,18 @@
 
         // Platform / executor / command missing data
         if (valid) {
-            $('#ttp-tests > li').each(function() {
-                let platform = $(this).find('#ability-platform').val();
-                let executor = $(this).find('#ability-executor').val();
-                let command = $(this).find('#ability-command').val();
-                if (!command || !executor || !platform) {
-                    valid = false;
-                }
-            });
+            if ($('#ttp-tests > li').length) {
+                $('#ttp-tests > li').each(function() {
+                    let platform = $(this).find('#ability-platform').val();
+                    let executor = $(this).find('#ability-executor').val();
+                    let command = $(this).find('#ability-command').val();
+                    if (!command || !executor || !platform) {
+                        valid = false;
+                    }
+                });
+            } else {
+                valid = false;
+            }
         }
 
         // Additional info missing data
@@ -449,7 +453,7 @@
         return valid;
     }
 
-    function saveAbility() {
+    function saveAbility(addToAdversary=false) {
         if (!validateAbility()) {
             warn('Missing required data!');
             stream('Missing required data!');
@@ -500,10 +504,25 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
-        restRequest('PUT', data, saveAbilityCallback);
+
+        $.ajax({
+           url: '/api/rest',
+           type: 'PUT',
+           contentType: 'application/json',
+           data: JSON.stringify(data),
+           success: function(data, status, options) {
+               saveAbilityCallback(data, addToAdversary);
+           },
+           error: function (xhr, ajaxOptions, thrownError) {
+               stream(thrownError);
+           }
+        });
     }
 
-    function saveAbilityCallback(data) {
+    function saveAbilityCallback(data, addToAdversary=false) {
+        if ($('#ability-identifier').val() === '') {
+            $('#ability-identifier').val(data[0].ability_id);
+        }
         let options = $('#phase-modal').find('#ability-ability-filter');
         let ability = options.find(':selected').data('ability');
         if (!ability || (ability && ability.ability_id != data[0].ability_id)) {
@@ -523,6 +542,18 @@
             loadAdversary();
         }
         stream('Ability saved!');
+
+        if (addToAdversary) {
+            addAbilityToAdversary();
+        }
+    }
+
+    function addAbilityToAdversary() {
+        let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
+        let abilityBox = buildAbility(ability);
+        g_grid.add(abilityBox[0]);
+        clearPhaseModal();
+        hidePhaseModal();
     }
 
     function appendToSelect(field, identifier, value, optionId) {
@@ -815,13 +846,9 @@
     }
 
     function clearPhaseModal() {
-        $('#ability-tactic-filter option:selected').removeAttr('selected');
-        $('#ability-tactic-filter option:first').remove();
-        $('#ability-tactic-filter').prepend('<option disabled selected>Choose a tactic</option>');
-        $('#ability-technique-filter').empty();
-        $('#ability-technique-filter').append('<option disabled selected>Choose a technique</option>');
-        $('#ability-ability-filter').empty();
-        $('#ability-ability-filter').append('<option disabled selected>0 abilities</option>');
+        $('#ability-tactic-filter option:first').prop('selected', true);
+        $('#ability-technique-filter').empty().append('<option disabled="disabled" selected>Choose a technique</option>');
+        $('#ability-ability-filter').empty().append('<option disabled="disabled" selected>0 abilities</option>');
         $('#ability-identifier').val('');
         $('#ability-name').val('');
         $('#ability-description').val('');
@@ -913,15 +940,6 @@
     function clearObjective() {
         $('#objective-select')[0].value = '';
         $('#objective-img')[0].style="display:none";
-    }
-
-    function addAbilityToPhase() {
-        saveAbility();
-        let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
-        let abilityBox = buildAbility(ability);
-        g_grid.add(abilityBox[0]);
-        clearPhaseModal();
-        hidePhaseModal();
     }
 
     function deleteProfile(){
