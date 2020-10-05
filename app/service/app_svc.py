@@ -141,7 +141,11 @@ class AppService(AppServiceInterface, BaseService):
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):
-            self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
+            msg = '%s does not meet the minimum version of %s' % (requirement, params['version'])
+            if params.get('optional', False):
+                self.log.warning(msg)
+            else:
+                self.log.error(msg)
             self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
             return False
         return True

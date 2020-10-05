@@ -31,6 +31,7 @@ requirements:
     version: 1.11
   metasploit:
     command: msfconsole -v
+    optional: true
     type: installed_program
     version: 4.0
   python:
