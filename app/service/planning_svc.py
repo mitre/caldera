@@ -157,8 +157,19 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         else:
+            pre_filter = []
+            parallel_list = []
             for agent in operation.agents:
-                links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+                pre_filter.append(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            for agent_list in pre_filter:
+                for el in agent_list:
+                    if not self._fil(el, 'remote.host.fqdn'):
+                        links.append(el)
+                    else:
+                        cmpr = (el.command_hash if el.command_hash else el.command)
+                        if cmpr not in parallel_list:
+                            parallel_list.append(cmpr)
+                            links.append(el)
         self.log.debug('Generated %s usable links' % (len(links)))
         return await self.sort_links(links)
 

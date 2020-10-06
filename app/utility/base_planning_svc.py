@@ -81,11 +81,8 @@ class BasePlanningService(BaseService):
         completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
 
-        fil = lambda x: x if any('remote.host.fqdn' in y.trait for y in x.used) else None
-        # filter for any links that use remote.host.fqdn, so we can avoid submitting multiple lateral movement
-        # requests across a multiple agents (race condition)
-        lat = [fil(k) for k in operation.chain]
-        lat_links = [(x.command_hash if x.command_hash else x.command) for x in lat if x != None]
+        lat = [BasePlanningService._fil(k, 'remote.host.fqdn') for k in operation.chain if k.status != 1]
+        lat_links = [(x.command_hash if x.command_hash else x.command) for x in lat if x]
 
         return [l for l in links if l.ability.repeatable or
                 ((l.command_hash if l.command_hash else l.command) not in completed_links
@@ -120,6 +117,14 @@ class BasePlanningService(BaseService):
         return links
 
     """ PRIVATE """
+
+    @staticmethod
+    def _fil(x, trait):
+        """
+        Filter Link based on presence of trait in facts used
+        """
+        if any(trait in y.trait for y in x.used):
+            return x
 
     @staticmethod
     async def _build_single_test_variant(copy_test, combo, executor):
