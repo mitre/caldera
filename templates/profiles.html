@@ -526,7 +526,8 @@
         let abilitySelector = $('#phase-modal').find('#ability-ability-filter');
         let selectedAbility = abilitySelector.find(':selected').data('ability');
 
-        let newAbility = addPlatforms([data[0]])[0];
+        let abilityData = data[0];
+        let newAbility = addPlatforms([abilityData])[0];
         
         if (!selectedAbility || selectedAbility.ability_id != newAbility.ability_id) {
             appendAbilityToList('phase-modal', newAbility);
@@ -540,15 +541,30 @@
 
         var $to_replace = -1;
         $.each(exploits, function(i, ab) {
-            if (ab.ability_id === newAbility.ability_id) {
+            if (ab.ability_id === abilityData.ability_id) {
                 $to_replace = i;
                 return false;
             }
         });
         if ($to_replace != -1) {
-            exploits[$to_replace] = newAbility;
+            exploits[$to_replace] = abilityData;
+        } else {
+            exploits.push(abilityData);
         }
         stream('Ability saved!');
+
+        let tactics = $.map($('#ability-tactic-filter option'), function(option) {
+            if (option.value) {
+                return option.value;
+            }
+        });
+        if ($.inArray(newAbility.tactic, tactics) === -1) {
+            var newTactic = $('<option></option>')
+                .attr('value', newAbility.tactic)
+                .attr('data-tactic', newAbility.tactic)
+                .text(newAbility.tactic);
+            $('#ability-tactic-filter').append(newTactic);
+        }
 
         if (addToAdversary) {
             addAbilityToAdversary();
