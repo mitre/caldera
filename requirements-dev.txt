@@ -1,5 +1,5 @@
 tox
-pytest==5.4.2
+pytest
 pytest-aiohttp==0.3.0
 coverage
 pre-commit

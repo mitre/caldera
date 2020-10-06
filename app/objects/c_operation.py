@@ -154,7 +154,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish or link.can_ignore():
+            while not (link.finish or link.can_ignore()):
                 await asyncio.sleep(5)
                 if not member.trusted:
                     break

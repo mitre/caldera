@@ -12,6 +12,7 @@ matrix:
           env: TOXENV=py38,style,coverage-ci,safety
 
 install:
+    - pip install --upgrade virtualenv
     - pip install tox
 
 script:

@@ -4,6 +4,7 @@ import glob
 import os.path
 import pickle
 import shutil
+import warnings
 from base64 import b64encode
 
 from app.objects.c_ability import Ability
@@ -139,16 +140,22 @@ class DataService(DataServiceInterface, BaseService):
                                 await self._update_extensions(a)
 
     async def load_adversary_file(self, filename, access):
-        for adv in self.strip_yml(filename):
-            adversary = Adversary.load(adv)
-            adversary.access = access
-            await self.store(adversary)
+        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
+        await self.load_yaml_file(Adversary, filename, access)
 
     async def load_source_file(self, filename, access):
+        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
+        await self.load_yaml_file(Source, filename, access)
+
+    async def load_objective_file(self, filename, access):
+        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
+        await self.load_yaml_file(Objective, filename, access)
+
+    async def load_yaml_file(self, object_class, filename, access):
         for src in self.strip_yml(filename):
-            source = Source.load(src)
-            source.access = access
-            await self.store(source)
+            obj = object_class.load(src)
+            obj.access = access
+            await self.store(obj)
 
     """ PRIVATE """
 
@@ -173,7 +180,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
-            await self.load_adversary_file(filename, plugin.access)
+            await self.load_yaml_file(Adversary, filename, plugin.access)
 
     async def _load_abilities(self, plugin):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
@@ -194,14 +201,11 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_sources(self, plugin):
         for filename in glob.iglob('%s/sources/*.yml' % plugin.data_dir, recursive=False):
-            await self.load_source_file(filename, plugin.access)
+            await self.load_yaml_file(Source, filename, plugin.access)
 
     async def _load_objectives(self, plugin):
         for filename in glob.iglob('%s/objectives/*.yml' % plugin.data_dir, recursive=False):
-            for src in self.strip_yml(filename):
-                objective = Objective.load(src)
-                objective.access = plugin.access
-                await self.store(objective)
+            await self.load_yaml_file(Objective, filename, plugin.access)
 
     async def _load_payloads(self, plugin):
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
@@ -216,10 +220,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
-            for planner in self.strip_yml(filename):
-                planner = Planner.load(planner)
-                planner.access = plugin.access
-                await self.store(planner)
+            await self.load_yaml_file(Planner, filename, plugin.access)
 
     async def _load_extensions(self):
         for entry in self._app_configuration['payloads']['extensions']:
