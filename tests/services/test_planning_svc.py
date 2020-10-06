@@ -4,7 +4,52 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
+
+
+stop_bucket_exhaustion_params = [
+    {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
+    {'stopping_condition_met': True , 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': True},
+    {'stopping_condition_met': False, 'operation_state': 'FINISHED' , 'condition_stop': True, 'assert_value': True},
+    {'stopping_condition_met': True, 'operation_state': 'FINISHED' , 'condition_stop': True , 'assert_value': True },
+    {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': False , 'assert_value': False }
+]
+
+
+class PlannerFake:
+    def __init__(self, operation):
+        self.state_machine = ['one', 'two', 'three', 'four']
+        self.next_bucket = 'one'
+        self.stopping_condition_met = False
+        self.stopping_conditions = [Fact(trait='j.g.b', value='good')]
+        self.calls = []
+        self.operation = operation
+
+    async def one(self):
+        self.calls.append('one')
+        self.next_bucket = 'two'
+
+    async def two(self):
+        self.calls.append('two')
+        self.next_bucket = 'three'
+
+    async def three(self):
+        self.calls.append('three')
+        self.next_bucket = None
+
+    async def four(self):
+        self.calls.append('four')
+        self.next_bucket = None
+
+
+def planner_stub(**kwargs):
+    """Creates Planner stub with supplied properties."""
+    class PlannerStub:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+    return PlannerStub(**kwargs)
 
 
 @pytest.fixture
@@ -26,6 +71,17 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
     ))
 
     yield tability, tagent, toperation
+
+
+@pytest.fixture(params=stop_bucket_exhaustion_params)
+def stop_bucket_exhaustion_setup(request, setup_planning_test):
+    """
+    Provides setup objects for tests of _stop_bucket_exhaustion().
+    """
+    _, _, operation = setup_planning_test
+    planner = planner_stub(stopping_condition_met=request.param['stopping_condition_met'])
+    operation.state = operation.states[request.param["operation_state"]]
+    return planner, operation, request.param['condition_stop'], request.param['assert_value']
 
 
 class TestPlanningService:
@@ -102,67 +158,28 @@ class TestPlanningService:
         assert sl[1] == l2
         assert sl[2] == l1
 
-    def test_stop_bucket_execution(self, loop, setup_planning_test, planning_svc):
+    def test_stop_bucket_exhaustion(self, loop, stop_bucket_exhaustion_setup, planning_svc):
+        """
+        NOTE: Test runs 5x, each with parameter sets found in 'stop_bucket_exhaustion_params'.
+        """
+        planner, operation, condition_stop, assert_value = stop_bucket_exhaustion_setup
+        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(planner, operation, condition_stop)) is assert_value
+
+    def test_execute_planner(self, loop, setup_planning_test, planning_svc, monkeypatch):
+        """
+        Case 1 - let planner run until it stops itself after bucket 'three'.
+        """
         ability, agent, operation = setup_planning_test
-
-        class PlannerStub:
-            stopping_condition_met = False
-
-        p = PlannerStub()
-        operation.state = operation.states['RUNNING']
-
-        # case 1 - operation running, planner stop condition not met
-        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is False
-        # case 2 - operation running, planner stop condition met
-        p.stopping_condition_met = True
-        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
-        # case 3 - operaton finished, planner stop condition not met
-        operation.state = operation.states['FINISHED']
-        p.stopping_condition_met = False
-        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
-        # case 4 - operation finished, planner stop condition met
-        p.stopping_condition_met = True
-        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, True)) is True
-        # case 5 - case 2 with condition stop off
-        operation.state = operation.states['RUNNING']
-        assert loop.run_until_complete(planning_svc._stop_bucket_exhaustion(p, operation, False)) is False
-
-    def test_execute_planner(self, loop, fact, link, setup_planning_test, planning_svc, monkeypatch):
-        ability, agent, operation = setup_planning_test
-        sc = fact(trait='j.g.b', value='good')
-
-        class PlannerFake:
-            def __init__(self, operation):
-                self.state_machine = ['one', 'two', 'three', 'four']
-                self.next_bucket = 'one'
-                self.stopping_condition_met = False
-                self.stopping_conditions = [sc]
-                self.calls = []
-                self.operation = operation
-
-            async def one(self):
-                self.calls.append('one')
-                self.next_bucket = 'two'
-
-            async def two(self):
-                self.calls.append('two')
-                self.next_bucket = 'three'
-
-            async def three(self):
-                self.calls.append('three')
-                self.next_bucket = None  # stopping execution here
-
-            async def four(self):
-                self.calls.append('four')
-                self.next_bucket = None
-
-        # case 1 - let planner run until it stops itself after bucket 'three'
         p = PlannerFake(operation)
         loop.run_until_complete(planning_svc.execute_planner(p))
         assert p.calls == ['one', 'two', 'three']
 
-        # case 2 - start planner but then hijack operation after bucket 'two and flag that stopping condition
-        # been found, thus stopping the planner when it attempt to proceed to next bucket
+    def test_execute_planner_2(self, monkeypatch, loop, planning_svc, setup_planning_test):
+        """
+        Case 2 - start planner but then hijack operation after bucket 'two and flag that stopping condition
+        been found, thus stopping the planner when it attempt to proceed to next bucket
+        """
+        ability, agent, operation = setup_planning_test
         async def stub_update_stopping_condition_met(planner, operation):
             if planner.calls == ['one', 'two']:
                 planner.stopping_condition_met = True
@@ -171,8 +188,12 @@ class TestPlanningService:
         loop.run_until_complete(planning_svc.execute_planner(p))
         assert p.calls == ['one', 'two']
 
-        # case 3 - start planner but then hijack operation and set it to 'FINISH' state, thus
-        # stopping the planner when it attempts to proceed to next bucket
+    def test_execute_planner_3(self, monkeypatch, loop, planning_svc, setup_planning_test):
+        """
+        Case 3 - start planner but then hijack operation and set it to 'FINISH' state, thus
+        stopping the planner when it attempts to proceed to next bucket
+        """
+        ability, agent, operation = setup_planning_test
         async def stub_update_stopping_condition_met_1(planner, operation):
             if planner.calls == ['one']:
                 operation.state = operation.states['FINISHED']
