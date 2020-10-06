@@ -113,3 +113,11 @@ span.psw {
 .config-arg {
     vertical-align: initial;
 }
+p.command {
+    padding: 10px;
+    width: 85%;
+    color: white;
+    font-size: 13px;
+    font-style:italic;
+    background-color: rgba(170, 170, 170, 0.15);
+}
