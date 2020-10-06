@@ -30,10 +30,15 @@
         <a onclick="viewSection('profiles', '/campaign/profiles')">adversaries</a>
         <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
         <div class="nav-header">
-            <p>Administrative</p>
+            <p>Plugins</p>
         </div>
-        <a onclick="display_errors({{ errors }})">Startup errors</a>
-        <a href="/logout">Log out</a>
+        {% for plugin in plugins | sort(attribute='name') %}
+            {% if plugin.address %}
+                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
+            {% else %}
+                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
+            {% endif %}
+        {% endfor %}
         <div class="nav-header">
             <p>Advanced</p>
         </div>
@@ -44,15 +49,10 @@
         <a onclick="viewSection('obfuscators', '/advanced/obfuscators')">obfuscators</a>
         <a onclick="viewSection('configuration', '/advanced/configurations')">configuration</a>
         <div class="nav-header">
-            <p>Plugins</p>
+            <p>Administrative</p>
         </div>
-        {% for plugin in plugins %}
-            {% if plugin.address %}
-                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
-            {% else %}
-                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
-            {% endif %}
-        {% endfor %}
+        <a onclick="display_errors({{ errors }})">Startup errors</a>
+        <a href="/logout">Log out</a>
         <br>
     </div>
 
