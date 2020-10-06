@@ -161,58 +161,19 @@
             <div class="row">
                 <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
                 <div class="column" style="flex:92%">
-                    <div style="display: flex; padding: 0px 50px;">
-                        <div>
-                            <h3 class="tab-title active" onclick="switchModalTab(this)" data-tab="modal-presets">Preset Commands</h3>
-                            <hr class="tab-line active">
-                        </div>
-                        <div>
-                            <h3 class="tab-title" onclick="switchModalTab(this)" data-tab="modal-configure">Configure</h3>
-                            <hr class="tab-line">
-                        </div>
-                    </div>
-                    <div id="tab-content">
-                        <div id="modal-presets" class="tab-page">
-                            <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
-                                <option disabled selected>Choose an agent</option>
-                                {% for i,a in abilities.items() %}
-                                <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
-                                {% endfor %}}
-                            </select>
-                            <br>
-                            <select id="chosen-platform" onchange="filterCommands()" style="width:33%;">
-                                <option selected value="">All platforms</option>
-                            </select>
-                            <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
-                            <ul id="variations"></ul>
-                        </div>
-                        <div id="modal-configure" class="tab-page" style="display:none">
-                            <div id="modal-conf-type">
-                               <select id="conf-chosen-agent" onchange="selectAgent(this)" style="width:33%;">
-                                    <option disabled selected>Choose an agent</option>
-                                    {% for i,a in abilities.items() %}
-                                    <option value="{{ i }}">{{ a[0].name }}</option>
-                                    {% endfor %}}
-                                </select>
-                                <br>
-                                <select id="conf-chosen-platform" onchange=selectPlatform(this) style="width:33%;">
-                                    <option selected disabled>All platforms</option>
-                                </select>
-                                <br>
-                                <select id="conf-chosen-executor" onchange=selectExecutor(this) style="width:33%;">
-                                    <option selected disabled>All executors</option>
-                                </select>
-                                <table id="conf-arguments" style="margin:auto; padding: 25px 0px"></table>
-                                <table id="conf-command-box" class="conf-command">
-                                    <tr>
-                                        <td>
-                                            <img id="conf-platform-icon" class="golden conf-icon">
-                                        </td>
-                                        <td id="conf-command" contenteditable="true"></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
+                    <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
+                        <option disabled selected>Choose an agent</option>
+                        {% for i,a in abilities.items() %}
+                        <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
+                        {% endfor %}}
+                    </select>
+                    <br>
+                    <select id="chosen-platform" onchange="filterCommands()" style="width:33%;">
+                        <option selected value="">All platforms</option>
+                    </select>
+                    <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
+                    <table id="conf-arguments" style="margin:auto; padding: 25px 0px; display: none"></table>
+                    <ul id="variations"></ul>
                     </div>
                 </div>
             </div>
@@ -229,14 +190,14 @@
             </tr>
             <tr>
                 <td></td>
-                <td><p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p></td>
+                <td><p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;" contenteditable="true"></p></td>
             </tr>
         </table>
     </div>
 </div>
 
 <script>
-    var agentData, appConfig;
+    var agentAbilityData, appConfig;
 
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
@@ -445,18 +406,28 @@
 
     function displayCommand(){
         function displayMe(data){
-            data.forEach(function(ability) {
-                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description, ability.test));
-                ability.variations.forEach(function(v) {
-                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description, v.command));
+            agentAbilityData = data["abilities"];
+            appConfig = data["app_config"];
+            data["abilities"].forEach(function(ability, agentIdx) {
+                addConfigArguments(ability.command);
+                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description,
+                                                       ability.command, agentIdx, null));
+                ability.variations.forEach(function(v, variationIdx) {
+                    addConfigArguments(v.command);
+                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description,
+                                                           v.command, agentIdx, variationIdx));
                 });
             });
-            populatePlatforms(data);
+            replaceProps();
+            $("#conf-arguments").show();
+            populatePlatforms(data["abilities"]);
+
+
         }
-        function populatePlatforms(data){
+        function populatePlatforms(abilities){
             $("#chosen-platform").empty();
             $("#chosen-platform").append("<option selected value=''>All platforms</option>");
-            data.forEach(function(ability) {
+            abilities.forEach(function(ability) {
                 if ($("#chosen-platform option[value='" + ability.platform + "']").length == 0) {
                     $("#chosen-platform").append('<option value="' + ability.platform + '">' + ability.platform + '</option>')
                 }
@@ -464,7 +435,8 @@
         }
         let variations = $('#variations');
         variations.empty();
-        restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
+        $("#conf-arguments").empty();
+        restRequest('POST', {'index':'agent_configuration','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
     }
 
     function filterCommands(){
@@ -478,88 +450,52 @@
         });
     }
 
-    function buildAbilityTemplate(platform, executor, description, command){
+    function buildAbilityTemplate(platform, executor, description, command, agentIdx, variationIdx){
         let template = $('#variation-template').clone();
         template.attr('id', 'command-variation');
         template.find('#description').text(description + ' ('+executor+')');
-        template.find('#command').text(atob(command));
+        template.find('#command').text(command);
+        template.find('#command').addClass('command');
+        template.find('#command').data('agent-index', agentIdx);
+        template.find('#command').data('variation-index', variationIdx);
         template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
         template.data('platform', platform);
         template.show();
         return template;
     }
 
-    function switchModalTab(clickedTab) {
-        $(".tab-title").removeClass("active");
-        $(".tab-line").removeClass("active");
-        $(".tab-page").hide();
-        $(clickedTab).addClass("active");
-        $(clickedTab).parent().find(".tab-line").addClass("active");
-        $("#" + clickedTab.dataset.tab).show();
-    }
-
-    function selectAgent(agentSelect) {
-        function populatePlatforms(data){
-            $("#conf-chosen-platform").empty();
-            $("#conf-chosen-platform").append("<option selected disabled>All platforms</option>");
-            $("#conf-chosen-executor").empty();
-            $("#conf-chosen-executor").append("<option selected disabled>All executors</option>");
-            $("#conf-arguments").empty();
-            $("#conf-command-box").hide();
-            agentData = data['platforms'];
-            appConfig = data['app_config'];
-            for (var platform in agentData) {
-                if ($("#conf-chosen-platform option[value='" + platform + "']").length == 0) {
-                    $("#conf-chosen-platform").append('<option value="' + platform + '">' + platform + '</option>');
-                }
-            }
-        }
-        restRequest('POST', {'index': 'agent_configuration', 'ability_id': agentSelect.value}, populatePlatforms);
-    }
-
-    function selectPlatform(platformSelect) {
-        $("#conf-chosen-executor").empty();
-        $("#conf-chosen-executor").append("<option selected disabled >All executors</option>");
-        for (var executor in agentData[platformSelect.value]) {
-            if ($("#conf-chosen-executor option[value='" + executor + "']").length == 0) {
-                let optionHTML = $('<option value="' + executor + '">' + executor + '</option>')
-                $("#conf-chosen-executor").append(optionHTML);
-                if (Object.keys(agentData[platformSelect.value]).length == 1) {
-                    optionHTML.attr("selected", true);
-                    selectExecutor($("#conf-chosen-executor")[0]);
-                }
-            }
-        }
-        $('#conf-platform-icon').attr('src', '/gui/img/' + platformSelect.value + '.png');
-    }
-
-    function selectExecutor(executorSelect) {
-        let command = agentData[$("#conf-chosen-platform").val()][executorSelect.value]["command"];
-        let args = Array.from(command.matchAll(/#{(.+?)}/g));
-
-        if ($("#conf-arguments").html() == "") {
-            args.forEach(function(arg) {
-                let capturedGroup = arg[1];
-                let argHTML = "<tr class='config-arg'><td><label>" + capturedGroup + "</label></td><td>" +
-                    "<input placeholder='" + appConfig[capturedGroup] + "' oninput='replaceProps()'></td></tr>";
-                $("#conf-arguments").append(argHTML);
-            });
-        }
-        replaceProps();
-        $("#conf-command-box").show();
-    }
-
-    function replaceProps() {
-        let command = agentData[$("#conf-chosen-platform").val()][$("#conf-chosen-executor").val()]["command"];
+    function addConfigArguments(command) {
         let args = Array.from(command.matchAll(/#{(.+?)}/g));
         args.forEach(function(arg) {
             let capturedGroup = arg[1];
-            let input = $("#conf-arguments label:contains('" + capturedGroup + "')").closest("tr").find("input");
-            let inputValue = input.val() ? input.val() : input.attr("placeholder");
+            if ($(".config-arg[data-contact='" + capturedGroup + "']").length == 0) {
+                let argHTML = "<tr class='config-arg' data-contact='" + capturedGroup +"'><td><label>" + capturedGroup + "</label></td><td>" +
+                    "<input placeholder='" + appConfig[capturedGroup] + "' oninput='replaceProps()'></td></tr>";
+                $("#conf-arguments").append(argHTML);
+            }
+        });
+    }
 
-            command = command.replace(arg[0], inputValue);
+    function replaceProps() {
+        $(".command").each(function(i, elem) {
+            let command = "";
+            let agentIdx = $(elem).data("agent-index");
+            let variationIdx = $(elem).data("variation-index");
+            if ($(elem).data("variation-index") != null) {
+                command = agentAbilityData[agentIdx].variations[variationIdx].command;
+            }
+            else {
+                command = agentAbilityData[agentIdx].command;
+            }
+            let args = Array.from(command.matchAll(/#{(.+?)}/g));
+            args.forEach(function(arg) {
+                let capturedGroup = arg[1];
+                let input = $("#conf-arguments label:contains('" + capturedGroup + "')").closest("tr").find("input");
+                let inputValue = input.val() ? input.val() : input.attr("placeholder");
+                command = command.replace(arg[0], inputValue);
+            })
+            $(elem).html(command);
         })
-        $("#conf-command").html(command);
     }
 
     //# sourceURL=agents.js

@@ -100,30 +100,6 @@ span.psw {
 #alert-modal {
     z-index: 120;
 }
-.tab-title {
-    font-weight: 500;
-    font-size: 20px;
-    line-height: 45px;
-    margin: 0px;
-    width: 200px;
-    cursor: pointer;
-}
-.tab-title:hover {
-    color: #750b20;
-}
-.tab-line {
-    height: 4px;
-    border-width: 0px;
-    background-color: transparent;
-    width: 85%;
-}
-.active {
-    color: #750b20;
-}
-
-hr.active {
-    background-color: #750b20;
-}
 .config-arg input {
     padding: 5px;
     margin: 5px;
@@ -136,21 +112,4 @@ hr.active {
 }
 .config-arg {
     vertical-align: initial;
-}
-.conf-icon {
-    height: 25px;
-}
-#conf-command {
-    padding: 10px;
-    background-color: rgba(170, 170, 170, 0.15);
-    color: white;
-    text-align: left;
-    font-size: 13px;
-    font-style: italic;
-}
-.conf-command {
-    margin: auto;
-    padding-left:65px;
-    border-spacing: 15px;
-    display: none;
 }
