@@ -186,7 +186,7 @@
                             <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
                             <ul id="variations"></ul>
                         </div>
-                        <div id="modal-configure" class="tab-page" style="text-align: left; display:none">
+                        <div id="modal-configure" class="tab-page" style="display:none">
                             <div id="modal-conf-type">
                                <select id="conf-chosen-agent" onchange="selectAgent(this)" style="width:33%;">
                                     <option disabled selected>Choose an agent</option>
@@ -202,10 +202,15 @@
                                 <select id="conf-chosen-executor" onchange=selectExecutor(this) style="width:33%;">
                                     <option selected disabled>All executors</option>
                                 </select>
-                                <table id="conf-arguments" style="margin-left:10px;"></table>
-                                <div style="padding: 10px; margin: 10px">
-                                    <p id="conf-command" style="font-size: 13px; font-style: italic; color: white"></p>
-                                </div>
+                                <table id="conf-arguments" style="margin:auto; padding: 25px 0px"></table>
+                                <table id="conf-command-box" class="conf-command">
+                                    <tr>
+                                        <td>
+                                            <img id="conf-platform-icon" class="golden conf-icon">
+                                        </td>
+                                        <td id="conf-command" contenteditable="true"></td>
+                                    </tr>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -500,7 +505,7 @@
             $("#conf-chosen-executor").empty();
             $("#conf-chosen-executor").append("<option selected disabled>All executors</option>");
             $("#conf-arguments").empty();
-            $("#conf-command").empty();
+            $("#conf-command-box").hide();
             agentData = data['platforms'];
             appConfig = data['app_config'];
             for (var platform in agentData) {
@@ -515,8 +520,6 @@
     function selectPlatform(platformSelect) {
         $("#conf-chosen-executor").empty();
         $("#conf-chosen-executor").append("<option selected disabled >All executors</option>");
-        $("#conf-arguments").empty();
-        $("#conf-command").empty();
         for (var executor in agentData[platformSelect.value]) {
             if ($("#conf-chosen-executor option[value='" + executor + "']").length == 0) {
                 let optionHTML = $('<option value="' + executor + '">' + executor + '</option>')
@@ -527,21 +530,23 @@
                 }
             }
         }
+        $('#conf-platform-icon').attr('src', '/gui/img/' + platformSelect.value + '.png');
     }
 
     function selectExecutor(executorSelect) {
-        $("#conf-arguments").empty();
         let command = agentData[$("#conf-chosen-platform").val()][executorSelect.value]["command"];
         let args = Array.from(command.matchAll(/#{(.+?)}/g));
 
-        args.forEach(function(arg) {
-            let capturedGroup = arg[1];
-            let argHTML = "<tr class='conf-arg'><td><label>" + capturedGroup + "</label></td><td>" +
-                "<input class='config-arg' placeholder='" + appConfig[capturedGroup] + "' onchange='replaceProps()'></td></tr>";
-            $("#conf-arguments").append(argHTML);
-        });
-
+        if ($("#conf-arguments").html() == "") {
+            args.forEach(function(arg) {
+                let capturedGroup = arg[1];
+                let argHTML = "<tr class='config-arg'><td><label>" + capturedGroup + "</label></td><td>" +
+                    "<input placeholder='" + appConfig[capturedGroup] + "' oninput='replaceProps()'></td></tr>";
+                $("#conf-arguments").append(argHTML);
+            });
+        }
         replaceProps();
+        $("#conf-command-box").show();
     }
 
     function replaceProps() {

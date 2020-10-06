@@ -124,14 +124,33 @@ span.psw {
 hr.active {
     background-color: #750b20;
 }
-.config-arg {
+.config-arg input {
     padding: 5px;
-    margin: 10px;
+    margin: 5px;
     text-align: left;
+    font-size: 13px
 }
-label {
+.config-arg label {
     color: white;
+    font-size: 14px
 }
-.conf-arg {
+.config-arg {
     vertical-align: initial;
+}
+.conf-icon {
+    height: 25px;
+}
+#conf-command {
+    padding: 10px;
+    background-color: rgba(170, 170, 170, 0.15);
+    color: white;
+    text-align: left;
+    font-size: 13px;
+    font-style: italic;
+}
+.conf-command {
+    margin: auto;
+    padding-left:65px;
+    border-spacing: 15px;
+    display: none;
 }
