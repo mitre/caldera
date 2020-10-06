@@ -10,10 +10,10 @@ from app.utility.base_world import BaseWorld
 
 stop_bucket_exhaustion_params = [
     {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
-    {'stopping_condition_met': True , 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': True},
-    {'stopping_condition_met': False, 'operation_state': 'FINISHED' , 'condition_stop': True, 'assert_value': True},
-    {'stopping_condition_met': True, 'operation_state': 'FINISHED' , 'condition_stop': True , 'assert_value': True },
-    {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': False , 'assert_value': False }
+    {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': True},
+    {'stopping_condition_met': False, 'operation_state': 'FINISHED', 'condition_stop': True, 'assert_value': True},
+    {'stopping_condition_met': True, 'operation_state': 'FINISHED', 'condition_stop': True, 'assert_value': True},
+    {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': False, 'assert_value': False}
 ]
 
 
@@ -180,6 +180,7 @@ class TestPlanningService:
         been found, thus stopping the planner when it attempt to proceed to next bucket
         """
         ability, agent, operation = setup_planning_test
+
         async def stub_update_stopping_condition_met(planner, operation):
             if planner.calls == ['one', 'two']:
                 planner.stopping_condition_met = True
@@ -194,6 +195,7 @@ class TestPlanningService:
         stopping the planner when it attempts to proceed to next bucket
         """
         ability, agent, operation = setup_planning_test
+
         async def stub_update_stopping_condition_met_1(planner, operation):
             if planner.calls == ['one']:
                 operation.state = operation.states['FINISHED']
