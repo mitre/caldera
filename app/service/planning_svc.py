@@ -10,7 +10,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     def __init__(self):
         super().__init__()
         self.log = self.add_service('planning_svc', self)
-        self.root_event_channel = 'planner'
 
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
         """Apply all links for specified bucket
@@ -121,11 +120,11 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
-            await self.publish_event(event='bucket',
-                                     msg=f'Bucket transition: {bucket}',
-                                     operation_id=planner.operation.id,
-                                     operation_name=planner.operation.name,
-                                     ts=str(datetime.datetime.now()))
+            await self.get_service('event_svc').fire_event(
+                event='planner',
+                msg=f'Bucket transition: {bucket}',
+                operation_id=planner.operation.id,
+                operation_name=planner.operation.name)
 
         while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
                 and not await planner.operation.is_finished():
@@ -259,23 +258,23 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
 
-    async def publish_event(self, event=None, **callback_kwargs):
-        """Proxy access to event service to fire any events related to
-        planner operation.
+    # async def publish_event(self, event=None, **callback_kwargs):
+    #     """Proxy access to event service to fire any events related to
+    #     planner operation.
 
-        All events are nested under 'planner/' scope
+    #     All events are nested under 'planner/' scope
 
-        :param event: event name/tag
-        :type event: str
-        :param callback_kwargs: keyword args to pass to event handler
-        :type callback_kwargs: keyword args
+    #     :param event: event name/tag
+    #     :type event: str
+    #     :param callback_kwargs: keyword args to pass to event handler
+    #     :type callback_kwargs: keyword args
 
-        """
-        if event:
-            event_path = '/'.join([self.root_event_channel, event])
-        else:
-            event_path = self.root_event_channel
-        return await self.get_service('event_svc').fire_event(event_path, **callback_kwargs)
+    #     """
+    #     if event:
+    #         event_path = '/'.join([self.root_event_channel, event])
+    #     else:
+    #         event_path = self.root_event_channel
+    #     return await self.get_service('event_svc').fire_event(event_path, **callback_kwargs)
 
     @staticmethod
     async def sort_links(links):
