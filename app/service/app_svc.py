@@ -143,6 +143,11 @@ class AppService(AppServiceInterface, BaseService):
         if not self.check_requirement(params):
             msg = '%s does not meet the minimum version of %s' % (requirement, params['version'])
             if params.get('optional', False):
+                msg = '. '.join([
+                    msg,
+                    '%s is an optional dependency and its absence will not affect Caldera\'s core operation' % requirement.capitalize(),
+                    params.get('reason', '')
+                ])
                 self.log.warning(msg)
             else:
                 self.log.error(msg)
