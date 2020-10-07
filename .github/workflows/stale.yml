@@ -17,5 +17,6 @@ jobs:
         stale-pr-label: 'no-pr-activity'
         stale-pr-message: 'This issue is stale because it has been open 20 days with no activity. Remove stale label or comment or this will be closed in 5 days'
         stale-issue-message: 'This issue is stale because it has been open 20 days with no activity. Remove stale label or comment or this will be closed in 5 days'
+        exempt-issue-labels: 'feature'
         days-before-stale: 20
         days-before-close: 5
