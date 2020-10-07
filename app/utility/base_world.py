@@ -122,7 +122,7 @@ class BaseWorld:
             return compare_versions(mod_version, version)
 
         def check_program_version(command, version, **kwargs):
-            output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False)
+            output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False, timeout=10)
             return compare_versions(output.decode('utf-8'), version)
 
         def compare_versions(version_string, minimum_version):
@@ -143,8 +143,11 @@ class BaseWorld:
         try:
             requirement_type = params.get('type')
             return checkers[requirement_type](**params)
+        except FileNotFoundError:
+            return False
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
+            return False
 
     @staticmethod
     def get_version(path='.'):
