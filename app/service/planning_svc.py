@@ -46,10 +46,10 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 if batch:
                     l_ids.append(l_id)
                 else:
-                    if await self.execute_links(planner, operation, [l_id], condition_stop):
+                    if await self.wait_for_links_and_monitor(planner, operation, [l_id], condition_stop):
                         return
             if batch:
-                if await self.execute_links(planner, operation, l_ids, condition_stop):
+                if await self.wait_for_links_and_monitor(planner, operation, l_ids, condition_stop):
                     return
 
     async def wait_for_links_and_monitor(self, planner, operation, link_ids, condition_stop):
