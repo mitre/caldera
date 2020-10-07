@@ -249,6 +249,19 @@ class RestService(RestServiceInterface, BaseService):
             operation[0].obfuscator = obfuscator
             self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
 
+    async def get_agent_configuration(self, data):
+        abilities = await self.get_service('data_svc').locate('abilities', data)
+
+        raw_abilities = [{'platform': ability.platform, 'executor': ability.executor,
+                          'description': ability.description, 'command': ability.raw_command,
+                          'variations': [{'description': v.description, 'command': v.raw_command}
+                                         for v in ability.variations]}
+                         for ability in abilities]
+
+        app_config = {k: v for k, v in self.get_config().items() if k.startswith('app.')}
+
+        return dict(abilities=raw_abilities, app_config=app_config)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):

@@ -100,3 +100,24 @@ span.psw {
 #alert-modal {
     z-index: 120;
 }
+.config-arg input {
+    padding: 5px;
+    margin: 5px;
+    text-align: left;
+    font-size: 13px
+}
+.config-arg label {
+    color: white;
+    font-size: 14px
+}
+.config-arg {
+    vertical-align: initial;
+}
+p.command {
+    padding: 10px;
+    width: 85%;
+    color: white;
+    font-size: 13px;
+    font-style:italic;
+    background-color: rgba(170, 170, 170, 0.15);
+}

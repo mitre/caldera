@@ -21,6 +21,10 @@ class Variation(BaseObject):
     def command(self):
         return self.replace_app_props(self._command)
 
+    @property
+    def raw_command(self):
+        return self.decode_bytes(self._command)
+
     def __init__(self, description, command):
         super().__init__()
         self.description = description

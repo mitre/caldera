@@ -63,6 +63,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return '%s%s%s' % (self.ability_id, self.platform, self.executor)
 
+    @property
+    def raw_command(self):
+        return self.decode_bytes(self._test)
+
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
@@ -110,7 +114,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('technique_name', self.technique_name)
         existing.update('technique_id', self.technique_id)
         existing.update('name', self.name)
-        existing.update('_test', self.test)
+        existing.update('_test', self._test)
         existing.update('description', self.description)
         existing.update('cleanup', self.cleanup)
         existing.update('executor', self.executor)

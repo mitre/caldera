@@ -164,7 +164,7 @@
                     <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
                         <option disabled selected>Choose an agent</option>
                         {% for i,a in abilities.items() %}
-                            <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
+                        <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
                         {% endfor %}}
                     </select>
                     <br>
@@ -172,7 +172,9 @@
                         <option selected value="">All platforms</option>
                     </select>
                     <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
+                    <table id="conf-arguments" style="margin:auto; padding-top: 25px; display: none"></table>
                     <ul id="variations"></ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -188,13 +190,15 @@
             </tr>
             <tr>
                 <td></td>
-                <td><p id="command" style="color:white;font-size:13px;font-style:italic;width:70%;"></p></td>
+                <td><p id="command" contenteditable="true"></p></td>
             </tr>
         </table>
     </div>
 </div>
 
 <script>
+    var agentAbilityData, appConfig;
+
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
         clearInterval(refresher);
@@ -402,18 +406,28 @@
 
     function displayCommand(){
         function displayMe(data){
-            data.forEach(function(ability) {
-                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description, ability.test));
-                ability.variations.forEach(function(v) {
-                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description, v.command));
+            agentAbilityData = data["abilities"];
+            appConfig = data["app_config"];
+            data["abilities"].forEach(function(ability, agentIdx) {
+                addConfigArguments(ability.command);
+                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description,
+                                                       ability.command, agentIdx, null));
+                ability.variations.forEach(function(v, variationIdx) {
+                    addConfigArguments(v.command);
+                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description,
+                                                           v.command, agentIdx, variationIdx));
                 });
             });
-            populatePlatforms(data);
+            replaceProps();
+            $("#conf-arguments").show();
+            populatePlatforms(data["abilities"]);
+
+
         }
-        function populatePlatforms(data){
+        function populatePlatforms(abilities){
             $("#chosen-platform").empty();
             $("#chosen-platform").append("<option selected value=''>All platforms</option>");
-            data.forEach(function(ability) {
+            abilities.forEach(function(ability) {
                 if ($("#chosen-platform option[value='" + ability.platform + "']").length == 0) {
                     $("#chosen-platform").append('<option value="' + ability.platform + '">' + ability.platform + '</option>')
                 }
@@ -421,7 +435,8 @@
         }
         let variations = $('#variations');
         variations.empty();
-        restRequest('POST', {'index':'abilities','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
+        $("#conf-arguments").empty();
+        restRequest('POST', {'index':'agent_configuration','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
     }
 
     function filterCommands(){
@@ -435,15 +450,52 @@
         });
     }
 
-    function buildAbilityTemplate(platform, executor, description, command){
+    function buildAbilityTemplate(platform, executor, description, command, agentIdx, variationIdx){
         let template = $('#variation-template').clone();
         template.attr('id', 'command-variation');
         template.find('#description').text(description + ' ('+executor+')');
-        template.find('#command').text(atob(command));
+        template.find('#command').text(command);
+        template.find('#command').addClass('command');
+        template.find('#command').data('agent-index', agentIdx);
+        template.find('#command').data('variation-index', variationIdx);
         template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
         template.data('platform', platform);
         template.show();
         return template;
+    }
+
+    function addConfigArguments(command) {
+        let args = Array.from(command.matchAll(/#{(.+?)}/g));
+        args.forEach(function(arg) {
+            let capturedGroup = arg[1];
+            if ($(".config-arg[data-contact='" + capturedGroup + "']").length == 0) {
+                let argHTML = "<tr class='config-arg' data-contact='" + capturedGroup +"'><td><label>" + capturedGroup + "</label></td><td>" +
+                    "<input placeholder='" + appConfig[capturedGroup] + "' oninput='replaceProps()'></td></tr>";
+                $("#conf-arguments").append(argHTML);
+            }
+        });
+    }
+
+    function replaceProps() {
+        $(".command").each(function(i, elem) {
+            let command = "";
+            let agentIdx = $(elem).data("agent-index");
+            let variationIdx = $(elem).data("variation-index");
+            if ($(elem).data("variation-index") != null) {
+                command = agentAbilityData[agentIdx].variations[variationIdx].command;
+            }
+            else {
+                command = agentAbilityData[agentIdx].command;
+            }
+            let args = Array.from(command.matchAll(/#{(.+?)}/g));
+            args.forEach(function(arg) {
+                let capturedGroup = arg[1];
+                let input = $("#conf-arguments label:contains('" + capturedGroup + "')").closest("tr").find("input");
+                let inputValue = input.val() ? input.val() : input.attr("placeholder");
+                command = command.replace(arg[0], inputValue);
+            })
+            $(elem).html(command);
+        })
     }
 
     //# sourceURL=agents.js
