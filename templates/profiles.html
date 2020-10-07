@@ -81,7 +81,7 @@
                                 <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
                             <tr>
                             <tr>
-                                <td style="width:10%"><b>technique:</b></td>
+                                <td style="width:10%"><b>technique id:</b></td>
                                 <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
                             </tr>
                             <tr>
@@ -163,13 +163,14 @@
             <div class="topleftnum">
                 <div class="ability-order">*</div>
             </div>
-            <table class="bottomright">
-                <tr id="ability-metadata"></tr>
-            </table>
+            <div id="ability-metadata" class="bottomright">
+            </div>
             <div id="icon-row" class="icon-row"></div>
         </div>
     </center>
 </div>
+
+<span id="ability-tooltip" class="tooltiptext"></span>
 
 <div id="adv-objective-modal" class="modal">
     <form class="modal-content">
@@ -293,6 +294,16 @@
         stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
         addPhase(1);
     });
+
+    $(document).on("mouseover", ".tooltip", function(event) {
+        $("#ability-tooltip").show();
+        $("#ability-tooltip").css({left: event.clientX + 10, top: event.pageY, 'z-index':100});
+        $("#ability-tooltip").html(this.dataset.text);
+    })
+
+    $(document).on("mouseout", ".tooltip", function(event) {
+        $("#ability-tooltip").hide();
+    })
 
     function toggleAdversaryView() {
         $('#profile-existing-name option:eq(0)').prop('selected', true);
@@ -536,16 +547,16 @@
         template.find('#ability-attack').html(ability.tactic + ' | '+ ability.technique_name);
 
         if(requirements.length > 0) {
-            template.find('#ability-metadata').append('<td><div id="ability-padlock"><div class="tooltip"><span class="tooltiptext">This ability has requirements</span>&#128274;</div></div></td>');
+            template.find('#ability-metadata').append('<div id="ability-padlock" style="padding: 0 2;"><div class="tooltip" data-text="This ability has requirements">&#128274;</div></div>');
         }
         if(ability.cleanup) {
-            template.find('#ability-metadata').append('<td><div id="ability-broom"><div class="tooltip"><span class="tooltiptext">This ability can clean itself up</span>&#128465;</div></div></td>');
+            template.find('#ability-metadata').append('<div id="ability-broom" style="padding: 0 2;"><div class="tooltip" data-text="This ability can clean itself up">&#128465;</div></div>');
         }
         if(ability.parsers.length > 0) {
-           template.find('#ability-metadata').append('<td><div id="ability-parser"><div class="tooltip"><span class="tooltiptext">This ability unlocks other abilities</span>&#128273;</div></div></td>');
+           template.find('#ability-metadata').append('<div id="ability-parser" style="padding: 0 2;"><div class="tooltip" data-text="This ability unlocks other abilities">&#128273;</div></div>');
         }
         if(ability.payloads.length > 0) {
-           template.find('#ability-metadata').append('<td><div id="ability-payload"><div class="tooltip"><span class="tooltiptext">This ability uses a payload</span>&#128176;</div></div></td>');
+           template.find('#ability-metadata').append('<div id="ability-payload" style="padding: 0 2;"><div class="tooltip" data-text="This ability uses a payload">&#128176;</div></div>');
         }
         template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div><div class="ability-show">?</div>');
         template.find('.ability-remove').click(function() {
@@ -568,7 +579,7 @@
             else if(exec === 'pwsh') {exec = 'powershell core';}
             else if(exec === 'sh') {exec = 'shell';}
             else if(exec === 'cmd') {exec = 'commandline';}
-            let icon = $('<div class="tooltip"><span class="tooltiptext">Works on '+p+' ('+ exec +')</span><img src="/gui/img/'+p+'.png"/></div>');
+            let icon = $('<div class="tooltip" data-text="Works on '+p+' ('+ exec +')"></span><img src="/gui/img/'+p+'.png"/></div>');
             icon.appendTo(template.find('#icon-row'));
         });
         template.show();

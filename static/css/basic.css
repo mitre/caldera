@@ -156,6 +156,14 @@
     text-align: left;
     padding-bottom: 20px;
 }
+.pane-header-editable input,
+.fillable-table input {
+    background-color: inherit;
+    border: none;
+    color: var(--font-color);
+    text-align: left;
+    padding: 0;
+}
 .op-selected {
     visibility: hidden;
 }
@@ -299,8 +307,77 @@
 #pack-phases td {
     padding: 5px 8px;
 }
-#source-rules li {
-    list-style-type:none;
+.source-modal h3 {
+    text-align: center;
+    margin: 2px 0 20px;
+}
+.source-modal ul {
+    padding: 0 5%;
+}
+.source-modal .column > p {
+    width: 93%;
+    color: white;
+    text-align: right;
+}
+.source-modal .column > p.source-note {
+    font-size: 12px;
+}
+.source-row {
+    width: 100%;
+    margin: 2em auto;
+    list-style-type: none;
+}
+.source-row table {
+    width: 100%;
+    table-layout: fixed;
+}
+.source-row p {
+    font-size: 11px;
+    text-align: center;
+}
+.source-row input {
+    width: 100%;
+    padding: 0 15px;
+}
+#source-rules td:nth-child(1) {
+    width: 15%;
+}
+#source-rules td:nth-child(2) {
+    width: 85%;
+}
+#source-rules td:nth-child(3) {
+    width: 5%;
+}
+#source-relationships td:nth-child(1) {
+    width: 10%;
+}
+#source-relationships td:nth-child(2) {
+    width: 25%;
+}
+#source-relationships td:nth-child(3) {
+    width: 60%;
+}
+#source-relationships td:nth-child(4) {
+    width: 5%;
+}
+#factTbl {
+    table-layout: fixed;
+}
+#factTbl th {
+    text-align: left;
+}
+#factTbl th:nth-child(1) {
+    width: 20%;
+}
+#factTbl th:nth-child(2) {
+    width: 75%;
+}
+#factTbl th:nth-child(3) {
+    width: 5%;
+}
+#factTbl td p {
+    overflow-wrap: anywhere;
+    word-break: break-all;
 }
 .topright {
     position: absolute;
@@ -340,6 +417,8 @@
     bottom: 0;
     right: 0;
     padding: 10px;
+    display: flex;
+    z-index: 1;
 }
 .phase-headers {
     text-align: left;
@@ -560,6 +639,12 @@ table.dataTable input[type=text] {
   text-align: center; /* To center it horizontally (if you want) */
   line-height: 30px; /* To center it vertically */
   color: black;
+}
+.default-option {
+    color: gray;
+}
+#resultCmd {
+    overflow-wrap: anywhere;
 }
 .dotted {
     border: 1px solid white;

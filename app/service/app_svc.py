@@ -104,7 +104,7 @@ class AppService(AppServiceInterface, BaseService):
                 await self.get_service('data_svc').store(plugin)
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
-                self.log.debug('Enabled plugin: %s' % plugin.name)
+                self.log.info('Enabled plugin: %s' % plugin.name)
                 if not plugin.version:
                     self._errors.append(Error(plugin.name, 'plugin code is not a release version'))
 

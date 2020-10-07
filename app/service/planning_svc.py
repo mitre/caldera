@@ -37,16 +37,20 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type condition_stop: bool, optional
         """
         l_ids = []
-        for l in await self.get_links(operation, [bucket], agent):
-            l_id = await operation.apply(l)
+        while True:
+            links = await self.get_links(operation, [bucket], agent)
+            if len(links) == 0:
+                break
+            for l in links:
+                l_id = await operation.apply(l)
+                if batch:
+                    l_ids.append(l_id)
+                else:
+                    if await self.execute_links(planner, operation, [l_id], condition_stop):
+                        return
             if batch:
-                l_ids.append(l_id)
-            else:
-                if await self.wait_for_links_and_monitor(planner, operation, [l_id], condition_stop):
+                if await self.execute_links(planner, operation, l_ids, condition_stop):
                     return
-        if batch:
-            if await self.wait_for_links_and_monitor(planner, operation, l_ids, condition_stop):
-                return
 
     async def wait_for_links_and_monitor(self, planner, operation, link_ids, condition_stop):
         """Wait for link completion, update stopping conditions and
@@ -119,8 +123,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
             await self.get_service('event_svc').fire_event(
-                queue='planner',
-                event=f'Bucket transition: {bucket}',
+                exchange='planner', queue='bucket_transition',
+                bucket=bucket,
                 operation_id=planner.operation.id,
                 operation_name=planner.operation.name)
 
@@ -328,7 +332,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         return agent_cleanup_links
 
     async def _generate_new_links(self, operation, agent, abilities, link_status):
-        """Generate cleanup links with given status
+        """Generate links with given status
 
         :param operation: Operation to generate links on
         :type operation: Operation
@@ -338,7 +342,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type agent: list(Ability)
         :param link_status: Link status, referencing link state dict
         :type link_status: int
-        :return: Cleanup links for agent
+        :return: Links for agent
         :rtype: list(Link)
         """
         links = []

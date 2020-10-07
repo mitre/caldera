@@ -129,7 +129,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def close(self, services):
         await self._cleanup_operation(services)
         await self._save_new_source(services)
-        await services.get('event_svc').fire_event(queue='operation', event='completed', op=self.id)
+        await services.get('event_svc').fire_event(exchange='operation', queue='completed', op=self.id)
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
@@ -154,7 +154,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             member = [member for member in self.agents if member.paw == link.paw][0]
-            while not link.finish or link.can_ignore():
+            while not (link.finish or link.can_ignore()):
                 await asyncio.sleep(5)
                 if not member.trusted:
                     break
@@ -272,7 +272,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
-                                                     op_facts=[f.display for f in self.all_facts()],
+                                                     op_facts=[f.trait for f in self.all_facts()],
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:

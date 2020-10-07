@@ -97,3 +97,6 @@ span.psw {
     color: #7a1f1f;
     cursor: pointer;
 }
+#alert-modal {
+    z-index: 120;
+}

@@ -36,20 +36,29 @@ function populateTechniques(parentId, exploits){
     });
 }
 
-function populateAbilities(parentId, exploits){
-    exploits = addPlatforms(exploits);
-    let parent = $('#'+parentId);
-    $(parent).find('#ability-ability-filter').empty();
+/**
+ * Populate the abilities dropdown based on selected technique
+ * @param {string} parentId - Parent ID used to search for dropdowns
+ * @param {object[]} abilities - Abilities object array
+ */
+function populateAbilities (parentId, abilities) {
+    abilities = addPlatforms(abilities);
+    let parent = $('#' + parentId);
 
-    let showing = [];
-    let attack_id = $(parent).find('#ability-technique-filter').find(":selected").data('technique');
-    exploits.forEach(function(ability) {
-        if(attack_id === ability.technique_id) {
-            appendAbilityToList(parentId, ability);
-            showing += 1;
+    // Collect abilities matching technique
+    let techniqueAbilities = [];
+    let attack_id = $(parent).find('#ability-technique-filter').find(':selected').data('technique');
+    abilities.forEach(function (ability) {
+        if (ability.technique_id === attack_id) {
+            techniqueAbilities.push(ability);
         }
     });
-    $(parent).find('#ability-ability-filter').prepend("<option disabled='disabled' selected>"+showing.length+" abilities</option>");
+
+    // Clear, then populate the ability dropdown
+    $(parent).find('#ability-ability-filter').empty().append('<option disabled="disabled" selected>' + techniqueAbilities.length + ' abilities</option>');
+    techniqueAbilities.forEach(function (ability) {
+        appendAbilityToList(parentId, ability);
+    });
 }
 
 function appendTechniqueToList(parentId, tactic, value) {
