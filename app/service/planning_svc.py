@@ -1,5 +1,3 @@
-import datetime
-
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
@@ -121,8 +119,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
             await self.get_service('event_svc').fire_event(
-                event='planner',
-                msg=f'Bucket transition: {bucket}',
+                queue='planner',
+                event=f'Bucket transition: {bucket}',
                 operation_id=planner.operation.id,
                 operation_name=planner.operation.name)
 
@@ -257,24 +255,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if planner.stopping_conditions:
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
-
-    # async def publish_event(self, event=None, **callback_kwargs):
-    #     """Proxy access to event service to fire any events related to
-    #     planner operation.
-
-    #     All events are nested under 'planner/' scope
-
-    #     :param event: event name/tag
-    #     :type event: str
-    #     :param callback_kwargs: keyword args to pass to event handler
-    #     :type callback_kwargs: keyword args
-
-    #     """
-    #     if event:
-    #         event_path = '/'.join([self.root_event_channel, event])
-    #     else:
-    #         event_path = self.root_event_channel
-    #     return await self.get_service('event_svc').fire_event(event_path, **callback_kwargs)
 
     @staticmethod
     async def sort_links(links):

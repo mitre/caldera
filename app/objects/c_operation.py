@@ -129,7 +129,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def close(self, services):
         await self._cleanup_operation(services)
         await self._save_new_source(services)
-        await services.get('event_svc').fire_event('operation/completed', op=self.id)
+        await services.get('event_svc').fire_event(queue='operation', event='completed', op=self.id)
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
