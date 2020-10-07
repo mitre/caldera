@@ -17,8 +17,8 @@ class EventService(EventServiceInterface, BaseService):
         self.default_queue = 'general'
 
     async def observe_event(self, callback, exchange=None, queue=None):
-        exchange = exchange if exchange else self.default_exchange
-        queue = queue if queue else self.default_queue
+        exchange = exchange or self.default_exchange
+        queue = queue or self.default_queue
         path = '/'.join([exchange, queue])
         handle = _Handle(path, callback)
         ws_contact = await self.contact_svc.get_contact('websocket')
@@ -33,7 +33,6 @@ class EventService(EventServiceInterface, BaseService):
             self.log.error("WebSocket error: {}".format(e), exc_info=True)
 
     async def fire_event(self, exchange=None, queue=None, timestamp=True, **callback_kwargs):
-        # TODO: need to fix existing references to this that are now broken
         exchange = exchange or self.default_exchange
         queue = queue or self.default_queue
         metadata = {}
