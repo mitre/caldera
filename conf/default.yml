@@ -12,16 +12,17 @@ encryption_key: ADMIN123
 exfil_dir: /tmp
 host: 0.0.0.0
 plugins:
-- sandcat
-- stockpile
-- compass
-- manx
-- response
-- gameboard
-- training
 - access
 - atomic
+- compass
+- debrief
 - fieldmanual
+- gameboard
+- manx
+- response
+- sandcat
+- stockpile
+- training
 port: 8888
 reports_dir: /tmp
 requirements:

@@ -15,6 +15,7 @@ class AdvancedPack(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_route('GET', '/advanced/sources', self._section_sources)
+        self.app_svc.application.router.add_route('GET', '/advanced/objectives', self._section_objectives)
         self.app_svc.application.router.add_route('GET', '/advanced/planners', self._section_planners)
         self.app_svc.application.router.add_route('GET', '/advanced/contacts', self._section_contacts)
         self.app_svc.application.router.add_route('GET', '/advanced/obfuscators', self._section_obfuscators)
@@ -50,3 +51,9 @@ class AdvancedPack(BaseWorld):
     async def _section_sources(self, request):
         access = await self.auth_svc.get_permissions(request)
         return dict(sources=[s.display for s in await self.data_svc.locate('sources', match=dict(access=tuple(access)))])
+
+    @check_authorization
+    @template('objectives.html')
+    async def _section_objectives(self, request):
+        access = await self.auth_svc.get_permissions(request)
+        return dict(objectives=[o.display for o in await self.data_svc.locate('objectives', match=dict(access=tuple(access)))])

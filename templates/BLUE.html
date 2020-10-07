@@ -30,24 +30,24 @@
         <a onclick="viewSection('profiles', '/campaign/profiles')">defenders</a>
         <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
         <div class="nav-header">
-            <p>Administrative</p>
-        </div>
-        <a onclick="display_errors({{ errors }})">Startup errors</a>
-        <a href="/logout">Log out</a>
-        <div class="nav-header">
-            <p>Advanced</p>
-        </div>
-        <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
-        <div class="nav-header">
             <p>Plugins</p>
         </div>
-        {% for plugin in plugins %}
+        {% for plugin in plugins  | sort(attribute='name') %}
             {% if plugin.address %}
                 <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
             {% else %}
                 <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
             {% endif %}
         {% endfor %}
+        <div class="nav-header">
+            <p>Advanced</p>
+        </div>
+        <a onclick="viewSection('sources', '/advanced/sources')">sources</a>
+        <div class="nav-header">
+            <p>Administrative</p>
+        </div>
+        <a onclick="display_errors({{ errors }})">Startup errors</a>
+        <a href="/logout">Log out</a>
         <br>
     </div>
 

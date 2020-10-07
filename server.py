@@ -29,6 +29,7 @@ def setup_logger(level=logging.DEBUG):
             continue
         else:
             logging.getLogger(logger_name).setLevel(100)
+    logging.captureWarnings(True)
 
 
 async def start_server():

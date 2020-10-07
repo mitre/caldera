@@ -27,6 +27,8 @@ data/facts/*yml
 !data/facts/.gitkeep
 data/sources/*
 !data/sources/.gitkeep
+data/objectives/*
+!data/objectives/.gitkeep
 .tox/
 
 # coverage reports

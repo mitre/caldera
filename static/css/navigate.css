@@ -1,16 +1,17 @@
 .navbar {
-  margin: 25px;
+  padding: 25px;
 }
 .sidenav {
   height: 100%;
   width: 0;
   position: fixed;
-  z-index: 101;
+  z-index: 110;
   top: 0;
   left: 0;
   background-color: #111;
   overflow-x: hidden;
-  transition: 0.5s;
+  white-space: nowrap;
+  transition: 0.4s;
   padding-top: 10px;
 }
 .sidenav a {
@@ -27,8 +28,8 @@
 }
 .sidenav .closebtn {
   position: absolute;
-  top: 0;
-  right: 25px;
+  top: 5px;
+  right: 5px;
   font-size: 36px;
   margin-left: 50px;
 }
@@ -41,11 +42,12 @@
   .sidenav a {font-size: 14px;}
 }
 .nav-header {
+    width: 250px;
     background-color: var(--navbar-color);
 }
 .nav-header p {
     font-size: 16px;
-    padding: 1px;
+    padding: 2px;
     text-align: center;
     color: var(--font-color);
 }
@@ -54,6 +56,7 @@
    left: 0;
    bottom: 0;
    width: 100%;
+   z-index: 105;
    background-color: var(--navbar-color);
    color: white;
    text-align: center;

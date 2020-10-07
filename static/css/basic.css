@@ -156,6 +156,14 @@
     text-align: left;
     padding-bottom: 20px;
 }
+.pane-header-editable input,
+.fillable-table input {
+    background-color: inherit;
+    border: none;
+    color: var(--font-color);
+    text-align: left;
+    padding: 0;
+}
 .op-selected {
     visibility: hidden;
 }
@@ -299,6 +307,59 @@
 #pack-phases td {
     padding: 5px 8px;
 }
+.source-modal h3 {
+    text-align: center;
+    margin: 2px 0 20px;
+}
+.source-modal ul {
+    padding: 0 5%;
+}
+.source-modal .column > p {
+    width: 93%;
+    color: white;
+    text-align: right;
+}
+.source-modal .column > p.source-note {
+    font-size: 12px;
+}
+.source-row {
+    width: 100%;
+    margin: 2em auto;
+    list-style-type: none;
+}
+.source-row table {
+    width: 100%;
+    table-layout: fixed;
+}
+.source-row p {
+    font-size: 11px;
+    text-align: center;
+}
+.source-row input {
+    width: 100%;
+    padding: 0 15px;
+}
+#source-rules td:nth-child(1) {
+    width: 15%;
+}
+#source-rules td:nth-child(2) {
+    width: 85%;
+}
+#source-rules td:nth-child(3) {
+    width: 5%;
+}
+#source-relationships td:nth-child(1) {
+    width: 10%;
+}
+#source-relationships td:nth-child(2) {
+    width: 25%;
+}
+#source-relationships td:nth-child(3) {
+    width: 60%;
+}
+#source-relationships td:nth-child(4) {
+    width: 5%;
+}
 #factTbl {
     table-layout: fixed;
 }
@@ -317,9 +378,6 @@
 #factTbl td p {
     overflow-wrap: anywhere;
     word-break: break-all;
-}
-#source-rules li {
-    list-style-type:none;
 }
 .topright {
     position: absolute;
