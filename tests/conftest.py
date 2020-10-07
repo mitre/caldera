@@ -19,6 +19,7 @@ from app.objects.c_operation import Operation
 from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_fact import Fact
 
 
 @pytest.fixture(scope='session')
@@ -151,6 +152,14 @@ def link():
         return Link.load(dict(ability=ability, command=command, paw=paw, *args, **kwargs))
 
     return _generate_link
+
+
+@pytest.fixture
+def fact():
+    def _generate_fact(trait, *args, **kwargs):
+        return Fact(trait=trait, *args, **kwargs)
+
+    return _generate_fact
 
 
 @pytest.fixture
