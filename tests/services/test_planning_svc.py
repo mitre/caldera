@@ -239,3 +239,6 @@ class TestPlanningService:
 
         filt = loop.run_until_complete(planning_svc.remove_completed_links(operation, agent, [l2, l3]))
         assert 1 == len(filt)
+
+        flat_fil = planning_svc._filter_parallel([[l0, l1, l2, l3], [l0, l1, l2, l3], [l0, l1, l2, l3]])
+        assert 7 == len(flat_fil)

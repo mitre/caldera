@@ -81,6 +81,7 @@ class BasePlanningService(BaseService):
         completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
 
+        # 1 in this case is a failed link
         lat = [BasePlanningService._fil(k, 'remote.host.fqdn') for k in operation.chain if k.status != 1]
         lat_links = [(x.command_hash if x.command_hash else x.command) for x in lat if x]
 
@@ -119,12 +120,32 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    def _fil(x, trait):
+    def _fil(link, trait):
         """
         Filter Link based on presence of trait in facts used
         """
-        if any(trait in y.trait for y in x.used):
-            return x
+        if any(trait in y.trait for y in link.used):
+            return link
+
+    @staticmethod
+    def _filter_parallel(agent_links):
+        """
+        Filter links across agents
+        :param agent_links: array of agent links
+        :return: Flattened, filtered list of links
+        """
+        links = []
+        parallel_list = []
+        for agent_list in agent_links:
+            for el in agent_list:
+                if not BasePlanningService._fil(el, 'remote.host.fqdn'):
+                    links.append(el)
+                else:
+                    cmpr = (el.command_hash if el.command_hash else el.command)
+                    if cmpr not in parallel_list:
+                        parallel_list.append(cmpr)
+                        links.append(el)
+        return links
 
     @staticmethod
     async def _build_single_test_variant(copy_test, combo, executor):
