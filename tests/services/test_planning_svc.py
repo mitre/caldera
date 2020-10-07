@@ -218,3 +218,24 @@ class TestPlanningService:
         ability, agent, operation = setup_planning_test
         generated_links = loop.run_until_complete(planning_svc.generate_and_trim_links(agent, operation, [ability]))
         assert 1 == len(generated_links)
+
+    def test_duplicate_lateral_filter(self, loop, setup_planning_test, planning_svc, link, fact):
+        ability, agent, operation = setup_planning_test
+
+        l0 = link(command='a0', paw='0', ability=ability)
+        l1 = link(command='a1', paw='0', ability=ability)
+        l2 = link(command='a0', paw='0', ability=ability)
+        l3 = link(command='a1', paw='0', ability=ability)
+
+        l0.used = [fact(trait='remote.host.fqdn', value='a.c.a')]
+        l1.used = [fact(trait='remote.ssh.cmd', value='a.c.a')]
+        l2.used = [fact(trait='remote.host.fqdn', value='a.c.a')]
+
+        filtered = [planning_svc._fil(x, 'remote.host.fqdn') for x in [l0, l1, l2, l3]
+                    if planning_svc._fil(x, 'remote.host.fqdn')]
+        assert 2 == len(filtered)
+
+        operation.chain = [l0, l1]
+
+        filt = loop.run_until_complete(planning_svc.remove_completed_links(operation, agent, [l2, l3]))
+        assert 1 == len(filt)
