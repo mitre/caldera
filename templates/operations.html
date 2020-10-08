@@ -109,7 +109,7 @@
               </button>
           </div>
       </div>
-      <button id="opBtn" type="button" style="opacity:0.5" disabled="true" class="button-notready atomic-button separated-button" onclick="handleStartAction()">
+      <button id="opBtn" type="button" style="opacity:0.5" disabled="true" class="button-notready atomic-button" onclick="handleStartAction()">
           Start
       </button>
     </div>
@@ -305,8 +305,10 @@
         if ($('#togBtnOp').is(':checked')) {
             stream('Operation name required. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
+            $('#opBtn').addClass('separated-button')
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
+            $('#opBtn').removeClass('separated-button')
         }
     }
 
