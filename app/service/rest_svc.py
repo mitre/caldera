@@ -122,6 +122,7 @@ class RestService(RestServiceInterface, BaseService):
         paw = data.pop('paw', None)
         if paw is None:
             await self._update_global_props(**data)
+            return self.get_config(name='agents')
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=paw)):
             await agent.gui_modification(**data)
             return agent.display

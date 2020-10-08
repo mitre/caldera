@@ -303,8 +303,21 @@
             "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
             "bootstrap_abilities":globalBootstrap};
         stream('Agent configuration has been updated!');
-        restRequest('PUT', data, doNothing);
+        restRequest('PUT', data, saveGlobalAgentCallback);
     }
+    
+    function saveGlobalAgentCallback(data) {
+        let invalid_abilities = [];
+        let bootstrap_abilities = $('#globalBootstrap').val().split(",");
+        $.each(bootstrap_abilities, function(index, bootstrap_ability) {
+            let ability = bootstrap_ability.trim();
+            if ($.inArray(ability, data.bootstrap_abilities) === -1) {
+                invalid_abilities.push(ability);
+            }
+        });
+        stream('Ignoring invalid bootstrap abilities: ' + invalid_abilities.join(', '));
+    }
+
 
     function killAgent(){
         /**
