@@ -399,6 +399,7 @@
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
+        checkOpformValid();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
         restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
@@ -713,7 +714,7 @@
     }
 
     function checkOpformValid(){
-        validateFormState(($('#queueName').val()), '#opBtn');
+        validateFormState(($('#togBtnOp').is(':checked') && $('#queueName').val()), '#opBtn');
         validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""), '#scheduleBtn');
         if ($('#togBtnOp').is(':checked')) {
             $('#opBtn').addClass('separated-button');
