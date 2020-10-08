@@ -41,7 +41,7 @@
       <div id="agent-bootstrap-options" class="sidebar-cutout" style="display: none">
           <input id="globalBootstrap" type="text" placeholder="Bootstrap ability IDs" value="{{ agent_config.bootstrap_abilities | join(', ') }}"/>
       </div>
-      <button id="saveAgentBtn" type="button" class="button-success atomic-button" onclick="saveGlobalAgent()">Save changes</button>
+      <button id="saveAgentBtn" type="button" class="button-success atomic-button separated-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
     <div class="column" style="flex:75%">
         <span style="text-align:left">You have <span id="agent-cnt">{{ agents|length}}</span></span> agents</h4>

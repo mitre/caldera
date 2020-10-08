@@ -65,6 +65,9 @@
     border:none;
     border-radius: 25px;
 }
+.atomic-button.separated-button {
+    margin-top: 40px;
+}
 .top-tip {
     position: absolute;
     color: var(--font-color);
@@ -708,16 +711,3 @@ table.dataTable input[type=text] {
     height: 25px;
     border: 2px solid var(--navbar-color);
 }
-
-/* Operations */
-
-#opBtn {
-    margin: 40px 0 0;
-}
-
-/* Agents */
-
-#saveAgentBtn {
-    margin: 40px 0 0;
-}
-
