@@ -305,10 +305,10 @@
         if ($('#togBtnOp').is(':checked')) {
             stream('Operation name required. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
-            $('#opBtn').addClass('separated-button')
+            $('#opBtn').addClass('separated-button');
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
-            $('#opBtn').removeClass('separated-button')
+            $('#opBtn').removeClass('separated-button');
         }
     }
 
@@ -714,8 +714,10 @@
 
     function checkOpformValid(){
         validateFormState(($('#queueName').val()), '#opBtn');
-        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""),
-            '#scheduleBtn');
+        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""), '#scheduleBtn');
+        if ($('#togBtnOp').is(':checked')) {
+            $('#opBtn').addClass('separated-button');
+        }
     }
     //# sourceURL=operations.js
 </script>
