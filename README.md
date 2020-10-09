@@ -25,6 +25,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
+- **[Fieldmanual](https://github.com/mitre/fieldmanual)** (documentation)
 - **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
 - **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
 - **[Manx](https://github.com/mitre/manx)** (shell functionality and reverse shell payloads)
