@@ -573,6 +573,7 @@
             techList.val(ability['technique_id']).change();
             abList.val(ability['name']).change();
             showPhaseModal(1);
+	    filterExecutors($('#ability-platform'));
         });
 
         ability.platform.forEach(function(p, index) {
