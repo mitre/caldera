@@ -573,7 +573,6 @@
             techList.val(ability['technique_id']).change();
             abList.val(ability['name']).change();
             showPhaseModal(1);
-	        filterExecutors($('#ability-platform'));
         });
 
         ability.platform.forEach(function(p, index) {
@@ -642,6 +641,7 @@
                 let template = $("#ttp-template").clone();
                 let unique = aid.ability_id + ability.platform + ability.executor;
                 template.find('#ability-platform').val(ability.platform);
+                filterExecutors(template.find('#ability-platform'));
                 template.find('#ability-executor').val(ability.executor);
                 template.find('#ability-command').val(atob(ability.test));
                 template.find('#ability-timeout').val(ability.timeout);
