@@ -237,8 +237,12 @@ class TestPlanningService:
 
         operation.chain = [l0, l1]
 
+        # test historical filtering
         filt = loop.run_until_complete(planning_svc.remove_completed_links(operation, agent, [l2, l3]))
         assert 1 == len(filt)
 
-        flat_fil = planning_svc._filter_parallel([[l0, l1, l2, l3], [l0, l1, l2, l3], [l0, l1, l2, l3]])
+        # test parallel filtering
+        flat_fil = planning_svc._cross_check_agents_for_duplicate_lat_mov([[l0, l1, l2, l3],
+                                                                           [l0, l1, l2, l3],
+                                                                           [l0, l1, l2, l3]])
         assert 7 == len(flat_fil)

@@ -160,7 +160,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             agent_links = []
             for agent in operation.agents:
                 agent_links.append(await self.generate_and_trim_links(agent, operation, abilities, trim))
-            links = self._filter_parallel(agent_links)
+            links = self._cross_check_agents_for_duplicate_lat_mov(agent_links)
         self.log.debug('Generated %s usable links' % (len(links)))
         return await self.sort_links(links)
 

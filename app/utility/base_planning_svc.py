@@ -82,8 +82,7 @@ class BasePlanningService(BaseService):
                            if l.paw == agent.paw and (l.finish or l.can_ignore())]
 
         # 1 in this case is a failed link
-        lat = [BasePlanningService._fil(k, 'remote.host.fqdn') for k in operation.chain if k.status != 1]
-        lat_links = [(x.command_hash if x.command_hash else x.command) for x in lat if x]
+        lat_links = BasePlanningService._list_historic_dup_lat_mov(operation)
 
         return [l for l in links if l.ability.repeatable or
                 ((l.command_hash if l.command_hash else l.command) not in completed_links
@@ -128,7 +127,12 @@ class BasePlanningService(BaseService):
             return link
 
     @staticmethod
-    def _filter_parallel(agent_links):
+    def _list_historic_dup_lat_mov(operation):
+        lat = [BasePlanningService._fil(k, 'remote.host.fqdn') for k in operation.chain if k.status != 1]
+        return [(x.command_hash if x.command_hash else x.command) for x in lat if x]
+
+    @staticmethod
+    def _cross_check_agents_for_duplicate_lat_mov(agent_links):
         """
         Filter links across agents
         :param agent_links: array of agent links
