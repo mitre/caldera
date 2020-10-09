@@ -319,7 +319,9 @@
                 invalid_abilities.push(ability);
             }
         });
-        stream('Ignoring invalid bootstrap abilities: ' + invalid_abilities.join(', '));
+        if (invalid_abilities.length > 0) {
+            stream('Ignoring invalid bootstrap abilities: ' + invalid_abilities.join(', '));
+        }
     }
 
 
