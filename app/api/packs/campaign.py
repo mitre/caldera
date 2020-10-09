@@ -43,7 +43,7 @@ class CampaignPack(BaseWorld):
             if a.platform in platforms:
                 platforms[a.platform].add(a.executor)
             else:
-                platforms[a.platform] = set([a.executor])
+                platforms[a.platform] = {[a.executor]}
         for p in platforms:
             platforms[p] = list(platforms[p])
         tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
