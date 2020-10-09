@@ -75,7 +75,11 @@
               </select>
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
                 {% for p in planners %}
-                    <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                  {% if p.name == "atomic" %}
+                    <option value="{{ p.name }}" selected>Use {{ p.name }} planner</option>
+                  {% else %}
+                      <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                  {% endif %}
                 {% endfor %}
               </select>
               <select name="source" id="queueSource" class="queueOption" style="opacity:0.5" disabled="true">
