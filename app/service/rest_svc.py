@@ -137,6 +137,7 @@ class RestService(RestServiceInterface, BaseService):
         paw = data.pop('paw', None)
         if paw is None:
             await self._update_global_props(**data)
+            return self.get_config(name='agents')
         for agent in await self.get_service('data_svc').locate('agents', match=dict(paw=paw)):
             await agent.gui_modification(**data)
             return agent.display
@@ -330,15 +331,36 @@ class RestService(RestServiceInterface, BaseService):
         return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
-        if implant_name:
-            self.set_config(name='agents', prop='implant_name', value=implant_name)
-        if bootstrap_abilities:
-            abilities = self.get_config(name='agents', prop='bootstrap_abilities')
-            abilities.append(bootstrap_abilities)
+        """Update global agent properties
+
+        :param sleep_min: Beacon min sleep time (seconds)
+        :type sleep_min: int
+        :param sleep_max: Beacon max sleep time (seconds)
+        :type sleep_max: int
+        :param watchdog: Watchdog timer (seconds)
+        :type watchdog: int
+        :param untrusted: Untrusted timer (seconds)
+        :type untrusted: int
+        :param implant_name: Agent file name
+        :type implant_name: str
+        :param bootstrap_abilities: Comma-separated ability UUIDs
+        :type bootstrap_abilities: str
+        """
         self.set_config(name='agents', prop='sleep_min', value=sleep_min)
         self.set_config(name='agents', prop='sleep_max', value=sleep_max)
         self.set_config(name='agents', prop='untrusted_timer', value=untrusted)
         self.set_config(name='agents', prop='watchdog', value=watchdog)
+        if implant_name:
+            self.set_config(name='agents', prop='implant_name', value=implant_name)
+        if bootstrap_abilities:
+            abilities = []
+            ability_ids = [ability_id.strip() for ability_id in bootstrap_abilities.split(',') if ability_id.strip()]
+            for ability_id in ability_ids:
+                if await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id.strip())):
+                    abilities.append(ability_id)
+                else:
+                    self.log.debug('Could not find ability with id "{}" for bootstrap'.format(ability_id))
+            self.set_config(name='agents', prop='bootstrap_abilities', value=abilities)
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':

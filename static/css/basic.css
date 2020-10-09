@@ -65,6 +65,9 @@
     border:none;
     border-radius: 25px;
 }
+.atomic-button.separated-button {
+    margin-top: 40px;
+}
 .top-tip {
     position: absolute;
     color: var(--font-color);

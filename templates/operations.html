@@ -39,10 +39,10 @@
 
       <div id="addOperation" style="display: none;">
           <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
-          <div id="optional" class="column sidebar-cutout sidebar-header">
-              <h5>BASIC OPTIONS</h5>
+          <div id="optional" class="sidebar-header">
+              <h5>Basic Options</h5>
           </div>
-          <div id="optional-options" class="column sidebar-cutout">
+          <div id="optional-options" class="sidebar-cutout" style="display: none">
               <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
                 <option value="" class="default-option" selected>Use all groups</option>
                 {% for g in groups %}
@@ -65,10 +65,10 @@
               </select>
           </div>
 
-          <div id="autonomous" class="column sidebar-cutout sidebar-header">
-              <h5>AUTONOMOUS</h5>
+          <div id="autonomous" class="sidebar-header">
+              <h5>Autonomous</h5>
           </div>
-          <div id="autonomous-options" class="column sidebar-cutout" style="display: none;">
+          <div id="autonomous-options" class="sidebar-cutout" style="display: none;">
               <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
                 <option value="1" selected>Run autonomously</option>
                 <option value="0">Require manual approval</option>
@@ -85,10 +85,10 @@
               </select>
           </div>
 
-          <div id="stealth" class="column sidebar-cutout sidebar-header">
-              <h5>STEALTH</h5>
+          <div id="stealth" class="sidebar-header">
+              <h5>Stealth</h5>
           </div>
-          <div id="stealth-options" class="column sidebar-cutout" style="display: none;">
+          <div id="stealth-options" class="sidebar-cutout" style="display: none;">
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
                     <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
@@ -99,21 +99,19 @@
               <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100" onchange="stream('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.')">
           </div>
 
-          <div id="schedules" class="column sidebar-cutout sidebar-header">
-              <h5>SCHEDULE</h5>
+          <div id="schedules" class="sidebar-header">
+              <h5>Schedule</h5>
           </div>
-          <div id="schedules-options" class="column sidebar-cutout" style="display: none;">
+          <div id="schedules-options" class="sidebar-cutout" style="display: none;">
               <input type="time" id="schedule-time" onchange="checkOpformValid()">
-              <button id="scheduleBtn" type="button" style="opacity:0.5;" disabled="true"
-              class="button-notready atomic-button" onclick="handleScheduleAction()">Schedule
-                </button>
+              <button id="scheduleBtn" type="button" style="opacity:0.5;" disabled="true" class="button-notready atomic-button" onclick="handleScheduleAction()">
+                  Schedule
+              </button>
           </div>
-
-          <br>
-          <button id="opBtn" type="button" style="opacity:0.5" disabled="true"
-              class="button-notready atomic-button" onclick="handleStartAction()">Start
-          </button>
       </div>
+      <button id="opBtn" type="button" style="opacity:0.5" disabled="true" class="button-notready atomic-button" onclick="handleStartAction()">
+          Start
+      </button>
     </div>
     <div class="column op-selected" style="flex:75%">
       <div class="op-dets">
@@ -283,20 +281,20 @@
 
         $("#optional").click(function(){
             stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
-            $("#optional-options").slideToggle("slow");
+            $("#optional-options").slideToggle();
         });
         $("#schedules").click(function(){
             stream('Schedule your operation to run every day.');
-            $("#schedules-options").slideToggle("slow");
+            $("#schedules-options").slideToggle();
             $('#opBtn').fadeToggle('slow');
         });
         $("#stealth").click(function(){
             stream('Stealth options will determine just how noticeable your operation is to the defense.');
-            $("#stealth-options").slideToggle("slow");
+            $("#stealth-options").slideToggle();
         });
         $("#autonomous").click(function(){
             stream('Autonomous options allow you to configure how much manual intervention you want.');
-            $("#autonomous-options").slideToggle("slow");
+            $("#autonomous-options").slideToggle();
         });
     });
 
@@ -307,8 +305,10 @@
         if ($('#togBtnOp').is(':checked')) {
             stream('Operation name required. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
+            $('#opBtn').addClass('separated-button');
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
+            $('#opBtn').removeClass('separated-button');
         }
     }
 
@@ -399,6 +399,7 @@
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
+        checkOpformValid();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
         restRequest('POST', {'index':'operations'}, reloadOperationsElements);
     }
@@ -733,9 +734,11 @@
     }
 
     function checkOpformValid(){
-        validateFormState(($('#queueName').val()), '#opBtn');
-        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""),
-            '#scheduleBtn');
+        validateFormState(($('#togBtnOp').is(':checked') && $('#queueName').val()), '#opBtn');
+        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""), '#scheduleBtn');
+        if ($('#togBtnOp').is(':checked')) {
+            $('#opBtn').addClass('separated-button');
+        }
     }
     //# sourceURL=operations.js
 </script>

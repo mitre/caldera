@@ -29,7 +29,8 @@ class CampaignPack(BaseWorld):
         agents = [h.display for h in await self.data_svc.locate('agents', match=search)]
         ability_ids = tuple(self.get_config(name='agents', prop='deployments'))
         abilities = await self.data_svc.locate('abilities', match=dict(ability_id=ability_ids))
-        return dict(agents=agents, abilities=self._rollup_abilities(abilities))
+        agent_config = self.get_config(name='agents')
+        return dict(agents=agents, abilities=self._rollup_abilities(abilities), agent_config=agent_config)
 
     @check_authorization
     @template('profiles.html')

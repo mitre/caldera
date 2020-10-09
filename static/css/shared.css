@@ -364,10 +364,6 @@ p[onclick] {
     padding: 10px 25px;
     text-align: left;
 }
-.sidebar-header {
-    border-bottom: 1px solid white;
-    cursor: pointer;
-}
 
 /* notice bar */
 
@@ -438,9 +434,19 @@ p[onclick] {
      border-radius: 50px;
      display: block;
 }
-.sidebar-cutout h5 {
-    margin-bottom: 0;
+.sidebar-header {
+    margin: 30px 30px 0;
+    border-bottom: 1px solid white;
+    cursor: pointer;
 }
+.sidebar-header h5 {
+    margin-bottom: 0;
+    text-transform: uppercase;
+}
+.sidebar-cutout {
+    padding: 10px 30px 0;
+}
+
 .sidebar-cutout input[type=text] {
     width:90%;
     border-radius: 5px;
