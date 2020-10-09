@@ -153,8 +153,10 @@
 </div>
 
 <div id="ability-template" class="ability-box" style="display: none">
-    <h4 id="name" style="margin:5px; margin-top:5px;"></h4>
-    <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
+    <div class="ability-show">
+        <h4 id="name" style="margin:5px; margin-top:5px;"></h4>
+        <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
+    </div>
     <center>
         <div>
             <div class="topright" id="ability-rm">
@@ -558,7 +560,7 @@
         if(ability.payloads.length > 0) {
            template.find('#ability-metadata').append('<div id="ability-payload" style="padding: 0 2;"><div class="tooltip" data-text="This ability uses a payload">&#128176;</div></div>');
         }
-        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div><div class="ability-show">?</div>');
+        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
         template.find('.ability-remove').click(function() {
             removeAbility(ability);
         });
