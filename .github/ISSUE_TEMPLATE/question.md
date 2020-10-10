@@ -1,9 +1,9 @@
 ---
 name: "\U00002753 Question"
-about: 
+about: Support questions
 title: ''
 labels: question
-assignees: 
+assignees: ''
 
 ---
 
