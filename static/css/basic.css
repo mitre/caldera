@@ -202,9 +202,11 @@
    margin: 2px;
 }
 .ability-box {
-    background-color: var(--primary-background);
+    background-color: var(--secondary-background);
+    border-color: var(--theme-color);
+    border-style: solid;
     border-radius:15px;
-    border: 0 none;
+    border-width: 2px;
     position: relative;
     padding: 10px;
     max-width: 25%;
