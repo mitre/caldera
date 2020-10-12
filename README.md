@@ -36,6 +36,9 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 - **[Stockpile](https://github.com/mitre/stockpile)** (technique and profile storehouse)
 - **[Training](https://github.com/mitre/training)** (certification and training course)
 
+:star: Create your own plugin!
+Use our plugin generator **[Skeleton](https://github.com/mitre/skeleton)** 
+
 ## Requirements
 
 These requirements are for the computer running the core framework:
