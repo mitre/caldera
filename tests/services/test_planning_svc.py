@@ -171,7 +171,7 @@ class TestPlanningService:
         """
         ability, agent, operation = setup_planning_test
         p = PlannerFake(operation)
-        loop.run_until_complete(planning_svc.execute_planner(p))
+        loop.run_until_complete(planning_svc.execute_planner(p, publish_transitions=False))
         assert p.calls == ['one', 'two', 'three']
 
     def test_execute_planner_2(self, monkeypatch, loop, planning_svc, setup_planning_test):
@@ -186,7 +186,7 @@ class TestPlanningService:
                 planner.stopping_condition_met = True
         monkeypatch.setattr(planning_svc, 'update_stopping_condition_met', stub_update_stopping_condition_met)
         p = PlannerFake(operation)
-        loop.run_until_complete(planning_svc.execute_planner(p))
+        loop.run_until_complete(planning_svc.execute_planner(p, publish_transitions=False))
         assert p.calls == ['one', 'two']
 
     def test_execute_planner_3(self, monkeypatch, loop, planning_svc, setup_planning_test):
@@ -201,7 +201,7 @@ class TestPlanningService:
                 operation.state = operation.states['FINISHED']
         monkeypatch.setattr(planning_svc, 'update_stopping_condition_met', stub_update_stopping_condition_met_1)
         p = PlannerFake(operation)
-        loop.run_until_complete(planning_svc.execute_planner(p))
+        loop.run_until_complete(planning_svc.execute_planner(p, publish_transitions=False))
         assert p.calls == ['one']
 
     def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
