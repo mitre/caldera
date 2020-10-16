@@ -119,7 +119,7 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    def _fil(link, trait):
+    def _filter_links_by_trait(link, trait):
         """
         Filter Link based on presence of trait in facts used
         """
@@ -128,7 +128,8 @@ class BasePlanningService(BaseService):
 
     @staticmethod
     def _list_historic_dup_lat_mov(operation):
-        lat = [BasePlanningService._fil(k, 'remote.host.fqdn') for k in operation.chain if k.status != 1]
+        lat = [BasePlanningService._filter_links_by_trait(k, 'remote.host.fqdn') for k in operation.chain
+               if k.status != k.states['ERROR']]
         return [(x.command_hash if x.command_hash else x.command) for x in lat if x]
 
     @staticmethod
@@ -141,14 +142,15 @@ class BasePlanningService(BaseService):
         links = []
         parallel_list = []
         for agent_list in agent_links:
-            for el in agent_list:
-                if not BasePlanningService._fil(el, 'remote.host.fqdn'):
-                    links.append(el)
+            for individual_link in agent_list:
+                if not BasePlanningService._filter_links_by_trait(individual_link, 'remote.host.fqdn'):
+                    links.append(individual_link)
                 else:
-                    cmpr = (el.command_hash if el.command_hash else el.command)
-                    if cmpr not in parallel_list:
-                        parallel_list.append(cmpr)
-                        links.append(el)
+                    compare = (individual_link.command_hash if individual_link.command_hash else
+                               individual_link.command)
+                    if compare not in parallel_list:
+                        parallel_list.append(compare)
+                        links.append(individual_link)
         return links
 
     @staticmethod

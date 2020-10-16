@@ -231,8 +231,8 @@ class TestPlanningService:
         l1.used = [fact(trait='remote.ssh.cmd', value='a.c.a')]
         l2.used = [fact(trait='remote.host.fqdn', value='a.c.a')]
 
-        filtered = [planning_svc._fil(x, 'remote.host.fqdn') for x in [l0, l1, l2, l3]
-                    if planning_svc._fil(x, 'remote.host.fqdn')]
+        filtered = [planning_svc._filter_links_by_trait(x, 'remote.host.fqdn') for x in [l0, l1, l2, l3]
+                    if planning_svc._filter_links_by_trait(x, 'remote.host.fqdn')]
         assert 2 == len(filtered)
 
         operation.chain = [l0, l1]
