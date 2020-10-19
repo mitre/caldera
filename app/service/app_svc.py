@@ -141,7 +141,16 @@ class AppService(AppServiceInterface, BaseService):
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):
-            self.log.error('%s does not meet the minimum version of %s' % (requirement, params['version']))
+            msg = '%s does not meet the minimum version of %s' % (requirement, params['version'])
+            if params.get('optional', False):
+                msg = '. '.join([
+                    msg,
+                    '%s is an optional dependency and its absence will not affect Caldera\'s core operation' % requirement.capitalize(),
+                    params.get('reason', '')
+                ])
+                self.log.warning(msg)
+            else:
+                self.log.error(msg)
             self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
             return False
         return True
