@@ -30,13 +30,6 @@ requirements:
     command: go version
     type: installed_program
     version: 1.11
-  metasploit:
-    command: msfconsole -v
-    optional: true
-    reason: It is only required if you would like to launch Metasploit modules from
-      Caldera.
-    type: installed_program
-    version: 4.0
   python:
     attr: version
     module: sys
