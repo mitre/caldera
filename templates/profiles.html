@@ -33,11 +33,11 @@
     </div>
     <div id="adversary-content" class="column adversary-header">
         <div id="row">
-            <input id="profile-goal" type="text" placeholder="enter a profile name (required)" onkeyup="checkAdversaryButtons()">
+            <input id="profile-goal" type="text" placeholder="enter a profile name (required)" oninput="checkAdversaryButtons()">
             <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
         </div>
         <input id="objective-select" type="text" style="display:none" disabled>
-        <input id="profile-description" type="text" placeholder="enter a profile description (required)" onkeyup="checkAdversaryButtons()">
+        <input id="profile-description" type="text" placeholder="enter a profile description (required)" oninput="checkAdversaryButtons()">
         <br><br>
         <div id="dummy"></div>
     </div>
@@ -60,7 +60,7 @@
                 <select id="ability-ability-filter" onchange="showAbility('phase-modal', exploits)">
                     <option disabled selected>0 abilities</option>
                 </select>
-                <input id="ability-search-filter" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
+                <input id="ability-search-filter" type="text" placeholder="Search for abilities..." oninput="searchAbilities('phase-modal', exploits);">
                 <button id="reset-ability-modal-button" type="button" class="atomic-button" onclick="clearPhaseModal()">Reset Fields</button>
                 <br><br>
                 <div id="ability-manager" class="ability-attack row-simple">
@@ -68,19 +68,19 @@
                         <table frame=void rules=rows>
                             <tr>
                                 <td>id:</td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" onkeyup="checkAbilityButtons()" /></td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
                                 <td>name:</td>
-                                <td><input type="text" id="ability-name" placeholder="Name (required)" onkeyup="checkAbilityButtons()" /></td>
+                                <td><input type="text" id="ability-name" placeholder="Name (required)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
                                 <td>description:</td>
-                                <td><input type="text" id="ability-description" placeholder="Description (required)" onkeyup="checkAbilityButtons()" /></td>
+                                <td><input type="text" id="ability-description" placeholder="Description (required)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
                                 <td>tactic:</td>
-                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" onkeyup="checkAbilityButtons()" /></td>
+                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" oninput="checkAbilityButtons()" /></td>
                             <tr>
                             <tr>
                                 <td>technique id:</td>
@@ -230,7 +230,7 @@
 
 <table id="additional-info-row-template-holder" style="display:none">
     <tr id="additional-info-template">
-        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key" onkeyup="checkAbilityButtons()"></td>
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key" oninput="checkAbilityButtons()"></td>
         <td><b>:</b></td>
         <td><input type="text" class="additional-value" placeholder="value"></td>
         <td><div class="ability-remove">
@@ -275,7 +275,7 @@
         </tr>
         <tr>
             <td style="width:10%"><b>command:</b></td>
-            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute" onkeyup="checkAbilityButtons()"></textarea></td>
+            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute" oninput="checkAbilityButtons()"></textarea></td>
         </tr>
         <tr>
             <td style="width:10%"><b>cleanup:</b></td>
@@ -925,6 +925,7 @@
 
     function freshId(){
         $('#ability-identifier').val(uuidv4());
+        //checkAbilityButtons();
     }
 
     function uploadPayload() {
