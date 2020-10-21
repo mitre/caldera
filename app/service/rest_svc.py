@@ -449,15 +449,16 @@ class RestService(RestServiceInterface, BaseService):
             ab['id'] = str(uuid.uuid4())
 
         # Validate ID, used for file creation
-        if not self.is_uuid4(ab.get('id')):
-            self.log.debug('Invalid ability ID "{}". ID must be UUID4.'.format(ab.get('id')))
+        validator = re.compile(r'^[a-zA-Z0-9-_]+$')
+        if not ab.get('id') or not validator.match(ab.get('id')):
+            self.log.debug('Invalid ability ID "%s". IDs can only contain '
+                           'alphanumeric characters, hyphens, and underscores.' % ab.get('id'))
             return []
 
         # Validate tactic, used for directory creation
-        tactic_match = re.compile(r'^[a-zA-Z0-9\-]+$')
-        if not ab.get('tactic') or not tactic_match.match(ab.get('tactic')):
-            self.log.debug('Invalid ability tactic "{}". Tactics can only contain alphanumeric characters and hyphens.'
-                           .format(ab.get('tactic')))
+        if not ab.get('tactic') or not validator.match(ab.get('tactic')):
+            self.log.debug('Invalid ability tactic "%s". Tactics can only contain '
+                           'alphanumeric characters, hyphens, and underscores.' % ab.get('tactic'))
             return []
 
         # Validate platforms, ability will not be loaded if empty

@@ -68,7 +68,7 @@
                         <table frame=void rules=rows>
                             <tr>
                                 <td>id:</td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique UUID identifier" oninput="checkAbilityButtons()" /></td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier (default UUID)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
                                 <td>name:</td>
@@ -389,17 +389,18 @@
 
     function validateAbility() {
         // Enable Save and Add to Adversary buttons if the ability has:
-        // - No ID, or GUID ID
+        // - No ID, or ID only contains valid characters
         // - Name
         // - Description
-        // - Tactic is not empty and only contains alphanumeric and hyphens
+        // - Tactic is not empty and only contains valid characters
         // - Platform / executor / command
         // - Unique, non-empty keys in additional info
         let valid = true;
+        let validator = /^[0-9a-z-_]+$/i;
 
         // Validate ID
         let abilityId = $('#ability-identifier').val();
-        if (abilityId.length !== 0 && !isUuid(abilityId)) {
+        if (abilityId.length !== 0 && !(validator.test(abilityId))) {
             valid = false;
         }
 
@@ -416,7 +417,7 @@
         // Validate tactic
         if (valid) {
             let abilityTactic = $('#ability-tactic-name').val();
-            if (abilityId.length !== 0 && !(/^[0-9a-z\-]+$/i.test(abilityTactic))) {
+            if (abilityTactic.length !== 0 && !(validator.test(abilityTactic))) {
                 valid = false;
             }
         }
