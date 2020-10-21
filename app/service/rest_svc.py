@@ -484,7 +484,7 @@ class RestService(RestServiceInterface, BaseService):
             tactic_dir = os.path.join('data', 'abilities', new_ability.get('tactic'))
             if not os.path.exists(tactic_dir):
                 os.makedirs(tactic_dir)
-            file_path = '%s/%s.yml' % (tactic_dir, new_ability['id'])
+            file_path = os.path.join(tactic_dir, '%s.yml' % new_ability['id'])
             final = new_ability
             # Get access
             allowed = self._get_allowed_from_access(access)
