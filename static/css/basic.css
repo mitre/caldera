@@ -771,3 +771,105 @@ table.dataTable input[type=text] {
     height: 25px;
     border: 2px solid var(--navbar-color);
 }
+
+/* Adversaries/Profiles */
+
+.adversary-sidebar-option {
+    padding: 20px 0 0;
+}
+
+#profile-existing-name {
+    margin: 0 0 20px;
+}
+
+#adversary-add {
+    display: none;
+}
+
+#adversary-content {
+    flex: 75%;
+    visibility: hidden;
+    text-align: left;
+}
+
+#phase-modal .container > .column {
+    flex: 100%;
+}
+
+#ability-search-filter {
+    width: 60%;
+}
+
+#reset-ability-modal-button {
+    width: 115px;
+    height: 30px;
+    padding-top: 8px;
+    color: black;
+    background-color: firebrick;
+}
+
+#ability-manager-fields {
+    flex: 60%;
+}
+
+#ability-manager-fields table {
+    border-spacing: 2px;
+    width: 100%;
+}
+
+#ability-manager-fields table td:nth-child(1) {
+    width: 8em;
+    font-weight: bold;
+}
+
+#ability-manager-additional {
+    flex: 40%;
+}
+
+#ability-manager-additional #row-simple {
+    display: flex;
+    overflow: hidden;
+}
+
+#ability-manager-additional .column {
+    float: left;
+    flex: 20%;
+    margin: 0px;
+}
+
+#ability-manager-additional .column p {
+    padding-top: 4px;
+    text-align: center;
+    color: white;
+}
+
+#ability-manager-additional .column img {
+    cursor: pointer;
+}
+
+#ability-additional-info {
+    display: flex;
+    margin-top: 1em;
+}
+
+#ability-additional-info div {
+    display: flex;
+    flex: 5em;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+#ability-button-row {
+    float: right;
+    width: 40%;
+    padding-right: 5%;
+}
+
+#ability-button-row button {
+    padding: 0 20px;
+}
+
+#ttp-tests {
+    width: 100%;
+}

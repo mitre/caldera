@@ -11,31 +11,33 @@
           <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
         </label>
       </div>
-      <br>
       <p class="section-description">
           Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network. Profiles
           can be used for offensive or defensive use cases.
       </p>
-        <br>
-      <div id="viewAdversary">
-          <select id="profile-existing-name" style="margin-top:-15px" onchange="loadAdversary();">
-            <option value="" disabled selected>Select an existing profile</option>
-            {% for adv in adversaries %}
-                <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
-            {% endfor %}}
-          </select>
+      <div id="adversary-view" class="adversary-sidebar-option">
+        <select id="profile-existing-name" onchange="loadAdversary();">
+          <option value="" disabled selected>Select an existing profile</option>
+          {% for adv in adversaries %}
+              <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+          {% endfor %}}
+        </select>
       </div>
-      <button id="advNewBtn" type="button" class="button-success atomic-button" onclick="saveAdversary()">Save</button>
+      <button id="adversary-save-button" type="button" class="button-notready atomic-button" onclick="saveAdversary()">Save</button>
       <hr>
-      <button type="button" class="button-success atomic-button" onclick="deleteProfile()">Delete profile</button>
+      <button id="adversary-delete-button" type="button" class="button-notready atomic-button" onclick="deleteProfile()">Delete</button>
+
+      <div id="adversary-add" class="adversary-sidebar-option">
+
+      </div>
     </div>
-    <div id="phases" class="column adversary-header" style="flex:75%;text-align: left">
+    <div id="adversary-content" class="column adversary-header">
         <div id="row">
-            <input id="profile-goal" type="text" placeholder="enter a profile name">
+            <input id="profile-goal" type="text" placeholder="enter a profile name (required)" oninput="checkAdversaryButtons()">
             <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
         </div>
         <input id="objective-select" type="text" style="display:none" disabled>
-        <input id="profile-description" type="text" placeholder="enter a profile description">
+        <input id="profile-description" type="text" placeholder="enter a profile description (required)" oninput="checkAdversaryButtons()">
         <br><br>
         <div id="dummy"></div>
     </div>
@@ -45,7 +47,7 @@
 <div id="phase-modal" class="modal">
     <form class="modal-content">
         <div class="container section-profile row ability-viewer modal-box">
-            <div class="column" style="flex:100%;">
+            <div class="column">
                 <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', exploits);">
                     <option disabled selected>Choose a tactic</option>
                     {% for tactic in tactics %}
@@ -58,73 +60,72 @@
                 <select id="ability-ability-filter" onchange="showAbility('phase-modal', exploits)">
                     <option disabled selected>0 abilities</option>
                 </select>
-                <input id="ability-search-filter" style="width:60%;" type="text" placeholder="Search for abilities..." onkeyup="searchAbilities('phase-modal', exploits);">
-                <button id="reset-ability-modal-button" type="button" class="atomic-button" style="width:115px;height:30px;padding-top:8px;color:black;background-color:firebrick" onclick="clearPhaseModal()">Reset Fields</button>
+                <input id="ability-search-filter" type="text" placeholder="Search for abilities..." oninput="searchAbilities('phase-modal', exploits);">
+                <button id="reset-ability-modal-button" type="button" class="atomic-button" onclick="clearPhaseModal()">Reset Fields</button>
                 <br><br>
                 <div id="ability-manager" class="ability-attack row-simple">
-                    <div class="column" style="flex:60%">
-                        <table frame=void rules=rows style="border-spacing:2px;width:100%">
+                    <div id="ability-manager-fields" class="column">
+                        <table frame=void rules=rows>
                             <tr>
-                                <td style="width:10%"><b>id:</b></td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier"></td>
+                                <td>id:</td>
+                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier (default UUID)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>name:</b></td>
-                                <td><input type="text" id="ability-name" placeholder="Name"></td>
+                                <td>name:</td>
+                                <td><input type="text" id="ability-name" placeholder="Name (required)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>description:</b></td>
-                                <td><input type="text" id="ability-description" placeholder="Description"></td>
+                                <td>description:</td>
+                                <td><input type="text" id="ability-description" placeholder="Description (required)" oninput="checkAbilityButtons()" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>tactic:</b></td>
-                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic"></td>
+                                <td>tactic:</td>
+                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" oninput="checkAbilityButtons()" /></td>
                             <tr>
                             <tr>
-                                <td style="width:10%"><b>technique id:</b></td>
-                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID"></td>
+                                <td>technique id:</td>
+                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID" /></td>
                             </tr>
                             <tr>
-                                <td style="width:10%"><b>technique:</b></td>
-                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name"></td>
+                                <td>technique:</td>
+                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name" /></td>
                             </tr>
                         </table>
 
                     </div>
-                    <div class="column" style="flex:40%">
-                        <div id="ability-modifier-buttons row-simple" style="overflow: hidden; display: flex">
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                    <div id="ability-manager-additional" class="column">
+                        <div id="row-simple">
+                            <div class="column">
                                 <div>
-                                    <img onclick="freshId()" style="cursor:pointer" src="/gui/img/recycle.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="freshId()">generate new id</p>
+                                    <img onclick="freshId()" src="/gui/img/recycle.png">
+                                    <p onclick="freshId()">generate new id</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <img onclick="addExecutorBlock()" style="cursor:pointer" src="/gui/img/executor.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addExecutorBlock()">add executor</p>
+                                    <img onclick="addExecutorBlock()" src="/gui/img/executor.png">
+                                    <p onclick="addExecutorBlock()">add executor</p>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <label for="uploadPayloadFile"><img style="cursor:pointer" src="/gui/img/payload.png"></label>
+                                    <label for="uploadPayloadFile"><img src="/gui/img/payload.png"></label>
                                     <form id="uploadPayloadForm">
                                        <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
                                        <input type="file" id="uploadPayloadFile" style="display: none">
                                     </form>
                                 </div>
                             </div>
-                            <div class="column" style="float: left; margin: 0px; flex:20%">
+                            <div class="column">
                                 <div>
-                                    <img onclick="addAdditionalInfo()" style="cursor:pointer" src="/gui/img/additional-fields.png">
-                                    <p style="color:white;text-align: center; padding-top: 4px" onclick="addAdditionalInfo()">add info</p>
+                                    <img onclick="addAdditionalInfo(); checkAbilityButtons()" src="/gui/img/additional-fields.png">
+                                    <p onclick="addAdditionalInfo(); checkAbilityButtons()">add info</p>
                                 </div>
                             </div>
                         </div>
-                        <br>
-                        <div id="ability-additional-info" style="display: flex">
-                            <div style="flex: 15%; display: flex; justify-content: center; align-items: center;"><b>Info:</b></div>
-                            <table id="additional-info-table" frame=void rules=rows style="flex:85%">
+                        <div id="ability-additional-info" style="display: none">
+                            <div>info:</div>
+                            <table id="additional-info-table" frame=void rules=rows>
                                 <tbody>
                                 </tbody>
                             </table>
@@ -132,10 +133,12 @@
                     </div>
                     <br><br>
                 </div>
-                <ul id="ttp-tests"></ul>
-                <div style="float:right;">
-                    <button id="ability-save" type="button" class="button-success atomic-button" onclick="saveAbility()">Save</button>
-                    <button type="button" class="button-success atomic-button" onclick="addAbilityToPhase()">Add to Adversary</button>
+                <div id="ability-button-row" class="row-simple">
+                    <button id="ability-save" type="button" class="button-notready atomic-button" onclick="saveAbility()">Save</button>
+                    <button id="ability-add-to-adv" type="button" class="button-notready atomic-button" onclick="saveAbility(true)">Add to Adversary</button>
+                </div>
+                <div class="row-simple">
+                    <ul id="ttp-tests"></ul>
                 </div>
             </div>
             <div class="imgcontainer">
@@ -227,7 +230,7 @@
 
 <table id="additional-info-row-template-holder" style="display:none">
     <tr id="additional-info-template">
-        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key"></td>
+        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key" oninput="checkAbilityButtons()"></td>
         <td><b>:</b></td>
         <td><input type="text" class="additional-value" placeholder="value"></td>
         <td><div class="ability-remove">
@@ -238,13 +241,13 @@
 
 <li id="ttp-template" class="ttp-template" style="display: none">
     <div class="dotted">
-        <b><p style="color:white" onclick="removeBlock($(this))">remove</p></b>
+        <p onclick="$(this).closest('li').remove(); checkAbilityButtons()">&#x274C;</p>
     </div>
     <table frame=void rules=rows style="border-spacing:5px;width:100%">
         <tr>
             <td style="width:10%"><b>platform:</b></td>
             <td>
-              <select id="ability-platform" onchange="filterExecutors(this)">
+              <select id="ability-platform" onchange="filterExecutors(this); checkAbilityButtons()">
                 <option value="" disabled selected>Select a platform</option>
                     {% for platform, executors in platforms.items() %}
                         <option value="{{ platform }}">{{ platform }}</option>
@@ -255,7 +258,7 @@
         <tr>
             <td style="width:10%"><b>executor:</b></td>
             <td>
-              <select id="ability-executor">
+              <select id="ability-executor" onchange="checkAbilityButtons()">
                 <option value="" disabled selected>Select an executor</option>
               </select>
             </td>
@@ -272,7 +275,7 @@
         </tr>
         <tr>
             <td style="width:10%"><b>command:</b></td>
-            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute"></textarea></td>
+            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute" oninput="checkAbilityButtons()"></textarea></td>
         </tr>
         <tr>
             <td style="width:10%"><b>cleanup:</b></td>
@@ -308,13 +311,41 @@
     })
 
     function toggleAdversaryView() {
-        $('#profile-existing-name option:eq(0)').prop('selected', true);
-        $('#profile-goal').val('');
-        $('#profile-description').val('');
-        $('.tempPhase').remove();
-        $('.phase-headers').remove();
-        loadAtomicOrder([]);
-        clearObjective();
+        // Change Add/View sidebar
+        $('#adversary-view').toggle();
+        $('#adversary-add').toggle();
+
+        // Clear content if switching to "Add"
+        if ($('#adversary-add').is(':visible')) {
+            clearAdversaryContent();
+        }
+
+        // Set content visibility and sidebar buttons enable
+        checkAdversaryContent();
+        checkAdversaryButtons();
+    }
+
+    function checkAdversaryContent() {
+        if ($('#adversary-add').is(':visible') || $('#profile-existing-name').val() !== null) {
+            $('#adversary-content').css('visibility', 'visible');
+        } else {
+            $('#adversary-content').css('visibility', 'hidden');
+        }
+    }
+
+    function checkAdversaryButtons() {
+        validateFormState(($('#profile-goal').val() !== '' && $('#profile-description').val() !== ''), '#adversary-save-button');
+        validateFormState(($('#profile-existing-name').val()), '#adversary-delete-button');
+    }
+
+    function clearAdversaryContent() {
+      $('#profile-existing-name option:eq(0)').prop('selected', true);
+      $('#profile-goal').val('');
+      $('#profile-description').val('');
+      $('.tempPhase').remove();
+      $('.phase-headers').remove();
+      loadAtomicOrder([]);
+      clearObjective();
     }
 
     function saveAdversary() {
@@ -338,24 +369,108 @@
 
     function saveAdversaryCallback(data) {
         stream('Adversary saved!');
-        appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'view-'+data[0].adversary_id);
+        appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'adversary-'+data[0].adversary_id);
         $('#profile-existing-name').val(data[0].adversary_id);
         appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
+
+        if ($('#adversary-add').is(':visible')) {
+          $('#togBtnAdv').click();
+        }
     }
 
-    function saveAbility() {
-        let name = $('#ability-name').val();
-        if(!name){ warn('Please enter an ability name!'); return; }
-        let description = $('#ability-description').val();
-        if(!description){ warn('Please enter a description!'); return; }
+    function checkAbilityButtons() {
+        // Enable / Disable Save and Add to Adversary buttons
+        let valid = validateAbility();
+        let uniqueAbility = ($('#ability-identifier').val() === "" ||
+                             $('#tempPhase1').find('#' + $('#ability-identifier').val()).length === 0);
+        validateFormState(valid, '#ability-save');
+        validateFormState((valid && uniqueAbility), '#ability-add-to-adv');
+    }
+
+    function validateAbility() {
+        // Enable Save and Add to Adversary buttons if the ability has:
+        // - No ID, or ID only contains valid characters
+        // - Name
+        // - Description
+        // - Tactic is not empty and only contains valid characters
+        // - Platform / executor / command
+        // - Unique, non-empty keys in additional info
+        let valid = true;
+        let validator = /^[0-9a-z-_]+$/i;
+
+        // Validate ID
+        let abilityId = $('#ability-identifier').val();
+        if (abilityId.length !== 0 && !(validator.test(abilityId))) {
+            valid = false;
+        }
+
+        // Ability details missing data
+        if (valid) {
+            if (
+                $('#ability-name').val().length === 0
+                || $('#ability-description').val().length === 0
+            ) {
+                valid = false;
+            }
+        }
+
+        // Validate tactic
+        if (valid) {
+            let abilityTactic = $('#ability-tactic-name').val();
+            if (abilityTactic.length !== 0 && !(validator.test(abilityTactic))) {
+                valid = false;
+            }
+        }
+
+        // Platform / executor / command missing data
+        if (valid) {
+            if ($('#ttp-tests > li').length) {
+                $('#ttp-tests > li').each(function() {
+                    let platform = $(this).find('#ability-platform').val();
+                    let executor = $(this).find('#ability-executor').val();
+                    let command = $(this).find('#ability-command').val();
+                    if (!command || !executor || !platform) {
+                        valid = false;
+                    }
+                });
+            } else {
+                valid = false;
+            }
+        }
+
+        // Additional info missing data
+        if (valid) {
+            let additionalInfo = {};
+            $('#ability-additional-info').find('#additional-info-table tr').each(function() {
+                let key = $(this).find('.additional-key').val();
+                if (key !== '' && !(key in additionalInfo)) {
+                    additionalInfo[key] = $(this).find('.additional-value').val();
+                } else {
+                    valid = false;
+                }
+            });
+        }
+
+        return valid;
+    }
+
+    function saveAbility(addToAdversary=false) {
+        if (!validateAbility()) {
+            warn('Missing required data!');
+            stream('Missing required data!');
+            return;
+        }
 
         let data = {};
         let platforms = {};
-        let invalid = false;
+
+        let name = $('#ability-name').val();
+        let description = $('#ability-description').val();
+
         $('#ttp-tests > li').each(function() {
             let platform = $(this).find('#ability-platform').val();
 
-            if(platforms[platform] === undefined) {
+            if (platforms[platform] === undefined) {
                 platforms[platform] = {};
             }
 
@@ -365,33 +480,24 @@
             let cleanup = $(this).find('#ability-cleanup').val();
             let timeout = $(this).find('#ability-timeout').val();
 
-            if(!command || !executor || !platform) {
-                invalid = true;
-            }
             let ex = {'command': command};
-            if(payloads) {
+            if (payloads) {
                 ex['payloads'] = payloads;
             }
-            if(cleanup) {
+            if (cleanup) {
                 ex['cleanup'] = cleanup;
             }
-            if(timeout) {
+            if (timeout) {
                 ex['timeout'] = parseInt(timeout);
             }
             platforms[platform][executor] = ex;
         });
         $('#ability-additional-info').find('#additional-info-table tr').each(function() {
             let key = $(this).find('.additional-key').val();
-            if (key !== '' && !(key in data)){
+            if (key !== '' && !(key in data)) {
                 data[key] = $(this).find('.additional-value').val();
-            } else {
-                invalid = true;
             }
         });
-        if(invalid) {
-            alert('Missing required data!');
-            return;
-        }
         data['index'] = 'abilities';
         data['id'] = $('#ability-identifier').val();
         data['name'] = name;
@@ -399,34 +505,92 @@
         data['tactic'] = $('#ability-tactic-name').val();
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
-        $('#ability-save').text('WAIT...');
-        restRequest('PUT', data, saveAbilityCallback);
+
+        $.ajax({
+           url: '/api/rest',
+           type: 'PUT',
+           contentType: 'application/json',
+           data: JSON.stringify(data),
+           success: function(data, status, options) {
+               saveAbilityCallback(data, addToAdversary);
+           },
+           error: function (xhr, ajaxOptions, thrownError) {
+               stream(thrownError);
+           }
+        });
     }
 
-    function saveAbilityCallback(data) {
-        let options = $('#phase-modal').find('#ability-ability-filter');
-        let ability = options.find(":selected").data('ability');
-        if((!ability) || (ability && ability.ability_id != data[0].ability_id)) {
-            let a = addPlatforms([data[0]]);
-            appendAbilityToList('phase-modal', a[0]);
-            options.val(a[0].name);
+    function saveAbilityCallback(data, addToAdversary=false) {
+        if ($('#ability-identifier').val() === '') {
+            $('#ability-identifier').val(data[0].ability_id);
         }
+        let abilitySelector = $('#phase-modal').find('#ability-ability-filter');
+        let selectedAbility = abilitySelector.find(':selected').data('ability');
+
+        let abilityData = data[0];
+        let newAbility = addPlatforms([abilityData])[0];
+        
+        if (!selectedAbility || selectedAbility.ability_id != newAbility.ability_id) {
+            appendAbilityToList('phase-modal', newAbility);
+        } else {
+            abilitySelector.find(':selected')
+                .attr('value', newAbility.name)
+                .data('ability', newAbility)
+                .text(newAbility.name);
+        }
+        abilitySelector.val(newAbility.name);
+
         var $to_replace = -1;
         $.each(exploits, function(i, ab) {
-            if (ab.ability_id === data[0].ability_id) {
+            if (ab.ability_id === abilityData.ability_id) {
                 $to_replace = i;
                 return false;
             }
         });
         if ($to_replace != -1) {
-            exploits[$to_replace] = data[0];
-            loadAdversary();
+            exploits[$to_replace] = abilityData;
+        } else {
+            exploits.push(abilityData);
         }
-        alert('Ability saved!');
+        stream('Ability saved!');
+
+        let tactics = $.map($('#ability-tactic-filter option'), function(option) {
+            if (option.value) {
+                return option.value;
+            }
+        });
+        if ($.inArray(newAbility.tactic, tactics) === -1) {
+            var newTactic = $('<option></option>')
+                .attr('value', newAbility.tactic)
+                .attr('data-tactic', newAbility.tactic)
+                .text(newAbility.tactic);
+            $('#ability-tactic-filter').append(newTactic);
+        }
+
+        if (addToAdversary) {
+            addAbilityToAdversary();
+        } else {
+            replaceAbilityInAdversary();
+        }
     }
 
-    function removeBlock(element){
-        element.parent().parent().parent().remove();
+    function replaceAbilityInAdversary() {
+        let ability = $('#phase-modal').find('#ability-ability-filter').find(':selected').data('ability');
+        let abilityItem = $(g_grid.getElement()).children('#' + ability.ability_id);
+        if (abilityItem.length) {
+            let abilityIndex = parseInt($(abilityItem).find('.ability-order').text()) - 1;
+            g_grid.remove(g_grid.getItems(abilityIndex), { removeElements: true });
+            let abilityBox = buildAbility(ability);
+            g_grid.add(abilityBox[0], { index: abilityIndex });
+        }
+    }
+
+    function addAbilityToAdversary() {
+        let ability = $('#phase-modal').find('#ability-ability-filter').find(':selected').data('ability');
+        let abilityBox = buildAbility(ability);
+        g_grid.add(abilityBox[0]);
+        clearPhaseModal();
+        hidePhaseModal();
     }
 
     function appendToSelect(field, identifier, value, optionId) {
@@ -451,6 +615,8 @@
 
     function loadAdversaryCallback(data) {
         stream('Profiles contain abilities which will run in atomic order by default. It contains abilities, or TTPs.');
+
+        $('#adversary-content').css('visibility', 'visible');
         $('#profile-goal').val(data[0].name);
         $('#profile-description').val(data[0].description);
 
@@ -460,6 +626,8 @@
         $('#objective-existing')[0].value = data[0].objective.id;
         handleObjectiveSelection(data[0].objective.id);
         linkObjective();
+
+        checkAdversaryButtons();
     }
 
     function createMuuriGrid() {
@@ -526,7 +694,7 @@
         }
         template.show();
         let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering</span>' +
-            '<span class="ability-add" onclick="showPhaseModal('+number+')">&#10010; add ability</span>'
+            '<span class="ability-add" onclick="showPhaseModal('+number+'); checkAbilityButtons()">&#10010; add ability</span>'
             +'<span class="ability-add" onclick="showProfileModal('+number+')" ' +
             'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span>' +
             '<span class="ability-add" onclick="showObjectiveModal()" ' +
@@ -659,10 +827,12 @@
                 payloads.multiSelect('select', ability.payloads);
             }
         });
+
+        checkAbilityButtons();
     }
 
     function filterExecutors(elem) {
-        let ttpTable = $(elem).parent().parent().parent();
+        let ttpTable = $(elem).closest('table');
         let platform = $(elem).val();
         let executorSelect = $(ttpTable).find('#ability-executor');
         $(executorSelect).empty();
@@ -691,6 +861,7 @@
                 $('#ability-additional-info').hide();
             }
             $(this).parent().parent().remove();
+            checkAbilityButtons();
         });
         return $table_row;
     }
@@ -707,18 +878,14 @@
     }
 
     function hidePhaseModal() {
-        $("body").off("keyup");
-        document.getElementById("phase-modal").style.display="none";
+        $('#phase-modal').hide();
+        $('#ability-search-filter').val('');
     }
 
     function clearPhaseModal() {
-        $('#ability-tactic-filter option:selected').removeAttr('selected');
-        $('#ability-tactic-filter option:first').remove();
-        $('#ability-tactic-filter').prepend('<option disabled selected>Choose a tactic</option>');
-        $('#ability-technique-filter').empty();
-        $('#ability-technique-filter').append('<option disabled selected>Choose a technique</option>');
-        $('#ability-ability-filter').empty();
-        $('#ability-ability-filter').append('<option disabled selected>0 abilities</option>');
+        $('#ability-tactic-filter option:first').prop('selected', true);
+        $('#ability-technique-filter').empty().append('<option disabled="disabled" selected>Choose a technique</option>');
+        $('#ability-ability-filter').empty().append('<option disabled="disabled" selected>0 abilities</option>');
         $('#ability-identifier').val('');
         $('#ability-name').val('');
         $('#ability-description').val('');
@@ -759,6 +926,7 @@
 
     function freshId(){
         $('#ability-identifier').val(uuidv4());
+        checkAbilityButtons();
     }
 
     function uploadPayload() {
@@ -812,18 +980,12 @@
         $('#objective-img')[0].style="display:none";
     }
 
-    function addAbilityToPhase() {
-        let ability = $('#phase-modal').find('#ability-ability-filter').find(":selected").data('ability');
-        let abilityBox = buildAbility(ability);
-        g_grid.add(abilityBox[0]);
-        clearPhaseModal();
-        hidePhaseModal();
-    }
-
     function deleteProfile(){
         function deleteCallback(data){
-            $('#adversary-'+adversary_id).remove();
-            toggleAdversaryView();
+            $('#adversary-' + adversary_id).remove();
+            clearAdversaryContent();
+            checkAdversaryContent();
+            checkAdversaryButtons();
             stream(data);
         }
         let adversary_id = $('#profile-existing-name').val();
