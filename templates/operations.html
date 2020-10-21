@@ -310,6 +310,7 @@
             stream('Operation name required. Click the headers below to reveal optional properties.');
             showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
             $('#opBtn').addClass('separated-button');
+            checkOpformValid();
         } else {
             showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
             $('#opBtn').removeClass('separated-button');
