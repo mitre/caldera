@@ -20,7 +20,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 
 ## Plugins
 
-:star: Create your own plugin! Use our plugin generator **[Skeleton](https://github.com/mitre/skeleton)** :star:
+:star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
 
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
