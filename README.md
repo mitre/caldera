@@ -64,7 +64,7 @@ Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-> Want to super-power your CALDERA server installation? Make sure GoLang (1.13+) is installed.
+**Super-power your CALDERA server installation! Install GoLang (1.13+)**
 
 Finally, start the server. 
 ```Bash
