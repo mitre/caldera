@@ -22,9 +22,11 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 
 :star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
 
+### Default
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
+- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
 - **[Fieldmanual](https://github.com/mitre/fieldmanual)** (documentation)
@@ -38,6 +40,9 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 - **[Stockpile](https://github.com/mitre/stockpile)** (technique and profile storehouse)
 - **[Training](https://github.com/mitre/training)** (certification and training course)
 
+### More
+These plugins are ready to use but are not included by default:
+- **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 
 ## Requirements
 
