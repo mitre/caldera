@@ -217,15 +217,15 @@
             stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
         }
         $("#agent-beacon").click(function(){
-            stream('Set the minimum and maximum seconds the agent will take to beacon home. Timer changes will affect agents after their next beacon.');
+            stream('Set the minimum and maximum seconds the agent will take to beacon home. Beacon timer changes will only affect new agents.');
             $("#agent-beacon-options").slideToggle();
         });
         $("#agent-watchdog").click(function(){
-            stream('Set the number of seconds to wait before killing the agent, once the server is unreachable. Set 0 for infinite. Timer changes will affect agents after their next beacon.');
+            stream('Set the number of seconds to wait before killing the agent, once the server is unreachable. Set 0 for infinite. Watchdog timer changes will only affect new agents.');
             $("#agent-watchdog-options").slideToggle();
         });
         $("#agent-untrusted").click(function(){
-            stream('Set the number of seconds the server will wait before marking a missing agent as untrusted. Timer changes will affect agents after their next beacon.');
+            stream('Set the number of seconds the server will wait before marking a missing agent as untrusted. Untrusted timer changes will affect all agents.');
             $("#agent-untrusted-options").slideToggle();
         });
         $("#agent-implant").click(function(){
