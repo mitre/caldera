@@ -63,7 +63,7 @@ class FileSvc(FileServiceInterface, BaseService):
                 field = await reader.next()
                 if not field:
                     break
-                filename = field.filename
+                _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir)
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
