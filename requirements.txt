@@ -4,7 +4,7 @@ aiohttp_session==2.9.0
 aiohttp-security==0.4.0
 jinja2==2.10.3
 pyyaml>=5.1
-cryptography==2.8
+cryptography==3.2
 websockets==8.1
 Sphinx==3.0.4
 sphinx_rtd_theme==0.4.3
