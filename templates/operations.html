@@ -535,6 +535,7 @@
         let paw = selectedAgent.split('-')[1];
         let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
         restRequest('POST', postData, potentialLinksCallback, '/api/rest');
+        $('#potential-links-count').html('Building potential links...');
     }
 
     function potentialLinksCallback(data){
