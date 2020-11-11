@@ -210,7 +210,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
-            report['skipped_abilities'] = await self._get_skipped_abilities_by_agent(data_svc)
+            report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
 
             return report
         except Exception:
@@ -263,7 +263,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
 
-    async def _get_skipped_abilities_by_agent(self, data_svc):
+    async def get_skipped_abilities_by_agent(self, data_svc):
         abilities_by_agent = await self._get_all_possible_abilities_by_agent(data_svc)
         skipped_abilities = []
         for agent in self.agents:
