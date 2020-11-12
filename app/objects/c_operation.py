@@ -184,6 +184,26 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def get_active_agent_by_paw(self, paw):
         return [a for a in await self.active_agents() if a.paw == paw]
 
+    async def get_skipped_abilities_by_agent(self, data_svc):
+        abilities_by_agent = await self._get_all_possible_abilities_by_agent(data_svc)
+        skipped_abilities = []
+        for agent in self.agents:
+            agent_skipped = defaultdict(dict)
+            agent_executors = agent.executors
+            agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
+            for ab in abilities_by_agent[agent.paw]['all_abilities']:
+                skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
+                                                     op_facts=[f.trait for f in self.all_facts()],
+                                                     state=self.state, agent_ran=agent_ran)
+                if skipped:
+                    if agent_skipped[skipped['ability_id']]:
+                        if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
+                            agent_skipped[skipped['ability_id']] = skipped
+                    else:
+                        agent_skipped[skipped['ability_id']] = skipped
+            skipped_abilities.append({agent.paw: list(agent_skipped.values())})
+        return skipped_abilities
+
     async def report(self, file_svc, data_svc, output=False, redacted=False):
         try:
             report = dict(name=self.name, host_group=[a.display for a in self.agents],
@@ -262,26 +282,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _unfinished_links_for_agent(self, paw):
         return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
-
-    async def get_skipped_abilities_by_agent(self, data_svc):
-        abilities_by_agent = await self._get_all_possible_abilities_by_agent(data_svc)
-        skipped_abilities = []
-        for agent in self.agents:
-            agent_skipped = defaultdict(dict)
-            agent_executors = agent.executors
-            agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
-            for ab in abilities_by_agent[agent.paw]['all_abilities']:
-                skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
-                                                     op_facts=[f.trait for f in self.all_facts()],
-                                                     state=self.state, agent_ran=agent_ran)
-                if skipped:
-                    if agent_skipped[skipped['ability_id']]:
-                        if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
-                            agent_skipped[skipped['ability_id']] = skipped
-                    else:
-                        agent_skipped[skipped['ability_id']] = skipped
-            skipped_abilities.append({agent.paw: list(agent_skipped.values())})
-        return skipped_abilities
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
         abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
