@@ -44,8 +44,9 @@ class BaseWorld:
             BaseWorld._app_configuration[name][prop] = value
 
     @staticmethod
-    def decode_bytes(s):
-        return b64decode(s).decode('utf-8', errors='ignore').replace('\n', '')
+    def decode_bytes(s, strip_newlines=True):
+        decoded = b64decode(s).decode('utf-8', errors='ignore')
+        return decoded.replace('\r\n', '').replace('\n', '') if strip_newlines else decoded
 
     @staticmethod
     def encode_string(s):
