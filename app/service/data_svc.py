@@ -119,7 +119,7 @@ class DataService(DataServiceInterface, BaseService):
                             'command') else None
                         cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
                             'cleanup') else None
-                        if info.get('code') and info.get('code').strip():
+                        if info.get('code') and info['code'].strip():
                             try:
                                 _, source_code = await self.get_service('file_svc').read_file(info['code'].strip())
                                 encoded_code = self.encode_string(source_code.decode('utf-8').strip())
