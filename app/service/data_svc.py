@@ -119,7 +119,14 @@ class DataService(DataServiceInterface, BaseService):
                             'command') else None
                         cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
                             'cleanup') else None
-                        encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                        if info.get('code') and info.get('code').strip():
+                            try:
+                                _, source_code = await self.get_service('file_svc').read_file(info['code'].strip())
+                                encoded_code = self.encode_string(source_code.decode('utf-8').strip())
+                            except FileNotFoundError:
+                                encoded_code = self.encode_string(info['code'].strip())
+                        else:
+                            encoded_code = None
                         payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
                         for e in name.split(','):
                             for pl in platforms.split(','):
