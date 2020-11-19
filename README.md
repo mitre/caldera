@@ -24,7 +24,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 
 ### Default
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
-- **[Atomic](https://github.com/mitre/atomic)** (Atomic Read Team project TTPs)
+- **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
 - **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
