@@ -631,20 +631,6 @@ table.dataTable input[type=text] {
 .legend .queued {
     background-color: #555555; //dark grey
 }
-#operationProgress {
-  width: 75%;
-  border-radius: 25px;
-  background-color: grey;
-}
-#operationProgressBar {
-  width: 10%;
-  height: 30px;
-  border-radius: 25px;
-  background-color: var(--theme-color);
-  text-align: center; /* To center it horizontally (if you want) */
-  line-height: 30px; /* To center it vertically */
-  color: black;
-}
 .default-option {
     color: gray;
 }

@@ -120,6 +120,8 @@
     <div class="column op-selected" style="flex:75%">
       <div class="op-dets">
         <center>
+            <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
+            <br><br>
             <div class="op-control-container">
                 <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
                 <span title="Pause Operation" class="op-control-item"><button id="op-control-pause" onclick="changeCurrentOperationState('paused')">&#2405;</button></span>
@@ -131,12 +133,6 @@
                         <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual</span></div>
                     </label>
                 </div>
-            </div>
-            <br>
-            <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
-            <br><br>
-            <div id="operationProgress" style="text-align: left">
-              <div id="operationProgressBar">0%</div>
             </div>
             <br>
             <table class="legend">
@@ -442,7 +438,6 @@
             }
             $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
-            changeProgress(OPERATION.finish, parseInt(OPERATION.objective.percentage));
             clearTimeline();
             for(let i=0; i<OPERATION.chain.length; i++){
                 if(OPERATION.chain[i].status === -1) {
@@ -689,23 +684,7 @@
         downloadReport('/api/rest', selectedOpName, postData);
     }
 
-    function changeProgress(finish, percent) {
-        // Calculate percentage
-        if (percent >= 100) {
-            if (finish) {
-                percent = 100;
-            } else {
-                    percent = 99;
-            }
-        } else if (isNaN(percent)) {
-            percent = 0;
-        }
 
-        // Set progress bar
-        $('#operationProgressBar').width(percent + '%');
-        $('#operationProgressBar').html(percent + '%');
-    }
-    
     function resetMoreModal() {
         let modal = $('#more-modal');
         modal.hide();
