@@ -5,11 +5,9 @@ name = 'upx'
 
 
 class Packer:
-    def __init__(self, file_svc, platform):
+    def __init__(self, file_svc):
         self.file_svc = file_svc
-        self.platform = platform
         self.packer_folder = 'data/payloads'
-        self.supported_platforms = ['darwin', 'linux', 'windows']
 
     async def pack(self, filename, contents):
         try:

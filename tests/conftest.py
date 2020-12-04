@@ -3,6 +3,7 @@ import random
 import string
 import uuid
 import yaml
+from unittest import mock
 
 from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
@@ -84,6 +85,11 @@ def learning_svc():
 @pytest.fixture(scope='class')
 def services(app_svc):
     return app_svc.get_services()
+
+
+@pytest.fixture(scope='class')
+def mocker():
+    return mock
 
 
 @pytest.fixture

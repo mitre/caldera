@@ -3,6 +3,7 @@ import pytest
 
 from app.utility.payload_encoder import xor_file
 from tests import AsyncMock
+from asyncio import Future
 
 
 @pytest.mark.usefixtures(
@@ -154,3 +155,30 @@ class TestFileService:
         loop.run_until_complete(file_svc.add_special_payload(payload_name, payload_func))
 
         assert file_svc.special_payloads[payload_name] == payload_func
+
+    def test_pack_file(self, loop, mocker, tmpdir, file_svc, data_svc):
+        payload = 'unittestpayload'
+        payload_content = b'content'
+        new_payload_content = b'new_content'
+        packer_name = 'test'
+
+        # create temp files
+        file = tmpdir.join(payload)
+        file.write(payload_content)
+
+        # start mocking up methods
+        packer = mocker.Mock(return_value=Future())
+        packer.return_value = packer
+        packer.pack = AsyncMock(return_value=(payload, new_payload_content))
+        data_svc.locate = AsyncMock(return_value=[])
+        module = mocker.Mock()
+        module.Packer = packer
+        file_svc.packers[packer_name] = module
+        file_svc.data_svc = data_svc
+        file_svc.read_file = AsyncMock(return_value=(payload, payload_content))
+
+        file_path, content, display_name = loop.run_until_complete(file_svc.get_file(headers=dict(file='%s:%s' % (packer_name, payload))))
+
+        packer.pack.assert_called_once()
+        assert payload == file_path
+        assert content == new_payload_content
