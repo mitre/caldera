@@ -3,6 +3,9 @@ import base64
 import copy
 import os
 import subprocess
+import glob
+from importlib import import_module
+
 
 from aiohttp import web
 from cryptography.fernet import Fernet
@@ -25,12 +28,17 @@ class FileSvc(FileServiceInterface, BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
+        self.payload_options = dict()
+        self.packers = self._load_packers('app/utility/packers')
 
     async def get_file(self, headers):
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
+        packer = None
         display_name = payload = headers.get('file')
+        if ':' in payload:
+            _, display_name = packer, payload = payload.split(':')
         if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
             payload, display_name = await self._operate_extension(payload, headers)
         if self.is_uuid4(payload):
@@ -38,6 +46,8 @@ class FileSvc(FileServiceInterface, BaseService):
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
+        if packer and packer in self.packers:
+            file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
         if headers.get('xor_key'):
             xor_key = headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
@@ -141,6 +151,9 @@ class FileSvc(FileServiceInterface, BaseService):
                     return k, k
         return payload, payload
 
+    def get_payload_packer(self, packer):
+        return self.packers[packer].Packer(self)
+
     """ PRIVATE """
 
     def _save(self, filename, content, encrypt=True):
@@ -163,6 +176,14 @@ class FileSvc(FileServiceInterface, BaseService):
                                    iterations=2 ** 20,
                                    backend=default_backend())
         return Fernet(base64.urlsafe_b64encode(generated_key.derive(bytes(self.get_config('encryption_key'), 'utf-8'))))
+
+    @staticmethod
+    def _load_packers(path):
+        packers = dict()
+        for module in glob.iglob('%s/**.py' % path):
+            packer = import_module(module.replace('/', '.').replace('\\', '.').replace('.py', ''))
+            packers[packer.name] = packer
+        return packers
 
     async def _operate_extension(self, payload, headers):
         try:
