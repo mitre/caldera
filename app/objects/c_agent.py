@@ -36,6 +36,7 @@ class AgentFieldsSchema(ma.Schema):
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
+    origin_link_id = ma.fields.Integer()
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -52,7 +53,7 @@ class AgentSchema(AgentFieldsSchema):
 class Agent(FirstClassObjectInterface, BaseObject):
 
     schema = AgentSchema()
-    load_schema = AgentSchema(partial=['paw'])
+    load_schema = AgentSchema(partial=['paw', 'origin_link_id'])
 
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
                     exe_name='#{exe_name}', payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
@@ -68,7 +69,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None, proxy_chain=None):
+                 proxy_receivers=None, proxy_chain=None, origin_link_id=0):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -96,6 +97,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.access = self.Access.BLUE if group == 'blue' else self.Access.RED
         self.proxy_receivers = proxy_receivers if proxy_receivers else dict()
         self.proxy_chain = proxy_chain if proxy_chain else []
+        self.origin_link_id = origin_link_id
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
