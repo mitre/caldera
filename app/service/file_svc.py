@@ -25,12 +25,16 @@ class FileSvc(FileServiceInterface, BaseService):
         self.special_payloads = dict()
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
+        self.packers = dict()
 
     async def get_file(self, headers):
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
+        packer = None
         display_name = payload = headers.get('file')
+        if ':' in payload:
+            _, display_name = packer, payload = payload.split(':')
         if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
             payload, display_name = await self._operate_extension(payload, headers)
         if self.is_uuid4(payload):
@@ -38,6 +42,8 @@ class FileSvc(FileServiceInterface, BaseService):
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
+        if packer and packer in self.packers:
+            file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
         if headers.get('xor_key'):
             xor_key = headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
@@ -140,6 +146,9 @@ class FileSvc(FileServiceInterface, BaseService):
                         return k, v['obfuscation_name'][0]
                     return k, k
         return payload, payload
+
+    def get_payload_packer(self, packer):
+        return self.packers[packer].Packer(self)
 
     """ PRIVATE """
 

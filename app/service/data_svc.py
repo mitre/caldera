@@ -6,6 +6,7 @@ import pickle
 import shutil
 import warnings
 from base64 import b64encode
+from importlib import import_module
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -168,6 +169,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
                 await self._load_objectives(plug)
+                await self._load_packers(plug)
             await self._verify_ability_set()
             for plug in plugins:
                 await self._load_adversaries(plug)
@@ -227,6 +229,14 @@ class DataService(DataServiceInterface, BaseService):
             await self.get_service('file_svc').add_special_payload(entry,
                                                                    self._app_configuration['payloads']
                                                                    ['extensions'][entry])
+
+    async def _load_packers(self, plugin):
+        plug_packers = dict()
+        for module in glob.iglob('plugins/%s/app/packers/**.py' % plugin.name):
+            packer = import_module(module.replace('/', '.').replace('\\', '.').replace('.py', ''))
+            if await packer.check_dependencies(self.get_service('app_svc')):
+                plug_packers[packer.name] = packer
+        self.get_service('file_svc').packers.update(plug_packers)
 
     async def _create_ability(self, ability_id, tactic=None, technique_name=None, technique_id=None, name=None,
                               test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
