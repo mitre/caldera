@@ -42,8 +42,11 @@ class FileSvc(FileServiceInterface, BaseService):
         if payload in self.special_payloads:
             payload, display_name = await self.special_payloads[payload](headers)
         file_path, contents = await self.read_file(payload)
-        if packer and packer in self.packers:
-            file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
+        if packer:
+            if packer in self.packers:
+                file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
+            else:
+                self.log.warning('packer <%s> not available for payload <%s>, returning unpacked' % (packer, payload))
         if headers.get('xor_key'):
             xor_key = headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
