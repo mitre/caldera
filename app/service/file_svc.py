@@ -28,8 +28,7 @@ class FileSvc(FileServiceInterface, BaseService):
         self.packers = dict()
 
     async def get_file(self, headers):
-        mutable_headers = dict()
-        mutable_headers.update(headers)
+        mutable_headers = dict(headers)
         if 'file' not in mutable_headers:
             raise KeyError('File key was not provided')
 
