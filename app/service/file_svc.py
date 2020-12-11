@@ -28,30 +28,33 @@ class FileSvc(FileServiceInterface, BaseService):
         self.packers = dict()
 
     async def get_file(self, headers):
-        if 'file' not in headers:
+        mutable_headers = {}
+        mutable_headers.update(headers)
+        if 'file' not in mutable_headers:
             raise KeyError('File key was not provided')
 
         packer = None
-        display_name = payload = headers.get('file')
+        display_name = payload = mutable_headers.get('file')
         if ':' in payload:
             _, display_name = packer, payload = payload.split(':')
+            mutable_headers['file'] = payload
         if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
-            payload, display_name = await self._operate_extension(payload, headers)
+            payload, display_name = await self._operate_extension(payload, mutable_headers)
         if self.is_uuid4(payload):
             payload, display_name = self.get_payload_name_from_uuid(payload)
         if payload in self.special_payloads:
-            payload, display_name = await self.special_payloads[payload](headers)
+            payload, display_name = await self.special_payloads[payload](mutable_headers)
         file_path, contents = await self.read_file(payload)
         if packer:
             if packer in self.packers:
                 file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
             else:
                 self.log.warning('packer <%s> not available for payload <%s>, returning unpacked' % (packer, payload))
-        if headers.get('xor_key'):
-            xor_key = headers['xor_key']
+        if mutable_headers.get('xor_key'):
+            xor_key = mutable_headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
-        if headers.get('name'):
-            display_name = headers.get('name')
+        if mutable_headers.get('name'):
+            display_name = mutable_headers.get('name')
         if file_path.endswith('.xored'):
             display_name = file_path.replace('.xored', '')
         return file_path, contents, display_name
