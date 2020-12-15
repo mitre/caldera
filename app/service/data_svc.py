@@ -120,7 +120,16 @@ class DataService(DataServiceInterface, BaseService):
                             'command') else None
                         cleanup_cmd = b64encode(info['cleanup'].strip().encode('utf-8')).decode() if info.get(
                             'cleanup') else None
-                        encoded_code = self.encode_string(info['code'].strip()) if info.get('code') else None
+                        if info.get('code') and info['code'].strip():
+                            cleaned_code = info['code'].strip()
+                            _, code_path = await self.get_service('file_svc').find_file_path(cleaned_code)
+                            if code_path:
+                                _, code_data = await self.get_service('file_svc').read_file(cleaned_code)
+                                encoded_code = self.encode_string(code_data.decode('utf-8').strip())
+                            else:
+                                encoded_code = self.encode_string(cleaned_code)
+                        else:
+                            encoded_code = None
                         payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
                         for e in name.split(','):
                             for pl in platforms.split(','):
