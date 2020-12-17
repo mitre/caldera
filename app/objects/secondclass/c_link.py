@@ -34,6 +34,7 @@ class LinkSchema(ma.Schema):
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
+    deadman = ma.fields.Boolean()
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -86,7 +87,7 @@ class Link(BaseObject):
                     TIMEOUT=124)
 
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
-                 host=None):
+                 host=None, deadman=False):
         super().__init__()
         self.id = id
         self.command = command
@@ -108,6 +109,7 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = False
+        self.deadman = deadman
 
     def __eq__(self, other):
         if isinstance(other, Link):
