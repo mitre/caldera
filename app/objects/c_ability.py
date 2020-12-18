@@ -35,6 +35,7 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema, missing=None)
     test = ma.fields.String(missing=None)
+    singleton = ma.fields.Bool(missing=None)
 
     @ma.post_load
     def build_ability(self, data, **_):
@@ -46,7 +47,8 @@ class AbilitySchema(ma.Schema):
 class Ability(FirstClassObjectInterface, BaseObject):
 
     schema = AbilitySchema()
-    display_schema = AbilitySchema(exclude=['repeatable', 'language', 'code', 'build_target'])  # may need to fix for id=self.unique
+    # may need to fix for id=self.unique
+    display_schema = AbilitySchema(exclude=['repeatable', 'language', 'code', 'build_target', 'singleton'])
 
     RESERVED = dict(payload='#{payload}')
     HOOKS = dict()
@@ -70,7 +72,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
-                 variations=None, language=None, code=None, build_target=None, additional_info=None, tags=None, **kwargs):
+                 variations=None, language=None, code=None, build_target=None, additional_info=None, tags=None,
+                 singleton=False, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -93,6 +96,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.build_target = build_target
         self.variations = get_variations(variations)
         self.buckets = buckets if buckets else []
+        self.singleton = singleton
         if access:
             self.access = self.Access(access)
         self.additional_info = additional_info or dict()
