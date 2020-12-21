@@ -353,7 +353,7 @@ class RestService(RestServiceInterface, BaseService):
         self.set_config(name='agents', prop='watchdog', value=watchdog)
         if implant_name:
             self.set_config(name='agents', prop='implant_name', value=implant_name)
-        if bootstrap_abilities:
+        if bootstrap_abilities is not None:
             abilities = []
             ability_ids = [ability_id.strip() for ability_id in bootstrap_abilities.split(',') if ability_id.strip()]
             for ability_id in ability_ids:
