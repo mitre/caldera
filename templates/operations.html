@@ -314,6 +314,7 @@
     }
 
     function handleStartAction(){
+        $('.op-selected').css('visibility', 'hidden');
         restRequest('PUT', buildOperationObject(), handleStartActionCallback);
     }
 
