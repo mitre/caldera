@@ -66,7 +66,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
                            source=tsource)
 
     cability = ability(ability_id='321', executor='sh', platform='darwin', test=BaseWorld.encode_string(test_string),
-                       cleanup=BaseWorld.encode_string('whoami'), variations=[])
+                       cleanup=BaseWorld.encode_string('whoami'), singleton=True, variations=[])
 
     loop.run_until_complete(data_svc.store(tability))
     loop.run_until_complete(data_svc.store(cability))
@@ -237,3 +237,29 @@ class TestPlanningService:
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+
+    def test_duplicate_lateral_filter(self, loop, setup_planning_test, planning_svc, link, fact):
+        ability, agent, operation, sability = setup_planning_test
+
+        l0 = link(command='a0', paw='0', ability=ability)
+        l1 = link(command='a1', paw='0', ability=sability)
+        l2 = link(command='a0', paw='0', ability=ability)
+        l3 = link(command='a1', paw='0', ability=sability)
+
+        l0.status = l0.states['SUCCESS']
+        l1.status = l1.states['SUCCESS']
+
+        filtered = [x for x in [l0, l1, l2, l3] if x.ability.singleton]
+        assert 2 == len(filtered)
+
+        operation.chain = [l0, l1]
+
+        # test historical filtering
+        filt = loop.run_until_complete(planning_svc.remove_completed_links(operation, agent, [l2, l3]))
+        assert 1 == len(filt)
+
+        # test parallel filtering
+        flat_fil = planning_svc._cross_check_agents_for_duplicate_singletons([[l0, l1, l2, l3],
+                                                                              [l0, l1, l2, l3],
+                                                                              [l0, l1, l2, l3]])
+        assert 7 == len(flat_fil)

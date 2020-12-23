@@ -1,7 +1,6 @@
 import os
 import pytest
 
-from app.utility.payload_encoder import xor_file
 from tests import AsyncMock
 from asyncio import Future
 
