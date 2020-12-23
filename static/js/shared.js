@@ -116,7 +116,9 @@ $(document).ready(function () {
             $('.modal').hide();
         }
         if(!$(event.target).closest('#mySidenav').length && !$(event.target).is('.navbar span')) {
-            document.getElementById("mySidenav").style.width = "0px";
+            if (document.getElementById("mySidenav") != null) {
+                document.getElementById("mySidenav").style.width = "0px";
+            }
         }
     });
 });
