@@ -695,11 +695,11 @@
         modal.find('#resultView').text('');
     }
 
-    function submitHilChanges(ability, status){
-        parent = $(ability).parent().parent();
-        let command = $(parent).find('.hil-command').val();
-        updateLinkStatus($(parent).find('.hil-linkId').html(), status, btoa(command));
-        $(parent).parent().parent().remove();
+    function submitHilChanges(link_button, status){
+        link_loop = $(link_button).parent().parent();
+        let command = $(link_loop).find('.hil-command').val();
+        updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, btoa(command));
+        $(link_loop).parent().parent().remove();
         refresh();
         return false;
     }
