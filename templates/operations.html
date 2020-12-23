@@ -465,6 +465,7 @@
                         loop_template.css('display', 'block');
                         loop_template.insertAfter(template.find(".member-infos"));
                         template.find('#'+OPERATION.chain[i].id+'-rm').remove();
+                        template.find('#'+OPERATION.chain[i].id+'-cm').remove()
                     }
 
                     refreshUpdatableFields(OPERATION.chain[i], template, true);
