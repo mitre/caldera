@@ -454,6 +454,7 @@
                         'onclick="findResults(this,'+lnk+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"></span>' +
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
+                        '<span id="'+OPERATION.chain[i].id+'-cm" style="font-size:11px;float:right;" onclick="showCommand(\''+OPERATION.chain[i].command+'\')">&#x2754;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
 
                     if (OPERATION.chain[i].status === -1) {
@@ -626,6 +627,7 @@
                 resultStar.addClass('tactic-no-facts');
             }
             div.find('#'+chain.id+'-rm').remove();
+            div.find('#'+chain.id+'-cm').remove();
         }
         if(chain.status === 0) {
             applyTimelineColor(div, 'success');
@@ -728,6 +730,11 @@
         if ($('#togBtnOp').is(':checked')) {
             $('#opBtn').addClass('separated-button');
         }
+    }
+
+    function showCommand(command){
+        document.getElementById('more-modal').style.display='block';
+        $('#resultCmd').html(atob(command));
     }
     //# sourceURL=operations.js
 </script>
