@@ -173,6 +173,7 @@ class DataService(DataServiceInterface, BaseService):
         try:
             if not plugins:
                 plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
+            if not [plugin for plugin in plugins if plugin.data_dir == 'data']:
                 plugins.append(Plugin(data_dir='data'))
             for plug in plugins:
                 await self._load_payloads(plug)
