@@ -490,7 +490,8 @@ class RestService(RestServiceInterface, BaseService):
             # Get access
             allowed = self._get_allowed_from_access(access)
 
-        await self.get_service('file_svc').save_file(file_path, yaml.dump([final], encoding='utf-8'), '', encrypt=False)
+        await self.get_service('file_svc').save_file(file_path, yaml.dump([final], encoding='utf-8', sort_keys=False),
+                                                     '', encrypt=False)
         await self.get_service('data_svc').remove('abilities', dict(ability_id=final['id']))
         await self.get_service('data_svc').load_ability_file(file_path, allowed)
         await self._restore_exec_timeouts(final['id'], new_ability_exec_timeouts)
@@ -520,7 +521,8 @@ class RestService(RestServiceInterface, BaseService):
         return [i.display for i in await self.get_service('data_svc').locate(object_class_name, dict(id=final['id']))]
 
     async def _save_and_refresh_item(self, file_path, object_class, final, allowed):
-        await self.get_service('file_svc').save_file(file_path, yaml.dump(final, encoding='utf-8'), '', encrypt=False)
+        await self.get_service('file_svc').save_file(file_path, yaml.dump(final, encoding='utf-8', sort_keys=False),
+                                                     '', encrypt=False)
         await self.get_service('data_svc').load_yaml_file(object_class, file_path, allowed)
 
     async def _prep_new_ability(self, ab):
