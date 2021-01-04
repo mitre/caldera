@@ -206,24 +206,6 @@
     </div>
 </div>
 
-<div id="loop-modal" class="modal section-profile">
-    <form class="modal-content">
-        <div class="container modal-box">
-            <div class="row duk-modal">
-                <div class="column" style="flex:25%">
-                    <p id="hil-linkId"></p>
-                    <h5 id="hil-paw"></h5>
-                    <button class="atomic-button button-success approve" type="button" onclick="submitHilChanges(-3)">Approve</button>
-                    <button class="atomic-button button-embedded discard" type="button" onclick="submitHilChanges(-2)">Discard</button>
-                </div>
-                <div class="column codearea" style="flex:75%">
-                    <textarea id="hil-command" spellcheck="false"></textarea>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
 <li id="potential-link-template" class="potential-links" style="display: none;margin-bottom:-50px">
     <div class="row-simple">
         <div class="column">
@@ -270,6 +252,20 @@
     </div>
   </div>
 </li>
+
+<div id="loop-template" class="loop-section" style="display:none">
+    <div style="display:flex">
+        <div class="column" style="flex:15%; margin:5px">
+            <button class="atomic-button button-success approve" type="button" onclick="submitHilChanges(this, -3)" style="margin: 5px">Approve</button>
+            <button class="atomic-button button-embedded discard" type="button" onclick="submitHilChanges(this, -2)" style="margin: 5px;margin-bottom: 15px">Discard</button>
+        </div>
+        <div class="column codearea" style="flex:85%; margin:5px">
+            <p class="hil-linkId" style="display:none"></p>
+            <div class="hil-command" role="textbox" contenteditable spellcheck="false"></div>
+        </div>
+    </div>
+</div>
+
 <script>
     let refresher = setInterval(refresh, 10000);
     $('.section-profile').bind('destroyed', function() {
@@ -440,14 +436,8 @@
             $('#currentObfuscation').val(OPERATION.obfuscator);
             applyOperationAgents(OPERATION);
             clearTimeline();
-            for(let i=0; i<OPERATION.chain.length; i++){
-                if(OPERATION.chain[i].status === -1) {
-                    $('#hil-linkId').html(OPERATION.chain[i].unique);
-                    $('#hil-paw').html(OPERATION.chain[i].paw);
-                    $('#hil-command').html(atob(OPERATION.chain[i].command));
-                    document.getElementById("loop-modal").style.display = "block";
-                    return;
-                } else if($("#op_id_" + OPERATION.chain[i].id).length === 0) {
+            for (let i=0; i<OPERATION.chain.length; i++) {
+                if ($("#op_id_" + OPERATION.chain[i].id).length === 0) {
                     let template = $("#link-template").clone();
                     let title = OPERATION.chain[i].ability.name;
                     if(OPERATION.chain[i].cleanup) {
@@ -466,11 +456,24 @@
                         '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-cm" style="font-size:11px;float:right;" onclick="showCommand(\''+OPERATION.chain[i].command+'\')">&#x2754;</span>' +
                         '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
+
+                    if (OPERATION.chain[i].status === -1) {
+                        let loop_template = $("#loop-template").clone();
+                        loop_template.removeAttr('id');
+                        loop_template.find('.hil-linkId').html(OPERATION.chain[i].unique);
+                        loop_template.find('.hil-command').html(atob(OPERATION.chain[i].command));
+                        loop_template.css('display', 'block');
+                        loop_template.insertAfter(template.find(".member-infos"));
+                        template.find('#'+OPERATION.chain[i].id+'-rm').remove();
+                        template.find('#'+OPERATION.chain[i].id+'-cm').remove()
+                    }
+
                     refreshUpdatableFields(OPERATION.chain[i], template, true);
 
                     template.insertAfter("#time-start");
                     $(template.find("#inner-contents")).slideUp();
                     template.show();
+
                 } else {
                     let existing = $("#op_id_"+OPERATION.chain[i].id);
                     refreshUpdatableFields(OPERATION.chain[i], existing);
@@ -695,10 +698,11 @@
         modal.find('#resultView').text('');
     }
 
-    function submitHilChanges(status){
-        document.getElementById("loop-modal").style.display = "none";
-        let command = $('#hil-command').val();
-        updateLinkStatus($('#hil-linkId').html(), status, btoa(command));
+    function submitHilChanges(link_button, status){
+        link_loop = $(link_button).parent().parent();
+        let command = $(link_loop).find('.hil-command').val();
+        updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, btoa(command));
+        $(link_loop).parent().parent().remove();
         refresh();
         return false;
     }

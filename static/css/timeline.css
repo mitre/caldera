@@ -173,3 +173,19 @@ a:hover {
 .cleanup .event:before {
   content: attr(data-host-name);
 }
+
+.loop-section {
+    border-bottom:3px solid #777;
+    margin:0 9;
+    margin-bottom:5px;
+}
+
+.hil-command {
+    width: 97%;
+    background-color: black;
+    border-radius: 10px;
+    padding: 5px;
+    padding-left: 10px;
+    margin: 5px;
+    margin-bottom: 15px;
+}
