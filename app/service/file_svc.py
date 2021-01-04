@@ -28,6 +28,7 @@ class FileSvc(FileServiceInterface, BaseService):
         self.packers = dict()
 
     async def get_file(self, headers):
+        headers = dict(headers)
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
@@ -35,6 +36,7 @@ class FileSvc(FileServiceInterface, BaseService):
         display_name = payload = headers.get('file')
         if ':' in payload:
             _, display_name = packer, payload = payload.split(':')
+            headers['file'] = payload
         if any(payload.endswith(x) for x in [y for y in self.special_payloads if y.startswith('.')]):
             payload, display_name = await self._operate_extension(payload, headers)
         if self.is_uuid4(payload):
