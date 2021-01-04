@@ -181,8 +181,8 @@ function display_errors(errors){
 }
 
 function openNav() {
-  document.getElementById("mySidenav").style.width = "250px";
+  $('#mySidenav').width('250px');
 }
 function closeNav() {
-  document.getElementById("mySidenav").style.width = "0";
+  $('#mySidenav').width('0');
 }
