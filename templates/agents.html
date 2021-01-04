@@ -273,6 +273,7 @@
     function deleteAgent(paw){
         function deleteAgentCallback(data){
             $('#'+paw).remove();
+            $('#agent-cnt').text(parseInt($('#agent-cnt').text()) - 1);
         }
         stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
         restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
