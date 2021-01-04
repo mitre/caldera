@@ -108,7 +108,7 @@ $(document).ready(function () {
     $(document).keyup(function(e){
         if(e.key == "Escape"){
             $('.modal').hide();
-            document.getElementById("mySidenav").style.width = "0px";
+            $('#mySidenav').width('0');
         }
     });
     $('body').click(function(event) {
@@ -116,7 +116,7 @@ $(document).ready(function () {
             $('.modal').hide();
         }
         if(!$(event.target).closest('#mySidenav').length && !$(event.target).is('.navbar span')) {
-            document.getElementById("mySidenav").style.width = "0px";
+            $('#mySidenav').width('0');
         }
     });
 });
@@ -181,8 +181,8 @@ function display_errors(errors){
 }
 
 function openNav() {
-  document.getElementById("mySidenav").style.width = "250px";
+  $('#mySidenav').width('250px');
 }
 function closeNav() {
-  document.getElementById("mySidenav").style.width = "0";
+  $('#mySidenav').width('0');
 }
