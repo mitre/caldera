@@ -78,7 +78,10 @@ class Link(BaseObject):
                     UNTRUSTED=-4,
                     EXECUTE=-3,
                     DISCARD=-2,
-                    PAUSE=-1)
+                    PAUSE=-1,
+                    SUCCESS=0,
+                    ERROR=1,
+                    TIMEOUT=124)
 
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
                  host=None):
