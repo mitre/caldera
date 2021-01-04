@@ -108,7 +108,7 @@ $(document).ready(function () {
     $(document).keyup(function(e){
         if(e.key == "Escape"){
             $('.modal').hide();
-            document.getElementById("mySidenav").style.width = "0px";
+            $('#mySidenav').width('0');
         }
     });
     $('body').click(function(event) {
@@ -116,9 +116,7 @@ $(document).ready(function () {
             $('.modal').hide();
         }
         if(!$(event.target).closest('#mySidenav').length && !$(event.target).is('.navbar span')) {
-            if (document.getElementById("mySidenav") != null) {
-                document.getElementById("mySidenav").style.width = "0px";
-            }
+            $('#mySidenav').width('0');
         }
     });
 });
