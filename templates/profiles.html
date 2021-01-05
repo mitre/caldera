@@ -498,7 +498,6 @@
                 data[key] = $(this).find('.additional-value').val();
             }
         });
-        data['index'] = 'abilities';
         data['id'] = $('#ability-identifier').val();
         data['name'] = name;
         data['description'] = description;
@@ -506,9 +505,16 @@
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
 
+        let url = '/api/v2/abilities';
+        let method = 'POST';
+        if (data['id'] !== '') {
+            url = '/api/v2/abilities/' + data['id'];
+            method = 'PUT';
+        }
+
         $.ajax({
-           url: '/api/rest',
-           type: 'PUT',
+           url: url,
+           type: method,
            contentType: 'application/json',
            data: JSON.stringify(data),
            success: function(data, status, options) {
