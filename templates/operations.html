@@ -513,7 +513,7 @@
             stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
             nextApiGetOne('operations', parseInt(selectedOperationId), operationCallback);
         }
-        restRequest('POST', {'index':'agents'}, updateGroups);
+        nextApiGetAll('agents', updateGroups);
     }
 
     function applyOperationAgents(operation) {
