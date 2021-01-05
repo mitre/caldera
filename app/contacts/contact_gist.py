@@ -157,23 +157,24 @@ class Contact(BaseWorld):
         try:
             if await self._wait_for_paw(paw, comm_type='instructions'):
                 return
-            return await self._post_gist(self._build_gist_content(comm_type='instructions', paw=paw,
+            return await self._post_gist(self._build_gist_content(comm_type='instructions', descriptor=paw,
                                                                   files={str(uuid.uuid4()): dict(content=text)}))
         except Exception as e:
             self.log.warning('Posting instructions over c2 (%s) failed!: %s' % (self.__class__.__name__, e))
 
     async def _send_payloads(self, agent, instructions):
         for i in instructions:
+            link_id = i.id
             for p in i.payloads:
-                filename, payload_contents = await self._get_payload_content(p, agent)
-                await self._post_payloads(filename, payload_contents, '%s-%s' % (agent.paw, filename))
+                filename, payload_contents, _ = await self._get_payload_content(p, agent, link_id)
+                await self._post_payloads(filename, payload_contents, agent.paw, '%s-%s-%s' % (agent.paw, link_id, filename))
 
-    async def _post_payloads(self, filename, payload_contents, paw):
+    async def _post_payloads(self, filename, payload_contents, paw, gist_descriptor):
         try:
             files = {filename: dict(content=self._encode_string(payload_contents))}
             if len(files) < 1 or await self._wait_for_paw(paw, comm_type='payloads'):
                 return
-            return await self._post_gist(self._build_gist_content(comm_type='payloads', paw=paw, files=files))
+            return await self._post_gist(self._build_gist_content(comm_type='payloads', descriptor=gist_descriptor, files=files))
         except Exception as e:
             self.log.warning('Posting payload over c2 (%s) failed! %s' % (self.__class__.__name__, e))
 
@@ -211,7 +212,7 @@ class Contact(BaseWorld):
 
     async def _wait_for_paw(self, paw, comm_type):
         for gist_content in await self._get_gists():
-            if '{}-{}'.format(comm_type, paw) == gist_content['description']:
+            if gist_content['description'].startswith('{}-{}'.format(comm_type, paw)):
                 return True
         return False
 
@@ -225,15 +226,17 @@ class Contact(BaseWorld):
         await self._delete_gists(gist_ids=[g[1] for g in gists])
         return gist_data
 
-    async def _get_payload_content(self, payload, beacon):
-        if payload in self.file_svc.special_payloads:
-            f = await self.file_svc.special_payloads[payload](dict(file=payload, platform=beacon['platform']))
-            return await self.file_svc.read_file(f)
-        return await self.file_svc.read_file(payload)
+    async def _get_payload_content(self, payload, agent, link_id):
+        return await self.file_svc.get_file(dict(
+            file=payload,
+            paw=agent.paw,
+            platform=agent.platform,
+            link=link_id,
+        ))
 
     @staticmethod
-    def _build_gist_content(comm_type, paw, files):
-        return dict(description='{}-{}'.format(comm_type, paw), public=False, files=files)
+    def _build_gist_content(comm_type, descriptor, files):
+        return dict(description='{}-{}'.format(comm_type, descriptor), public=False, files=files)
 
     @api_access
     async def _post_gist(self, gist_content, session):

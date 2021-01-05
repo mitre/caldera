@@ -33,6 +33,7 @@ class OperationSchema(ma.Schema):
     start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     state = ma.fields.String()
     obfuscator = ma.fields.String()
+    file_encoding = ma.fields.String()
     autonomous = ma.fields.Integer()
     chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
@@ -88,7 +89,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 timeout=30, use_learning_parsers=True):
+                 timeout=30, use_learning_parsers=True, file_encoding='plain-text'):
         super().__init__()
         self.id = str(id)
         self.start, self.finish = None, None
@@ -105,6 +106,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.autonomous = autonomous
         self.last_ran = None
         self.obfuscator = obfuscator
+        self.file_encoding = file_encoding
         self.auto_close = auto_close
         self.visibility = visibility
         self.objective = None

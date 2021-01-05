@@ -334,6 +334,7 @@ class RestService(RestServiceInterface, BaseService):
         agents = await self.construct_agents_for_group(group)
         sources = await self.get_service('data_svc').locate('sources', match=dict(name=data.pop('source', 'basic')))
         allowed = self._get_allowed_from_access(access)
+        file_encoding = data.pop('file_encoding', 'plain-text')
 
         return Operation(name=name, planner=planner[0], agents=agents, adversary=adversary,
                          group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
@@ -341,7 +342,8 @@ class RestService(RestServiceInterface, BaseService):
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')),
                          timeout=int(data.pop('timeout', 30)),
-                         use_learning_parsers=bool(int(data.pop('use_learning_parsers', 0))))
+                         use_learning_parsers=bool(int(data.pop('use_learning_parsers', 0))),
+                         file_encoding=file_encoding)
 
     def _get_allowed_from_access(self, access):
         if self.Access.HIDDEN in access['access']:

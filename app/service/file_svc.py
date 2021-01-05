@@ -34,7 +34,9 @@ class FileSvc(FileServiceInterface, BaseService):
             raise KeyError('File key was not provided')
 
         packer = None
+        link_id = headers.get('link')
         display_name = payload = headers.get('file')
+        self.log.debug('fetching file %s' % display_name)
         if ':' in payload:
             _, display_name = packer, payload = payload.split(':')
             headers['file'] = payload
@@ -57,6 +59,17 @@ class FileSvc(FileServiceInterface, BaseService):
             display_name = headers.get('name')
         if file_path.endswith('.xored'):
             display_name = file_path.replace('.xored', '')
+        if link_id:
+            # See if the file request associated with this link requires any encoding.
+            link = await self.get_service('app_svc').find_link(link_id)
+            if link and link.file_encoding:
+                self.log.debug('Encoding requested file %s with data encoder: %s' % (display_name, link.file_encoding))
+                contents = await self._encode_file_data(contents, link.file_encoding)
+        elif headers.get('file-encoding'):
+            encoding = headers.get('file-encoding')
+            self.log.debug('Encoding requested file %s with data encoder: %s' % (display_name, encoding))
+            contents = await self._encode_file_data(contents, encoding)
+
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir, encrypt=True):
@@ -201,6 +214,15 @@ class FileSvc(FileServiceInterface, BaseService):
         except Exception as e:
             self.log.error('Error loading extension handler=%s, %s' % (payload, e))
 
+    async def _encode_file_data(self, file_contents, encoding):
+        encoders = await self.data_svc.locate('data_encoders', match=dict(name=encoding))
+        if encoders:
+            module = encoders[0].load()
+            return module.encode(file_contents)
+        else:
+            self.log.error('Could not find the requested data encoder %s. Returning original file bytes' % encoding)
+            return file_contents
+
 
 def _go_vars(arch, platform):
     return '%s GOARCH=%s %s GOOS=%s' % (_get_header(), arch, _get_header(), platform)
@@ -208,3 +230,4 @@ def _go_vars(arch, platform):
 
 def _get_header():
     return 'SET' if os.name == 'nt' else ''
+

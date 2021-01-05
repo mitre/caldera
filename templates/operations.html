@@ -112,6 +112,11 @@
                     <option value="{{ o.name|e }}">{{ o.name|e }} obfuscation</option>
                   {% endfor %}
               </select>
+              <select name="phases" id="queueFileEncoder" class="queueOption" style="opacity:0.5" disabled="true">
+                  {% for e in data_encoders %}
+                    <option value="{{ e.name }}">{{ e.name }} file encoding</option>
+                  {% endfor %}
+              </select>
               <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
               <p style="margin-bottom:-10px">adjust visibility: </p>
               <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100" onchange="stream('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.')">
@@ -172,6 +177,13 @@
                 <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
                   {% for o in obfuscators %}
                     <option value="{{ o.name|e }}">Use {{ o.name|e }} obfuscation</option>
+                  {% endfor %}
+              </select>
+            </div>
+            <div>
+                <select id="currentFileEncoding" onchange="updateFileEncoding()" class="dark-select" style="width:33%">
+                  {% for e in data_encoders %}
+                    <option value="{{ e.name }}">Use {{ e.name }} file encoding</option>
                   {% endfor %}
               </select>
             </div>
@@ -417,6 +429,7 @@
             "planner":document.getElementById("queuePlanner").value,
             "autonomous":document.getElementById("queueAuto").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
+            "file_encoding":document.getElementById("queueFileEncoder").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "use_learning_parsers": document.getElementById("queueDefaultParsers").value,
             "jitter":jitter,
@@ -437,6 +450,13 @@
         let newObfuscation = $('#currentObfuscation').val();
         stream('Changing operation obfuscation to '+newObfuscation);
         restRequest('POST', {'index':'operation','op_id': op_id, 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+    }
+
+    function updateFileEncoding() {
+        let op_id = $('#operation-list option:selected').attr('value');
+        let newFileEncoding = $('#currentFileEncoding').val();
+        stream('Changing operation payload/upload file encoding to ' + newFileEncoding);
+        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'file_encoding': newFileEncoding}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
@@ -483,6 +503,7 @@
                 $("#togBtnHil").prop("checked", false);
             }
             $('#currentObfuscation').val(OPERATION.obfuscator);
+            $('#currentFileEncoding').val(OPERATION.file_encoding);
             applyOperationAgents(OPERATION);
             clearTimeline();
             for (let i=0; i<OPERATION.chain.length; i++) {

@@ -354,7 +354,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if a.test:
                 links.append(
                     Link.load(dict(command=a.test, paw=agent.paw, score=0, ability=a,
-                                   status=link_status, jitter=self.jitter(operation.jitter)))
+                                   status=link_status, jitter=self.jitter(operation.jitter),
+                                   file_encoding=operation.file_encoding))
                 )
         return links
 

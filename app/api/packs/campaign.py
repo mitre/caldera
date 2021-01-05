@@ -68,8 +68,9 @@ class CampaignPack(BaseWorld):
                           key=lambda p: p['name'])
         obfuscators = [o.display for o in await self.data_svc.locate('obfuscators')]
         operations = [o.display for o in await self.data_svc.locate('operations', match=access)]
+        data_encoders = [e.display for e in await self.data_svc.locate('data_encoders')]
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
-                    obfuscators=obfuscators)
+                    obfuscators=obfuscators, data_encoders=data_encoders)
 
     """ PRIVATE """
 
