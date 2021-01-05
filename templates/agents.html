@@ -267,7 +267,7 @@
                 }
             });
         }
-        restRequest('POST', {'index':'agents'}, updateTbl)
+        nextApiGetAll('agents', updateTbl);
     }
 
     function deleteAgent(paw){
@@ -276,7 +276,7 @@
             $('#agent-cnt').text(parseInt($('#agent-cnt').text()) - 1);
         }
         stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
-        restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
+        nextApiDelete('agents', paw, deleteAgentCallback);
     }
 
     function updateAgent(){
@@ -285,8 +285,6 @@
         }
         let sleepArr = parseSleep($('#modal-sleep').val().replace(/\s/g, ""));
         let data = {
-            'index': 'agents',
-            'paw': $('#modal-paw').text(),
             'group': $('#modal-group').val(),
             'watchdog': parseInt($('#modal-watchdog').val())
         };
@@ -294,7 +292,7 @@
             data["sleep_min"] = parseInt(sleepArr[0]);
             data["sleep_max"] = parseInt(sleepArr[1]);
         }
-        restRequest('PUT', data, closeAgentModal);
+        nextApiUpdate('agents', $('#modal-paw').text(), data, closeAgentModal);
     }
 
     function saveGlobalAgent() {
@@ -330,18 +328,17 @@
         /**
         Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog.
         **/
+        function killAgentCallback(data) {
+            document.getElementById('agent-modal').style.display='none';
+            stream(`Agent ${data.paw} will self terminate after its next beacon.`);
+        }
         let data = {
-            'index': 'agents',
-            'paw': $('#modal-paw').text(),
             'watchdog': 1,
             'sleep_min': 3,
             'sleep_max': 3
         };
         if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
-            restRequest('PUT', data, (data) => {
-                document.getElementById('agent-modal').style.display='none';
-                stream(`Agent ${data.paw} will self terminate after its next beacon.`);
-            });
+            nextApiUpdate('agents', $('#modal-paw').text(), data, killAgentCallback);
         }
     }
 
@@ -431,7 +428,7 @@
             parent.find('#modal-peer_chain').html(peer_chain);
             parent.show();
         }
-        restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
+        nextApiGetOne('agents', paw, agentInfoCallback);
     }
 
     function displayCommand(){
