@@ -1,14 +1,26 @@
 /* HELPFUL functions to call */
 
-function nextApiGet(object, id, callback, api='/api/v2/') {
-    let endpoint = api + object;
-    if (id) {
-        endpoint = api + object + '/' + id;
-    }
+function nextApiGetAll(object, callback, parameters={}, api='/api/v2/') {
     $.ajax({
-        url: endpoint,
+        url: api + object,
         type: 'GET',
         contentType: 'application/json',
+        data: parameters,
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+
+function nextApiGetOne(object, id, callback, parameters={}, api='/api/v2/') {
+    $.ajax({
+        url: api + object + '/' + id,
+        type: 'GET',
+        contentType: 'application/json',
+        data: parameters,
         success: function (data, textStatus, jqXHR) {
             callback(data);
         },

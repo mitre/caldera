@@ -361,13 +361,19 @@
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
 
-        nextApiPost('adversaries', {
+        let data = {
             'name': name,
             'description': description,
             'atomic_ordering': abilities,
             'id': identifier,
             'objective': objective
-        }, saveAdversaryCallback);
+        };
+
+        if (identifier) {
+            nextApiPut('adversaries', identifier, data, saveAdversaryCallback);
+        } else {
+            nextApiPost('adversaries', data, saveAdversaryCallback);
+        }
     }
 
     function saveAdversaryCallback(data) {
@@ -619,7 +625,7 @@
     }
 
     function loadAdversary() {
-        nextApiGet('adversaries', $('#profile-existing-name').val(), loadAdversaryCallback);
+        nextApiGetOne('adversaries', $('#profile-existing-name').val(), loadAdversaryCallback, {'explode': true});
     }
 
     function loadAdversaryCallback(data) {
@@ -972,7 +978,7 @@
     });
 
     function handleObjectiveSelection(id) {
-       restRequest('POST', {'index':'objectives', 'id': id}, requestObjectiveCallback);
+       nextApiGetOne('objectives', id, requestObjectiveCallback);
     }
 
     function requestObjectiveCallback(data){
@@ -1004,7 +1010,7 @@
     }
 
     function addAdvToCurrentProfile() {
-        nextApiGet('adversaries', $('#adv-profile-filter').val(), loadAdvProfileCallback);
+        nextApiGetOne('adversaries', $('#adv-profile-filter').val(), loadAdvProfileCallback, {'explode': true});
         hideProfileModal();
 	}
 

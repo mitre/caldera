@@ -111,7 +111,7 @@
                 }
             });
         }
-        restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
+        nextApiGetAll('objectives', objectiveCallback);
     }
 
     function toggleObjectiveView() {
@@ -142,7 +142,7 @@
             $('#objective-description').val(data[0].description);
         }
         stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'objectives', 'id': $('#objective-list').val()}, loadObjectiveCallback);
+        nextApiGetOne('objectives', $('#objective-list').val(), loadObjectiveCallback);
     }
 
     function addGoalRow(target, operator, value, count) {
@@ -170,12 +170,7 @@
         let id = objective.data('id');
         let description = $('#objective-description');
         if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
-            id = uuidv4();
-            objective.data('id', id);
-        }
         let data = {};
-        data['index'] = 'objectives';
         data['id'] = id;
         data['name'] = name;
         data['description'] = description.val();
@@ -189,14 +184,17 @@
                 'count': this.cells[3].children[0].value
             }
             $.each(rowdata, function(key, val) {
-                console.log(`${key} = ${val}`)
                 if(!val) { warn(`Goal ${index+1} is missing ${key}`); return; }
             })
             data['goals'].push(rowdata);
         });
         if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
 
-        restRequest('PUT', data, saveObjectiveCallback);
+        if (id) {
+            nextApiPut('objectives', id, data, saveObjectiveCallback);
+        } else {
+            nextApiPost('objectives', data, saveObjectiveCallback);
+        }
     }
 
     function viewAssignments(){
@@ -223,11 +221,12 @@
             });
         }
 
-        let activeId = $("#objective-list").val()
-        if(activeId)
-            restRequest('POST', {'index':'adversaries', 'objective': activeId}, populateAssignmentsCallback);
-        else
-            restRequest('POST', {'index':'adversaries'}, populateAssignmentsCallback);
+        let activeId = $("#objective-list").val();
+        if (activeId) {
+            nextApiGetAll('adversaries', populateAssignmentsCallback, {'objective': activeId, 'explode': true});
+        } else {
+            nextApiGetAll('adversaries', populateAssignmentsCallback, {'explode': true});
+        }
     }
 
     //# objectiveURL=objectives.js
