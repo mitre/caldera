@@ -370,9 +370,9 @@
         };
 
         if (identifier) {
-            nextApiPut('adversaries', identifier, data, saveAdversaryCallback);
+            nextApiUpdate('adversaries', identifier, data, saveAdversaryCallback);
         } else {
-            nextApiPost('adversaries', data, saveAdversaryCallback);
+            nextApiCreate('adversaries', data, saveAdversaryCallback);
         }
     }
 

@@ -191,9 +191,9 @@
         if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
 
         if (id) {
-            nextApiPut('objectives', id, data, saveObjectiveCallback);
+            nextApiUpdate('objectives', id, data, saveObjectiveCallback);
         } else {
-            nextApiPost('objectives', data, saveObjectiveCallback);
+            nextApiCreate('objectives', data, saveObjectiveCallback);
         }
     }
 

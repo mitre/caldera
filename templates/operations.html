@@ -311,7 +311,7 @@
 
     function handleStartAction(){
         $('.op-selected').css('visibility', 'hidden');
-        nextApiPost('operations', buildOperationObject(), handleStartActionCallback);
+        nextApiCreate('operations', buildOperationObject(), handleStartActionCallback);
     }
 
     function checkOpBtns(){
@@ -383,7 +383,7 @@
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
         stream('Changing operation state to '+newState);
-        nextApiPut('operations', parseInt(op_id), {'state': newState}, doNothing);
+        nextApiUpdate('operations', parseInt(op_id), {'state': newState}, doNothing);
 
     }
 
@@ -391,7 +391,7 @@
         let op_id = $('#operation-list option:selected').attr('value');
         let newObfuscation = $('#currentObfuscation').val();
         stream('Changing operation obfuscation to '+newObfuscation);
-        nextApiPut('operations', parseInt(op_id), {'obfuscator': newObfuscation}, doNothing);
+        nextApiUpdate('operations', parseInt(op_id), {'obfuscator': newObfuscation}, doNothing);
 
     }
 
@@ -721,7 +721,7 @@
 
     function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        nextApiPut('operations', parseInt(op_id), {'autonomous': 'toggleMe'}, doNothing);
+        nextApiUpdate('operations', parseInt(op_id), {'autonomous': 'toggleMe'}, doNothing);
     }
 
     function checkOpformValid(){

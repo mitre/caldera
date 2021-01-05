@@ -30,7 +30,7 @@ function nextApiGetOne(object, id, callback, parameters={}, api='/api/v2/') {
     });
 }
 
-function nextApiPost(object, data, callback, api='/api/v2/') {
+function nextApiCreate(object, data, callback, api='/api/v2/') {
     $.ajax({
         url: api + object,
         type: 'POST',
@@ -45,7 +45,7 @@ function nextApiPost(object, data, callback, api='/api/v2/') {
     });
 }
 
-function nextApiPut(object, id, data, callback, api='/api/v2/') {
+function nextApiUpdate(object, id, data, callback, api='/api/v2/') {
     $.ajax({
         url: api + object + '/' + id,
         type: 'PUT',
@@ -60,7 +60,7 @@ function nextApiPut(object, id, data, callback, api='/api/v2/') {
     });
 }
 
-function nextApiPatch(object, id, data, callback, api='/api/v2/') {
+function nextApiPartialUpdate(object, id, data, callback, api='/api/v2/') {
     $.ajax({
         url: api + object + '/' + id,
         type: 'PATCH',
