@@ -1,7 +1,7 @@
 /* HELPFUL functions to call */
 
 function nextApiGet(object, id, callback, api='/api/v2/') {
-    let endpoint = api + object
+    let endpoint = api + object;
     if (id) {
         endpoint = api + object + '/' + id;
     }
@@ -35,7 +35,7 @@ function nextApiPost(object, data, callback, api='/api/v2/') {
 
 function nextApiPut(object, id, data, callback, api='/api/v2/') {
     $.ajax({
-        url: api + object + '/' + id;,
+        url: api + object + '/' + id,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -50,7 +50,7 @@ function nextApiPut(object, id, data, callback, api='/api/v2/') {
 
 function nextApiPatch(object, id, data, callback, api='/api/v2/') {
     $.ajax({
-        url: api + object + '/' + id;,
+        url: api + object + '/' + id,
         type: 'PATCH',
         contentType: 'application/json',
         data: JSON.stringify(data),
