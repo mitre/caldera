@@ -350,9 +350,6 @@
 
     function saveAdversary() {
         let identifier = $('#profile-existing-name').val();
-        if(!identifier){
-            identifier = uuidv4();
-        }
         let name = $('#profile-goal').val();
         if(!name){ warn('Please enter a profile name!'); return; }
         let description = $('#profile-description').val();
@@ -363,8 +360,14 @@
         let listing = g_grid.getItems();
         listing.forEach(function(entry){
             abilities.push({"id": entry._element.id})});
-        restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'id': identifier,"objective":objective}, saveAdversaryCallback);
+
+        nextApiPost('adversaries', {
+            'name': name,
+            'description': description,
+            'atomic_ordering': abilities,
+            'id': identifier,
+            'objective': objective
+        }, saveAdversaryCallback);
     }
 
     function saveAdversaryCallback(data) {
@@ -505,15 +508,15 @@
         data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
         data['platforms'] = platforms;
 
-        let url = '/api/v2/abilities';
+        let endpoint = '/api/v2/abilities';
         let method = 'POST';
         if (data['id'] !== '') {
-            url = '/api/v2/abilities/' + data['id'];
+            endpoint = '/api/v2/abilities/' + data['id'];
             method = 'PUT';
         }
 
         $.ajax({
-           url: url,
+           url: endpoint,
            type: method,
            contentType: 'application/json',
            data: JSON.stringify(data),
@@ -616,7 +619,7 @@
     }
 
     function loadAdversary() {
-        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
+        nextApiGet('adversaries', $('#profile-existing-name').val(), loadAdversaryCallback);
     }
 
     function loadAdversaryCallback(data) {
@@ -996,12 +999,12 @@
         }
         let adversary_id = $('#profile-existing-name').val();
         if (confirm(`Are you sure you want to terminate this adversary?`)){
-            restRequest('DELETE', {"index": "adversaries", "adversary_id": adversary_id}, deleteCallback);
+            nextApiDelete('adversaries', adversary_id, deleteCallback);
         }
     }
 
     function addAdvToCurrentProfile() {
-        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-profile-filter').val()}, loadAdvProfileCallback);
+        nextApiGet('adversaries', $('#adv-profile-filter').val(), loadAdvProfileCallback);
         hideProfileModal();
 	}
 

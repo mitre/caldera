@@ -1,5 +1,81 @@
 /* HELPFUL functions to call */
 
+function nextApiGet(object, id, callback, api='/api/v2/') {
+    let endpoint = api + object
+    if (id) {
+        endpoint = api + object + '/' + id;
+    }
+    $.ajax({
+        url: endpoint,
+        type: 'GET',
+        contentType: 'application/json',
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+
+function nextApiPost(object, data, callback, api='/api/v2/') {
+    $.ajax({
+        url: api + object,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+
+function nextApiPut(object, id, data, callback, api='/api/v2/') {
+    $.ajax({
+        url: api + object + '/' + id;,
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+
+function nextApiPatch(object, id, data, callback, api='/api/v2/') {
+    $.ajax({
+        url: api + object + '/' + id;,
+        type: 'PATCH',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+function nextApiDelete(object, id, callback, api='/api/v2/') {
+    $.ajax({
+        url: api + object + '/' + id,
+        type: 'DELETE',
+        contentType: 'application/json',
+        success: function (data, textStatus, jqXHR) {
+            callback(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            stream(errorThrown);
+        }
+    });
+}
+
 function restRequest(type, data, callback, endpoint='/api/rest') {
     $.ajax({
        url: endpoint,
