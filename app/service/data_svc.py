@@ -132,6 +132,7 @@ class DataService(DataServiceInterface, BaseService):
                         else:
                             encoded_code = None
                         payloads = ab.pop('payloads', []) if encoded_code else info.get('payloads')
+                        uploads = ab.pop('uploads', []) if encoded_code else info.get('uploads')
                         for e in name.split(','):
                             for pl in platforms.split(','):
                                 a = await self._create_ability(ability_id=ability_id, tactic=tactic,
@@ -142,7 +143,8 @@ class DataService(DataServiceInterface, BaseService):
                                                                cleanup=cleanup_cmd, code=encoded_code,
                                                                language=info.get('language'),
                                                                build_target=info.get('build_target'),
-                                                               payloads=payloads, parsers=info.get('parsers', []),
+                                                               payloads=payloads, uploads=uploads,
+                                                               parsers=info.get('parsers', []),
                                                                timeout=info.get('timeout', 60),
                                                                requirements=requirements, privilege=privilege,
                                                                buckets=await self._classify(ab, tactic),
@@ -256,7 +258,7 @@ class DataService(DataServiceInterface, BaseService):
                               test=None, description=None, executor=None, platform=None, cleanup=None, payloads=None,
                               parsers=None, requirements=None, privilege=None, timeout=60, access=None, buckets=None,
                               repeatable=False, code=None, language=None, build_target=None, variations=None,
-                              singleton=False, **kwargs):
+                              singleton=False, uploads=None, **kwargs):
         ps = []
         for module in parsers:
             ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
@@ -267,7 +269,7 @@ class DataService(DataServiceInterface, BaseService):
         ability = Ability(ability_id=ability_id, name=name, test=test, tactic=tactic,
                           technique_id=technique_id, technique=technique_name, code=code, language=language,
                           executor=executor, platform=platform, description=description, build_target=build_target,
-                          cleanup=cleanup, payloads=payloads, parsers=ps, requirements=rs,
+                          cleanup=cleanup, payloads=payloads, uploads=uploads, parsers=ps, requirements=rs,
                           privilege=privilege, timeout=timeout, repeatable=repeatable,
                           variations=variations, buckets=buckets, singleton=singleton, **kwargs)
         ability.access = access
