@@ -311,7 +311,7 @@
 
     function handleStartAction(){
         $('.op-selected').css('visibility', 'hidden');
-        restRequest('PUT', buildOperationObject(), handleStartActionCallback);
+        nextApiPost('operations', buildOperationObject(), handleStartActionCallback);
     }
 
     function checkOpBtns(){
@@ -333,9 +333,8 @@
 
             stream(data);
         }
-        let operation_id = parseInt($('#operation-list option:selected').attr('value'));
-        let data = {'index': 'operations', 'id': operation_id};
-        restRequest('DELETE', data, deleteCallback);
+        let operation_id = parseInt($('#operation-list option:selected').val());
+        nextApiDelete('operations', operation_id, deleteCallback);
     }
 
     function handleScheduleAction(){
@@ -367,7 +366,6 @@
             return;
         }
         return {
-            "index": "operations",
             "name":name,
             "group":document.getElementById("queueGroup").value,
             "adversary_id":document.getElementById("queueFlow").value,
@@ -385,21 +383,23 @@
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
         stream('Changing operation state to '+newState);
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
+        nextApiPut('operations', parseInt(op_id), {'state': newState}, doNothing);
+
     }
 
     function updateObfuscation() {
         let op_id = $('#operation-list option:selected').attr('value');
         let newObfuscation = $('#currentObfuscation').val();
         stream('Changing operation obfuscation to '+newObfuscation);
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+        nextApiPut('operations', parseInt(op_id), {'obfuscator': newObfuscation}, doNothing);
+
     }
 
     function handleStartActionCallback(data){
         $("#togBtnOp").prop("checked", false).change();
         checkOpformValid();
         stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
-        restRequest('POST', {'index':'operations'}, reloadOperationsElements);
+        nextApiGetAll('operations', reloadOperationsElements);
     }
 
     function reloadOperationsElements(data){
@@ -507,12 +507,11 @@
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
             stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
-            restRequest('POST', postData, operationCallback, '/api/rest');
+            nextApiGetOne('operations', parseInt(selectedOperationId), operationCallback);
         }
         restRequest('POST', {'index':'agents'}, updateGroups);
     }
@@ -722,7 +721,7 @@
 
     function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id),'autonomous':'toggleMe'}, doNothing, `/api/rest`);
+        nextApiPut('operations', parseInt(op_id), {'autonomous': 'toggleMe'}, doNothing);
     }
 
     function checkOpformValid(){
