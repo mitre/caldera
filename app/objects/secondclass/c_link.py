@@ -60,6 +60,8 @@ class Link(BaseObject):
     load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
                                       'output'])
 
+    RESERVED = dict(origin_link_id='#{origin_link_id}')
+
     @property
     def unique(self):
         return self.hash('%s' % self.id)
@@ -107,6 +109,12 @@ class Link(BaseObject):
         self._pin = pin
         self.output = False
 
+    def __eq__(self, other):
+        if isinstance(other, Link):
+            return other.paw == self.paw and other.ability.ability_id == self.ability.ability_id \
+                   and other.used == self.used
+        return False
+
     async def parse(self, operation, result):
         try:
             if self.status != 0:
@@ -122,9 +130,14 @@ class Link(BaseObject):
     def apply_id(self, host):
         self.id = self.generate_number()
         self.host = host
+        self.replace_origin_link_id()
 
     def can_ignore(self):
         return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]
+
+    def replace_origin_link_id(self):
+        decoded_cmd = self.decode_bytes(self.command)
+        self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], str(self.id)))
 
     """ PRIVATE """
 

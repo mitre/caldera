@@ -44,6 +44,7 @@ class BasePlanningService(BaseService):
         :param rules:
         :return: updated list of links
         """
+        link_variants = []
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
@@ -60,13 +61,13 @@ class BasePlanningService(BaseService):
                         copy_link.score = score
                         copy_link.used.extend(used)
                         copy_link.apply_id(agent.host)
-                        links.append(copy_link)
+                        link_variants.append(copy_link)
                     except Exception as ex:
                         logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
                 link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
-        return links
+        return links + link_variants
 
     @staticmethod
     async def remove_completed_links(operation, agent, links):
@@ -78,10 +79,8 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
-                           if l.paw == agent.paw and (l.finish or l.can_ignore())]
-        return [l for l in links if l.ability.repeatable or
-                (l.command_hash if l.command_hash else l.command) not in completed_links]
+        completed_links = [lnk for lnk in operation.chain if lnk.paw == agent.paw and (lnk.finish or lnk.can_ignore())]
+        return [lnk for lnk in links if lnk.ability.repeatable or lnk not in completed_links]
 
     @staticmethod
     async def remove_links_missing_facts(links):
