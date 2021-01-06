@@ -463,7 +463,7 @@
         let variations = $('#variations');
         variations.empty();
         $("#conf-arguments").empty();
-        restRequest('POST', {'index':'agent_configuration','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
+        nextApiGetOne('deploy_commands', $('#chosen-agent option:selected').val(), displayMe);
     }
 
     function filterCommands(){
