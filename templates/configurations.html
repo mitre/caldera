@@ -63,11 +63,11 @@
     });
     function updateConfig(prop) {
         stream('You updated property "'+prop+'". Good work!');
-        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+        nextApiPartialUpdate('config', 'main', {'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
     }
     function enablePlugin(name){
         stream('You enabled a new plugin! Bummer that it is not available until your next server restart.');
-        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
+        nextApiPartialUpdate('config', 'main', {'prop': 'plugin', 'value': name}, doNothing);
     }
     //# sourceURL=configurations.js
 </script>
