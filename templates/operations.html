@@ -532,8 +532,8 @@
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
-        let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
-        restRequest('POST', postData, potentialLinksCallback, '/api/rest');
+
+        nextApiGetOne('operations/' + selectedOperationId + '/links', paw, potentialLinksCallback);
         $('#potential-links-count').html('Building potential links...');
     }
 
@@ -596,14 +596,14 @@
     }
 
     function addLink(l) {
+        let selectedOperationId = $('#operation-list option:selected').attr('value');
         let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
         let link = linkDiv.data('link');
         let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
         link.command = btoa(linkDiv.find('#potential-command').text());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
-        link["index"] = "link";
-        restRequest('PUT', link, refresh, '/api/rest');
+        nextApiCreate('operations/' + selectedOperationId + '/links', link, refresh);
     }
 
     function updatePotentialLinkCount(){
