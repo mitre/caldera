@@ -15,7 +15,7 @@
           <select id="planner-select" style="margin-top:-15px" onchange="loadPlanner()">
             <option value="" disabled selected>Select an existing planner</option>
             {% for p in planners %}
-              <option value="{{ p.name }}">{{ p.name }} planner</option>
+              <option value="{{ p.id }}">{{ p.name }} planner</option>
             {% endfor %}
           </select>
       </div>
@@ -41,7 +41,7 @@
             $('#planner-title').text(data[0]['name']);
             $('#planner-description').text(data[0]['description']);
         }
-        restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
+        nextApiGetOne('planners', $('#planner-select').val(), loadPlannerCallback);
     }
 
     //# sourceURL=planners.js
