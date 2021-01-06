@@ -339,9 +339,9 @@
 
     function handleScheduleAction(){
         let op = buildOperationObject();
-        let time = document.getElementById("schedule-time").value;
-        restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule':
-                {'hour': parseInt(time.split(":")[0]), 'minute': parseInt(time.split(":")[1])}}, doNothing);
+        let time = $('#schedule-time').val().split(':');
+        op['schedule'] = {'hour': parseInt(time[0]), 'minute': parseInt(time[1])};
+        nextApiCreate('operations', op, doNothing);
         stream('New operation scheduled!');
     }
 
