@@ -25,7 +25,7 @@
 
 <script>
     function downloadContactReport(contact) {
-        downloadReport('/api/rest', contact + '_report', {"index":"contact", "contact":contact});
+        nextApiDownloadReport('contacts', contact, contact + '_report');
     }
 
     //# sourceURL=contacts.js
