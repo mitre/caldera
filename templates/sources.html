@@ -156,7 +156,7 @@
                 }
             });
         }
-        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
+        nextApiGetAll('sources', sourceCallback);
     }
 
     function toggleSourceView() {
@@ -187,7 +187,7 @@
             populateRelationships(data[0].relationships);
         }
         stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+        nextApiGetOne('sources', $('#profile-source-name').val(), loadSourceCallback);
     }
 
     function addFactRow(trait, value){
@@ -208,13 +208,7 @@
         let name = source.text();
         let id = source.data('id');
         if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
-            id = uuidv4();
-            source.data('id', id);
-        }
         let data = {};
-        data['index'] = 'sources';
-        data['id'] = id;
         data['name'] = name;
         data['facts'] = [];
         data['rules'] = [];
@@ -256,7 +250,12 @@
             data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
         });
         if(data['relationships'].length > 0 && data['facts'].length === 0) { warn('Relationships require at least one fact to be specified.'); return; }
-        restRequest('PUT', data, saveSourceCallback);
+
+        if (id) {
+            nextApiUpdate('sources', id, data, saveSourceCallback);
+        } else {
+            nextApiCreate('sources', data, saveSourceCallback);
+        }
     }
 
     function viewRules(){
