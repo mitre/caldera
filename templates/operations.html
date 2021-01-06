@@ -683,10 +683,11 @@
 
     function downloadOperationReport() {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let agentOutput = $('#agent-output').prop("checked");
-        let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
-        let selectedOpName = $('#operation-list option:selected').text();
-        downloadReport('/api/rest', selectedOpName, postData);
+        if (selectedOperationId) {
+            let agentOutput = $('#agent-output').prop('checked');
+            let selectedOpName = $('#operation-list option:selected').text();
+            nextApiDownloadReport('operations', selectedOperationId, selectedOpName, {'agent_output': agentOutput});
+        }
     }
 
 

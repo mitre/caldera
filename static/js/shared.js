@@ -88,18 +88,18 @@ function nextApiDelete(object, id, callback, api='/api/v2/') {
     });
 }
 
-function nextApiDownloadReport(report, id, filename, data={}) {
+function nextApiDownloadReport(report, id, filename, parameters={}) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        let dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data, null, 2));
         let downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", filename + ".json");
+        downloadAnchorNode.setAttribute('href', dataStr);
+        downloadAnchorNode.setAttribute('download', filename + '.json');
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     }
-    nextApiGetOne('reports/' + report, id, downloadObjectAsJson)
+    nextApiGetOne('reports/' + report, id, downloadObjectAsJson, parameters)
 }
 
 function restRequest(type, data, callback, endpoint='/api/rest') {
