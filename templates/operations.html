@@ -688,7 +688,7 @@
         if (selectedOperationId) {
             let agentOutput = $('#agent-output').prop('checked');
             let selectedOpName = $('#operation-list option:selected').text();
-            nextApiDownloadReport('operations', selectedOperationId, selectedOpName, {'agent_output': agentOutput});
+            nextApiDownloadReport('operations/' + selectedOperationId + '/report', selectedOpName, {'agent_output': agentOutput});
         }
     }
 
