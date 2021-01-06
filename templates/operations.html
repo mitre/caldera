@@ -533,7 +533,7 @@
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
 
-        nextApiGetOne('operations/' + selectedOperationId + '/links', paw, potentialLinksCallback);
+        nextApiGetOne('operations/' + selectedOperationId + '/potential_links', paw, potentialLinksCallback);
         $('#potential-links-count').html('Building potential links...');
     }
 
@@ -603,7 +603,7 @@
         link.command = btoa(linkDiv.find('#potential-command').text());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
-        nextApiCreate('operations/' + selectedOperationId + '/links', link, refresh);
+        nextApiCreate('operations/' + selectedOperationId + '/potential_links', link, refresh);
     }
 
     function updatePotentialLinkCount(){
@@ -676,9 +676,11 @@
                 $('#resultView').html(res);
             }
         }
+        let selectedOperationId = $('#operation-list option:selected').attr('value');
         document.getElementById('more-modal').style.display='block';
         $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
-        restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
+
+        nextApiGetOne('operations/' + selectedOperationId + '/links', lnk, loadResults);
     }
 
     function downloadOperationReport() {
@@ -700,7 +702,7 @@
 
     function submitHilChanges(link_button, status){
         link_loop = $(link_button).parent().parent();
-        let command = $(link_loop).find('.hil-command').val();
+        let command = $(link_loop).find('.hil-command').text();
         updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, btoa(command));
         $(link_loop).parent().parent().remove();
         refresh();
@@ -708,16 +710,18 @@
     }
 
     function updateLinkStatus2(lnk, op_id, status) {
-        let data = {'index':'chain', 'link_id': op_id+'-'+lnk, 'status': status};
-        restRequest('PUT', data, doNothing);
+        let data = {'status': status};
+        nextApiUpdate('operations/' + op_id + '/links', lnk, data, doNothing);
     }
 
     function updateLinkStatus(lnk, status, command='') {
-        let data = {'index':'chain', 'link_id': lnk, 'status': status};
-        if(command) {
+        let selectedOperationId = $('#operation-list option:selected').attr('value');
+        let data = {'status': status};
+        console.log(command);
+        if (command) {
             data['command'] = command;
         }
-        restRequest('PUT', data, doNothing);
+        nextApiUpdate('operations/' + selectedOperationId + '/links', lnk, data, doNothing);
     }
 
     function toggleHil(){
