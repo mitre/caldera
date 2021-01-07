@@ -34,6 +34,7 @@ class LinkSchema(ma.Schema):
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
+    deadman = ma.fields.Boolean()
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -60,6 +61,8 @@ class Link(BaseObject):
     load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
                                       'output'])
 
+    RESERVED = dict(origin_link_id='#{origin_link_id}')
+
     @property
     def unique(self):
         return self.hash('%s' % self.id)
@@ -84,7 +87,7 @@ class Link(BaseObject):
                     TIMEOUT=124)
 
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
-                 host=None):
+                 host=None, deadman=False):
         super().__init__()
         self.id = id
         self.command = command
@@ -106,6 +109,13 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = False
+        self.deadman = deadman
+
+    def __eq__(self, other):
+        if isinstance(other, Link):
+            return other.paw == self.paw and other.ability.ability_id == self.ability.ability_id \
+                   and other.used == self.used
+        return False
 
     async def parse(self, operation, result):
         try:
@@ -122,9 +132,14 @@ class Link(BaseObject):
     def apply_id(self, host):
         self.id = self.generate_number()
         self.host = host
+        self.replace_origin_link_id()
 
     def can_ignore(self):
         return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]
+
+    def replace_origin_link_id(self):
+        decoded_cmd = self.decode_bytes(self.command)
+        self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], str(self.id)))
 
     """ PRIVATE """
 

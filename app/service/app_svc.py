@@ -200,6 +200,6 @@ class AppService(AppServiceInterface, BaseService):
     @staticmethod
     def _check_links_for_match(unique, links):
         for ll in links:
-            exists = next((link for link in ll if link.unique == unique), None)
+            exists = next((link for link in ll if link.unique == str(unique)), None)
             if exists:
                 return exists

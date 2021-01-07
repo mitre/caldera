@@ -57,7 +57,11 @@ class ContactService(ContactServiceInterface, BaseService):
         )
         await self._add_agent_to_operation(agent)
         self.log.debug('First time %s beacon from %s' % (agent.contact, agent.paw))
-        await agent.bootstrap(self.get_service('data_svc'))
+        data_svc = self.get_service('data_svc')
+        await agent.bootstrap(data_svc)
+        if agent.deadman_enabled:
+            self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." % agent.paw)
+            await agent.deadman(data_svc)
         return agent, await self._get_instructions(agent)
 
     async def build_filename(self):
@@ -125,7 +129,8 @@ class ContactService(ContactServiceInterface, BaseService):
                            command=link.command,
                            executor=link.ability.executor,
                            timeout=link.ability.timeout,
-                           payloads=payloads)
+                           payloads=payloads,
+                           deadman=link.deadman)
 
     async def _add_agent_to_operation(self, agent):
         """Determine which operation(s) incoming agent belongs to and
