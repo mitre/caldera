@@ -294,6 +294,8 @@ class DataService(DataServiceInterface, BaseService):
         await self._verify_adversary_profiles()
 
     async def _verify_abilities(self):
+        special_extensions = [special_payload for special_payload in
+                              self.get_service('file_svc').special_payloads if special_payload.startswith('.')]
         cleanup_abilities = await self.locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for ability in await self.locate('abilities'):
             if not ability.name:
@@ -315,6 +317,8 @@ class DataService(DataServiceInterface, BaseService):
                 payload_name = payload
                 if self.is_uuid4(payload):
                     payload_name, _ = self.get_service('file_svc').get_payload_name_from_uuid(payload)
+                if any(payload_name.endswith(extension) for extension in special_extensions):
+                    continue
                 _, path = await self.get_service('file_svc').find_file_path(payload_name)
                 if not path:
                     self.log.warning('Payload referenced in %s but not found: %s' % (ability.ability_id, payload))
