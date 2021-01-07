@@ -370,9 +370,10 @@ class RestService(RestServiceInterface, BaseService):
                                           await self.get_service('data_svc').locate('abilities',
                                                                                     match=dict(ability_id=ab_id))]
                 if adv['objective']:
-                    adv['objective'] = [ob.display for ob in
-                                        await self.get_service('data_svc').locate('objectives',
-                                                                                  match=dict(id=adv['objective']))][0]
+                    objectives = await self.get_service('data_svc').locate('objectives',
+                                                                           match=dict(id=adv['objective']))
+                    if objectives:
+                        adv['objective'] = objectives[0].display
         return results
 
     async def _delete_data_from_memory_and_disk(self, ram_key, identifier, data):
