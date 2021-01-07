@@ -317,7 +317,8 @@ class DataService(DataServiceInterface, BaseService):
                 payload_name = payload
                 if self.is_uuid4(payload):
                     payload_name, _ = self.get_service('file_svc').get_payload_name_from_uuid(payload)
-                if any(payload_name.endswith(extension) for extension in special_extensions):
+                if any(payload_name.endswith(extension) for extension in special_extensions) or \
+                        (ability.code and payload_name == ability.build_target):
                     continue
                 _, path = await self.get_service('file_svc').find_file_path(payload_name)
                 if not path:
