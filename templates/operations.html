@@ -453,9 +453,9 @@
                         title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
                         'onclick="findResults(this,'+lnk+')"' +
                         'data-encoded-cmd="'+OPERATION.chain[i].command+'"></span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-cm" style="font-size:11px;float:right;" onclick="showCommand(\''+OPERATION.chain[i].command+'\')">&#x2754;</span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
+                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;cursor:pointer;margin-left:5px" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
+                        '<img id="'+OPERATION.chain[i].id+'-cm" src="/gui/img/duk.png" style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" onclick="showCommand(\''+OPERATION.chain[i].command+'\')"/>' +
+                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;cursor:pointer;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
 
                     if (OPERATION.chain[i].status === -1) {
                         let loop_template = $("#loop-template").clone();
@@ -708,8 +708,8 @@
     }
 
     function updateLinkStatus2(lnk, op_id, status) {
-        let data = {'index':'chain', 'link_id': op_id+'-'+lnk, 'status': status};
-        restRequest('PUT', data, doNothing);
+        let data = {'index':'chain', 'link_id': lnk, 'status': status};
+        restRequest('PUT', data, refresh);
     }
 
     function updateLinkStatus(lnk, status, command='') {
