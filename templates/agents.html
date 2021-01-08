@@ -41,6 +41,12 @@
       <div id="agent-bootstrap-options" class="sidebar-cutout" style="display: none">
           <input id="globalBootstrap" type="text" placeholder="Bootstrap ability IDs" value="{{ agent_config.bootstrap_abilities | join(', ') }}"/>
       </div>
+      <div id="agent-deadman" class="sidebar-header">
+          <h5>Deadman Abilities</h5>
+      </div>
+      <div id="agent-deadman-options" class="sidebar-cutout" style="display: none">
+          <input id="globalDeadman" type="text" placeholder="Deadman ability IDs" value="{{ agent_config.deadman_abilities | join(', ') }}"/>
+      </div>
       <button id="saveAgentBtn" type="button" class="button-success atomic-button separated-button" onclick="saveGlobalAgent()">Save changes</button>
     </div>
     <div class="column" style="flex:75%">
@@ -236,6 +242,10 @@
             stream('Comma-separated list of ability IDs to be run on a new agent beacon. UUIDs will be validated against current ability list.');
             $("#agent-bootstrap-options").slideToggle();
         });
+        $("#agent-deadman").click(function(){
+            stream('Comma-separated list of ability IDs to be run when an agent terminates. UUIDs will be validated against current ability list.');
+            $("#agent-deadman-options").slideToggle();
+        });
     });
     function refresh(){
         function updateTbl(data){
@@ -299,6 +309,7 @@
 
     function saveGlobalAgent() {
         let globalBootstrap = $('#globalBootstrap').val();
+        let globalDeadman = $('#globalDeadman').val();
         let globalImplantName = $('#globalImplantName').val();
         let globalMinsleep = $('#globalSleepMin').val();
         let globalMaxsleep = $('#globalSleepMax').val();
@@ -306,22 +317,33 @@
         let globalUntrusted = $('#globalUntrusted').val();
         let data = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
             "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
-            "bootstrap_abilities":globalBootstrap};
+            "bootstrap_abilities":globalBootstrap,"deadman_abilities":globalDeadman};
         stream('Agent configuration has been updated!');
         restRequest('PUT', data, saveGlobalAgentCallback);
     }
     
     function saveGlobalAgentCallback(data) {
-        let invalid_abilities = [];
+        let invalid_bootstrap_abilities = [];
+        let invalid_deadman_abilities = [];
         let bootstrap_abilities = $('#globalBootstrap').val().split(",");
+        let deadman_abilities = $('#globalDeadman').val().split(",");
         $.each(bootstrap_abilities, function(index, bootstrap_ability) {
             let ability = bootstrap_ability.trim();
             if ($.inArray(ability, data.bootstrap_abilities) === -1) {
-                invalid_abilities.push(ability);
+                invalid_bootstrap_abilities.push(ability);
             }
         });
-        if (invalid_abilities.length > 0) {
-            stream('Ignoring invalid bootstrap abilities: ' + invalid_abilities.join(', '));
+        if (invalid_bootstrap_abilities.length > 0) {
+            stream('Ignoring invalid bootstrap abilities: ' + invalid_bootstrap_abilities.join(', '));
+        }
+        $.each(deadman_abilities, function(index, deadman_ability) {
+            let ability = deadman_ability.trim();
+            if ($.inArray(ability, data.deadman_abilities) === -1) {
+                invalid_deadman_abilities.push(ability);
+            }
+        });
+        if (invalid_deadman_abilities.length > 0) {
+            stream('Ignoring invalid deadman abilities: ' + invalid_deadman_abilities.join(', '));
         }
     }
 

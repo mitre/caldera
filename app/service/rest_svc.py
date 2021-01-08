@@ -331,7 +331,8 @@ class RestService(RestServiceInterface, BaseService):
             return copy.deepcopy(adv[0])
         return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
 
-    async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name, bootstrap_abilities):
+    async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name,
+                                   bootstrap_abilities, deadman_abilities):
         """Update global agent properties
 
         :param sleep_min: Beacon min sleep time (seconds)
@@ -346,6 +347,8 @@ class RestService(RestServiceInterface, BaseService):
         :type implant_name: str
         :param bootstrap_abilities: Comma-separated ability UUIDs
         :type bootstrap_abilities: str
+        :param deadman_abilities: Comma-separated ability UUIDs
+        :type deadman_abilities: str
         """
         self.set_config(name='agents', prop='sleep_min', value=sleep_min)
         self.set_config(name='agents', prop='sleep_max', value=sleep_max)
@@ -354,14 +357,27 @@ class RestService(RestServiceInterface, BaseService):
         if implant_name:
             self.set_config(name='agents', prop='implant_name', value=implant_name)
         if bootstrap_abilities is not None:
-            abilities = []
-            ability_ids = [ability_id.strip() for ability_id in bootstrap_abilities.split(',') if ability_id.strip()]
-            for ability_id in ability_ids:
-                if await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id.strip())):
-                    abilities.append(ability_id)
-                else:
-                    self.log.debug('Could not find ability with id "{}" for bootstrap'.format(ability_id))
-            self.set_config(name='agents', prop='bootstrap_abilities', value=abilities)
+            await self._update_agent_ability_list_property(bootstrap_abilities, 'bootstrap_abilities')
+
+        if deadman_abilities is not None:
+            await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
+
+
+    async def _update_agent_ability_list_property(self, abilities_str, prop_name):
+        """Set the specified agent config property with the specified abilities.
+
+        :param abilities_str: Comma-separated ability UUIDs
+        :type abilities_str: str
+        :param prop_name: name of the configuration property to set (e.g. 'bootstrap_abilities', 'deadman_abilities')
+        :type prop_name: str
+        """
+        abilities = []
+        for ability_id in [ability_id.strip() for ability_id in abilities_str.split(',') if ability_id.strip()]:
+            if await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id.strip())):
+                abilities.append(ability_id)
+            else:
+                self.log.debug('Could not find ability with id "{}" for property "{}"'.format(ability_id, prop_name))
+            self.set_config(name='agents', prop=prop_name, value=abilities)
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':
