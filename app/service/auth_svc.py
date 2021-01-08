@@ -1,7 +1,7 @@
 import base64
 from collections import namedtuple
 
-from aiohttp import web
+from aiohttp import web, web_request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
 from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
 from aiohttp_security import setup as setup_security
@@ -37,7 +37,8 @@ def check_authorization(func):
         return await func(*args, **params)
 
     async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('app', args[1])
+        if len(args) > 1 and type(args[1]) is web_request.Request:
+            await args[0].auth_svc.check_permissions('app', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
