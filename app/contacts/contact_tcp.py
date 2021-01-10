@@ -73,16 +73,17 @@ class TcpSessionHandler(BaseWorld):
             (reader, writer) = next((i.reader, i.writer) for i in self.sessions if i.id == int(session_id))
             writer.write(str.encode(' '))
             writer.write(str.encode('%s\n' % cmd))
-            self.log.info(cmd)
             await writer.drain()
             try:
-                response = await asyncio.wait_for(await self._attempt_connection(reader), timeout=10) # let's say 10 seconds are enough
+                response = await asyncio.wait_for(self._attempt_connection(reader), timeout=10) # let's say 10 seconds are enough
                 response = json.loads(response)
             except asyncio.TimeoutError:
-                response = dict(status=1, pwd='~$ ', response=str(err))
-            self.log.info(response)
+                response = dict(status=1, pwd='~$ ', response="Await timeout!")
+            except Exception as e:
+                self.log.exception(e)
             return response['status'], response["pwd"], response['response']
         except Exception as e:
+            self.log.exception(e)
             return 1, '~$ ', e
 
     """ PRIVATE """
@@ -102,7 +103,7 @@ class TcpSessionHandler(BaseWorld):
                 data += part
                 if len(part) < buffer:
                     break
-            except err:
+            except Exception as err:
                 return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')
 
