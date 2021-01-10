@@ -4,7 +4,8 @@ import socket
 import time
 
 from app.utility.base_world import BaseWorld
-from plugins.manx.app.c_session import Session
+from app.utility.base_object import BaseObject
+
 
 
 class Contact(BaseWorld):
@@ -49,7 +50,8 @@ class TcpSessionHandler(BaseWorld):
     async def refresh(self):
         for index, session in enumerate(self.sessions):
             try:
-                session.connection.send(str.encode(' '))
+                session.writer.write(str.encode(' '))
+                await session.writer.drain()
             except socket.error:
                 del self.sessions[index]
 
@@ -59,21 +61,26 @@ class TcpSessionHandler(BaseWorld):
         except Exception as e:
             self.log.debug('Handshake failed: %s' % e)
             return
-        connection = writer.get_extra_info('socket')
         profile['executors'] = [e for e in profile['executors'].split(',') if e]
         profile['contact'] = 'tcp'
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
-        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
+        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, reader=reader, writer=writer)
         self.sessions.append(new_session)
         await self.send(new_session.id, agent.paw)
 
     async def send(self, session_id, cmd):
         try:
-            conn = next(i.connection for i in self.sessions if i.id == int(session_id))
-            conn.send(str.encode(' '))
-            conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(conn, 3)
-            response = json.loads(response)
+            (reader, writer) = next((i.reader, i.writer) for i in self.sessions if i.id == int(session_id))
+            writer.write(str.encode(' '))
+            writer.write(str.encode('%s\n' % cmd))
+            self.log.info(cmd)
+            await writer.drain()
+            try:
+                response = await asyncio.wait_for(await self._attempt_connection(reader), timeout=10) # let's say 10 seconds are enough
+                response = json.loads(response)
+            except asyncio.TimeoutError:
+                response = dict(status=1, pwd='~$ ', response=str(err))
+            self.log.info(response)
             return response['status'], response["pwd"], response['response']
         except Exception as e:
             return 1, '~$ ', e
@@ -86,19 +93,43 @@ class TcpSessionHandler(BaseWorld):
         return json.loads(profile_bites)
 
     @staticmethod
-    async def _attempt_connection(connection, max_tries):
-        attempts = 0
+    async def _attempt_connection(reader):
         buffer = 4096
         data = b''
         while True:
             try:
-                part = connection.recv(buffer)
+                part = await reader.read(buffer)
                 data += part
                 if len(part) < buffer:
                     break
-            except BlockingIOError as err:
-                if attempts > max_tries:
-                    return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
-                attempts += 1
-                time.sleep(.1 * attempts)
+            except err:
+                return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')
+
+
+class Session(BaseObject):
+    @property
+    def unique(self):
+        return self.hash('%s' % self.paw)
+
+    def __init__(self, id, paw, reader, writer):
+        super().__init__()
+        self.id = id
+        self.paw = paw
+        self.reader = reader
+        self.writer = writer
+
+    def store(self, ram):
+        existing = self.retrieve(ram['sessions'], self.unique)
+        if not existing:
+            ram['sessions'].append(self)
+            return self.retrieve(ram['sessions'], self.unique)
+        return existing
+
+
+
+
+
+
+
+
