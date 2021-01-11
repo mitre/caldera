@@ -5,6 +5,7 @@ import os
 import subprocess
 
 from aiohttp import web
+from multidict import CIMultiDict
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -28,7 +29,7 @@ class FileSvc(FileServiceInterface, BaseService):
         self.packers = dict()
 
     async def get_file(self, headers):
-        headers = dict(headers)
+        headers = CIMultiDict(headers)
         if 'file' not in headers:
             raise KeyError('File key was not provided')
 
