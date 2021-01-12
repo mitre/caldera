@@ -131,7 +131,7 @@ class BasePlanningService(BaseService):
         return [x for x in singleton if x]
 
     @staticmethod
-    def _cross_check_agents_for_duplicate_singletons(agent_links):
+    def _remove_links_of_duplicate_singletons(agent_links):
         """
         Filter links across agents
         :param agent_links: array of agent links
