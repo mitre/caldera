@@ -178,10 +178,10 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_payloads(plug)
                 await self._load_abilities(plug)
                 await self._load_objectives(plug)
-                await self._load_packers(plug)
                 await self._load_adversaries(plug)
-                await self._load_sources(plug)
                 await self._load_planners(plug)
+                await self._load_sources(plug)
+                await self._load_packers(plug)
             await self._load_extensions()
             await self._verify_data_sets()
         except Exception as e:
