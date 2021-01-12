@@ -298,11 +298,11 @@ class DataService(DataServiceInterface, BaseService):
         await self._verify_adversary_profiles()
 
     async def _verify_abilities(self):
+        required_fields = ['name', 'description', 'tactic', 'technique_id', 'technique_name']
         special_extensions = [special_payload for special_payload in
                               self.get_service('file_svc').special_payloads if special_payload.startswith('.')]
         cleanup_abilities = await self.locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for ability in await self.locate('abilities'):
-            required_fields = ['name', 'description', 'tactic', 'technique_id', 'technique_name']
             for field in required_fields:
                 if not getattr(ability, field):
                     setattr(ability, field, '(auto-generated)')
