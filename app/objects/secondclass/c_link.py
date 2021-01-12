@@ -118,16 +118,17 @@ class Link(BaseObject):
         return False
 
     async def parse(self, operation, result):
-        try:
-            if self.status != 0:
-                return
-            for parser in self.ability.parsers:
-                source_facts = operation.source.facts if operation else []
+        if self.status != 0:
+            return
+        for parser in self.ability.parsers:
+            source_facts = operation.source.facts if operation else []
+            try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
                 await self._update_scores(operation, increment=len(relationships))
                 await self._create_relationships(relationships, operation)
-        except Exception as e:
-            logging.getLogger('link').debug('parse exception: %s' % e)
+            except Exception as e:
+                logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
+                                                % (parser.module, self.ability.ability_id, e))
 
     def apply_id(self, host):
         self.id = self.generate_number()
@@ -145,12 +146,10 @@ class Link(BaseObject):
 
     async def _parse_link_result(self, result, parser, source_facts):
         blob = b64decode(result).decode('utf-8')
-        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs, source_facts=source_facts)
+        parser_info = dict(module=parser.module, used_facts=self.used, mappers=parser.parserconfigs,
+                           source_facts=source_facts)
         p_inst = await self._load_module('Parser', parser_info)
-        try:
-            return p_inst.parse(blob=blob)
-        except Exception:
-            return []
+        return p_inst.parse(blob=blob)
 
     @staticmethod
     async def _load_module(module_type, module_info):
