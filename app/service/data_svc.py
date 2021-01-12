@@ -302,21 +302,11 @@ class DataService(DataServiceInterface, BaseService):
                               self.get_service('file_svc').special_payloads if special_payload.startswith('.')]
         cleanup_abilities = await self.locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for ability in await self.locate('abilities'):
-            if not ability.name:
-                ability.name = '(auto-generated)'
-                self.log.warning('Missing name for ability: %s' % ability.ability_id)
-            if not ability.description:
-                ability.description = '(auto-generated)'
-                self.log.warning('Missing description for ability: %s' % ability.ability_id)
-            if not ability.tactic:
-                ability.tactic = '(auto-generated)'
-                self.log.warning('Missing tactic for ability: %s' % ability.ability_id)
-            if not ability.technique_id:
-                ability.technique_id = '(auto-generated)'
-                self.log.warning('Missing technique ID for ability: %s' % ability.ability_id)
-            if not ability.technique_name:
-                ability.technique_name = '(auto-generated)'
-                self.log.warning('Missing technique name for ability: %s' % ability.ability_id)
+            required_fields = ['name', 'description', 'tactic', 'technique_id', 'technique_name']
+            for field in required_fields:
+                if not getattr(ability, field):
+                    setattr(ability, field, '(auto-generated)')
+                    self.log.warning('Missing required field in ability %s: %s' % (ability.ability_id, field))
             for payload in ability.payloads:
                 payload_name = payload
                 if self.is_uuid4(payload):
