@@ -67,8 +67,8 @@
                 <tr id="{{ a.paw }}">
                     <td><p>{{ a.paw }}</p></td>
                     <td><p>{{ a.host }}</p></td>
-                    <td><p id="{{a.paw}}-contact">{{ a.contact }}</p></td>
-                    <td><button id="{{a.paw}}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.pid }}</button></td>
+                    <td><p>{{ a.contact }}</p></td>
+                    <td><button id="{{a.paw|e}}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw|e }}')">{{ a.pid }}</button></td>
                     <td><p>{{ a.privilege }}</p></td>
                     <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
                 </tr>
@@ -249,6 +249,7 @@
             $("#agent-deadman-options").slideToggle();
         });
     });
+
     function refresh(){
         function updateTbl(data){
             $('#agent-cnt').text(data.length);
@@ -259,7 +260,10 @@
                     if(a.paw === paw) {
                         //update existing row
                         if(!a.trusted) {
-                            $('#'+paw+'-pid').addClass('maroon');
+                            let element = document.getElementById(paw + '-pid');
+                            if (element !== null) {
+                                element.classList.add('maroon');
+                            }
                         }
                         $('#'+paw+'-contact').text(a.contact);
                         found = true;
@@ -267,16 +271,30 @@
                 });
                 if(!found) {
                     stream('new agent beacon: '+a.paw);
-                    $('#agent-table tr:last').after(
-                        '<tr id="'+a.paw+'">' +
-                            '<td><p>'+a.paw+'</p></td>' +
-                            '<td><p>'+a.host+'</p></td>' +
-                            '<td><p>'+a.contact+'</p></td>' +
-                            '<td><button id="' + a.paw + '-pid" class="button-row" onclick="showAgentInfo(\'' + a.paw + '\')">' + a.pid + '</button></td>' +
-                            '<td><p>'+a.privilege+'</p></td>' +
-                            '<td><p onclick="deleteAgent(\'' + a.paw + '\')">&#x274C;</p></td>' +
-                        '</tr>'
-                    )
+
+                    let pidButton = $('<button></button>')
+                        .prop('id', a.paw + '-pid')
+                        .addClass('button-row')
+                        .click(function() {
+                            showAgentInfo(a.paw)
+                        })
+                        .text(a.pid);
+
+                    let deleteButton = $('<p></p>')
+                        .click( function() {
+                            deleteAgent(a.paw)
+                        })
+                        .html('&#x274C;');
+
+                    let newAgentRow = $('<tr></tr>').prop('id', a.paw)
+                        .append($('<td></td>').append($('<p></p>').text(a.paw)))
+                        .append($('<td></td>').append($('<p></p>').text(a.host)))
+                        .append($('<td></td>').append($('<p></p>').text(a.contact)))
+                        .append($('<td></td>').append(pidButton))
+                        .append($('<td></td>').append($('<p></p>').text(a.privilege)))
+                        .append($('<td></td>').append(deleteButton));
+
+                    $('#agent-table tr:last').after(newAgentRow);
                 }
             });
         }
@@ -285,7 +303,10 @@
 
     function deleteAgent(paw){
         function deleteAgentCallback(data){
-            $('#'+paw).remove();
+            let element = document.getElementById(paw);
+            if (element !== null) {
+                element.remove();
+            }
             $('#agent-cnt').text(parseInt($('#agent-cnt').text()) - 1);
         }
         stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
@@ -390,22 +411,22 @@
             let peer_receivers = "";
             let peer_chain = "";
             let current_contact = agent['contact'];
-            parent.find('#modal-paw').html(agent['paw']);
-            parent.find('#modal-host').html(agent['host']);
-            parent.find('#modal-username').html(agent['username']);
-            parent.find('#modal-privilege').html(agent['privilege']);
-            parent.find('#modal-last_seen').html(agent['last_seen']);
-            parent.find('#modal-exe_name').html(agent['exe_name']);
+            parent.find('#modal-paw').text(agent['paw']);
+            parent.find('#modal-host').text(agent['host']);
+            parent.find('#modal-username').text(agent['username']);
+            parent.find('#modal-privilege').text(agent['privilege']);
+            parent.find('#modal-last_seen').text(agent['last_seen']);
+            parent.find('#modal-exe_name').text(agent['exe_name']);
             parent.find('#modal-group').val(agent['group']);
             parent.find('#modal-sleep').val(agent['sleep_min']+'/'+agent['sleep_max']);
             parent.find('#modal-watchdog').val(agent['watchdog']);
-            parent.find('#modal-architecture').html(agent['architecture']);
-            parent.find('#modal-platform').html(agent['platform']);
-            parent.find('#modal-location').html(agent['location']);
-            parent.find('#modal-pid').html(agent['pid']);
-            parent.find('#modal-ppid').html(agent['ppid']);
-            parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
-            parent.find('#modal-watchdog').html(agent['watchdog']);
+            parent.find('#modal-architecture').text(agent['architecture']);
+            parent.find('#modal-platform').text(agent['platform']);
+            parent.find('#modal-location').text(agent['location']);
+            parent.find('#modal-pid').text(agent['pid']);
+            parent.find('#modal-ppid').text(agent['ppid']);
+            parent.find('#modal-executors').text(JSON.stringify(agent['executors']));
+            parent.find('#modal-watchdog').text(agent['watchdog']);
 
             // Set up contact selection
             let num_contacts = agent['available_contacts'].length;
@@ -431,53 +452,57 @@
             contact_elem.val(current_contact);
 
             // Set up peer-to-peer proxy receiver information display.
+            parent.find('#modal-peer_receivers').empty();
             if (Object.keys(agent['proxy_receivers']).length == 0) {
-                peer_receivers = "No local peer-to-peer proxy receivers active.";
+                parent.find('#modal-peer_receivers').text('No local peer-to-peer proxy receivers active.');
             } else {
-                peer_receivers = "<table>";
+                let peerReceiversTable = $('<table/>');
                 for (var key in agent['proxy_receivers']) {
-                    peer_receivers += "<tr>";
-                    peer_receivers += "<td><i>" + key + "  </i></td>";
-                    peer_receivers += "<td><p></p></td>";
-                    peer_receivers += "</tr>";
+                    $('<tr/>')
+                        .append($('<td/>').append($('<i/>').text(key)))
+                        .append($('<td/>').append($('<p/>')))
+                        .appendTo(peerReceiversTable);
+
                     for (i = 0; i < agent['proxy_receivers'][key].length; i++) {
-                        peer_receivers += "<tr>";
-                        peer_receivers += "<td><p></p></td>";
-                        peer_receivers += "<td><p>" + agent['proxy_receivers'][key][i] + "</p></td>";
-                        peer_receivers += "</tr>";
+                        $('<tr/>')
+                            .append($('<td/>').append($('<p/>')))
+                            .append($('<td/>').append($('<p/>').text(agent['proxy_receivers'][key][i])))
+                            .appendTo(peerReceiversTable);
                     };
                 };
-                peer_receivers += "</table>";
+                parent.find('#modal-peer_receivers').append(peerReceiversTable);
             };
 
             // Set up peer-to-peer proxy chain information display.
+            parent.find('#modal-peer_chain').empty();
             let proxy_chain_length = agent['proxy_chain'].length;
             if (proxy_chain_length == 0) {
-                peer_chain = "Not using peer agents to reach C2.";
+                parent.find('#modal-peer_chain').text('Not using peer agents to reach C2.');
             } else {
-                // Header row
-                peer_chain = "<table cellspacing=\"15\">";
-                peer_chain += "<tr>";
-                peer_chain += "<th style=\"color:white\"><i>Hop Index</i></th>"
-                peer_chain += "<th style=\"color:white\"><i>Peer Paw</i></th>"
-                peer_chain += "<th style=\"color:white\"><i>Peer Receiver Address</i></th>";
-                peer_chain += "<th style=\"color:white\"><i>Peer Receiver Protocol</i></th>";
-                peer_chain += "</tr>";
+                let headerRow = $('<tr></tr>').html(
+                    '<th style="color:white"><i>Hop Index</i></th>'
+                    + '<th style="color:white"><i>Peer Paw</i></th>'
+                    + '<th style="color:white"><i>Peer Receiver Address</i></th>'
+                    + '<th style="color:white"><i>Peer Receiver Protocol</i></th>'
+                );
+                let peerChainTable = $('<table></table>').prop('cellspacing', 15).append(headerRow);
 
                 // Proxy chain rows
                 for (i = 0; i < proxy_chain_length; i++) {
-                    peer_chain += "<tr>";
-                    peer_chain += "<td style=\"text-align:center\"><i>" + i + "</i></td>"
+                    let peerRow = $('<tr></tr>').append(
+                        $('<td></td>')
+                            .prop('style', 'text-align:center')
+                            .append($('<i></i>').text(i))
+                    );
                     for (j = 0; j < agent['proxy_chain'][i].length; j++) {
-                        peer_chain += "<td><p>" + agent['proxy_chain'][i][j] + "</p></td>";
+                        $('<td></td>')
+                            .append($('<p></p>').text(agent['proxy_chain'][i][j]))
+                            .appendTo(peerRow);
                     }
-                    peer_chain += "</tr>";
+                    peerChainTable.append(peerRow);
                 };
-                peer_chain += "</table>";
+                parent.find('#modal-peer_chain').append(peerChainTable);
             };
-
-            parent.find('#modal-peer_receivers').html(peer_receivers);
-            parent.find('#modal-peer_chain').html(peer_chain);
             parent.show();
         }
         restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
@@ -573,7 +598,7 @@
                 let inputValue = input.val() ? input.val() : input.attr("placeholder");
                 command = command.replace(arg[0], inputValue);
             })
-            $(elem).html(command);
+            $(elem).text(command);
         })
     }
 
