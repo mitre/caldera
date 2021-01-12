@@ -171,17 +171,20 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load(self, plugins=()):
         try:
+            async_tasks = []
             if not plugins:
                 plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
                 plugins.append(Plugin(data_dir='data'))
             for plug in plugins:
                 await self._load_payloads(plug)
-                await self._load_abilities(plug)
+                await self._load_abilities(plug, async_tasks)
                 await self._load_objectives(plug)
                 await self._load_adversaries(plug)
                 await self._load_planners(plug)
                 await self._load_sources(plug)
                 await self._load_packers(plug)
+            for task in async_tasks:
+                await task
             await self._load_extensions()
             await self._verify_data_sets()
         except Exception as e:
@@ -191,9 +194,10 @@ class DataService(DataServiceInterface, BaseService):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
             await self.load_yaml_file(Adversary, filename, plugin.access)
 
-    async def _load_abilities(self, plugin):
+    async def _load_abilities(self, plugin, tasks=None):
+        tasks = [] if tasks is None else tasks
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
-            asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access))
+            tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
     async def _update_extensions(self, ability):
         for ab in await self.locate('abilities', dict(name=None, ability_id=ability.ability_id)):
