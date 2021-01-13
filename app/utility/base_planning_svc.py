@@ -80,15 +80,13 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: updated list of links
         """
-        completed_links = [(l.command_hash if l.command_hash else l.command) for l in operation.chain
-                           if l.paw == agent.paw and (l.finish or l.can_ignore())]
-
         completed_links = [lnk for lnk in operation.chain if lnk.paw == agent.paw and (lnk.finish or lnk.can_ignore())]
 
         singleton_links = BasePlanningService._list_historic_duplicate_singletons(operation)
 
         return [lnk for lnk in links if lnk.ability.repeatable or
-                (lnk not in completed_links and lnk not in singleton_links)]
+                (lnk not in completed_links and
+                 not any([lnk.command_hash == x.command_hash for x in singleton_links]))]
 
     @staticmethod
     async def remove_links_missing_facts(links):
