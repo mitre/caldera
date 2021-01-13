@@ -50,20 +50,21 @@ class BasePlanningService(BaseService):
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, facts)
-                good_facts = await RuleSet(rules=rules).apply_rules(facts=relevant_facts[0])
-                valid_facts = await self._trim_by_limit(decoded_test, good_facts)
-                for combo in list(itertools.product(*valid_facts)):
-                    try:
-                        copy_test = copy.copy(decoded_test)
-                        copy_link = copy.deepcopy(link)
-                        variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
-                        copy_link.command = self.encode_string(variant)
-                        copy_link.score = score
-                        copy_link.used.extend(used)
-                        copy_link.apply_id(agent.host)
-                        link_variants.append(copy_link)
-                    except Exception as ex:
-                        logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
+                if all([x for x in relevant_facts]):
+                    good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
+                    valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
+                    for combo in list(itertools.product(*valid_facts)):
+                        try:
+                            copy_test = copy.copy(decoded_test)
+                            copy_link = copy.deepcopy(link)
+                            variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
+                            copy_link.command = self.encode_string(variant)
+                            copy_link.score = score
+                            copy_link.used.extend(used)
+                            copy_link.apply_id(agent.host)
+                            link_variants.append(copy_link)
+                        except Exception as ex:
+                            logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
                 link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
