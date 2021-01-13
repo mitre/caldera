@@ -86,7 +86,7 @@ class BasePlanningService(BaseService):
 
         return [lnk for lnk in links if lnk.ability.repeatable or
                 (lnk not in completed_links and
-                 not any([lnk.command_hash == x.command_hash for x in singleton_links]))]
+                 not any([lnk.command == x.command for x in singleton_links]))]
 
     @staticmethod
     async def remove_links_missing_facts(links):
