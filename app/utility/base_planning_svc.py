@@ -49,7 +49,7 @@ class BasePlanningService(BaseService):
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
-                relevant_facts = await self._build_relevant_facts(variables, facts)
+                relevant_facts = await self._build_relevant_facts([x for x in variables if '_' not in x], facts)
                 if all([x for x in relevant_facts]):
                     good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
                     valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
