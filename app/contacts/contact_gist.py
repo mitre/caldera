@@ -51,7 +51,8 @@ class Contact(BaseWorld):
         Handles various beacons types (beacon and results)
         """
         for beacon in beacons:
-            beacon['contact'] = self.name
+            if 'contact' not in beacon:
+                beacon['contact'] = self.name
             agent, instructions = await self.contact_svc.handle_heartbeat(**beacon)
             await self._send_payloads(agent, instructions)
             await self._send_instructions(agent, instructions)
@@ -85,6 +86,8 @@ class Contact(BaseWorld):
                         sleep=await agent.calculate_sleep(),
                         watchdog=agent.watchdog,
                         instructions=json.dumps([json.dumps(i.display) for i in instructions]))
+        if agent.gui_selected_contact != agent.contact:
+            response['new_contact'] = agent.gui_selected_contact
         await self._post_instructions(self._encode_string(json.dumps(response).encode('utf-8')), agent.paw)
 
     async def _post_instructions(self, text, paw):

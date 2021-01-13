@@ -23,12 +23,15 @@ class Contact(BaseWorld):
         try:
             profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
             profile['paw'] = profile.get('paw')
-            profile['contact'] = 'http'
+            if 'contact' not in profile:
+                profile['contact'] = 'http'
             agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
             response = dict(paw=agent.paw,
                             sleep=await agent.calculate_sleep(),
                             watchdog=agent.watchdog,
                             instructions=json.dumps([json.dumps(i.display) for i in instructions]))
+            if agent.gui_selected_contact != agent.contact:
+                response['new_contact'] = agent.gui_selected_contact
             return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
         except Exception as e:
             logging.error('Malformed beacon: %s' % e)

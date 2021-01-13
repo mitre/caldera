@@ -67,7 +67,7 @@
                 <tr id="{{ a.paw }}">
                     <td><p>{{ a.paw }}</p></td>
                     <td><p>{{ a.host }}</p></td>
-                    <td><p>{{ a.contact }}</p></td>
+                    <td><p id="{{a.paw}}-contact">{{ a.contact }}</p></td>
                     <td><button id="{{a.paw}}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw }}')">{{ a.pid }}</button></td>
                     <td><p>{{ a.privilege }}</p></td>
                     <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
@@ -88,8 +88,10 @@
                 <hr>
                 <table class="obfuscation-table" border=1 frame=void rules=rows>
                     <tr>
-                        <td>Contact</td>
-                        <td><p id="modal-contact"></p></td>
+                        <td>Contact *</td>
+                        <td>
+                             <select id="modal-contact" value=""/>
+                        </td>
                     </tr>
                     <tr>
                         <td>Host</td>
@@ -259,6 +261,7 @@
                         if(!a.trusted) {
                             $('#'+paw+'-pid').addClass('maroon');
                         }
+                        $('#'+paw+'-contact').text(a.contact);
                         found = true;
                     }
                 });
@@ -298,7 +301,8 @@
             'index': 'agents',
             'paw': $('#modal-paw').text(),
             'group': $('#modal-group').val(),
-            'watchdog': parseInt($('#modal-watchdog').val())
+            'watchdog': parseInt($('#modal-watchdog').val()),
+            'gui_selected_contact': $('#modal-contact').val()
         };
         if (sleepArr.length !== 0) {
             data["sleep_min"] = parseInt(sleepArr[0]);
@@ -385,8 +389,8 @@
             let agent = data[0];
             let peer_receivers = "";
             let peer_chain = "";
+            let current_contact = agent['contact'];
             parent.find('#modal-paw').html(agent['paw']);
-            parent.find('#modal-contact').html(agent['contact']);
             parent.find('#modal-host').html(agent['host']);
             parent.find('#modal-username').html(agent['username']);
             parent.find('#modal-privilege').html(agent['privilege']);
@@ -402,6 +406,29 @@
             parent.find('#modal-ppid').html(agent['ppid']);
             parent.find('#modal-executors').html(JSON.stringify(agent['executors']));
             parent.find('#modal-watchdog').html(agent['watchdog']);
+
+            // Set up contact selection
+            let num_contacts = agent['available_contacts'].length;
+            let contact_elem = parent.find('#modal-contact');
+            contact_elem.empty();
+            contact_elem.prepend(
+                $('<option></option>')
+                    .addClass('contact-option')
+                    .val(current_contact)
+                    .text(current_contact)
+            );
+            for (i = 0; i < num_contacts; i++) {
+                let curr = agent['available_contacts'][i];
+                if (curr != current_contact) {
+                    contact_elem.append(
+                        $('<option></option>')
+                            .addClass('contact-option')
+                            .val(curr)
+                            .text(curr)
+                    );
+                }
+            }
+            contact_elem.val(current_contact);
 
             // Set up peer-to-peer proxy receiver information display.
             if (Object.keys(agent['proxy_receivers']).length == 0) {

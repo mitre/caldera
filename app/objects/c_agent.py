@@ -33,11 +33,13 @@ class AgentFieldsSchema(ma.Schema):
     host = ma.fields.String()
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
+    gui_selected_contact = ma.fields.String()
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
     origin_link_id = ma.fields.Integer()
     deadman_enabled = ma.fields.Boolean()
+    available_contacts = ma.fields.List(ma.fields.String())
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -70,7 +72,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False):
+                 proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
+                 available_contacts=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -100,6 +103,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.proxy_chain = proxy_chain if proxy_chain else []
         self.origin_link_id = origin_link_id
         self.deadman_enabled = deadman_enabled
+        self.available_contacts = available_contacts if available_contacts else [self.contact]
+        self.gui_selected_contact = contact
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -144,9 +149,10 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('proxy_receivers', kwargs.get('proxy_receivers'))
         self.update('proxy_chain', kwargs.get('proxy_chain'))
         self.update('deadman_enabled', kwargs.get('deadman_enabled'))
+        self.update('contact', kwargs.get('contact'))
 
     async def gui_modification(self, **kwargs):
-        loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog')).load(kwargs)
+        loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'gui_selected_contact')).load(kwargs)
         for k, v in loaded.items():
             self.update(k, v)
 
