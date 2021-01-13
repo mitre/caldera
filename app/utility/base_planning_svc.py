@@ -134,7 +134,7 @@ class BasePlanningService(BaseService):
     async def _build_relevant_facts(variables, facts):
         """
         Create a list of facts which are relevant to the given ability's defined variables
-        
+
         Returns: (list) of lists, with each inner list providing all known values for the corresponding fact trait
         """
         relevant_facts = []
