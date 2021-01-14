@@ -43,6 +43,7 @@ class ContactService(ContactServiceInterface, BaseService):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
+                self.log.debug('Received result for link %s from agent %s via contact %s' % (result['id'], agent.paw, agent.contact))
                 await self._save(Result(**result))
                 operation = await self.get_service('app_svc').find_op_with_link(result['id'])
                 access = operation.access if operation else self.Access.RED
