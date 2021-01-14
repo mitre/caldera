@@ -49,21 +49,22 @@ class BasePlanningService(BaseService):
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
-                relevant_facts = await self._build_relevant_facts(variables, facts)
-                good_facts = await RuleSet(rules=rules).apply_rules(facts=relevant_facts[0])
-                valid_facts = await self._trim_by_limit(decoded_test, good_facts)
-                for combo in list(itertools.product(*valid_facts)):
-                    try:
-                        copy_test = copy.copy(decoded_test)
-                        copy_link = copy.deepcopy(link)
-                        variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
-                        copy_link.command = self.encode_string(variant)
-                        copy_link.score = score
-                        copy_link.used.extend(used)
-                        copy_link.apply_id(agent.host)
-                        link_variants.append(copy_link)
-                    except Exception as ex:
-                        logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
+                relevant_facts = await self._build_relevant_facts([x for x in variables if '_' not in x], facts)
+                if all(relevant_facts):
+                    good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
+                    valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
+                    for combo in list(itertools.product(*valid_facts)):
+                        try:
+                            copy_test = copy.copy(decoded_test)
+                            copy_link = copy.deepcopy(link)
+                            variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
+                            copy_link.command = self.encode_string(variant)
+                            copy_link.score = score
+                            copy_link.used.extend(used)
+                            copy_link.apply_id(agent.host)
+                            link_variants.append(copy_link)
+                        except Exception as ex:
+                            logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
                 link.apply_id(agent.host)
                 link.command = self.encode_string(decoded_test)
@@ -133,6 +134,8 @@ class BasePlanningService(BaseService):
     async def _build_relevant_facts(variables, facts):
         """
         Create a list of facts which are relevant to the given ability's defined variables
+        
+        Returns: (list) of lists, with each inner list providing all known values for the corresponding fact trait
         """
         relevant_facts = []
         for v in variables:
