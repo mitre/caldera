@@ -40,6 +40,7 @@ class AgentFieldsSchema(ma.Schema):
     origin_link_id = ma.fields.Integer()
     deadman_enabled = ma.fields.Boolean()
     available_contacts = ma.fields.List(ma.fields.String())
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
