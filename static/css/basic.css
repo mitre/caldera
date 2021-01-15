@@ -190,6 +190,39 @@
     margin-right: 5%;
     cursor: pointer;
 }
+.op-manual-commands {
+    float: right;
+    font-size: 13px;
+    margin-right: 3%;
+    cursor: pointer;
+}
+#manual-command-settings {
+    display: flex;
+    width: 80%;
+    margin: 2em auto 0;
+}
+#manual-executor {
+    flex: 12%;
+    margin: 0;
+    padding: 0;
+    color: gainsboro;
+    background-color: black;
+    border-color: gainsboro;
+}
+#manual-command {
+    flex: 76%;
+    margin: 0 1em;
+    text-align: left;
+    color: gainsboro;
+    background-color: black;
+    border-color: gainsboro;
+}
+#manual-run {
+    flex: 12%;
+    height: 2.3em;
+    margin: 0;
+    padding: 0;
+}
 .profile-tests {
     float: left;
     width: 100%;

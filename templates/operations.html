@@ -159,6 +159,7 @@
       </div>
       <div id="content">
           <span class="op-potential-links" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
+          <span class="op-manual-commands" onclick="document.getElementById('manual-modal').style.display='block';">&#10010; manual command</span>
           <br>
           <ul id="timeline" class="timeline">
               <li id="time-start">
@@ -201,6 +202,26 @@
             </div>
             <div class="imgcontainer">
                 <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="manual-modal" class="modal">
+    <div class="modal-content" style="width:100%;">
+        <div class="container section-profile row ability-viewer modal-box">
+            <div class="column control-width" style="flex:100%;">
+                <select id="manual-agent" onchange="selectManualAgent();">
+                    <option disabled selected>Choose an agent</option>
+                </select>
+                <div id="manual-command-settings" style="display:none">
+                  <select id="manual-executor"></select>
+                  <input type="text" id="manual-command" placeholder="Run arbitrary command" />
+                  <button id="manual-run" type="button" class="button-success atomic-button" onclick="runManualCommand()">Run</button>
+                </div>
+            </div>
+            <div class="imgcontainer">
+                <span onclick="closeManualCommandModal()" class="close" title="Close Modal">&times;</span>
             </div>
         </div>
     </div>
@@ -525,6 +546,12 @@
                         .attr("value", 'agent-'+paw)
                         .text(operation.host_group[i].display_name + '-'+operation.host_group[i].paw));
             }
+            if($("#manual-agent option[value='" + paw + "'").length === 0){
+                 $('#manual-agent').append($("<option></option>")
+                        .attr('value', paw)
+                        .text(operation.host_group[i].display_name + '-'+operation.host_group[i].paw)
+                        .data('executors', operation.host_group[i].executors));
+            }
         }
     }
 
@@ -609,6 +636,57 @@
 
     function updatePotentialLinkCount(){
         $('#potential-links-count').html($('#potential-links li').length + ' potential links');
+    }
+
+    function selectManualAgent() {
+        $('#manual-executor').empty();
+        let executorShells = {
+            'psh': 'PS >',
+            'cmd': '>',
+            'sh': '$'
+        };
+        $.each($('#manual-agent option:selected').data('executors'), function(index, executor) {
+            if (executor in executorShells) {
+                var newOption = $('<option></option>')
+                                .attr('value', executor)
+                                .text(executorShells[executor]);
+                                $('#manual-executor').append(newOption);
+            }
+        });
+        $('#manual-command-settings').show();
+    }
+
+    function closeManualCommandModal() {
+        $('#manual-modal').hide();
+        $('#manual-agent-filter').prop('selectedIndex', 0);
+        $('#manual-command-settings').hide();
+    }
+
+    function runManualCommand() {
+        function runManualCommandCallback(data) {
+            if (data['error']) {
+                stream('Error running manual command: ' + data['error']);
+            } else {
+                stream('Manual command queued');
+                $('#manual-command').val('');
+            }
+            $('#manual-run').addClass('button-success').removeClass('button-notready');
+        }
+        let agent = $('#manual-agent').val();
+        let operation = $('#operation-list').val();
+        let executor = $('#manual-executor').val();
+        let command = $('#manual-command').val();
+        if (agent !== null && operation !== null && executor !== null && command !== '') {
+            $('#manual-run').addClass('button-notready').removeClass('button-success');
+            let request = {
+                'index': 'manual_command',
+                'agent': agent,
+                'operation': operation,
+                'executor': executor,
+                'command': command
+            };
+            restRequest('PUT', request, runManualCommandCallback);
+        }
     }
 
     function refreshUpdatableFields(chain, div, newEntry=false){

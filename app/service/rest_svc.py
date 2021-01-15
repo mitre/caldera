@@ -197,7 +197,7 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
-    async def add_manual_link(self, access, data):
+    async def add_manual_command(self, access, data):
         for parameter in ['operation', 'agent', 'executor', 'command']:
             if parameter not in data.keys():
                 return dict(error='Missing parameter: %s' % parameter)
@@ -221,7 +221,7 @@ class RestService(RestServiceInterface, BaseService):
 
         encoded_command = self.encode_string(data['command'])
         ability = Ability(ability_id='(auto-generated)', tactic='(auto-generated)', technique_id='(auto-generated)',
-                          technique='(auto-generated)', name='Manual Link', description='Manual link ability',
+                          technique='(auto-generated)', name='Manual Command', description='Manual command ability',
                           cleanup='', test=encoded_command, executor=data['executor'], platform=agent.platform,
                           payloads=[], parsers=[], requirements=[], privilege=None, variations=[])
         link = Link.load(dict(command=encoded_command, paw=agent.paw, cleanup=0, ability=ability, score=0, jitter=2,
