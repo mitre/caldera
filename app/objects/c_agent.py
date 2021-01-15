@@ -36,6 +36,7 @@ class AgentFieldsSchema(ma.Schema):
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):

@@ -102,6 +102,10 @@
                         <td><p id="modal-last_seen"></p></td>
                     </tr>
                     <tr>
+                        <td>Created</td>
+                        <td><p id="modal-created"></p></td>
+                    </tr>
+                    <tr>
                         <td>Group *</td>
                         <td><input id="modal-group" style="text-align: left"/></td>
                     </tr>
@@ -368,6 +372,7 @@
             parent.find('#modal-username').html(agent['username']);
             parent.find('#modal-privilege').html(agent['privilege']);
             parent.find('#modal-last_seen').html(agent['last_seen']);
+            parent.find('#modal-created').html(agent['created']);
             parent.find('#modal-exe_name').html(agent['exe_name']);
             parent.find('#modal-group').val(agent['group']);
             parent.find('#modal-sleep').val(agent['sleep_min']+'/'+agent['sleep_max']);
