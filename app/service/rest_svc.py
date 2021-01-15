@@ -13,8 +13,10 @@ from aiohttp import web
 from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
+from app.objects.c_ability import Ability
 from app.objects.c_source import Source
 from app.objects.c_schedule import Schedule
+from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
@@ -195,6 +197,40 @@ class RestService(RestServiceInterface, BaseService):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
 
+    async def add_manual_link(self, access, data):
+        for parameter in ['operation', 'agent', 'executor', 'command']:
+            if parameter not in data.keys():
+                return dict(error='Missing parameter: %s' % parameter)
+
+        try:
+            operation_id = int(data['operation'])
+        except ValueError:
+            return dict(error='Invalid operation ID')
+        operation_search = {'id': operation_id, **access}
+        operation = next(iter(await self.get_service('data_svc').locate('operations', match=operation_search)), None)
+        if not operation:
+            return dict(error='Operation not found')
+
+        agent_search = {'paw': data['agent'], **access}
+        agent = next(iter(await self.get_service('data_svc').locate('agents', match=agent_search)), None)
+        if not agent:
+            return dict(error='Agent not found')
+
+        if data['executor'] not in agent.executors:
+            return dict(error='Agent missing specified executor')
+
+        encoded_command = self.encode_string(data['command'])
+        ability = Ability(ability_id='(auto-generated)', tactic='(auto-generated)', technique_id='(auto-generated)',
+                          technique='(auto-generated)', name='Manual Link', description='Manual link ability',
+                          cleanup='', test=encoded_command, executor=data['executor'], platform=agent.platform,
+                          payloads=[], parsers=[], requirements=[], privilege=None, variations=[])
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, cleanup=0, ability=ability, score=0, jitter=2,
+                              status=operation.link_status()))
+        link.apply_id(agent.host)
+        operation.add_link(link)
+
+        return dict(link=link.unique)
+
     async def task_agent_with_ability(self, paw, ability_id, obfuscator, facts=()):
         new_links = []
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=paw)):
@@ -361,7 +397,6 @@ class RestService(RestServiceInterface, BaseService):
 
         if deadman_abilities is not None:
             await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
-
 
     async def _update_agent_ability_list_property(self, abilities_str, prop_name):
         """Set the specified agent config property with the specified abilities.
