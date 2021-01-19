@@ -115,6 +115,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         learned_relationships = [r for lnk in self.chain for r in lnk.relationships]
         return seeded_relationships + learned_relationships
 
+    def ran_ability_id(self, ability_id):
+        return ability_id in [link.ability.ability_id for link in self.chain if link.finish]
+
     async def apply(self, link):
         while self.state != self.states['RUNNING']:
             if self.state == self.states['RUN_ONE_LINK']:
