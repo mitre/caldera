@@ -172,8 +172,10 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if agent:
             links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
         else:
+            agent_links = []
             for agent in operation.agents:
-                links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+                agent_links.append(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            links = self._remove_links_of_duplicate_singletons(agent_links)
         self.log.debug('Generated %s usable links' % (len(links)))
         return await self.sort_links(links)
 
