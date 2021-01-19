@@ -33,7 +33,7 @@ class AgentFieldsSchema(ma.Schema):
     host = ma.fields.String()
     watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    gui_selected_contact = ma.fields.String()
+    pending_contact = ma.fields.String()
     links = ma.fields.List(ma.fields.Nested(LinkSchema()))
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
@@ -104,7 +104,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.origin_link_id = origin_link_id
         self.deadman_enabled = deadman_enabled
         self.available_contacts = available_contacts if available_contacts else [self.contact]
-        self.gui_selected_contact = contact
+        self.pending_contact = contact
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -152,7 +152,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('contact', kwargs.get('contact'))
 
     async def gui_modification(self, **kwargs):
-        loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'gui_selected_contact')).load(kwargs)
+        loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
         for k, v in loaded.items():
             self.update(k, v)
 
