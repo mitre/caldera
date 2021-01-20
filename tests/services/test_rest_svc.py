@@ -93,7 +93,8 @@ class TestRestSvc:
                      'executors': ['pwsh', 'psh'], 'ppid': 0, 'sleep_min': 2, 'server': '://None:None',
                      'platform': 'windows', 'host': 'unknown', 'paw': '123', 'pid': 0,
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
-                     'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0}],
+                     'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0,
+                     'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown'}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
                 'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)
