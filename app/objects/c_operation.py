@@ -63,6 +63,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
+        self.timeout = 180
         self.name = name
         self.group = group
         self.agents = agents
@@ -127,7 +128,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return link.id
 
     async def close(self, services):
-        await self._cleanup_operation(services)
+        try:
+            await asyncio.wait_for(self._cleanup_operation(services), timeout=self.timeout)
+        except asyncio.TimeoutError:
+            logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. Forcibly terminating.")
+            self.state = self.states['OUT_OF_TIME']
         await self._save_new_source(services)
         await services.get('event_svc').fire_event(exchange='operation', queue='completed', op=self.id)
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
