@@ -10,11 +10,11 @@ jobs:
       matrix:
         include:
           - python-version: 3.6
-            TOXENV: py36,style,coverage-ci,safety
+            toxenv: py36,style,coverage-ci,safety
           - python-version: 3.7
-            TOXENV: py37,style,coverage-ci,safety
+            toxenv: py37,style,coverage-ci,safety
           - python-version: 3.8
-            TOXENV: py38,style,coverage-ci,safety
+            toxenv: py38,style,coverage-ci,safety
 
     steps:
       - uses: actions/checkout@v2
@@ -29,4 +29,6 @@ jobs:
           pip install --upgrade virtualenv
           pip install tox
       - name: Run tests
+        env:
+          TOXENV: ${{ matrix.toxenv }}
         run: tox
