@@ -1,0 +1,29 @@
+name: Code Testing
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: 3.6
+            TOXENV: py36,style,coverage-ci,safety
+          - python-version: 3.7
+            TOXENV: py37,style,coverage-ci,safety
+          - python-version: 3.8
+            TOXENV: py38,style,coverage-ci,safety
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install dependencies
+        run: |
+          pip install --upgrade virtualenv
+          pip install tox
+      - name: Run tests
+        run: tox
