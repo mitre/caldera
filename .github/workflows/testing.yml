@@ -26,4 +26,4 @@ jobs:
           pip install --upgrade virtualenv
           pip install tox
       - name: Run tests
-        run: tox -e py
+        run: tox
