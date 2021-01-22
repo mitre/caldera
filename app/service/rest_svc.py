@@ -264,6 +264,13 @@ class RestService(RestServiceInterface, BaseService):
 
         return dict(abilities=raw_abilities, app_config=app_config)
 
+    async def check_repeatable_abilities(self, data):
+        adversary = (await self.get_service('data_svc').locate('adversaries',
+                                                               match=dict(adversary_id=data.get('adversary_id'))))[0]
+        has_repeatable = [ab.repeatable for ab_id in adversary.atomic_ordering for ab in
+                          await self.get_service('data_svc').locate('abilities', match=dict(ability_id=ab_id))]
+        return dict(has_repeatable=any(has_repeatable))
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):

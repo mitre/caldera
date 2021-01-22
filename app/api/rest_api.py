@@ -98,7 +98,8 @@ class RestApi(BaseWorld):
                     link=lambda d: self.rest_svc.get_potential_links(**d),
                     operation=lambda d: self.rest_svc.update_operation(**d),
                     task=lambda d: self.rest_svc.task_agent_with_ability(**d),
-                    agent_configuration=lambda d: self.rest_svc.get_agent_configuration(d)
+                    agent_configuration=lambda d: self.rest_svc.get_agent_configuration(d),
+                    check_repeatable_abilities=lambda d: self.rest_svc.check_repeatable_abilities(d)
                 )
             )
             if index not in options[request.method]:

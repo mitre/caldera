@@ -55,6 +55,7 @@
    position: fixed;
    left: 0;
    bottom: 0;
+   height: 30px;
    width: 100%;
    z-index: 105;
    background-color: var(--navbar-color);
