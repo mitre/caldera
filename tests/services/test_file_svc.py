@@ -10,6 +10,14 @@ from asyncio import Future
 )
 class TestFileService:
 
+    def test_save_file(self, loop, file_svc, tmp_path):
+        filename = "test_file.txt"
+        payload = b'These are the file contents.'
+        # save temporary test file
+        loop.run_until_complete(file_svc.save_file(filename, payload, tmp_path, encrypt=False))
+        file_location = tmp_path / filename
+        assert os.path.isfile(file_location)
+
     def test_create_exfil_sub_directory(self, loop, file_svc):
         exfil_dir_name = 'unit-testing-Rocks'
         new_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory(exfil_dir_name))
