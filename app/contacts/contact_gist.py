@@ -196,6 +196,7 @@ class Contact(BaseWorld):
             created_dir = os.path.normpath('/' + paw).lstrip('/')
             saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
             unique_filename = ''.join([upload_info.filename, '-', upload_id[0:10]])
+            # TODO get link id
             await self.file_svc.save_file(unique_filename, upload_info.export_contents(), saveto_dir)
             self.log.debug('Uploaded file %s/%s' % (saveto_dir, upload_info.filename))
 
