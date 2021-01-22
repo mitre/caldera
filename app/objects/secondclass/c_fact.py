@@ -51,6 +51,11 @@ class Fact(BaseObject):
             escaped_value = escaped_value.replace(char, (escape_ref[executor]['escape_prefix'] + char))
         return escaped_value
 
+    def __eq__(self, other):
+        if isinstance(other, Fact):
+            return self.unique == other.unique
+        return False
+
     def __init__(self, trait, value=None, score=1, collected_by=None, technique_id=None):
         super().__init__()
         self.trait = trait
