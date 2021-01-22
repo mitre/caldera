@@ -88,7 +88,8 @@ class RestApi(BaseWorld):
                     chain=lambda d: self.rest_svc.update_chain_data(d),
                     operations=lambda d: self.rest_svc.create_operation(access, d),
                     schedule=lambda d: self.rest_svc.create_schedule(access, d),
-                    link=lambda d: self.rest_svc.apply_potential_link(Link.load(d))
+                    link=lambda d: self.rest_svc.apply_potential_link(Link.load(d)),
+                    manual_command=lambda d: self.rest_svc.add_manual_command(access, d)
                 ),
                 POST=dict(
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
