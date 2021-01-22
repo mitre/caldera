@@ -22,8 +22,9 @@ def api_access(func):
 
 class Contact(BaseWorld):
     class GistUpload:
-        def __init__(self, upload_id, filename, num_chunks):
+        def __init__(self, upload_id, link_id, filename, num_chunks):
             self.upload_id = upload_id
+            self.link_id = link_id
             self.filename = filename
             self.chunks = [None]*num_chunks
             self.required_chunks = num_chunks
@@ -51,7 +52,7 @@ class Contact(BaseWorld):
         self.key = ''
 
         # Stores uploaded file chunks. Maps paw to dict that maps upload ID to GistUpload object
-        self.pending_uploads = defaultdict(lambda: dict())
+        self.pending_uploads = defaultdict(lambda: dict[str, self.GistUpload]())
 
     def retrieve_config(self):
         return self.key
@@ -118,13 +119,14 @@ class Contact(BaseWorld):
                 return
             paw = paw_info[1]
             upload_id = metadata[1]
-            filename = self.file_svc.decode_bytes(metadata[2])
-            curr_chunk = int(metadata[3])
-            num_chunks = int(metadata[4])
-            self.log.debug('Received uploaded file chunk %d out of %d for paw %s, upload ID %s, filename %s ' % (
-                curr_chunk, num_chunks, paw, upload_id, filename
+            link_id = metadata[2]
+            filename = self.file_svc.decode_bytes(metadata[3])
+            curr_chunk = int(metadata[4])
+            num_chunks = int(metadata[5])
+            self.log.debug('Received uploaded file chunk %d out of %d for paw %s, upload ID %s, filename %s, link ID %s ' % (
+                curr_chunk, num_chunks, paw, upload_id, filename, link_id
             ))
-            await self._store_file_chunk(paw, upload_id, filename, file_contents, curr_chunk, num_chunks)
+            await self._store_file_chunk(paw, upload_id, link_id, filename, file_contents, curr_chunk, num_chunks)
             if await self._ready_to_export(paw, upload_id):
                 self.log.debug('Upload %s complete for paw %s, filename %s' % (upload_id, paw, filename))
                 await self._submit_uploaded_file(paw, upload_id)
@@ -178,11 +180,11 @@ class Contact(BaseWorld):
         except Exception as e:
             self.log.warning('Posting payload over c2 (%s) failed! %s' % (self.__class__.__name__, e))
 
-    async def _store_file_chunk(self, paw, upload_id, filename, contents, curr_chunk, total_chunks):
+    async def _store_file_chunk(self, paw, upload_id, link_id, filename, contents, curr_chunk, total_chunks):
         pending_upload = self.pending_uploads[paw].get(upload_id)
         if not pending_upload:
             # starting brand new upload
-            pending_upload = self.GistUpload(upload_id, filename, total_chunks)
+            pending_upload = self.GistUpload(upload_id, link_id, filename, total_chunks)
             self.pending_uploads[paw][upload_id] = pending_upload
         pending_upload.add_chunk(curr_chunk - 1, contents)
 
@@ -196,9 +198,9 @@ class Contact(BaseWorld):
             created_dir = os.path.normpath('/' + paw).lstrip('/')
             saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
             unique_filename = ''.join([upload_info.filename, '-', upload_id[0:10]])
-            # TODO get link id
-            await self.file_svc.save_file(unique_filename, upload_info.export_contents(), saveto_dir)
-            self.log.debug('Uploaded file %s/%s' % (saveto_dir, upload_info.filename))
+            link_id = upload_info.link_id
+            await self.file_svc.save_file(unique_filename, upload_info.export_contents(), saveto_dir, link_id=link_id)
+            self.log.debug('Uploaded file %s/%s for link %s, paw %s' % (saveto_dir, upload_info.filename, link_id, paw))
 
     async def _get_raw_gist_info(self, comm_type):
         """

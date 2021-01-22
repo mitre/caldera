@@ -34,9 +34,7 @@ class FileSvc(FileServiceInterface, BaseService):
             raise KeyError('File key was not provided')
 
         packer = None
-        link_id = headers.get('link')
         display_name = payload = headers.get('file')
-        self.log.debug('fetching file %s' % display_name)
         if ':' in payload:
             _, display_name = packer, payload = payload.split(':')
             headers['file'] = payload
@@ -59,16 +57,12 @@ class FileSvc(FileServiceInterface, BaseService):
             display_name = headers.get('name')
         if file_path.endswith('.xored'):
             display_name = file_path.replace('.xored', '')
-        if link_id:
-            # See if the file request associated with this link requires any encoding.
-            contents = await self._encode_contents_for_link_id(contents, link_id)
-        elif headers.get('file-encoding'):
-            contents = await self._encode_contents(contents, headers.get('file-encoding'))
+        contents = await self._perform_data_encoding(headers, contents)
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir, encrypt=True, link_id=None):
         if link_id:
-            payload = self._decode_contents_for_link_id(link_id)
+            payload = await self._decode_contents_for_link_id(payload, link_id)
         self._save(os.path.join(target_dir, filename), payload, encrypt)
 
     async def create_exfil_sub_directory(self, dir_name):
@@ -212,6 +206,19 @@ class FileSvc(FileServiceInterface, BaseService):
         except Exception as e:
             self.log.error('Error loading extension handler=%s, %s' % (payload, e))
 
+    async def _perform_data_encoding(self, headers, contents):
+        link_id = headers.get('link')
+        requested_encoding = headers.get('file-encoding')
+        if link_id:
+            # See if the file request associated with this link requires any encoding.
+            try:
+                return await self._encode_contents_for_link_id(contents, link_id)
+            except Exception as e:
+                self.log.error(e)
+        elif requested_encoding:
+            return await self._encode_contents(contents, requested_encoding)
+        return contents
+
     async def _get_encoder_name_from_link_id(self, link_id):
         link = await self.get_service('app_svc').find_link(link_id)
         if link:
@@ -225,7 +232,8 @@ class FileSvc(FileServiceInterface, BaseService):
         self.log.error('Could not find the requested data encoder %s' % encoding)
 
     async def _encode_contents(self, contents, encoder_name):
-        encoder = await self._get_encoder_from_encoding_name(encoder_name)
+        self.log.debug('Encoding file contents using %s encoding' % encoder_name)
+        encoder = await self._get_encoder_from_encoder_name(encoder_name)
         if encoder:
             return encoder.encode(contents)
         else:
@@ -234,10 +242,11 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def _encode_contents_for_link_id(self, contents, link_id):
         encoder_name = await self._get_encoder_name_from_link_id(link_id)
-        return self._encode_contents(self, contents, encoder_name)
+        return await self._encode_contents(contents, encoder_name)
 
     async def _decode_contents(self, contents, encoder_name):
-        encoder = await self._get_encoder_from_encoding_name(encoder_name)
+        self.log.debug('Decoding file contents using %s encoding' % encoder_name)
+        encoder = await self._get_encoder_from_encoder_name(encoder_name)
         if encoder:
             return encoder.decode(contents)
         else:
@@ -246,7 +255,7 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def _decode_contents_for_link_id(self, contents, link_id):
         encoder_name = await self._get_encoder_name_from_link_id(link_id)
-        return self._decode_contents(self, contents, encoder_name)
+        return await self._decode_contents(contents, encoder_name)
 
 
 def _go_vars(arch, platform):
@@ -255,4 +264,3 @@ def _go_vars(arch, platform):
 
 def _get_header():
     return 'SET' if os.name == 'nt' else ''
-
