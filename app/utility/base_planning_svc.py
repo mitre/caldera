@@ -198,7 +198,7 @@ class BasePlanningService(BaseService):
     async def _trim_by_limit(self, decoded_test, facts):
         limited_facts = []
         for limit in re.findall(self.re_limited, decoded_test):
-            limited = [copy.deepcopy(facts[0])]
+            limited = copy.deepcopy(facts)
             trait = re.search(self.re_trait, limit).group(0)
 
             limit_definitions = re.search(self.re_index, limit).group(0)
