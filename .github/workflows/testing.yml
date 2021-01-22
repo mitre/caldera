@@ -35,4 +35,3 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           files: ./coverage.xml
-          verbose: true # optional (default = false)
