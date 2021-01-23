@@ -263,13 +263,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 cleanup_count += 1
         if cleanup_count:
             try:
-                await asyncio.wait_for(self.wait_for_completion(), timeout=self.timeout + self.agents[0].sleep_max *
-                                                                                          cleanup_count)
+                await asyncio.wait_for(self.wait_for_completion(),
+                                       timeout=self.timeout + self.agents[0].sleep_max * cleanup_count)
             except asyncio.TimeoutError:
                 logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. "
                                 f"Forcibly terminating.")
                 self.state = self.states['OUT_OF_TIME']
-
 
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
