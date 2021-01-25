@@ -188,3 +188,13 @@ class TestRestSvc:
         link = operation.potential_links[0]
         loop.run_until_complete(internal_rest_svc.apply_potential_link(link))
         assert 1 == len(operation.chain)
+
+    def test_check_repeatable_abilities(self, loop, rest_svc, data_svc):
+        loop.run_until_complete(data_svc.store(
+            Ability(ability_id='456', test=BaseWorld.encode_string('whoami'), variations=[],
+                    executor='psh', platform='windows', repeatable=True))
+        )
+        adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=['456'])
+        loop.run_until_complete(data_svc.store(adversary))
+        internal_rest_svc = rest_svc(loop)
+        assert internal_rest_svc.check_repeatable_abilities(dict(adversary_id='456'))
