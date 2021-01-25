@@ -19,7 +19,7 @@ class TestFileService:
         # Read file contents from saved file
         file_contents = open(file_location, "r")
         assert os.path.isfile(file_location)
-        assert 'These are the file contents.' == file_contents.read()
+        assert payload.decode("utf-8") == file_contents.read()
 
     def test_create_exfil_sub_directory(self, loop, file_svc):
         exfil_dir_name = 'unit-testing-Rocks'
