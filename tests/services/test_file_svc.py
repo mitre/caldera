@@ -13,10 +13,13 @@ class TestFileService:
     def test_save_file(self, loop, file_svc, tmp_path):
         filename = "test_file.txt"
         payload = b'These are the file contents.'
-        # save temporary test file
+        # Save temporary test file
         loop.run_until_complete(file_svc.save_file(filename, payload, tmp_path, encrypt=False))
         file_location = tmp_path / filename
+        # Read file contents from saved file
+        file_contents = open(file_location, "r")
         assert os.path.isfile(file_location)
+        assert 'These are the file contents.' == file_contents.read()
 
     def test_create_exfil_sub_directory(self, loop, file_svc):
         exfil_dir_name = 'unit-testing-Rocks'
