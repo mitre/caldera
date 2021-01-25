@@ -77,7 +77,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
-        self.tactic = tactic
+        self.tactic = tactic.lower() if tactic else None
         self.technique_name = technique
         self.technique_id = technique_id
         self.name = name

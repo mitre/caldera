@@ -507,11 +507,12 @@ class RestService(RestServiceInterface, BaseService):
                            'alphanumeric characters, hyphens, and underscores.' % ab.get('id'))
             return []
 
-        # Validate tactic, used for directory creation
+        # Validate tactic, used for directory creation, lower case if present
         if not ab.get('tactic') or not validator.match(ab.get('tactic')):
             self.log.debug('Invalid ability tactic "%s". Tactics can only contain '
                            'alphanumeric characters, hyphens, and underscores.' % ab.get('tactic'))
             return []
+        ab['tactic'] = ab.get('tactic').lower()
 
         # Validate platforms, ability will not be loaded if empty
         if not ab.get('platforms'):
