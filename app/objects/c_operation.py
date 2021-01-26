@@ -63,7 +63,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
-        self.timeout = 180
+        self.base_timeout = 180
         self.name = name
         self.group = group
         self.agents = agents
@@ -264,7 +264,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if cleanup_count:
             try:
                 await asyncio.wait_for(self.wait_for_completion(),
-                                       timeout=self.timeout + self.agents[0].sleep_max * cleanup_count)
+                                       timeout=self.base_timeout + self.agents[0].sleep_max * cleanup_count)
             except asyncio.TimeoutError:
                 logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. "
                                 f"Forcibly terminating.")
