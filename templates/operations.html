@@ -49,10 +49,14 @@
                     <option id="qgroup-{{ g }}" value="{{ g }}">{{ g }}</option>
                 {% endfor %}
               </select>
-              <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true">
+              <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true" onchange="advHasRepeatableAbilities(this.value)">
                 <option value="" class="default-option" selected>No adversary (manual)</option>
                 {% for adv in adversaries %}
-                  <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                  {% if adv.has_repeatable_abilities %}
+                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}" data-has-repeatable>{{ adv.name }}</option>
+                  {% else %}
+                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                  {% endif %}
                 {% endfor %}
               </select>
               <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
@@ -816,4 +820,13 @@
         $('#resultCmd').html(atob(command));
     }
     //# sourceURL=operations.js
+
+    function advHasRepeatableAbilities(selectedAdversary) {
+        if ($('#queuePlanner').val() == 'atomic' && $('#qflow-' + selectedAdversary).data('has-repeatable') != null) {
+            stream('The profile selected has repeatable abilities. When used in combination with the atomic planner, the atomic planner may repeatedly retry the same fact value with the repeatable ability.');
+        }
+        else {
+            stream('');
+        }
+    }
 </script>
