@@ -113,9 +113,11 @@ class ContactService(ContactServiceInterface, BaseService):
     async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
+        # Include instructions from operations
         for link in [c for op in ops for c in op.chain
-                     if c.paw == agent.paw and not c.collect and c.status == c.states['EXECUTE']]:
+                     if c.paw == agent.paw and not c.finish and c.status == c.states['EXECUTE']]:
             instructions.append(self._convert_link_to_instruction(link))
+        # Include instructions from bootstrap ability
         for link in [l for l in agent.links if not l.collect]:
             instructions.append(self._convert_link_to_instruction(link))
         return instructions
