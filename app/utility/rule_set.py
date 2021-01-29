@@ -64,6 +64,6 @@ class RuleSet:
     async def _is_ip_rule_match(self, rule, fact):
         if rule.match != '.*' and await self._is_ip_network(rule.match) and \
                 await self._is_ip_network(fact.value):
-            if ipaddress.IPv4Network(fact.value).subnet_of(ipaddress.IPv4Network(rule.match)):
+            if ipaddress.ip_address(fact.value) in ipaddress.ip_network(rule.match):
                 return True
         return False
