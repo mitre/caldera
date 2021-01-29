@@ -220,8 +220,8 @@ class RestService(RestServiceInterface, BaseService):
             return dict(error='Agent missing specified executor')
 
         encoded_command = self.encode_string(data['command'])
-        ability = Ability(ability_id='(auto-generated)', tactic='(auto-generated)', technique_id='(auto-generated)',
-                          technique='(auto-generated)', name='Manual Command', description='Manual command ability',
+        ability = Ability(ability_id='auto-generated', tactic='auto-generated', technique_id='auto-generated',
+                          technique='auto-generated', name='Manual Command', description='Manual command ability',
                           cleanup='', test=encoded_command, executor=data['executor'], platform=agent.platform,
                           payloads=[], parsers=[], requirements=[], privilege=None, variations=[])
         link = Link.load(dict(command=encoded_command, paw=agent.paw, cleanup=0, ability=ability, score=0, jitter=2,
