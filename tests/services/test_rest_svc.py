@@ -86,7 +86,7 @@ class TestRestSvc:
                 'state': 'finished',
                 'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
                             'params': {},
-                            'ignore_enforcement_modules': [], 'id': '123'},
+                            'ignore_enforcement_modules': [], 'id': '123', 'allow_repeatable_abilities': False},
                 'jitter': '2/8',
                 'host_group': [
                     {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown',

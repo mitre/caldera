@@ -81,8 +81,10 @@
                 {% for p in planners %}
                   {% if p.name == "atomic" %}
                     <option value="{{ p.name }}" selected>Use {{ p.name }} planner</option>
+                  {% elif p.allow_repeatable_abilities %}
+                    <option value="{{ p.name }}" data-allow-repeatable-abilities>Use {{ p.name }} planner</option>
                   {% else %}
-                      <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                    <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                   {% endif %}
                 {% endfor %}
               </select>
@@ -822,11 +824,22 @@
     //# sourceURL=operations.js
 
     function advHasRepeatableAbilities(selectedAdversary) {
-        if ($('#queuePlanner').val() == 'atomic' && $('#qflow-' + selectedAdversary).data('has-repeatable') != null) {
-            stream('The profile selected has repeatable abilities. When used in combination with the atomic planner, the atomic planner may repeatedly retry the same fact value with the repeatable ability.');
+        if ($('#qflow-' + selectedAdversary).data('has-repeatable') != null) {
+            $("#queuePlanner option").each(function() {
+                if (!this.hasAttribute('data-allow-repeatable-abilities')) {
+                    this.setAttribute('disabled', '');
+                    this.removeAttribute('selected');
+                }
+             });
+            $('#queuePlanner option[value="batch"]').prop('selected', 'selected');
+            $('#queuePlanner').val('batch');
+             stream('The profile selected has repeatable abilities. Some planners do not support repeatable abilities and have been disabled.');
         }
         else {
-            stream('');
+            $('#queuePlanner option').each(function() { this.removeAttribute('disabled'); this.removeAttribute('selected') });
+            $('#queuePlanner option[value="atomic"]').prop('selected', 'selected');
+            $('#queuePlanner').val('atomic');
+            stream('Selected planner defaulting to ' + $('#queuePlanner').val() + '.');
         }
     }
 </script>
