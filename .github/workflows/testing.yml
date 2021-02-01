@@ -16,7 +16,7 @@ jobs:
           - python-version: 3.8
             toxenv: py38,style,coverage-ci,safety
           - python-version: 3.9
-            toxenv: py38,style,coverage-ci,safety
+            toxenv: py39,style,coverage-ci,safety
 
     steps:
       - uses: actions/checkout@v2
