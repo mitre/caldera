@@ -176,8 +176,15 @@ class RestService(RestServiceInterface, BaseService):
         payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
         payload_dirs.extend(pathlib.Path.cwd() / 'plugins' / plugin.name / 'payloads'
                             for plugin in await self.get_service('data_svc').locate('plugins') if plugin.enabled)
-        return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
-                   if p.is_file() and not p.name.startswith('.'))
+        payloads = set()
+        for p_dir in payload_dirs:
+            for p in p_dir.glob('*'):
+                if p.is_file() and not p.name.startswith('.'):
+                    if p.name.endswith('.xored'):
+                        payloads.add(p.name.replace('.xored', ''))
+                    else:
+                        payloads.add(p.name)
+        return payloads
 
     async def find_abilities(self, paw):
         data_svc = self.get_service('data_svc')
