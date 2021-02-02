@@ -363,7 +363,6 @@ class RestService(RestServiceInterface, BaseService):
         if deadman_abilities is not None:
             await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
 
-
     async def _update_agent_ability_list_property(self, abilities_str, prop_name):
         """Set the specified agent config property with the specified abilities.
 

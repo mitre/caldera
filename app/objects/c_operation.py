@@ -267,8 +267,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _safely_handle_cleanup(self, cleanup_link_count):
         try:
-            await asyncio.wait_for(self.wait_for_completion(), timeout=self.base_timeout + self.link_timeout *
-                                                                                           cleanup_link_count)
+            await asyncio.wait_for(self.wait_for_completion(),
+                                   timeout=self.base_timeout + self.link_timeout * cleanup_link_count)
         except asyncio.TimeoutError:
             logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. Forcibly terminating.")
             self.state = self.states['OUT_OF_TIME']
