@@ -58,12 +58,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     CLEANUP='cleanup')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None):
+                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
+                 timeout=30):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
         self.base_timeout = 180
+        self.link_timeout = 30
         self.name = name
         self.group = group
         self.agents = agents
@@ -262,13 +263,15 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 self.add_link(link)
                 cleanup_count += 1
         if cleanup_count:
-            try:
-                await asyncio.wait_for(self.wait_for_completion(),
-                                       timeout=self.base_timeout + self.agents[0].sleep_max * cleanup_count)
-            except asyncio.TimeoutError:
-                logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. "
-                                f"Forcibly terminating.")
-                self.state = self.states['OUT_OF_TIME']
+            await self._safely_handle_cleanup(cleanup_count)
+
+    async def _safely_handle_cleanup(self, cleanup_link_count):
+        try:
+            await asyncio.wait_for(self.wait_for_completion(), timeout=self.base_timeout + self.link_timeout *
+                                                                                           cleanup_link_count)
+        except asyncio.TimeoutError:
+            logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. Forcibly terminating.")
+            self.state = self.states['OUT_OF_TIME']
 
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
