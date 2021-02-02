@@ -157,7 +157,7 @@
 
 <div id="ability-template" class="ability-box" style="display: none">
     <div class="ability-show">
-        <h4 id="name" style="margin:5px; margin-top:5px;"></h4>
+        <h4 id="name" style="margin:5px; margin-top:5px;"><span></span></h4>
         <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
     </div>
     <center>
@@ -308,6 +308,24 @@
 
     $(document).on("mouseout", ".tooltip", function(event) {
         $("#ability-tooltip").hide();
+    })
+
+    $(document).on("mouseover", ".ability-box h4", function() {
+        if (isEllipsisActive(this)) {
+            $(this.firstElementChild).addClass("ability-long-name");
+            $(this).css("overflow", "visible");
+            let abilityBox = $(this).closest(".ability-box");
+            abilityBox.css("z-index", 100);
+            abilityBox.find(".topleftnum, .topright").css("z-index", -1);
+        }
+    })
+
+    $(document).on("mouseout", ".ability-box h4", function() {
+        $(this.firstElementChild).removeClass("ability-long-name");
+        $(this).css("overflow", "hidden");
+        let abilityBox = $(this).closest(".ability-box");
+        abilityBox.css("z-index", 1);
+        abilityBox.find(".topleftnum, .topright").css("z-index", 0);
     })
 
     function toggleAdversaryView() {
@@ -713,7 +731,7 @@
             .data('testId', ability.ability_id)
             .data('requirements', requirements);
 
-        template.find('#name').html(ability.name);
+        template.find('#name span').html(ability.name);
         template.find('#ability-attack').html(ability.tactic + ' | '+ ability.technique_name);
 
         if(requirements.length > 0) {
@@ -1009,5 +1027,9 @@
     }
 
     //# sourceURL=profiles.js
+
+    function isEllipsisActive(e) {
+     return (e.offsetWidth < e.scrollWidth);
+}
 
 </script>
