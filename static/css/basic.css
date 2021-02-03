@@ -247,6 +247,10 @@
 .ability-box h4 {
     margin-left: 2%;
     padding-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 95%;
 }
 .ability-box p {
     overflow: hidden;
@@ -264,6 +268,17 @@
     filter: invert(var(--invert-percentage));
     margin-top: -3px;
     margin-bottom: -3px;
+}
+.ability-long-name {
+    position: initial;
+    z-index: 100;
+    margin-left: -50%;
+    margin-right: -50%;
+    padding: 4px 8px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: grey;
+    background-color: var(--secondary-background);
 }
 .ability-viewer {
     background-color: var(--primary-background);
