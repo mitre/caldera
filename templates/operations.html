@@ -87,6 +87,9 @@
                     <option value="{{ s.name }}">Use {{ s.name }} facts</option>
                 {% endfor %}
               </select>
+              <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
+              <input id="queueTimeout" class="queueOption" type="number" value="30" min="0" max="300"
+                      onchange="stream('The number of seconds Caldera will wait per cleanup action to complete before continuing.')">
           </div>
 
           <div id="stealth" class="sidebar-header">
@@ -399,7 +402,8 @@
             "auto_close": document.getElementById("queueAutoClose").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
-            "visibility": document.getElementById("queueVisibility").value
+            "visibility": document.getElementById("queueVisibility").value,
+            "timeout": document.getElementById("queueTimeout").value
         };
     }
 

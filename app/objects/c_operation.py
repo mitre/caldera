@@ -58,11 +58,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     CLEANUP='cleanup')
 
     def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True,
-                 visibility=50, access=None):
+                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
+                 timeout=30):
         super().__init__()
         self.id = id
         self.start, self.finish = None, None
+        self.base_timeout = 180
+        self.link_timeout = 30
         self.name = name
         self.group = group
         self.agents = agents
@@ -258,10 +260,21 @@ class Operation(FirstClassObjectInterface, BaseObject):
     """ PRIVATE """
 
     async def _cleanup_operation(self, services):
+        cleanup_count = 0
         for member in self.agents:
             for link in await services.get('planning_svc').get_cleanup_links(self, member):
                 self.add_link(link)
-        await self.wait_for_completion()
+                cleanup_count += 1
+        if cleanup_count:
+            await self._safely_handle_cleanup(cleanup_count)
+
+    async def _safely_handle_cleanup(self, cleanup_link_count):
+        try:
+            await asyncio.wait_for(self.wait_for_completion(),
+                                   timeout=self.base_timeout + self.link_timeout * cleanup_link_count)
+        except asyncio.TimeoutError:
+            logging.warning(f"[OPERATION] - unable to close {self.name} cleanly due to timeout. Forcibly terminating.")
+            self.state = self.states['OUT_OF_TIME']
 
     async def _get_planning_module(self, services):
         planning_module = import_module(self.planner.module)
@@ -276,7 +289,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
             id=str(uuid.uuid4()),
             name=self.name,
             facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
-            relationships=[dict(source=fact_to_dict(r.source), edge=r.edge, target=fact_to_dict(r.target), score=r.score) for link in self.chain for r in link.relationships]
+            relationships=[dict(source=fact_to_dict(r.source), edge=r.edge,
+                                target=fact_to_dict(r.target), score=r.score)
+                           for link in self.chain for r in link.relationships]
         )
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 

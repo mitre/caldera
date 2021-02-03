@@ -121,3 +121,9 @@ p.command {
     font-style:italic;
     background-color: rgba(170, 170, 170, 0.15);
 }
+#queueTimeout {
+    height: 30px;
+    width: 75%;
+    margin: 5px;
+    margin-top: 8px;
+}
