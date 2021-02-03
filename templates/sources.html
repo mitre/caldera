@@ -4,7 +4,7 @@
       <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
       <div id="sources-sidebar"  class="column section-border" style="flex:25%">
       <img src="/gui/img/facts.png">
-      <h4>Sources</h4>
+      <h4>Fact Sources</h4>
       <br>
       <div class="toggle">
         <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
@@ -134,11 +134,11 @@
 
 <script>
     $(document).ready(function () {
-        stream('New sources will be created after each operation, containing the intelligence that was learned.')
+        stream('New facts sources will be created after each operation, containing the intelligence that was learned.')
     });
     let refresher = setInterval(refresh, 15000);
     $('.section-profile').bind('destroyed', function() {
-        console.log('sources refresh off');
+        console.log('fact sources refresh off');
         clearInterval(refresher);
     });
 
