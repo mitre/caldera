@@ -579,12 +579,12 @@
             if(!(techniqueFilter === '-- any --' || typeof techniqueFilter === 'undefined') && !(techniqueFilter === ("technique-"+link.ability.technique_id)))
                 continue;/**/
             template.attr('id', uniqueLinkId);
-            template.find('#potential-name').html(link.ability.name);
-            template.find('#potential-technique').html(link.ability.technique_id+' - '+link.ability.technique_name+' ('+link.ability.tactic+')')
-            template.find('#potential-description').html(link.ability.description);
-            template.find('#potential-command').html(atob(link.command));
-            template.find('#potential-score').html(link.score);
-            template.find('#potential-visibility').html(link.visibility.score);
+            template.find('#potential-name').text(link.ability.name);
+            template.find('#potential-technique').text(link.ability.technique_id+' - '+link.ability.technique_name+' ('+link.ability.tactic+')')
+            template.find('#potential-description').text(link.ability.description);
+            template.find('#potential-command').text(atob(link.command));
+            template.find('#potential-score').text(link.score);
+            template.find('#potential-visibility').text(link.visibility.score);
             template.data('link', link);
             template.show();
             if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
