@@ -58,12 +58,44 @@ class RuleSet:
         return False
 
     @staticmethod
+    async def _is_ip_address(value):
+        try:
+            ipaddress.IPv4Address(value)
+            return True
+        except (ValueError, ipaddress.AddressValueError):
+            pass
+        return False
+
+    @staticmethod
     async def _is_regex_rule_match(rule, fact):
         return re.match(rule.match, fact.value)
 
     async def _is_ip_rule_match(self, rule, fact):
-        if rule.match != '.*' and await self._is_ip_network(rule.match) and \
-                await self._is_ip_network(fact.value):
-            if ipaddress.IPv4Network(fact.value).subnet_of(ipaddress.IPv4Network(rule.match)):
-                return True
+        """ We only match string-equivalent IP addresses, string-equivalent subnets in CIDR notation, and IP address
+        facts to the subnet rules where the address is a member of the subnet. Matching non-equivalent subnets is
+        complicated, because of the following general case:
+                                    _____________________________________
+                                    |         Rule       |     Fact     |
+                                    -------------------------------------
+                                    | DENY: 127.0.0.0/24 | 127.0.0.0/23 |
+                                    -------------------------------------
+        In the above case, we do not match on this fact, since the fact is a supernet of the rule (it "contains" the
+        rule subnet). Therefore, the rule subnet is only a portion of the fact subnet. Thus, CALDERA would ignore the
+        DENY rule and scan /23 anyway. But this would include a denied subnet range, which is undesired behavior.
+        This being the case, CALDERA does not match on non-equivalent subnets.
+        """
+        if rule.match != '.*':
+            is_fact_address = await self._is_ip_address(fact.value)
+            is_fact_network = await self._is_ip_network(fact.value)
+            is_rule_address = await self._is_ip_address(rule.match)
+            is_rule_network = await self._is_ip_network(rule.match)
+
+            if is_fact_address and is_rule_address:
+                return fact.value == rule.match
+            elif is_fact_network and is_rule_address:
+                return False
+            elif is_fact_address and is_rule_network:
+                return ipaddress.IPv4Address(fact.value) in ipaddress.IPv4Network(rule.match)
+            elif is_fact_network and is_rule_network:
+                return fact.value == rule.match
         return False
