@@ -399,6 +399,7 @@ class RestService(RestServiceInterface, BaseService):
         if deadman_abilities is not None:
             await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
 
+
     async def _update_agent_ability_list_property(self, abilities_str, prop_name):
         """Set the specified agent config property with the specified abilities.
 
@@ -413,7 +414,7 @@ class RestService(RestServiceInterface, BaseService):
                 abilities.append(ability_id)
             else:
                 self.log.debug('Could not find ability with id "{}" for property "{}"'.format(ability_id, prop_name))
-            self.set_config(name='agents', prop=prop_name, value=abilities)
+        self.set_config(name='agents', prop=prop_name, value=abilities)
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':
