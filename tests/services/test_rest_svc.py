@@ -24,6 +24,14 @@ def setup_rest_svc_test(loop, data_svc):
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[],
                 executor='psh', platform='windows'))
     )
+    loop.run_until_complete(data_svc.store(
+        Ability(ability_id='456', test=BaseWorld.encode_string('whoami'), variations=[],
+                executor='sh', platform='linux'))
+    )
+    loop.run_until_complete(data_svc.store(
+        Ability(ability_id='789', test=BaseWorld.encode_string('hostname'), variations=[],
+                executor='sh', platform='linux'))
+    )
     adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[])
     loop.run_until_complete(data_svc.store(adversary))
 
@@ -50,7 +58,6 @@ def setup_rest_svc_test(loop, data_svc):
                    description='Does no obfuscation to any command, instead running it in plain text',
                    module='plugins.stockpile.app.obfuscators.plain_text')
     ))
-
 
 @pytest.mark.usefixtures(
     "setup_rest_svc_test"
@@ -190,3 +197,79 @@ class TestRestSvc:
         link = operation.potential_links[0]
         loop.run_until_complete(internal_rest_svc.apply_potential_link(link))
         assert 1 == len(operation.chain)
+
+    def test_set_single_bootstrap_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '123',
+            'deadman_abilities': ''
+        }
+        want = ['123']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+
+    def test_set_multiple_bootstrap_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '123, 456, 789',
+            'deadman_abilities': ''
+        }
+        want = ['123', '456', '789']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+
+    def test_clear_bootstrap_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '',
+        }
+        want = []
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+        assert agent_config.get('deadman_abilities') == want
+
+    def test_set_single_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '123'
+        }
+        want = ['123']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('deadman_abilities') == want
+
+    def test_set_multiple_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '123, 456, 789'
+        }
+        want = ['123', '456', '789']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('deadman_abilities') == want
