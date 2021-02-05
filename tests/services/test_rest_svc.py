@@ -59,6 +59,7 @@ def setup_rest_svc_test(loop, data_svc):
                    module='plugins.stockpile.app.obfuscators.plain_text')
     ))
 
+
 @pytest.mark.usefixtures(
     "setup_rest_svc_test"
 )
