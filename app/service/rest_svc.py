@@ -469,7 +469,7 @@ class RestService(RestServiceInterface, BaseService):
         await self._save_and_refresh_item(file_path, Adversary, final, allowed)
         stored_adv = await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))
         for a in stored_adv:
-            a.has_repeatable_abilities = a.check_repeatable_abilities(self.get_service('data_svc').ram)
+            a.has_repeatable_abilities = a.check_repeatable_abilities(self.get_service('data_svc').ram['abilities'])
         return [a.display for a in stored_adv]
 
     async def _persist_ability(self, access, ab):

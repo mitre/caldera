@@ -35,7 +35,7 @@ class TestAdversary:
         test_adversary = Adversary(adversary_id='123', name='test', description='',
                                    atomic_ordering=['456'])
         ram = dict(adversaries=[test_adversary], abilities=[repeatable_ability])
-        assert test_adversary.check_repeatable_abilities(ram)
+        assert test_adversary.check_repeatable_abilities(ram['abilities'])
 
     def test_update_empty_list(self, adversary, ability):
         test_adversary = adversary()

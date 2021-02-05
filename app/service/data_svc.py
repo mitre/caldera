@@ -345,4 +345,4 @@ class DataService(DataServiceInterface, BaseService):
             for ability_id in adv.atomic_ordering:
                 if not next((ability for ability in self.ram['abilities'] if ability.ability_id == ability_id), None):
                     self.log.warning('Ability referenced in %s but not found: %s' % (adv.adversary_id, ability_id))
-            adv.has_repeatable_abilities = adv.check_repeatable_abilities(self.ram)
+            adv.has_repeatable_abilities = adv.check_repeatable_abilities(self.ram['abilities'])

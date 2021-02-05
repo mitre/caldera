@@ -67,7 +67,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('atomic_ordering', self.atomic_ordering)
         existing.update('objective', self.objective)
         existing.update('tags', self.tags)
-        existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram))
+        existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram['abilities']))
         return existing
 
     def has_ability(self, ability):
@@ -82,5 +82,5 @@ class Adversary(FirstClassObjectInterface, BaseObject):
                 return plugin
         return None
 
-    def check_repeatable_abilities(self, ram):
-        return any(ab.repeatable for ab_id in self.atomic_ordering for ab in ram['abilities'] if ab.ability_id == ab_id)
+    def check_repeatable_abilities(self, ability_list):
+        return any(ab.repeatable for ab_id in self.atomic_ordering for ab in ability_list if ab.ability_id == ab_id)
