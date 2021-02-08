@@ -420,7 +420,7 @@ class RestService(RestServiceInterface, BaseService):
                 abilities.append(ability_id)
             else:
                 self.log.debug('Could not find ability with id "{}" for property "{}"'.format(ability_id, prop_name))
-            self.set_config(name='agents', prop=prop_name, value=abilities)
+        self.set_config(name='agents', prop=prop_name, value=abilities)
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':

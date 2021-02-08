@@ -358,7 +358,7 @@
         let deadman_abilities = $('#globalDeadman').val().split(",");
         $.each(bootstrap_abilities, function(index, bootstrap_ability) {
             let ability = bootstrap_ability.trim();
-            if ($.inArray(ability, data.bootstrap_abilities) === -1) {
+            if ($.inArray(ability, data.bootstrap_abilities) === -1 && ability.length > 0) {
                 invalid_bootstrap_abilities.push(ability);
             }
         });
@@ -367,7 +367,7 @@
         }
         $.each(deadman_abilities, function(index, deadman_ability) {
             let ability = deadman_ability.trim();
-            if ($.inArray(ability, data.deadman_abilities) === -1) {
+            if ($.inArray(ability, data.deadman_abilities) === -1 && ability.length > 0) {
                 invalid_deadman_abilities.push(ability);
             }
         });
