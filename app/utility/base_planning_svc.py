@@ -49,7 +49,6 @@ class BasePlanningService(BaseService):
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
-                variables = list(set(variables))
                 relevant_facts = await self._build_relevant_facts([x for x in variables if len(x.split('.')) > 2],
                                                                   facts)
                 if all(relevant_facts):
@@ -162,7 +161,7 @@ class BasePlanningService(BaseService):
             score += (score + var.score)
             used.append(var)
             re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
+            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test, 1)
         return copy_test, score, used
 
     @staticmethod
