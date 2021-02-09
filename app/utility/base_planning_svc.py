@@ -49,6 +49,7 @@ class BasePlanningService(BaseService):
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = re.findall(self.re_variable, decoded_test)
             if variables:
+                variables = list(set(variables))
                 relevant_facts = await self._build_relevant_facts([x for x in variables if len(x.split('.')) > 2],
                                                                   facts)
                 if all(relevant_facts):
