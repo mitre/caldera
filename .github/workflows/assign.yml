@@ -1,3 +1,4 @@
+# https://github.com/kentaro-m/auto-assign-action
 name: 'Auto Assign'
 on: pull_request
 
@@ -6,3 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: kentaro-m/auto-assign-action@v1.1.2
+        with:
+          configuration-path: ".github/auto_assign.yml"
