@@ -24,7 +24,7 @@ class TestAgent:
         ability = Ability(ability_id='123', test=BaseWorld.encode_string('net user #{domain.user.name} /domain'),
                           variations=[], executor='psh', platform='windows')
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
-        fact = Fact(trait='domain.user.name', value='bob')
+        fact = Fact(name='domain.user.name', value='bob')
 
         loop.run_until_complete(agent.task([ability], 'plain-text', [fact]))
         assert 1 == len(agent.links)

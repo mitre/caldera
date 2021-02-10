@@ -35,11 +35,11 @@ class TestLearningSvc:
         learning_svc.model.add(frozenset({'host.user.name', 'target.org.name'}))
         learning_svc.model.add(frozenset({'host.file.extension', 'host.user.name', 'domain.user.name'}))
         facts = [
-            Fact(trait='target.org.name', value='something'),
-            Fact(trait='host.user.name', value='admin'),
-            Fact(trait='host.user.name', value='root'),
-            Fact(trait='domain.user.name', value='user'),
-            Fact(trait='not.really.here', value='should never be found')
+            Fact(name='target.org.name', value='something'),
+            Fact(name='host.user.name', value='admin'),
+            Fact(name='host.user.name', value='root'),
+            Fact(name='domain.user.name', value='user'),
+            Fact(name='not.really.here', value='should never be found')
         ]
         loop.run_until_complete(learning_svc._build_relationships(link, facts))
         assert len(link.relationships) == 4

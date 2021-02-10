@@ -160,13 +160,13 @@ class Link(BaseObject):
         for relationship in relationships:
             await self._save_fact(operation, relationship.source, relationship.score)
             await self._save_fact(operation, relationship.target, relationship.score)
-            if all((relationship.source.trait, relationship.edge)):
+            if all((relationship.source.name, relationship.edge)):
                 self.relationships.append(relationship)
 
     async def _save_fact(self, operation, fact, score):
         all_facts = operation.all_facts() if operation else self.facts
-        if all([fact.trait, fact.value]) and await self._is_new_fact(fact, all_facts):
-            self.facts.append(Fact(trait=fact.trait, value=fact.value, score=score, collected_by=self.paw,
+        if all([fact.name, fact.value]) and await self._is_new_fact(fact, all_facts):
+            self.facts.append(Fact(name=fact.name, value=fact.value, score=score, collected_by=self.paw,
                                    technique_id=self.ability.technique_id))
 
     async def _is_new_fact(self, fact, facts):
@@ -174,10 +174,10 @@ class Link(BaseObject):
 
     @staticmethod
     def _fact_exists(new_fact, fact):
-        return new_fact.trait == fact.trait and new_fact.value == fact.value
+        return new_fact.name == fact.name and new_fact.value == fact.value
 
     def _is_new_host_fact(self, new_fact, fact):
-        return new_fact.trait[:5] == 'host.' and self.paw != fact.collected_by
+        return new_fact.name[:5] == 'host.' and self.paw != fact.collected_by
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:

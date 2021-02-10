@@ -8,12 +8,12 @@ from app.objects.secondclass.c_fact import Fact
 class Parser:
 
     def __init__(self):
-        self.trait = 'host.ip.address'
+        self.name = 'host.ip.address'
 
     def parse(self, blob):
         for ip in re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', blob):
             if self._is_valid_ip(ip):
-                yield Fact.load(dict(trait=self.trait, value=ip))
+                yield Fact.load(dict(name=self.name, value=ip))
 
     @staticmethod
     def _is_valid_ip(raw_ip):

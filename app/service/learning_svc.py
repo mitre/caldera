@@ -60,8 +60,8 @@ class LearningService(LearningServiceInterface, BaseService):
 
     @staticmethod
     async def _save_fact(link, facts, fact):
-        if all(fact.trait) and not any(f.trait == fact.trait and f.value == fact.value for f in facts):
-            fact.collected_by = link.paw
+        if all(fact.name) and not any(f.name == fact.name and f.value == fact.value for f in facts):
+            fact.add_link(link)
             fact.technique_id = link.ability.technique_id
             link.facts.append(fact)
 
@@ -69,8 +69,8 @@ class LearningService(LearningServiceInterface, BaseService):
         for relationship in self.model:
             matches = []
             for fact in facts:
-                if fact.trait in relationship:
+                if fact.name in relationship:
                     matches.append(fact)
             for pair in itertools.combinations(matches, r=2):
-                if pair[0].trait != pair[1].trait:
+                if pair[0].name != pair[1].name:
                     link.relationships.append(Relationship(source=pair[0], edge='has', target=pair[1]))

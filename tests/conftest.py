@@ -123,7 +123,7 @@ def ability():
 @pytest.fixture
 def operation():
     def _generate_operation(name, agents, adversary, *args, **kwargs):
-        return Operation(name=name, agents=agent, adversary=adversary, *args, **kwargs)
+        return Operation(name=name, agents=agents, adversary=adversary, *args, **kwargs)
 
     return _generate_operation
 
@@ -162,8 +162,8 @@ def link():
 
 @pytest.fixture
 def fact():
-    def _generate_fact(trait, *args, **kwargs):
-        return Fact(trait=trait, *args, **kwargs)
+    def _generate_fact(name, *args, **kwargs):
+        return Fact(name=name, *args, **kwargs)
 
     return _generate_fact
 

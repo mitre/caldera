@@ -25,7 +25,7 @@ class PlannerFake:
         self.state_machine = ['one', 'two', 'three', 'four']
         self.next_bucket = 'one'
         self.stopping_condition_met = False
-        self.stopping_conditions = [Fact(trait='j.g.b', value='good')]
+        self.stopping_conditions = [Fact(name='j.g.b', value='good')]
         self.calls = []
         self.operation = operation
 
@@ -110,10 +110,10 @@ class TestPlanningService:
 
     def test_stopping_condition_met(self, loop, planning_svc, fact):
         facts = [
-            fact(trait='m.b.k', value='michael'),
-            fact(trait='l.r.k', value='laura')
+            fact(name='m.b.k', value='michael'),
+            fact(name='l.r.k', value='laura')
         ]
-        stopping_condition = fact(trait='c.p.k', value='cole')
+        stopping_condition = fact(name='c.p.k', value='cole')
 
         assert loop.run_until_complete(planning_svc._stopping_condition_met(facts, stopping_condition)) is False
         facts.append(stopping_condition)
@@ -122,7 +122,7 @@ class TestPlanningService:
     def test_check_stopping_conditions(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
         operation.source.facts = []
-        stopping_conditions = [fact(trait='s.o.f.', value='seldon')]
+        stopping_conditions = [fact(name='s.o.f.', value='seldon')]
 
         # first verify stopping conditions not met
         assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) is False
@@ -137,7 +137,7 @@ class TestPlanningService:
 
     def test_update_stopping_condition_met(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
-        stopping_condition = fact(trait='t.c.t', value='boss')
+        stopping_condition = fact(name='t.c.t', value='boss')
 
         class PlannerStub():
             stopping_conditions = [stopping_condition]
@@ -229,9 +229,9 @@ class TestPlanningService:
     def test_link_fact_coverage(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
-        f1 = Fact(trait='a.b.c', value='1')
-        f2 = Fact(trait='a.b.d', value='2')
-        f3 = Fact(trait='a.b.e', value='3')
+        f1 = Fact(name='a.b.c', value='1')
+        f2 = Fact(name='a.b.d', value='2')
+        f3 = Fact(name='a.b.e', value='3')
 
         gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3]))
 

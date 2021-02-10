@@ -1,5 +1,8 @@
 import marshmallow as ma
 
+from datetime import datetime
+from enum import Enum
+
 from app.utility.base_object import BaseObject
 
 escape_ref = {
@@ -20,18 +23,48 @@ escape_ref = {
 }
 
 
+class FactLacksIdentifier(Exception):
+    pass
+
+
+NOT_SPECIFIED = "X"
+
+
+class SourceTypes(Enum):
+    DOMAIN = 1
+    SEEDED = 2
+    LEARNED = 3
+    IMPORTED = 4
+
+
+class Restrictions(Enum):
+    UNIQUE = 1
+    SINGLE = 2
+
+
 class FactSchema(ma.Schema):
+    trait = ma.fields.String()
+    collected_by = ma.fields.String()
 
     unique = ma.fields.String()
-    trait = ma.fields.String()
+    name = ma.fields.String()
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
+    timestamp = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    __source_type = ma.fields.Int()
+    source = ma.fields.String()
+    links = ma.fields.List(ma.fields.String())
+    __restrictions = ma.fields.Int()
+    relationships = ma.fields.List(ma.fields.String())
     score = ma.fields.Integer()
-    collected_by = ma.fields.String()
     technique_id = ma.fields.String()
 
     @ma.post_load()
     def build_fact(self, data, **_):
-        return Fact(**data)
+        if "trait" in data:  # This is a temporary workaround until the fact upgrades are completed
+            print(f"Warning - the trait argument is being replaced with 'name' as part of the fact upgrade.")
+            return Fact(**{"name" if k == "trait" else k: v for k, v in data.items()})
+        else:
+            return Fact(**data)
 
 
 class Fact(BaseObject):
@@ -41,7 +74,7 @@ class Fact(BaseObject):
 
     @property
     def unique(self):
-        return self.hash('%s%s' % (self.trait, self.value))
+        return self.hash('%s%s' % (self.name, self.value))
 
     def escaped(self, executor):
         if executor not in escape_ref:
@@ -56,10 +89,65 @@ class Fact(BaseObject):
             return self.unique == other.unique
         return False
 
-    def __init__(self, trait, value=None, score=1, collected_by=None, technique_id=None):
+    def __init__(self, name, value=None, source_type=SourceTypes["LEARNED"], source=NOT_SPECIFIED,
+                 restrictions=NOT_SPECIFIED, score=1, technique_id=None,
+                 collected_by=None):  # collected_by will be removed in the near future
         super().__init__()
-        self.trait = trait
+        self.name = name
         self.value = value
+        self.timestamp = datetime.now()
+        self.__source_type = source_type
+        self.source = source
+        self.links = list()
+        self.__restrictions = restrictions
+        self.relationships = list()
         self.score = score
-        self.collected_by = collected_by
         self.technique_id = technique_id
+
+        self.__collected_by = collected_by  # Collected_by will be removed in the near future, succeeded by source/links
+
+    @property
+    def collected_by(self):
+        print(f"collected_by will be deprecated. Please use source/links instead.")
+        return self.__collected_by
+
+    # Temporary reroute as the fact upgrade continues
+    @property
+    def trait(self):
+        print(f"trait will be deprecated. Please use 'name' instead.")
+        return self.name
+
+    @property
+    def source_type(self):
+        return self.__source_type
+
+    @source_type.setter
+    def source_type(self, s_type):
+        if s_type in SourceTypes:
+            self.__source_type = s_type
+        else:
+            print(f"{s_type} is not a valid SourceType. Defaulting to 'LEARNED'")
+            self.__source_type = SourceTypes["LEARNED"]
+
+    @property
+    def restrictions(self):
+        return self.__restrictions
+
+    @restrictions.setter
+    def restrictions(self, restriction):
+        if restriction in Restrictions:
+            self.restrictions = restriction
+        else:
+            print(f"{restriction} is not a valid Restriction.")
+
+    def add_link(self, link):
+        if any(x == link.id for x in self.links):
+            print(f"This fact already has connections to link {link.id}")
+            return
+        self.links.append(link.id)
+
+    def add_relationship(self, relationship):
+        if any(x == relationship.unique for x in self.relationships):
+            print(f"This fact already has connections to relationship {relationship.unique}")
+            return
+        self.relationships.append(relationship.unique)
