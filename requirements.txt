@@ -20,3 +20,4 @@ reportlab==3.5.59  # debrief
 svglib==1.0.1  # debrief
 Markdown==3.3.3  # training
 dnspython==2.1.0
+asyncssh==2.5.0
