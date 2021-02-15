@@ -222,7 +222,6 @@ class RestService(RestServiceInterface, BaseService):
         if data.get('prop') == 'plugin':
             enabled_plugins = self.get_config('plugins')
             new_plugin = data.get('value')
-            # only add the new plugin if it is not already in the enabled_plugins
             if new_plugin not in enabled_plugins:
                 enabled_plugins.append(new_plugin)
         else:
