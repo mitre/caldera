@@ -264,7 +264,9 @@ class RestService(RestServiceInterface, BaseService):
     async def update_config(self, data):
         if data.get('prop') == 'plugin':
             enabled_plugins = self.get_config('plugins')
-            enabled_plugins.append(data.get('value'))
+            new_plugin = data.get('value')
+            if new_plugin not in enabled_plugins:
+                enabled_plugins.append(new_plugin)
         else:
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
