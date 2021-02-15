@@ -21,7 +21,7 @@ class Contact(BaseWorld):
         loop = asyncio.get_event_loop()
         dns = self.get_config('app.contact.dns.socket')
         addr, port = dns.split(':')
-        loop.create_task(loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port)))
+        await loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port))
 
 
 class DnsPacket:
@@ -299,8 +299,7 @@ class Handler(asyncio.DatagramProtocol):
             return self.offset >= self.size
 
     class ClientRequestContext:
-        def __init__(self, request_id, dns_request, request_contents, client_addr):
-            self.client_addr = client_addr
+        def __init__(self, request_id, dns_request, request_contents):
             self.request_id = request_id
             self.dns_request = dns_request  # DnsPacket object
             self.request_contents = request_contents
@@ -340,19 +339,25 @@ class Handler(asyncio.DatagramProtocol):
         self.transport = transport
 
     def datagram_received(self, data, addr):
-        async def handle_msg():
-            try:
-                packet = DnsPacket.generate_packet_from_bytes(data)
-                self.log.debug('Received %s DNS request: %s' % (packet.record_type.name, packet.qname))
-                await self._handle_dns_request(packet, addr)
-            except Exception as e:
-                self.log.error(e)
-        asyncio.get_event_loop().create_task(handle_msg())
+        asyncio.get_event_loop().create_task(self._handle_msg(data, addr))
 
-    async def _handle_dns_request(self, dns_request_packet, addr):
+    async def _handle_msg(self, data, addr):
+        try:
+            response_data = await self.generate_dns_tunneling_response_bytes(data)
+            print(response_data)
+            self.transport.sendto(response_data, addr)
+        except Exception as e:
+            self.log.error(e)
+
+    async def generate_dns_tunneling_response_bytes(self, data):
+        packet = DnsPacket.generate_packet_from_bytes(data)
+        response_obj = await self._get_response_for_dns_request(packet)
+        return response_obj.get_bytes()
+
+    async def _get_response_for_dns_request(self, dns_request_packet):
         """Given DNS request packet, parse out the agent message. If the message is incomplete, add to pending
         message. If the message is complete, or if it completes any pending messages, then process the complete
-        message."""
+        message. Returns the corresponding DNS response object for the request."""
 
         # Qname labels are of format message_id.message_type.chunk_index.total_chunks.data.contact_base_domain_fqdn.
         # For example, 281723.be.0.1.68656c6c6f20776f726c64.mycalderac2domain.com indicates the following:
@@ -364,19 +369,15 @@ class Handler(asyncio.DatagramProtocol):
         labels = dns_request_packet.qname_labels
         if dns_request_packet.qname.lower() != self.domain.lower() \
                 and not dns_request_packet.qname.lower().endswith('.' + self.domain.lower()):
-            self.log.warn('Received request for qname %s that is not the C2 DNS tunneling domain %s' %
-                          (dns_request_packet.qname, self.domain))
-            self.log.warn('Sending NXDOMAIN response.')
-            self._send_nxdomain_response(dns_request_packet, addr)
-            return
-
+            self.log.warning('Received request for qname %s that is not the C2 DNS tunneling domain %s' %
+                             (dns_request_packet.qname, self.domain))
+            self.log.warning('Sending NXDOMAIN response.')
+            return self._generate_nxdomain_response(dns_request_packet)
         if dns_request_packet.record_type == DnsRecordType.AAAA:
-            self._send_dummy_ipv6_response(dns_request_packet, addr)
-            return
+            return self._generate_dummy_ipv6_response(dns_request_packet)
         elif dns_request_packet.record_type not in (DnsRecordType.A, DnsRecordType.TXT):
-            self.log.warn('Received unsupported DNS record type request %d' % dns_request_packet.record_type.value)
-            self._send_empty_response(dns_request_packet, addr)
-            return
+            self.log.warning('Received unsupported DNS record type request %d' % dns_request_packet.record_type.value)
+            return self._generate_empty_response(dns_request_packet)
 
         message_id = labels[0]
         try:
@@ -384,63 +385,53 @@ class Handler(asyncio.DatagramProtocol):
             self._store_data_chunk(labels)
         except ValueError as e:
             # Invalid or mismatched message type - send NXDomain response
-            self.log.warn('Invalid dns tunneling message type received from client. Full error: %s' % e)
-            self._send_nxdomain_response(dns_request_packet, addr)
-            return
+            self.log.warning('Invalid dns tunneling message type received from client. Full error: %s' % e)
+            return self._generate_nxdomain_response(dns_request_packet)
 
         # Handle the message if complete. Any non-A record request is automatically considered "complete"
         if self._message_complete(message_id) or dns_request_packet.record_type != DnsRecordType.A:
-            self.log.debug('Received complete client message %s' % message_id)
             self._store_completed_message(message_id)
-            await self._handle_completed_message(message_id, dns_request_packet, addr)
+            return await self._generate_response_for_completed_message(message_id, dns_request_packet)
         else:
             # Return standard acknowledgement response for incomplete A-record messages
-            self._acknowledge_incomplete_message(dns_request_packet, addr)
+            return self._generate_response_for_incomplete_message(dns_request_packet)
 
-    def _send_nxdomain_response(self, dns_query, addr):
-        response_obj = DnsResponse.generate_response_for_query(dns_query, DnsResponseCodes.NXDOMAIN, [])
-        self._send_dns_response(response_obj, addr)
+    def _generate_nxdomain_response(self, dns_query):
+        return DnsResponse.generate_response_for_query(dns_query, DnsResponseCodes.NXDOMAIN, [])
 
-    def _send_empty_response(self, dns_query, addr):
-        response_obj = DnsResponse.generate_response_for_query(dns_query, DnsResponseCodes.SUCCESS, [])
-        self._send_dns_response(response_obj, addr)
+    def _generate_empty_response(self, dns_query):
+        return DnsResponse.generate_response_for_query(dns_query, DnsResponseCodes.SUCCESS, [])
 
-    def _send_dummy_ipv6_response(self, dns_request_packet, addr):
-        ipv6_bytes = self._generate_dummy_ipv6_response()
+    def _generate_dummy_ipv6_response(self, dns_request_packet):
+        ipv6_bytes = self._get_random_ipv6_addr()
         answer_obj = DnsAnswerObj(DnsRecordType.AAAA, dns_request_packet.dns_class, DnsResponse.default_ttl, ipv6_bytes)
-        response_obj = DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS,
-                                                               [answer_obj])
-        self._send_dns_response(response_obj, addr)
-
-    def _send_dns_response(self, dns_response_obj, addr):
-        """Send the given DnsResponse object to the specified address."""
-        response_bytes = dns_response_obj.get_bytes()
-        self.transport.sendto(response_bytes, addr)
+        return DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS, [answer_obj])
 
     def _store_completed_message(self, message_id):
         msg = self.pending_messages.pop(message_id, None)
         if msg:
             self.completed_messages[message_id] = msg
 
-    async def _handle_completed_message(self, message_id, dns_request_packet, addr):
+    async def _generate_response_for_completed_message(self, message_id, dns_request_packet):
         msg = self.completed_messages.pop(message_id, None)
         if msg:
             contents = msg.export_contents()
-            request_context = self.ClientRequestContext(message_id, dns_request_packet, contents, addr)
+            request_context = self.ClientRequestContext(message_id, dns_request_packet, contents)
 
             # Process message based on message type
             if msg.message_type == self.MessageType.Beacon:
-                await self._process_beacon(request_context)
+                return await self._process_beacon(request_context)
             elif msg.message_type == self.MessageType.InstructionDownload:
-                self._process_download_request_via_txt(request_context, self.pending_instructions, 'instructions')
+                return self._process_download_request_via_txt(request_context, self.pending_instructions, 'instructions')
             elif msg.message_type == self.MessageType.PayloadRequest:
-                await self._process_payload_request(request_context)
+                return await self._process_payload_request(request_context)
             elif msg.message_type == self.MessageType.PayloadFilenameDownload:
-                self._process_download_request_via_txt(request_context, self.pending_payload_names, 'payload filename')
+                return self._process_download_request_via_txt(request_context, self.pending_payload_names, 'payload filename')
             elif msg.message_type == self.MessageType.PayloadDataDownload:
-                self._process_download_request_via_txt(request_context, self.pending_payloads, 'payload data')
+                return self._process_download_request_via_txt(request_context, self.pending_payloads, 'payload data')
             else:
-                self.log.warn('Unsupported message type %s' % msg.message_type.value)
+                self.log.warning('Unsupported message type %s' % msg.message_type.value)
+                return self._generate_nxdomain_response(dns_request_packet)
 
     async def _process_payload_request(self, request_context):
         payload_metadata = self._unpack_json(request_context.request_contents)
@@ -456,39 +447,37 @@ class Handler(asyncio.DatagramProtocol):
                     self.pending_payload_names[request_context.request_id] = self.StoredResponse(encoded_payload_name)
 
                     # Notify agent that payload is ready
-                    self._notify_server_ready_via_ipv4(request_context.dns_request, request_context.client_addr)
                     self.log.debug('Stored payload %s for request ID %s' % (display_name, request_context.request_id))
-                    return
+                    return self._generate_server_ready_ipv4_response(request_context.dns_request)
             else:
-                self.log.warn('Client did not include filename in payload request ID %s' % request_context.request_id)
+                self.log.warning('Client did not include filename in payload request ID %s' % request_context.request_id)
         else:
-            self.log.warn('Empty payload request received from message ID %s' % request_context.request_id)
-        self._send_nxdomain_response(request_context.dns_request, request_context.client_addr)
+            self.log.warning('Empty payload request received from message ID %s' % request_context.request_id)
+        return self._generate_nxdomain_response(request_context.dns_request)
 
     async def _fetch_payload(self, payload_metadata):
         try:
             return await self.file_svc.get_file(payload_metadata)
         except FileNotFoundError:
-            self.log.warn('Could not find requested payload')
+            self.log.warning('Could not find requested payload')
             return None, None, None
         except Exception as e:
-            self.log.warn('Error fetching payload: %s' % e)
+            self.log.warning('Error fetching payload: %s' % e)
             return None, None, None
 
     def _process_download_request_via_txt(self, request_context, data_repo, data_type='unknown'):
         if request_context.dns_request.record_type != DnsRecordType.TXT:
-            self.log.warn('Client attempted to request %s without sending TXT query.' % data_type)
-            self._send_nxdomain_response(request_context.dns_request, request_context.client_addr)
+            self.log.warning('Client attempted to request %s without sending TXT query.' % data_type)
+            return self._generate_nxdomain_response(request_context.dns_request)
         else:
-            self.log.debug('Client requested %s via message ID %s' % (data_type, request_context.request_id))
             stored_response = data_repo.get(request_context.request_id)
             if stored_response:
-                self._send_data_chunk_via_txt(data_repo, request_context, stored_response)
+                return self._generate_data_chunk_txt_response(data_repo, request_context, stored_response)
             else:
-                self.log.warn('No %s found for message ID %s' % (data_type, request_context.request_id))
-                self._send_nxdomain_response(request_context.dns_request, request_context.client_addr)
+                self.log.warning('No %s found for message ID %s' % (data_type, request_context.request_id))
+                return self._generate_nxdomain_response(request_context.dns_request)
 
-    def _send_data_chunk_via_txt(self, data_repo, request_context, stored_response):
+    def _generate_data_chunk_txt_response(self, data_repo, request_context, stored_response):
         data = bytearray(stored_response.read_data(DnsResponse.max_txt_size - 1))
         if stored_response.finished_reading():
             # This is the last data chunk to send.
@@ -496,7 +485,7 @@ class Handler(asyncio.DatagramProtocol):
             data_repo.pop(request_context.request_id)
         else:
             data.append(self._remaining_data_suffix)
-        self._send_txt_response(request_context.dns_request, data, DnsResponse.default_ttl, request_context.client_addr)
+        return self._generate_txt_response(request_context.dns_request, data, DnsResponse.default_ttl)
 
     async def _process_beacon(self, request_context):
         profile = self._unpack_json(request_context.request_contents)
@@ -507,10 +496,10 @@ class Handler(asyncio.DatagramProtocol):
 
             # Store beacon response for agent to fetch later, and tell agent that beacon is ready
             self._store_beacon_response(request_context.request_id, beacon_response)
-            self._notify_server_ready_via_ipv4(request_context.dns_request, request_context.client_addr)
+            return self._generate_server_ready_ipv4_response(request_context.dns_request)
         else:
-            self.log.warn('Empty profile received from beacon message ID %s' % request_context.request_id)
-            self._send_nxdomain_response(request_context.dns_request, request_context.client_addr)
+            self.log.warning('Empty profile received from beacon message ID %s' % request_context.request_id)
+            return self._generate_nxdomain_response(request_context.dns_request)
 
     async def _get_beacon_response(self, profile):
         agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
@@ -529,10 +518,10 @@ class Handler(asyncio.DatagramProtocol):
         response_bytes = b64encode(json.dumps(response_dict).encode('utf-8'))
         self.pending_instructions[beacon_id] = self.StoredResponse(response_bytes)
 
-    def _notify_server_ready_via_ipv4(self, dns_request_packet, dest_addr):
+    def _generate_server_ready_ipv4_response(self, dns_request_packet):
         # IPv4 address with odd last octet means that server is ready for next step
         response_data = self._generate_random_ipv4_response(False)
-        self._send_ipv4_response(dns_request_packet, response_data, DnsResponse.default_ttl, dest_addr)
+        return self._generate_ipv4_response(dns_request_packet, response_data, DnsResponse.default_ttl)
 
     def _unpack_json(self, data):
         json_contents = None
@@ -542,26 +531,22 @@ class Handler(asyncio.DatagramProtocol):
             self.log.error('Error decoding contents into json: %s' % e)
         return json_contents
 
-    def _send_ipv4_response(self, dns_request_packet, ipv4_bytes, ttl, addr):
+    def _generate_ipv4_response(self, dns_request_packet, ipv4_bytes, ttl):
         answer_obj = DnsAnswerObj(DnsRecordType.A, dns_request_packet.dns_class, ttl, ipv4_bytes)
-        response_obj = DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS,
-                                                               [answer_obj])
-        self._send_dns_response(response_obj, addr)
+        return DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS, [answer_obj])
 
-    def _send_txt_response(self, dns_request_packet, txt_bytes, ttl, addr):
+    def _generate_txt_response(self, dns_request_packet, txt_bytes, ttl):
         payload = len(txt_bytes).to_bytes(1, byteorder='big') + txt_bytes
         answer_obj = DnsAnswerObj(DnsRecordType.TXT, dns_request_packet.dns_class, ttl, payload)
-        response_obj = DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS,
-                                                               [answer_obj])
-        self._send_dns_response(response_obj, addr)
+        return DnsResponse.generate_response_for_query(dns_request_packet, DnsResponseCodes.SUCCESS, [answer_obj])
 
-    def _acknowledge_incomplete_message(self, request_packet, addr):
+    def _generate_response_for_incomplete_message(self, request_packet):
         if request_packet.record_type != DnsRecordType.A:
-            self.log.warn("Client sent incomplete DNS tunneling message that was not an A record request. Invalid")
-            self._send_nxdomain_response(request_packet, addr)
+            self.log.warning("Client sent incomplete DNS tunneling message that was not an A record request. Invalid")
+            return self._generate_nxdomain_response(request_packet)
         else:
             response_data = self._generate_random_ipv4_response(True)
-            self._send_ipv4_response(request_packet, response_data, DnsResponse.default_ttl, addr)
+            return self._generate_ipv4_response(request_packet, response_data, DnsResponse.default_ttl)
 
     def _message_complete(self, message_id):
         """Returns true if the message is complete, false if still missing chunks."""
@@ -601,5 +586,5 @@ class Handler(asyncio.DatagramProtocol):
             return random_bytes
 
     @staticmethod
-    def _generate_dummy_ipv6_response():
+    def _get_random_ipv6_addr():
         return random.randbytes(16)
