@@ -344,7 +344,6 @@ class Handler(asyncio.DatagramProtocol):
     async def _handle_msg(self, data, addr):
         try:
             response_data = await self.generate_dns_tunneling_response_bytes(data)
-            print(response_data)
             self.transport.sendto(response_data, addr)
         except Exception as e:
             self.log.error(e)
