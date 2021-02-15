@@ -304,6 +304,7 @@ class RestService(RestServiceInterface, BaseService):
                          for ability in abilities]
 
         app_config = {k: v for k, v in self.get_config().items() if k.startswith('app.')}
+        app_config.update({'agents.%s' % k: v for k, v in self.get_config(name='agents').items()})
 
         return dict(abilities=raw_abilities, app_config=app_config)
 
