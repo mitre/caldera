@@ -67,7 +67,7 @@ def beacon_profile_hex_chunks():
 
 @pytest.fixture
 def message_id():
-    return str(random.randint(10000000, 99999999))
+    return str(random.randrange(10000000, 100000000))
 
 
 @pytest.fixture
