@@ -372,16 +372,18 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:
-            ability = (await self.get_service('data_svc').locate('abilities',
-                                                                 match=dict(unique=link.ability.unique)))[0]
-            for cleanup in ability.cleanup:
-                decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
-                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
-                lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                     ability=ability, score=0, jitter=2, status=link_status))
-                if lnk.command not in [l.command for l in links]:
-                    lnk.apply_id(agent.host)
-                    links.append(lnk)
+            matched_abilities = await self.get_service('data_svc').locate('abilities',
+                                                                          match=dict(unique=link.ability.unique))
+            if matched_abilities:
+                ability = matched_abilities[0]
+                for cleanup in ability.cleanup:
+                    decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
+                    variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
+                    lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                                         ability=ability, score=0, jitter=2, status=link_status))
+                    if lnk.command not in [l.command for l in links]:
+                        lnk.apply_id(agent.host)
+                        links.append(lnk)
         return links
 
     @staticmethod
