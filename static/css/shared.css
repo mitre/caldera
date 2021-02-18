@@ -536,6 +536,9 @@ p[onclick] {
 .maroon {
     background-color: maroon;
 }
+.yellow {
+    background-color: #FFB000;
+}
 .golden {
     background-color: goldenrod;
     border-radius: 50%;
