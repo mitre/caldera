@@ -35,13 +35,15 @@ class DataService(DataServiceInterface, BaseService):
     async def destroy():
         if os.path.exists('data/object_store'):
             os.remove('data/object_store')
+
         for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
             for f in glob.glob('%s/*' % d):
-                if not f.startswith('.'):
-                    try:
-                        os.remove(f)
-                    except IsADirectoryError:
-                        shutil.rmtree(f)
+                if f.startswith('.'):  # e.g., .gitkeep
+                    continue
+                elif os.path.isdir(f):
+                    shutil.rmtree(f)
+                else:
+                    os.remove(f)
 
     async def save_state(self):
         await self._prune_non_critical_data()
