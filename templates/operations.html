@@ -830,16 +830,14 @@
                     this.setAttribute('disabled', '');
                     this.removeAttribute('selected');
                 }
-             });
-            $('#queuePlanner option[value="batch"]').prop('selected', 'selected');
-            $('#queuePlanner').val('batch');
-             stream('The profile selected has repeatable abilities. Some planners do not support repeatable abilities and have been disabled.');
+            });
+            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
+            stream('The profile selected has repeatable abilities. Some planners do not support repeatable abilities and have been disabled.');
         }
         else {
             $('#queuePlanner option').each(function() { this.removeAttribute('disabled'); this.removeAttribute('selected') });
-            $('#queuePlanner option[value="atomic"]').prop('selected', 'selected');
-            $('#queuePlanner').val('atomic');
-            stream('Selected planner defaulting to ' + $('#queuePlanner').val() + '.');
+            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
+            stream('Selecting first available planner: ' + $('#queuePlanner').val() + '.');
         }
     }
 </script>
