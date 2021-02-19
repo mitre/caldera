@@ -7,6 +7,7 @@ import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
 from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
 
@@ -26,6 +27,8 @@ class LinkSchema(ma.Schema):
     pin = ma.fields.Integer(missing=0)
     pid = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
+    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
+    used = ma.fields.List(ma.fields.Nested(FactSchema()))
     unique = ma.fields.String()
     collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
     finish = ma.fields.String()
@@ -87,7 +90,7 @@ class Link(BaseObject):
                     TIMEOUT=124)
 
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
-                 host=None, deadman=False):
+                 host=None, deadman=False, used=[], relationships=[]):
         super().__init__()
         self.id = id
         self.command = command
@@ -104,8 +107,8 @@ class Link(BaseObject):
         self.collect = None
         self.finish = None
         self.facts = []
-        self.relationships = []
-        self.used = []
+        self.relationships = relationships
+        self.used = used
         self.visibility = Visibility()
         self._pin = pin
         self.output = False
