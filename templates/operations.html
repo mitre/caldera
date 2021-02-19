@@ -49,10 +49,14 @@
                     <option id="qgroup-{{ g }}" value="{{ g }}">{{ g }}</option>
                 {% endfor %}
               </select>
-              <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true">
+              <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true" onchange="advHasRepeatableAbilities(this.value)">
                 <option value="" class="default-option" selected>No adversary (manual)</option>
                 {% for adv in adversaries %}
-                  <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                  {% if adv.has_repeatable_abilities %}
+                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}" data-has-repeatable>{{ adv.name }}</option>
+                  {% else %}
+                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                  {% endif %}
                 {% endfor %}
               </select>
               <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
@@ -77,8 +81,10 @@
                 {% for p in planners %}
                   {% if p.name == "atomic" %}
                     <option value="{{ p.name }}" selected>Use {{ p.name }} planner</option>
+                  {% elif p.allow_repeatable_abilities %}
+                    <option value="{{ p.name }}" data-allow-repeatable-abilities>Use {{ p.name }} planner</option>
                   {% else %}
-                      <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                    <option value="{{ p.name }}">Use {{ p.name }} planner</option>
                   {% endif %}
                 {% endfor %}
               </select>
@@ -820,4 +826,22 @@
         $('#resultCmd').html(atob(command));
     }
     //# sourceURL=operations.js
+
+    function advHasRepeatableAbilities(selectedAdversary) {
+        if ($('#qflow-' + selectedAdversary).data('has-repeatable') != null) {
+            $("#queuePlanner option").each(function() {
+                if (!this.hasAttribute('data-allow-repeatable-abilities')) {
+                    this.setAttribute('disabled', '');
+                    this.removeAttribute('selected');
+                }
+            });
+            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
+            stream('The profile selected has repeatable abilities. Some planners do not support repeatable abilities and have been disabled.');
+        }
+        else {
+            $('#queuePlanner option').each(function() { this.removeAttribute('disabled'); this.removeAttribute('selected') });
+            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
+            stream('Selecting first available planner: ' + $('#queuePlanner').val() + '.');
+        }
+    }
 </script>

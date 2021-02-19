@@ -14,6 +14,7 @@ class AdversarySchema(ma.Schema):
     atomic_ordering = ma.fields.List(ma.fields.String())
     objective = ma.fields.String()
     tags = ma.fields.List(ma.fields.String())
+    has_repeatable_abilities = ma.fields.Boolean()
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -54,6 +55,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         self.atomic_ordering = atomic_ordering
         self.objective = objective
         self.tags = set(tags) if tags else set()
+        self.has_repeatable_abilities = False
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
@@ -65,6 +67,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('atomic_ordering', self.atomic_ordering)
         existing.update('objective', self.objective)
         existing.update('tags', self.tags)
+        existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram['abilities']))
         return existing
 
     def has_ability(self, ability):
@@ -78,3 +81,6 @@ class Adversary(FirstClassObjectInterface, BaseObject):
             if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.adversary_id):
                 return plugin
         return None
+
+    def check_repeatable_abilities(self, ability_list):
+        return any(ab.repeatable for ab_id in self.atomic_ordering for ab in ability_list if ab.ability_id == ab_id)
