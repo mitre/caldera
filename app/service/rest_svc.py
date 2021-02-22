@@ -227,7 +227,8 @@ class RestService(RestServiceInterface, BaseService):
             return dict(error='Agent missing specified executor')
 
         encoded_command = self.encode_string(data['command'])
-        ability = Ability(ability_id='auto-generated', tactic='auto-generated', technique_id='auto-generated',
+        ability_id = str(uuid.uuid4())
+        ability = Ability(ability_id=ability_id, tactic='auto-generated', technique_id='auto-generated',
                           technique='auto-generated', name='Manual Command', description='Manual command ability',
                           cleanup='', test=encoded_command, executor=data['executor'], platform=agent.platform,
                           payloads=[], parsers=[], requirements=[], privilege=None, variations=[])
@@ -478,7 +479,10 @@ class RestService(RestServiceInterface, BaseService):
         if len(await self.get_service('data_svc').locate('objectives', match=dict(id=final['objective']))) == 0:
             final['objective'] = obj_default.id
         await self._save_and_refresh_item(file_path, Adversary, final, allowed)
-        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))]
+        stored_adv = await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))
+        for a in stored_adv:
+            a.has_repeatable_abilities = a.check_repeatable_abilities(self.get_service('data_svc').ram['abilities'])
+        return [a.display for a in stored_adv]
 
     async def _persist_ability(self, access, ab):
         """Persist ability.

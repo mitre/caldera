@@ -15,6 +15,7 @@ class PlannerSchema(ma.Schema):
     description = ma.fields.String()
     stopping_conditions = ma.fields.List(ma.fields.Nested(FactSchema()))
     ignore_enforcement_modules = ma.fields.List(ma.fields.String())
+    allow_repeatable_abilities = ma.fields.Boolean()
 
     @ma.post_load()
     def build_planner(self, data, **_):
@@ -31,7 +32,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         return self.hash(self.name)
 
     def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None,
-                 ignore_enforcement_modules=()):
+                 ignore_enforcement_modules=(), allow_repeatable_abilities=False):
         super().__init__()
         self.planner_id = planner_id
         self.name = name
@@ -40,6 +41,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         self.description = description
         self.stopping_conditions = self._set_stopping_conditions(stopping_conditions)
         self.ignore_enforcement_modules = ignore_enforcement_modules
+        self.allow_repeatable_abilities = allow_repeatable_abilities
 
     def store(self, ram):
         existing = self.retrieve(ram['planners'], self.unique)

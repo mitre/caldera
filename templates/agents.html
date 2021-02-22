@@ -68,7 +68,16 @@
                     <td><p>{{ a.paw }}</p></td>
                     <td><p>{{ a.host }}</p></td>
                     <td><p>{{ a.contact }}</p></td>
-                    <td><button id="{{a.paw|e}}-pid" class="button-row" onclick="showAgentInfo('{{ a.paw|e }}')">{{ a.pid }}</button></td>
+                    {% if a.trusted %}
+                        {% if a.watchdog > 0 and a.watchdog < a.sleep_min %}
+                            {% set agentStatus = "yellow" %}
+                        {% else %}
+                            {% set agentStatus = "" %}
+                        {% endif %}
+                    {% else %}
+                        {% set agentStatus = "maroon" %}
+                    {% endif %}
+                    <td><button id="{{a.paw|e}}-pid" class="button-row {{ agentStatus }}" onclick="showAgentInfo('{{ a.paw|e }}')">{{ a.pid }}</button></td>
                     <td><p>{{ a.privilege }}</p></td>
                     <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
                 </tr>
@@ -266,6 +275,7 @@
                         if(!a.trusted) {
                             let element = document.getElementById(paw + '-pid');
                             if (element !== null) {
+                                element.classList.remove('yellow');
                                 element.classList.add('maroon');
                             }
                         }
@@ -392,6 +402,11 @@
             restRequest('PUT', data, (data) => {
                 document.getElementById('agent-modal').style.display='none';
                 stream(`Agent ${data.paw} will self terminate after its next beacon.`);
+                let element = document.getElementById(data.paw + '-pid');
+                if (element !== null) {
+                    element.classList.remove('maroon');
+                    element.classList.add('yellow');
+                }
             });
         }
     }
