@@ -59,7 +59,7 @@ def planner_stub(**kwargs):
 @pytest.fixture
 def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_world):
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
-                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
+                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=[tagent],
@@ -138,8 +138,6 @@ class TestPlanningService:
 
         # PART B: Fill in facts to allow "cability" to be returned in "links"
         #   in addition to "tability"
-        # Temp fix for a regex bug in (app/utility/base_planning_svc.py:100)
-        cability.test = "#{a.b.c} - #{a.b.d} - #{a.b.e}"
         operation.add_link(Link.load(
             dict(command='', paw=agent.paw, ability=tability, status=0)))
         operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
@@ -151,18 +149,16 @@ class TestPlanningService:
 
         assert links[0].ability.ability_id == cability.ability_id
         assert links[1].ability.ability_id == tability.ability_id
-        assert base64.b64decode(links[0].command) == b'1 - 2 - 3'
+        assert base64.b64decode(links[0].command).decode('utf-8') == target_string
 
     def test_exhaust_bucket(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
-        ability.repeatable = True
         operation.adversary.atomic_ordering = ["123"]
         operation.add_link(Link.load(
             dict(command='', paw=agent.paw, ability=ability, status=0)))
         operation.chain[0].finish = True
         planner = PlannerFake(operation)
-        ability.buckets.append("Discovery")
-        bucket = "Discovery"
+        bucket = "test"
         timeout = False
         try:
             loop.run_until_complete(asyncio.wait_for(planning_svc.exhaust_bucket(
@@ -176,9 +172,9 @@ class TestPlanningService:
         b2 = 'hardin'
         a, _, _, _ = setup_planning_test
         loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b1))
-        assert a.buckets == [b1]
+        assert a.buckets == ['test', b1]
         loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b2))
-        assert a.buckets == [b1, b2]
+        assert a.buckets == ['test', b1, b2]
 
     def test_default_next_bucket(self, loop, planning_svc):
         sm = ['alpha', 'bravo', 'charlie']

@@ -98,7 +98,7 @@ class BasePlanningService(BaseService):
         :return: updated list of links
         """
         links[:] = [l for l in links if
-                    not re.findall(r'#{(.*?)}', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
+                    not re.findall(r'(#{[a-zA-Z1-9]+?\..+?})', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
