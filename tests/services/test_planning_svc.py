@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -61,9 +62,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_wor
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
-    toperation = operation(name='test1', agents=tagent, adversary=Adversary(name='test', description='test',
-                                                                            atomic_ordering=[], adversary_id='XYZ'),
-                           source=tsource)
+    toperation = operation(name='test1', agents=[tagent], adversary=Adversary(name='test', description='test', atomic_ordering=[], adversary_id='XYZ'), source=tsource)
 
     cability = ability(ability_id='321', executor='sh', platform='darwin', test=BaseWorld.encode_string(test_string),
                        cleanup=BaseWorld.encode_string('whoami'), singleton=True, variations=[])
@@ -92,6 +91,36 @@ def stop_bucket_exhaustion_setup(request, setup_planning_test):
 
 
 class TestPlanningService:
+    def test_wait_for_links_and_monitor(self, loop, planning_svc, fact,
+                                        setup_planning_test):
+        # PART A:
+        ability, agent, operation, _ = setup_planning_test
+        # Add a link to operation.chain
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=ability, status=0)))
+        # Set id to match planner.operation.chain[0].id
+        operation.chain[0].id = "123"
+        planner = PlannerFake(operation)
+        # Create a list containing only the id used above
+        link_ids = ["123"]
+        # Make sure program doesn't hang in wait_for_links_completion()
+        planner.operation.chain[0].finish = True
+        assert loop.run_until_complete(planning_svc.wait_for_links_and_monitor(
+            planner, operation, link_ids, condition_stop=True)) is False
+
+        # PART B:
+        # Make sure program hangs in wait_for_links_completion()
+        planner.operation.chain[0].finish = False
+        timeout = False
+        try:
+            loop.run_until_complete(asyncio.wait_for(
+                planning_svc.wait_for_links_and_monitor(planner, operation,
+                                                        link_ids,
+                                                        condition_stop=True),
+                timeout=5.0))
+        except asyncio.TimeoutError:
+            timeout = True
+        assert timeout is True
 
     def test_add_ability_to_bucket(self, loop, setup_planning_test, planning_svc):
         b1 = 'salvador'
