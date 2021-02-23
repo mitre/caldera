@@ -24,7 +24,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param agent: Agent to run links on, defaults to None
         :type agent: Agent, optional
         :param batch: Push all bucket links immediately. Will check if
-            operation has been stopped(by user) after all bucket links
+            operation has been stopped (by user) after all bucket links
             complete. 'False' will push links one at a time, and wait
             for each to complete. Will check if operation has been
             stopped (by user) after each single link is completed.
@@ -148,7 +148,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type operation: Operation
         :param buckets: Buckets containing abilities. If 'None', get all links
             for given operation, agent, and trim setting. If a list of buckets
-            if provided, then get links for specified buckets for given
+            is provided, then get links for specified buckets for given
             operation and trim setting. Defaults to None.
         :type buckets: list(string), optional
         :param agent: Agent to generate links for, defaults to None
