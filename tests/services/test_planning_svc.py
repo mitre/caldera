@@ -153,6 +153,24 @@ class TestPlanningService:
         assert links[1].ability.ability_id == tability.ability_id
         assert base64.b64decode(links[0].command) == b'1 - 2 - 3'
 
+    def test_exhaust_bucket(self, loop, setup_planning_test, planning_svc):
+        ability, agent, operation, _ = setup_planning_test
+        ability.repeatable = True
+        operation.adversary.atomic_ordering = ["123"]
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=ability, status=0)))
+        operation.chain[0].finish = True
+        planner = PlannerFake(operation)
+        ability.buckets.append("Discovery")
+        bucket = "Discovery"
+        timeout = False
+        try:
+            loop.run_until_complete(asyncio.wait_for(planning_svc.exhaust_bucket(
+                planner, bucket, operation, agent), timeout=5.0))
+        except asyncio.TimeoutError:
+            timeout = True
+        assert timeout is True
+
     def test_add_ability_to_bucket(self, loop, setup_planning_test, planning_svc):
         b1 = 'salvador'
         b2 = 'hardin'
