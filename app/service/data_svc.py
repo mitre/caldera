@@ -313,7 +313,7 @@ class DataService(DataServiceInterface, BaseService):
         for ability in await self.locate('abilities'):
             for field in required_fields:
                 if not getattr(ability, field):
-                    setattr(ability, field, '(auto-generated)')
+                    setattr(ability, field, 'auto-generated')
                     self.log.warning('Missing required field in ability %s: %s' % (ability.ability_id, field))
             for payload in ability.payloads:
                 payload_name = payload
