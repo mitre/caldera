@@ -1,5 +1,6 @@
 import pytest
 import asyncio
+import base64
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -7,7 +8,6 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
-
 
 stop_bucket_exhaustion_params = [
     {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
@@ -125,6 +125,33 @@ class TestPlanningService:
         except asyncio.TimeoutError:
             timeout = True
         assert timeout is True
+
+    def test_get_links(self, loop, setup_planning_test, planning_svc, data_svc):
+        # PART A: Don't fill in facts for "cability" so only "tability"
+        #   is returned in "links"
+        tability, agent, operation, cability = setup_planning_test
+        operation.adversary.atomic_ordering = ["123", "321"]
+        links = loop.run_until_complete(planning_svc.get_links
+                                        (operation=operation, buckets=None,
+                                         agent=agent))
+        assert links[0].ability.ability_id == tability.ability_id
+
+        # PART B: Fill in facts to allow "cability" to be returned in "links"
+        #   in addition to "tability"
+        # Temp fix for a regex bug in (app/utility/base_planning_svc.py:100)
+        cability.test = "#{a.b.c} - #{a.b.d} - #{a.b.e}"
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=tability, status=0)))
+        operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
+        operation.chain[0].facts.append(Fact(trait='a.b.d', value='2'))
+        operation.chain[0].facts.append(Fact(trait='a.b.e', value='3'))
+        links = loop.run_until_complete(planning_svc.get_links
+                                        (operation=operation, buckets=None,
+                                         agent=agent))
+
+        assert links[0].ability.ability_id == cability.ability_id
+        assert links[1].ability.ability_id == tability.ability_id
+        assert base64.b64decode(links[0].command) == b'1 - 2 - 3'
 
     def test_add_ability_to_bucket(self, loop, setup_planning_test, planning_svc):
         b1 = 'salvador'
