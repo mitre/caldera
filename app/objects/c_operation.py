@@ -106,9 +106,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
         return seeded_facts + learned_facts
 
-    def has_fact(self, trait, value):
+    def has_fact(self, name, value):
         for f in self.all_facts():
-            if f.trait == trait and f.value == value:
+            if f.name == name and f.value == value:
                 return True
         return False
 
@@ -198,7 +198,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
-                                                     op_facts=[f.trait for f in self.all_facts()],
+                                                     op_facts=[f.name for f in self.all_facts()],
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
@@ -284,7 +284,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def _save_new_source(self, services):
         def fact_to_dict(f):
             if f:
-                return dict(trait=f.trait, value=f.value, score=f.score)
+                return dict(name=f.name, value=f.value, score=f.score)
         data = dict(
             id=str(uuid.uuid4()),
             name=self.name,

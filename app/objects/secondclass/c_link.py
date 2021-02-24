@@ -166,8 +166,10 @@ class Link(BaseObject):
     async def _save_fact(self, operation, fact, score):
         all_facts = operation.all_facts() if operation else self.facts
         if all([fact.name, fact.value]) and await self._is_new_fact(fact, all_facts):
-            self.facts.append(Fact(name=fact.name, value=fact.value, score=score, collected_by=self.paw,
-                                   technique_id=self.ability.technique_id))
+            f = Fact(name=fact.name, value=fact.value, score=score, technique_id=self.ability.technique_id,
+                     source=operation.id)
+            f.links.append(self)
+            self.facts.append(f)
 
     async def _is_new_fact(self, fact, facts):
         return all(not self._fact_exists(fact, f) or self._is_new_host_fact(fact, f) for f in facts)

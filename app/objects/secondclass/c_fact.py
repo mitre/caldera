@@ -43,7 +43,6 @@ class Restrictions(Enum):
 
 
 class FactSchema(ma.Schema):
-    collected_by = ma.fields.String()
 
     unique = ma.fields.String()
     name = ma.fields.String()
@@ -62,6 +61,9 @@ class FactSchema(ma.Schema):
         if "trait" in data:
             print(f"Warning - the trait argument is being replaced with 'name' as part of the fact upgrade.")
             data['name'] = data.pop('trait')
+        if "collected_by" in data:
+            print(f"Warning - removing collected_by")
+            data.pop('collected_by')
         return data
 
     @ma.post_load
@@ -96,8 +98,7 @@ class Fact(BaseObject):
         return False
 
     def __init__(self, name, value=None, source_type=SourceTypes["LEARNED"], source=NOT_SPECIFIED,
-                 restrictions=NOT_SPECIFIED, score=1, technique_id=None,
-                 collected_by=None):  # collected_by will be removed in the near future
+                 restrictions=NOT_SPECIFIED, score=1, technique_id=None):
         super().__init__()
         self.name = name
         self.value = value
@@ -110,12 +111,12 @@ class Fact(BaseObject):
         self.score = score
         self.technique_id = technique_id
 
-        self.__collected_by = collected_by  # Collected_by will be removed in the near future, succeeded by source/links
-
     @property
-    def collected_by(self):
+    def collected_by(self):  # collected_by is functionally the paw of the agent that acquired this
         print(f"collected_by will be deprecated. Please use source/links instead.")
-        return self.__collected_by
+        if len(self.links):
+            return self.links[0].paw
+        return None
 
     # Temporary reroute as the fact upgrade continues
     @property
