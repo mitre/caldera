@@ -1,0 +1,12 @@
+.file-explorer img{
+    height: 23px;
+    width: 23px;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    padding: 3px;
+    background-color: transparent;
+    -webkit-filter: invert(1);
+    filter: invert(1);
+    vertical-align: middle;
+}

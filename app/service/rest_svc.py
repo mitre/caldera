@@ -311,6 +311,15 @@ class RestService(RestServiceInterface, BaseService):
 
         return dict(abilities=raw_abilities, app_config=app_config)
 
+    async def list_exfil_files(self, data):
+        files = self.get_service('file_svc').list_exfilled_files()
+        if data.get('operation_id'):
+            folders = await self._get_operation_exfil_folders(data['operation_id'])
+            for key in list(files.keys()):
+                if key not in folders:
+                    files.pop(key, None)
+        return files
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):
@@ -663,3 +672,8 @@ class RestService(RestServiceInterface, BaseService):
         for ab in abilities:
             ab.timeout = exec_timeouts[ab.platform][ab.executor]
             await self.get_service('data_svc').store(ab)
+
+    async def _get_operation_exfil_folders(self, operation_id):
+        op = await self.get_service('data_svc').locate('operations', match=dict(id=int(operation_id)))
+        op = op[0]
+        return ['%s-%s' % (a.host, a.paw) for a in op.agents]

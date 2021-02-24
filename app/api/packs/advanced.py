@@ -20,6 +20,7 @@ class AdvancedPack(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/advanced/contacts', self._section_contacts)
         self.app_svc.application.router.add_route('GET', '/advanced/obfuscators', self._section_obfuscators)
         self.app_svc.application.router.add_route('GET', '/advanced/configurations', self._section_configurations)
+        self.app_svc.application.router.add_route('GET', '/advanced/exfills', self._section_exfil_files)
 
     """ PRIVATE """
 
@@ -57,3 +58,9 @@ class AdvancedPack(BaseWorld):
     async def _section_objectives(self, request):
         access = await self.auth_svc.get_permissions(request)
         return dict(objectives=[o.display for o in await self.data_svc.locate('objectives', match=dict(access=tuple(access)))])
+
+    @check_authorization
+    @template('exfilled_files.html')
+    async def _section_exfil_files(self, request):
+        access = await self.auth_svc.get_permissions(request)
+        return dict(exfil_dir=self.get_config('exfil_dir'), operations=[o.display for o in await self.data_svc.locate('operations', match=dict(access=tuple(access)))])
