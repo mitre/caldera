@@ -2,7 +2,6 @@ import asyncio
 import base64
 import copy
 import os
-import re
 import subprocess
 
 from aiohttp import web
@@ -157,24 +156,6 @@ class FileSvc(FileServiceInterface, BaseService):
     def get_payload_packer(self, packer):
         return self.packers[packer].Packer(self)
 
-    def list_exfilled_files_old(self, startdir=None):
-        def set_nested(fs_dict, keys, value):
-            for key in keys[:-1]:
-                fs_dict = fs_dict.setdefault(key, {})
-            fs_dict[keys[-1]] = value
-
-        if not startdir:
-            startdir = self.get_config('exfil_dir')
-
-        exfil_files = {}
-        for root, dirs, files in os.walk(startdir):
-            root_keys = root.lstrip(os.sep).split(os.sep)
-            for d in dirs:
-                set_nested(exfil_files, root_keys + [d], dict())
-            for file in files:
-                set_nested(exfil_files, root_keys + [file], os.path.getsize(os.path.join(root, file)))
-        return exfil_files
-
     def list_exfilled_files(self, startdir=None):
         if not startdir:
             startdir = self.get_config('exfil_dir')
@@ -183,8 +164,6 @@ class FileSvc(FileServiceInterface, BaseService):
         exfil_folders = [f.path for f in os.scandir(startdir) if f.is_dir()]
         for d in exfil_folders:
             exfil_key = d.split(os.sep)[-1]
-            if not re.match(r'[^.].+-.+', exfil_key):  # matching folder names to the pattern sandcat uses for the upload key (can be removed if we move to a non-shared exfil dir)
-                continue
             exfil_files[exfil_key] = {}
             for file in [f.path for f in os.scandir(d) if f.is_file()]:
                 exfil_files[exfil_key][file.split(os.sep)[-1]] = file

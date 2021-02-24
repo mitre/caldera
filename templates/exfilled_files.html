@@ -58,7 +58,9 @@
 
             // Handle API callback
             $("#exfil-tld").empty();
-            addFolder("exfil-tld", exfil_dir.replace('/', ''), data);
+            let startdir = exfil_dir.split(/[\/\\]/);
+            startdir = startdir[startdir.length -1];
+            addFolder("exfil-tld", startdir, data);
             collapseTree();
         }
 

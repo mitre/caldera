@@ -11,7 +11,7 @@ app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
-exfil_dir: /tmp
+exfil_dir: /tmp/caldera
 host: 0.0.0.0
 plugins:
 - access

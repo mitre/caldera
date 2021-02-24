@@ -674,6 +674,5 @@ class RestService(RestServiceInterface, BaseService):
             await self.get_service('data_svc').store(ab)
 
     async def _get_operation_exfil_folders(self, operation_id):
-        op = await self.get_service('data_svc').locate('operations', match=dict(id=int(operation_id)))
-        op = op[0]
+        op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(operation_id))))[0]
         return ['%s-%s' % (a.host, a.paw) for a in op.agents]
