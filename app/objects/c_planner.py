@@ -62,5 +62,5 @@ class Planner(FirstClassObjectInterface, BaseObject):
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:
-            return [Fact.load(dict(trait=trait, value=value)) for sc in conditions for trait, value in sc.items()]
+            return [Fact.load(dict(name=name, value=value)) for sc in conditions for name, value in sc.items()]
         return []

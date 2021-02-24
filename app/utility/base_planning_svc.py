@@ -12,7 +12,7 @@ class BasePlanningService(BaseService):
 
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
     re_limited = re.compile(r'#{.*\[*\]}')
-    re_trait = re.compile(r'(?<=\{).+?(?=\[)')
+    re_name = re.compile(r'(?<=\{).+?(?=\[)')
     re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
 
     async def trim_links(self, operation, links, agent):
@@ -160,7 +160,7 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+            re_variable = re.compile(r'#{(%s.*?)}' % var.name, flags=re.DOTALL)
             copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
@@ -173,12 +173,12 @@ class BasePlanningService(BaseService):
         """
         Create a list of facts which are relevant to the given ability's defined variables
 
-        Returns: (list) of lists, with each inner list providing all known values for the corresponding fact trait
+        Returns: (list) of lists, with each inner list providing all known values for the corresponding fact name
         """
         relevant_facts = []
         for v in variables:
             variable_facts = []
-            for fact in [f for f in facts if f.trait == v.split('[')[0]]:
+            for fact in [f for f in facts if f.name == v.split('[')[0]]:
                 variable_facts.append(fact)
             relevant_facts.append(variable_facts)
         return relevant_facts
@@ -199,12 +199,12 @@ class BasePlanningService(BaseService):
         limited_facts = []
         for limit in re.findall(self.re_limited, decoded_test):
             limited = copy.deepcopy(facts)
-            trait = re.search(self.re_trait, limit).group(0)
+            name = re.search(self.re_name, limit).group(0)
 
             limit_definitions = re.search(self.re_index, limit).group(0)
             if limit_definitions:
                 for limiter in limit_definitions.split(','):
-                    limited = self._apply_limiter(trait=trait, limiter=limiter.split('='), facts=limited)
+                    limited = self._apply_limiter(name=name, limiter=limiter.split('='), facts=limited)
             if limited:
                 limited_facts.append(limited[0])
         if limited_facts:
@@ -212,8 +212,8 @@ class BasePlanningService(BaseService):
         return facts
 
     @staticmethod
-    def _apply_limiter(trait, limiter, facts):
+    def _apply_limiter(name, limiter, facts):
         if limiter[0] == 'max':
-            return sorted([f for f in facts if f.trait == trait], key=lambda k: (-k.score))[:int(limiter[1])]
+            return sorted([f for f in facts if f.name == name], key=lambda k: (-k.score))[:int(limiter[1])]
         if limiter[0] == 'technique':
             return [f for f in facts if f.technique_id == limiter[1]]

@@ -48,7 +48,7 @@ class RestService(RestServiceInterface, BaseService):
         planner_dict = await self._read_from_yaml(file_path)
         planner_dict['stopping_conditions'] = self._get_stopping_conditions(data)
         await self._write_to_yaml(file_path, planner_dict)
-        planner.stopping_conditions = [Fact.load(dict(trait=f.get('trait'), value=f.get('value')))
+        planner.stopping_conditions = [Fact.load(dict(name=f.get('name'), value=f.get('value')))
                                        for f in data['stopping_conditions']]
         await self.get_service('data_svc').store(planner)
 
@@ -353,7 +353,7 @@ class RestService(RestServiceInterface, BaseService):
     def _get_stopping_conditions(data):
         new_stopping_conditions = data.get('stopping_conditions')
         if new_stopping_conditions:
-            return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
+            return [{s.get('name'): s.get('value')} for s in new_stopping_conditions]
 
     async def _build_potential_abilities(self, operation):
         potential_abilities = []

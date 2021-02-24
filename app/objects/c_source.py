@@ -12,7 +12,7 @@ from app.utility.base_object import BaseObject
 class AdjustmentSchema(ma.Schema):
 
     ability_id = ma.fields.String()
-    trait = ma.fields.String()
+    name = ma.fields.String()
     value = ma.fields.String()
     offset = ma.fields.Integer()
 
@@ -21,7 +21,7 @@ class AdjustmentSchema(ma.Schema):
         return Adjustment(**data)
 
 
-Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
+Adjustment = namedtuple('Adjustment', 'ability_id name value offset')
 
 
 class SourceSchema(ma.Schema):
@@ -39,9 +39,9 @@ class SourceSchema(ma.Schema):
         raw_adjustments = in_data.pop('adjustments', {})
         if raw_adjustments:
             for ability_id, adjustments in raw_adjustments.items():
-                for trait, block in adjustments.items():
+                for name, block in adjustments.items():
                     for change in block:
-                        x.append(dict(ability_id=ability_id, trait=trait, value=change.get('value'),
+                        x.append(dict(ability_id=ability_id, name=name, value=change.get('value'),
                                       offset=change.get('offset')))
         in_data['adjustments'] = x
         return in_data

@@ -20,9 +20,15 @@ class RuleActionField(ma.fields.Field):
 
 class RuleSchema(ma.Schema):
 
-    trait = ma.fields.String()
+    name = ma.fields.String()
     match = ma.fields.String()
     action = RuleActionField()
+
+    @ma.pre_load
+    def test_input(self, data, **_):
+        if 'trait' in data:
+            data['name'] = data.pop('trait')
+        return data
 
     @ma.post_load
     def build_rule(self, data, **_):
@@ -33,8 +39,8 @@ class Rule(BaseObject):
 
     schema = RuleSchema()
 
-    def __init__(self, action, trait, match='.*'):
+    def __init__(self, action, name, match='.*'):
         super().__init__()
         self.action = action
-        self.trait = trait
+        self.name = name
         self.match = match

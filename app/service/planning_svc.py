@@ -234,7 +234,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         the facts required to stop the planner. Operation facts are
         checked against the list of facts provided by the stopping
         conditions. Facts will be validated based on the `unique`
-        property, which is a combination of the fact trait and value.
+        property, which is a combination of the fact name and value.
 
         :param stopping_conditions: List of facts which, if collected,
             should be used to terminate the planner
@@ -395,6 +395,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         for l in links:
             for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
-                if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
+                if operation.has_fact(name=adjustment.name, value=adjustment.value):
                     l.visibility.apply(adjustment)
                     l.status = l.states['HIGH_VIZ']

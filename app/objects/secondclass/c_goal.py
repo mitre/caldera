@@ -40,7 +40,7 @@ class Goal(BaseObject):
     def satisfied(self, all_facts=None):
         temp_count = 0
         for fact in (all_facts or []):
-            if self.target == fact.trait and self.parse_operator(self.operator)(self.value, fact.value):
+            if self.target == fact.name and self.parse_operator(self.operator)(self.value, fact.value):
                 temp_count += 1
         if temp_count >= self.count:
             self.achieved = True

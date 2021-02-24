@@ -25,7 +25,7 @@ class RuleSet:
     async def _applicable_rules(self, fact):
         applicable_rules = []
         for rule in self.rules:
-            if rule.trait == fact.trait:
+            if rule.name == fact.name:
                 applicable_rules.append(rule)
         return applicable_rules
 

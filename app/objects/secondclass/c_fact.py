@@ -43,7 +43,6 @@ class Restrictions(Enum):
 
 
 class FactSchema(ma.Schema):
-    trait = ma.fields.String()
     collected_by = ma.fields.String()
 
     unique = ma.fields.String()
@@ -58,7 +57,14 @@ class FactSchema(ma.Schema):
     score = ma.fields.Integer()
     technique_id = ma.fields.String()
 
-    @ma.post_load()
+    @ma.pre_load
+    def test_input(self, data, **_):
+        if "trait" in data:
+            print(f"Warning - the trait argument is being replaced with 'name' as part of the fact upgrade.")
+            data['name'] = data.pop('trait')
+        return data
+
+    @ma.post_load
     def build_fact(self, data, **_):
         if "trait" in data:  # This is a temporary workaround until the fact upgrades are completed
             print(f"Warning - the trait argument is being replaced with 'name' as part of the fact upgrade.")
