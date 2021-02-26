@@ -90,7 +90,7 @@ class Link(BaseObject):
                     TIMEOUT=124)
 
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
-                 host=None, deadman=False, used=[], relationships=[]):
+                 host=None, deadman=False, used=None, relationships=None):
         super().__init__()
         self.id = id
         self.command = command
@@ -107,8 +107,8 @@ class Link(BaseObject):
         self.collect = None
         self.finish = None
         self.facts = []
-        self.relationships = relationships
-        self.used = used
+        self.relationships = relationships if relationships else []
+        self.used = used if used else []
         self.visibility = Visibility()
         self._pin = pin
         self.output = False
