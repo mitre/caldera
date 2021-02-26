@@ -62,7 +62,7 @@ class Link(BaseObject):
     schema = LinkSchema()
     display_schema = LinkSchema(exclude=['jitter'])
     load_schema = LinkSchema(exclude=['decide', 'pid', 'facts', 'unique', 'collect', 'finish', 'visibility',
-                                      'output'])
+                                      'output', 'used.unique'])
 
     RESERVED = dict(origin_link_id='#{origin_link_id}')
 
