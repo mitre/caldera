@@ -159,6 +159,8 @@ class FileSvc(FileServiceInterface, BaseService):
     def list_exfilled_files(self, startdir=None):
         if not startdir:
             startdir = self.get_config('exfil_dir')
+        if not os.path.exists(startdir):
+            return dict()
 
         exfil_files = dict()
         exfil_folders = [f.path for f in os.scandir(startdir) if f.is_dir()]

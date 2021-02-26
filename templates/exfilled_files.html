@@ -22,6 +22,9 @@
             {% endfor %}
           </select>
       </div>
+      <button id="selectAllBtn" type="button" class="button-success atomic-button"
+              onclick="selectAllFiles()">Select All Files
+      </button>
       <button id="downloadBtn" type="button" class="button-success atomic-button"
               onclick="downloadFiles()">Download Selected Files
       </button>
@@ -45,7 +48,7 @@
 
             function addFolder(parent, folder, contents) {
                 let fid = parent + '-' + folder;
-                $("#"+parent).append('<li><img class="parent" src="/gui/img/folder.png"><span>' + folder + '</span><ul class="child" id="'+ fid +'"></ul></li>');
+                $("#"+parent).append('<li><img class="folder" src="/gui/img/folder.png"><span>' + folder + '</span><ul class="child" id="'+ fid +'"></ul></li>');
                 Object.keys(contents).forEach(function(key){
                     if(contents[key].constructor == Object){
                         addFolder(fid, key, contents[key]);
@@ -68,8 +71,14 @@
     }
 
     function collapseTree() {
-        $('.parent').click(function() {
+        $('.folder').click(function() {
            $(this).siblings('ul').slideToggle();
+        });
+    }
+
+    function selectAllFiles() {
+        $("#exfil-tld").find('input').each(function() {
+            $(this).prop('checked', true);
         });
     }
 

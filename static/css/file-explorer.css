@@ -10,3 +10,11 @@
     filter: invert(1);
     vertical-align: middle;
 }
+
+.file-explorer .folder {
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+}
