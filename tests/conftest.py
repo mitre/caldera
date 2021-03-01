@@ -123,7 +123,7 @@ def ability():
 @pytest.fixture
 def operation():
     def _generate_operation(name, agents, adversary, *args, **kwargs):
-        return Operation(name=name, agents=agent, adversary=adversary, *args, **kwargs)
+        return Operation(name=name, agents=agents, adversary=adversary, *args, **kwargs)
 
     return _generate_operation
 
