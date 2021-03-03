@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import glob
+import html
 import os
 import pathlib
 import uuid
@@ -663,3 +664,28 @@ class RestService(RestServiceInterface, BaseService):
         for ab in abilities:
             ab.timeout = exec_timeouts[ab.platform][ab.executor]
             await self.get_service('data_svc').store(ab)
+
+
+def html_encode_json_response(func):
+
+    async def recursive_encoding(info):
+        if isinstance(info, dict):
+            for key in info:
+                info[key] = recursive_encoding(info[key])
+            return info
+        elif isinstance(info, list):
+            return [recursive_encoding(item) for item in info]
+        elif isinstance(info, str):
+            return html.escape(info, quote=False)
+        else:
+            return info
+
+    async def html_encode(*args, **kwargs):
+        response = await func(*args, **kwargs)
+        if isinstance(response, web.Response):
+            response.body = (await recursive_encoding(response.body.decode('utf-8'))).encode('utf-8')
+            return response
+        else:
+            return recursive_encoding(response)
+
+    return html_encode

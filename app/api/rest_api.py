@@ -13,6 +13,7 @@ from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
+from app.service.rest_svc import html_encode_json_response
 from app.utility.base_world import BaseWorld
 
 
@@ -66,6 +67,7 @@ class RestApi(BaseWorld):
     """ API ENDPOINTS """
 
     @check_authorization
+    @html_encode_json_response
     async def rest_core(self, request):
         try:
             access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
