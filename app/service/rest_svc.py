@@ -2,6 +2,7 @@ import asyncio
 import copy
 import glob
 import html
+import json
 import os
 import pathlib
 import uuid
@@ -671,21 +672,23 @@ def html_encode_json_response(func):
     async def recursive_encoding(info):
         if isinstance(info, dict):
             for key in info:
-                info[key] = recursive_encoding(info[key])
+                info[key] = await recursive_encoding(info[key])
             return info
         elif isinstance(info, list):
-            return [recursive_encoding(item) for item in info]
+            return [await recursive_encoding(item) for item in info]
         elif isinstance(info, str):
-            return html.escape(info, quote=False)
+            return html.escape(info)
         else:
             return info
 
     async def html_encode(*args, **kwargs):
         response = await func(*args, **kwargs)
         if isinstance(response, web.Response):
-            response.body = (await recursive_encoding(response.body.decode('utf-8'))).encode('utf-8')
+            response_obj = json.loads(response.body.decode('utf-8'))
+            response_obj_enc = await recursive_encoding(response_obj)
+            response.body = (json.dumps(response_obj_enc)).encode('utf-8')
             return response
         else:
-            return recursive_encoding(response)
+            return await recursive_encoding(response)
 
     return html_encode

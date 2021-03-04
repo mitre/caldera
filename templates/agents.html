@@ -578,7 +578,7 @@
         let template = $('#variation-template').clone();
         template.attr('id', 'command-variation');
         template.find('#description').text(description + ' ('+executor+')');
-        template.find('#command').text(command);
+        template.find('#command').html(command);
         template.find('#command').addClass('command');
         template.find('#command').data('agent-index', agentIdx);
         template.find('#command').data('variation-index', variationIdx);
@@ -616,10 +616,14 @@
                 let capturedGroup = arg[1];
                 let input = $("#conf-arguments label:contains('" + capturedGroup + "')").closest("tr").find("input");
                 let inputValue = input.val() ? input.val() : input.attr("placeholder");
-                command = command.replace(arg[0], inputValue);
+                command = command.replace(arg[0], encodeHTML(inputValue));
             })
-            $(elem).text(command);
+            $(elem).html(command);
         })
+    }
+
+    function encodeHTML(value) {
+        return $('<textarea/>').text(value).html();
     }
 
     //# sourceURL=agents.js
