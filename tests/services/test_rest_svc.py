@@ -65,6 +65,53 @@ def setup_rest_svc_test(loop, data_svc):
 )
 class TestRestSvc:
 
+    def test_delete_operation(self, loop, rest_svc, data_svc):
+        # PART A: Create an operation
+        expected_operation = {'name': 'My Test Operation',
+                              'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc',
+                                            'adversary_id': 'ad-hoc', 'atomic_ordering': [], 'objective': None,
+                                            'tags': [], 'has_repeatable_abilities': False}, 'state': 'finished',
+                              'planner': {'name': 'test', 'description': None, 'module': 'test',
+                                          'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
+                                          'ignore_enforcement_modules': [], 'id': '123'}, 'jitter': '2/8',
+                              'host_group': [{'trusted': True, 'architecture': 'unknown', 'watchdog': 0,
+                                              'contact': 'unknown', 'username': 'unknown', 'links': [], 'sleep_max': 8,
+                                              'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
+                                              'sleep_min': 2, 'server': '://None:None', 'platform': 'windows',
+                                              'host': 'unknown', 'paw': '123', 'pid': 0,
+                                              'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown',
+                                              'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
+                                              'origin_link_id': 0, 'deadman_enabled': False,
+                                              'available_contacts': ['unknown'], 'pending_contact': 'unknown'}],
+                              'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
+                              'obfuscator': 'plain-text', 'objective': {'goals': [{'value': 'complete',
+                                                                                   'operator': '==',
+                                                                                   'target': 'exhaustion',
+                                                                                   'achieved': False,
+                                                                                   'count': 1048576}],
+                                                                        'percentage': 0.0, 'description': '',
+                                                                        'id': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+                                                                        'name': 'default'}}
+        internal_rest_svc = rest_svc(loop)
+        operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
+            access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
+            data=dict(name='My Test Operation', planner='test', source='123', state='finished')))
+        operation_id = operation[0]["id"]
+        new_operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id)))[0].display
+        new_operation.pop('id')
+        new_operation['host_group'][0].pop('last_seen')
+        new_operation.pop('start')
+        new_operation["host_group"][0].pop("created")
+        assert new_operation == expected_operation
+
+        # PART B: Delete the operation (that was created in Part A) from the data service
+        delete_criteria = {'id': operation_id, 'finish': None, 'base_timeout': 180, 'link_timeout': 30,
+                           'name': 'My Test Operation', 'jitter': '2/8', 'state': 'finished', 'autonomous': True,
+                           'last_ran': None, 'obfuscator': 'plain-text', 'auto_close': False, 'visibility': 50,
+                           'chain': [], 'potential_links': []}
+        loop.run_until_complete(internal_rest_svc.delete_operation(delete_criteria))
+        assert loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id))) == []
+
     def test_update_config(self, loop, data_svc, rest_svc):
         internal_rest_svc = rest_svc(loop)
         # check that an ability reflects the value in app. property
