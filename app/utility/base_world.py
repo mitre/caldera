@@ -22,10 +22,6 @@ class BaseWorld:
     """
 
     _app_configuration = dict()
-    _software_version_check_commands = dict(
-        go='go version',
-        golang='go version',
-    )
 
     re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
 
@@ -125,12 +121,9 @@ class BaseWorld:
             mod_version = getattr(import_module(module), attr, '')
             return compare_versions(mod_version, version)
 
-        def check_program_version(program, version, **kwargs):
-            command = BaseWorld._software_version_check_commands.get(program)
-            if command:
-                output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False, timeout=10)
-                return compare_versions(output.decode('utf-8'), version)
-            return False
+        def check_program_version(command, version, **kwargs):
+            output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False, timeout=10)
+            return compare_versions(output.decode('utf-8'), version)
 
         def compare_versions(version_string, minimum_version):
             version = parse_version(version_string)
