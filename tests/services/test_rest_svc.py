@@ -97,12 +97,12 @@ class TestRestSvc:
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
             data=dict(name='My Test Operation', planner='test', source='123', state='finished')))
         operation_id = operation[0]["id"]
-        new_operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id)))[0].display
-        new_operation.pop('id')
-        new_operation['host_group'][0].pop('last_seen')
-        new_operation.pop('start')
-        new_operation["host_group"][0].pop("created")
-        assert new_operation == expected_operation
+        found_operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id)))[0].display
+        found_operation.pop('id')
+        found_operation['host_group'][0].pop('last_seen')
+        found_operation.pop('start')
+        found_operation["host_group"][0].pop("created")
+        assert found_operation == expected_operation
 
         # PART B: Delete the operation (that was created in Part A) from the data service
         delete_criteria = {'id': operation_id, 'finish': None, 'base_timeout': 180, 'link_timeout': 30,
