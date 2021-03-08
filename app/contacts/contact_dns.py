@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import random
+import uuid
 
 from base64 import b64encode
 from enum import Enum
@@ -308,9 +309,10 @@ class Handler(asyncio.DatagramProtocol):
             self.request_contents = request_contents
 
     class FileUploadRequest:
-        def __init__(self, request_id, requesting_paw, filename):
+        def __init__(self, request_id, requesting_paw, directory, filename):
             self.request_id = request_id
             self.requesting_paw = requesting_paw
+            self.directory = directory
             self.filename = filename
 
     def __init__(self, domain, services, name):
@@ -455,17 +457,19 @@ class Handler(asyncio.DatagramProtocol):
         if upload_metadata:
             filename = upload_metadata.get('file')
             requesting_paw = upload_metadata.get('paw')
+            directory = upload_metadata.get('directory', str(uuid.uuid4()))
             if filename and requesting_paw:
                 self.log.debug('Received upload request for file %s for request ID %s' %
                                (filename, request_context.request_id))
                 self.pending_uploads[request_context.request_id] = self.FileUploadRequest(
                     request_context.request_id,
                     requesting_paw,
+                    directory,
                     filename
                 )
                 return self._generate_server_ready_ipv4_response(request_context.dns_request)
             else:
-                self.log.warning('Client file upload request (ID %s) is missing filename and/or paw' %
+                self.log.warning('Client file upload request (ID %s) is missing filename, hostname, and/or paw' %
                                  request_context.request_id)
         else:
             self.log.warning('Empty upload request received from message ID %s' % request_context.request_id)
@@ -480,6 +484,7 @@ class Handler(asyncio.DatagramProtocol):
 
             # request_context.request_contents contains the file upload data
             await self._submit_uploaded_file(upload_request.requesting_paw,
+                                             upload_request.directory,
                                              unique_filename,
                                              request_context.request_contents)
             return self._generate_server_ready_ipv4_response(request_context.dns_request)
@@ -488,9 +493,9 @@ class Handler(asyncio.DatagramProtocol):
                              request_context.request_id)
         return self._generate_nxdomain_response(request_context.dns_request)
 
-    async def _submit_uploaded_file(self, paw, filename, data):
-        if paw and filename and data:
-            created_dir = os.path.normpath('/' + paw).lstrip('/')
+    async def _submit_uploaded_file(self, paw, directory, filename, data):
+        if paw and filename and directory and data:
+            created_dir = os.path.normpath('/' + directory).lstrip('/')
             saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
             await self.file_svc.save_file(filename, data, saveto_dir)
             self.log.debug('Uploaded file %s/%s' % (saveto_dir, filename))

@@ -222,8 +222,10 @@ class TestContactDns:
                          get_file_upload_data_qnames):
         paw = 'asdasd'
         filename = 'testupload.txt'
-        upload_metadata = dict(paw=paw, file=filename)
-        target_dir = '/tmp/%s/' % paw
+        hostname = 'testhost'
+        directory = '%s-%s' % (hostname, paw)
+        upload_metadata = dict(paw=paw, file=filename, directory=directory)
+        target_dir = '/tmp/%s' % directory
         target_path = '%s/%s-%s' % (target_dir, filename, message_id)
         file_data = b'thiswilltakemultiplednsrequests' * 100
         metadata_hex_chunks = get_hex_chunks(json.dumps(upload_metadata).encode('utf-8'))
