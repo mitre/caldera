@@ -97,8 +97,8 @@ class TestRestSvc:
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
             data=dict(name='My Test Operation', planner='test', source='123', state='finished')))
         operation_id = operation[0]["id"]
+        expected_operation['id'] = operation_id
         found_operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id)))[0].display
-        found_operation.pop('id')
         found_operation['host_group'][0].pop('last_seen')
         found_operation.pop('start')
         found_operation["host_group"][0].pop("created")
