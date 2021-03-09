@@ -1,6 +1,8 @@
 import asyncio
 import json
+import os
 import random
+import uuid
 
 from base64 import b64encode
 from enum import Enum
@@ -261,6 +263,8 @@ class Handler(asyncio.DatagramProtocol):
         PayloadRequest = 'pr'
         PayloadFilenameDownload = 'pf'
         PayloadDataDownload = 'pd'
+        FileUploadRequest = 'ur'
+        FileUploadData = 'ud'
 
     class TunneledMessage:
         def __init__(self, message_id, message_type, num_chunks):
@@ -304,6 +308,13 @@ class Handler(asyncio.DatagramProtocol):
             self.dns_request = dns_request  # DnsPacket object
             self.request_contents = request_contents
 
+    class FileUploadRequest:
+        def __init__(self, request_id, requesting_paw, directory, filename):
+            self.request_id = request_id
+            self.requesting_paw = requesting_paw
+            self.directory = directory
+            self.filename = filename
+
     def __init__(self, domain, services, name):
         super().__init__()
         self.services = services
@@ -334,6 +345,11 @@ class Handler(asyncio.DatagramProtocol):
         # Key: message ID.
         # Value: StoredResponse obj
         self.pending_payload_names = {}
+
+        # Maps upload request IDs to upload requests
+        # Key: message ID
+        # Value: FileUploadRequest obj
+        self.pending_uploads = {}
 
     def connection_made(self, transport):
         self.transport = transport
@@ -428,9 +444,61 @@ class Handler(asyncio.DatagramProtocol):
                 return self._process_download_request_via_txt(request_context, self.pending_payload_names, 'payload filename')
             elif msg.message_type == self.MessageType.PayloadDataDownload:
                 return self._process_download_request_via_txt(request_context, self.pending_payloads, 'payload data')
+            elif msg.message_type == self.MessageType.FileUploadRequest:
+                return self._process_upload_request(request_context)
+            elif msg.message_type == self.MessageType.FileUploadData:
+                return await self._process_upload_data(request_context)
             else:
                 self.log.warning('Unsupported message type %s' % msg.message_type.value)
                 return self._generate_nxdomain_response(dns_request_packet)
+
+    def _process_upload_request(self, request_context):
+        upload_metadata = self._unpack_json(request_context.request_contents)
+        if upload_metadata:
+            filename = upload_metadata.get('file')
+            requesting_paw = upload_metadata.get('paw')
+            directory = upload_metadata.get('directory', str(uuid.uuid4()))
+            if filename and requesting_paw:
+                self.log.debug('Received upload request for file %s for request ID %s' %
+                               (filename, request_context.request_id))
+                self.pending_uploads[request_context.request_id] = self.FileUploadRequest(
+                    request_context.request_id,
+                    requesting_paw,
+                    directory,
+                    filename
+                )
+                return self._generate_server_ready_ipv4_response(request_context.dns_request)
+            else:
+                self.log.warning('Client file upload request (ID %s) is missing filename, hostname, and/or paw' %
+                                 request_context.request_id)
+        else:
+            self.log.warning('Empty upload request received from message ID %s' % request_context.request_id)
+        return self._generate_nxdomain_response(request_context.dns_request)
+
+    async def _process_upload_data(self, request_context):
+        # Make sure we are expecting this upload
+        upload_request = self.pending_uploads.get(request_context.request_id)
+        if upload_request:
+            # Append the request ID to the filename to help make it unique
+            unique_filename = '-'.join([upload_request.filename, request_context.request_id])
+
+            # request_context.request_contents contains the file upload data
+            await self._submit_uploaded_file(upload_request.requesting_paw,
+                                             upload_request.directory,
+                                             unique_filename,
+                                             request_context.request_contents)
+            return self._generate_server_ready_ipv4_response(request_context.dns_request)
+        else:
+            self.log.warning('Client sent upload data without first making an upload request (request ID %s)' %
+                             request_context.request_id)
+        return self._generate_nxdomain_response(request_context.dns_request)
+
+    async def _submit_uploaded_file(self, paw, directory, filename, data):
+        if paw and filename and directory and data:
+            created_dir = os.path.normpath('/' + directory).lstrip('/')
+            saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
+            await self.file_svc.save_file(filename, data, saveto_dir)
+            self.log.debug('Uploaded file %s/%s' % (saveto_dir, filename))
 
     async def _process_payload_request(self, request_context):
         payload_metadata = self._unpack_json(request_context.request_contents)
