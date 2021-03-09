@@ -41,6 +41,7 @@ class AgentFieldsSchema(ma.Schema):
     deadman_enabled = ma.fields.Boolean()
     available_contacts = ma.fields.List(ma.fields.String())
     created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    host_ip_addrs = ma.fields.List(ma.fields.String())
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -74,7 +75,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None):
+                 available_contacts=None, host_ip_addrs=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -106,6 +107,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.deadman_enabled = deadman_enabled
         self.available_contacts = available_contacts if available_contacts else [self.contact]
         self.pending_contact = contact
+        self.host_ip_addrs = host_ip_addrs if host_ip_addrs else []
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -151,6 +153,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('proxy_chain', kwargs.get('proxy_chain'))
         self.update('deadman_enabled', kwargs.get('deadman_enabled'))
         self.update('contact', kwargs.get('contact'))
+        self.update('host_ip_addrs', kwargs.get('host_ip_addrs'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
