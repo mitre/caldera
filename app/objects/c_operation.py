@@ -241,6 +241,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         except Exception:
             logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
 
+    async def event_logs(self, file_svc, data_svc, output=False):
+        # Ignore discarded / high visibility links that did not actually run.
+        return [await self._convert_link_to_event_log(step, file_svc, data_svc, output=output) for step in self.chain
+                if not step.can_ignore()]
+
     async def run(self, services):
         # load objective
         obj = await services.get('data_svc').locate('objectives', match=dict(id=self.adversary.objective))
@@ -258,6 +263,23 @@ class Operation(FirstClassObjectInterface, BaseObject):
             logging.error(e, exc_info=True)
 
     """ PRIVATE """
+
+    async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
+        event_dict = dict(command=link.command,
+                          delegated_timestamp=link.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                          collected_timestamp=link.collect.strftime('%Y-%m-%d %H:%M:%S') if link.collect else None,
+                          finished_timestamp=link.finish,
+                          status=link.status,
+                          platform=link.ability.platform,
+                          executor=link.ability.executor,
+                          pid=link.pid,
+                          agent_metadata=await self._get_agent_info_for_event_log(link.paw, data_svc),
+                          ability_metadata=self._get_ability_metadata_for_event_log(link.ability),
+                          operation_metadata=self._get_operation_metadata_for_event_log(),
+                          attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
+        if output and link.output:
+            event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
+        return event_dict
 
     async def _cleanup_operation(self, services):
         cleanup_count = 0
@@ -334,6 +356,43 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 else:
                     return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                                 ability_id=ability.ability_id, ability_name=ability.name)
+
+    def _get_operation_metadata_for_event_log(self):
+        return dict(operation_name=self.name,
+                    operation_start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                    operation_adversary=self.adversary.name)
+
+    @staticmethod
+    def _get_ability_metadata_for_event_log(ability):
+        return dict(ability_id=ability.ability_id,
+                    ability_name=ability.name,
+                    ability_description=ability.description)
+
+    @staticmethod
+    def _get_attack_metadata_for_event_log(ability):
+        return dict(tactic=ability.tactic,
+                    technique_name=ability.technique_name,
+                    technique_id=ability.technique_id)
+
+    @staticmethod
+    async def _get_agent_info_for_event_log(agent_paw, data_svc):
+        agent_search_results = await data_svc.locate('agents', match=dict(paw=agent_paw))
+        if not agent_search_results:
+            return {}
+        else:
+            # We expect only one agent per paw.
+            agent = agent_search_results[0]
+            return dict(paw=agent.paw,
+                        group=agent.group,
+                        architecture=agent.architecture,
+                        username=agent.username,
+                        location=agent.location,
+                        pid=agent.pid,
+                        ppid=agent.ppid,
+                        privilege=agent.privilege,
+                        host=agent.host,
+                        contact=agent.contact,
+                        created=agent.created.strftime('%Y-%m-%d %H:%M:%S'))
 
     class Reason(Enum):
         PLATFORM = 0

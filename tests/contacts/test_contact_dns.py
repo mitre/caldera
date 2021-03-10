@@ -9,10 +9,11 @@ from dns import message, rdatatype
 
 from app.contacts.contact_dns import Contact as DnsContact
 from app.utility.base_world import BaseWorld
+from app.utility.file_decryptor import read as decrypt_read, get_encryptor
 
 
-@pytest.fixture
-def dns_c2(loop, app_svc, contact_svc, data_svc, obfuscator):
+@pytest.fixture(scope='session')
+def dns_contact_base_world():
     BaseWorld.apply_config(name='main', config={'app.contact.dns.domain': 'mycaldera.caldera',
                                                 'app.contact.dns.socket': '0.0.0.0:53',
                                                 'plugins': ['sandcat', 'stockpile'],
@@ -28,6 +29,10 @@ def dns_c2(loop, app_svc, contact_svc, data_svc, obfuscator):
                                                   'bootstrap_abilities': [
                                                       '43b3754c-def4-4699-a673-1d85648fda6a'
                                                   ]})
+
+
+@pytest.fixture
+def dns_c2(loop, app_svc, contact_svc, data_svc, file_svc, obfuscator):
     services = app_svc(loop).get_services()
     dns_c2 = DnsContact(services)
     return dns_c2
@@ -42,8 +47,8 @@ def get_dns_response(loop, dns_c2):
     return _get_dns_response
 
 
-@pytest.fixture(scope='class')
-def beacon_profile_hex_chunks():
+@pytest.fixture
+def beacon_profile_hex_chunks(get_hex_chunks):
     beacon_profile = {
         'architecture': 'amd64',
         'contact': 'dns',
@@ -59,10 +64,7 @@ def beacon_profile_hex_chunks():
         'username': 'testuser'
     }
     marshaled = json.dumps(beacon_profile)
-    hex_str = marshaled.encode('utf-8').hex()
-    chunk_size = 62
-    hex_len = len(hex_str)
-    return [hex_str[i:i+chunk_size] for i in range(0, hex_len, chunk_size)]
+    return get_hex_chunks(marshaled.encode('utf-8'))
 
 
 @pytest.fixture
@@ -93,9 +95,59 @@ def get_instruction_response(random_data, get_dns_response):
     return _get_instruction_response
 
 
+@pytest.fixture
+def get_hex_chunks():
+    def _get_hex_chunks(data):
+        hex_str = data.hex()
+        chunk_size = 62
+        hex_len = len(hex_str)
+        return [hex_str[i:i + chunk_size] for i in range(0, hex_len, chunk_size)]
+    return _get_hex_chunks
+
+
+@pytest.fixture
+def get_file_upload_metadata_qnames():
+    def _get_file_upload_metadata_qnames(message_id, metadata_hex_chunks):
+        num_chunks = len(metadata_hex_chunks)
+        return ['%s.ur.%d.%d.%s.mycaldera.caldera' % (message_id, i, num_chunks, metadata_hex_chunks[i])
+                for i in range(0, num_chunks)]
+    return _get_file_upload_metadata_qnames
+
+
+@pytest.fixture
+def get_file_upload_data_qnames():
+    def _get_file_upload_data_qnames(message_id, data_hex_chunks):
+        num_chunks = len(data_hex_chunks)
+        return ['%s.ud.%d.%d.%s.mycaldera.caldera' % (message_id, i, num_chunks, data_hex_chunks[i])
+                for i in range(0, num_chunks)]
+    return _get_file_upload_data_qnames
+
+
+@pytest.mark.usefixtures(
+    'dns_contact_base_world'
+)
 class TestContactDns:
     _RCODE_NXDOMAIN = 3
     _RCODE_SUCCESS = 0
+
+    @staticmethod
+    def _assert_successful_ivp4(response_msg):
+        assert response_msg and response_msg.rcode() == TestContactDns._RCODE_SUCCESS
+
+        # Make sure we got back an IPv4 address
+        assert len(response_msg.answer) == 1
+        assert len(response_msg.answer[0]) == 1
+        assert response_msg.answer[0][0].rdtype == rdatatype.RdataType.A
+
+    @staticmethod
+    def _assert_even_ipv4(response_msg):
+        # Last octet should be even if the server is expecting more data
+        assert int(response_msg.answer[0][0].address.split('.')[3]) % 2 == 0
+
+    @staticmethod
+    def _assert_odd_ipv4(response_msg):
+        # Last octet should be odd if the server received all data
+        assert int(response_msg.answer[0][0].address.split('.')[3]) % 2 == 1
 
     def test_config(self, dns_c2):
         assert dns_c2.domain == 'mycaldera.caldera'
@@ -112,34 +164,21 @@ class TestContactDns:
     def test_partial_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
         first_qname = get_beacon_profile_qnames(message_id)[0]
         response_msg = get_dns_response(first_qname, 'a')
-        assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
-
-        # Make sure we got back an IPv4 address
-        assert len(response_msg.answer) == 1
-        assert len(response_msg.answer[0]) == 1
-        assert response_msg.answer[0][0].rdtype == rdatatype.RdataType.A
-
-        # Last octet should be even if the server is expecting more data
-        assert int(response_msg.answer[0][0].address.split('.')[3]) % 2 == 0
+        self._assert_successful_ivp4(response_msg)
+        self._assert_even_ipv4(response_msg)
 
     def test_completed_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
         qnames = get_beacon_profile_qnames(message_id)
         final_index = len(qnames) - 1
         for index, qname in enumerate(qnames):
             response_msg = get_dns_response(qname, 'a')
-            assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
-
-            # Make sure we got back an IPv4 address
-            assert len(response_msg.answer) == 1
-            assert len(response_msg.answer[0]) == 1
-            assert response_msg.answer[0][0].rdtype == rdatatype.RdataType.A
+            self._assert_successful_ivp4(response_msg)
 
             # Check final octet
-            final_octet = int(response_msg.answer[0][0].address.split('.')[3])
             if index == final_index:
-                assert final_octet % 2 == 1
+                self._assert_odd_ipv4(response_msg)
             else:
-                assert final_octet % 2 == 0
+                self._assert_even_ipv4(response_msg)
 
     def test_instruction_download(self, get_dns_response, get_beacon_profile_qnames, message_id,
                                   get_instruction_response):
@@ -178,3 +217,61 @@ class TestContactDns:
         invalid_qname = '%s.id.0.1.%s.mycaldera.caldera' % (message_id, random_data)
         response_msg = get_dns_response(invalid_qname, 'a')  # Should be TXT request
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
+
+    def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
+                         get_file_upload_data_qnames):
+        paw = 'asdasd'
+        filename = 'testupload.txt'
+        hostname = 'testhost'
+        directory = '%s-%s' % (hostname, paw)
+        upload_metadata = dict(paw=paw, file=filename, directory=directory)
+        target_dir = '/tmp/%s' % directory
+        target_path = '%s/%s-%s' % (target_dir, filename, message_id)
+        file_data = b'thiswilltakemultiplednsrequests' * 100
+        metadata_hex_chunks = get_hex_chunks(json.dumps(upload_metadata).encode('utf-8'))
+        file_data_hex_chunks = get_hex_chunks(file_data)
+        metadata_qnames = get_file_upload_metadata_qnames(message_id, metadata_hex_chunks)
+        file_data_qnames = get_file_upload_data_qnames(message_id, file_data_hex_chunks)
+
+        # Send file upload request
+        final_index = len(metadata_qnames) - 1
+        for index, qname in enumerate(metadata_qnames):
+            response_msg = get_dns_response(qname, 'a')
+            self._assert_successful_ivp4(response_msg)
+            # Check final octet
+            if index == final_index:
+                self._assert_odd_ipv4(response_msg)
+            else:
+                self._assert_even_ipv4(response_msg)
+
+        # Send file data
+        final_index = len(file_data_qnames) - 1
+        for index, qname in enumerate(file_data_qnames):
+            response_msg = get_dns_response(qname, 'a')
+            self._assert_successful_ivp4(response_msg)
+            # Check final octet
+            if index == final_index:
+                self._assert_odd_ipv4(response_msg)
+            else:
+                self._assert_even_ipv4(response_msg)
+
+        # Check if upload succeeded
+        assert os.path.isfile(target_path)
+        decrypt_error = None
+        try:
+            decrypted_upload = self._get_decrypted_upload(target_path)
+        except Exception as e:
+            decrypt_error = e
+        finally:
+            os.remove(target_path)
+            os.rmdir(target_dir)
+        assert (not decrypt_error), 'Exception occurred when decrypting uploaded file: %s' % decrypt_error
+        assert file_data == decrypted_upload
+
+    @staticmethod
+    def _get_decrypted_upload(filepath):
+        encryptor = get_encryptor('BLAH', 'ADMIN123')
+        return decrypt_read(filepath, encryptor)
+
+    def test_unexpected_file_upload(self):
+        assert True

@@ -22,12 +22,15 @@ escape_ref = {
 
 class FactSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     unique = ma.fields.String()
     trait = ma.fields.String()
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
     score = ma.fields.Integer()
-    collected_by = ma.fields.String()
-    technique_id = ma.fields.String()
+    collected_by = ma.fields.String(allow_none=True)
+    technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
     def build_fact(self, data, **_):

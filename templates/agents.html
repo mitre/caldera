@@ -163,6 +163,10 @@
                         <td><p id="modal-executors"></p></td>
                     </tr>
                     <tr>
+                        <td>Host IP Addresses</td>
+                        <td><p id="modal-host_ip_addrs"></p></td>
+                    </tr>
+                    <tr>
                         <td>Peer-to-Peer Proxy Receivers</td>
                         <td><p id="modal-peer_receivers"></p></td>
                     </tr>
@@ -447,6 +451,7 @@
             parent.find('#modal-ppid').text(agent['ppid']);
             parent.find('#modal-executors').text(JSON.stringify(agent['executors']));
             parent.find('#modal-watchdog').text(agent['watchdog']);
+            parent.find('#modal-host_ip_addrs').text(JSON.stringify(agent['host_ip_addrs']));
 
             // Set up contact selection
             let num_contacts = agent['available_contacts'].length;

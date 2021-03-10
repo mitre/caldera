@@ -130,8 +130,16 @@ class RestService(RestServiceInterface, BaseService):
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
         op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return await op.report(file_svc=self.get_service('file_svc'), data_svc=self.get_service('data_svc'),
-                               output=data.get('agent_output'))
+        report_format = data.pop('format', 'full-report')
+        if report_format == 'full-report':
+            generator_func = op.report
+        elif report_format == 'event-logs':
+            generator_func = op.event_logs
+        else:
+            self.log.error('Unsupported operation report format requested: %s' % report_format)
+            return ''
+        return await generator_func(file_svc=self.get_service('file_svc'), data_svc=self.get_service('data_svc'),
+                                    output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))

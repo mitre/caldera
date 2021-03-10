@@ -32,7 +32,8 @@
             </tr>
         </table>
         </center>
-        <button id="reportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationReport()">Download report</button>
+        <button id="fullReportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationFullReport()">Download full report</button>
+        <button id="eventLogBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationEventLogs()">Download event logs</button>
         <hr>
         <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
       </div>
@@ -346,7 +347,8 @@
 
     function checkOpBtns(){
         validateFormState(($('#operation-list').val()), '#opDelete');
-        validateFormState(($('#operation-list').val()), '#reportBtn');
+        validateFormState(($('#operation-list').val()), '#fullReportBtn');
+        validateFormState(($('#operation-list').val()), '#eventLogBtn');
     }
 
     function deleteOperation(){
@@ -770,14 +772,26 @@
         restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
     }
 
-    function downloadOperationReport() {
+    function downloadOperationFullReport() {
+        downloadOperationInfo('full-report');
+    }
+
+    function downloadOperationEventLogs() {
+        downloadOperationInfo('event-logs');
+    }
+
+    function downloadOperationInfo(format) {
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let agentOutput = $('#agent-output').prop("checked");
-        let postData = selectedOperationId ? {'index':'operation_report', 'op_id': selectedOperationId, 'agent_output': Number(agentOutput)} : null;
+        let postData = selectedOperationId ? {
+                'index':'operation_report',
+                'op_id': selectedOperationId,
+                'agent_output': Number(agentOutput),
+                'format': format,
+            } : null;
         let selectedOpName = $('#operation-list option:selected').text();
         downloadReport('/api/rest', selectedOpName, postData);
     }
-
 
     function resetMoreModal() {
         let modal = $('#more-modal');
