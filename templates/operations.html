@@ -765,12 +765,12 @@
 
                 let factValues = Array.from(data.link.facts, fact => fact.value.toString());
                 factValues = Array.from(new Set(factValues));
-                factValues.sort(function(a, b) { return b.length - a.length });
-                $.each(factValues, function (i, factValue) {
+                factValues.sort((a, b) => { return b.length - a.length });
+                $.each(factValues, (i, factValue) => {
                     let encodedValue = $('<div/>').text(factValue).html();
                     resultText = resultText.replaceAll(encodedValue, '<span class="highlight">' + encodedValue + '</span>');
                 });
-                result = $('#resultView').html(resultText);
+                $('#resultView').html(resultText);
             } else {
               $('#resultView').empty();
             }
