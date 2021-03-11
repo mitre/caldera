@@ -153,7 +153,7 @@
                 });
                 if(!found){
                     $('#profile-source-name')
-                        .append($("<option></option>")
+                        .append($('<option></option>')
                             .text(s.name)
                             .val(s.id)
                         );
@@ -195,27 +195,27 @@
     }
 
     function addFactRow(trait, value){
-        $('#factTbl tbody').append($("<tr></tr>")
-            .append($("<td></td>")
-                .append($("<p></p>")
+        $('#factTbl tbody').append($('<tr></tr>')
+            .append($('<td></td>')
+                .append($('<p></p>')
                     .text(trait)
-                    .attr("contenteditable", "true")
+                    .attr('contenteditable', 'true')
                 )
             )
-            .append($("<td></td>")
-                .append($("<p></p>")
+            .append($('<td></td>')
+                .append($('<p></p>')
                     .text(value)
-                    .attr("contenteditable", "true")
+                    .attr('contenteditable', 'true')
                 )
             )
-            .append($("<td></td>")
-                .append($("<p></p>")
-                    .html("&#x274C;")
-                    .attr("contenteditable", "true")
+            .append($('<td></td>')
+                .append($('<p></p>')
+                    .html('&#x274C;')
+                    .attr('contenteditable', 'true')
                     .click(event => {
                         $(event.currentTarget).closest('tr').remove()
                     })
-                    .css("cursor", "pointer")
+                    .css('cursor', 'pointer')
                 )
             )
         );
