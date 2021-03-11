@@ -212,7 +212,10 @@
                 .append($("<p></p>")
                     .html("&#x274C;")
                     .attr("contenteditable", "true")
-                    .attr("onclick", "$(this).closest('tr').remove()")
+                    .click(event => {
+                        $(event.currentTarget).closest('tr').remove()
+                    })
+                    .css("cursor", "pointer")
                 )
             )
         );
