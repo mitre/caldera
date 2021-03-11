@@ -760,15 +760,23 @@
         function loadResults(data){
             if (data) {
                 let res = atob(data.output);
-                data.link.facts.sort(function(a, b) { return b.value.length - a.value.length });
-                $.each(data.link.facts, function (k, v) {
-                    res = res.replaceAll(v.value, "<span class='highlight'>" + v.value + "</span>");
+                $('#resultView').text(res);
+                resultText = $('#resultView').html();
+
+                let factValues = Array.from(data.link.facts, fact => fact.value.toString());
+                factValues = Array.from(new Set(factValues));
+                factValues.sort((a, b) => { return b.length - a.length });
+                $.each(factValues, (i, factValue) => {
+                    let encodedValue = $('<div/>').text(factValue).html();
+                    resultText = resultText.replaceAll(encodedValue, '<span class="highlight">' + encodedValue + '</span>');
                 });
-                $('#resultView').html(res);
+                $('#resultView').html(resultText);
+            } else {
+              $('#resultView').empty();
             }
         }
         document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').html(atob($(elem).attr('data-encoded-cmd')));
+        $('#resultCmd').text(atob($(elem).attr('data-encoded-cmd')));
         restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
     }
 
@@ -837,7 +845,8 @@
 
     function showCommand(command){
         document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').html(atob(command));
+        $('#resultCmd').text(atob(command));
+        $('#resultView').empty();
     }
     //# sourceURL=operations.js
 
