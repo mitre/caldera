@@ -20,7 +20,7 @@
             <select id="objective-list" style="margin-top:-15px" onchange="loadObjective();">
                 <option value="" disabled selected>Select an existing objective</option>
                 {% for o in objectives %}
-                    <option value="{{ o.id }}">{{ o.name }}</option>
+                    <option value="{{ o.id|e }}">{{ o.name|e }}</option>
                 {% endfor %}}
             </select>
         </div>
@@ -146,18 +146,62 @@
     }
 
     function addGoalRow(target, operator, value, count) {
-        let resTarget = ((target) ? `<input type="text" placeholder="Enter target" name="target" value="${target}" required>` : '<input type="text" placeholder="Enter target" name="target" required>');
-        let resOperator = ((operator) ? `<input type="text" placeholder="Enter operator" value="${operator}" required>` : '<input type="text" placeholder="Enter operator" required>');
-        let resValue = ((value) ? `<input type="text" placeholder="Enter value" value="${value}" required>` : '<input type="text" placeholder="Enter value" required>');
-        let resCount = ((operator) ? `<input type="number" placeholder="Enter count" value="${count}" required>` : '<input type="number" placeholder="Enter count" required>');
-        $('#goalTbl tr:last').after(
-            '<tr>' +
-                `<td>${resTarget}</td>` +
-                `<td>${resOperator}</td>` +
-                `<td>${resValue}</td>` +
-                `<td>${resCount}</td>` +
-                '<td><p onclick="$(this).parent().parent().remove()">&#x274C;</p></td>'+
-            '</tr>'
+        let resTarget = ($('<input>')
+            .attr('type', 'text')
+            .attr('placeholder', 'Enter target')
+            .attr('name', 'target')
+            .prop('required', true)
+            );
+            if (target) {
+                resTarget.val(target)
+            }
+        let resOperator = ($('<input>')
+            .attr('type', 'text')
+            .attr('placeholder', 'Enter operator')
+            .prop('required', true)
+            );
+            if (operator) {
+                resOperator.val(operator)
+            }
+        let resValue = ($('<input>')
+            .attr('type', 'text')
+            .attr('placeholder', 'Enter value')
+            .prop('required', true)
+            );
+            if (value) {resValue.val(value)
+            }
+        let resCount = ($('<input>')
+            .attr('type', 'number')
+            .attr('placeholder', 'Enter count')
+            .prop('required', true)
+            );
+            if (operator) {
+                resCount.val(count)
+            }
+
+        $('#goalTbl tr:last').after($('<tr></tr>')
+            .append($('<td></td>')
+                .append(resTarget)
+            )
+            .append($('<td></td>')
+                .append(resOperator)
+            )
+            .append($('<td></td>')
+                .append(resValue)
+            )
+            .append($('<td></td>')
+                .append(resCount)
+            )
+            .append($('<td></td>')
+                .append($('<p></p>')
+                    .html('&#x274C;')
+                    .attr('contenteditable', 'true')
+                    .click(event => {
+                        $(event.currentTarget).parent().parent().remove()
+                    })
+                    .css('cursor', 'pointer')
+                )
+            )
         )
     }
 
