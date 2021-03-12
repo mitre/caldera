@@ -12,6 +12,7 @@ from importlib import import_module
 import aiohttp_jinja2
 import jinja2
 import yaml
+from aiohttp import web
 
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
@@ -172,6 +173,13 @@ class AppService(AppServiceInterface, BaseService):
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('ability_refresh')))
+
+    def register_subapp(self, path: str,  app: web.Application):
+        """Registers a web application under the root application.
+
+        Requests under `path` will be routed to this app.
+        """
+        self.application.add_subapp(path, app)
 
     def get_loaded_plugins(self):
         return tuple(self._loaded_plugins)
