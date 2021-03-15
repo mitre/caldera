@@ -4,6 +4,9 @@ import logging
 from aiohttp import web
 
 
+DEFAULT_LOGGER_NAME = "rest_api"
+
+
 class BaseApi(abc.ABC):
     def __init__(self, logger=None):
         self._logger = logger or self._create_logger()
@@ -17,5 +20,4 @@ class BaseApi(abc.ABC):
         pass
 
     def _create_logger(self):
-        logger_name = f'{self.__module__}.{self.__class__.__name__}'
-        return logging.getLogger(logger_name)
+        return logging.getLogger(DEFAULT_LOGGER_NAME)
