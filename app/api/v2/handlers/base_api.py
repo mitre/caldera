@@ -1,6 +1,8 @@
 import abc
 import logging
 
+from aiohttp import web
+
 
 class BaseApi(abc.ABC):
     def __init__(self, logger=None):
@@ -11,7 +13,7 @@ class BaseApi(abc.ABC):
         return self._logger
 
     @abc.abstractmethod
-    def add_routes(self, app):
+    def add_routes(self, app: web.Application):
         pass
 
     def _create_logger(self):
