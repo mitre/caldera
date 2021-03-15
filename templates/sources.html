@@ -21,7 +21,7 @@
           <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
             <option value="" disabled selected>Select an existing source</option>
             {% for s in sources %}
-                <option value="{{ s.id }}">{{ s.name }}</option>
+                <option value="{{ s.id|e }}">{{ s.name|e }}</option>
             {% endfor %}}
           </select>
       </div>
@@ -152,7 +152,11 @@
                     }
                 });
                 if(!found){
-                    $('#profile-source-name').append('<option value="'+s.id+'">'+s.name+'</option>');
+                    $('#profile-source-name')
+                        .append($('<option></option>')
+                            .text(s.name)
+                            .val(s.id)
+                        );
                 }
             });
         }
@@ -183,7 +187,7 @@
             });
             source.data('id', data[0].id);
             applyRules(data[0].rules);
-            source.html(data[0].name);
+            source.text(data[0].name);
             populateRelationships(data[0].relationships);
         }
         stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
@@ -191,13 +195,30 @@
     }
 
     function addFactRow(trait, value){
-        $('#factTbl tbody').append(
-            '<tr>' +
-                '<td><p contenteditable="true">' + trait + '</p></td>' +
-                '<td><p contenteditable="true">' + value + '</p></td>' +
-                '<td><p onclick="$(this).closest(\'tr\').remove()">&#x274C;</p></td>'+
-            '</tr>'
-        )
+        $('#factTbl tbody').append($('<tr></tr>')
+            .append($('<td></td>')
+                .append($('<p></p>')
+                    .text(trait)
+                    .attr('contenteditable', 'true')
+                )
+            )
+            .append($('<td></td>')
+                .append($('<p></p>')
+                    .text(value)
+                    .attr('contenteditable', 'true')
+                )
+            )
+            .append($('<td></td>')
+                .append($('<p></p>')
+                    .html('&#x274C;')
+                    .attr('contenteditable', 'true')
+                    .click(event => {
+                        $(event.currentTarget).closest('tr').remove()
+                    })
+                    .css('cursor', 'pointer')
+                )
+            )
+        );
     }
 
     function saveSource(){
