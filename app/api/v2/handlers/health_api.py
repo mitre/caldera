@@ -15,7 +15,7 @@ class HealthApi(BaseApi):
 
     def add_routes(self, app: web.Application):
         router = app.router
-        router.add_get("/health", self.get_health_info)
+        router.add_get('/health', self.get_health_info)
 
     @security.authentication_exempt
     async def get_health_info(self, request):

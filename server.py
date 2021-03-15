@@ -102,7 +102,7 @@ if __name__ == '__main__':
     event_svc = EventService()
 
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
-    app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
+    app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
 
     if args.fresh:
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
