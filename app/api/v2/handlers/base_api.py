@@ -15,6 +15,5 @@ class BaseApi(abc.ABC):
         pass
 
     def _create_logger(self):
-        """"""
         logger_name = f"{self.__module__}.{self.__class__.__name__}"
         return logging.getLogger(logger_name)
