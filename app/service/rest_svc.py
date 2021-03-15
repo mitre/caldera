@@ -276,7 +276,7 @@ class RestService(RestServiceInterface, BaseService):
             new_plugin = data.get('value')
             if new_plugin not in enabled_plugins:
                 enabled_plugins.append(new_plugin)
-        else:
+        elif data.get('prop') != 'requirements':  # Prevent users from editing requirements via API.
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
