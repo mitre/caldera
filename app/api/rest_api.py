@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import uuid
+import base64
 
 import marshmallow as ma
 from aiohttp import web
@@ -41,6 +42,7 @@ class RestApi(BaseWorld):
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
+        self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 
     """ BOILERPLATE """
 
@@ -99,7 +101,8 @@ class RestApi(BaseWorld):
                     link=lambda d: self.rest_svc.get_potential_links(**d),
                     operation=lambda d: self.rest_svc.update_operation(**d),
                     task=lambda d: self.rest_svc.task_agent_with_ability(**d),
-                    agent_configuration=lambda d: self.rest_svc.get_agent_configuration(d)
+                    agent_configuration=lambda d: self.rest_svc.get_agent_configuration(d),
+                    exfil_files=lambda d: self.rest_svc.list_exfil_files(d)
                 )
             )
             if index not in options[request.method]:
@@ -138,6 +141,29 @@ class RestApi(BaseWorld):
             return web.HTTPNotFound(body='File not found')
         except Exception as e:
             return web.HTTPNotFound(body=str(e))
+
+    @check_authorization
+    async def download_exfil_file(self, request):
+        def is_in_exfil_dir(f):
+            return f.startswith(self.get_config('exfil_dir'))
+
+        if request.query.get('file'):
+            try:
+                file = base64.b64decode(request.query.get('file')).decode('ascii')
+                file = os.path.normpath(file)  # normalize path to remove all directory traversal attempts then check for presence in exfil dir
+                if not is_in_exfil_dir(file):
+                    return web.HTTPNotFound(body="File not found in exfil dir")
+                filename = file.split(os.sep)[-1]
+                path = os.sep.join(file.split(os.sep)[:-1])
+                _, content = await self.file_svc.read_file(filename, location=path)
+                headers = dict([('CONTENT-DISPOSITION', 'attachment; filename="%s"' % filename),
+                                ('FILENAME', filename)])
+                return web.Response(body=content, headers=headers)
+            except FileNotFoundError:
+                return web.HTTPNotFound(body='File not found')
+            except Exception as e:
+                return web.HTTPNotFound(body=str(e))
+        return web.HTTPBadRequest(body='A file needs to be specified for download')
 
     """ PRIVATE """
 
