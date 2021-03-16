@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from aiohttp import web, web_request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
+from aiohttp_jinja2 import render_template
 from aiohttp_security import api as aiohttp_security_api
 from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
 from aiohttp_security import setup as setup_security
@@ -14,6 +15,7 @@ import ldap3
 from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
+from app.service.interfaces.i_login_handler import LoginHandlerInterface
 from app.utility.base_service import BaseService
 
 
@@ -59,6 +61,7 @@ class AuthService(AuthServiceInterface, BaseService):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
         self.ldap_config = self.get_config('ldap')
+        self.optional_login_handler = None
 
     async def apply(self, app, users):
         if users:
@@ -82,27 +85,55 @@ class AuthService(AuthServiceInterface, BaseService):
         await forget(request, web.Response())
         raise web.HTTPFound('/login')
 
+    async def set_optional_login_handler(self, login_handler):
+        """
+        Sets the optional login handler for the auth service. This login handler will take priority for login methods
+        during login_user and redirects during check_permissions
+        """
+        if isinstance(login_handler, LoginHandlerInterface):
+            self.optional_login_handler = login_handler
+        else:
+            self.log.warn('Attempted to set login handler to an object that does not implement LoginHandlerInterface.')
+
     async def login_user(self, request):
         """
         Log a user in and save the session
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
-        data = await request.post()
-        username = data.get('username')
-        password = data.get('password')
-        if self.ldap_config:
-            verified = await self._ldap_login(username, password)
-        else:
-            verified = await self._check_credentials(request.app.user_map, username, password)
+        if self.optional_login_handler:
+            try:
+                self.log.debug('Delegating to login handler for login')
+                await self.optional_login_handler.handle_login(request)
+            except web.HTTPRedirection as http_redirect:
+                raise http_redirect
+            except Exception as e:
+                self.log.error('Exception when handling login request via optional login handler: %s' % e)
+            self.log.debug('Falling back to main login handler')
 
-        if verified:
-            self.log.debug('%s logging in:' % username)
-            response = web.HTTPFound('/')
-            await remember(request, response, username)
-            raise response
-        self.log.debug('%s failed login attempt: ' % username)
-        raise web.HTTPFound('/login')
+        # Fallback
+        return await self._base_login_user(request)
+
+    async def login_redirect(self, request, use_template=True):
+        """If optional login handler is set, defer to it to handle login. Otherwise, use default login handling method
+        (or fallback to it if optional login handler fails). Default method is to return the login.html template
+        if use_template is set to True, otherwise redirect to '/login' by raising HTTPFound exception."""
+
+        if self.optional_login_handler:
+            try:
+                self.log.debug('Delegating to login handler for redirect')
+                await self.optional_login_handler.handle_login_redirect(request)
+            except web.HTTPRedirection as http_redirect:
+                raise http_redirect
+            except Exception as e:
+                self.log.error('Exception when handling persmissions redirect via optional login handler: %s' % e)
+            self.log.debug('Falling back to main login handler')
+
+        # Fallback
+        if use_template:
+            return render_template('login.html', request, dict())
+        else:
+            raise web.HTTPFound('/login')
 
     def request_has_valid_api_key(self, request):
         api_key = request.headers.get(HEADER_API_KEY)
@@ -118,13 +149,19 @@ class AuthService(AuthServiceInterface, BaseService):
     async def request_has_valid_user_session(self, request):
         return await aiohttp_security_api.authorized_userid(request) is not None
 
+    async def provide_verified_login_response(self, request, username):
+        self.log.debug('%s logging in:' % username)
+        response = web.HTTPFound('/')
+        await remember(request, response, username)
+        raise response
+
     async def check_permissions(self, group, request):
         try:
             if self.request_has_valid_api_key(request):
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
-            raise web.HTTPFound('/login')
+            return await self.login_redirect(request, use_template=False)
 
     async def get_permissions(self, request):
         identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
@@ -150,6 +187,21 @@ class AuthService(AuthServiceInterface, BaseService):
         if not user:
             return False
         return user.password == password
+
+    async def _base_login_user(self, request):
+        data = await request.post()
+        username = data.get('username')
+        password = data.get('password')
+        if username and password:
+            if self.ldap_config:
+                verified = await self._ldap_login(username, password)
+            else:
+                verified = await self._check_credentials(request.app.user_map, username, password)
+
+            if verified:
+                await self.provide_verified_login_response(request, username)
+            self.log.debug('%s failed login attempt: ' % username)
+        raise web.HTTPFound('/login')
 
     async def _ldap_login(self, username, password):
         server = ldap3.Server(self.ldap_config.get('server'))
