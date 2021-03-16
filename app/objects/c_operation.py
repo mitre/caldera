@@ -79,10 +79,15 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.auto_close = auto_close
         self.visibility = visibility
         self.objective = None
+        self._fact_listing = []
         self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
         if source:
             self.rules = source.rules
+
+        self._fact_listing = []
+        seeded_facts = [f for f in self.source.facts] if self.source else []
+        self._fact_listing.extend(seeded_facts)
 
     def store(self, ram):
         existing = self.retrieve(ram['operations'], self.unique)
@@ -102,9 +107,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return any(str(lnk.id) == str(link_id) for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source else []
-        learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
-        return seeded_facts + learned_facts
+        #seeded_facts = [f for f in self.source.facts] if self.source else []
+        #learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
+        #return seeded_facts + learned_facts
+        return [f for f in self._fact_listing if f.score > 0]
 
     def has_fact(self, name, value):
         for f in self.all_facts():
@@ -256,6 +262,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
             await self.close(services)
         except Exception as e:
             logging.error(e, exc_info=True)
+
+    async def add_fact(self, fact):
+        if fact:
+            if any(x.unique == fact.unique for x in self._fact_listing):
+                print(f"This fact already exists within this operation.")
+                return
+            self._fact_listing.append(fact)
 
     """ PRIVATE """
 

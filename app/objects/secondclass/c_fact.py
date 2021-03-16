@@ -81,6 +81,16 @@ class Fact(BaseObject):
     load_schema = FactSchema(exclude=['unique'])
 
     @property
+    def display(self):
+        default = super().display
+        default['relationships'] = [x.display for x in self.relationships]
+        default['relationships'] = [dict(source=f"{x['source'].name}: {x['source'].value}", edge=x['edge'],
+                                         target=F"{x['target'].name}: {x['target'].value}")
+                                    for x in default['relationships'] if x['edge'] != '']
+        default['links'] = [dict(host=x.host, paw=x.paw, id=x.id) for x in self.links]
+        return default
+
+    @property
     def unique(self):
         return self.hash('%s%s' % (self.name, self.value))
 
@@ -148,13 +158,15 @@ class Fact(BaseObject):
             print(f"{restriction} is not a valid Restriction.")
 
     def add_link(self, link):
-        if any(x == link.id for x in self.links):
-            print(f"This fact already has connections to link {link.id}")
-            return
-        self.links.append(link.id)
+        if link:
+            if any(x.id == link.id for x in self.links):
+                print(f"This fact already has connections to link {link.id}")
+                return
+            self.links.append(link)
 
     def add_relationship(self, relationship):
-        if any(x == relationship.unique for x in self.relationships):
-            print(f"This fact already has connections to relationship {relationship.unique}")
-            return
-        self.relationships.append(relationship.unique)
+        if relationship:
+            if any(x.unique == relationship.unique for x in self.relationships):
+                print(f"This fact already has connections to relationship {relationship.unique}")
+                return
+            self.relationships.append(relationship)

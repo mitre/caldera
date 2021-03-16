@@ -6,7 +6,7 @@ from importlib import import_module
 import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
-from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.objects.secondclass.c_fact import Fact, FactSchema, SourceTypes
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
 
@@ -158,18 +158,24 @@ class Link(BaseObject):
 
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
-            await self._save_fact(operation, relationship.source, relationship.score)
-            await self._save_fact(operation, relationship.target, relationship.score)
+            await self._save_fact(operation, relationship.source, relationship.score, relationship)
+            await self._save_fact(operation, relationship.target, relationship.score, relationship)
             if all((relationship.source.name, relationship.edge)):
                 self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, fact, score):
+    async def _save_fact(self, operation, fact, score, relationship=None):
         all_facts = operation.all_facts() if operation else self.facts
-        if all([fact.name, fact.value]) and await self._is_new_fact(fact, all_facts):
-            f = Fact(name=fact.name, value=fact.value, score=score, technique_id=self.ability.technique_id,
-                     source=operation.id)
-            f.links.append(self)
-            self.facts.append(f)
+        if all([fact.name, fact.value]):
+            if await self._is_new_fact(fact, all_facts):
+                f = Fact(name=fact.name, value=fact.value, score=score, technique_id=self.ability.technique_id,
+                         source=operation.id)
+                await operation.add_fact(f)
+            else:
+                f = [x for x in all_facts if self._fact_exists(fact, x)][0]
+            f.add_relationship(relationship)
+            f.add_link(self)
+            if f not in self.facts:
+                self.facts.append(f)
 
     async def _is_new_fact(self, fact, facts):
         return all(not self._fact_exists(fact, f) or self._is_new_host_fact(fact, f) for f in facts)

@@ -21,7 +21,7 @@ class BaseParser:
         if not search:
             return None
         for uf in used_facts:
-            if search == uf.trait:
+            if search == uf.name:
                 return uf.value
         return match
 
