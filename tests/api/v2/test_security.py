@@ -28,7 +28,6 @@ def base_world():
 
 @pytest.fixture
 def simple_webapp(loop, base_world):
-    '''List endpoints'''
     async def index(request):
         return web.Response(status=200, text='hello!')
 
@@ -50,6 +49,7 @@ def simple_webapp(loop, base_world):
     app.router.add_get('/private', private)
 
     auth_svc = AuthService()
+
     loop.run_until_complete(
         auth_svc.apply(
             app=app,
@@ -57,8 +57,10 @@ def simple_webapp(loop, base_world):
         )
     )
 
-    # Have to do this *after* initializing session middleware to ensure the session middleware is
-    # hit before the authentication-required middleware
+    # The authentication_required middleware needs to run after the session middleware.
+    # AuthService.apply(...) adds session middleware to the app, so we can append the
+    # the auth middleware after. Not doing this will cause a 500 in regards to the
+    # session middleware not being set up correctly.
     app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
 
     return app
