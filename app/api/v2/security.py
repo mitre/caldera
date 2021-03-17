@@ -1,7 +1,7 @@
 from aiohttp import web
 
 
-def set_handler_unauthenticated(handler):
+def set_handler_authentication_exempt(handler):
     handler.__caldera_unauthenticated__ = True
 
 
@@ -21,7 +21,7 @@ def authentication_exempt(handler):
         This only applies when the authentication_required_middleware is
         being used.
     """
-    set_handler_unauthenticated(handler)
+    set_handler_authentication_exempt(handler)
     return handler
 
 
