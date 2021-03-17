@@ -30,6 +30,10 @@ class BaseWorld:
         BaseWorld._app_configuration[name] = config
 
     @staticmethod
+    def clear_config():
+        BaseWorld._app_configuration = {}
+
+    @staticmethod
     def get_config(prop=None, name=None):
         name = name if name else 'main'
         if prop:
