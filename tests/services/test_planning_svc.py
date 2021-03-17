@@ -17,7 +17,7 @@ stop_bucket_exhaustion_params = [
     {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': False, 'assert_value': False}
 ]
 
-test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e}'
+test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e[filters(max=3)]}'
 target_string = '#{1_2_3} - 1 - 2 - 3'
 
 
@@ -310,6 +310,21 @@ class TestPlanningService:
         gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3]))
 
         assert len(gen) == 2
+        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+
+    def test_filter_bs(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+        f1 = Fact(trait='a.b.c', value='1')
+        f2 = Fact(trait='a.b.d', value='2')
+        f3 = Fact(trait='a.b.e', value='3')
+        f4 = Fact(trait='a.b.e', value='4')
+        f5 = Fact(trait='a.b.e', value='5')
+        f6 = Fact(trait='a.b.e', value='6')
+
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3, f4, f5, f6]))
+
+        assert len(gen) == 4
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
 
     def test_duplicate_lateral_filter(self, loop, setup_planning_test, planning_svc, link, fact):
