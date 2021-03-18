@@ -439,8 +439,12 @@
         let op_elem = $("#operation-list");
         $.each(data, function(index, op) {
             if(!op_elem.find('option[value="'+op.id+'"]').length > 0){
-                op_elem.append('<option id="' + op.id + '" class="operationOption" ' +
-                    'value="' + op.id +'" >' + op.name + ' - ' + op.start + '</option>');
+                op_elem.append($('<option></option>')
+                    .attr('id', op.id)
+                    .addClass('operationOption')
+                    .val(op.id)
+                    .text(op.name + ' - ' + op.start)
+                );
             }
         });
         op_elem.prop('selectedIndex', op_elem.find('option').length-1).change();
@@ -460,7 +464,7 @@
         function operationCallback(data){
             function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
             let OPERATION = data[0];
-            $("#op-control-state").html(OPERATION.state + spacing() + OPERATION.start + spacing() + OPERATION.chain.length + ' decisions');
+            $("#op-control-state").html(encodeHTML(OPERATION.state) + spacing() + encodeHTML(OPERATION.start) + spacing() + OPERATION.chain.length + ' decisions');
             if (OPERATION.autonomous) {
                 $("#togBtnHil").prop("checked", true);
             } else {
@@ -481,20 +485,51 @@
                     template.attr("id", "op_id_" + OPERATION.chain[i].id);
                     template.attr("operation", OPERATION.id);
                     template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-                    template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                        'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                        title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                        'onclick="findResults(this,'+lnk+')"' +
-                        'data-encoded-cmd="'+OPERATION.chain[i].command+'"></span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;cursor:pointer;margin-left:5px" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
-                        '<img id="'+OPERATION.chain[i].id+'-cm" src="/gui/img/duk.png" style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" onclick="showCommand(\''+OPERATION.chain[i].command+'\')"/>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;cursor:pointer;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
+                    template.find('#time-tactic')
+                        .append($('<div></div>')
+                            .css('font-size', '13px')
+                            .css('font-weight', '100')
+                            .dblclick( () => {
+                                rollup(OPERATION.chain[i].id);
+                            })
+                            .text('agent#' + agentPaw + '... ' + title)
+                            .append($('<span></span>')
+                                .attr('id', OPERATION.chain[i].id + '-rs')
+                                .addClass('tactic-find-result')
+                                .attr('data-encoded-cmd', OPERATION.chain[i].command)
+                                .click( event => {
+                                    findResults($(event.currentTarget), lnk);
+                                })
+                            )
+                            .append($('<span style="font-size:11px;float:right;cursor:pointer;margin-left:5px"></span>')
+                                .attr('id', OPERATION.chain[i].id + '-rm')
+                                .click( () => {
+                                    updateLinkStatus2(lnk, OPERATION.id, -2);
+                                })
+                                .html('&#x274C;')
+                            )
+                            .append($('<img style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" />')
+                                .attr('id', OPERATION.chain[i].id + '-cm')
+                                .attr('src', '/gui/img/duk.png')
+                                .click( () => {
+                                    showCommand(OPERATION.chain[i].command);
+                                })
+                            )
+                            .append($('<span style="font-size:22px;float:right;cursor:pointer;"></span>')
+                                .attr('id', OPERATION.chain[i].id + '-add')
+                                .click( () => {
+                                    updateLinkStatus2(lnk, OPERATION.id, -3);
+                                })
+                                .html('&#x002B;')
+                            )
+
+                        )
 
                     if (OPERATION.chain[i].status === -1) {
                         let loop_template = $("#loop-template").clone();
                         loop_template.removeAttr('id');
-                        loop_template.find('.hil-linkId').html(OPERATION.chain[i].unique);
-                        loop_template.find('.hil-command').html(atob(OPERATION.chain[i].command));
+                        loop_template.find('.hil-linkId').text(OPERATION.chain[i].unique);
+                        loop_template.find('.hil-command').text(atob(OPERATION.chain[i].command));
                         loop_template.css('display', 'block');
                         loop_template.insertAfter(template.find(".member-infos"));
                         template.find('#'+OPERATION.chain[i].id+'-rm').remove();
@@ -574,7 +609,7 @@
         let paw = selectedAgent.split('-')[1];
         let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
         restRequest('POST', postData, potentialLinksCallback, '/api/rest');
-        $('#potential-links-count').html('Building potential links...');
+        $('#potential-links-count').text('Building potential links...');
     }
 
     function potentialLinksCallback(data){
@@ -630,7 +665,7 @@
 
     function closePotentialLinksModal() {
         document.getElementById('potential-modal').style.display='none';
-        $('#potential-links-count').html('');
+        $('#potential-links-count').text('');
         $('#potential-links').empty();
         $('#potential-agent-filter').prop("selectedIndex", 0);
     }
@@ -647,7 +682,7 @@
     }
 
     function updatePotentialLinkCount(){
-        $('#potential-links-count').html($('#potential-links li').length + ' potential links');
+        $('#potential-links-count').text($('#potential-links li').length + ' potential links');
     }
 
     function selectManualAgent() {
@@ -866,5 +901,9 @@
             $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
             stream('Selecting first available planner: ' + $('#queuePlanner').val() + '.');
         }
+    }
+
+    function encodeHTML(string) {
+        return $('<div>').text(string).html();
     }
 </script>
