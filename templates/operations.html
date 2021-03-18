@@ -365,7 +365,7 @@
 
             stream(data);
         }
-        let operation_id = parseInt($('#operation-list option:selected').attr('value'));
+        let operation_id = $('#operation-list option:selected').attr('value');
         let data = {'index': 'operations', 'id': operation_id};
         restRequest('DELETE', data, deleteCallback);
     }
@@ -418,14 +418,14 @@
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
         stream('Changing operation state to '+newState);
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'state': newState}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id, 'state': newState}, doNothing, `/api/rest`);
     }
 
     function updateObfuscation() {
         let op_id = $('#operation-list option:selected').attr('value');
         let newObfuscation = $('#currentObfuscation').val();
         stream('Changing operation obfuscation to '+newObfuscation);
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id, 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
@@ -540,7 +540,7 @@
         }
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operations','id': parseInt(selectedOperationId)} : null;
+            let postData = selectedOperationId ? {'index':'operations','id': selectedOperationId} : null;
             if (selectedOperationId != null){
                 $('.op-selected').css('visibility', 'visible');
             }
@@ -572,7 +572,7 @@
         let selectedOperationId = $('#operation-list option:selected').attr('value');
         let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
         let paw = selectedAgent.split('-')[1];
-        let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
+        let postData = {"index":"link","op_id": selectedOperationId, "paw": paw};
         restRequest('POST', postData, potentialLinksCallback, '/api/rest');
         $('#potential-links-count').html('Building potential links...');
     }
@@ -832,7 +832,7 @@
 
     function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id),'autonomous':'toggleMe'}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id,'autonomous':'toggleMe'}, doNothing, `/api/rest`);
     }
 
     function checkOpformValid(){
