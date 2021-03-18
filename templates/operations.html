@@ -19,7 +19,7 @@
           <option id="operationDefault" value="" disabled selected>Operations</option>
           {% for op in operations %}
                 {%  if op.start|length%}
-                    <option class="operationOption" id="{{ op.id }}-{{ op.name }}" value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
+                    <option class="operationOption" id="{{ op.id|e }}-{{ op.name|e }}" value="{{ op.id|e }}">{{ op.name|e }} - {{ op.start|e }}</option>
                 {% endif %}
           {% endfor %}
         </select>
@@ -47,16 +47,16 @@
               <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
                 <option value="" class="default-option" selected>Use all groups</option>
                 {% for g in groups %}
-                    <option id="qgroup-{{ g }}" value="{{ g }}">{{ g }}</option>
+                    <option id="qgroup-{{ g|e }}" value="{{ g|e }}">{{ g|e }}</option>
                 {% endfor %}
               </select>
               <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true" onchange="advHasRepeatableAbilities(this.value)">
                 <option value="" class="default-option" selected>No adversary (manual)</option>
                 {% for adv in adversaries %}
                   {% if adv.has_repeatable_abilities %}
-                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}" data-has-repeatable>{{ adv.name }}</option>
+                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}" data-has-repeatable>{{ adv.name|e }}</option>
                   {% else %}
-                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}">{{ adv.name|e }}</option>
                   {% endif %}
                 {% endfor %}
               </select>
@@ -81,17 +81,17 @@
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
                 {% for p in planners %}
                   {% if p.name == "atomic" %}
-                    <option value="{{ p.name }}" selected>Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}" selected>Use {{ p.name|e }} planner</option>
                   {% elif p.allow_repeatable_abilities %}
-                    <option value="{{ p.name }}" data-allow-repeatable-abilities>Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}" data-allow-repeatable-abilities>Use {{ p.name|e }} planner</option>
                   {% else %}
-                    <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}">Use {{ p.name|e }} planner</option>
                   {% endif %}
                 {% endfor %}
               </select>
               <select name="source" id="queueSource" class="queueOption" style="opacity:0.5" disabled="true">
                 {% for s in sources %}
-                    <option value="{{ s.name }}">Use {{ s.name }} facts</option>
+                    <option value="{{ s.name|e }}">Use {{ s.name|e }} facts</option>
                 {% endfor %}
               </select>
               <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
@@ -105,7 +105,7 @@
           <div id="stealth-options" class="sidebar-cutout" style="display: none;">
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
-                    <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
+                    <option value="{{ o.name|e }}">{{ o.name|e }} obfuscation</option>
                   {% endfor %}
               </select>
               <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
@@ -161,7 +161,7 @@
             <div>
                 <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
                   {% for o in obfuscators %}
-                    <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                    <option value="{{ o.name|e }}">Use {{ o.name|e }} obfuscation</option>
                   {% endfor %}
               </select>
             </div>
