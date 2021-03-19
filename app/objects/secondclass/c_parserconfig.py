@@ -11,6 +11,7 @@ class ParserConfigSchema(ma.Schema):
     source = ma.fields.String()
     edge = ma.fields.String(missing=None)
     target = ma.fields.String(missing=None)
+    restrictions = ma.fields.String(missing=None)
     custom_parser_vals = ma.fields.Mapping(keys=ma.fields.String(), values=ma.fields.String())
 
     @ma.pre_load
@@ -30,6 +31,7 @@ class ParserConfigSchema(ma.Schema):
         data.edge = data.edge or ''
         data.target = data.target or ''
         data.custom_parser_vals = data.custom_parser_vals or {}
+        data.restrictions = data.restrictions or ''
         return data
 
 
@@ -37,9 +39,10 @@ class ParserConfig(BaseObject):
 
     schema = ParserConfigSchema()
 
-    def __init__(self, source, edge=None, target=None, custom_parser_vals=None):
+    def __init__(self, source, edge=None, target=None, custom_parser_vals=None, restrictions=None):
         super().__init__()
         self.source = source
         self.edge = edge
         self.target = target
         self.custom_parser_vals = custom_parser_vals
+        self.restrictions = restrictions

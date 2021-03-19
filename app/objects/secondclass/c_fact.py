@@ -85,9 +85,10 @@ class Fact(BaseObject):
         default = super().display
         default['relationships'] = [x.display for x in self.relationships]
         default['relationships'] = [dict(source=f"{x['source'].name}: {x['source'].value}", edge=x['edge'],
-                                         target=F"{x['target'].name}: {x['target'].value}")
+                                         target=f"{x['target'].name}: {x['target'].value}")
                                     for x in default['relationships'] if x['edge'] != '']
         default['links'] = [dict(host=x.host, paw=x.paw, id=x.id) for x in self.links]
+        default['source_type'] = self.source_type.name
         return default
 
     @property

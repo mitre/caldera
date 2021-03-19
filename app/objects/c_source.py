@@ -3,7 +3,7 @@ from collections import namedtuple
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_fact import FactSchema
+from app.objects.secondclass.c_fact import FactSchema, SourceTypes
 from app.objects.secondclass.c_rule import RuleSchema
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.utility.base_object import BaseObject
@@ -69,6 +69,10 @@ class Source(FirstClassObjectInterface, BaseObject):
         self.rules = rules
         self.adjustments = adjustments
         self.relationships = relationships
+
+        for x in self.facts:
+            x.source = self.id
+            x.source_type = SourceTypes.SEEDED
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)

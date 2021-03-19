@@ -64,7 +64,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.id = id
         self.start, self.finish = None, None
         self.base_timeout = 180
-        self.link_timeout = 30
+        self.link_timeout = timeout
         self.name = name
         self.group = group
         self.agents = agents
@@ -107,9 +107,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return any(str(lnk.id) == str(link_id) for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
-        #seeded_facts = [f for f in self.source.facts] if self.source else []
-        #learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
-        #return seeded_facts + learned_facts
         return [f for f in self._fact_listing if f.score > 0]
 
     def has_fact(self, name, value):

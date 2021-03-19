@@ -6,7 +6,7 @@ from importlib import import_module
 import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
-from app.objects.secondclass.c_fact import Fact, FactSchema, SourceTypes
+from app.objects.secondclass.c_fact import Fact, FactSchema, Restrictions
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
 
@@ -125,7 +125,7 @@ class Link(BaseObject):
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
                 await self._update_scores(operation, increment=len(relationships))
-                await self._create_relationships(relationships, operation)
+                await self._create_relationships(relationships, operation, configs=parser.parserconfigs)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
                                                 % (parser.module, self.ability.ability_id, e))
@@ -156,19 +156,21 @@ class Link(BaseObject):
         module = import_module(module_info['module'])
         return getattr(module, module_type)(module_info)
 
-    async def _create_relationships(self, relationships, operation):
+    async def _create_relationships(self, relationships, operation, configs=None):
         for relationship in relationships:
-            await self._save_fact(operation, relationship.source, relationship.score, relationship)
-            await self._save_fact(operation, relationship.target, relationship.score, relationship)
+            if configs:
+                restriction = configs[0].restrictions if configs[0].restrictions != '' else None
+            await self._save_fact(operation, relationship.source, relationship.score, relationship, restriction)
+            await self._save_fact(operation, relationship.target, relationship.score, relationship, restriction)
             if all((relationship.source.name, relationship.edge)):
                 self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, fact, score, relationship=None):
+    async def _save_fact(self, operation, fact, score, relationship=None, restriction=None):
         all_facts = operation.all_facts() if operation else self.facts
         if all([fact.name, fact.value]):
             if await self._is_new_fact(fact, all_facts):
                 f = Fact(name=fact.name, value=fact.value, score=score, technique_id=self.ability.technique_id,
-                         source=operation.id)
+                         source=operation.id, restrictions=restriction)
                 await operation.add_fact(f)
             else:
                 f = [x for x in all_facts if self._fact_exists(fact, x)][0]
