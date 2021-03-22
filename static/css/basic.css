@@ -910,7 +910,6 @@ table.dataTable input[type=text] {
 
 #op-control-info-wrapper {
     display: flex;
-    width: 50%;
     justify-content: center
 }
 
