@@ -12,6 +12,7 @@ from importlib import import_module
 import aiohttp_jinja2
 import jinja2
 import yaml
+from aiohttp import web
 
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
@@ -31,6 +32,7 @@ class AppService(AppServiceInterface, BaseService):
         self.log = self.add_service('app_svc', self)
         self.loop = asyncio.get_event_loop()
         self._errors = []
+        self._loaded_plugins = []  # all plugins that were loaded, including disabled ones
 
     async def start_sniffer_untrusted_agents(self):
         next_check = self.get_config(name='agents', prop='untrusted_timer')
@@ -98,6 +100,8 @@ class AppService(AppServiceInterface, BaseService):
             plugin = Plugin(name=p)
             if plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
+                self._loaded_plugins.append(plugin)
+
             if plugin.name in self.get_config('plugins'):
                 await plugin.enable(self.get_services())
                 self.log.info('Enabled plugin: %s' % plugin.name)
@@ -169,6 +173,16 @@ class AppService(AppServiceInterface, BaseService):
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('ability_refresh')))
+
+    def register_subapp(self, path: str,  app: web.Application):
+        """Registers a web application under the root application.
+
+        Requests under `path` will be routed to this app.
+        """
+        self.application.add_subapp(path, app)
+
+    def get_loaded_plugins(self):
+        return tuple(self._loaded_plugins)
 
     """ PRIVATE """
 
