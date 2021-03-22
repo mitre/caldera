@@ -907,3 +907,14 @@ table.dataTable input[type=text] {
 #ttp-tests {
     width: 100%;
 }
+
+#op-control-info-wrapper {
+    display: flex;
+    width: 50%;
+    justify-content: center
+}
+
+.op-control-info-entry {
+    width: fit-content;
+    padding: 0px 20px 0px 20px;
+}

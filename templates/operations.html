@@ -130,7 +130,13 @@
     <div class="column op-selected" style="flex:75%">
       <div class="op-dets">
         <center>
-            <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
+            <span title="Current Operation Status" class="op-control-text" id="op-control-state">
+                <div id="op-control-info-wrapper" style="">
+                    <div id="op-control-info-status" class="op-control-info-entry" style="border-right: 2px solid"></div>
+                    <div id="op-control-info-start" class="op-control-info-entry" style="border-right: 2px solid"></div>
+                    <div id="op-control-info-length" class="op-control-info-entry"></div>
+                </div>
+            </span>
             <br><br>
             <div class="op-control-container">
                 <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
@@ -462,9 +468,10 @@
 
     function refresh() {
         function operationCallback(data){
-            function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
             let OPERATION = data[0];
-            $("#op-control-state").html(encodeHTML(OPERATION.state) + spacing() + encodeHTML(OPERATION.start) + spacing() + OPERATION.chain.length + ' decisions');
+            $('#op-control-info-status').text(OPERATION.state);
+            $('#op-control-info-start').text(OPERATION.start);
+            $('#op-control-info-length').text(OPERATION.chain.length + ' DECISIONS');
             if (OPERATION.autonomous) {
                 $("#togBtnHil").prop("checked", true);
             } else {
