@@ -6,7 +6,7 @@ from importlib import import_module
 import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
-from app.objects.secondclass.c_fact import Fact, FactSchema, Restrictions
+from app.objects.secondclass.c_fact import Fact, FactSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
 

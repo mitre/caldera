@@ -89,6 +89,8 @@ class Fact(BaseObject):
                                     for x in default['relationships'] if x['edge'] != '']
         default['links'] = [dict(host=x.host, paw=x.paw, id=x.id) for x in self.links]
         default['source_type'] = self.source_type.name
+        if self.restrictions and self.restrictions is not NOT_SPECIFIED:
+            default['restrictions'] = self.restrictions
         return default
 
     @property
