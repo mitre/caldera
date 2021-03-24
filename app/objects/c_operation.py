@@ -60,7 +60,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
                  timeout=30):
         super().__init__()
-        self.id = id
+        self.id = str(id)
         self.start, self.finish = None, None
         self.base_timeout = 180
         self.link_timeout = 30
