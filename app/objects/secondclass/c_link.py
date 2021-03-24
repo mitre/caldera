@@ -2,6 +2,7 @@ import logging
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
+import uuid
 
 import marshmallow as ma
 
@@ -17,7 +18,7 @@ class LinkSchema(ma.Schema):
     class Meta:
         unknown = ma.EXCLUDE
 
-    id = ma.fields.Integer(missing=None)
+    id = ma.fields.String(missing='')
     paw = ma.fields.String()
     command = ma.fields.String()
     status = ma.fields.Integer(missing=-3)
@@ -89,10 +90,10 @@ class Link(BaseObject):
                     ERROR=1,
                     TIMEOUT=124)
 
-    def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
+    def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None):
         super().__init__()
-        self.id = id
+        self.id = str(id)
         self.command = command
         self.command_hash = None
         self.paw = paw
@@ -134,7 +135,7 @@ class Link(BaseObject):
                                                 % (parser.module, self.ability.ability_id, e))
 
     def apply_id(self, host):
-        self.id = self.generate_number()
+        self.id = str(uuid.uuid4())
         self.host = host
         self.replace_origin_link_id()
 
@@ -143,7 +144,7 @@ class Link(BaseObject):
 
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
-        self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], str(self.id)))
+        self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
 
     """ PRIVATE """
 
