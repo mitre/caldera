@@ -19,7 +19,7 @@
           <option id="operationDefault" value="" disabled selected>Operations</option>
           {% for op in operations %}
                 {%  if op.start|length%}
-                    <option class="operationOption" id="{{ op.id }}-{{ op.name }}" value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
+                    <option class="operationOption" id="{{ op.id|e }}-{{ op.name|e }}" value="{{ op.id|e }}">{{ op.name|e }} - {{ op.start|e }}</option>
                 {% endif %}
           {% endfor %}
         </select>
@@ -47,16 +47,16 @@
               <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
                 <option value="" class="default-option" selected>Use all groups</option>
                 {% for g in groups %}
-                    <option id="qgroup-{{ g }}" value="{{ g }}">{{ g }}</option>
+                    <option id="qgroup-{{ g|e }}" value="{{ g|e }}">{{ g|e }}</option>
                 {% endfor %}
               </select>
               <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true" onchange="advHasRepeatableAbilities(this.value)">
                 <option value="" class="default-option" selected>No adversary (manual)</option>
                 {% for adv in adversaries %}
                   {% if adv.has_repeatable_abilities %}
-                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}" data-has-repeatable>{{ adv.name }}</option>
+                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}" data-has-repeatable>{{ adv.name|e }}</option>
                   {% else %}
-                    <option id="qflow-{{ adv.adversary_id }}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}">{{ adv.name|e }}</option>
                   {% endif %}
                 {% endfor %}
               </select>
@@ -81,17 +81,17 @@
               <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
                 {% for p in planners %}
                   {% if p.name == "atomic" %}
-                    <option value="{{ p.name }}" selected>Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}" selected>Use {{ p.name|e }} planner</option>
                   {% elif p.allow_repeatable_abilities %}
-                    <option value="{{ p.name }}" data-allow-repeatable-abilities>Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}" data-allow-repeatable-abilities>Use {{ p.name|e }} planner</option>
                   {% else %}
-                    <option value="{{ p.name }}">Use {{ p.name }} planner</option>
+                    <option value="{{ p.name|e }}">Use {{ p.name|e }} planner</option>
                   {% endif %}
                 {% endfor %}
               </select>
               <select name="source" id="queueSource" class="queueOption" style="opacity:0.5" disabled="true">
                 {% for s in sources %}
-                    <option value="{{ s.name }}">Use {{ s.name }} facts</option>
+                    <option value="{{ s.name|e }}">Use {{ s.name|e }} facts</option>
                 {% endfor %}
               </select>
               <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
@@ -105,7 +105,7 @@
           <div id="stealth-options" class="sidebar-cutout" style="display: none;">
               <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
                   {% for o in obfuscators %}
-                    <option value="{{ o.name }}">{{ o.name }} obfuscation</option>
+                    <option value="{{ o.name|e }}">{{ o.name|e }} obfuscation</option>
                   {% endfor %}
               </select>
               <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
@@ -130,7 +130,13 @@
     <div class="column op-selected" style="flex:75%">
       <div class="op-dets">
         <center>
-            <span title="Current Operation Status" class="op-control-text" id="op-control-state"></span>
+            <span title="Current Operation Status" class="op-control-text" id="op-control-state">
+                <div id="op-control-info-wrapper">
+                    <div id="op-control-info-status" class="op-control-info-entry" style="border-right: 2px solid"></div>
+                    <div id="op-control-info-start" class="op-control-info-entry" style="border-right: 2px solid"></div>
+                    <div id="op-control-info-length" class="op-control-info-entry"></div>
+                </div>
+            </span>
             <br><br>
             <div class="op-control-container">
                 <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
@@ -161,7 +167,7 @@
             <div>
                 <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
                   {% for o in obfuscators %}
-                    <option value="{{ o.name }}">Use {{ o.name }} obfuscation</option>
+                    <option value="{{ o.name|e }}">Use {{ o.name|e }} obfuscation</option>
                   {% endfor %}
               </select>
             </div>
@@ -439,8 +445,12 @@
         let op_elem = $("#operation-list");
         $.each(data, function(index, op) {
             if(!op_elem.find('option[value="'+op.id+'"]').length > 0){
-                op_elem.append('<option id="' + op.id + '" class="operationOption" ' +
-                    'value="' + op.id +'" >' + op.name + ' - ' + op.start + '</option>');
+                op_elem.append($('<option></option>')
+                    .attr('id', op.id)
+                    .addClass('operationOption')
+                    .val(op.id)
+                    .text(op.name + ' - ' + op.start)
+                );
             }
         });
         op_elem.prop('selectedIndex', op_elem.find('option').length-1).change();
@@ -458,9 +468,10 @@
 
     function refresh() {
         function operationCallback(data){
-            function spacing() { return "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" }
             let OPERATION = data[0];
-            $("#op-control-state").html(OPERATION.state + spacing() + OPERATION.start + spacing() + OPERATION.chain.length + ' decisions');
+            $('#op-control-info-status').text(OPERATION.state);
+            $('#op-control-info-start').text(OPERATION.start);
+            $('#op-control-info-length').text(OPERATION.chain.length + ' DECISIONS');
             if (OPERATION.autonomous) {
                 $("#togBtnHil").prop("checked", true);
             } else {
@@ -481,20 +492,51 @@
                     template.attr("id", "op_id_" + OPERATION.chain[i].id);
                     template.attr("operation", OPERATION.id);
                     template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-                    template.find('#time-tactic').html('<div style="font-size: 13px;font-weight:100" ' +
-                        'ondblclick="rollup('+OPERATION.chain[i].id+')">agent#'+ agentPaw + '... ' +
-                        title + '<span id="'+OPERATION.chain[i].id+'-rs" class="tactic-find-result" ' +
-                        'onclick="findResults(this,\''+lnk+'\')"' +
-                        'data-encoded-cmd="'+OPERATION.chain[i].command+'"></span>' +
-                        '<span id="'+OPERATION.chain[i].id+'-rm" style="font-size:11px;float:right;cursor:pointer;margin-left:5px" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+', -2)">&#x274C;</span>' +
-                        '<img id="'+OPERATION.chain[i].id+'-cm" src="/gui/img/duk.png" style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" onclick="showCommand(\''+OPERATION.chain[i].command+'\')"/>' +
-                        '<span id="'+OPERATION.chain[i].id+'-add" style="font-size:22px;float:right;cursor:pointer;" onclick="updateLinkStatus2('+lnk+','+OPERATION.id+',-3)">&#x002B;</span></div>');
+                    template.find('#time-tactic')
+                        .append($('<div></div>')
+                            .css('font-size', '13px')
+                            .css('font-weight', '100')
+                            .dblclick( () => {
+                                rollup(OPERATION.chain[i].id);
+                            })
+                            .text('agent#' + agentPaw + '... ' + title)
+                            .append($('<span></span>')
+                                .attr('id', OPERATION.chain[i].id + '-rs')
+                                .addClass('tactic-find-result')
+                                .attr('data-encoded-cmd', OPERATION.chain[i].command)
+                                .click( event => {
+                                    findResults($(event.currentTarget), lnk);
+                                })
+                            )
+                            .append($('<span style="font-size:11px;float:right;cursor:pointer;margin-left:5px"></span>')
+                                .attr('id', OPERATION.chain[i].id + '-rm')
+                                .click( () => {
+                                    updateLinkStatus2(lnk, OPERATION.id, -2);
+                                })
+                                .html('&#x274C;')
+                            )
+                            .append($('<img style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" />')
+                                .attr('id', OPERATION.chain[i].id + '-cm')
+                                .attr('src', '/gui/img/duk.png')
+                                .click( () => {
+                                    showCommand(OPERATION.chain[i].command);
+                                })
+                            )
+                            .append($('<span style="font-size:22px;float:right;cursor:pointer;"></span>')
+                                .attr('id', OPERATION.chain[i].id + '-add')
+                                .click( () => {
+                                    updateLinkStatus2(lnk, OPERATION.id, -3);
+                                })
+                                .html('&#x002B;')
+                            )
+
+                        )
 
                     if (OPERATION.chain[i].status === -1) {
                         let loop_template = $("#loop-template").clone();
                         loop_template.removeAttr('id');
-                        loop_template.find('.hil-linkId').html(OPERATION.chain[i].unique);
-                        loop_template.find('.hil-command').html(atob(OPERATION.chain[i].command));
+                        loop_template.find('.hil-linkId').text(OPERATION.chain[i].unique);
+                        loop_template.find('.hil-command').text(atob(OPERATION.chain[i].command));
                         loop_template.css('display', 'block');
                         loop_template.insertAfter(template.find(".member-infos"));
                         template.find('#'+OPERATION.chain[i].id+'-rm').remove();
@@ -574,7 +616,7 @@
         let paw = selectedAgent.split('-')[1];
         let postData = {"index":"link","op_id": parseInt(selectedOperationId), "paw": paw};
         restRequest('POST', postData, potentialLinksCallback, '/api/rest');
-        $('#potential-links-count').html('Building potential links...');
+        $('#potential-links-count').text('Building potential links...');
     }
 
     function potentialLinksCallback(data){
@@ -630,7 +672,7 @@
 
     function closePotentialLinksModal() {
         document.getElementById('potential-modal').style.display='none';
-        $('#potential-links-count').html('');
+        $('#potential-links-count').text('');
         $('#potential-links').empty();
         $('#potential-agent-filter').prop("selectedIndex", 0);
     }
@@ -647,7 +689,7 @@
     }
 
     function updatePotentialLinkCount(){
-        $('#potential-links-count').html($('#potential-links li').length + ' potential links');
+        $('#potential-links-count').text($('#potential-links li').length + ' potential links');
     }
 
     function selectManualAgent() {
