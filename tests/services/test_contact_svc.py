@@ -26,7 +26,7 @@ def setup_contact_service(loop, data_svc, agent, ability, operation, link, adver
     tagent = agent(sleep_min=10, sleep_max=60, watchdog=0, executors=['special_executor'])
     loop.run_until_complete(data_svc.store(tagent))
     toperation = operation(name='sample', agents=[tagent], adversary=adversary())
-    tlink = link(command='', paw=tagent.paw, ability=tability, id=12345)
+    tlink = link(command='', paw=tagent.paw, ability=tability, id='5212fca4-6544-49ce-a78d-a95d30e95705')
     loop.run_until_complete(toperation.apply(tlink))
     loop.run_until_complete(data_svc.store(toperation))
     yield tlink
@@ -45,17 +45,17 @@ class TestContactSvc:
         link = setup_contact_service
         rest_svc = RestService()
         result = dict(
-            id=str(link.id),
+            id=link.id,
             output=str(base64.b64encode(base64.b64encode(test_string)), 'utf-8'),
             pid=0,
             status=0
         )
         await contact_svc._save(Result(**result))
-        result = await rest_svc.display_result(dict(link_id=str(link.id)))
+        result = await rest_svc.display_result(dict(link_id=link.id))
         assert base64.b64decode(result['output']) == test_string
 
         # cleanup test
         try:
-            os.remove(os.path.join('data', 'results', str(link.id)))
+            os.remove(os.path.join('data', 'results', link.id))
         except FileNotFoundError:
             print('Unable to cleanup test_save_ability_hooks result file')
