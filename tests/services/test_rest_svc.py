@@ -82,7 +82,8 @@ class TestRestSvc:
                                               'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown',
                                               'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
                                               'origin_link_id': 0, 'deadman_enabled': False,
-                                              'available_contacts': ['unknown'], 'pending_contact': 'unknown'}],
+                                              'available_contacts': ['unknown'], 'pending_contact': 'unknown',
+                                              'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
                               'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
                               'obfuscator': 'plain-text', 'objective': {'goals': [{'value': 'complete',
                                                                                    'operator': '==',
@@ -151,7 +152,7 @@ class TestRestSvc:
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
                      'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0,
                      'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                     'host_ip_addrs': []}],
+                     'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
                 'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)

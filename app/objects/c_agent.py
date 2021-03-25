@@ -18,6 +18,7 @@ class AgentFieldsSchema(ma.Schema):
     architecture = ma.fields.String()
     platform = ma.fields.String()
     server = ma.fields.String()
+    upstream_dest = ma.fields.String()
     username = ma.fields.String()
     location = ma.fields.String()
     pid = ma.fields.Integer()
@@ -61,7 +62,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
     load_schema = AgentSchema(partial=['paw', 'origin_link_id'])
 
     RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
-                    exe_name='#{exe_name}', payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
+                    exe_name='#{exe_name}', upstream_dest='#{upstream_dest}',
+                    payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
 
     @property
     def unique(self):
@@ -75,7 +77,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None, host_ip_addrs=None):
+                 available_contacts=None, host_ip_addrs=None, upstream_dest=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -108,6 +110,11 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.available_contacts = available_contacts if available_contacts else [self.contact]
         self.pending_contact = contact
         self.host_ip_addrs = host_ip_addrs if host_ip_addrs else []
+        if upstream_dest:
+            upstream_url = urlparse(upstream_dest)
+            self.upstream_dest = '%s://%s:%s' % (upstream_url.scheme, upstream_url.hostname, upstream_url.port)
+        else:
+            self.upstream_dest = self.server
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -154,6 +161,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('deadman_enabled', kwargs.get('deadman_enabled'))
         self.update('contact', kwargs.get('contact'))
         self.update('host_ip_addrs', kwargs.get('host_ip_addrs'))
+        self.update('upstream_dest', kwargs.get('upstream_dest'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
@@ -172,6 +180,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         decoded_cmd = decoded_cmd.replace(self.RESERVED['agent_paw'], self.paw)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['location'], self.location)
         decoded_cmd = decoded_cmd.replace(self.RESERVED['exe_name'], self.exe_name)
+        decoded_cmd = decoded_cmd.replace(self.RESERVED['upstream_dest'], self.upstream_dest)
         decoded_cmd = self._replace_payload_data(decoded_cmd, file_svc)
         return decoded_cmd
 
