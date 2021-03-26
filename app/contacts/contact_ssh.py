@@ -23,7 +23,8 @@ class Contact(BaseWorld):
         try:
             host_key = asyncssh.read_private_key(host_key_filepath, passphrase=host_key_passphrase)
         except Exception as e:
-            self.log.warn('Unable to use provided SSH private key: %s.\nWill generate temporary SSH private key.' % e)
+            self.log.warn('Unable to use provided SSH private key: %s' % e)
+            self.log.warn('Will generate temporary SSH private key.')
             host_key = asyncssh.generate_private_key('ssh-rsa', comment='temporary key')
         try:
             await asyncssh.create_server(self.server_factory, addr, int(port),
