@@ -1,11 +1,9 @@
 import pytest
 import aiohttp
 import asyncssh
-import time
 
 from app.contacts.contact_ssh import Contact as SshContact
 from app.utility.base_world import BaseWorld
-from app.utility.file_decryptor import read as decrypt_read, get_encryptor
 
 
 @pytest.fixture(scope='session')
@@ -29,10 +27,12 @@ def ssh_contact_base_world():
                                                       '43b3754c-def4-4699-a673-1d85648fda6a'
                                                   ]})
 
+
 @pytest.fixture
 def ssh_contact(loop, app_svc, contact_svc, data_svc, file_svc, obfuscator):
     services = app_svc(loop).get_services()
     return SshContact(services)
+
 
 @pytest.mark.usefixtures(
     'ssh_contact_base_world'
