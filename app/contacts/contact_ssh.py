@@ -11,8 +11,8 @@ class Contact(BaseWorld):
         self.description = 'Accept tunneled SSH messages'
         self.log = self.create_logger('contact_ssh')
         self.services = services
-        self._user_name = ''
-        self._user_password = ''
+        self._user_name = self.get_config('app.contact.ssh.user_name')
+        self._user_password = self.get_config('app.contact.ssh.user_password')
 
     async def start(self):
         ssh_endpoint = self.get_config('app.contact.ssh.socket')
@@ -20,11 +20,16 @@ class Contact(BaseWorld):
         host_key_filename = self.get_config('app.contact.ssh.host_key_file')
         host_key_filepath = os.path.join('conf', 'ssh_keys', host_key_filename)
         host_key_passphrase = self.get_config('app.contact.ssh.host_key_passphrase')
-        host_key = asyncssh.read_private_key(host_key_filepath, passphrase=host_key_passphrase)
-        self._user_name = self.get_config('app.contact.ssh.user_name')
-        self._user_password = self.get_config('app.contact.ssh.user_password')
-        await asyncssh.create_server(self.server_factory, addr, int(port),
-                                     server_host_keys=[host_key])
+        try:
+            host_key = asyncssh.read_private_key(host_key_filepath, passphrase=host_key_passphrase)
+        except Exception as e:
+            self.log.error('Error reading provided SSH private key. Will generate temporary SSH private key. Error: %s' % e)
+            host_key = asyncssh.generate_private_key('ssh-rsa', comment='temporary key')
+        try:
+            await asyncssh.create_server(self.server_factory, addr, int(port),
+                                         server_host_keys=[host_key])
+        except Exception as e:
+            self.log.error('Error starting SSH server: %s' % e)
 
     def server_factory(self):
         return SSHServerContact(self.services, self._user_name, self._user_password)

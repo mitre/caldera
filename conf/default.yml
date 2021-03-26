@@ -6,6 +6,11 @@ app.contact.dns.socket: 0.0.0.0:8853
 app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://0.0.0.0:8888
+app.contact.ssh.host_key_file: REPLACE_WITH_KEY_FILE_PATH
+app.contact.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
+app.contact.ssh.socket: 0.0.0.0:8022
+app.contact.ssh.user_name: sandcat
+app.contact.ssh.user_password: s4ndc4t!
 app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
