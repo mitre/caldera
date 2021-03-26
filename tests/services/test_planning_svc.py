@@ -62,7 +62,7 @@ def planner_stub(**kwargs):
 def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, init_base_world):
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
-    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
+    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin', host='a.b.e')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=[tagent],
                            adversary=Adversary(name='test', description='test',
@@ -71,7 +71,7 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, in
                            source=tsource)
 
     cability = ability(ability_id='321', executor='sh', platform='darwin', test=BaseWorld.encode_string(test_string),
-                       cleanup=BaseWorld.encode_string('whoami'), singleton=True, variations=[])
+                       cleanup=BaseWorld.encode_string('whoami'), recoverable=True, singleton=True, variations=[])
 
     loop.run_until_complete(data_svc.store(tability))
     loop.run_until_complete(data_svc.store(cability))
@@ -467,3 +467,33 @@ class TestPlanningService:
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
         await BasePlanningService.remove_links_missing_facts(links)
         assert len(links) == 0
+
+    def test_recovery(self, loop, setup_planning_test, planning_svc, link, fact):
+        ability, agent, operation, sability = setup_planning_test
+
+        # do setup
+        l0 = link(command='a0', paw='a.b.e', ability=ability)
+        l1 = link(command='a1', paw='a.b.e', ability=sability)
+        l1.used.append(Fact(trait='a.b.c', value='a.b.c'))
+        l1.used.append(Fact(trait='a.b.d', value='a.b.d'))
+        l1.used.append(Fact(trait='a.b.e', value='a.b.e'))
+        l0.status = l0.states['SUCCESS']
+        l1.status = l1.states['SUCCESS']
+        operation.chain = [l0, l1]
+        operation.agents[0].trusted = False  # set agent to untrusted (it died?)
+
+        # verify that we can check previously run links for facts that include the host the agent died on
+        out = planning_svc._match_input_string(l1, agent.host)
+        assert out is True
+        out = planning_svc._match_input_string(l0, agent.host)
+        assert out is False
+
+        # verify that we can generate a new copy of a link for a now dead agent
+        agent.paw = 'a.b.e'  # force paw to be something we can predict
+        recovered = loop.run_until_complete(planning_svc.restore_dead_agent_links(operation, agent, []))
+        assert len(recovered) == 1
+
+        # verify that said rejuvenation only triggers once (you only get one shot at recovery at the moment
+        operation.chain.append(recovered[0])
+        second_pass = loop.run_until_complete(planning_svc.restore_dead_agent_links(operation, agent, []))
+        assert len(second_pass) == 0

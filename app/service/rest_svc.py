@@ -206,7 +206,7 @@ class RestService(RestServiceInterface, BaseService):
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
         operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
-        return dict(links=[l.display for l in operation.potential_links])
+        return dict(links=[link.display for link in operation.potential_links])
 
     async def apply_potential_link(self, link):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)

@@ -146,7 +146,7 @@ class ContactService(ContactServiceInterface, BaseService):
         for link in [c for op in ops for c in op.chain
                      if c.paw == agent.paw and not c.collect and c.status == c.states['EXECUTE']]:
             instructions.append(self._convert_link_to_instruction(link))
-        for link in [l for l in agent.links if not l.collect]:
+        for link in [s_link for s_link in agent.links if not s_link.collect]:
             instructions.append(self._convert_link_to_instruction(link))
         return instructions
 

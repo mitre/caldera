@@ -261,6 +261,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                    platform=step.ability.platform,
                                    executor=step.ability.executor,
                                    pid=step.pid,
+                                   repeated=step.recovery,
                                    description=step.ability.description,
                                    name=step.ability.name,
                                    attack=dict(tactic=step.ability.tactic,
@@ -374,7 +375,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):
-        return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
+        return [link for link in self.chain if link.paw == paw and not link.finish and not link.can_ignore()]
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
         abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering

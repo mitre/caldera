@@ -37,6 +37,7 @@ class AbilitySchema(ma.Schema):
     access = ma.fields.Nested(AccessSchema, missing=None)
     test = ma.fields.String(missing=None)
     singleton = ma.fields.Bool(missing=None)
+    recoverable = ma.fields.Bool(missing=None)
 
     @ma.post_load
     def build_ability(self, data, **_):
@@ -74,7 +75,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
                  variations=None, language=None, code=None, build_target=None, additional_info=None, tags=None,
-                 singleton=False, uploads=None, **kwargs):
+                 singleton=False, recoverable=False, uploads=None, **kwargs):
         super().__init__()
         self._test = test
         self.ability_id = ability_id
@@ -99,6 +100,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.variations = get_variations(variations)
         self.buckets = buckets if buckets else []
         self.singleton = singleton
+        self.recoverable = recoverable
         if access:
             self.access = self.Access(access)
         self.additional_info = additional_info or dict()

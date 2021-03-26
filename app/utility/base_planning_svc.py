@@ -6,6 +6,7 @@ from base64 import b64decode
 
 from app.utility.base_service import BaseService
 from app.utility.rule_set import RuleSet
+from app.objects.secondclass.c_link import Link
 
 
 class BasePlanningService(BaseService):
@@ -49,6 +50,7 @@ class BasePlanningService(BaseService):
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
+        links = await self.restore_dead_agent_links(operation, agent, links)
         return links
 
     async def add_test_variants(self, links, agent, facts=(), rules=()):
@@ -112,6 +114,25 @@ class BasePlanningService(BaseService):
                  not any([lnk.command == x.command for x in singleton_links]))]
 
     @staticmethod
+    async def restore_dead_agent_links(operation, agent, links):
+        list_of_dead_agents = [x.host for x in operation.agents if not x.trusted]
+        for dead_agent in list_of_dead_agents:
+            potential_links = [x for x in operation.chain if BasePlanningService._match_input_string(x, dead_agent)]
+            potential_links = [x for x in potential_links if x.paw == agent.paw and (x.status == x.states['SUCCESS']
+                                                                                     or x.recovery)]
+            recovs = [x for x in potential_links if x.recovery]
+            potential_links = [x for x in potential_links if x not in recovs]
+            recovery_links = [Link.load(dict(command=x.command, paw=agent.paw, score=0, ability=x.ability,
+                                             status=operation.link_status(), jitter=x.jitter)) for x in potential_links]
+            for s_link in range(0, len(potential_links)):
+                recovery_links[s_link].used = potential_links[s_link].used
+            for link in recovery_links:
+                link.recovery = True
+            print(f"[PLANNING DEBUG] - spawning recovery actions for agent {dead_agent}: {recovery_links}")
+            links.extend(recovery_links)
+        return links
+
+    @staticmethod
     async def remove_links_missing_facts(links):
         """
         Remove any links that did not have facts encoded into command
@@ -119,23 +140,24 @@ class BasePlanningService(BaseService):
         :param links:
         :return: updated list of links
         """
-        links[:] = [l for l in links if not BasePlanningService.re_variable.findall(b64decode(l.command).decode('utf-8'))]
+        links[:] = [a_link for a_link in links if not
+                    BasePlanningService.re_variable.findall(b64decode(a_link.command).decode('utf-8'))]
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
+        links[:] = [a_link for a_link in links if a_link.cleanup or await self._do_enforcements(a_link, operation)]
         return links
 
     @staticmethod
     async def remove_links_above_visibility(links, operation):
-        links[:] = [l for l in links if operation.visibility >= l.visibility.score]
+        links[:] = [a_link for a_link in links if operation.visibility >= a_link.visibility.score]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
         o = (await self.get_service('data_svc').locate('obfuscators', match=dict(name=obfuscator)))[0]
         mod = o.load(agent)
-        for l in links:
-            l.command = self.encode_string(mod.run(l))
+        for s_link in links:
+            s_link.command = self.encode_string(mod.run(s_link))
         return links
 
     """ PRIVATE """
@@ -194,6 +216,13 @@ class BasePlanningService(BaseService):
     @staticmethod
     def _is_fact_bound(fact):
         return not fact['link_id']
+
+    @staticmethod
+    def _match_input_string(link, input_string):
+        for f in link.used:
+            if input_string in f.value and link.ability.recoverable:
+                return True
+        return False
 
     @staticmethod
     async def _build_relevant_facts(variables, facts):

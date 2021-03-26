@@ -146,6 +146,7 @@ class Link(BaseObject):
         self.visibility = Visibility()
         self._pin = pin
         self.output = False
+        self.recovery = False
         self.deadman = deadman
 
     def __eq__(self, other):
