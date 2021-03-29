@@ -7,7 +7,6 @@ from copy import deepcopy
 from datetime import datetime
 from enum import Enum
 from importlib import import_module
-from random import randint
 
 import marshmallow as ma
 
@@ -20,7 +19,7 @@ from app.utility.base_object import BaseObject
 
 
 class OperationSchema(ma.Schema):
-    id = ma.fields.Integer()
+    id = ma.fields.String()
     name = ma.fields.String()
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
@@ -57,11 +56,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     FINISHED='finished',
                     CLEANUP='cleanup')
 
-    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
+    def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
                  timeout=30):
         super().__init__()
-        self.id = id
+        self.id = str(id)
         self.start, self.finish = None, None
         self.base_timeout = 180
         self.link_timeout = 30
@@ -92,7 +91,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return existing
 
     def set_start_details(self):
-        self.id = self.id if self.id else randint(0, 999999)
+        self.id = self.id if self.id else str(uuid.uuid4())
         self.start = datetime.now()
 
     def add_link(self, link):
