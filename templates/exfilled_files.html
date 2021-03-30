@@ -1,0 +1,101 @@
+<link rel="stylesheet" href="/gui/css/file-explorer.css">
+<div id="exfills" class="section-profile exfills">
+  <div class="advanced row">
+    <div class="bottomright duk-icon"><img onclick="toggleSidebar('exfills-sidebar')" src="/gui/img/expand.png"></div>
+    <div class="topleft duk-icon"><img onclick="removeSection('exfills')" src="/gui/img/x.png"></div>
+    <div id="planners-sidebar" class="column section-border" style="flex:25%">
+      <img src="/gui/img/facts.png">
+      <h4>Exfilled Files</h4>
+      <p class="section-description">
+          Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at {{ exfil_dir }}.<br>
+          You can view and download the files here
+      </p>
+      <br>
+      <div id="viewFiles">
+          <select id="op-file-select" style="margin-top:-15px" onchange="loadFiles()">
+            <option value="" disabled selected>Select an existing operation</option>
+            <option value="">all</option>
+            {% for op in operations %}
+                {%  if op.start|length%}
+                    <option value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
+                {% endif %}
+            {% endfor %}
+          </select>
+      </div>
+      <button id="selectAllBtn" type="button" class="button-success atomic-button"
+              onclick="selectAllFiles()">Select All Files
+      </button>
+      <button id="downloadBtn" type="button" class="button-success atomic-button"
+              onclick="downloadFiles()">Download Selected Files
+      </button>
+    </div>
+
+    <div id="directory-info" class="column exfil-header" style="flex:75%;text-align: left">
+        <ul id="exfil-tld" class="file-explorer">
+        </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+    const exfil_dir = {{exfil_dir | tojson}}
+
+    function loadFiles() {
+        function loadFilesCallback(data) {
+            function addFile(parent, file, path) {
+                $("#"+parent).append('<li><input type="checkbox" value="'+path+'"><img src="/gui/img/file.png"><span>'+file+'</span></li>');
+            }
+
+            function addFolder(parent, folder, contents) {
+                let fid = parent + '-' + folder;
+                $("#"+parent).append('<li><img class="folder" src="/gui/img/folder.png"><span>' + folder + '</span><ul class="child" id="'+ fid +'"></ul></li>');
+                Object.keys(contents).forEach(function(key){
+                    if(contents[key].constructor == Object){
+                        addFolder(fid, key, contents[key]);
+                    }
+                    else {
+                        addFile(fid, key, contents[key]);
+                    }
+                });
+            }
+
+            // Handle API callback
+            $("#exfil-tld").empty();
+            let startdir = exfil_dir.split(/[\/\\]/);
+            startdir = startdir[startdir.length -1];
+            addFolder("exfil-tld", startdir, data);
+            collapseTree();
+        }
+
+        restRequest('POST', {'index':'exfil_files', 'operation_id': $('#op-file-select').val()}, loadFilesCallback);
+    }
+
+    function collapseTree() {
+        $('.folder').click(function() {
+           $(this).siblings('ul').slideToggle();
+        });
+    }
+
+    function selectAllFiles() {
+        $("#exfil-tld").find('input').each(function() {
+            $(this).prop('checked', true);
+        });
+    }
+
+    function downloadFiles() {
+        $("#exfil-tld").find('input:checked').each(function() {
+            let filename = this.value.split(/[\/\\]/);
+            filename = filename[filename.length -1];
+            stream('Downloading file: '+ filename);
+            let uri = "/file/download_exfil?file=" + btoa(this.value);
+            let downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", uri);
+            downloadAnchorNode.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+    }
+
+    //# sourceURL=exfil.js
+</script>

@@ -1,4 +1,5 @@
 import asyncio
+import re
 from collections import defaultdict
 from datetime import datetime
 from base64 import b64decode
@@ -39,10 +40,14 @@ class ContactService(ContactServiceInterface, BaseService):
     @report
     async def handle_heartbeat(self, **kwargs):
         results = kwargs.pop('results', [])
+        old_paw = kwargs.get('paw')
+        if old_paw:
+            kwargs['paw'] = await self._sanitize_paw(old_paw)
         for agent in await self.get_service('data_svc').locate('agents', dict(paw=kwargs.get('paw', None))):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
+                self.log.debug('Received result for link %s from agent %s via contact %s' % (result['id'], agent.paw, agent.contact))
                 await self._save(Result(**result))
                 operation = await self.get_service('app_svc').find_op_with_link(result['id'])
                 access = operation.access if operation else self.Access.RED
@@ -72,6 +77,14 @@ class ContactService(ContactServiceInterface, BaseService):
         return contact[0]
 
     """ PRIVATE """
+
+    async def _sanitize_paw(self, input_paw):
+        """
+        Remove any characters from the given paw that do not fall in the following set:
+            - alphanumeric characters
+            - hyphen, underscore, period
+        """
+        return re.sub(r'[^\w.\-]', '', input_paw)
 
     async def _save(self, result):
         try:
@@ -126,12 +139,14 @@ class ContactService(ContactServiceInterface, BaseService):
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
         payloads = [] if link.cleanup else link.ability.payloads
+        uploads = [] if link.cleanup else link.ability.uploads
         return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
                            executor=link.ability.executor,
                            timeout=link.ability.timeout,
                            payloads=payloads,
+                           uploads=uploads,
                            deadman=link.deadman)
 
     async def _add_agent_to_operation(self, agent):

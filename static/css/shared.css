@@ -478,8 +478,9 @@ p[onclick] {
     margin: 5px;
 }
 .obfuscation-table input {
-    background-color: inherit;
+    background-color: var(--primary-background);
     color: white;
+    margin-left: -5px;
 }
 .watermark {
     position: fixed;
@@ -534,6 +535,9 @@ p[onclick] {
 }
 .maroon {
     background-color: maroon;
+}
+.yellow {
+    background-color: #FFB000;
 }
 .golden {
     background-color: goldenrod;

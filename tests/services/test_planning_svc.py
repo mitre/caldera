@@ -1,4 +1,6 @@
 import pytest
+import asyncio
+import base64
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -6,7 +8,6 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
-
 
 stop_bucket_exhaustion_params = [
     {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
@@ -16,7 +17,7 @@ stop_bucket_exhaustion_params = [
     {'stopping_condition_met': True, 'operation_state': 'RUNNING', 'condition_stop': False, 'assert_value': False}
 ]
 
-test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e}'
+test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e[filters(max=3)]}'
 target_string = '#{1_2_3} - 1 - 2 - 3'
 
 
@@ -58,11 +59,13 @@ def planner_stub(**kwargs):
 @pytest.fixture
 def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_world):
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
-                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[])
+                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
-    toperation = operation(name='test1', agents=tagent, adversary=Adversary(name='test', description='test',
-                                                                            atomic_ordering=[], adversary_id='XYZ'),
+    toperation = operation(name='test1', agents=[tagent],
+                           adversary=Adversary(name='test', description='test',
+                                               atomic_ordering=[],
+                                               adversary_id='XYZ'),
                            source=tsource)
 
     cability = ability(ability_id='321', executor='sh', platform='darwin', test=BaseWorld.encode_string(test_string),
@@ -92,15 +95,86 @@ def stop_bucket_exhaustion_setup(request, setup_planning_test):
 
 
 class TestPlanningService:
+    def test_wait_for_links_and_monitor(self, loop, planning_svc, fact,
+                                        setup_planning_test):
+        # PART A:
+        ability, agent, operation, _ = setup_planning_test
+        # Add a link to operation.chain
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=ability, status=0)))
+        # Set id to match planner.operation.chain[0].id
+        operation.chain[0].id = "123"
+        planner = PlannerFake(operation)
+        # Create a list containing only the id used above
+        link_ids = ["123"]
+        # Make sure program doesn't hang in wait_for_links_completion()
+        planner.operation.chain[0].finish = True
+        assert loop.run_until_complete(planning_svc.wait_for_links_and_monitor(
+            planner, operation, link_ids, condition_stop=True)) is False
+
+        # PART B:
+        # Make sure program hangs in wait_for_links_completion()
+        planner.operation.chain[0].finish = False
+        timeout = False
+        try:
+            loop.run_until_complete(asyncio.wait_for(
+                planning_svc.wait_for_links_and_monitor(planner, operation,
+                                                        link_ids,
+                                                        condition_stop=True),
+                timeout=5.0))
+        except asyncio.TimeoutError:
+            timeout = True
+        assert timeout is True
+
+    def test_get_links(self, loop, setup_planning_test, planning_svc, data_svc):
+        # PART A: Don't fill in facts for "cability" so only "tability"
+        #   is returned in "links"
+        tability, agent, operation, cability = setup_planning_test
+        operation.adversary.atomic_ordering = ["123", "321"]
+        links = loop.run_until_complete(planning_svc.get_links
+                                        (operation=operation, buckets=None,
+                                         agent=agent))
+        assert links[0].ability.ability_id == tability.ability_id
+
+        # PART B: Fill in facts to allow "cability" to be returned in "links"
+        #   in addition to "tability"
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=tability, status=0)))
+        operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
+        operation.chain[0].facts.append(Fact(trait='a.b.d', value='2'))
+        operation.chain[0].facts.append(Fact(trait='a.b.e', value='3'))
+        links = loop.run_until_complete(planning_svc.get_links
+                                        (operation=operation, buckets=None,
+                                         agent=agent))
+
+        assert links[0].ability.ability_id == cability.ability_id
+        assert links[1].ability.ability_id == tability.ability_id
+        assert base64.b64decode(links[0].command).decode('utf-8') == target_string
+
+    def test_exhaust_bucket(self, loop, setup_planning_test, planning_svc):
+        ability, agent, operation, _ = setup_planning_test
+        operation.adversary.atomic_ordering = ["123"]
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=ability, status=0)))
+        operation.chain[0].finish = True
+        planner = PlannerFake(operation)
+        bucket = "test"
+        timeout = False
+        try:
+            loop.run_until_complete(asyncio.wait_for(planning_svc.exhaust_bucket(
+                planner, bucket, operation, agent), timeout=5.0))
+        except asyncio.TimeoutError:
+            timeout = True
+        assert timeout is True
 
     def test_add_ability_to_bucket(self, loop, setup_planning_test, planning_svc):
         b1 = 'salvador'
         b2 = 'hardin'
         a, _, _, _ = setup_planning_test
         loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b1))
-        assert a.buckets == [b1]
+        assert a.buckets == ['test', b1]
         loop.run_until_complete(planning_svc.add_ability_to_bucket(a, b2))
-        assert a.buckets == [b1, b2]
+        assert a.buckets == ['test', b1, b2]
 
     def test_default_next_bucket(self, loop, planning_svc):
         sm = ['alpha', 'bravo', 'charlie']
@@ -236,6 +310,21 @@ class TestPlanningService:
         gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3]))
 
         assert len(gen) == 2
+        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+
+    def test_filter_bs(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+        f1 = Fact(trait='a.b.c', value='1')
+        f2 = Fact(trait='a.b.d', value='2')
+        f3 = Fact(trait='a.b.e', value='3')
+        f4 = Fact(trait='a.b.e', value='4')
+        f5 = Fact(trait='a.b.e', value='5')
+        f6 = Fact(trait='a.b.e', value='6')
+
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3, f4, f5, f6]))
+
+        assert len(gen) == 4
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
 
     def test_duplicate_lateral_filter(self, loop, setup_planning_test, planning_svc, link, fact):

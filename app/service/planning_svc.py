@@ -24,7 +24,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param agent: Agent to run links on, defaults to None
         :type agent: Agent, optional
         :param batch: Push all bucket links immediately. Will check if
-            operation has been stopped(by user) after all bucket links
+            operation has been stopped (by user) after all bucket links
             complete. 'False' will push links one at a time, and wait
             for each to complete. Will check if operation has been
             stopped (by user) after each single link is completed.
@@ -148,7 +148,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type operation: Operation
         :param buckets: Buckets containing abilities. If 'None', get all links
             for given operation, agent, and trim setting. If a list of buckets
-            if provided, then get links for specified buckets for given
+            is provided, then get links for specified buckets for given
             operation and trim setting. Defaults to None.
         :type buckets: list(string), optional
         :param agent: Agent to generate links for, defaults to None
@@ -372,16 +372,18 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:
-            ability = (await self.get_service('data_svc').locate('abilities',
-                                                                 match=dict(unique=link.ability.unique)))[0]
-            for cleanup in ability.cleanup:
-                decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
-                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
-                lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                     ability=ability, score=0, jitter=2, status=link_status))
-                if lnk.command not in [l.command for l in links]:
-                    lnk.apply_id(agent.host)
-                    links.append(lnk)
+            matched_abilities = await self.get_service('data_svc').locate('abilities',
+                                                                          match=dict(unique=link.ability.unique))
+            if matched_abilities:
+                ability = matched_abilities[0]
+                for cleanup in ability.cleanup:
+                    decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
+                    variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
+                    lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                                         ability=ability, score=0, jitter=2, status=link_status))
+                    if lnk.command not in [l.command for l in links]:
+                        lnk.apply_id(agent.host)
+                        links.append(lnk)
         return links
 
     @staticmethod

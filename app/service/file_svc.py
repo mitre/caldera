@@ -156,6 +156,21 @@ class FileSvc(FileServiceInterface, BaseService):
     def get_payload_packer(self, packer):
         return self.packers[packer].Packer(self)
 
+    def list_exfilled_files(self, startdir=None):
+        if not startdir:
+            startdir = self.get_config('exfil_dir')
+        if not os.path.exists(startdir):
+            return dict()
+
+        exfil_files = dict()
+        exfil_folders = [f.path for f in os.scandir(startdir) if f.is_dir()]
+        for d in exfil_folders:
+            exfil_key = d.split(os.sep)[-1]
+            exfil_files[exfil_key] = {}
+            for file in [f.path for f in os.scandir(d) if f.is_file()]:
+                exfil_files[exfil_key][file.split(os.sep)[-1]] = file
+        return exfil_files
+
     """ PRIVATE """
 
     def _save(self, filename, content, encrypt=True):

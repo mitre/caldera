@@ -13,8 +13,10 @@ from aiohttp import web
 from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
+from app.objects.c_ability import Ability
 from app.objects.c_source import Source
 from app.objects.c_schedule import Schedule
+from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
@@ -127,9 +129,17 @@ class RestService(RestServiceInterface, BaseService):
 
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
-        op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
-        return await op.report(file_svc=self.get_service('file_svc'), data_svc=self.get_service('data_svc'),
-                               output=data.get('agent_output'))
+        op = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
+        report_format = data.pop('format', 'full-report')
+        if report_format == 'full-report':
+            generator_func = op.report
+        elif report_format == 'event-logs':
+            generator_func = op.event_logs
+        else:
+            self.log.error('Unsupported operation report format requested: %s' % report_format)
+            return ''
+        return await generator_func(file_svc=self.get_service('file_svc'), data_svc=self.get_service('data_svc'),
+                                    output=data.get('agent_output'))
 
     async def download_contact_report(self, contact):
         return dict(contacts=self.get_service('contact_svc').report.get(contact.get('contact'), dict()))
@@ -174,8 +184,15 @@ class RestService(RestServiceInterface, BaseService):
         payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
         payload_dirs.extend(pathlib.Path.cwd() / 'plugins' / plugin.name / 'payloads'
                             for plugin in await self.get_service('data_svc').locate('plugins') if plugin.enabled)
-        return set(p.name for p_dir in payload_dirs for p in p_dir.glob('*')
-                   if p.is_file() and not p.name.startswith('.'))
+        payloads = set()
+        for p_dir in payload_dirs:
+            for p in p_dir.glob('*'):
+                if p.is_file() and not p.name.startswith('.'):
+                    if p.name.endswith('.xored'):
+                        payloads.add(p.name.replace('.xored', ''))
+                    else:
+                        payloads.add(p.name)
+        return payloads
 
     async def find_abilities(self, paw):
         data_svc = self.get_service('data_svc')
@@ -194,6 +211,37 @@ class RestService(RestServiceInterface, BaseService):
     async def apply_potential_link(self, link):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
         return await operation.apply(link)
+
+    async def add_manual_command(self, access, data):
+        for parameter in ['operation', 'agent', 'executor', 'command']:
+            if parameter not in data.keys():
+                return dict(error='Missing parameter: %s' % parameter)
+
+        operation_search = {'id': data['operation'], **access}
+        operation = next(iter(await self.get_service('data_svc').locate('operations', match=operation_search)), None)
+        if not operation:
+            return dict(error='Operation not found')
+
+        agent_search = {'paw': data['agent'], **access}
+        agent = next(iter(await self.get_service('data_svc').locate('agents', match=agent_search)), None)
+        if not agent:
+            return dict(error='Agent not found')
+
+        if data['executor'] not in agent.executors:
+            return dict(error='Agent missing specified executor')
+
+        encoded_command = self.encode_string(data['command'])
+        ability_id = str(uuid.uuid4())
+        ability = Ability(ability_id=ability_id, tactic='auto-generated', technique_id='auto-generated',
+                          technique='auto-generated', name='Manual Command', description='Manual command ability',
+                          cleanup='', test=encoded_command, executor=data['executor'], platform=agent.platform,
+                          payloads=[], parsers=[], requirements=[], privilege=None, variations=[])
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, cleanup=0, ability=ability, score=0, jitter=2,
+                              status=operation.link_status()))
+        link.apply_id(agent.host)
+        operation.add_link(link)
+
+        return dict(link=link.unique)
 
     async def task_agent_with_ability(self, paw, ability_id, obfuscator, facts=()):
         new_links = []
@@ -221,8 +269,10 @@ class RestService(RestServiceInterface, BaseService):
     async def update_config(self, data):
         if data.get('prop') == 'plugin':
             enabled_plugins = self.get_config('plugins')
-            enabled_plugins.append(data.get('value'))
-        else:
+            new_plugin = data.get('value')
+            if new_plugin not in enabled_plugins:
+                enabled_plugins.append(new_plugin)
+        elif data.get('prop') != 'requirements':  # Prevent users from editing requirements via API.
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
@@ -261,8 +311,18 @@ class RestService(RestServiceInterface, BaseService):
                          for ability in abilities]
 
         app_config = {k: v for k, v in self.get_config().items() if k.startswith('app.')}
+        app_config.update({'agents.%s' % k: v for k, v in self.get_config(name='agents').items()})
 
         return dict(abilities=raw_abilities, app_config=app_config)
+
+    async def list_exfil_files(self, data):
+        files = self.get_service('file_svc').list_exfilled_files()
+        if data.get('operation_id'):
+            folders = await self._get_operation_exfil_folders(data['operation_id'])
+            for key in list(files.keys()):
+                if key not in folders:
+                    files.pop(key, None)
+        return files
 
     """ PRIVATE """
 
@@ -279,7 +339,8 @@ class RestService(RestServiceInterface, BaseService):
                          group=group, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
-                         auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')))
+                         auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')),
+                         timeout=int(data.pop('timeout', 30)))
 
     def _get_allowed_from_access(self, access):
         if self.Access.HIDDEN in access['access']:
@@ -362,7 +423,6 @@ class RestService(RestServiceInterface, BaseService):
         if deadman_abilities is not None:
             await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
 
-
     async def _update_agent_ability_list_property(self, abilities_str, prop_name):
         """Set the specified agent config property with the specified abilities.
 
@@ -377,7 +437,7 @@ class RestService(RestServiceInterface, BaseService):
                 abilities.append(ability_id)
             else:
                 self.log.debug('Could not find ability with id "{}" for property "{}"'.format(ability_id, prop_name))
-            self.set_config(name='agents', prop=prop_name, value=abilities)
+        self.set_config(name='agents', prop=prop_name, value=abilities)
 
     async def _explode_display_results(self, object_name, results):
         if object_name == 'adversaries':
@@ -432,7 +492,10 @@ class RestService(RestServiceInterface, BaseService):
         if len(await self.get_service('data_svc').locate('objectives', match=dict(id=final['objective']))) == 0:
             final['objective'] = obj_default.id
         await self._save_and_refresh_item(file_path, Adversary, final, allowed)
-        return [a.display for a in await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))]
+        stored_adv = await self._services.get('data_svc').locate('adversaries', dict(adversary_id=final["id"]))
+        for a in stored_adv:
+            a.has_repeatable_abilities = a.check_repeatable_abilities(self.get_service('data_svc').ram['abilities'])
+        return [a.display for a in stored_adv]
 
     async def _persist_ability(self, access, ab):
         """Persist ability.
@@ -472,11 +535,12 @@ class RestService(RestServiceInterface, BaseService):
                            'alphanumeric characters, hyphens, and underscores.' % ab.get('id'))
             return []
 
-        # Validate tactic, used for directory creation
+        # Validate tactic, used for directory creation, lower case if present
         if not ab.get('tactic') or not validator.match(ab.get('tactic')):
             self.log.debug('Invalid ability tactic "%s". Tactics can only contain '
                            'alphanumeric characters, hyphens, and underscores.' % ab.get('tactic'))
             return []
+        ab['tactic'] = ab.get('tactic').lower()
 
         # Validate platforms, ability will not be loaded if empty
         if not ab.get('platforms'):
@@ -612,3 +676,7 @@ class RestService(RestServiceInterface, BaseService):
         for ab in abilities:
             ab.timeout = exec_timeouts[ab.platform][ab.executor]
             await self.get_service('data_svc').store(ab)
+
+    async def _get_operation_exfil_folders(self, operation_id):
+        op = (await self.get_service('data_svc').locate('operations', match=dict(id=operation_id)))[0]
+        return ['%s-%s' % (a.host, a.paw) for a in op.agents]

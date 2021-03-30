@@ -1,8 +1,9 @@
 import base64
 from collections import namedtuple
 
-from aiohttp import web
+from aiohttp import web, web_request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
+from aiohttp_security import api as aiohttp_security_api
 from aiohttp_security import SessionIdentityPolicy, check_permission, remember, forget
 from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
@@ -14,6 +15,12 @@ from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.utility.base_service import BaseService
+
+
+HEADER_API_KEY = 'KEY'
+COOKIE_SESSION = 'API_SESSION'
+CONFIG_API_KEY_RED = 'api_key_red'
+CONFIG_API_KEY_BLUE = 'api_key_blue'
 
 
 def for_all_public_methods(decorator):
@@ -37,7 +44,8 @@ def check_authorization(func):
         return await func(*args, **params)
 
     async def helper(*args, **params):
-        await args[0].auth_svc.check_permissions('app', args[1])
+        if len(args) > 1 and type(args[1]) is web_request.Request:
+            await args[0].auth_svc.check_permissions('app', args[1])
         result = await process(func, *args, **params)
         return result
     return helper
@@ -61,7 +69,7 @@ class AuthService(AuthServiceInterface, BaseService):
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
-        storage = EncryptedCookieStorage(secret_key, cookie_name='API_SESSION')
+        storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION)
         setup_session(app, storage)
         policy = SessionIdentityPolicy()
         setup_security(app, policy, DictionaryAuthorizationPolicy(self.user_map))
@@ -96,10 +104,23 @@ class AuthService(AuthServiceInterface, BaseService):
         self.log.debug('%s failed login attempt: ' % username)
         raise web.HTTPFound('/login')
 
+    def request_has_valid_api_key(self, request):
+        api_key = request.headers.get(HEADER_API_KEY)
+
+        if api_key is None:
+            return False
+        if api_key == self.get_config(CONFIG_API_KEY_RED):
+            return True
+        if api_key == self.get_config(CONFIG_API_KEY_BLUE):
+            return True
+        return False
+
+    async def request_has_valid_user_session(self, request):
+        return await aiohttp_security_api.authorized_userid(request) is not None
+
     async def check_permissions(self, group, request):
         try:
-            if request.headers.get('KEY') == self.get_config('api_key_red') or \
-                    request.headers.get('KEY') == self.get_config('api_key_blue'):
+            if self.request_has_valid_api_key(request):
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
@@ -115,6 +136,11 @@ class AuthService(AuthServiceInterface, BaseService):
         elif request.headers.get('KEY') == self.get_config('api_key_blue'):
             return self.Access.BLUE, self.Access.APP
         return ()
+
+    async def is_request_authenticated(self, request):
+        if self.request_has_valid_api_key(request):
+            return True
+        return await self.request_has_valid_user_session(request)
 
     """ PRIVATE """
 

@@ -190,6 +190,39 @@
     margin-right: 5%;
     cursor: pointer;
 }
+.op-manual-commands {
+    float: right;
+    font-size: 13px;
+    margin-right: 3%;
+    cursor: pointer;
+}
+#manual-command-settings {
+    display: flex;
+    width: 80%;
+    margin: 2em auto 0;
+}
+#manual-executor {
+    flex: 12%;
+    margin: 0;
+    padding: 0;
+    color: gainsboro;
+    background-color: black;
+    border-color: gainsboro;
+}
+#manual-command {
+    flex: 76%;
+    margin: 0 1em;
+    text-align: left;
+    color: gainsboro;
+    background-color: black;
+    border-color: gainsboro;
+}
+#manual-run {
+    flex: 12%;
+    height: 2.3em;
+    margin: 0;
+    padding: 0;
+}
 .profile-tests {
     float: left;
     width: 100%;
@@ -214,6 +247,10 @@
 .ability-box h4 {
     margin-left: 2%;
     padding-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 95%;
 }
 .ability-box p {
     overflow: hidden;
@@ -231,6 +268,17 @@
     filter: invert(var(--invert-percentage));
     margin-top: -3px;
     margin-bottom: -3px;
+}
+.ability-long-name {
+    position: initial;
+    z-index: 100;
+    margin-left: -50%;
+    margin-right: -50%;
+    padding: 4px 8px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: grey;
+    background-color: var(--secondary-background);
 }
 .ability-viewer {
     background-color: var(--primary-background);
@@ -858,4 +906,14 @@ table.dataTable input[type=text] {
 
 #ttp-tests {
     width: 100%;
+}
+
+#op-control-info-wrapper {
+    display: flex;
+    justify-content: center
+}
+
+.op-control-info-entry {
+    width: fit-content;
+    padding: 0px 20px 0px 20px;
 }

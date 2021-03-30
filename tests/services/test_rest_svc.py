@@ -24,6 +24,14 @@ def setup_rest_svc_test(loop, data_svc):
         Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[],
                 executor='psh', platform='windows'))
     )
+    loop.run_until_complete(data_svc.store(
+        Ability(ability_id='456', test=BaseWorld.encode_string('whoami'), variations=[],
+                executor='sh', platform='linux'))
+    )
+    loop.run_until_complete(data_svc.store(
+        Ability(ability_id='789', test=BaseWorld.encode_string('hostname'), variations=[],
+                executor='sh', platform='linux'))
+    )
     adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[])
     loop.run_until_complete(data_svc.store(adversary))
 
@@ -57,6 +65,54 @@ def setup_rest_svc_test(loop, data_svc):
 )
 class TestRestSvc:
 
+    def test_delete_operation(self, loop, rest_svc, data_svc):
+        # PART A: Create an operation
+        expected_operation = {'name': 'My Test Operation',
+                              'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc',
+                                            'adversary_id': 'ad-hoc', 'atomic_ordering': [], 'objective': None,
+                                            'tags': [], 'has_repeatable_abilities': False}, 'state': 'finished',
+                              'planner': {'name': 'test', 'description': None, 'module': 'test',
+                                          'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
+                                          'ignore_enforcement_modules': [], 'id': '123'}, 'jitter': '2/8',
+                              'host_group': [{'trusted': True, 'architecture': 'unknown', 'watchdog': 0,
+                                              'contact': 'unknown', 'username': 'unknown', 'links': [], 'sleep_max': 8,
+                                              'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
+                                              'sleep_min': 2, 'server': '://None:None', 'platform': 'windows',
+                                              'host': 'unknown', 'paw': '123', 'pid': 0,
+                                              'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown',
+                                              'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
+                                              'origin_link_id': 0, 'deadman_enabled': False,
+                                              'available_contacts': ['unknown'], 'pending_contact': 'unknown',
+                                              'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
+                              'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
+                              'obfuscator': 'plain-text', 'objective': {'goals': [{'value': 'complete',
+                                                                                   'operator': '==',
+                                                                                   'target': 'exhaustion',
+                                                                                   'achieved': False,
+                                                                                   'count': 1048576}],
+                                                                        'percentage': 0.0, 'description': '',
+                                                                        'id': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+                                                                        'name': 'default'}}
+        internal_rest_svc = rest_svc(loop)
+        operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
+            access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
+            data=dict(name='My Test Operation', planner='test', source='123', state='finished')))
+        operation_id = operation[0]["id"]
+        expected_operation['id'] = operation_id
+        found_operation = loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id)))[0].display
+        found_operation['host_group'][0].pop('last_seen')
+        found_operation.pop('start')
+        found_operation["host_group"][0].pop("created")
+        assert found_operation == expected_operation
+
+        # PART B: Delete the operation (that was created in Part A) from the data service
+        delete_criteria = {'id': operation_id, 'finish': None, 'base_timeout': 180, 'link_timeout': 30,
+                           'name': 'My Test Operation', 'jitter': '2/8', 'state': 'finished', 'autonomous': True,
+                           'last_ran': None, 'obfuscator': 'plain-text', 'auto_close': False, 'visibility': 50,
+                           'chain': [], 'potential_links': []}
+        loop.run_until_complete(internal_rest_svc.delete_operation(delete_criteria))
+        assert loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id))) == []
+
     def test_update_config(self, loop, data_svc, rest_svc):
         internal_rest_svc = rest_svc(loop)
         # check that an ability reflects the value in app. property
@@ -82,10 +138,11 @@ class TestRestSvc:
     def test_create_operation(self, loop, rest_svc, data_svc):
         want = {'name': 'Test',
                 'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc', 'adversary_id': 'ad-hoc',
-                              'atomic_ordering': [], 'objective': None, 'tags': []}, 'state': 'finished',
+                              'atomic_ordering': [], 'objective': None, 'tags': [], 'has_repeatable_abilities': False},
+                'state': 'finished',
                 'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
                             'params': {},
-                            'ignore_enforcement_modules': [], 'id': '123'},
+                            'ignore_enforcement_modules': [], 'id': '123', 'allow_repeatable_abilities': False},
                 'jitter': '2/8',
                 'host_group': [
                     {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown',
@@ -93,7 +150,9 @@ class TestRestSvc:
                      'executors': ['pwsh', 'psh'], 'ppid': 0, 'sleep_min': 2, 'server': '://None:None',
                      'platform': 'windows', 'host': 'unknown', 'paw': '123', 'pid': 0,
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
-                     'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0}],
+                     'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0,
+                     'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown',
+                     'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
                 'obfuscator': 'plain-text'}
         internal_rest_svc = rest_svc(loop)
@@ -103,6 +162,7 @@ class TestRestSvc:
         operation[0].pop('id')
         operation[0]['host_group'][0].pop('last_seen')
         operation[0].pop('start')
+        operation[0]['host_group'][0].pop('created')
         assert want == operation[0]
 
     def test_delete_ability(self, loop, rest_svc, file_svc):
@@ -188,3 +248,79 @@ class TestRestSvc:
         link = operation.potential_links[0]
         loop.run_until_complete(internal_rest_svc.apply_potential_link(link))
         assert 1 == len(operation.chain)
+
+    def test_set_single_bootstrap_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '123',
+            'deadman_abilities': ''
+        }
+        want = ['123']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+
+    def test_set_multiple_bootstrap_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '123, 456, 789',
+            'deadman_abilities': ''
+        }
+        want = ['123', '456', '789']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+
+    def test_clear_bootstrap_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '',
+        }
+        want = []
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('bootstrap_abilities') == want
+        assert agent_config.get('deadman_abilities') == want
+
+    def test_set_single_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '123'
+        }
+        want = ['123']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('deadman_abilities') == want
+
+    def test_set_multiple_deadman_ability(self, loop, rest_svc):
+        update_data = {
+            'sleep_min': 5,
+            'sleep_max': 5,
+            'watchdog': 0,
+            'untrusted': 90,
+            'implant_name': 'splunkd',
+            'bootstrap_abilities': '',
+            'deadman_abilities': '123, 456, 789'
+        }
+        want = ['123', '456', '789']
+        internal_rest_svc = rest_svc(loop)
+        agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
+        assert agent_config.get('deadman_abilities') == want

@@ -47,11 +47,18 @@ class TcpSessionHandler(BaseWorld):
         self.sessions = []
 
     async def refresh(self):
-        for index, session in enumerate(self.sessions):
+        index = 0
+
+        while index < len(self.sessions):
+            session = self.sessions[index]
+
             try:
                 session.connection.send(str.encode(' '))
             except socket.error:
+                self.log.debug('Error occurred when refreshing session %s. Removing from session pool.', session.id)
                 del self.sessions[index]
+            else:
+                index += 1
 
     async def accept(self, reader, writer):
         try:

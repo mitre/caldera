@@ -22,12 +22,15 @@ escape_ref = {
 
 class FactSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     unique = ma.fields.String()
     trait = ma.fields.String()
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
     score = ma.fields.Integer()
-    collected_by = ma.fields.String()
-    technique_id = ma.fields.String()
+    collected_by = ma.fields.String(allow_none=True)
+    technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
     def build_fact(self, data, **_):
@@ -50,6 +53,11 @@ class Fact(BaseObject):
         for char in escape_ref[executor]['special']:
             escaped_value = escaped_value.replace(char, (escape_ref[executor]['escape_prefix'] + char))
         return escaped_value
+
+    def __eq__(self, other):
+        if isinstance(other, Fact):
+            return self.unique == other.unique
+        return False
 
     def __init__(self, trait, value=None, score=1, collected_by=None, technique_id=None):
         super().__init__()

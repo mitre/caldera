@@ -12,7 +12,6 @@ from importlib import import_module
 from random import randint, choice
 from enum import Enum
 
-import dirhash
 import marshmallow as ma
 import marshmallow_enum as ma_enum
 
@@ -29,6 +28,10 @@ class BaseWorld:
     @staticmethod
     def apply_config(name, config):
         BaseWorld._app_configuration[name] = config
+
+    @staticmethod
+    def clear_config():
+        BaseWorld._app_configuration = {}
 
     @staticmethod
     def get_config(prop=None, name=None):
@@ -149,19 +152,6 @@ class BaseWorld:
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
             return False
-
-    @staticmethod
-    def get_version(path='.'):
-        ignore = ['/plugins/', '/data', '.*/', '_*/']
-        included_extensions = ['*.py', '*.html', '*.js', '*.go']
-        version_file = os.path.join(path, 'VERSION.txt')
-        if os.path.exists(version_file):
-            with open(version_file, 'r') as f:
-                version, md5 = f.read().strip().split('-')
-            calculated_md5 = dirhash.dirhash(path, 'md5', ignore=ignore, match=included_extensions)
-            if md5 == calculated_md5:
-                return version
-        return None
 
     class Access(Enum):
         APP = 0

@@ -29,7 +29,15 @@ class BaseObject(BaseWorld):
             return self
 
     def update(self, field, value):
-        if (value or type(value) == list) and (value != self.__getattribute__(field)):
+        """
+        Updates the given field to the given value as long as the value is not None and the new value is different from
+        the current value. Ignoring None prevents current property values from being overwritten to None if the given
+        property is not intentionally passed back to be updated (example: Agent heartbeat)
+
+        :param field: object property to update
+        :param value: value to update to
+        """
+        if (value is not None) and (value != self.__getattribute__(field)):
             self.__setattr__(field, value)
 
     def search_tags(self, value):
