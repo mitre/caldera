@@ -29,6 +29,7 @@ Examples include agents, GUI interfaces, collections of TTPs and more.
 - **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
+- **[Emu](https://github.com/mitre/emu)** (CTID emulation plans)
 - **[Fieldmanual](https://github.com/mitre/fieldmanual)** (documentation)
 - **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
 - **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
