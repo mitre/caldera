@@ -129,7 +129,7 @@ class RestService(RestServiceInterface, BaseService):
 
     async def display_operation_report(self, data):
         op_id = data.pop('op_id')
-        op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(op_id))))[0]
+        op = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]
         report_format = data.pop('format', 'full-report')
         if report_format == 'full-report':
             generator_func = op.report
@@ -217,11 +217,7 @@ class RestService(RestServiceInterface, BaseService):
             if parameter not in data.keys():
                 return dict(error='Missing parameter: %s' % parameter)
 
-        try:
-            operation_id = int(data['operation'])
-        except ValueError:
-            return dict(error='Invalid operation ID')
-        operation_search = {'id': operation_id, **access}
+        operation_search = {'id': data['operation'], **access}
         operation = next(iter(await self.get_service('data_svc').locate('operations', match=operation_search)), None)
         if not operation:
             return dict(error='Operation not found')
@@ -682,5 +678,5 @@ class RestService(RestServiceInterface, BaseService):
             await self.get_service('data_svc').store(ab)
 
     async def _get_operation_exfil_folders(self, operation_id):
-        op = (await self.get_service('data_svc').locate('operations', match=dict(id=int(operation_id))))[0]
+        op = (await self.get_service('data_svc').locate('operations', match=dict(id=operation_id)))[0]
         return ['%s-%s' % (a.host, a.paw) for a in op.agents]
