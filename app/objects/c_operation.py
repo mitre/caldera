@@ -249,10 +249,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def run(self, services):
         # load objective
         data_svc = services.get('data_svc')
-        obj = await data_svc.locate('objectives', match=dict(id=self.adversary.objective))
-        if obj == []:
-            obj = await data_svc.locate('objectives', match=dict(name='default'))
-        self.objective = deepcopy(obj[0])
+        await self._load_objective(data_svc)
         try:
             # Operation cedes control to planner
             planner = await self._get_planning_module(services)
@@ -262,18 +259,27 @@ class Operation(FirstClassObjectInterface, BaseObject):
             await self.close(services)
 
             # Automatic event log output
-            file_svc = services.get('file_svc')
-            await self.write_event_logs_to_disk(file_svc, data_svc, output=True)
+            await self.write_event_logs_to_disk(services.get('file_svc'), data_svc, output=True)
         except Exception as e:
             logging.error(e, exc_info=True)
 
     async def write_event_logs_to_disk(self, file_svc, data_svc, output=False):
         event_logs = await self.event_logs(file_svc, data_svc, output=output)
-        event_logs_dumps = json.dumps(event_logs)
         event_logs_dir = await file_svc.create_exfil_sub_directory('%s/event_logs' % self.get_config('reports_dir'))
-        await file_svc.save_file('operation_%s.json' % self.id, event_logs_dumps.encode(), event_logs_dir, encrypt=False)
+        file_name = 'operation_%s.json' % self.id
+        await self._write_logs_to_disk(event_logs, file_name, event_logs_dir, file_svc)
 
     """ PRIVATE """
+
+    async def _write_logs_to_disk(self, logs, file_name, dest_dir, file_svc):
+        logs_dumps = json.dumps(logs)
+        await file_svc.save_file(file_name, logs_dumps.encode(), dest_dir, encrypt=False)
+
+    async def _load_objective(self, data_svc):
+        obj = await data_svc.locate('objectives', match=dict(id=self.adversary.objective))
+        if not obj:
+            obj = await data_svc.locate('objectives', match=dict(name='default'))
+        self.objective = deepcopy(obj[0])
 
     async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
         event_dict = dict(command=link.command,
