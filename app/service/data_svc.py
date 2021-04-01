@@ -1,7 +1,7 @@
 import asyncio
 import copy
 import glob
-import os.path
+import os
 import pickle
 import shutil
 import warnings
@@ -22,6 +22,18 @@ from app.utility.base_service import BaseService
 
 MIN_MODULE_LEN = 1
 
+DEFAULT_BACKUP_DIR = "data/backup"
+DEFAULT_DATA_FILE_GLOBS = (
+    'data/abilities/*',
+    'data/adversaries/*',
+    'data/facts/*',
+    'data/objectives/*'
+    'data/payloads/*',
+    'data/results/*',
+    'data/sources/*',
+    'data/object_store',
+)
+
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -32,18 +44,39 @@ class DataService(DataServiceInterface, BaseService):
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
-    async def destroy():
-        if os.path.exists('data/object_store'):
-            os.remove('data/object_store')
+    def _iter_data_files():
+        """Yield paths to data files managed by caldera.
 
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
-            for f in glob.glob('%s/*' % d):
+        The files paths are relative to the root caldera folder, so they
+        will begin with "data/".
+        """
+        for data_glob in DEFAULT_DATA_FILE_GLOBS:
+            for f in glob.glob(data_glob):
                 if f.startswith('.'):  # e.g., .gitkeep
                     continue
-                elif os.path.isdir(f):
-                    shutil.rmtree(f)
-                else:
-                    os.remove(f)
+                yield f
+
+    @staticmethod
+    async def destroy(backup_dir=DEFAULT_BACKUP_DIR):
+        """Clear the caldera data directory and server state.
+
+        This moves all data files and the object store to the specified
+        backup directory. The original data file paths are preserved
+        under the backup directory.
+
+        Example (original path -> new backup path):
+            data/results/23deddf-ff3f2.yml -> backup/data/results/23deddf-ff3f2.yml
+        """
+        if os.path.exists(backup_dir):
+            shutil.rmtree(backup_dir)
+
+        os.mkdir(backup_dir)
+
+        for file_path in DataService._iter_data_files():
+            src_dir, src_filename = os.path.split(file_path)
+            dst_dir = os.path.join(backup_dir, src_dir)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.move(file_path, os.path.join(dst_dir, src_filename))
 
     async def save_state(self):
         await self._prune_non_critical_data()

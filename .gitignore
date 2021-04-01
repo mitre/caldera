@@ -29,6 +29,7 @@ data/sources/*
 !data/sources/.gitkeep
 data/objectives/*
 !data/objectives/.gitkeep
+data/backup/*
 .tox/
 
 # coverage reports
