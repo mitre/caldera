@@ -13,7 +13,7 @@ from app.objects.secondclass.c_link import Link
 @pytest.fixture
 def operation_agent(agent):
     return agent(sleep_min=30, sleep_max=60, watchdog=0, platform='windows', host='WORKSTATION',
-                 username='testagent', architecture='amd64', group='red', location='C:\\Users\\Public\\test.exe',
+                 username='testagent', architecture='amd64', group='red', location=r'C:\Users\Public\test.exe',
                  pid=1234, ppid=123, executors=['psh'], privilege='User', exe_name='test.exe', contact='unknown',
                  paw='testpaw')
 
@@ -90,7 +90,7 @@ class TestOperation:
             group='red',
             architecture='amd64',
             username='testagent',
-            location='C:\\Users\\Public\\test.exe',
+            location=r'C:\Users\Public\test.exe',
             pid=1234,
             ppid=123,
             privilege='User',
@@ -158,7 +158,7 @@ class TestOperation:
             group='red',
             architecture='amd64',
             username='testagent',
-            location='C:\\Users\\Public\\test.exe',
+            location=r'C:\Users\Public\test.exe',
             pid=1234,
             ppid=123,
             privilege='User',
