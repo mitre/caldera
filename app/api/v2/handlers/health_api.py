@@ -1,5 +1,6 @@
 import operator
 
+import aiohttp_apispec
 from aiohttp import web
 
 import app
@@ -17,6 +18,8 @@ class HealthApi(BaseApi):
         router = app.router
         router.add_get('/health', self.get_health_info)
 
+    @aiohttp_apispec.docs(tags=["health"])
+    @aiohttp_apispec.response_schema(CalderaInfoSchema, 200)
     @security.authentication_exempt
     async def get_health_info(self, request):
         loaded_plugins_sorted = sorted(self._app_svc.get_loaded_plugins(), key=operator.attrgetter('name'))
