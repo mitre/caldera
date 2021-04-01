@@ -1,8 +1,8 @@
 import logging
+import uuid
 from base64 import b64decode
 from datetime import datetime
 from importlib import import_module
-import uuid
 
 import marshmallow as ma
 
