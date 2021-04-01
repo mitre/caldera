@@ -30,6 +30,7 @@ data/sources/*
 data/objectives/*
 !data/objectives/.gitkeep
 data/backup/*
+!data/backup/.gitkeep
 .tox/
 
 # coverage reports
