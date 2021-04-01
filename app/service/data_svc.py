@@ -22,12 +22,12 @@ from app.utility.base_service import BaseService
 
 MIN_MODULE_LEN = 1
 
-DEFAULT_BACKUP_DIR = "data/backup"
-DEFAULT_DATA_FILE_GLOBS = (
+DATA_BACKUP_DIR = "data/backup"
+DATA_FILE_GLOBS = (
     'data/abilities/*',
     'data/adversaries/*',
     'data/facts/*',
-    'data/objectives/*'
+    'data/objectives/*',
     'data/payloads/*',
     'data/results/*',
     'data/sources/*',
@@ -49,15 +49,36 @@ class DataService(DataServiceInterface, BaseService):
 
         The files paths are relative to the root caldera folder, so they
         will begin with "data/".
+
+        Note:
+            This will skip any files starting with '.' (e.g., 'gitkeep').
         """
-        for data_glob in DEFAULT_DATA_FILE_GLOBS:
+        for data_glob in DATA_FILE_GLOBS:
             for f in glob.glob(data_glob):
-                if f.startswith('.'):  # e.g., .gitkeep
-                    continue
                 yield f
 
     @staticmethod
-    async def destroy(backup_dir=DEFAULT_BACKUP_DIR):
+    def _delete_directory_contents(path):
+        """Delete all files and subdirectories under `path`.
+
+        Note:
+            This uses `glob` and thus, ignores files files that
+            start with a '.' (e.g., '.gitkeep')
+        """
+        if not os.path.exists(path):
+            return
+
+        if not os.path.isdir(path):
+            raise ValueError(f"Input path must be a directory. Received {path}")
+
+        for path in glob.glob(f"{path}/*"):
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+
+    @staticmethod
+    async def destroy():
         """Clear the caldera data directory and server state.
 
         This moves all data files and the object store to the specified
@@ -67,14 +88,14 @@ class DataService(DataServiceInterface, BaseService):
         Example (original path -> new backup path):
             data/results/23deddf-ff3f2.yml -> backup/data/results/23deddf-ff3f2.yml
         """
-        if os.path.exists(backup_dir):
-            shutil.rmtree(backup_dir)
-
-        os.mkdir(backup_dir)
+        if os.path.exists(DATA_BACKUP_DIR):
+            DataService._delete_directory_contents(DATA_BACKUP_DIR)
+        else:
+            os.mkdir(DATA_BACKUP_DIR)
 
         for file_path in DataService._iter_data_files():
             src_dir, src_filename = os.path.split(file_path)
-            dst_dir = os.path.join(backup_dir, src_dir)
+            dst_dir = os.path.join(DATA_BACKUP_DIR, src_dir)
             os.makedirs(dst_dir, exist_ok=True)
             shutil.move(file_path, os.path.join(dst_dir, src_filename))
 
