@@ -1,4 +1,4 @@
-name: Code Testing
+name: Security Checks
 
 on: [push]
 
@@ -10,11 +10,11 @@ jobs:
       matrix:
         include:
           - python-version: 3.6
-            toxenv: py36,style,coverage-ci
+            toxenv: safety
           - python-version: 3.7
-            toxenv: py37,style,coverage-ci
+            toxenv: safety
           - python-version: 3.8
-            toxenv: py38,style,coverage-ci
+            toxenv: safety
 
     steps:
       - uses: actions/checkout@v2
@@ -32,6 +32,4 @@ jobs:
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
-      - uses: codecov/codecov-action@v1
-        with:
-          files: ./coverage.xml
+
