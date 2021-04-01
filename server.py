@@ -4,9 +4,11 @@ import logging
 import os
 import sys
 
+import aiohttp_apispec
 from aiohttp import web
 
 import app.api.v2
+from app import version
 from app.api.rest_api import RestApi
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
@@ -62,6 +64,20 @@ def run_tasks(services):
         loop.run_until_complete(services.get('app_svc').teardown(main_config_file=args.environment))
 
 
+def init_swagger_documentation(app):
+    """Makes swagger documentation available at /api/docs for any endpoints
+    marked for aiohttp_apispec documentation.
+    """
+    aiohttp_apispec.setup_aiohttp_apispec(
+        app=app,
+        title="CALDERA",
+        version=version.get_version(),
+        swagger_path="/api/docs",
+        url="/api/docs/swagger.json",
+        static_path="/static/swagger"
+    )
+
+
 if __name__ == '__main__':
     def list_str(values):
         return values.split(',')
@@ -103,6 +119,7 @@ if __name__ == '__main__':
 
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
+    init_swagger_documentation(app_svc.application)
 
     if args.fresh:
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
