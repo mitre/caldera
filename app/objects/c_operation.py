@@ -268,6 +268,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         event_logs_dir = await file_svc.create_exfil_sub_directory('%s/event_logs' % self.get_config('reports_dir'))
         file_name = 'operation_%s.json' % self.id
         await self._write_logs_to_disk(event_logs, file_name, event_logs_dir, file_svc)
+        logging.debug('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
 
     """ PRIVATE """
 
