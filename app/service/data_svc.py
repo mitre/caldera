@@ -51,7 +51,7 @@ class DataService(DataServiceInterface, BaseService):
         will begin with "data/".
 
         Note:
-            This will skip any files starting with '.' (e.g., 'gitkeep').
+            This will skip any files starting with '.' (e.g., '.gitkeep').
         """
         for data_glob in DATA_FILE_GLOBS:
             for f in glob.glob(data_glob):
@@ -62,8 +62,9 @@ class DataService(DataServiceInterface, BaseService):
         """Delete all files and subdirectories under `path`.
 
         Note:
-            This uses `glob` and thus, ignores files files that
-            start with a '.' (e.g., '.gitkeep')
+            This uses `glob` and thus, ignores top-level files
+            that start with a '.' (e.g., '.gitkeep'. Any subdirectories
+            are deleted entirely (even if they contain '.' files).
         """
         if not os.path.exists(path):
             return
@@ -81,9 +82,8 @@ class DataService(DataServiceInterface, BaseService):
     async def destroy():
         """Clear the caldera data directory and server state.
 
-        This moves all data files and the object store to the specified
-        backup directory. The original data file paths are preserved
-        under the backup directory.
+        This moves all data files and the object store to the data backup directory.
+        The original data file paths are preserved under the backup directory.
 
         Example (original path -> new backup path):
             data/results/23deddf-ff3f2.yml -> backup/data/results/23deddf-ff3f2.yml
