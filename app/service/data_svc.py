@@ -70,9 +70,9 @@ class DataService(DataServiceInterface, BaseService):
             return
 
         if not os.path.isdir(path):
-            raise ValueError(f"Input path must be a directory. Received {path}")
+            raise ValueError(f'Input path must be a directory. Received {path}')
 
-        for path in glob.glob(f"{path}/*"):
+        for path in glob.glob(f'{path}/*'):
             if os.path.isdir(path):
                 shutil.rmtree(path)
             else:
