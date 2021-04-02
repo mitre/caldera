@@ -122,6 +122,7 @@ if __name__ == '__main__':
     init_swagger_documentation(app_svc.application)
 
     if args.fresh:
+        logging.info("Fresh startup: removing server data files")
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
 
     run_tasks(services=app_svc.get_services())
