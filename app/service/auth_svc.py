@@ -1,4 +1,5 @@
 import base64
+import logging
 from collections import namedtuple
 
 from aiohttp import web, web_request
@@ -11,6 +12,7 @@ from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
+from importlib import import_module
 import ldap3
 from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
@@ -54,14 +56,94 @@ def check_authorization(func):
 
 
 class AuthService(AuthServiceInterface, BaseService):
+    class DefaultLoginHandler(LoginHandlerInterface):
+        def __init__(self, auth_svc):
+            self.log = logging.getLogger('default_login_handler')
+            self.auth_svc = auth_svc
+            self._ldap_config = self.get_config('ldap')
+            self._name = 'Default Login Handler'
+
+        @property
+        def name(self):
+            return self._name
+
+        """ LoginHandlerInterface implementation """
+
+        async def handle_login(self, request, **kwargs):
+            self.log.debug('Handling login')
+            data = await request.post()
+            username = data.get('username')
+            password = data.get('password')
+            if username and password:
+                if self._ldap_config:
+                    verified = await self._ldap_login(username, password)
+                else:
+                    verified = await self._check_credentials(request.app.user_map, username, password)
+
+                if verified:
+                    await self.auth_svc.provide_verified_login_response(request, username)
+                self.log.debug('%s failed login attempt: ' % username)
+            raise web.HTTPFound('/login')
+
+        async def handle_login_redirect(self, request, **kwargs):
+            self.log.debug('Handling login redirect')
+            if kwargs.get('use_template'):
+                return render_template('login.html', request, dict())
+            else:
+                raise web.HTTPFound('/login')
+
+        """ PRIVATE """
+
+        @staticmethod
+        async def _check_credentials(user_map, username, password):
+            user = user_map.get(username)
+            if not user:
+                return False
+            return user.password == password
+
+        async def _ldap_login(self, username, password):
+            server = ldap3.Server(self._ldap_config.get('server'))
+            dn = self._ldap_config.get('dn')
+            user_attr = self._ldap_config.get('user_attr') or 'uid'
+            user_string = '%s=%s,%s' % (user_attr, username, dn)
+
+            try:
+                with ldap3.Connection(server, user=user_string, password=password) as conn:
+                    if conn.bind():
+                        if username not in self.user_map:
+                            group = await self._ldap_get_group(conn, dn, username, user_attr)
+                            await self.create_user(username, None, group)
+                        return True
+            except LDAPException:
+                self.log.error('Unable to connect to LDAP server')
+
+            return False
+
+        async def _ldap_get_group(self, connection, dn, username, user_attr):
+            group_attr = self._ldap_config.get('group_attr') or 'objectClass'
+            red_group_name = self._ldap_config.get('red_group') or 'red'
+
+            try:
+                connection.search(dn, '(%s=%s)' % (user_attr, username), attributes=[group_attr])
+            except LDAPAttributeError:
+                self.log.error('Invalid group_attr in config: %s' % group_attr)
+                return 'blue'
+
+            groups_result = connection.entries[0][group_attr].value
+            if ((isinstance(groups_result, list) and red_group_name in groups_result)
+                    or red_group_name == groups_result):
+                return 'red'
+            else:
+                return 'blue'
+
 
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
-        self.ldap_config = self.get_config('ldap')
-        self.optional_login_handler = None
+        self._default_login_handler = self.DefaultLoginHandler(self)
+        self._login_handler = self._get_primary_login_handler()
 
     async def apply(self, app, users):
         if users:
@@ -85,55 +167,42 @@ class AuthService(AuthServiceInterface, BaseService):
         await forget(request, web.Response())
         raise web.HTTPFound('/login')
 
-    async def set_optional_login_handler(self, login_handler):
-        """
-        Sets the optional login handler for the auth service. This login handler will take priority for login methods
-        during login_user and redirects during check_permissions
-        """
-        if isinstance(login_handler, LoginHandlerInterface):
-            self.optional_login_handler = login_handler
-        else:
-            self.log.warn('Attempted to set login handler to an object that does not implement LoginHandlerInterface.')
-
     async def login_user(self, request):
         """
         Log a user in and save the session
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
-        if self.optional_login_handler:
-            try:
-                self.log.debug('Delegating to login handler for login')
-                await self.optional_login_handler.handle_login(request)
-            except web.HTTPRedirection as http_redirect:
-                raise http_redirect
-            except Exception as e:
-                self.log.error('Exception when handling login request via optional login handler: %s' % e)
-            self.log.debug('Falling back to main login handler')
+        try:
+            self.log.debug('Using login handler "%s" for login' % self._login_handler.name)
+            return await self._login_handler.handle_login(request)
+        except web.HTTPRedirection as http_redirect:
+            raise http_redirect
+        except Exception as e:
+            self.log.error('Exception when handling login request: %s' % e)
 
-        # Fallback
-        return await self._base_login_user(request)
+        # Fallback if not already using default login handler
+        if not isinstance(self._login_handler, self.DefaultLoginHandler):
+            self.log.debug('Falling back to default login handler')
+            return await self._default_login_handler.handle_login(request)
 
     async def login_redirect(self, request, use_template=True):
-        """If optional login handler is set, defer to it to handle login. Otherwise, use default login handling method
-        (or fallback to it if optional login handler fails). Default method is to return the login.html template
-        if use_template is set to True, otherwise redirect to '/login' by raising HTTPFound exception."""
+        """Redirect user to login page using the configured login handler. If using the default login handler
+        and use_template is set to true, method will return the login.html template. If use_template is set to False
+        and the default login handler is configured, it will redirect to '/login' by raising HTTPFound exception."""
 
-        if self.optional_login_handler:
-            try:
-                self.log.debug('Delegating to login handler for redirect')
-                await self.optional_login_handler.handle_login_redirect(request)
-            except web.HTTPRedirection as http_redirect:
-                raise http_redirect
-            except Exception as e:
-                self.log.error('Exception when handling persmissions redirect via optional login handler: %s' % e)
-            self.log.debug('Falling back to main login handler')
+        try:
+            self.log.debug('Using login handler "%s" for login redirect' % self._login_handler.name)
+            return await self._login_handler.handle_login_redirect(request, use_template=use_template)
+        except web.HTTPRedirection as http_redirect:
+            raise http_redirect
+        except Exception as e:
+            self.log.error('Exception when handling login redirect: %s' % e)
 
-        # Fallback
-        if use_template:
-            return render_template('login.html', request, dict())
-        else:
-            raise web.HTTPFound('/login')
+        # Fallback if not already using default login handler
+        if not isinstance(self._login_handler, self.DefaultLoginHandler):
+            self.log.debug('Falling back to default login handler')
+            return await self._default_login_handler.handle_login_redirect(request, use_template=use_template)
 
     def request_has_valid_api_key(self, request):
         api_key = request.headers.get(HEADER_API_KEY)
@@ -181,62 +250,26 @@ class AuthService(AuthServiceInterface, BaseService):
 
     """ PRIVATE """
 
-    @staticmethod
-    async def _check_credentials(user_map, username, password):
-        user = user_map.get(username)
-        if not user:
-            return False
-        return user.password == password
+    def _get_primary_login_handler(self):
+        """
+        Returns the login handler for the auth service as specified in the config file.
+        This login handler will take priority for login methods during login_user and redirects during
+        check_permissions. If no login handler was specified in the config file, the default handler will be returned.
+        """
+        login_handler_module_path = self.get_config('auth.login.handler.module')
+        if login_handler_module_path and login_handler_module_path != 'default':
+            try:
+                login_handler = getattr(import_module(login_handler_module_path), '__init__')()
+                if isinstance(login_handler, LoginHandlerInterface):
+                    self.log.info('Setting primary login handler: %s' % login_handler_module_path)
+                    return login_handler
+                else:
+                    self.log.warn('Attempted to set login handler that does not implement LoginHandlerInterface.')
+            except Exception as e:
+                self.log.error('Invalid login handler module: %s' % e)
 
-    async def _base_login_user(self, request):
-        data = await request.post()
-        username = data.get('username')
-        password = data.get('password')
-        if username and password:
-            if self.ldap_config:
-                verified = await self._ldap_login(username, password)
-            else:
-                verified = await self._check_credentials(request.app.user_map, username, password)
-
-            if verified:
-                await self.provide_verified_login_response(request, username)
-            self.log.debug('%s failed login attempt: ' % username)
-        raise web.HTTPFound('/login')
-
-    async def _ldap_login(self, username, password):
-        server = ldap3.Server(self.ldap_config.get('server'))
-        dn = self.ldap_config.get('dn')
-        user_attr = self.ldap_config.get('user_attr') or 'uid'
-        user_string = '%s=%s,%s' % (user_attr, username, dn)
-
-        try:
-            with ldap3.Connection(server, user=user_string, password=password) as conn:
-                if conn.bind():
-                    if username not in self.user_map:
-                        group = await self._ldap_get_group(conn, dn, username, user_attr)
-                        await self.create_user(username, None, group)
-                    return True
-        except LDAPException:
-            self.log.error('Unable to connect to LDAP server')
-
-        return False
-
-    async def _ldap_get_group(self, connection, dn, username, user_attr):
-        group_attr = self.ldap_config.get('group_attr') or 'objectClass'
-        red_group_name = self.ldap_config.get('red_group') or 'red'
-
-        try:
-            connection.search(dn, '(%s=%s)' % (user_attr, username), attributes=[group_attr])
-        except LDAPAttributeError:
-            self.log.error('Invalid group_attr in config: %s' % group_attr)
-            return 'blue'
-
-        groups_result = connection.entries[0][group_attr].value
-        if ((isinstance(groups_result, list) and red_group_name in groups_result)
-                or red_group_name == groups_result):
-            return 'red'
-        else:
-            return 'blue'
+        self.log.info('Using default login handler.')
+        return self._default_login_handler
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
