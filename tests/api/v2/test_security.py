@@ -66,6 +66,46 @@ def simple_webapp(loop, base_world):
     return app
 
 
+@pytest.fixture
+def class_based_webapp(loop, base_world):
+    async def index(request):
+        return web.Response(status=200, text='hello!')
+
+    @security.authentication_exempt
+    async def public(request):
+        return web.Response(status=200, text='public')
+
+    async def private(request):
+        return web.Response(status=200, text='private')
+
+    @security.authentication_exempt
+    async def login(request):
+        await auth_svc.login_user(request)  # Note: auth_svc defined in context function
+
+    app = web.Application()
+    app.router.add_get('/', index)
+    app.router.add_post('/login', login)
+    app.router.add_get('/public', public)
+    app.router.add_get('/private', private)
+
+    auth_svc = AuthService()
+
+    loop.run_until_complete(
+        auth_svc.apply(
+            app=app,
+            users=base_world.get_config('users')
+        )
+    )
+
+    # The authentication_required middleware needs to run after the session middleware.
+    # AuthService.apply(...) adds session middleware to the app, so we can append the
+    # the auth middleware after. Not doing this will cause a 500 in regards to the
+    # session middleware not being set up correctly.
+    app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
+
+    return app
+
+
 def test_set_handler_authentication_exempt():
     def fake_handler(request):
         return None
@@ -73,6 +113,16 @@ def test_set_handler_authentication_exempt():
     assert security.is_handler_authentication_exempt(fake_handler) is False
     security.set_handler_authentication_exempt(fake_handler)
     assert security.is_handler_authentication_exempt(fake_handler) is True
+
+
+def test_bound_method_is_authentication_exempt():
+    class Api:
+        def handler(self, request):
+            return None
+
+    api = Api()
+    assert security.is_handler_authentication_exempt(api.handler) is False
+    assert security.is_handler_authentication_exempt(security.authentication_exempt(api.handler)) is True
 
 
 async def test_authentication_required_middleware_authenticated_endpoint_returns_401(simple_webapp, aiohttp_client):
@@ -114,3 +164,25 @@ async def test_authentication_required_middleware_authenticated_endpoint_accepts
     # Internally the test client keeps track of the session and will forward any relavent cookies.
     index_response = await client.get('/private')
     assert index_response.status == 200
+
+
+async def test_authentication_exempt_bound_method_returns_200(base_world, aiohttp_client):
+    class Api:
+        async def public(self, request):
+            return web.Response(status=200, text='hello!')
+
+    api = Api()
+    app = web.Application()
+    app.router.add_get('/public', security.authentication_exempt(api.public))
+
+    auth_svc = AuthService()
+    await auth_svc.apply(
+        app=app,
+        users=base_world.get_config('users')
+    )
+
+    app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
+
+    client = await aiohttp_client(app)
+    resp = await client.get('/public')
+    assert resp.status == 200
