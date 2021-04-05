@@ -94,6 +94,10 @@
                     <option value="{{ s.name|e }}">Use {{ s.name|e }} facts</option>
                 {% endfor %}
               </select>
+              <select name="parsers" id="queueLearningParsers" class="queueOption" style="opacity:0.5" disabled="true">
+                <option value="0" selected>Do not use learning parsers</option>
+                <option value="1">Use learning parsers</option>
+              </select>
               <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
               <input id="queueTimeout" class="queueOption" type="number" value="30" min="0" max="300"
                       onchange="stream('The number of seconds Caldera will wait per cleanup action to complete before continuing.')">
@@ -414,6 +418,7 @@
             "autonomous":document.getElementById("queueAuto").value,
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
+            "use_learning_parsers": document.getElementById("queueLearningParsers").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
             "visibility": document.getElementById("queueVisibility").value,

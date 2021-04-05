@@ -85,14 +85,15 @@ class TestRestSvc:
                                               'available_contacts': ['unknown'], 'pending_contact': 'unknown',
                                               'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
                               'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
-                              'obfuscator': 'plain-text', 'objective': {'goals': [{'value': 'complete',
-                                                                                   'operator': '==',
-                                                                                   'target': 'exhaustion',
-                                                                                   'achieved': False,
-                                                                                   'count': 1048576}],
-                                                                        'percentage': 0.0, 'description': '',
-                                                                        'id': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
-                                                                        'name': 'default'}}
+                              'obfuscator': 'plain-text', 'use_learning_parsers': False,
+                              'objective': {'goals': [{'value': 'complete',
+                                                                'operator': '==',
+                                                                'target': 'exhaustion',
+                                                                'achieved': False,
+                                                                'count': 1048576}],
+                                                     'percentage': 0.0, 'description': '',
+                                                     'id': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+                                                     'name': 'default'}}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
@@ -154,7 +155,7 @@ class TestRestSvc:
                      'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown',
                      'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
-                'obfuscator': 'plain-text'}
+                'obfuscator': 'plain-text', 'use_learning_parsers': False}
         internal_rest_svc = rest_svc(loop)
         operation = loop.run_until_complete(internal_rest_svc.create_operation(access=dict(
             access=(internal_rest_svc.Access.RED, internal_rest_svc.Access.APP)),
