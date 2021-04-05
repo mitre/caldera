@@ -57,9 +57,9 @@ def check_authorization(func):
 
 class AuthService(AuthServiceInterface, BaseService):
     class DefaultLoginHandler(LoginHandlerInterface):
-        def __init__(self, auth_svc):
+        def __init__(self, services):
             self.log = logging.getLogger('default_login_handler')
-            self.auth_svc = auth_svc
+            self.auth_svc = services.get('auth_svc')
             self._ldap_config = self.get_config('ldap')
             self._name = 'Default Login Handler'
 
@@ -70,7 +70,7 @@ class AuthService(AuthServiceInterface, BaseService):
         """ LoginHandlerInterface implementation """
 
         async def handle_login(self, request, **kwargs):
-            self.log.debug('Handling login')
+            self.log.debug('Handling default login')
             data = await request.post()
             username = data.get('username')
             password = data.get('password')
@@ -86,7 +86,7 @@ class AuthService(AuthServiceInterface, BaseService):
             raise web.HTTPFound('/login')
 
         async def handle_login_redirect(self, request, **kwargs):
-            self.log.debug('Handling login redirect')
+            self.log.debug('Handling default login redirect')
             if kwargs.get('use_template'):
                 return render_template('login.html', request, dict())
             else:
@@ -142,8 +142,12 @@ class AuthService(AuthServiceInterface, BaseService):
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
-        self._default_login_handler = self.DefaultLoginHandler(self)
+        self._default_login_handler = self.DefaultLoginHandler(self.get_services())
         self._login_handler = self._get_primary_login_handler()
+
+    @property
+    def default_login_handler(self):
+        return self._default_login_handler
 
     async def apply(self, app, users):
         if users:
@@ -175,7 +179,7 @@ class AuthService(AuthServiceInterface, BaseService):
         """
         try:
             self.log.debug('Using login handler "%s" for login' % self._login_handler.name)
-            return await self._login_handler.handle_login(request)
+            await self._login_handler.handle_login(request)
         except web.HTTPRedirection as http_redirect:
             raise http_redirect
         except Exception as e:
@@ -259,7 +263,7 @@ class AuthService(AuthServiceInterface, BaseService):
         login_handler_module_path = self.get_config('auth.login.handler.module')
         if login_handler_module_path and login_handler_module_path != 'default':
             try:
-                login_handler = getattr(import_module(login_handler_module_path), '__init__')()
+                login_handler = getattr(import_module(login_handler_module_path), 'load_login_handler')(self.get_services())
                 if isinstance(login_handler, LoginHandlerInterface):
                     self.log.info('Setting primary login handler: %s' % login_handler_module_path)
                     return login_handler
