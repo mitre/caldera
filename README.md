@@ -8,7 +8,7 @@
 
 *Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/).*
 
-CALDERA&trade; is a cyber security framework designed to easily run autonomous breach-and-simulation exercises. It can also be used to run manual red-team engagements or automated incident response.
+CALDERA&trade; is a cyber security framework designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
 
@@ -16,8 +16,7 @@ The framework consists of two components:
 
 1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is 
 an asynchronous command-and-control (C2) server with a REST API and a web interface. 
-2) **Plugins**. These are separate repositories that hang off of the core framework, providing additional functionality. 
-Examples include agents, GUI interfaces, collections of TTPs and more. 
+2) **Plugins**. These repositories expand the core framework capabilities and providing additional functionality. Examples include agents, reporting, collections of TTPs and more.
 
 ## Plugins
 
