@@ -109,7 +109,7 @@ def op_with_learning_parser(ability, adversary):
 
 @pytest.fixture
 def op_without_learning_parser(ability, adversary):
-    op = Operation(name='test', agents=[], adversary=adversary)
+    op = Operation(name='test', agents=[], adversary=adversary, use_learning_parsers=False)
     return op
 
 
