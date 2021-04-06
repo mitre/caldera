@@ -62,7 +62,7 @@ class AuthService(AuthServiceInterface, BaseService):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
         self._default_login_handler = self.DefaultLoginHandler(self.get_services())
-        self._login_handler = self._get_primary_login_handler()
+        self._login_handler = self._set_primary_login_handler()
 
     @property
     def default_login_handler(self):
@@ -101,6 +101,8 @@ class AuthService(AuthServiceInterface, BaseService):
             await self._login_handler.handle_login(request)
         except web.HTTPRedirection as http_redirect:
             raise http_redirect
+        except web.HTTPUnauthorized as http_unauthorized:
+            raise http_unauthorized
         except Exception as e:
             self.log.error('Exception when handling login request: %s' % e)
 
@@ -119,6 +121,8 @@ class AuthService(AuthServiceInterface, BaseService):
             return await self._login_handler.handle_login_redirect(request, use_template=use_template)
         except web.HTTPRedirection as http_redirect:
             raise http_redirect
+        except web.HTTPUnauthorized as http_unauthorized:
+            raise http_unauthorized
         except Exception as e:
             self.log.error('Exception when handling login redirect: %s' % e)
 
@@ -173,7 +177,7 @@ class AuthService(AuthServiceInterface, BaseService):
 
     """ PRIVATE """
 
-    def _get_primary_login_handler(self):
+    def _set_primary_login_handler(self):
         """
         Returns the login handler for the auth service as specified in the config file.
         This login handler will take priority for login methods during login_user and redirects during

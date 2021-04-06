@@ -16,6 +16,7 @@ from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.service.interfaces.i_login_handler import LoginHandlerInterface
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
@@ -140,3 +141,29 @@ async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
     assert resp.status == HTTPStatus.OK
     config_dict = await resp.json()
     assert config_dict.get('requirements', dict()).get('go', dict()).get('command') == 'go version'
+
+async def test_custom_login_handler(aiohttp_client):
+    class RejectAllLoginHandler(LoginHandlerInterface):
+        def __init__(self, services):
+            self.auth_svc = services.get('auth_svc')
+            self._name = 'Reject All Logins'
+
+        """ LoginHandlerInterface implementation """
+
+        async def handle_login(self, request, **kwargs):
+            # Always reject login and return 401
+            raise web.HTTPUnauthorized(text='Automatic rejection')
+
+        async def handle_login_redirect(self, request, **kwargs):
+            # Always reject and return 401
+            print('Handling redirect')
+            raise web.HTTPUnauthorized(text='Automatic rejection')
+
+    BaseService.get_service('auth_svc')._login_handler = RejectAllLoginHandler(BaseService.get_services())
+    resp = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
+    assert resp.status == 401
+    assert await resp.text() == 'Automatic rejection'
+
+    resp = await aiohttp_client.get('/', allow_redirects=False)
+    assert resp.status == 401
+    assert await resp.text() == 'Automatic rejection'
