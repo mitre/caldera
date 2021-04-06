@@ -5,10 +5,6 @@ import types
 from aiohttp import web
 
 
-def set_handler_authentication_exempt(handler):
-    handler.__caldera_unauthenticated__ = True
-
-
 def is_handler_authentication_exempt(handler):
     """Return True if the endpoint handler is authentication exempt."""
     try:
@@ -47,7 +43,7 @@ def authentication_exempt(handler):
         else:
             handler = _wrap_method(handler)
 
-    set_handler_authentication_exempt(handler)
+    handler.__caldera_unauthenticated__ = True
     return handler
 
 
