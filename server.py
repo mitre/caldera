@@ -13,7 +13,7 @@ from app.api.rest_api import RestApi
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
-from app.service.data_svc import DataService
+from app.service.data_svc import DataService, DATA_BACKUP_DIR
 from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
@@ -122,6 +122,7 @@ if __name__ == '__main__':
     init_swagger_documentation(app_svc.application)
 
     if args.fresh:
+        logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
 
     run_tasks(services=app_svc.get_services())
