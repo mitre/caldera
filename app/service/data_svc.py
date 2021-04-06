@@ -1,8 +1,10 @@
 import asyncio
 import copy
+import datetime
 import glob
 import os
 import pickle
+import tarfile
 import shutil
 import warnings
 from base64 import b64encode
@@ -58,46 +60,32 @@ class DataService(DataServiceInterface, BaseService):
                 yield f
 
     @staticmethod
-    def _delete_directory_contents(path):
-        """Delete all files and subdirectories under `path`.
-
-        Note:
-            This uses `glob` and thus, ignores top-level files
-            that start with a '.' (e.g., '.gitkeep'. Any subdirectories
-            are deleted entirely (even if they contain '.' files).
-        """
+    def _delete_file(path):
         if not os.path.exists(path):
             return
-
-        if not os.path.isdir(path):
-            raise ValueError(f'Input path must be a directory. Received {path}')
-
-        for path in glob.glob(f'{path}/*'):
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.remove(path)
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
 
     @staticmethod
     async def destroy():
-        """Clear the caldera data directory and server state.
+        """Reset the caldera data directory and server state.
 
-        This moves all data files and the object store to the data backup directory.
-        The original data file paths are preserved under the backup directory.
-
-        Example (original path -> new backup path):
-            data/results/23deddf-ff3f2.yml -> backup/data/results/23deddf-ff3f2.yml
+        This creates a gzipped tarball backup of the data files tracked by caldera.
+        Paths are preserved within the tarball, with all files having "data/" as the
+        root.
         """
-        if os.path.exists(DATA_BACKUP_DIR):
-            DataService._delete_directory_contents(DATA_BACKUP_DIR)
-        else:
+        if not os.path.exists(DATA_BACKUP_DIR):
             os.mkdir(DATA_BACKUP_DIR)
 
-        for file_path in DataService._iter_data_files():
-            src_dir, src_filename = os.path.split(file_path)
-            dst_dir = os.path.join(DATA_BACKUP_DIR, src_dir)
-            os.makedirs(dst_dir, exist_ok=True)
-            shutil.move(file_path, os.path.join(dst_dir, src_filename))
+        timestamp = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        tarball_path = os.path.join(DATA_BACKUP_DIR, f'backup-{timestamp}.tar.gz')
+
+        with tarfile.open(tarball_path, 'w:gz') as tarball:
+            for file_path in DataService._iter_data_files():
+                tarball.add(file_path)
+                DataService._delete_file(file_path)
 
     async def save_state(self):
         await self._prune_non_critical_data()
