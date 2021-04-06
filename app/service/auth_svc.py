@@ -186,7 +186,7 @@ class AuthService(AuthServiceInterface, BaseService):
         login_handler_module_path = self.get_config('auth.login.handler.module')
         if login_handler_module_path and login_handler_module_path != 'default':
             try:
-                login_handler = getattr(import_module(login_handler_module_path), 'load_login_handler')(self.get_services())
+                login_handler = import_module(login_handler_module_path).load_login_handler(self.get_services())
                 if isinstance(login_handler, LoginHandlerInterface):
                     self.log.info('Setting primary login handler: %s' % login_handler_module_path)
                     return login_handler
