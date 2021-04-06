@@ -198,7 +198,6 @@ class AuthService(AuthServiceInterface, BaseService):
         self.log.info('Using default login handler.')
         return self._default_login_handler
 
-
     class DefaultLoginHandler(LoginHandlerInterface):
         def __init__(self, services):
             self.log = logging.getLogger('default_login_handler')
