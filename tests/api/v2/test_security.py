@@ -66,53 +66,22 @@ def simple_webapp(loop, base_world):
     return app
 
 
-@pytest.fixture
-def class_based_webapp(loop, base_world):
-    async def index(request):
-        return web.Response(status=200, text='hello!')
-
-    @security.authentication_exempt
-    async def public(request):
-        return web.Response(status=200, text='public')
-
-    async def private(request):
-        return web.Response(status=200, text='private')
-
-    @security.authentication_exempt
-    async def login(request):
-        await auth_svc.login_user(request)  # Note: auth_svc defined in context function
-
-    app = web.Application()
-    app.router.add_get('/', index)
-    app.router.add_post('/login', login)
-    app.router.add_get('/public', public)
-    app.router.add_get('/private', private)
-
-    auth_svc = AuthService()
-
-    loop.run_until_complete(
-        auth_svc.apply(
-            app=app,
-            users=base_world.get_config('users')
-        )
-    )
-
-    # The authentication_required middleware needs to run after the session middleware.
-    # AuthService.apply(...) adds session middleware to the app, so we can append the
-    # the auth middleware after. Not doing this will cause a 500 in regards to the
-    # session middleware not being set up correctly.
-    app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
-
-    return app
-
-
-def test_set_handler_authentication_exempt():
+def test_function_is_authentication_exempt():
     def fake_handler(request):
         return None
 
     assert security.is_handler_authentication_exempt(fake_handler) is False
-    security.set_handler_authentication_exempt(fake_handler)
-    assert security.is_handler_authentication_exempt(fake_handler) is True
+    assert security.is_handler_authentication_exempt(security.authentication_exempt(fake_handler)) is True
+
+
+def test_unbound_method_is_authentication_exempt():
+    class Api:
+        @security.authentication_exempt
+        def handler(self, request):
+            return None
+
+    api = Api()
+    assert security.is_handler_authentication_exempt(api.handler)
 
 
 def test_bound_method_is_authentication_exempt():
