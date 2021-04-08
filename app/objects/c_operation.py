@@ -86,6 +86,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if source:
             self.rules = source.rules
 
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        self._state = value
+
     def store(self, ram):
         existing = self.retrieve(ram['operations'], self.unique)
         if not existing:
