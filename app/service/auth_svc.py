@@ -175,25 +175,34 @@ class AuthService(AuthServiceInterface, BaseService):
             return True
         return await self.request_has_valid_user_session(request)
 
-    async def set_login_handlers(self, services):
+    async def set_login_handlers(self, services, primary_handler=None):
         """Sets the default login handler for the auth service, as well as the custom login handler if specified in the
-        config file. This login handler will take priority for login methods during login_user and redirects during
-        check_permissions. If no login handler was specified in the config file, the auth service will use the
-        default handler.
+        primary_handler parameter or in the config file. The custom login handler will take priority for login methods
+        during login_user and redirects during check_permissions.
+        If no login handler is specified in the primary_handler parameter, then the config file will
+        be used to load the primary login handler.
+        If no login handler was specified in the config file or via the primary_handler parameter,
+        the auth service will use only the default handler.
         Will raise a TypeError exception if the provided login handler does not implement the LoginHandlerInterface.
         """
         self._configure_default_login_handler(services)
-        login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
-        if login_handler_module_path and login_handler_module_path != 'default':
-            login_handler = import_module(login_handler_module_path).load_login_handler(services)
-            if isinstance(login_handler, LoginHandlerInterface):
-                self.log.info('Setting primary login handler: %s', login_handler_module_path)
-                self._login_handler = login_handler
+        provided_handler = primary_handler if primary_handler else self._get_login_handler_from_config(services)
+        if provided_handler:
+            if isinstance(provided_handler, LoginHandlerInterface):
+                self.log.info('Setting primary login handler: %s', provided_handler.name)
+                self._login_handler = provided_handler
             else:
                 raise TypeError('Attempted to set login handler that does not implement LoginHandlerInterface.')
         else:
             self.log.info('Using default login handler.')
             self._login_handler = self._default_login_handler
+
+    def _get_login_handler_from_config(self, services):
+        login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
+        if login_handler_module_path and login_handler_module_path != 'default':
+            self.log.debug('Fetching login handler from config from module: %s', login_handler_module_path)
+            login_handler = import_module(login_handler_module_path).load_login_handler(services)
+            return login_handler
 
     @classmethod
     def _configure_default_login_handler(cls, services):

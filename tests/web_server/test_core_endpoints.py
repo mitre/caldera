@@ -157,10 +157,15 @@ async def test_custom_rejecting_login_handler(aiohttp_client):
             # Always reject and return 401
             raise web.HTTPUnauthorized(text='Automatic rejection')
 
-    BaseService.get_service('auth_svc')._login_handler = RejectAllLoginHandler(
+    login_handler = RejectAllLoginHandler(
         BaseService.get_services(),
         'Reject All Login Handler',
     )
+    await BaseService.get_service('auth_svc').set_login_handlers(
+        BaseService.get_services(),
+        login_handler
+    )
+
     resp = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
     assert resp.status == HTTPStatus.UNAUTHORIZED
     assert await resp.text() == 'Automatic rejection'
@@ -185,9 +190,13 @@ async def test_custom_accepting_login_handler(aiohttp_client):
         async def handle_login_redirect(self, request, **kwargs):
             await self.handle_login(request, **kwargs)
 
-    BaseService.get_service('auth_svc')._login_handler = AcceptAllLoginHandler(
+    login_handler = AcceptAllLoginHandler(
         BaseService.get_services(),
         'Accept All Login Handler',
+    )
+    await BaseService.get_service('auth_svc').set_login_handlers(
+        BaseService.get_services(),
+        login_handler
     )
     resp = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='invalid', password='invalid'))
     assert resp.status == HTTPStatus.FOUND
