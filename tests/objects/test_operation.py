@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import pytest
@@ -8,6 +9,7 @@ from unittest.mock import MagicMock
 
 from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_result import Result
 
 
 @pytest.fixture
@@ -71,6 +73,43 @@ def op_for_event_logs(operation_agent, operation_adversary, ability, operation_l
                                     command=encoded_command_2, status=-2, host=operation_agent.host, pid=7891,
                                     decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
     op.chain = [link_1, link_2, discarded_link]
+    return op
+
+
+@pytest.fixture
+def test_ability(ability):
+    return ability(ability_id='123')
+
+
+@pytest.fixture
+def make_test_link(test_ability):
+    def _make_link(link_id):
+        return Link(command='', paw='123456', ability=test_ability, id=link_id)
+    return _make_link
+
+
+@pytest.fixture
+def make_test_result():
+    def _make_result(link_id):
+        result = dict(
+            id=link_id,
+            output=str(base64.b64encode('10.10.10.10'.encode('utf-8')).decode('utf-8')),
+            pid=0,
+            status=0
+        )
+        return Result(**result)
+    return _make_result
+
+
+@pytest.fixture
+def op_with_learning_parser(ability, adversary):
+    op = Operation(name='test', agents=[], adversary=adversary, use_learning_parsers=True)
+    return op
+
+
+@pytest.fixture
+def op_without_learning_parser(ability, adversary):
+    op = Operation(name='test', agents=[], adversary=adversary, use_learning_parsers=False)
     return op
 
 
@@ -223,3 +262,22 @@ class TestOperation:
             assert recorded_log == want
         finally:
             os.remove(target_path)
+
+    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, op_with_learning_parser, make_test_link, make_test_result):
+        test_link = make_test_link(1234)
+        op_with_learning_parser.add_link(test_link)
+        test_result = make_test_result(test_link.id)
+        loop.run_until_complete(data_svc.store(op_with_learning_parser))
+        loop.run_until_complete(contact_svc._save(test_result))
+        assert len(test_link.facts) == 1
+        fact = test_link.facts[0]
+        assert fact.trait == 'host.ip.address'
+        assert fact.value == '10.10.10.10'
+
+    def test_without_learning_parser(self, loop, contact_svc, data_svc, learning_svc, op_without_learning_parser, make_test_link, make_test_result):
+        test_link = make_test_link(5678)
+        op_without_learning_parser.add_link(test_link)
+        test_result = make_test_result(test_link.id)
+        loop.run_until_complete(data_svc.store(op_without_learning_parser))
+        loop.run_until_complete(contact_svc._save(test_result))
+        assert len(test_link.facts) == 0

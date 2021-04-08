@@ -106,7 +106,7 @@ class ContactService(ContactServiceInterface, BaseService):
                         loop.create_task(link.parse(None, result.output))
                     elif link.ability.parsers:
                         loop.create_task(link.parse(operation, result.output))
-                    else:
+                    elif operation.use_learning_parsers:
                         loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link, result.output))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)

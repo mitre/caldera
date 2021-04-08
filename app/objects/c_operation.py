@@ -34,6 +34,7 @@ class OperationSchema(ma.Schema):
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
+    use_learning_parsers = ma.fields.Boolean()
 
     @ma.post_load
     def build_planner(self, data, **_):
@@ -59,7 +60,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 timeout=30):
+                 timeout=30, use_learning_parsers=True):
         super().__init__()
         self.id = str(id)
         self.start, self.finish = None, None
@@ -81,6 +82,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.objective = None
         self.chain, self.potential_links, self.rules = [], [], []
         self.access = access if access else self.Access.APP
+        self.use_learning_parsers = use_learning_parsers
         if source:
             self.rules = source.rules
 
