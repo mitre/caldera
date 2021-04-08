@@ -3,12 +3,13 @@ from app.utility.base_object import BaseObject
 
 
 class LoginHandlerInterface(abc.ABC, BaseObject):
-    _name = 'Login Handler Interface'
+    def __init__(self, name):
+        self._name = name
 
     @abc.abstractmethod
     async def handle_login(self, request, **kwargs):
-        """
-        Handle login request
+        """Handle login request
+
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
@@ -16,8 +17,8 @@ class LoginHandlerInterface(abc.ABC, BaseObject):
 
     @abc.abstractmethod
     async def handle_login_redirect(self, request, **kwargs):
-        """
-        Handle redirect to login
+        """Handle redirect to login
+
         :param request:
         :return: the response/location of where the user is trying to navigate
         """
