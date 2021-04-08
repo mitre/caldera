@@ -112,7 +112,8 @@ class AuthService(AuthServiceInterface, BaseService):
     async def login_redirect(self, request, use_template=True):
         """Redirect user to login page using the configured login handler. If using the default login handler
         and use_template is set to true, method will return the login.html template. If use_template is set to False
-        and the default login handler is configured, it will redirect to '/login' by raising HTTPFound exception."""
+        and the default login handler is configured, it will redirect to '/login' by raising HTTPFound exception.
+        """
 
         try:
             self.log.debug('Using login handler "%s" for login redirect', self._login_handler.name)
