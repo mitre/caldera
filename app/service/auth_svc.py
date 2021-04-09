@@ -54,12 +54,12 @@ def check_authorization(func):
 
 class AuthService(AuthServiceInterface, BaseService):
     User = namedtuple('User', ['username', 'password', 'permissions'])
-    _default_login_handler = None
 
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
         self._login_handler = None
+        self._default_login_handler = None
 
     @property
     def default_login_handler(self):
@@ -91,7 +91,10 @@ class AuthService(AuthServiceInterface, BaseService):
         """Log a user in and save the session
 
         :param request:
-        :return: the response/location of where the user is trying to navigate
+        :raises web.HTTPRedirection: the HTTP response/location of where the user is trying to navigate
+        :raises web.HTTPUnauthorized: HTTP unauthorized response as provided by the login handler.
+        :raises web.HTTPForbidden: HTTP forbidden response as provided by the login handler.
+        :raises web.HTTPSuccessful: HTTP successful response as provided by the login handler.
         """
         try:
             self.log.debug('Using login handler "%s" for login', self._login_handler.name)
@@ -110,11 +113,14 @@ class AuthService(AuthServiceInterface, BaseService):
                 raise e
 
     async def login_redirect(self, request, use_template=True):
-        """Redirect user to login page using the configured login handler. If using the default login handler
-        and use_template is set to true, method will return the login.html template. If use_template is set to False
-        and the default login handler is configured, it will redirect to '/login' by raising HTTPFound exception.
-        """
+        """Redirect user to login page using the configured login handler. Will fall back to the
+        default login handler if an unexpected exception is raised.
 
+        :param request:
+        :param use_template: Determines if the login handler should return an html template rather than raise
+            an HTTP redirect, if applicable. Defaults to True.
+        :type use_template: bool, optional
+        """
         try:
             self.log.debug('Using login handler "%s" for login redirect', self._login_handler.name)
             return await self._login_handler.handle_login_redirect(request, use_template=use_template)
@@ -145,8 +151,8 @@ class AuthService(AuthServiceInterface, BaseService):
     async def request_has_valid_user_session(self, request):
         return await aiohttp_security_api.authorized_userid(request) is not None
 
-    async def provide_verified_login_response(self, request, username):
-        self.log.debug('%s logging in:', username)
+    async def handle_successful_login(self, request, username):
+        self.log.debug('%s logging in', username)
         response = web.HTTPFound('/')
         await remember(request, response, username)
         raise response
@@ -179,11 +185,17 @@ class AuthService(AuthServiceInterface, BaseService):
         """Sets the default login handler for the auth service, as well as the custom login handler if specified in the
         primary_handler parameter or in the config file. The custom login handler will take priority for login methods
         during login_user and redirects during check_permissions.
-        If no login handler is specified in the primary_handler parameter, then the config file will
-        be used to load the primary login handler.
+
         If no login handler was specified in the config file or via the primary_handler parameter,
         the auth service will use only the default handler.
-        Will raise a TypeError exception if the provided login handler does not implement the LoginHandlerInterface.
+
+        :param services: services used to set up the login handlers.
+        :type services: dict
+        :param primary_handler: Login handler for the auth service. If None, the config file will
+            be used to load the primary login handler. Must implement the LoginHandlerInterface.
+            Defaults to None.
+        :type primary_handler: LoginHandlerInterface, optional
+        :raises TypeError: The provided login handler does not implement the LoginHandlerInterface.
         """
         self._configure_default_login_handler(services)
         provided_handler = primary_handler if primary_handler else self._get_login_handler_from_config(services)
@@ -204,9 +216,8 @@ class AuthService(AuthServiceInterface, BaseService):
             login_handler = import_module(login_handler_module_path).load_login_handler(services)
             return login_handler
 
-    @classmethod
-    def _configure_default_login_handler(cls, services):
-        cls._default_login_handler = DefaultLoginHandler(services)
+    def _configure_default_login_handler(self, services):
+        self._default_login_handler = DefaultLoginHandler(services)
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):

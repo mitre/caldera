@@ -14,7 +14,7 @@ class DefaultLoginHandler(LoginHandlerInterface):
     def __init__(self, services):
         super().__init__(HANDLER_NAME)
         self.log = logging.getLogger('default_login_handler')
-        self.auth_svc = services.get('auth_svc')
+        self.services = services
         self._ldap_config = self.get_config('ldap')
 
     async def handle_login(self, request, **kwargs):
@@ -28,11 +28,17 @@ class DefaultLoginHandler(LoginHandlerInterface):
                 verified = await self._check_credentials(request.app.user_map, username, password)
 
             if verified:
-                await self.auth_svc.provide_verified_login_response(request, username)
+                await self.services.get('auth_svc').handle_successful_login(request, username)
             self.log.debug('%s failed login attempt: ', username)
         raise web.HTTPFound('/login')
 
     async def handle_login_redirect(self, request, **kwargs):
+        """Handle login redirect.
+
+        :return: login.html template if use_template is set to True in kwargs.
+        :raises web.HTTPFound: HTTPFound exception to redirect to the '/login' page if use_template
+            is set to False or not included in kwargs.
+        """
         if kwargs.get('use_template'):
             return render_template('login.html', request, dict())
         else:

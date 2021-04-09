@@ -1,4 +1,5 @@
 import abc
+
 from app.utility.base_object import BaseObject
 
 

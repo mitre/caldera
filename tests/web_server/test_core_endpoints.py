@@ -45,6 +45,7 @@ def aiohttp_client(loop, aiohttp_client):
         await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
+        await auth_svc.set_login_handlers(services)
         return app_svc.application
 
     app = loop.run_until_complete(initialize())
@@ -185,7 +186,7 @@ async def test_custom_accepting_login_handler(aiohttp_client):
             # Always accept login
             data = await request.post()
             username = data.get('username', 'default username')
-            await self.auth_svc.provide_verified_login_response(request, username)
+            await self.auth_svc.handle_successful_login(request, username)
 
         async def handle_login_redirect(self, request, **kwargs):
             await self.handle_login(request, **kwargs)
