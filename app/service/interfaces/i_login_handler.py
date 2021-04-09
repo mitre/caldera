@@ -13,6 +13,7 @@ class LoginHandlerInterface(abc.ABC, BaseObject):
 
         :param request:
         :return: the response/location of where the user is trying to navigate
+        :raises: HTTP exception, such as HTTPFound for redirect, or HTTPUnauthorized
         """
         pass
 
@@ -22,6 +23,7 @@ class LoginHandlerInterface(abc.ABC, BaseObject):
 
         :param request:
         :return: the response/location of where the user is trying to navigate
+        :raises: HTTP exception, such as HTTPFound for redirect, or HTTPUnauthorized
         """
         pass
 
