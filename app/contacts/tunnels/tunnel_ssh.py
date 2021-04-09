@@ -5,21 +5,21 @@ import asyncssh
 from app.utility.base_world import BaseWorld
 
 
-class Contact(BaseWorld):
+class Tunnel(BaseWorld):
     def __init__(self, services):
         self.name = 'ssh_tunneling'
         self.description = 'Accept tunneled SSH messages'
-        self.log = self.create_logger('contact_ssh')
+        self.log = self.create_logger('tunnel_ssh')
         self.services = services
-        self._user_name = self.get_config('app.contact.ssh.user_name')
-        self._user_password = self.get_config('app.contact.ssh.user_password')
+        self._user_name = self.get_config('app.contact.tunnel.ssh.user_name')
+        self._user_password = self.get_config('app.contact.tunnel.ssh.user_password')
 
     async def start(self):
-        ssh_endpoint = self.get_config('app.contact.ssh.socket')
+        ssh_endpoint = self.get_config('app.contact.tunnel.ssh.socket')
         addr, port = ssh_endpoint.split(':')
-        host_key_filename = self.get_config('app.contact.ssh.host_key_file')
+        host_key_filename = self.get_config('app.contact.tunnel.ssh.host_key_file')
         host_key_filepath = os.path.join('conf', 'ssh_keys', host_key_filename)
-        host_key_passphrase = self.get_config('app.contact.ssh.host_key_passphrase')
+        host_key_passphrase = self.get_config('app.contact.tunnel.ssh.host_key_passphrase')
         try:
             host_key = asyncssh.read_private_key(host_key_filepath, passphrase=host_key_passphrase)
         except Exception as e:
@@ -32,10 +32,10 @@ class Contact(BaseWorld):
             self.log.error('Error starting SSH server: %s' % e)
 
     def server_factory(self):
-        return SSHServerContact(self.services, self._user_name, self._user_password)
+        return SSHServerTunnel(self.services, self._user_name, self._user_password)
 
 
-class SSHServerContact(asyncssh.SSHServer):
+class SSHServerTunnel(asyncssh.SSHServer):
     def __init__(self, services, user_name, user_password):
         super().__init__()
         self.services = services

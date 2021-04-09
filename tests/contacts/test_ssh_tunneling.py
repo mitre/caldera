@@ -2,17 +2,17 @@ import pytest
 import aiohttp
 import asyncssh
 
-from app.contacts.contact_ssh import Contact as SshContact
+from app.contacts.tunnels.tunnel_ssh import Tunnel as SshTunnel
 from app.utility.base_world import BaseWorld
 
 
 @pytest.fixture(scope='session')
 def ssh_contact_base_world():
-    BaseWorld.apply_config(name='main', config={'app.contact.ssh.user_name': 'sandcat',
-                                                'app.contact.ssh.user_password': 's4ndc4t!',
-                                                'app.contact.ssh.socket': '0.0.0.0:8122',
-                                                'app.contact.ssh.host_key_file': 'REPLACE_WITH_KEY_FILE_PATH,',
-                                                'app.contact.ssh.host_key_passphrase': 'REPLACE_WITH_KEY_FILE_PASSPHRASE',
+    BaseWorld.apply_config(name='main', config={'app.contact.tunnel.ssh.user_name': 'sandcat',
+                                                'app.contact.tunnel.ssh.user_password': 's4ndc4t!',
+                                                'app.contact.tunnel.ssh.socket': '0.0.0.0:8122',
+                                                'app.contact.tunnel.ssh.host_key_file': 'REPLACE_WITH_KEY_FILE_PATH,',
+                                                'app.contact.tunnel.ssh.host_key_passphrase': 'REPLACE_WITH_KEY_FILE_PASSPHRASE',
                                                 'plugins': ['sandcat', 'stockpile'],
                                                 'crypt_salt': 'BLAH',
                                                 'api_key': 'ADMIN123',
@@ -31,7 +31,7 @@ def ssh_contact_base_world():
 @pytest.fixture
 def ssh_contact(loop, app_svc, contact_svc, data_svc, file_svc, obfuscator):
     services = app_svc(loop).get_services()
-    return SshContact(services)
+    return SshTunnel(services)
 
 
 @pytest.mark.usefixtures(
