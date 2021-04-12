@@ -46,9 +46,9 @@ class OperationSchema(ma.Schema):
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
-    EVENT_EXCHANGE = "operation"
-    EVENT_QUEUE_STATE_CHANGED = "state_changed"
-    EVENT_QUEUE_COMPLETED = "completed"
+    EVENT_EXCHANGE = 'operation'
+    EVENT_QUEUE_STATE_CHANGED = 'state_changed'
+    EVENT_QUEUE_COMPLETED = 'completed'
 
     schema = OperationSchema()
 
@@ -71,7 +71,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     @state.setter
     def state(self, value):
-        previous_state = getattr(self, "_state", NO_PREVIOUS_STATE)
+        previous_state = getattr(self, '_state', NO_PREVIOUS_STATE)
 
         self._state = value
 
