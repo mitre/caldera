@@ -290,30 +290,32 @@ class TestOperation:
             os.remove(target_path)
 
     @mock.patch.object(Operation, '_emit_state_change_event')
-    async def test_no_state_change_event_on_instantiation(self, mock_emit_state_change_method, fake_event_svc, adversary):
+    def test_no_state_change_event_on_instantiation(self, mock_emit_state_change_method, fake_event_svc, adversary):
         Operation(name='test', agents=[], adversary=adversary)
         mock_emit_state_change_method.assert_not_called()
 
     @mock.patch.object(Operation, '_emit_state_change_event')
-    async def test_no_state_change_event_fired_when_setting_same_state(self, mock_emit_state_change_method, loop, fake_event_svc, adversary):
+    def test_no_state_change_event_fired_when_setting_same_state(self, mock_emit_state_change_method, fake_event_svc, adversary):
         initial_state = 'running'
         op = Operation(name='test', agents=[], adversary=adversary, state=initial_state)
         op.state = initial_state
         mock_emit_state_change_method.assert_not_called()
 
     @mock.patch.object(Operation, '_emit_state_change_event')
-    async def test_state_change_event_fired_on_state_change(self, mock_emit_state_change_method, loop, fake_event_svc, adversary):
+    def test_state_change_event_fired_on_state_change(self, mock_emit_state_change_method, fake_event_svc, adversary):
         op = Operation(name='test', agents=[], adversary=adversary, state='running')
         op.state = 'finished'
         mock_emit_state_change_method.assert_called_with(from_state='running', to_state='finished')
 
-    async def test_emit_state_change_event(self, loop, fake_event_svc, adversary):
+    def test_emit_state_change_event(self, loop, fake_event_svc, adversary):
         op = Operation(name='test', agents=[], adversary=adversary, state='running')
         fake_event_svc.reset()
 
-        await op._emit_state_change_event(
-            from_state='running',
-            to_state='finished'
+        loop.run_until_complete(
+            op._emit_state_change_event(
+                from_state='running',
+                to_state='finished'
+            )
         )
 
         expected_key = (Operation.EVENT_EXCHANGE, Operation.EVENT_QUEUE_STATE_CHANGED)
