@@ -40,7 +40,7 @@ def setup_contact_service(loop, data_svc, agent, ability, operation, link, adver
     'obfuscator'
 )
 class TestContactSvc:
-    async def test_save_ability_hooks(self, setup_contact_service, contact_svc):
+    async def test_save_ability_hooks(self, setup_contact_service, contact_svc, event_svc):
         test_string = b'test_string'
         link = setup_contact_service
         rest_svc = RestService()
