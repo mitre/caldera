@@ -73,7 +73,7 @@ class Link(BaseObject):
     RESERVED = dict(origin_link_id='#{origin_link_id}')
 
     EVENT_EXCHANGE = 'link'
-    EVENT_QUEUE_STATUS_CHANGE = 'status_change'
+    EVENT_QUEUE_STATUS_CHANGED = 'status_changed'
 
     @property
     def unique(self):
@@ -183,7 +183,7 @@ class Link(BaseObject):
         task = asyncio.get_event_loop().create_task(
             event_svc.fire_event(
                 exchange=Link.EVENT_EXCHANGE,
-                queue=Link.EVENT_QUEUE_STATUS_CHANGE,
+                queue=Link.EVENT_QUEUE_STATUS_CHANGED,
                 link=self.id,
                 from_status=from_status,
                 to_status=to_status
