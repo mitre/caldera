@@ -102,7 +102,7 @@ class AuthService(AuthServiceInterface, BaseService):
         except (web.HTTPRedirection, web.HTTPUnauthorized, web.HTTPForbidden, web.HTTPSuccessful) as allowed_exception:
             raise allowed_exception
         except Exception as e:
-            self.log.exception('Exception when handling login request: %s', e)
+            self.log.exception('Exception when handling login request.')
 
             # Fallback if not already using default login handler
             if not isinstance(self._login_handler, DefaultLoginHandler):
@@ -127,7 +127,7 @@ class AuthService(AuthServiceInterface, BaseService):
         except (web.HTTPRedirection, web.HTTPUnauthorized, web.HTTPForbidden, web.HTTPSuccessful) as allowed_exception:
             raise allowed_exception
         except Exception as e:
-            self.log.exception('Exception when handling login redirect: %s', e)
+            self.log.exception('Exception when handling login redirect.')
 
             # Fallback if not already using default login handler
             if not isinstance(self._login_handler, DefaultLoginHandler):

@@ -4,7 +4,8 @@ from app.utility.base_object import BaseObject
 
 
 class LoginHandlerInterface(abc.ABC, BaseObject):
-    def __init__(self, name):
+    def __init__(self, services, name):
+        self.services = services
         self._name = name
 
     @abc.abstractmethod

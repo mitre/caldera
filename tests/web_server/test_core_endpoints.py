@@ -146,9 +146,8 @@ async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
 
 async def test_custom_rejecting_login_handler(aiohttp_client):
     class RejectAllLoginHandler(LoginHandlerInterface):
-        def __init__(self, services, name):
-            super().__init__(name)
-            self.auth_svc = services.get('auth_svc')
+        def __init__(self, services):
+            super().__init__(services, 'Reject All Login Handler')
 
         async def handle_login(self, request, **kwargs):
             # Always reject login and return 401
@@ -158,10 +157,7 @@ async def test_custom_rejecting_login_handler(aiohttp_client):
             # Always reject and return 401
             raise web.HTTPUnauthorized(text='Automatic rejection')
 
-    login_handler = RejectAllLoginHandler(
-        BaseService.get_services(),
-        'Reject All Login Handler',
-    )
+    login_handler = RejectAllLoginHandler(BaseService.get_services())
     await BaseService.get_service('auth_svc').set_login_handlers(
         BaseService.get_services(),
         login_handler
@@ -178,23 +174,22 @@ async def test_custom_rejecting_login_handler(aiohttp_client):
 
 async def test_custom_accepting_login_handler(aiohttp_client):
     class AcceptAllLoginHandler(LoginHandlerInterface):
-        def __init__(self, services, name):
-            super().__init__(name)
-            self.auth_svc = services.get('auth_svc')
+        def __init__(self, services):
+            super().__init__(services, 'Accept All Login Handler')
 
         async def handle_login(self, request, **kwargs):
             # Always accept login
             data = await request.post()
             username = data.get('username', 'default username')
-            await self.auth_svc.handle_successful_login(request, username)
+            auth_svc = self.services.get('auth_svc')
+            if not auth_svc:
+                raise Exception('Auth service not available.')
+            await auth_svc.handle_successful_login(request, username)
 
         async def handle_login_redirect(self, request, **kwargs):
             await self.handle_login(request, **kwargs)
 
-    login_handler = AcceptAllLoginHandler(
-        BaseService.get_services(),
-        'Accept All Login Handler',
-    )
+    login_handler = AcceptAllLoginHandler(BaseService.get_services())
     await BaseService.get_service('auth_svc').set_login_handlers(
         BaseService.get_services(),
         login_handler

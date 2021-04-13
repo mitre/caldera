@@ -58,9 +58,9 @@ class RestApi(BaseWorld):
         await self.auth_svc.logout_user(request)
 
     async def landing(self, request):
-        """If user doesn't have access, server will attempt to redirect to login."""
         access = await self.auth_svc.get_permissions(request)
         if not access:
+            # If user doesn't have access, server will attempt to redirect to login.
             return await self.auth_svc.login_redirect(request)
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))

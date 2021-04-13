@@ -12,9 +12,8 @@ HANDLER_NAME = 'Default Login Handler'
 
 class DefaultLoginHandler(LoginHandlerInterface):
     def __init__(self, services):
-        super().__init__(HANDLER_NAME)
+        super().__init__(services, HANDLER_NAME)
         self.log = logging.getLogger('default_login_handler')
-        self.services = services
         self._ldap_config = self.get_config('ldap')
 
     async def handle_login(self, request, **kwargs):
@@ -28,7 +27,10 @@ class DefaultLoginHandler(LoginHandlerInterface):
                 verified = await self._check_credentials(request.app.user_map, username, password)
 
             if verified:
-                await self.services.get('auth_svc').handle_successful_login(request, username)
+                auth_svc = self.services.get('auth_svc')
+                if not auth_svc:
+                    raise Exception('Auth service not available.')
+                await auth_svc.handle_successful_login(request, username)
             self.log.debug('%s failed login attempt: ', username)
         raise web.HTTPFound('/login')
 
