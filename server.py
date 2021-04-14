@@ -51,6 +51,7 @@ def run_tasks(services):
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
     loop.run_until_complete(data_svc.load_data(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(app_svc.load_plugin_expansions(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
+    loop.run_until_complete(auth_svc.set_login_handlers(services))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
