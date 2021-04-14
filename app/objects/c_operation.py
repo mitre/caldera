@@ -194,7 +194,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
             agent_executors = agent.executors
-            agent_ran = set([link.ability.display['ability_id'] for link in self.chain if link.paw == agent.paw])
+            agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
                                                      op_facts=[f.trait for f in self.all_facts()],
@@ -222,8 +222,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                    delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                    run=step.finish,
                                    status=step.status,
-                                   platform=step.ability.platform,
-                                   executor=step.ability.executor,
+                                   platform=step.executor.platform,
+                                   executor=step.executor.name,
                                    pid=step.pid,
                                    description=step.ability.description,
                                    name=step.ability.name,
@@ -269,8 +269,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           collected_timestamp=link.collect.strftime('%Y-%m-%d %H:%M:%S') if link.collect else None,
                           finished_timestamp=link.finish,
                           status=link.status,
-                          platform=link.ability.platform,
-                          executor=link.ability.executor,
+                          platform=link.executor.platform,
+                          executor=link.executor.name,
                           pid=link.pid,
                           agent_metadata=await self._get_agent_info_for_event_log(link.paw, data_svc),
                           ability_metadata=self._get_ability_metadata_for_event_log(link.ability),
@@ -328,33 +328,36 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return {a.paw: abilities for a in self.agents}
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
-        variables = re.findall(r'#{(.*?)}', self.decode_bytes(ability.test), flags=re.DOTALL) if ability.test else []
         if ability.ability_id in agent_ran:
             return
-        elif not agent.trusted:
+
+        ability_has_platform = any(executor for executor in ability.executors if executor.platform == agent.platform)
+        valid_executors = ability.get_executors(agent.platform, agent_executors)
+
+        any_facts_fulfilled = False
+        for executor in valid_executors:
+            facts = re.findall(r'#{(.*?)}', executor.command, flags=re.DOTALL) if executor.command else []
+            if all(fact in op_facts for fact in facts):
+                any_facts_fulfilled = True
+
+        if not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif ability.platform != agent.platform:
+        elif not ability_has_platform:
             return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability.ability_id,
                         ability_name=ability.name)
-        elif ability.executor not in agent_executors:
+        elif not valid_executors:
             return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif variables and not all(op_fact in op_facts for op_fact in variables):
+        elif not any_facts_fulfilled:
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        else:
-            if (ability.platform == agent.platform and ability.executor in agent_executors
-                    and ability.ability_id not in agent_ran):
-                if state != 'finished':
-                    return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
-                                ability_id=ability.ability_id, ability_name=ability.name)
-                else:
-                    return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
-                                ability_id=ability.ability_id, ability_name=ability.name)
+        elif state != 'finished':
+            return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
 
     def _get_operation_metadata_for_event_log(self):
         return dict(operation_name=self.name,

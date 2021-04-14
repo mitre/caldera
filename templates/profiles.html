@@ -546,9 +546,8 @@
         let abilitySelector = $('#phase-modal').find('#ability-ability-filter');
         let selectedAbility = abilitySelector.find(':selected').data('ability');
 
-        let abilityData = data[0];
-        let newAbility = addPlatforms([abilityData])[0];
-        
+        let newAbility = data[0];
+
         if (!selectedAbility || selectedAbility.ability_id != newAbility.ability_id) {
             appendAbilityToList('phase-modal', newAbility);
         } else {
@@ -561,15 +560,15 @@
 
         var $to_replace = -1;
         $.each(exploits, function(i, ab) {
-            if (ab.ability_id === abilityData.ability_id) {
+            if (ab.ability_id === newAbility.ability_id) {
                 $to_replace = i;
                 return false;
             }
         });
         if ($to_replace != -1) {
-            exploits[$to_replace] = abilityData;
+            exploits[$to_replace] = newAbility;
         } else {
-            exploits.push(abilityData);
+            exploits.push(newAbility);
         }
         stream('Ability saved!');
 
@@ -650,7 +649,7 @@
     }
 
     function createMuuriGrid() {
-    	let packer = new Muuri.Packer();
+        let packer = new Muuri.Packer();
         return new Muuri('.grid', {
             dragEnabled: true,
             layout: function (items, width, height) {
@@ -676,7 +675,6 @@
             template = addPhase(1);
         }
         let grid = createMuuriGrid();
-        abilities = addPlatforms(abilities);
         abilities.forEach(function(a) {
             let abilityBox = buildAbility(a);
             grid.add(abilityBox[0]);
@@ -724,33 +722,60 @@
         return template;
     }
 
-    function buildAbility(ability){
-        let requirements = buildRequirements(ability.test);
-        let template = $("#ability-template").clone();
-        template.attr('id', ability.ability_id)
-            .data('parsers', ability.parsers)
-            .data('testId', ability.ability_id)
-            .data('requirements', requirements);
+    function buildAbility(ability) {
+        let abilityRequirements = [];
+        let cleanupCommands = false;
+        let parsers = false;
+        let payloads = false;
 
+        let template = $('#ability-template').clone();
+        template.attr('id', ability.ability_id)
+            .data('abilityId', ability.ability_id)
+            .data('requirements', abilityRequirements);
         template.find('#name span').html(ability.name);
         template.find('#ability-attack').html(ability.tactic + ' | '+ ability.technique_name);
 
-        if(requirements.length > 0) {
+        ability.executors.forEach((executor) => {
+            if (executor.command !== null) {
+                let executorRequirements = buildRequirements(executor.command);
+                abilityRequirements = abilityRequirements.concat(executorRequirements);
+            }
+
+            cleanupCommands = (cleanupCommands || executor.cleanup.length > 0);
+            parsers = (parsers || executor.parsers.length > 0);
+            payloads = (payloads || executor.payloads.length > 0);
+
+            let executorName = executor.name;
+            if (executorName === 'psh') { executorName = 'powershell'; }
+            else if (executorName === 'pwsh') { executorName = 'powershell core'; }
+            else if (executorName === 'sh') { executorName = 'shell'; }
+            else if (executorName === 'cmd') { executorName = 'commandline'; }
+
+            $('<div></div>')
+                .addClass('tooltip')
+                .attr('data-text', 'Works on ' + executor.platform + ' (' + executorName + ')')
+                .append($('<img/>').attr('src', '/gui/img/' + executor.platform + '.png'))
+                .appendTo(template.find('#icon-row'));
+        });
+
+        if (abilityRequirements.length > 0) {
             template.find('#ability-metadata').append('<div id="ability-padlock" style="padding: 0 2;"><div class="tooltip" data-text="This ability has requirements">&#128274;</div></div>');
         }
-        if(ability.cleanup) {
+        if (cleanupCommands) {
             template.find('#ability-metadata').append('<div id="ability-broom" style="padding: 0 2;"><div class="tooltip" data-text="This ability can clean itself up">&#128465;</div></div>');
         }
-        if(ability.parsers.length > 0) {
+        if (parsers) {
            template.find('#ability-metadata').append('<div id="ability-parser" style="padding: 0 2;"><div class="tooltip" data-text="This ability unlocks other abilities">&#128273;</div></div>');
         }
-        if(ability.payloads.length > 0) {
+        if (payloads) {
            template.find('#ability-metadata').append('<div id="ability-payload" style="padding: 0 2;"><div class="tooltip" data-text="This ability uses a payload">&#128176;</div></div>');
         }
+
         template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
         template.find('.ability-remove').click(function() {
             removeAbility(ability);
         });
+
         template.find('.ability-show').click(function() {
             let pModal = $('#phase-modal');
             let tacList = pModal.find('#ability-tactic-filter');
@@ -761,28 +786,17 @@
             abList.val(ability['name']).change();
             showPhaseModal(1);
         });
-
-        ability.platform.forEach(function(p, index) {
-            let exec = ability.executor[index];
-            if (exec === 'psh'){exec = 'powershell';}
-            else if(exec === 'pwsh') {exec = 'powershell core';}
-            else if(exec === 'sh') {exec = 'shell';}
-            else if(exec === 'cmd') {exec = 'commandline';}
-            let icon = $('<div class="tooltip" data-text="Works on '+p+' ('+ exec +')"></span><img src="/gui/img/'+p+'.png"/></div>');
-            icon.appendTo(template.find('#icon-row'));
-        });
         template.show();
         return template;
     }
 
-    function buildRequirements(encodedTest){
-        let matchedRequirements = atob(encodedTest).match(/#{([^}]+)}/g);
-        if(matchedRequirements) {
+    function buildRequirements(command) {
+        let matchedRequirements = command.match(/#{([^}]+)}/g);
+        if (matchedRequirements) {
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{server}' });
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{group}' });
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{location}' });
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{paw}' });
-            matchedRequirements = [...new Set(matchedRequirements)];
             return matchedRequirements.map(function(val){
                return val.replace(/[#{}]/g, "");
             });
@@ -806,45 +820,44 @@
         $('#ability-additional-info').find('#additional-info-table').empty();
         $('#ability-additional-info').hide();
 
-        let aid = $('#'+parentId).find('#ability-ability-filter').find(":selected").data('ability');
-        $('#ability-identifier').val(aid.ability_id);
-        $('#ability-name').val(aid.name);
-        $('#ability-description').val(aid.description);
-        $('#ability-tactic-name').val(aid.tactic);
-        $('#ability-tech-id').val(aid.technique_id);
-        $('#ability-tech-name').val(aid.technique_name);
+        let ability = $('#'+parentId).find('#ability-ability-filter').find(':selected').data('ability');
+        $('#ability-identifier').val(ability.ability_id);
+        $('#ability-name').val(ability.name);
+        $('#ability-description').val(ability.description);
+        $('#ability-tactic-name').val(ability.tactic);
+        $('#ability-tech-id').val(ability.technique_id);
+        $('#ability-tech-name').val(ability.technique_name);
 
-        if (Object.keys(aid.additional_info).length > 0) {
-            $.each(aid.additional_info, function(key, value) {
+        if (Object.keys(ability.additional_info).length > 0) {
+            ability.additional_info.forEach((value, key) => {
                 let $table_row = addAdditionalInfo();
-                $table_row.find(".additional-key").val(key);
-                $table_row.find(".additional-value").val(value);
+                $table_row.find('.additional-key').val(key);
+                $table_row.find('.additional-value').val(value);
             });
             $('#ability-additional-info').show();
         }
 
-        exploits.forEach(function(ability) {
-            if(aid.ability_id === ability.ability_id) {
-                let template = $("#ttp-template").clone();
-                let unique = aid.ability_id + ability.platform + ability.executor;
-                template.find('#ability-platform').val(ability.platform);
-                filterExecutors(template.find('#ability-platform'));
-                template.find('#ability-executor').val(ability.executor);
-                template.find('#ability-command').val(atob(ability.test));
-                template.find('#ability-timeout').val(ability.timeout);
-                if(ability.cleanup[0]) {
-                    template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
-                }
-                template.show();
-                template.attr('id', unique);
-                $('#ttp-tests').append(template);
-                let payloads = $('#'+unique).find('#ability-payload');
-                payloads.multiSelect({
-                    selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
-                    selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
-                    keepOrder: true });
-                payloads.multiSelect('select', ability.payloads);
+        ability.executors.forEach((executor) => {
+            let template = $('#ttp-template').clone();
+            let unique = ability.ability_id + executor.platform + executor.name;
+            template.attr('id', unique);
+            template.find('#ability-platform').val(executor.platform);
+            filterExecutors(template.find('#ability-platform'));
+            template.find('#ability-executor').val(executor.name);
+            template.find('#ability-command').val(executor.command);
+            template.find('#ability-timeout').val(ability.timeout);
+            if (executor.cleanup.length > 0) {
+                template.find('#ability-cleanup').val(executor.cleanup[0]);
             }
+            template.show();
+
+            $('#ttp-tests').append(template);
+            let payloads = $('#'+unique).find('#ability-payload');
+            payloads.multiSelect({
+                selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
+                selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
+                keepOrder: true });
+            payloads.multiSelect('select', executor.payloads);
         });
 
         checkAbilityButtons();
@@ -855,9 +868,15 @@
         let platform = $(elem).val();
         let executorSelect = $(ttpTable).find('#ability-executor');
         $(executorSelect).empty();
-        $(executorSelect).append('<option value="" disabled selected>Select an executor</option>');
-        $.each(platforms[platform], function(i, executor) {
-            $(executorSelect).append('<option value="' + executor + '">' + executor + '</option>-->');
+        $(executorSelect).append($('<option></option>')
+            .text('Select an executor')
+            .attr('disabled', 'disabled')
+            .attr('selected', 'selected'));
+
+        platforms[platform].forEach((executor) => {
+            $(executorSelect).append($('<option></option>')
+                .val(executor)
+                .text(executor));
         });
     }
 
@@ -1014,23 +1033,20 @@
     }
 
     function addAdvToCurrentProfile() {
+        function loadAdvProfileCallback(data) {
+            data[0]['atomic_ordering'].forEach((ability) => {
+                let abilityBox = buildAbility(ability);
+                g_grid.add(abilityBox[0]);
+            });
+        }
         restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-profile-filter').val()}, loadAdvProfileCallback);
         hideProfileModal();
-	}
-
-	function loadAdvProfileCallback(data){
-        let atomic_order = data[0]['atomic_ordering'];
-        let abilities = addPlatforms(atomic_order);
-        for (let ab of abilities) {
-	        let abilityBox = buildAbility(ab);
-	        g_grid.add(abilityBox[0]);
-		}
     }
 
     //# sourceURL=profiles.js
 
     function isEllipsisActive(e) {
-     return (e.offsetWidth < e.scrollWidth);
-}
+        return (e.offsetWidth < e.scrollWidth);
+    }
 
 </script>

@@ -6,6 +6,7 @@ from importlib import import_module
 import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
+from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_fact import Fact, FactSchema
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
@@ -33,6 +34,7 @@ class LinkSchema(ma.Schema):
     collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
+    executor = ma.fields.Nested(ExecutorSchema())
     cleanup = ma.fields.Integer(missing=0)
     visibility = ma.fields.Nested(VisibilitySchema)
     host = ma.fields.String(missing=None)
@@ -46,15 +48,16 @@ class LinkSchema(ma.Schema):
             link['ability'] = link_input.schema.dump(link_input)
         return link
 
+    @ma.pre_load()
+    def fix_executor(self, link, **_):
+        if 'executor' in link and isinstance(link['executor'], Executor):
+            link_input = link.pop('executor')
+            link['executor'] = link_input.schema.dump(link_input)
+        return link
+
     @ma.post_load()
     def build_link(self, data, **_):
         return Link(**data)
-
-    @ma.pre_dump()
-    def prepare_link(self, data, **_):
-        # temp - can be simplified with AbilitySchema
-        data.executor = data.ability.executor if isinstance(data.ability, Ability) else data.ability['executor']
-        return data
 
 
 class Link(BaseObject):
@@ -89,7 +92,7 @@ class Link(BaseObject):
                     ERROR=1,
                     TIMEOUT=124)
 
-    def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
+    def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id=None, pin=0,
                  host=None, deadman=False, used=None, relationships=None):
         super().__init__()
         self.id = id
@@ -99,6 +102,7 @@ class Link(BaseObject):
         self.host = host
         self.cleanup = cleanup
         self.ability = ability
+        self.executor = executor
         self.status = status
         self.score = score
         self.jitter = jitter
@@ -123,7 +127,7 @@ class Link(BaseObject):
     async def parse(self, operation, result):
         if self.status != 0:
             return
-        for parser in self.ability.parsers:
+        for parser in self.executor.parsers:
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)

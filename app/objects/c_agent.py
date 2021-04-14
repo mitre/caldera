@@ -127,18 +127,35 @@ class Agent(FirstClassObjectInterface, BaseObject):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
     async def capabilities(self, ability_set):
+        """Get abilities that the agent is capable of running"""
         abilities = []
-        if self.executors:
-            preferred = self._get_preferred_executor()
-            executors = self.executors
-            for ai in set([pa.ability_id for pa in ability_set]):
-                total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
-                                 and (ab.platform == self.platform) and (ab.executor in executors)]
-                if len(total_ability) > 0:
-                    val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                    if self.privileged_to_run(val):
-                        abilities.append(val)
+        for ability in ability_set:
+            if self.privileged_to_run(ability) and ability.get_executors(self.platform, self.executors):
+                abilities.append(ability)
         return abilities
+
+    async def capabilities_with_preference(self, ability_set):
+        """Get abilities that the agent is capable of running along with preferred executor"""
+        if not self.executors:
+            return []
+
+        ability_executors = []
+
+        for ability in ability_set:
+            if not self.privileged_to_run(ability):
+                continue
+            executor = await self.get_preferred_executor(ability)
+            if executor:
+                ability_executors.append((ability, executor))
+        return ability_executors
+
+    async def get_preferred_executor(self, ability):
+        """Get preferred executor for ability"""
+        preferred_executor = self._get_preferred_executor()
+        potential_executors = ability.get_executors(self.platform, self.executors)
+        if potential_executors:
+            return next((ex for ex in potential_executors if ex.name == preferred_executor), potential_executors[0])
+        return None
 
     async def heartbeat_modification(self, **kwargs):
         now = datetime.now()
@@ -206,12 +223,27 @@ class Agent(FirstClassObjectInterface, BaseObject):
         await self.task(abilities, obfuscator='plain-text', deadman=True)
 
     async def task(self, abilities, obfuscator, facts=(), deadman=False):
+        if not self.executors:
+            return []
+
         bps = BasePlanningService()
-        potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i, deadman=deadman)) for i in await self.capabilities(abilities)]
+        preferred_executor = self._get_preferred_executor()
+
         links = []
-        for valid in await bps.remove_links_missing_facts(
-                await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
-            links.append(valid)
+        for ability in await self.capabilities(abilities):
+            executors = ability.get_executors(self.platform, self.executors)
+            executors = sorted(executors, key=lambda ex: ex.name == preferred_executor, reverse=True)
+
+            for executor in executors:
+                ex_links = [Link.load(dict(command=self.encode_string(executor.command), paw=self.paw, ability=ability,
+                                           executor=executor, deadman=deadman))]
+                variants = await bps.add_test_variants(links=ex_links, agent=self, facts=facts)
+                valid_links = await bps.remove_links_missing_facts(variants)
+                if valid_links:
+                    for valid_link in valid_links:
+                        links.append(valid_link)
+                    break
+
         links = await bps.obfuscate_commands(self, obfuscator, links)
         self.links.extend(links)
         return links

@@ -40,10 +40,11 @@ class CampaignPack(BaseWorld):
         objs = await self.data_svc.locate('objectives', match=access)
         platforms = dict()
         for a in abilities:
-            if a.platform in platforms:
-                platforms[a.platform].add(a.executor)
-            else:
-                platforms[a.platform] = set([a.executor])
+            for executor in a.executors:
+                if executor.platform in platforms:
+                    platforms[executor.platform].add(executor.name)
+                else:
+                    platforms[executor.platform] = set([executor.name])
         for p in platforms:
             platforms[p] = list(platforms[p])
         tactics = sorted(list(set(a.tactic.lower() for a in abilities)))

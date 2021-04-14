@@ -348,14 +348,14 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-        for a in await agent.capabilities(abilities):
-            if a.code and a.HOOKS:
-                await a.HOOKS[a.language](a)
-            if a.test:
-                links.append(
-                    Link.load(dict(command=a.test, paw=agent.paw, score=0, ability=a,
-                                   status=link_status, jitter=self.jitter(operation.jitter)))
-                )
+        for ability, executor in await agent.capabilities_with_preference(abilities):
+            if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
+                await executor.HOOKS[executor.language](ability, executor)
+            if executor.command:
+                link = Link.load(dict(command=self.encode_string(executor.command), paw=agent.paw, score=0,
+                                      ability=ability, executor=executor, status=link_status,
+                                      jitter=self.jitter(operation.jitter)))
+                links.append(link)
         return links
 
     async def _generate_cleanup_links(self, operation, agent, link_status):
@@ -372,18 +372,15 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         links = []
         for link in [l for l in operation.chain if l.paw == agent.paw]:
-            matched_abilities = await self.get_service('data_svc').locate('abilities',
-                                                                          match=dict(unique=link.ability.unique))
-            if matched_abilities:
-                ability = matched_abilities[0]
-                for cleanup in ability.cleanup:
-                    decoded_cmd = agent.replace(cleanup, file_svc=self.get_service('file_svc'))
-                    variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
-                    lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                         ability=ability, score=0, jitter=2, status=link_status))
-                    if lnk.command not in [l.command for l in links]:
-                        lnk.apply_id(agent.host)
-                        links.append(lnk)
+            for cleanup in link.executor.cleanup:
+                decoded_cmd = agent.replace(self.encode_string(cleanup), file_svc=self.get_service('file_svc'))
+                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
+                lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
+                                     ability=link.ability, executor=link.executor, score=0, jitter=2,
+                                     status=link_status))
+                if lnk.command not in [l.command for l in links]:
+                    lnk.apply_id(agent.host)
+                    links.append(lnk)
         return links
 
     @staticmethod

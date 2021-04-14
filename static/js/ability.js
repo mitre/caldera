@@ -1,35 +1,12 @@
 
-function addPlatforms(abilities) {
-    let ab = [];
-    abilities.forEach(function(a) {
-        let exists = false;
-        for(let i in ab){
-            if(ab[i].ability_id === a.ability_id) {
-                ab[i]['platform'].push(a.platform);
-                ab[i]['executor'].push(a.executor);
-                exists = true;
-                break;
-            }
-        }
-        if(!exists) {
-            a_copy = Object.assign({}, a)
-            a_copy['platform'] = [a.platform];
-            a_copy['executor'] = [a.executor];
-            ab.push(a_copy);
-        }
-    });
-    return ab;
-}
-
-function populateTechniques(parentId, exploits){
-    exploits = addPlatforms(exploits);
+function populateTechniques(parentId, abilities) {
     let parent = $('#'+parentId);
     $(parent).find('#ability-technique-filter').empty().append("<option disabled='disabled' selected>Choose a technique</option>");
 
-    let tactic = $(parent).find('#ability-tactic-filter').find(":selected").data('tactic');
+    let tactic = $(parent).find('#ability-tactic-filter').find(':selected').data('tactic');
     let found = [];
-    exploits.forEach(function(ability) {
-        if(ability.tactic.includes(tactic) && !found.includes(ability.technique_id)) {
+    abilities.forEach(function(ability) {
+        if (ability.tactic.includes(tactic) && !found.includes(ability.technique_id)) {
             found.push(ability.technique_id);
             appendTechniqueToList(parentId, tactic, ability);
         }
@@ -41,8 +18,7 @@ function populateTechniques(parentId, exploits){
  * @param {string} parentId - Parent ID used to search for dropdowns
  * @param {object[]} abilities - Abilities object array
  */
-function populateAbilities (parentId, abilities) {
-    abilities = addPlatforms(abilities);
+function populateAbilities(parentId, abilities) {
     let parent = $('#' + parentId);
 
     // Collect abilities matching technique
@@ -83,18 +59,19 @@ function searchAbilities(parent, abilities){
     let val = pElem.find('#ability-search-filter').val().toLowerCase();
     let added = [];
     if(val){
-        abilities.forEach(function(ab){
-            let cmd = atob(ab['test']);
-            if (
-                (
-                    ab['name'].toLowerCase().includes(val) ||
-                    ab['description'].toLowerCase().includes(val) ||
-                    cmd.toLowerCase().includes(val)
-                ) && !added.includes(ab['ability_id'])
-            ){
-                let composite = addPlatforms([ab]);
+        abilities.forEach(function(ab) {
+            let commandHasSearch = false;
+            ab['executors'].forEach(function(executor) {
+                if (executor['command'] != null && executor['command'].toLowerCase().includes(val)) {
+                    commandHasSearch = true;
+                }
+            });
+
+            let nameHasSearch = ab['name'].toLowerCase().includes(val);
+            let descriptionHasSearch = ab['description'].toLowerCase().includes(val);
+            if ((nameHasSearch || descriptionHasSearch || commandHasSearch) && !added.includes(ab['ability_id'])) {
                 added.push(ab['ability_id']);
-                appendAbilityToList(parent, composite[0]);
+                appendAbilityToList(parent, ab);
             }
         });
     }
