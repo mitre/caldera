@@ -13,18 +13,18 @@ class BasePlanningService(BaseService):
     # Matches facts/variables.
     # Group 0 returns the trait, including any limits
     # Ex: '#{server.malicious.url}' => 'server.malicious.url'
-    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]' => 'host.file.path[filters(technique=T1005,max=3)]'
+    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'host.file.path[filters(technique=T1005,max=3)]'
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
 
     # Matches facts/variables that contain limits, denoted by brackets in the fact name.
-    # Ex: Matches '#{host.file.path[filters(technique=T1005,max=3)]'
+    # Ex: Matches '#{host.file.path[filters(technique=T1005,max=3)]}'
     # Ex: Does not match: '#{server.malicious.url}'
     re_limited = re.compile(r'#{.*\[*\]}')
 
     # Matches the trait of a limited fact
     # Group 0 returns the trait excluding any limits
     # Ex: Does not match non-limited fact '#{server.malicious.url}'
-    # Ex: #{host.file.path[filters(technique=T1005,max=3)] => 'host.file.path'
+    # Ex: #{host.file.path[filters(technique=T1005,max=3)]} => 'host.file.path'
     re_trait = re.compile(r'(?<=\{).+?(?=\[)')
 
     # Matches trait limits.
