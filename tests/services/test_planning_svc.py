@@ -359,3 +359,84 @@ class TestPlanningService:
                                                                        [l0, l1, l2, l3],
                                                                        [l0, l1, l2, l3]])
         assert 7 == len(flat_fil)
+
+    def test_trait_with_one_part(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+
+        encoded_command = BaseWorld.encode_string('#{a}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('1') in found_commands
+
+    def test_trait_with_two_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a.b}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('2') in found_commands
+
+    def test_trait_with_three_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a.b.c}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('3') in found_commands
+
+    def test_trait_with_multiple_variations_of_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a} #{a.b} #{a.b.c}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('1 2 3') in found_commands
