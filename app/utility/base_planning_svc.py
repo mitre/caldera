@@ -64,13 +64,18 @@ class BasePlanningService(BaseService):
         link_variants = []
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
-            variables = re.findall(self.re_variable, decoded_test)
+            variables = set(re.findall(self.re_variable, decoded_test))
+
             if variables:
-                relevant_facts = await self._build_relevant_facts([x for x in set(variables) if len(x.split('.')) > 2],
-                                                                  facts)
-                if all(relevant_facts):
+                relevant_facts = await self._build_relevant_facts(variables, facts)
+
+                if relevant_facts:
                     good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
                     valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
+
+                    if not valid_facts:
+                        continue
+
                     for combo in list(itertools.product(*valid_facts)):
                         try:
                             copy_test = copy.copy(decoded_test)
