@@ -18,7 +18,7 @@ stop_bucket_exhaustion_params = [
 ]
 
 test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e[filters(max=3)]}'
-target_string = '#{1_2_3} - 1 - 2 - 3'
+target_string = '0 - 1 - 2 - 3'
 
 
 class PlannerFake:
@@ -140,9 +140,12 @@ class TestPlanningService:
         #   in addition to "tability"
         operation.add_link(Link.load(
             dict(command='', paw=agent.paw, ability=tability, status=0)))
+
+        operation.chain[0].facts.append(Fact(trait='1_2_3', value='0'))
         operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
         operation.chain[0].facts.append(Fact(trait='a.b.d', value='2'))
         operation.chain[0].facts.append(Fact(trait='a.b.e', value='3'))
+
         links = loop.run_until_complete(planning_svc.get_links
                                         (operation=operation, buckets=None,
                                          agent=agent))
@@ -303,11 +306,13 @@ class TestPlanningService:
     def test_link_fact_coverage(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+
+        f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
         f2 = Fact(trait='a.b.d', value='2')
         f3 = Fact(trait='a.b.e', value='3')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3]))
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
@@ -315,6 +320,8 @@ class TestPlanningService:
     def test_filter_bs(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+
+        f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
         f2 = Fact(trait='a.b.d', value='2')
         f3 = Fact(trait='a.b.e', value='3')
@@ -322,7 +329,7 @@ class TestPlanningService:
         f5 = Fact(trait='a.b.e', value='5')
         f6 = Fact(trait='a.b.e', value='6')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3, f4, f5, f6]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3, f4, f5, f6]))
 
         assert len(gen) == 4
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
