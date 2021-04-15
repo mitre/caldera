@@ -182,7 +182,13 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+
+            # Matches a complete fact with a given trait
+            # Ex: Matches ${a}
+            # Ex: Matches ${a.b.c}
+            # Ex: Matches ${a.b.c[filters(max=3)]}
+            fmt_fact_pattern = r'#{(%s(?=[\[}]).*?)}'
+            re_variable = re.compile(fmt_fact_pattern % re.escape(var.trait), flags=re.DOTALL)
             copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
