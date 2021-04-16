@@ -8,6 +8,8 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
+from app.utility.base_planning_svc import BasePlanningService
+
 
 stop_bucket_exhaustion_params = [
     {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
@@ -440,3 +442,28 @@ class TestPlanningService:
         assert len(found_commands) == 2  # the original and the replaced
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('1 2 3') in found_commands
+
+    async def test_remove_links_missing_facts_keeps_link_without_facts(self, ability):
+        cmd = 'a -b --foo={bar}'  # almost includes a fact, but missing a '#' in front of '{bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 1
+        assert links[0].raw_command == cmd
+
+    async def test_remove_links_missing_facts_removes_part_part_fact(self, ability):
+        cmd = 'a -b --foo=#{bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0
+
+    async def test_remove_links_missing_facts_removes_two_part_fact(self, ability):
+        cmd = 'a -b --foo=#{foo.bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0
+
+    async def test_remove_links_missing_facts_removes_three_part_fact(self, ability):
+        cmd = 'a -b --foo=#{foo.bar.baz}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0
