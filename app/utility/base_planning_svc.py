@@ -186,8 +186,8 @@ class BasePlanningService(BaseService):
             # Ex: Matches ${a}
             # Ex: Matches ${a.b.c}
             # Ex: Matches ${a.b.c[filters(max=3)]}
-            fmt_fact_pattern = r'#{(%s(?=[\[}]).*?)}'
-            re_variable = re.compile(fmt_fact_pattern % re.escape(var.trait), flags=re.DOTALL)
+            pattern = r'#{(%s(?=[\[}]).*?)}' % re.escape(var.trait)
+            re_variable = re.compile(pattern, flags=re.DOTALL)
             copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 
