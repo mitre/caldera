@@ -44,15 +44,15 @@ class LinkSchema(ma.Schema):
     @ma.pre_load()
     def fix_ability(self, link, **_):
         if 'ability' in link and isinstance(link['ability'], Ability):
-            link_input = link.pop('ability')
-            link['ability'] = link_input.schema.dump(link_input)
+            ability = link.pop('ability')
+            link['ability'] = ability.schema.dump(ability)
         return link
 
     @ma.pre_load()
     def fix_executor(self, link, **_):
         if 'executor' in link and isinstance(link['executor'], Executor):
-            link_input = link.pop('executor')
-            link['executor'] = link_input.schema.dump(link_input)
+            executor = link.pop('executor')
+            link['executor'] = executor.schema.dump(executor)
         return link
 
     @ma.post_load()
