@@ -332,7 +332,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             return
 
         ability_has_platform = any(executor for executor in ability.executors if executor.platform == agent.platform)
-        valid_executors = ability.get_executors(agent.platform, agent_executors)
+        valid_executors = ability.find_executors(agent.platform, agent_executors)
 
         any_facts_fulfilled = False
         for executor in valid_executors:

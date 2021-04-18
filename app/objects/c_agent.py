@@ -130,7 +130,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         """Get abilities that the agent is capable of running"""
         abilities = []
         for ability in ability_set:
-            if self.privileged_to_run(ability) and ability.get_executors(self.platform, self.executors):
+            if self.privileged_to_run(ability) and ability.find_executors(self.platform, self.executors):
                 abilities.append(ability)
         return abilities
 
@@ -152,7 +152,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
     async def get_preferred_executor(self, ability):
         """Get preferred executor for ability"""
         preferred_executor = self._get_preferred_executor()
-        potential_executors = ability.get_executors(self.platform, self.executors)
+        potential_executors = ability.find_executors(self.platform, self.executors)
         if potential_executors:
             return next((ex for ex in potential_executors if ex.name == preferred_executor), potential_executors[0])
         return None
@@ -231,7 +231,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
         links = []
         for ability in await self.capabilities(abilities):
-            executors = ability.get_executors(self.platform, self.executors)
+            executors = ability.find_executors(self.platform, self.executors)
             executors = sorted(executors, key=lambda ex: ex.name == preferred_executor, reverse=True)
 
             for executor in executors:

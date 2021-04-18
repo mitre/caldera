@@ -327,7 +327,7 @@ class DataService(DataServiceInterface, BaseService):
                         continue
 
                     for cleanup_ability in cleanup_abilities:
-                        cleanup_executor = cleanup_ability.get_executor(executor.platform, executor.name)
+                        cleanup_executor = cleanup_ability.find_executor(executor.platform, executor.name)
                         if cleanup_executor and cleanup_executor.cleanup:
                             payload_name = '#{payload:%s}' % payload if self.is_uuid4(payload) else payload
                             cleanup_command = executor.replace_cleanup(cleanup_executor.cleanup[0], payload_name)

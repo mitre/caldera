@@ -89,19 +89,22 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 return plugin
         return None
 
-    def get_executor(self, platform, name):
-        return next(iter([e for e in self.executors if e.platform == platform and e.name == name]), None)
+    def find_executor(self, platform, name):
+        for executor in self.executors:
+            if executor.platform == platform and executor.name == name:
+                return executor
+        return None
 
-    def get_executors(self, platform, names):
+    def find_executors(self, platform, names):
         executors = []
         for name in names:
-            matched_executor = self.get_executor(platform, name)
+            matched_executor = self.find_executor(platform, name)
             if matched_executor and matched_executor not in executors:
                 executors.append(matched_executor)
         return executors
 
     def add_executor(self, executor):
-        existing_executor = self.get_executor(executor.platform, executor.name)
+        existing_executor = self.find_executor(executor.platform, executor.name)
         if existing_executor:
             self.executors.remove(existing_executor)
         self.executors.append(executor)
