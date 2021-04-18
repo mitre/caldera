@@ -356,7 +356,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
         any_facts_fulfilled = False
         for executor in valid_executors:
-            facts = re.findall(r'#{(.*?)}', executor.command, flags=re.DOTALL) if executor.command else []
+            facts = re.findall(r'#{(.*?)}', executor.test, flags=re.DOTALL) if executor.command else []
             if all(fact in op_facts for fact in facts):
                 any_facts_fulfilled = True
 

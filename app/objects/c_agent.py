@@ -259,7 +259,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             executors = sorted(executors, key=lambda ex: ex.name == preferred_executor_name, reverse=True)
 
             for executor in executors:
-                ex_links = [Link.load(dict(command=self.encode_string(executor.command), paw=self.paw, ability=ability,
+                ex_links = [Link.load(dict(command=self.encode_string(executor.test), paw=self.paw, ability=ability,
                                            executor=executor, deadman=deadman))]
                 variants = await bps.add_test_variants(links=ex_links, agent=self, facts=facts)
                 valid_links = await bps.remove_links_missing_facts(variants)
