@@ -127,15 +127,27 @@ class Agent(FirstClassObjectInterface, BaseObject):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
     async def capabilities(self, ability_set):
-        """Get abilities that the agent is capable of running"""
+        """Get abilities that the agent is capable of running
+
+        :param ability_set: List of abilities to check agent capability
+        :type ability_set: List[Ability]
+        :return: List of abilities the agents is capable of running
+        :rtype: List[Ability]
+        """
         abilities = []
         for ability in ability_set:
             if self.privileged_to_run(ability) and ability.find_executors(self.platform, self.executors):
                 abilities.append(ability)
         return abilities
 
-    async def capabilities_with_preference(self, ability_set):
-        """Get abilities that the agent is capable of running along with preferred executor"""
+    async def capabilities_with_preferred_executor(self, ability_set):
+        """Get abilities that the agent is capable of running along with preferred executor
+
+        :param ability_set: List of abilities to check agent capability
+        :type ability_set: List[Ability]
+        :return: List of abilities with preferred executor
+        :rtype: List[(Ability, Executor)]
+        """
         if not self.executors:
             return []
 
@@ -150,11 +162,23 @@ class Agent(FirstClassObjectInterface, BaseObject):
         return ability_executors
 
     async def get_preferred_executor(self, ability):
-        """Get preferred executor for ability"""
-        preferred_executor = self._get_preferred_executor()
+        """Get preferred executor for ability
+
+        Will return None if the agent is not capable of running any
+        executors in the given ability.
+
+        :param ability: Ability to get preferred executor for
+        :type ability: Ability
+        :return: Preferred executor or None
+        :rtype: Union[Executor, None]
+        """
+        preferred_executor_name = self._get_preferred_executor_name()
         potential_executors = ability.find_executors(self.platform, self.executors)
         if potential_executors:
-            return next((ex for ex in potential_executors if ex.name == preferred_executor), potential_executors[0])
+            for executor in potential_executors:
+                if executor.name == preferred_executor_name:
+                    return executor
+            return potential_executors[0]
         return None
 
     async def heartbeat_modification(self, **kwargs):
@@ -227,12 +251,12 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return []
 
         bps = BasePlanningService()
-        preferred_executor = self._get_preferred_executor()
+        preferred_executor_name = self._get_preferred_executor_name()
 
         links = []
         for ability in await self.capabilities(abilities):
             executors = ability.find_executors(self.platform, self.executors)
-            executors = sorted(executors, key=lambda ex: ex.name == preferred_executor, reverse=True)
+            executors = sorted(executors, key=lambda ex: ex.name == preferred_executor_name, reverse=True)
 
             for executor in executors:
                 ex_links = [Link.load(dict(command=self.encode_string(executor.command), paw=self.paw, ability=ability,
@@ -260,7 +284,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, display_name)
         return decoded_cmd
 
-    def _get_preferred_executor(self):
+    def _get_preferred_executor_name(self):
         if 'psh' in self.executors:
             return 'psh'
         elif 'sh' in self.executors:
