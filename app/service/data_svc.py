@@ -1,8 +1,10 @@
 import asyncio
 import copy
+import datetime
 import glob
-import os.path
+import os
 import pickle
+import tarfile
 import shutil
 import warnings
 from importlib import import_module
@@ -22,6 +24,18 @@ from app.utility.base_service import BaseService
 
 MIN_MODULE_LEN = 1
 
+DATA_BACKUP_DIR = "data/backup"
+DATA_FILE_GLOBS = (
+    'data/abilities/*',
+    'data/adversaries/*',
+    'data/facts/*',
+    'data/objectives/*',
+    'data/payloads/*',
+    'data/results/*',
+    'data/sources/*',
+    'data/object_store',
+)
+
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -32,18 +46,46 @@ class DataService(DataServiceInterface, BaseService):
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
-    async def destroy():
-        if os.path.exists('data/object_store'):
-            os.remove('data/object_store')
+    def _iter_data_files():
+        """Yield paths to data files managed by caldera.
 
-        for d in ['data/results', 'data/adversaries', 'data/abilities', 'data/facts', 'data/sources', 'data/payloads', 'data/objectives']:
-            for f in glob.glob('%s/*' % d):
-                if f.startswith('.'):  # e.g., .gitkeep
-                    continue
-                elif os.path.isdir(f):
-                    shutil.rmtree(f)
-                else:
-                    os.remove(f)
+        The files paths are relative to the root caldera folder, so they
+        will begin with "data/".
+
+        Note:
+            This will skip any files starting with '.' (e.g., '.gitkeep').
+        """
+        for data_glob in DATA_FILE_GLOBS:
+            for f in glob.glob(data_glob):
+                yield f
+
+    @staticmethod
+    def _delete_file(path):
+        if not os.path.exists(path):
+            return
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+    @staticmethod
+    async def destroy():
+        """Reset the caldera data directory and server state.
+
+        This creates a gzipped tarball backup of the data files tracked by caldera.
+        Paths are preserved within the tarball, with all files having "data/" as the
+        root.
+        """
+        if not os.path.exists(DATA_BACKUP_DIR):
+            os.mkdir(DATA_BACKUP_DIR)
+
+        timestamp = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        tarball_path = os.path.join(DATA_BACKUP_DIR, f'backup-{timestamp}.tar.gz')
+
+        with tarfile.open(tarball_path, 'w:gz') as tarball:
+            for file_path in DataService._iter_data_files():
+                tarball.add(file_path)
+                DataService._delete_file(file_path)
 
     async def save_state(self):
         await self._prune_non_critical_data()

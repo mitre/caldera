@@ -13,7 +13,7 @@ from app.api.rest_api import RestApi
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
-from app.service.data_svc import DataService
+from app.service.data_svc import DataService, DATA_BACKUP_DIR
 from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
@@ -51,6 +51,7 @@ def run_tasks(services):
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
     loop.run_until_complete(data_svc.load_data(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(app_svc.load_plugin_expansions(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
+    loop.run_until_complete(auth_svc.set_login_handlers(services))
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())
@@ -122,6 +123,7 @@ if __name__ == '__main__':
     init_swagger_documentation(app_svc.application)
 
     if args.fresh:
+        logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
 
     run_tasks(services=app_svc.get_services())
