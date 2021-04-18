@@ -96,12 +96,12 @@ class Ability(FirstClassObjectInterface, BaseObject):
         return None
 
     def find_executors(self, platform, names):
-        executors = []
+        executors = set()
         for name in names:
             matched_executor = self.find_executor(platform, name)
-            if matched_executor and matched_executor not in executors:
-                executors.append(matched_executor)
-        return executors
+            if matched_executor:
+                executors.add(matched_executor)
+        return list(executors)
 
     def add_executor(self, executor):
         existing_executor = self.find_executor(executor.platform, executor.name)
