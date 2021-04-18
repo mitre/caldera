@@ -331,7 +331,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if ability.ability_id in agent_ran:
             return
 
-        ability_has_platform = any(executor for executor in ability.executors if executor.platform == agent.platform)
         valid_executors = ability.find_executors(agent.platform, agent_executors)
 
         any_facts_fulfilled = False
@@ -343,9 +342,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif not ability_has_platform:
-            return dict(reason='Wrong platform', reason_id=self.Reason.PLATFORM.value, ability_id=ability.ability_id,
-                        ability_name=ability.name)
         elif not valid_executors:
             return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
