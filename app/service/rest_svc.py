@@ -525,7 +525,7 @@ class RestService(RestServiceInterface, BaseService):
         :param ab: Ability to add or
         :type ab: dict
         :return: Created / updated ability
-        :rtype: List(Ability)
+        :rtype: Ability
         """
         # Set ability ID if undefined
         if not ab.get('id'):
