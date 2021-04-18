@@ -1,20 +1,20 @@
 import pytest
 from app.objects.c_adversary import Adversary
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
 
 
 @pytest.fixture
 def setup_learning_service(loop, data_svc, ability, operation, link):
+    texecutor = Executor(name='sh', platform='darwin', command='whoami', payloads=['wifi.sh'])
     tability = ability(tactic='discovery', technique_id='T1033', technique='Find', name='test',
-                       test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                       platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
-                       variations=[])
+                       description='find active user', privilege=None, executors=[texecutor])
     loop.run_until_complete(data_svc.store(tability))
     toperation = operation(name='sample', agents=None, adversary=Adversary(name='sample', adversary_id='XYZ',
                                                                            atomic_ordering=[], description='test'))
     loop.run_until_complete(data_svc.store(toperation))
-    tlink = link(ability=tability, command='', paw='')
+    tlink = link(ability=tability, command='', paw='', executor=texecutor)
     yield toperation, tlink
 
 
