@@ -3,6 +3,7 @@ import os
 import pytest
 
 from app.service.rest_svc import RestService
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_result import Result
 
 
@@ -17,16 +18,16 @@ class TestProcessor:
 
 @pytest.fixture
 def setup_contact_service(loop, data_svc, agent, ability, operation, link, adversary):
+    texecutor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
     tability = ability(tactic='discovery', technique_id='T1033', technique='Find', name='test',
-                       test='d2hvYW1pCg==', description='find active user', cleanup='', executor='special_executor',
-                       platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
-                       variations=[])
+                       description='find active user', privilege=None, executors=[texecutor])
     tability.HOOKS['special_executor'] = TestProcessor()
     loop.run_until_complete(data_svc.store(tability))
     tagent = agent(sleep_min=10, sleep_max=60, watchdog=0, executors=['special_executor'])
     loop.run_until_complete(data_svc.store(tagent))
     toperation = operation(name='sample', agents=[tagent], adversary=adversary())
-    tlink = link(command='', paw=tagent.paw, ability=tability, id='5212fca4-6544-49ce-a78d-a95d30e95705')
+    tlink = link(command='', paw=tagent.paw, ability=tability, id='5212fca4-6544-49ce-a78d-a95d30e95705',
+                 executor=texecutor)
     loop.run_until_complete(toperation.apply(tlink))
     loop.run_until_complete(data_svc.store(toperation))
     yield tlink
