@@ -10,6 +10,7 @@ from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
 from app.service.contact_svc import ContactService
+from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
@@ -54,6 +55,11 @@ def file_svc():
 @pytest.fixture(scope='class')
 def contact_svc():
     return ContactService()
+
+
+@pytest.fixture(scope='class')
+def event_svc(contact_svc, init_base_world):
+    return EventService()
 
 
 @pytest.fixture(scope='class')

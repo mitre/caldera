@@ -57,7 +57,7 @@ def planner_stub(**kwargs):
 
 
 @pytest.fixture
-def setup_planning_test(loop, ability, agent, operation, data_svc, init_base_world):
+def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, init_base_world):
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')

@@ -1,14 +1,17 @@
 import base64
 import json
 import os
-import pytest
-
 from base64 import b64encode
 from datetime import datetime
+from unittest import mock
 from unittest.mock import MagicMock
+
+import pytest
 
 from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
+from app.service.interfaces.i_event_svc import EventServiceInterface
+from app.utility.base_service import BaseService
 from app.objects.secondclass.c_result import Result
 
 
@@ -74,6 +77,29 @@ def op_for_event_logs(operation_agent, operation_adversary, ability, operation_l
                                     decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
     op.chain = [link_1, link_2, discarded_link]
     return op
+
+
+@pytest.fixture
+def fake_event_svc(loop):
+    class FakeEventService(BaseService, EventServiceInterface):
+        def __init__(self):
+            self.fired = {}
+
+        def reset(self):
+            self.fired = {}
+
+        async def observe_event(self, callback, exchange=None, queue=None):
+            pass
+
+        async def fire_event(self, exchange=None, queue=None, timestamp=True, **callback_kwargs):
+            self.fired[exchange, queue] = callback_kwargs
+
+    service = FakeEventService()
+    service.add_service('event_svc', service)
+
+    yield service
+
+    BaseService.remove_service('event_svc')
 
 
 @pytest.fixture
@@ -262,6 +288,43 @@ class TestOperation:
             assert recorded_log == want
         finally:
             os.remove(target_path)
+
+    @mock.patch.object(Operation, '_emit_state_change_event')
+    def test_no_state_change_event_on_instantiation(self, mock_emit_state_change_method, fake_event_svc, adversary):
+        Operation(name='test', agents=[], adversary=adversary)
+        mock_emit_state_change_method.assert_not_called()
+
+    @mock.patch.object(Operation, '_emit_state_change_event')
+    def test_no_state_change_event_fired_when_setting_same_state(self, mock_emit_state_change_method, fake_event_svc, adversary):
+        initial_state = 'running'
+        op = Operation(name='test', agents=[], adversary=adversary, state=initial_state)
+        op.state = initial_state
+        mock_emit_state_change_method.assert_not_called()
+
+    @mock.patch.object(Operation, '_emit_state_change_event')
+    def test_state_change_event_fired_on_state_change(self, mock_emit_state_change_method, fake_event_svc, adversary):
+        op = Operation(name='test', agents=[], adversary=adversary, state='running')
+        op.state = 'finished'
+        mock_emit_state_change_method.assert_called_with(from_state='running', to_state='finished')
+
+    def test_emit_state_change_event(self, loop, fake_event_svc, adversary):
+        op = Operation(name='test', agents=[], adversary=adversary, state='running')
+        fake_event_svc.reset()
+
+        loop.run_until_complete(
+            op._emit_state_change_event(
+                from_state='running',
+                to_state='finished'
+            )
+        )
+
+        expected_key = (Operation.EVENT_EXCHANGE, Operation.EVENT_QUEUE_STATE_CHANGED)
+        assert expected_key in fake_event_svc.fired
+
+        event_kwargs = fake_event_svc.fired[expected_key]
+        assert event_kwargs['op'] == op.id
+        assert event_kwargs['from_state'] == 'running'
+        assert event_kwargs['to_state'] == 'finished'
 
     def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, op_with_learning_parser, make_test_link, make_test_result):
         test_link = make_test_link(1234)
