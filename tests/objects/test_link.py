@@ -28,6 +28,8 @@ def fake_event_svc(loop):
 
     yield service
 
+    service.remove_service('event_svc')
+
 
 class TestLink:
 
