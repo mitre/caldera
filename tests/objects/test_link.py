@@ -7,7 +7,7 @@ class TestLink:
 
     def test_link_eq(self, ability):
         test_executor = Executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123')
+        test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
                          paw='123456', ability=test_ability, id=111111, executor=test_executor)
@@ -19,7 +19,7 @@ class TestLink:
 
     def test_link_neq(self, ability):
         test_executor = Executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123')
+        test_ability = ability(ability_id='123', executors=[test_executor])
         fact_a = Fact(trait='host.user.name', value='a')
         fact_b = Fact(trait='host.user.name', value='b')
         test_link_a = Link(command='net user a', paw='123456', ability=test_ability, id=111111, executor=test_executor)

@@ -8,7 +8,7 @@ class TestAbility:
         """ Test ability.privilege == None """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', privilege=None, variations=[])
+            Ability(ability_id='123', privilege=None)
         ))
         assert agent.privileged_to_run(ability)
 
@@ -16,7 +16,7 @@ class TestAbility:
         """ Test ability.privilege == 'User' """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', privilege='User', variations=[])
+            Ability(ability_id='123', privilege='User')
         ))
         assert agent.privileged_to_run(ability)
 
@@ -24,7 +24,7 @@ class TestAbility:
         """ Test ability.privilege == 'Elevated' """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', privilege='Elevated', variations=[])
+            Ability(ability_id='123', privilege='Elevated')
         ))
         assert not agent.privileged_to_run(ability)
 
@@ -32,7 +32,7 @@ class TestAbility:
         """ Test ability.privilege == 'User' and agent.privilege == 'Elevated' """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', privilege='User', variations=[])
+            Ability(ability_id='123', privilege='User')
         ))
         assert agent.privileged_to_run(ability)
 
@@ -40,7 +40,7 @@ class TestAbility:
         """ Test ability.privilege == 'Elevated' and agent.privilege == 'Elevated' """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', privilege='Elevated', variations=[])
+            Ability(ability_id='123', privilege='Elevated')
         ))
         assert agent.privileged_to_run(ability)
 
@@ -48,6 +48,6 @@ class TestAbility:
         """ Test ability.privilege == 'None' and agent.privilege == 'Elevated' """
         agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
         ability = loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', variations=[])
+            Ability(ability_id='123')
         ))
         assert agent.privileged_to_run(ability)

@@ -5,6 +5,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
+from app.objects.secondclass.c_executor import Executor
 
 
 class TestDataService:
@@ -41,17 +42,14 @@ class TestDataService:
             json.dumps(x.display)
 
     def test_no_duplicate_ability(self, loop, data_svc):
+        executor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
         loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
-                    test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
-                    variations=[])
+                    description='find active user', privilege=None, executors=[executor])
         ))
         loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
-                    test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
-                    platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
-                    variations=[])
+                    description='find active user', privilege=None, executors=[executor])
         ))
         abilities = loop.run_until_complete(data_svc.locate('abilities'))
 
