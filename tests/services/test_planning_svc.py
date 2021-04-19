@@ -450,7 +450,7 @@ class TestPlanningService:
         assert len(links) == 1
         assert links[0].raw_command == cmd
 
-    async def test_remove_links_missing_facts_removes_part_part_fact(self, ability):
+    async def test_remove_links_missing_facts_removes_one_part_fact(self, ability):
         cmd = 'a -b --foo=#{bar}'
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
         await BasePlanningService.remove_links_missing_facts(links)
