@@ -1,5 +1,6 @@
 import base64
 from collections import namedtuple
+from importlib import import_module
 
 from aiohttp import web, web_request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
@@ -10,10 +11,10 @@ from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
-import ldap3
-from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
+from app.service.interfaces.i_login_handler import LoginHandlerInterface
+from app.service.login_handlers.default import DefaultLoginHandler
 from app.utility.base_service import BaseService
 
 
@@ -21,6 +22,7 @@ HEADER_API_KEY = 'KEY'
 COOKIE_SESSION = 'API_SESSION'
 CONFIG_API_KEY_RED = 'api_key_red'
 CONFIG_API_KEY_BLUE = 'api_key_blue'
+CONFIG_AUTH_LOGIN_HANDLER = 'auth.login.handler.module'
 
 
 def for_all_public_methods(decorator):
@@ -36,8 +38,7 @@ def for_all_public_methods(decorator):
 
 
 def check_authorization(func):
-    """
-    Authorization Decorator
+    """Authorization Decorator
     This requires that the calling class have `self.auth_svc` set to the authentication service.
     """
     async def process(func, *args, **params):
@@ -52,18 +53,22 @@ def check_authorization(func):
 
 
 class AuthService(AuthServiceInterface, BaseService):
-
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
-        self.ldap_config = self.get_config('ldap')
+        self._login_handler = None
+        self._default_login_handler = None
+
+    @property
+    def default_login_handler(self):
+        return self._default_login_handler
 
     async def apply(self, app, users):
         if users:
             for group, user in users.items():
-                self.log.debug('Created authentication group: %s' % group)
+                self.log.debug('Created authentication group: %s', group)
                 for username, password in user.items():
                     await self.create_user(username, password, group)
         app.user_map = self.user_map
@@ -83,26 +88,54 @@ class AuthService(AuthServiceInterface, BaseService):
         raise web.HTTPFound('/login')
 
     async def login_user(self, request):
-        """
-        Log a user in and save the session
-        :param request:
-        :return: the response/location of where the user is trying to navigate
-        """
-        data = await request.post()
-        username = data.get('username')
-        password = data.get('password')
-        if self.ldap_config:
-            verified = await self._ldap_login(username, password)
-        else:
-            verified = await self._check_credentials(request.app.user_map, username, password)
+        """Log a user in and save the session
 
-        if verified:
-            self.log.debug('%s logging in:' % username)
-            response = web.HTTPFound('/')
-            await remember(request, response, username)
-            raise response
-        self.log.debug('%s failed login attempt: ' % username)
-        raise web.HTTPFound('/login')
+        :param request:
+        :raises web.HTTPRedirection: the HTTP response/location of where the user is trying to navigate
+        :raises web.HTTPUnauthorized: HTTP unauthorized response as provided by the login handler.
+        :raises web.HTTPForbidden: HTTP forbidden response as provided by the login handler.
+        :raises web.HTTPSuccessful: HTTP successful response as provided by the login handler.
+        """
+        try:
+            self.log.debug('Using login handler "%s" for login', self._login_handler.name)
+            await self._login_handler.handle_login(request)
+        except (web.HTTPRedirection, web.HTTPUnauthorized, web.HTTPForbidden, web.HTTPSuccessful) as allowed_exception:
+            raise allowed_exception
+        except Exception as e:
+            self.log.exception('Exception when handling login request.')
+
+            # Fallback if not already using default login handler
+            if not isinstance(self._login_handler, DefaultLoginHandler):
+                self.log.debug('Falling back to default login handler')
+                return await self._default_login_handler.handle_login(request)
+            else:
+                # We ran into an unexpected exception when using the default login handler.
+                raise e
+
+    async def login_redirect(self, request, use_template=True):
+        """Redirect user to login page using the configured login handler. Will fall back to the
+        default login handler if an unexpected exception is raised.
+
+        :param request:
+        :param use_template: Determines if the login handler should return an html template rather than raise
+            an HTTP redirect, if applicable. Defaults to True.
+        :type use_template: bool, optional
+        """
+        try:
+            self.log.debug('Using login handler "%s" for login redirect', self._login_handler.name)
+            return await self._login_handler.handle_login_redirect(request, use_template=use_template)
+        except (web.HTTPRedirection, web.HTTPUnauthorized, web.HTTPForbidden, web.HTTPSuccessful) as allowed_exception:
+            raise allowed_exception
+        except Exception as e:
+            self.log.exception('Exception when handling login redirect.')
+
+            # Fallback if not already using default login handler
+            if not isinstance(self._login_handler, DefaultLoginHandler):
+                self.log.debug('Falling back to default login handler')
+                return await self._default_login_handler.handle_login_redirect(request, use_template=use_template)
+            else:
+                # We ran into an unexpected exception when using the default login handler.
+                raise e
 
     def request_has_valid_api_key(self, request):
         api_key = request.headers.get(HEADER_API_KEY)
@@ -118,13 +151,19 @@ class AuthService(AuthServiceInterface, BaseService):
     async def request_has_valid_user_session(self, request):
         return await aiohttp_security_api.authorized_userid(request) is not None
 
+    async def handle_successful_login(self, request, username):
+        self.log.debug('%s logging in', username)
+        response = web.HTTPFound('/')
+        await remember(request, response, username)
+        raise response
+
     async def check_permissions(self, group, request):
         try:
             if self.request_has_valid_api_key(request):
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
-            raise web.HTTPFound('/login')
+            return await self.login_redirect(request, use_template=False)
 
     async def get_permissions(self, request):
         identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
@@ -142,49 +181,43 @@ class AuthService(AuthServiceInterface, BaseService):
             return True
         return await self.request_has_valid_user_session(request)
 
-    """ PRIVATE """
+    async def set_login_handlers(self, services, primary_handler=None):
+        """Sets the default login handler for the auth service, as well as the custom login handler if specified in the
+        primary_handler parameter or in the config file. The custom login handler will take priority for login methods
+        during login_user and redirects during check_permissions.
 
-    @staticmethod
-    async def _check_credentials(user_map, username, password):
-        user = user_map.get(username)
-        if not user:
-            return False
-        return user.password == password
+        If no login handler was specified in the config file or via the primary_handler parameter,
+        the auth service will use only the default handler.
 
-    async def _ldap_login(self, username, password):
-        server = ldap3.Server(self.ldap_config.get('server'))
-        dn = self.ldap_config.get('dn')
-        user_attr = self.ldap_config.get('user_attr') or 'uid'
-        user_string = '%s=%s,%s' % (user_attr, username, dn)
-
-        try:
-            with ldap3.Connection(server, user=user_string, password=password) as conn:
-                if conn.bind():
-                    if username not in self.user_map:
-                        group = await self._ldap_get_group(conn, dn, username, user_attr)
-                        await self.create_user(username, None, group)
-                    return True
-        except LDAPException:
-            self.log.error('Unable to connect to LDAP server')
-
-        return False
-
-    async def _ldap_get_group(self, connection, dn, username, user_attr):
-        group_attr = self.ldap_config.get('group_attr') or 'objectClass'
-        red_group_name = self.ldap_config.get('red_group') or 'red'
-
-        try:
-            connection.search(dn, '(%s=%s)' % (user_attr, username), attributes=[group_attr])
-        except LDAPAttributeError:
-            self.log.error('Invalid group_attr in config: %s' % group_attr)
-            return 'blue'
-
-        groups_result = connection.entries[0][group_attr].value
-        if ((isinstance(groups_result, list) and red_group_name in groups_result)
-                or red_group_name == groups_result):
-            return 'red'
+        :param services: services used to set up the login handlers.
+        :type services: dict
+        :param primary_handler: Login handler for the auth service. If None, the config file will
+            be used to load the primary login handler. Must implement the LoginHandlerInterface.
+            Defaults to None.
+        :type primary_handler: LoginHandlerInterface, optional
+        :raises TypeError: The provided login handler does not implement the LoginHandlerInterface.
+        """
+        self._configure_default_login_handler(services)
+        provided_handler = primary_handler if primary_handler else self._get_login_handler_from_config(services)
+        if provided_handler:
+            if isinstance(provided_handler, LoginHandlerInterface):
+                self.log.info('Setting primary login handler: %s', provided_handler.name)
+                self._login_handler = provided_handler
+            else:
+                raise TypeError('Attempted to set login handler that does not implement LoginHandlerInterface.')
         else:
-            return 'blue'
+            self.log.info('Using default login handler.')
+            self._login_handler = self._default_login_handler
+
+    def _get_login_handler_from_config(self, services):
+        login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
+        if login_handler_module_path and login_handler_module_path != 'default':
+            self.log.debug('Fetching login handler from config from module: %s', login_handler_module_path)
+            login_handler = import_module(login_handler_module_path).load_login_handler(services)
+            return login_handler
+
+    def _configure_default_login_handler(self, services):
+        self._default_login_handler = DefaultLoginHandler(services)
 
 
 class DictionaryAuthorizationPolicy(AbstractAuthorizationPolicy):
