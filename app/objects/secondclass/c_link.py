@@ -69,7 +69,7 @@ class Link(BaseObject):
 
     @property
     def raw_command(self):
-        return self.decode_bytes(self.command) if self.command else ""
+        return self.decode_bytes(self.command) if self.command else ''
 
     @property
     def unique(self):
