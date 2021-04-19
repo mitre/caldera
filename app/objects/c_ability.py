@@ -27,6 +27,8 @@ class AbilitySchema(ma.Schema):
 
     @ma.post_load
     def build_ability(self, data, **_):
+        if 'technique' in data:
+            data['technique_name'] = data.pop('technique')
         return Ability(**data)
 
 

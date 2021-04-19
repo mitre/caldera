@@ -42,13 +42,13 @@ class TestDataService:
 
     def test_no_duplicate_ability(self, loop, data_svc):
         loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
+            Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
                     platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                     variations=[])
         ))
         loop.run_until_complete(data_svc.store(
-            Ability(ability_id='123', tactic='discovery', technique_id='1', technique='T1033', name='test',
+            Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
                     test='d2hvYW1pCg==', description='find active user', cleanup='', executor='sh',
                     platform='darwin', payloads=['wifi.sh'], parsers=[], requirements=[], privilege=None,
                     variations=[])

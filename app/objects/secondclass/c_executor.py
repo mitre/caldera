@@ -40,7 +40,7 @@ class Executor(BaseObject):
         """Get command with app property variables replaced"""
         return self.decode_bytes(self.replace_app_props(self.encode_string(self.command)))
 
-    def __init__(self, name=None, platform=None, command=None, code=None, language=None, build_target=None,
+    def __init__(self, name, platform, command=None, code=None, language=None, build_target=None,
                  payloads=None, uploads=None, timeout=60, parsers=None, cleanup=None, variations=None,
                  additional_info=None, **kwargs):
         super().__init__()

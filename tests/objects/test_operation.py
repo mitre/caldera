@@ -27,8 +27,8 @@ def operation_adversary(adversary):
 
 @pytest.fixture
 def operation_link():
-    def _generate_link(command, paw, ability, pid=0, decide=None, collect=None, finish=None, **kwargs):
-        generated_link = Link(command, paw, ability, **kwargs)
+    def _generate_link(command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
+        generated_link = Link(command, paw, ability, executor, **kwargs)
         generated_link.pid = pid
         if decide:
             generated_link.decide = decide
@@ -48,43 +48,43 @@ def encoded_command():
 
 
 @pytest.fixture
-def op_for_event_logs(operation_agent, operation_adversary, ability, operation_link, encoded_command):
+def op_for_event_logs(operation_agent, operation_adversary, executor, ability, operation_link, encoded_command):
     op = Operation(name='test', agents=[operation_agent], adversary=operation_adversary)
     op.set_start_details()
-    encoded_command_1 = encoded_command('whoami')
-    encoded_command_2 = encoded_command('hostname')
-    ability_1 = ability(ability_id='123', tactic='test tactic', technique_id='T0000', technique='test technique',
-                        name='test ability', description='test ability desc', executor='psh', platform='windows',
-                        test=encoded_command_1)
-    ability_2 = ability(ability_id='456', tactic='test tactic', technique_id='T0000', technique='test technique',
-                        name='test ability 2', description='test ability 2 desc', executor='psh',
-                        platform='windows', test=encoded_command_2)
-    link_1 = operation_link(ability=ability_1, paw=operation_agent.paw,
-                            command=encoded_command_1, status=0, host=operation_agent.host, pid=789,
+    command_1 = 'whoami'
+    command_2 = 'hostname'
+    executor_1 = executor(name='psh', platform='windows', command=command_1)
+    executor_2 = executor(name='psh', platform='windows', command=command_2)
+    ability_1 = ability(ability_id='123', tactic='test tactic', technique_id='T0000', technique_name='test technique',
+                        name='test ability', description='test ability desc', executors=[executor_1])
+    ability_2 = ability(ability_id='456', tactic='test tactic', technique_id='T0000', technique_name='test technique',
+                        name='test ability 2', description='test ability 2 desc', executors=[executor_2])
+    link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
+                            command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
                             decide=datetime.strptime('2021-01-01 08:00:00', '%Y-%m-%d %H:%M:%S'),
                             collect=datetime.strptime('2021-01-01 08:01:00', '%Y-%m-%d %H:%M:%S'),
                             finish='2021-01-01 08:02:00')
-    link_2 = operation_link(ability=ability_2, paw=operation_agent.paw,
-                            command=encoded_command_2, status=0, host=operation_agent.host, pid=7890,
+    link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
+                            command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
                             decide=datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'),
                             collect=datetime.strptime('2021-01-01 09:01:00', '%Y-%m-%d %H:%M:%S'),
                             finish='2021-01-01 09:02:00')
-    discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw,
-                                    command=encoded_command_2, status=-2, host=operation_agent.host, pid=7891,
+    discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
+                                    command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
                                     decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
     op.chain = [link_1, link_2, discarded_link]
     return op
 
 
 @pytest.fixture
-def test_ability(ability):
-    return ability(ability_id='123')
+def test_ability(ability, executor):
+    return ability(ability_id='123', executors=[executor(name='psh', platform='windows')])
 
 
 @pytest.fixture
 def make_test_link(test_ability):
     def _make_link(link_id):
-        return Link(command='', paw='123456', ability=test_ability, id=link_id)
+        return Link(command='', paw='123456', ability=test_ability, id=link_id, executor=test_ability.executors[0])
     return _make_link
 
 

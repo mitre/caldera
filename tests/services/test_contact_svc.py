@@ -19,7 +19,7 @@ class TestProcessor:
 @pytest.fixture
 def setup_contact_service(loop, data_svc, agent, ability, operation, link, adversary):
     texecutor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
-    tability = ability(tactic='discovery', technique_id='T1033', technique='Find', name='test',
+    tability = ability(tactic='discovery', technique_id='T1033', technique_name='Find', name='test',
                        description='find active user', privilege=None, executors=[texecutor])
     tability.HOOKS['special_executor'] = TestProcessor()
     loop.run_until_complete(data_svc.store(tability))

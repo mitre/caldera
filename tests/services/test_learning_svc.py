@@ -8,7 +8,7 @@ from app.utility.base_world import BaseWorld
 @pytest.fixture
 def setup_learning_service(loop, data_svc, ability, operation, link):
     texecutor = Executor(name='sh', platform='darwin', command='whoami', payloads=['wifi.sh'])
-    tability = ability(tactic='discovery', technique_id='T1033', technique='Find', name='test',
+    tability = ability(tactic='discovery', technique_id='T1033', technique_name='Find', name='test',
                        description='find active user', privilege=None, executors=[texecutor])
     loop.run_until_complete(data_svc.store(tability))
     toperation = operation(name='sample', agents=None, adversary=Adversary(name='sample', adversary_id='XYZ',
