@@ -135,7 +135,14 @@ class AppService(AppServiceInterface, BaseService):
         for contact_file in glob.iglob('app/contacts/*.py'):
             contact_module_name = contact_file.replace('/', '.').replace('\\', '.').replace('.py', '')
             contact_class = import_module(contact_module_name).Contact
-            await contact_svc.register(contact_class(self.get_services()))
+            await contact_svc.register_contact(contact_class(self.get_services()))
+        await self.register_contact_tunnels(contact_svc)
+
+    async def register_contact_tunnels(self, contact_svc):
+        for tunnel_file in glob.iglob('app/contacts/tunnels/*.py'):
+            tunnel_module_name = tunnel_file.replace('/', '.').replace('\\', '.').replace('.py', '')
+            tunnel_class = import_module(tunnel_module_name).Tunnel
+            await contact_svc.register_tunnel(tunnel_class(self.get_services()))
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):

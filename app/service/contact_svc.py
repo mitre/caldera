@@ -28,14 +28,22 @@ class ContactService(ContactServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('contact_svc', self)
         self.contacts = []
+        self.tunnels = []
         self.report = defaultdict(list)
 
-    async def register(self, contact):
+    async def register_contact(self, contact):
         try:
             await self._start_c2_channel(contact=contact)
             self.log.debug('Registered contact: %s' % contact.name)
         except Exception as e:
             self.log.error('Failed to start %s contact: %s' % (contact.name, e))
+
+    async def register_tunnel(self, tunnel):
+        try:
+            await self._start_c2_tunnel(tunnel=tunnel)
+            self.log.debug('Registered contact tunnel: %s', tunnel.name)
+        except Exception as e:
+            self.log.exception('Failed to start %s contact tunnel: %s', tunnel.name, e)
 
     @report
     async def handle_heartbeat(self, **kwargs):
@@ -75,6 +83,10 @@ class ContactService(ContactServiceInterface, BaseService):
     async def get_contact(self, name):
         contact = [c for c in self.contacts if c.name == name]
         return contact[0]
+
+    async def get_tunnel(self, name):
+        tunnel = [t for t in self.tunnels if t.name == name]
+        return tunnel[0] if len(tunnel) > 0 else None
 
     """ PRIVATE """
 
@@ -122,6 +134,11 @@ class ContactService(ContactServiceInterface, BaseService):
         loop = asyncio.get_event_loop()
         loop.create_task(contact.start())
         self.contacts.append(contact)
+
+    async def _start_c2_tunnel(self, tunnel):
+        loop = asyncio.get_event_loop()
+        loop.create_task(tunnel.start())
+        self.tunnels.append(tunnel)
 
     async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))

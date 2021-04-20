@@ -4,7 +4,11 @@ import abc
 class ContactServiceInterface(abc.ABC):
 
     @abc.abstractmethod
-    def register(self, contact):
+    def register_contact(self, contact):
+        pass
+
+    @abc.abstractmethod
+    def register_tunnel(self, tunnel):
         pass
 
     @abc.abstractmethod
