@@ -1,3 +1,5 @@
+import os.path
+
 import pytest
 import random
 import string
@@ -23,13 +25,16 @@ from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 
+DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIR = os.path.join(DIR, '..', 'conf')
+
 
 @pytest.fixture(scope='session')
 def init_base_world():
-    with open('conf/default.yml') as c:
+    with open(os.path.join(CONFIG_DIR, 'default.yml')) as c:
         BaseWorld.apply_config('main', yaml.load(c, Loader=yaml.FullLoader))
-    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-    BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'agents.yml'))[0])
+    BaseWorld.apply_config('payloads', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'payloads.yml'))[0])
 
 
 @pytest.fixture(scope='class')

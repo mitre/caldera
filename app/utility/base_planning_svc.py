@@ -10,9 +10,26 @@ from app.utility.rule_set import RuleSet
 
 class BasePlanningService(BaseService):
 
+    # Matches facts/variables.
+    # Group 0 returns the trait, including any limits
+    # Ex: '#{server.malicious.url}' => 'server.malicious.url'
+    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'host.file.path[filters(technique=T1005,max=3)]'
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
+
+    # Matches facts/variables that contain limits, denoted by brackets in the fact name.
+    # Ex: Matches '#{host.file.path[filters(technique=T1005,max=3)]}'
+    # Ex: Does not match: '#{server.malicious.url}'
     re_limited = re.compile(r'#{.*\[*\]}')
+
+    # Matches the trait of a limited fact
+    # Group 0 returns the trait excluding any limits
+    # Ex: Does not match non-limited fact '#{server.malicious.url}'
+    # Ex: #{host.file.path[filters(technique=T1005,max=3)]} => 'host.file.path'
     re_trait = re.compile(r'(?<=\{).+?(?=\[)')
+
+    # Matches trait limits.
+    # Group 0 returns the specific filters.
+    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'technique=T1005,max=3'
     re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
 
     async def trim_links(self, operation, links, agent):
@@ -47,13 +64,18 @@ class BasePlanningService(BaseService):
         link_variants = []
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
-            variables = re.findall(self.re_variable, decoded_test)
+            variables = set(re.findall(self.re_variable, decoded_test))
+
             if variables:
-                relevant_facts = await self._build_relevant_facts([x for x in set(variables) if len(x.split('.')) > 2],
-                                                                  facts)
-                if all(relevant_facts):
+                relevant_facts = await self._build_relevant_facts(variables, facts)
+
+                if relevant_facts:
                     good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
                     valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
+
+                    if not valid_facts:
+                        continue
+
                     for combo in list(itertools.product(*valid_facts)):
                         try:
                             copy_test = copy.copy(decoded_test)
@@ -97,8 +119,7 @@ class BasePlanningService(BaseService):
         :param links:
         :return: updated list of links
         """
-        links[:] = [l for l in links if
-                    not re.findall(r'(#{[a-zA-Z1-9]+?\..+?})', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
+        links[:] = [l for l in links if not BasePlanningService.re_variable.findall(b64decode(l.command).decode('utf-8'))]
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
@@ -160,7 +181,13 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+
+            # Matches a complete fact with a given trait
+            # Ex: Matches ${a}
+            # Ex: Matches ${a.b.c}
+            # Ex: Matches ${a.b.c[filters(max=3)]}
+            pattern = r'#{(%s(?=[\[}]).*?)}' % re.escape(var.trait)
+            re_variable = re.compile(pattern, flags=re.DOTALL)
             copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 

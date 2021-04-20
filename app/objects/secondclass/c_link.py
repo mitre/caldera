@@ -76,6 +76,10 @@ class Link(BaseObject):
     EVENT_QUEUE_STATUS_CHANGED = 'status_changed'
 
     @property
+    def raw_command(self):
+        return self.decode_bytes(self.command) if self.command else ''
+
+    @property
     def unique(self):
         return self.hash('%s' % self.id)
 
