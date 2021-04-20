@@ -68,6 +68,10 @@ class Link(BaseObject):
     RESERVED = dict(origin_link_id='#{origin_link_id}')
 
     @property
+    def raw_command(self):
+        return self.decode_bytes(self.command) if self.command else ''
+
+    @property
     def unique(self):
         return self.hash('%s' % self.id)
 

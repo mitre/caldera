@@ -8,6 +8,8 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
+from app.utility.base_planning_svc import BasePlanningService
+
 
 stop_bucket_exhaustion_params = [
     {'stopping_condition_met': False, 'operation_state': 'RUNNING', 'condition_stop': True, 'assert_value': False},
@@ -18,7 +20,7 @@ stop_bucket_exhaustion_params = [
 ]
 
 test_string = '#{1_2_3} - #{a.b.c} - #{a.b.d} - #{a.b.e[filters(max=3)]}'
-target_string = '#{1_2_3} - 1 - 2 - 3'
+target_string = '0 - 1 - 2 - 3'
 
 
 class PlannerFake:
@@ -140,9 +142,12 @@ class TestPlanningService:
         #   in addition to "tability"
         operation.add_link(Link.load(
             dict(command='', paw=agent.paw, ability=tability, status=0)))
+
+        operation.chain[0].facts.append(Fact(trait='1_2_3', value='0'))
         operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
         operation.chain[0].facts.append(Fact(trait='a.b.d', value='2'))
         operation.chain[0].facts.append(Fact(trait='a.b.e', value='3'))
+
         links = loop.run_until_complete(planning_svc.get_links
                                         (operation=operation, buckets=None,
                                          agent=agent))
@@ -303,11 +308,13 @@ class TestPlanningService:
     def test_link_fact_coverage(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+
+        f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
         f2 = Fact(trait='a.b.d', value='2')
         f3 = Fact(trait='a.b.e', value='3')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3]))
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
@@ -315,6 +322,8 @@ class TestPlanningService:
     def test_filter_bs(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+
+        f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
         f2 = Fact(trait='a.b.d', value='2')
         f3 = Fact(trait='a.b.e', value='3')
@@ -322,7 +331,7 @@ class TestPlanningService:
         f5 = Fact(trait='a.b.e', value='5')
         f6 = Fact(trait='a.b.e', value='6')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f1, f2, f3, f4, f5, f6]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3, f4, f5, f6]))
 
         assert len(gen) == 4
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
@@ -352,3 +361,109 @@ class TestPlanningService:
                                                                        [l0, l1, l2, l3],
                                                                        [l0, l1, l2, l3]])
         assert 7 == len(flat_fil)
+
+    def test_trait_with_one_part(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+
+        encoded_command = BaseWorld.encode_string('#{a}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('1') in found_commands
+
+    def test_trait_with_two_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a.b}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('2') in found_commands
+
+    def test_trait_with_three_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a.b.c}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('3') in found_commands
+
+    def test_trait_with_multiple_variations_of_parts(self, loop, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{a} #{a.b} #{a.b.c}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='a', value='1'),
+            Fact(trait='a.b', value='2'),
+            Fact(trait='a.b.c', value='3'),
+            Fact(trait='server', value='5')
+        ]
+
+        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        assert len(new_links) == 2
+
+        found_commands = set(x.command for x in new_links)
+        assert len(found_commands) == 2  # the original and the replaced
+        assert encoded_command in found_commands
+        assert BaseWorld.encode_string('1 2 3') in found_commands
+
+    async def test_remove_links_missing_facts_keeps_link_without_facts(self, ability):
+        cmd = 'a -b --foo={bar}'  # almost includes a fact, but missing a '#' in front of '{bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 1
+        assert links[0].raw_command == cmd
+
+    async def test_remove_links_missing_facts_removes_one_part_fact(self, ability):
+        cmd = 'a -b --foo=#{bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0
+
+    async def test_remove_links_missing_facts_removes_two_part_fact(self, ability):
+        cmd = 'a -b --foo=#{foo.bar}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0
+
+    async def test_remove_links_missing_facts_removes_three_part_fact(self, ability):
+        cmd = 'a -b --foo=#{foo.bar.baz}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        await BasePlanningService.remove_links_missing_facts(links)
+        assert len(links) == 0

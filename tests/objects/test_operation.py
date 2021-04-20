@@ -147,6 +147,7 @@ class TestOperation:
         assert op.ran_ability_id('123')
 
     def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
         start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
         agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
@@ -215,7 +216,9 @@ class TestOperation:
         assert event_logs == want
 
     def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
+
         start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
         agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
         want_agent_metadata = dict(
