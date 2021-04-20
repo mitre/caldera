@@ -776,7 +776,7 @@
     }
 
     function buildRequirements(encodedTest){
-        let matchedRequirements = atob(encodedTest).match(/#{([^}]+)}/g);
+        let matchedRequirements = b64DecodeUnicode(encodedTest).match(/#{([^}]+)}/g);
         if(matchedRequirements) {
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{server}' });
             matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{group}' });
@@ -830,10 +830,10 @@
                 template.find('#ability-platform').val(ability.platform);
                 filterExecutors(template.find('#ability-platform'));
                 template.find('#ability-executor').val(ability.executor);
-                template.find('#ability-command').val(atob(ability.test));
+                template.find('#ability-command').val(b64DecodeUnicode(ability.test));
                 template.find('#ability-timeout').val(ability.timeout);
                 if(ability.cleanup[0]) {
-                    template.find('#ability-cleanup').val(atob(ability.cleanup[0]));
+                    template.find('#ability-cleanup').val(b64DecodeUnicode(ability.cleanup[0]));
                 }
                 template.show();
                 template.attr('id', unique);
