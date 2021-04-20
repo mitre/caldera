@@ -1,5 +1,5 @@
 # Planning service code
-/app/service/planning_svc.py    @ArtificialErmine @elegantmoose
-/app/service/interfaces/i_planning_svc.py    @ArtificialErmine @elegantmoose
-/app/utility/base_planning_svc.py   @ArtificialErmine @elegantmoose
-/tests/services/test_planning_svc.py  @ArtificialErmine @elegantmoose
+/app/service/planning_svc.py   @mitre/squad-x
+/app/service/interfaces/i_planning_svc.py   @mitre/squad-x
+/app/utility/base_planning_svc.py   @mitre/squad-x
+/tests/services/test_planning_svc.py  @mitre/squad-x
