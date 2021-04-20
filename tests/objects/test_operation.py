@@ -147,6 +147,7 @@ class TestOperation:
         assert op.ran_ability_id('123')
 
     def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
         start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
         agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
@@ -215,7 +216,9 @@ class TestOperation:
         assert event_logs == want
 
     def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
+
         start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
         agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
         want_agent_metadata = dict(
@@ -326,7 +329,7 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, op_with_learning_parser, make_test_link, make_test_result):
+    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser, make_test_link, make_test_result):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
@@ -337,7 +340,8 @@ class TestOperation:
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
 
-    def test_without_learning_parser(self, loop, contact_svc, data_svc, learning_svc, op_without_learning_parser, make_test_link, make_test_result):
+    def test_without_learning_parser(self, loop, app_svc, contact_svc, data_svc, learning_svc, event_svc, op_without_learning_parser, make_test_link, make_test_result):
+        app_svc = app_svc(loop)  # contact_svc._save(...) needs app service registered
         test_link = make_test_link(5678)
         op_without_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)

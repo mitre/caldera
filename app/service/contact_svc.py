@@ -122,8 +122,8 @@ class ContactService(ContactServiceInterface, BaseService):
                         loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link, result.output))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
-        except Exception as e:
-            self.log.debug('save_results exception: %s' % e)
+        except Exception:
+            self.log.exception('Unexpected error occurred while saving link')
 
     async def _postprocess_link_result(self, result, ability):
         if ability.HOOKS and ability.executor in ability.HOOKS:
