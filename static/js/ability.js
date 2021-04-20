@@ -84,7 +84,7 @@ function searchAbilities(parent, abilities){
     let added = [];
     if(val){
         abilities.forEach(function(ab){
-            let cmd = atob(ab['test']);
+            let cmd = b64DecodeUnicode(ab['test']);
             if (
                 (
                     ab['name'].toLowerCase().includes(val) ||
