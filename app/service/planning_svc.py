@@ -3,29 +3,8 @@ from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
 
 
-class PlanningService(PlanningServiceInterface, BasePlanningService):
+test
 
-    def __init__(self):
-        super().__init__()
-        self.log = self.add_service('planning_svc', self)
-
-    async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):
-        """Apply all links for specified bucket
-
-        Blocks until all links are completed, either after batch push,
-        or separately for every pushed link.
-
-        :param planner: Planner to check for stopping conditions on
-        :type planner: LogicalPlanner
-        :param bucket: Bucket to pull abilities from
-        :type bucket: string
-        :param operation: Operation to run links on
-        :type operation: Operation
-        :param agent: Agent to run links on, defaults to None
-        :type agent: Agent, optional
-        :param batch: Push all bucket links immediately. Will check if
-            operation has been stopped (by user) after all bucket links
-            complete. 'False' will push links one at a time, and wait
             for each to complete. Will check if operation has been
             stopped (by user) after each single link is completed.
             Defaults to False
