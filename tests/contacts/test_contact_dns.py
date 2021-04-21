@@ -20,7 +20,7 @@ def dns_contact_base_world():
                                                 'crypt_salt': 'BLAH',
                                                 'api_key': 'ADMIN123',
                                                 'encryption_key': 'ADMIN123',
-                                                'exfil_dir': os.path.normpath('/')})
+                                                'exfil_dir': '/tmp'})
     BaseWorld.apply_config(name='agents', config={'sleep_max': 5,
                                                   'sleep_min': 5,
                                                   'untrusted_timer': 90,
@@ -225,8 +225,8 @@ class TestContactDns:
         hostname = 'testhost'
         directory = '%s-%s' % (hostname, paw)
         upload_metadata = dict(paw=paw, file=filename, directory=directory)
-        target_dir = os.path.normpath('/' + directory)
-        target_path = os.path.join(target_dir, f"{filename}-{message_id}")
+        target_dir = '/tmp/%s' % directory
+        target_path = '%s/%s-%s' % (target_dir, filename, message_id)
         file_data = b'thiswilltakemultiplednsrequests' * 100
         metadata_hex_chunks = get_hex_chunks(json.dumps(upload_metadata).encode('utf-8'))
         file_data_hex_chunks = get_hex_chunks(file_data)
