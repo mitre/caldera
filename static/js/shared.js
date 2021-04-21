@@ -198,6 +198,7 @@ function b64EncodeUnicode(str) { //https://stackoverflow.com/a/30106551
 
 function b64DecodeUnicode(str) { //https://stackoverflow.com/a/30106551
     if (str != null) {
+        // An error check is needed in case the wrong codec (i.e. not UTF-8) was used at source
         try {
             return decodeURIComponent(atob(str).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
