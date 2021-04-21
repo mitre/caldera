@@ -50,7 +50,8 @@ class BasePlanningService(BaseService):
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
-        links = await self.restore_dead_agent_links(operation, agent, links)
+        if operation.enable_recovery:
+            links = await self.restore_dead_agent_links(operation, agent, links)
         return links
 
     async def add_test_variants(self, links, agent, facts=(), rules=()):

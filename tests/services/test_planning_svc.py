@@ -491,8 +491,8 @@ class TestPlanningService:
 
         # verify that we can generate a new copy of a link for a now dead agent
         agent.paw = 'a.b.d'  # force paw to be something we can predict
-                             # (The planner just accepts that .d exists, even if it doesn't) - it only forcibly checks
-                             # dead agents here... and the agent that 'died' is on host 'a.b.e' (see init)
+        # (The planner just accepts that .d exists, even if it doesn't) - it only forcibly checks
+        # dead agents here... and the agent that 'died' is on host 'a.b.e' (see init)
         recovered = loop.run_until_complete(planning_svc.restore_dead_agent_links(operation, agent, []))
         assert len(recovered) == 1
 
