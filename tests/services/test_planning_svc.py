@@ -472,8 +472,9 @@ class TestPlanningService:
         ability, agent, operation, sability = setup_planning_test
 
         # do setup
-        l0 = link(command='a0', paw='a.b.e', ability=ability)
-        l1 = link(command='a1', paw='a.b.e', ability=sability)
+        t_out = '#{1_2_3} - a.b.c - a.b.d - a.b.e'
+        l0 = link(command=base64.b64encode(bytes(t_out, 'utf-8')), paw='a.b.d', ability=ability)
+        l1 = link(command=base64.b64encode(bytes(t_out, 'utf-8')), paw='a.b.d', ability=sability)
         l1.used.append(Fact(trait='a.b.c', value='a.b.c'))
         l1.used.append(Fact(trait='a.b.d', value='a.b.d'))
         l1.used.append(Fact(trait='a.b.e', value='a.b.e'))
@@ -489,7 +490,9 @@ class TestPlanningService:
         assert out is False
 
         # verify that we can generate a new copy of a link for a now dead agent
-        agent.paw = 'a.b.e'  # force paw to be something we can predict
+        agent.paw = 'a.b.d'  # force paw to be something we can predict
+                             # (The planner just accepts that .d exists, even if it doesn't) - it only forcibly checks
+                             # dead agents here... and the agent that 'died' is on host 'a.b.e' (see init)
         recovered = loop.run_until_complete(planning_svc.restore_dead_agent_links(operation, agent, []))
         assert len(recovered) == 1
 
@@ -497,3 +500,25 @@ class TestPlanningService:
         operation.chain.append(recovered[0])
         second_pass = loop.run_until_complete(planning_svc.restore_dead_agent_links(operation, agent, []))
         assert len(second_pass) == 0
+
+        # verify generator method still identifies the recovery candidate should a planner want to use it
+        returned_candidates = loop.run_until_complete(planning_svc._get_potential_recovery_links(operation, agent))
+        assert len(returned_candidates) == 2
+
+        # verify that created recovery links match expectations
+        generated_recovery = loop.run_until_complete(planning_svc._create_recovery_version(operation, agent,
+                                                                                           returned_candidates[0]))
+        # null out values un-synced values in the output
+        gr_display = generated_recovery.display
+        gr_display.pop('host')
+        gr_display.pop('unique')
+        gr_display.pop('id')
+        r_display = returned_candidates[1].display
+        r_display.pop('host')
+        r_display.pop('unique')
+        r_display.pop('id')
+        assert r_display == gr_display
+        assert (returned_candidates[0].command == generated_recovery.command)
+        assert (returned_candidates[0].used == generated_recovery.used)
+        assert (returned_candidates[0].paw == generated_recovery.paw)
+        assert (returned_candidates[0].ability.display == generated_recovery.ability.display)

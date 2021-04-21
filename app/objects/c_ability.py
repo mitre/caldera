@@ -84,7 +84,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.technique_id = technique_id
         self.name = name
         self.description = description
-        self.cleanup = [cleanup] if cleanup else []
         self.executor = executor
         self.platform = platform
         self.payloads = payloads if payloads else []
@@ -106,6 +105,14 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.additional_info = additional_info or dict()
         self.additional_info.update(**kwargs)
         self.tags = set(tags) if tags else set()
+
+        if not cleanup:
+            self.cleanup = []
+        else:
+            if isinstance(cleanup, list):
+                self.cleanup = cleanup
+            else:
+                self.cleanup = [cleanup]
 
     def __getattr__(self, item):
         try:

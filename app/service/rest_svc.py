@@ -340,7 +340,6 @@ class RestService(RestServiceInterface, BaseService):
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')),
-                         timeout=int(data.pop('timeout', 30)),
                          use_learning_parsers=bool(int(data.pop('use_learning_parsers', 0))))
 
     def _get_allowed_from_access(self, access):

@@ -115,21 +115,21 @@ class BasePlanningService(BaseService):
 
     @staticmethod
     async def restore_dead_agent_links(operation, agent, links):
-        list_of_dead_agents = [x.host for x in operation.agents if not x.trusted]
+        list_of_dead_agents = [x for x in operation.agents if not x.trusted]
         for dead_agent in list_of_dead_agents:
-            potential_links = [x for x in operation.chain if BasePlanningService._match_input_string(x, dead_agent)]
-            potential_links = [x for x in potential_links if x.paw == agent.paw and (x.status == x.states['SUCCESS']
-                                                                                     or x.recovery)]
-            recovs = [x for x in potential_links if x.recovery]
-            potential_links = [x for x in potential_links if x not in recovs]
-            recovery_links = [Link.load(dict(command=x.command, paw=agent.paw, score=0, ability=x.ability,
-                                             status=operation.link_status(), jitter=x.jitter)) for x in potential_links]
-            for s_link in range(0, len(potential_links)):
-                recovery_links[s_link].used = potential_links[s_link].used
-            for link in recovery_links:
-                link.recovery = True
-            print(f"[PLANNING DEBUG] - spawning recovery actions for agent {dead_agent}: {recovery_links}")
-            links.extend(recovery_links)
+            potential_links = await BasePlanningService._get_potential_recovery_links(operation, dead_agent=dead_agent,
+                                                                                      running_agent=agent)
+            previous_recovs = [x for x in potential_links if x.recovery]
+            potential_links = [x for x in potential_links if x not in previous_recovs]
+            recovery_links = [await BasePlanningService._create_recovery_version(operation, agent, x)
+                              for x in potential_links]
+            [x.apply_id(agent.host) for x in recovery_links]
+
+            if len(recovery_links):
+                print(f"[base_planning_svc] - spawning recovery actions for agent {dead_agent.paw} on host "
+                      f"{dead_agent.host} (assigned to agent {agent.paw} on host {agent.host}).: "
+                      f"{[x.id for x in recovery_links]}")
+                links.extend(recovery_links)
         return links
 
     @staticmethod
@@ -193,6 +193,47 @@ class BasePlanningService(BaseService):
                         parallel_list.append(compare)
                         links.append(individual_link)
         return links
+
+    @staticmethod
+    async def _get_potential_recovery_links(operation, running_agent, dead_agent=None):
+        """
+            Identify all potential recovery links
+            :param operation: operation to scan
+            :param dead_agent: optional parameter for a specific expired agent (object, not paw/string) to pull data for
+            :param running_agent: active agent to filter possible recovery links to (object, not paw/string)
+            :return: list of potential recovery links (includes previous recovery links)
+        """
+        potential_links = []
+        dead_agents = [x for x in operation.agents if not x.trusted]
+        if dead_agent:
+            dead_agents = [dead_agent]
+        for dagent in dead_agents:
+            potential_links = [x for x in operation.chain if BasePlanningService._match_input_string(x, dagent.host)]
+            potential_links = [x for x in potential_links if x.paw == running_agent.paw and
+                               (x.status == x.states['SUCCESS'] or x.recovery)]
+        return potential_links
+
+    @staticmethod
+    async def _create_recovery_version(operation, agent, link):
+        """
+            Create the 'recovery' version of a link
+            :param operation: The operation the original link is tied to
+            :param agent: The agent the link will be assigned to (object, not paw string)
+            :param link: The original link to make a recovery version of
+            :return: A recovery version of the chosen link
+        """
+        decoded_test = agent.replace(link.ability.test, BasePlanningService.get_service('file_svc'))
+        new_command, score, used = await BasePlanningService._build_single_test_variant(decoded_test, link.used,
+                                                                                        link.ability.executor)
+        new_command = BasePlanningService.encode_string(new_command)
+        recovery_link = Link.load(dict(command=new_command, paw=agent.paw, score=score, ability=link.ability,
+                                       status=operation.link_status(), jitter=link.jitter))
+        # copy other relevant data over
+        recovery_link.used = used
+        recovery_link.recovery = True
+        recovery_link.apply_id(agent.host)
+
+        return recovery_link
 
     @staticmethod
     async def _build_single_test_variant(copy_test, combo, executor):

@@ -86,9 +86,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
             to_state=value
         )
 
-    def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
+    def __init__(self, name, agents, adversary, id=None, jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 timeout=30, use_learning_parsers=True):
+                 use_learning_parsers=True):
         super().__init__()
         self.id = str(id)
         self.start, self.finish = None, None
