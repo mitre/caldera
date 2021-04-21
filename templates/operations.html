@@ -98,6 +98,10 @@
                 <option value="1" selected>Use default parsers</option>
                 <option value="0">Do not use default parsers</option>
               </select>
+              <select name="recovery" id="queueRecovery" class="queueOption" style="opacity:0.5" disabled="true">
+                  <option value="1" selected>Enable automated recovery</option>
+                  <option value="0">Disable automated recovery</option>
+              </select>
               <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
               <input id="queueTimeout" class="queueOption" type="number" value="30" min="0" max="300"
                       onchange="stream('The number of seconds Caldera will wait per cleanup action to complete before continuing.')">
@@ -419,6 +423,7 @@
             "obfuscator":document.getElementById("queueObfuscated").value,
             "auto_close": document.getElementById("queueAutoClose").value,
             "use_learning_parsers": document.getElementById("queueDefaultParsers").value,
+            "enable_recovery": document.getElementById("queueRecovery").value,
             "jitter":jitter,
             "source":document.getElementById("queueSource").value,
             "visibility": document.getElementById("queueVisibility").value,
