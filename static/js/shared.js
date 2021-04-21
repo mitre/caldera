@@ -198,8 +198,12 @@ function b64EncodeUnicode(str) { //https://stackoverflow.com/a/30106551
 
 function b64DecodeUnicode(str) { //https://stackoverflow.com/a/30106551
     if (str != null) {
-        return decodeURIComponent(atob(str).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        try {
+            return decodeURIComponent(atob(str).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+        } catch {
+            return atob(str);
+        }
     } else return "";
 }
