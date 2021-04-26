@@ -45,7 +45,7 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation.all_facts(), operation.rules)
-        links = await self.remove_links_missing_facts(links)
+        links = await self.remove_links_with_unset_variables(links)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
@@ -112,9 +112,9 @@ class BasePlanningService(BaseService):
                  not any([lnk.command == x.command for x in singleton_links]))]
 
     @staticmethod
-    async def remove_links_missing_facts(links):
+    async def remove_links_with_unset_variables(links):
         """
-        Remove any links that did not have facts encoded into command
+        Remove any links that contain variables that have not been filled in.
 
         :param links:
         :return: updated list of links
