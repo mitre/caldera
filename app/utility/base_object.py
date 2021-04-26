@@ -89,7 +89,7 @@ class BaseObject(BaseWorld):
             decoded_test = self.decode_bytes(encoded_string)
             for k, v in self.get_config().items():
                 if k.startswith('app.'):
-                    var = "#{%s}" % k
+                    var = '#{%s}' % k
                     decoded_test = decoded_test.replace(var, str(v).strip())
             return self.encode_string(decoded_test)
 
