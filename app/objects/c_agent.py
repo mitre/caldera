@@ -73,6 +73,16 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
+    @classmethod
+    def is_global_variable(cls, variable):
+        if variable.startswith('payload:'):
+            return True
+        if variable == 'payload':
+            return False
+        if variable in cls.RESERVED:
+            return True
+        return False
+
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
@@ -209,7 +219,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         bps = BasePlanningService()
         potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i, deadman=deadman)) for i in await self.capabilities(abilities)]
         links = []
-        for valid in await bps.remove_links_missing_facts(
+        for valid in await bps.remove_links_with_unset_variables(
                 await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
             links.append(valid)
         links = await bps.obfuscate_commands(self, obfuscator, links)
