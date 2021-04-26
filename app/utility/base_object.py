@@ -105,14 +105,12 @@ class BaseObject(BaseWorld):
 
 class AppConfigGlobalVariableIdentifier:
     @classmethod
-    def iter_app_config_variables(cls):
-        for config_key in BaseWorld.get_config().keys():
-            if config_key.startswith('app.'):
-                yield '#{%s}' % config_key
-
-    @classmethod
     def is_global_variable(cls, variable):
-        for config_variable in cls.iter_app_config_variables():
-            if variable == config_variable:
+        if not variable.startswith('app.'):
+            return False
+
+        for config_key in BaseWorld.get_config().keys():
+            if variable == config_key:
                 return True
+
         return False
