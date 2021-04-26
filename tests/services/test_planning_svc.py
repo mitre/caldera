@@ -423,7 +423,7 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('3') in found_commands
 
-    async def test_trait_with_multiple_variations_of_parts(self, loop, setup_planning_test, planning_svc):
+    async def test_trait_with_multiple_variations_of_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a} #{a.b} #{a.b.c}')
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
@@ -443,7 +443,7 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('1 2 3') in found_commands
 
-    async def test_global_variables_not_replaced_with_facts(self, loop, setup_planning_test, planning_svc):
+    async def test_global_variables_not_replaced_with_facts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{server} #{origin_link_id}')
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
