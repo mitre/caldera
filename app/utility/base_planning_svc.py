@@ -41,8 +41,16 @@ class BasePlanningService(BaseService):
         """
         self._global_variable_owners = list(global_variable_owners or ())
 
-    def add_global_variable_owner(self, x):
-        self._global_variable_owners.append(x)
+    def add_global_variable_owner(self, global_variable_owner):
+        """Adds a global variable owner to the internal registry.
+
+        These will be used for identification of global variables when performing variable-fact substitution.
+
+        Args:
+            global_variable_owner: An object that exposes an is_global_variable(...) method and accepts a string
+                containing a bare/unwrapped variable.
+        """
+        self._global_variable_owners.append(global_variable_owner)
 
     def is_global_variable(self, variable):
         return any(x.is_global_variable(variable) for x in self._global_variable_owners)
