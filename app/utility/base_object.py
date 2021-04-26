@@ -101,3 +101,18 @@ class BaseObject(BaseWorld):
             return cls.schema.load(dict_obj)
         else:
             raise NotImplementedError
+
+
+class AppConfigGlobalVariableIdentifier:
+    @classmethod
+    def iter_app_config_variables(cls):
+        for config_key in BaseWorld.get_config().keys():
+            if config_key.startswith('app.'):
+                yield '#{%s}' % config_key
+
+    @classmethod
+    def is_global_variable(cls, variable):
+        for config_variable in cls.iter_app_config_variables():
+            if variable == config_variable:
+                return True
+        return False
