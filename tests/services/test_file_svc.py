@@ -97,6 +97,28 @@ class TestFileService:
         os.remove(uploaded_file_path)
         os.rmdir(upload_dir)
 
+    def test_download_plaintext_file(self, loop, file_svc):
+        filename = 'plaintextpayload.txt'
+        payload_content = b'plaintext content'
+        file_svc.read_file = AsyncMock(return_value=(filename, payload_content))
+        file_path, content, display_name = loop.run_until_complete(
+            file_svc.get_file(headers={'file': filename, 'file-encoding': 'plain-text'})
+        )
+        assert file_path == filename
+        assert content == payload_content
+        assert display_name == filename
+
+    def test_download_base64_file(self, loop, file_svc):
+        filename = 'b64payload.txt'
+        payload_content = b'b64 content'
+        file_svc.read_file = AsyncMock(return_value=(filename, payload_content))
+        file_path, content, display_name = loop.run_until_complete(
+            file_svc.get_file(headers={'file': filename, 'file-encoding': 'base64'})
+        )
+        assert file_path == filename
+        assert content == b64encode(payload_content)
+        assert display_name == filename
+
     def test_pack_file(self, loop, mocker, tmpdir, file_svc, data_svc):
         payload = 'unittestpayload'
         payload_content = b'content'
