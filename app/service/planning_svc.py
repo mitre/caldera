@@ -41,8 +41,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             links = await self.get_links(operation, [bucket], agent)
             if len(links) == 0:
                 break
-            for l in links:
-                l_id = await operation.apply(l)
+            for s_link in links:
+                l_id = await operation.apply(s_link)
                 if batch:
                     l_ids.append(l_id)
                 else:
@@ -118,7 +118,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type planner: LogicalPlanner
         :param publish_transitions: flag to publish bucket transitions as
           events to the event service
-        :type publish tranitions: bool
+        :type publish_transitions: bool
         """
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
@@ -371,7 +371,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-        for link in [l for l in operation.chain if l.paw == agent.paw]:
+        for link in [s_link for s_link in operation.chain if s_link.paw == agent.paw]:
             matched_abilities = await self.get_service('data_svc').locate('abilities',
                                                                           match=dict(unique=link.ability.unique))
             if matched_abilities:
@@ -381,7 +381,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                     variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.ability.executor)
                     lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
                                          ability=ability, score=0, jitter=2, status=link_status))
-                    if lnk.command not in [l.command for l in links]:
+                    if lnk.command not in [a_link.command for a_link in links]:
                         lnk.apply_id(agent.host)
                         links.append(lnk)
         return links
@@ -395,8 +395,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param links: Links to apply adjustments to
         :type links: list(Link)
         """
-        for l in links:
-            for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
+        for a_link in links:
+            for adjustment in [a for a in operation.source.adjustments if a.ability_id == a_link.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility.apply(adjustment)
-                    l.status = l.states['HIGH_VIZ']
+                    a_link.visibility.apply(adjustment)
+                    a_link.status = a_link.states['HIGH_VIZ']
