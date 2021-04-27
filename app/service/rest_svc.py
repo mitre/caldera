@@ -276,7 +276,7 @@ class RestService(RestServiceInterface, BaseService):
             self.set_config('main', data.get('prop'), data.get('value'))
         return self.get_config()
 
-    async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None):
+    async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None, file_encoding=None):
         async def validate(op):
             try:
                 if not len(op):
@@ -300,6 +300,9 @@ class RestService(RestServiceInterface, BaseService):
         if obfuscator:
             operation[0].obfuscator = obfuscator
             self.log.debug('Updated operation=%s obfuscator to %s' % (op_id, operation[0].obfuscator))
+        if file_encoding:
+            operation[0].file_encoding = file_encoding
+            self.log.debug('Updated operation=%s file encoding to %s' % (op_id, operation[0].file_encoding))
 
     async def get_agent_configuration(self, data):
         abilities = await self.get_service('data_svc').locate('abilities', data)

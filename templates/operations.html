@@ -456,7 +456,7 @@
         let op_id = $('#operation-list option:selected').attr('value');
         let newFileEncoding = $('#currentFileEncoding').val();
         stream('Changing operation payload/upload file encoding to ' + newFileEncoding);
-        restRequest('POST', {'index':'operation','op_id': parseInt(op_id), 'file_encoding': newFileEncoding}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id, 'file_encoding': newFileEncoding}, doNothing, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
