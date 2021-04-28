@@ -234,6 +234,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_packers(plug)
             for task in async_tasks:
                 await task
+            await self._load_data_encoders(plugins)
             await self._load_extensions()
             await self._load_data_encoders(plugins)
             await self._verify_data_sets()

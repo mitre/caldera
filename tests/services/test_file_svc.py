@@ -4,19 +4,26 @@ import yaml
 
 from base64 import b64encode
 from tests import AsyncMock
+from unittest import mock
 from asyncio import Future
 
-from app.objects.c_data_encoder import DataEncoder
-from app.objects.c_operation import Operation
+from app.data_encoders.base64_basic import Base64Encoder
+from app.data_encoders.plain_text import PlainTextEncoder
 from app.objects.secondclass.c_link import Link
 from app.utility.file_decryptor import decrypt
 
 
+@pytest.fixture
+def store_encoders(loop, data_svc):
+    loop.run_until_complete(data_svc.store(PlainTextEncoder()))
+    loop.run_until_complete(data_svc.store(Base64Encoder()))
+
+
 @pytest.mark.usefixtures(
-    'init_base_world'
+    'init_base_world',
+    'store_encoders'
 )
 class TestFileService:
-
     def test_save_file(self, loop, file_svc, tmp_path):
         filename = "test_file.txt"
         payload = b'These are the file contents.'
@@ -44,80 +51,26 @@ class TestFileService:
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         assert output_data == output
 
-    def test_upload_decode_plaintext(self, loop, file_svc, data_svc, ability):
-        loop.run_until_complete(data_svc.store(
-            DataEncoder(name='plain-text',
-                        description='Does not encode or decode data at all, instead keeps it in plain text form',
-                        module='tests.services.data_encoders.plain_text')
-        ))
-        test_ability = ability(ability_id='123')
-        test_link = Link(command='net user a', paw='123456', ability=test_ability, id=123456,
-                         file_encoding='plain-text')
-        op = Operation(name='test op plaintext', agents=[], adversary=None, id='12345')
-        op.chain = [test_link]
-        loop.run_until_complete(data_svc.store(op))
-        file_svc.data_svc = data_svc
-        upload_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory('test-plaintext-upload'))
-        upload_filename = 'plaintext.txt'
-        upload_content = b'this will be encoded and decoded as plaintext'
-        loop.run_until_complete(file_svc.save_file(upload_filename, upload_content, upload_dir, encrypt=False,
-                                                   link_id=test_link.id))
-        uploaded_file_path = os.path.join(upload_dir, upload_filename)
-        assert os.path.isfile(uploaded_file_path)
-        with open(uploaded_file_path, 'rb') as file:
-            written_data = file.read()
-        assert written_data == upload_content
-        os.remove(uploaded_file_path)
-        os.rmdir(upload_dir)
+    def test_upload_decode_plaintext(self, loop, file_svc, data_svc, app_svc):
+        content = b'this will be encoded and decoded as plaintext'
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, app_svc, encoding='plain-text',
+                                             upload_content=content, decoded_content=content)
 
-    def test_upload_decode_b64(self, loop, file_svc, data_svc, ability):
-        loop.run_until_complete(data_svc.store(
-            DataEncoder(name='base64',
-                        description='Encodes and decodes data in base64',
-                        module='tests.services.data_encoders.base64_basic')
-        ))
-        test_ability = ability(ability_id='456')
-        test_link = Link(command='net user a', paw='123456', ability=test_ability, id=123457,
-                         file_encoding='base64')
-        op = Operation(name='test op b64', agents=[], adversary=None, id='12346')
-        op.chain = [test_link]
-        loop.run_until_complete(data_svc.store(op))
-        file_svc.data_svc = data_svc
-        upload_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory('test-base64-upload'))
-        upload_filename = 'base64.txt'
+    def test_upload_decode_b64(self, loop, file_svc, data_svc, app_svc):
         original_content = b'this will be encoded and decoded as base64'
         upload_content = b64encode(original_content)
-        loop.run_until_complete(file_svc.save_file(upload_filename, upload_content, upload_dir, encrypt=False,
-                                                   link_id=test_link.id))
-        uploaded_file_path = os.path.join(upload_dir, upload_filename)
-        assert os.path.isfile(uploaded_file_path)
-        with open(uploaded_file_path, 'rb') as file:
-            written_data = file.read()
-        assert written_data == original_content
-        os.remove(uploaded_file_path)
-        os.rmdir(upload_dir)
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, app_svc, encoding='base64',
+                                             upload_content=upload_content, decoded_content=original_content)
 
     def test_download_plaintext_file(self, loop, file_svc):
-        filename = 'plaintextpayload.txt'
         payload_content = b'plaintext content'
-        file_svc.read_file = AsyncMock(return_value=(filename, payload_content))
-        file_path, content, display_name = loop.run_until_complete(
-            file_svc.get_file(headers={'file': filename, 'file-encoding': 'plain-text'})
-        )
-        assert file_path == filename
-        assert content == payload_content
-        assert display_name == filename
+        self._test_download_file_with_encoding(loop, file_svc, encoding='plain-text', original_content=payload_content,
+                                               encoded_content=payload_content)
 
     def test_download_base64_file(self, loop, file_svc):
-        filename = 'b64payload.txt'
         payload_content = b'b64 content'
-        file_svc.read_file = AsyncMock(return_value=(filename, payload_content))
-        file_path, content, display_name = loop.run_until_complete(
-            file_svc.get_file(headers={'file': filename, 'file-encoding': 'base64'})
-        )
-        assert file_path == filename
-        assert content == b64encode(payload_content)
-        assert display_name == filename
+        self._test_download_file_with_encoding(loop, file_svc, encoding='base64', original_content=payload_content,
+                                               encoded_content=b64encode(payload_content))
 
     def test_pack_file(self, loop, mocker, tmpdir, file_svc, data_svc):
         payload = 'unittestpayload'
@@ -176,4 +129,39 @@ class TestFileService:
         assert decrypted_data == upload_content
         os.remove(uploaded_file_path)
         os.remove(decrypted_file_path)
+        os.rmdir(upload_dir)
+
+    @staticmethod
+    def _test_download_file_with_encoding(loop, file_svc, encoding, original_content, encoded_content):
+        filename = 'testencodedpayload.txt'
+        file_svc.read_file = AsyncMock(return_value=(filename, original_content))
+        file_path, content, display_name = loop.run_until_complete(
+            file_svc.get_file(headers={'file': filename, 'file-encoding': encoding})
+        )
+        assert file_path == filename
+        assert content == encoded_content
+        assert display_name == filename
+
+    @staticmethod
+    def _test_upload_file_with_encoding(loop, file_svc, data_svc, app_svc, encoding, upload_content, decoded_content):
+        def _mocked_get_service(requested_service):
+            if requested_service == 'app_svc':
+                return app_svc
+            else:
+                return file_svc.get_services().get(requested_service)
+
+        test_link = Link(command='net user a', paw='123456', ability=None, id=123456, file_encoding=encoding)
+        app_svc.find_link = AsyncMock(return_value=test_link)
+        file_svc.get_service = mock.Mock(side_effect=_mocked_get_service)
+        file_svc.data_svc = data_svc
+        upload_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory('testencodeduploaddir'))
+        upload_filename = 'testencodedupload.txt'
+        loop.run_until_complete(file_svc.save_file(upload_filename, upload_content, upload_dir, encrypt=False,
+                                                   link_id=test_link.id))
+        uploaded_file_path = os.path.join(upload_dir, upload_filename)
+        assert os.path.isfile(uploaded_file_path)
+        with open(uploaded_file_path, 'rb') as file:
+            written_data = file.read()
+        assert written_data == decoded_content
+        os.remove(uploaded_file_path)
         os.rmdir(upload_dir)

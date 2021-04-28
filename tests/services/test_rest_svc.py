@@ -83,7 +83,8 @@ class TestRestSvc:
                                               'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
                                               'origin_link_id': 0, 'deadman_enabled': False,
                                               'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                                              'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
+                                              'host_ip_addrs': [], 'upstream_dest': '://None:None',
+                                              'data_encoders': ['plain-text']}],
                               'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
                               'obfuscator': 'plain-text', 'use_learning_parsers': False, 'file_encoding': 'plain-text',
                               'objective': {'goals': [{'value': 'complete',
@@ -153,7 +154,7 @@ class TestRestSvc:
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
                      'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': 0,
                      'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                     'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
+                     'host_ip_addrs': [], 'upstream_dest': '://None:None', 'data_encoders': ['plain-text']}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
                 'obfuscator': 'plain-text', 'use_learning_parsers': False, 'file_encoding': 'plain-text'}
         internal_rest_svc = rest_svc(loop)

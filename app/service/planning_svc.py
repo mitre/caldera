@@ -353,7 +353,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if a.code and a.HOOKS:
                 await a.HOOKS[a.language](a)
             if a.test:
-                file_encoding = operation.file_encoding if operation.file_encoding in a.data_encoders \
+                file_encoding = operation.file_encoding if operation.file_encoding in agent.data_encoders \
                     else self._default_file_encoding
                 links.append(
                     Link.load(dict(command=a.test, paw=agent.paw, score=0, ability=a,

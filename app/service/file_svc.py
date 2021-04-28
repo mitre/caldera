@@ -228,7 +228,7 @@ class FileSvc(FileServiceInterface, BaseService):
         if encoding:
             encoders = await self.data_svc.locate('data_encoders', match=dict(name=encoding))
             if encoders:
-                return encoders[0].load()
+                return encoders[0]
         self.log.error('Could not find the requested data encoder %s' % encoding)
 
     async def _encode_contents(self, contents, encoder_name):
