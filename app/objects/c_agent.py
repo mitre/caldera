@@ -43,6 +43,7 @@ class AgentFieldsSchema(ma.Schema):
     available_contacts = ma.fields.List(ma.fields.String())
     created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     host_ip_addrs = ma.fields.List(ma.fields.String())
+    data_encoders = ma.fields.List(ma.fields.String())
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -87,7 +88,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None, host_ip_addrs=None, upstream_dest=None):
+                 available_contacts=None, host_ip_addrs=None, upstream_dest=None, data_encoders=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -125,6 +126,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             self.upstream_dest = '%s://%s:%s' % (upstream_url.scheme, upstream_url.hostname, upstream_url.port)
         else:
             self.upstream_dest = self.server
+        self.data_encoders = data_encoders if data_encoders else ['plain-text']
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)

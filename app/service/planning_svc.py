@@ -4,6 +4,7 @@ from app.utility.base_planning_svc import BasePlanningService
 
 
 class PlanningService(PlanningServiceInterface, BasePlanningService):
+    _default_file_encoding = 'plain-text'
 
     def __init__(self, global_variable_owners=None):
         super().__init__(global_variable_owners=global_variable_owners)
@@ -352,10 +353,12 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if a.code and a.HOOKS:
                 await a.HOOKS[a.language](a)
             if a.test:
+                file_encoding = operation.file_encoding if operation.file_encoding in a.data_encoders \
+                    else self._default_file_encoding
                 links.append(
                     Link.load(dict(command=a.test, paw=agent.paw, score=0, ability=a,
                                    status=link_status, jitter=self.jitter(operation.jitter),
-                                   file_encoding=operation.file_encoding))
+                                   file_encoding=file_encoding))
                 )
         return links
 
