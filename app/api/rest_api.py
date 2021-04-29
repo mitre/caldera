@@ -39,6 +39,7 @@ class RestApi(BaseWorld):
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
+        self.app_svc.application.router.add_route('BITS_POST', '/file/bits_upload', self.bits_upload)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
@@ -131,6 +132,9 @@ class RestApi(BaseWorld):
         created_dir = os.path.normpath('/' + request.headers.get('X-Request-ID', str(uuid.uuid4()))).lstrip('/')
         saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
+
+    async def bits_upload(self, request):
+
 
     async def download_file(self, request):
         try:
