@@ -17,9 +17,8 @@ def base64_encoder():
 
 
 @pytest.fixture
-def setup_data_encoders(loop, data_svc, plaintext_encoder, base64_encoder):
-    loop.run_until_complete(data_svc.store(plaintext_encoder))
-    loop.run_until_complete(data_svc.store(base64_encoder))
+def setup_data_encoders(loop, data_svc):
+    loop.run_until_complete(data_svc._load_data_encoders([]))
 
 
 @pytest.mark.usefixtures(
