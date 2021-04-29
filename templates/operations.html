@@ -541,7 +541,7 @@
                         let loop_template = $("#loop-template").clone();
                         loop_template.removeAttr('id');
                         loop_template.find('.hil-linkId').text(OPERATION.chain[i].unique);
-                        loop_template.find('.hil-command').text(atob(OPERATION.chain[i].command));
+                        loop_template.find('.hil-command').text(b64DecodeUnicode(OPERATION.chain[i].command));
                         loop_template.css('display', 'block');
                         loop_template.insertAfter(template.find(".member-infos"));
                         template.find('#'+OPERATION.chain[i].id+'-rm').remove();
@@ -641,7 +641,7 @@
             template.find('#potential-name').text(link.ability.name);
             template.find('#potential-technique').text(link.ability.technique_id+' - '+link.ability.technique_name+' ('+link.ability.tactic+')')
             template.find('#potential-description').text(link.ability.description);
-            template.find('#potential-command').text(atob(link.command));
+            template.find('#potential-command').text(b64DecodeUnicode(link.command));
             template.find('#potential-score').text(link.score);
             template.find('#potential-visibility').text(link.visibility.score);
             template.data('link', link);
@@ -686,7 +686,7 @@
         let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
         let link = linkDiv.data('link');
         let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
-        link.command = btoa(linkDiv.find('#potential-command').text());
+        link.command = b64EncodeUnicode(linkDiv.find('#potential-command').text());
         $('#'+uniqueLinkId).remove();
         updatePotentialLinkCount();
         link["index"] = "link";
@@ -806,7 +806,7 @@
     function findResults(elem, lnk){
         function loadResults(data){
             if (data) {
-                let res = atob(data.output);
+                let res = b64DecodeUnicode(data.output);
                 $('#resultView').text(res);
                 resultText = $('#resultView').html();
 
@@ -823,7 +823,7 @@
             }
         }
         document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').text(atob($(elem).attr('data-encoded-cmd')));
+        $('#resultCmd').text(b64DecodeUnicode($(elem).attr('data-encoded-cmd')));
         restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
     }
 
@@ -858,7 +858,7 @@
     function submitHilChanges(link_button, status){
         link_loop = $(link_button).parent().parent();
         let command = $(link_loop).find('.hil-command').val();
-        updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, btoa(command));
+        updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, b64EncodeUnicode(command));
         $(link_loop).parent().parent().remove();
         refresh();
         return false;
@@ -892,7 +892,7 @@
 
     function showCommand(command){
         document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').text(atob(command));
+        $('#resultCmd').text(b64DecodeUnicode(command));
         $('#resultView').empty();
     }
     //# sourceURL=operations.js
