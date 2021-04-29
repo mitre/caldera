@@ -73,6 +73,16 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
 
+    @classmethod
+    def is_global_variable(cls, variable):
+        if variable.startswith('payload:'):
+            return True
+        if variable == 'payload':
+            return False
+        if variable in cls.RESERVED:
+            return True
+        return False
+
     def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
@@ -261,11 +271,10 @@ class Agent(FirstClassObjectInterface, BaseObject):
             for executor in executors:
                 ex_links = [Link.load(dict(command=self.encode_string(executor.test), paw=self.paw, ability=ability,
                                            executor=executor, deadman=deadman))]
-                variants = await bps.add_test_variants(links=ex_links, agent=self, facts=facts)
-                valid_links = await bps.remove_links_missing_facts(variants)
+                valid_links = await bps.remove_links_with_unset_variables(
+                    await bps.add_test_variants(links=ex_links, agent=self, facts=facts))
                 if valid_links:
-                    for valid_link in valid_links:
-                        links.append(valid_link)
+                    links.extend(valid_links)
                     break
 
         links = await bps.obfuscate_commands(self, obfuscator, links)

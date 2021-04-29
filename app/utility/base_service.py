@@ -10,6 +10,10 @@ class BaseService(BaseWorld):
         return self.create_logger(name)
 
     @classmethod
+    def remove_service(cls, name):
+        del cls._services[name]
+
+    @classmethod
     def get_service(cls, name):
         return cls._services.get(name)
 

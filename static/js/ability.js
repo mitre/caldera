@@ -58,7 +58,7 @@ function searchAbilities(parent, abilities){
     abList.empty();
     let val = pElem.find('#ability-search-filter').val().toLowerCase();
     let added = [];
-    if(val){
+    if (val) {
         abilities.forEach(function(ab) {
             let commandHasSearch = false;
             ab['executors'].forEach(function(executor) {

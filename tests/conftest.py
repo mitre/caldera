@@ -1,3 +1,5 @@
+import os.path
+
 import pytest
 import random
 import string
@@ -10,6 +12,7 @@ from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.data_svc import DataService
 from app.service.contact_svc import ContactService
+from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
@@ -23,13 +26,16 @@ from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 
+DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIR = os.path.join(DIR, '..', 'conf')
+
 
 @pytest.fixture(scope='session')
 def init_base_world():
-    with open('conf/default.yml') as c:
+    with open(os.path.join(CONFIG_DIR, 'default.yml')) as c:
         BaseWorld.apply_config('main', yaml.load(c, Loader=yaml.FullLoader))
-    BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
-    BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
+    BaseWorld.apply_config('agents', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'agents.yml'))[0])
+    BaseWorld.apply_config('payloads', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'payloads.yml'))[0])
 
 
 @pytest.fixture(scope='class')
@@ -55,6 +61,11 @@ def file_svc():
 @pytest.fixture(scope='class')
 def contact_svc():
     return ContactService()
+
+
+@pytest.fixture(scope='class')
+def event_svc(contact_svc, init_base_world):
+    return EventService()
 
 
 @pytest.fixture(scope='class')

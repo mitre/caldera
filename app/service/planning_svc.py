@@ -5,8 +5,8 @@ from app.utility.base_planning_svc import BasePlanningService
 
 class PlanningService(PlanningServiceInterface, BasePlanningService):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, global_variable_owners=None):
+        super().__init__(global_variable_owners=global_variable_owners)
         self.log = self.add_service('planning_svc', self)
 
     async def exhaust_bucket(self, planner, bucket, operation, agent=None, batch=False, condition_stop=True):

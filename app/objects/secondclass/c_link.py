@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from base64 import b64decode
@@ -12,6 +13,10 @@ from app.objects.secondclass.c_fact import Fact, FactSchema
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
+from app.utility.base_service import BaseService
+
+
+NO_STATUS_SET = object()
 
 
 class LinkSchema(ma.Schema):
@@ -70,6 +75,13 @@ class Link(BaseObject):
 
     RESERVED = dict(origin_link_id='#{origin_link_id}')
 
+    EVENT_EXCHANGE = 'link'
+    EVENT_QUEUE_STATUS_CHANGED = 'status_changed'
+
+    @property
+    def raw_command(self):
+        return self.decode_bytes(self.command) if self.command else ''
+
     @property
     def unique(self):
         return self.hash('%s' % self.id)
@@ -92,6 +104,31 @@ class Link(BaseObject):
                     SUCCESS=0,
                     ERROR=1,
                     TIMEOUT=124)
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, value):
+        previous_status = getattr(self, '_status', NO_STATUS_SET)
+
+        self._status = value
+
+        if previous_status is NO_STATUS_SET:
+            return
+
+        if previous_status == value:
+            return
+
+        self._emit_status_change_event(
+            from_status=previous_status,
+            to_status=value
+        )
+
+    @classmethod
+    def is_global_variable(cls, variable):
+        return variable in cls.RESERVED
 
     def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None):
@@ -151,6 +188,21 @@ class Link(BaseObject):
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
 
     """ PRIVATE """
+
+    def _emit_status_change_event(self, from_status, to_status):
+        event_svc = BaseService.get_service('event_svc')
+
+        task = asyncio.get_event_loop().create_task(
+            event_svc.fire_event(
+                exchange=Link.EVENT_EXCHANGE,
+                queue=Link.EVENT_QUEUE_STATUS_CHANGED,
+                link=self.id,
+                from_status=from_status,
+                to_status=to_status
+            )
+        )
+
+        return task
 
     async def _parse_link_result(self, result, parser, source_facts):
         blob = b64decode(result).decode('utf-8')

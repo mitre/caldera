@@ -17,6 +17,10 @@ from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_service import BaseService
+
+
+NO_PREVIOUS_STATE = object()
 
 
 class OperationSchema(ma.Schema):
@@ -42,6 +46,9 @@ class OperationSchema(ma.Schema):
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
+    EVENT_EXCHANGE = 'operation'
+    EVENT_QUEUE_STATE_CHANGED = 'state_changed'
+    EVENT_QUEUE_COMPLETED = 'completed'
 
     schema = OperationSchema()
 
@@ -57,6 +64,27 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     OUT_OF_TIME='out_of_time',
                     FINISHED='finished',
                     CLEANUP='cleanup')
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        previous_state = getattr(self, '_state', NO_PREVIOUS_STATE)
+
+        self._state = value
+
+        if previous_state is NO_PREVIOUS_STATE:
+            return
+
+        if previous_state == value:
+            return
+
+        self._emit_state_change_event(
+            from_state=previous_state,
+            to_state=value
+        )
 
     def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
@@ -136,7 +164,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
     async def close(self, services):
         await self._cleanup_operation(services)
         await self._save_new_source(services)
-        await services.get('event_svc').fire_event(exchange='operation', queue='completed', op=self.id)
+        await services.get('event_svc').fire_event(
+            exchange=Operation.EVENT_EXCHANGE,
+            queue=Operation.EVENT_QUEUE_COMPLETED,
+            op=self.id
+        )
+
         if self.state not in [self.states['FINISHED'], self.states['OUT_OF_TIME']]:
             self.state = self.states['FINISHED']
         self.finish = self.get_current_timestamp()
@@ -380,6 +413,21 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return dict(operation_name=self.name,
                     operation_start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                     operation_adversary=self.adversary.name)
+
+    def _emit_state_change_event(self, from_state, to_state):
+        event_svc = BaseService.get_service('event_svc')
+
+        task = asyncio.get_event_loop().create_task(
+            event_svc.fire_event(
+                exchange=Operation.EVENT_EXCHANGE,
+                queue=Operation.EVENT_QUEUE_STATE_CHANGED,
+                op=self.id,
+                from_state=from_state,
+                to_state=to_state
+            )
+        )
+
+        return task
 
     @staticmethod
     def _get_ability_metadata_for_event_log(ability):

@@ -9,11 +9,51 @@ from app.utility.rule_set import RuleSet
 
 
 class BasePlanningService(BaseService):
-
+    # Matches facts/variables.
+    # Group 1 returns the trait, including any limits
+    # Ex: '#{server.malicious.url}' => 'server.malicious.url'
+    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'host.file.path[filters(technique=T1005,max=3)]'
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
+
+    # Matches facts/variables that contain limits, denoted by brackets in the fact name.
+    # Ex: Matches '#{host.file.path[filters(technique=T1005,max=3)]}'
+    # Ex: Does not match: '#{server.malicious.url}'
     re_limited = re.compile(r'#{.*\[*\]}')
+
+    # Matches the trait of a limited fact
+    # Group 0 returns the trait excluding any limits
+    # Ex: Does not match non-limited fact '#{server.malicious.url}'
+    # Ex: #{host.file.path[filters(technique=T1005,max=3)]} => 'host.file.path'
     re_trait = re.compile(r'(?<=\{).+?(?=\[)')
+
+    # Matches trait limits.
+    # Group 0 returns the specific filters.
+    # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'technique=T1005,max=3'
     re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
+
+    def __init__(self, global_variable_owners=None):
+        """Base class for Planning Service
+
+        Args:
+            global_variable_owners: List of objects/classes that expose an is_global_variable() method that accepts
+                an 'unwrapped' variable string (e.g. 'foo.bar.baz' and NOT '#{foo.bar.baz}') and returns True if
+                it is a global variable.
+        """
+        self._global_variable_owners = list(global_variable_owners or ())
+
+    def add_global_variable_owner(self, global_variable_owner):
+        """Adds a global variable owner to the internal registry.
+
+        These will be used for identification of global variables when performing variable-fact substitution.
+
+        Args:
+            global_variable_owner: An object that exposes an is_global_variable(...) method and accepts a string
+                containing a bare/unwrapped variable.
+        """
+        self._global_variable_owners.append(global_variable_owner)
+
+    def is_global_variable(self, variable):
+        return any(x.is_global_variable(variable) for x in self._global_variable_owners)
 
     async def trim_links(self, operation, links, agent):
         """
@@ -28,7 +68,7 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation.all_facts(), operation.rules)
-        links = await self.remove_links_missing_facts(links)
+        links = await self.remove_links_with_unset_variables(links)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
@@ -45,15 +85,21 @@ class BasePlanningService(BaseService):
         :return: updated list of links
         """
         link_variants = []
+
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
-            variables = re.findall(self.re_variable, decoded_test)
+            variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
+
             if variables:
-                relevant_facts = await self._build_relevant_facts([x for x in set(variables) if len(x.split('.')) > 2],
-                                                                  facts)
-                if all(relevant_facts):
+                relevant_facts = await self._build_relevant_facts(variables, facts)
+
+                if relevant_facts:
                     good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
                     valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
+
+                    if not valid_facts:
+                        continue
+
                     for combo in list(itertools.product(*valid_facts)):
                         try:
                             copy_test = copy.copy(decoded_test)
@@ -68,8 +114,10 @@ class BasePlanningService(BaseService):
                         except Exception as ex:
                             logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
-                link.apply_id(agent.host)
+                # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
+                link.apply_id(agent.host)
+
         return links + link_variants
 
     @staticmethod
@@ -91,15 +139,14 @@ class BasePlanningService(BaseService):
                  not any([lnk.command == x.command for x in singleton_links]))]
 
     @staticmethod
-    async def remove_links_missing_facts(links):
+    async def remove_links_with_unset_variables(links):
         """
-        Remove any links that did not have facts encoded into command
+        Remove any links that contain variables that have not been filled in.
 
         :param links:
         :return: updated list of links
         """
-        links[:] = [l for l in links if
-                    not re.findall(r'(#{[a-zA-Z1-9]+?\..+?})', b64decode(l.command).decode('utf-8'), flags=re.DOTALL)]
+        links[:] = [l for l in links if not BasePlanningService.re_variable.findall(b64decode(l.command).decode('utf-8'))]
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
@@ -161,7 +208,13 @@ class BasePlanningService(BaseService):
         for var in combo:
             score += (score + var.score)
             used.append(var)
-            re_variable = re.compile(r'#{(%s.*?)}' % var.trait, flags=re.DOTALL)
+
+            # Matches a complete fact with a given trait
+            # Ex: Matches ${a}
+            # Ex: Matches ${a.b.c}
+            # Ex: Matches ${a.b.c[filters(max=3)]}
+            pattern = r'#{(%s(?=[\[}]).*?)}' % re.escape(var.trait)
+            re_variable = re.compile(pattern, flags=re.DOTALL)
             copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
         return copy_test, score, used
 

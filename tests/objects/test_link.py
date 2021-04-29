@@ -1,6 +1,35 @@
+from unittest import mock
+
+import pytest
+
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_fact import Fact
+from app.service.interfaces.i_event_svc import EventServiceInterface
+from app.utility.base_service import BaseService
+
+
+@pytest.fixture
+def fake_event_svc(loop):
+    class FakeEventService(BaseService, EventServiceInterface):
+        def __init__(self):
+            self.fired = {}
+
+        def reset(self):
+            self.fired = {}
+
+        async def observe_event(self, callback, exchange=None, queue=None):
+            pass
+
+        async def fire_event(self, exchange=None, queue=None, timestamp=True, **callback_kwargs):
+            self.fired[exchange, queue] = callback_kwargs
+
+    service = FakeEventService()
+    service.add_service('event_svc', service)
+
+    yield service
+
+    service.remove_service('event_svc')
 
 
 class TestLink:
@@ -27,3 +56,39 @@ class TestLink:
         test_link_b = Link(command='net user b', paw='123456', ability=test_ability, id=222222, executor=test_executor)
         test_link_b.used = [fact_b]
         assert test_link_a != test_link_b
+
+    @mock.patch.object(Link, '_emit_status_change_event')
+    def test_no_status_change_event_on_instantiation(self, mock_emit_status_change_method, ability):
+        Link(command='net user a', paw='123456', ability=ability())
+        mock_emit_status_change_method.assert_not_called()
+
+    @mock.patch.object(Link, '_emit_status_change_event')
+    def test_no_status_change_event_fired_when_setting_same_status(self, mock_emit_status_change_method, ability):
+        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+        link.status = link.status
+        mock_emit_status_change_method.assert_not_called()
+
+    @mock.patch.object(Link, '_emit_status_change_event')
+    def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability):
+        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+        link.status = -5
+        mock_emit_status_change_method.assert_called_with(from_status=-3, to_status=-5)
+
+    def test_emit_status_change_event(self, loop, fake_event_svc, ability):
+        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+        fake_event_svc.reset()
+
+        loop.run_until_complete(
+            link._emit_status_change_event(
+                from_status=-3,
+                to_status=-5
+            )
+        )
+
+        expected_key = (Link.EVENT_EXCHANGE, Link.EVENT_QUEUE_STATUS_CHANGED)
+        assert expected_key in fake_event_svc.fired
+
+        event_kwargs = fake_event_svc.fired[expected_key]
+        assert event_kwargs['link'] == link.id
+        assert event_kwargs['from_status'] == -3
+        assert event_kwargs['to_status'] == -5
