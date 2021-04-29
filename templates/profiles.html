@@ -546,9 +546,8 @@
         let abilitySelector = $('#phase-modal').find('#ability-ability-filter');
         let selectedAbility = abilitySelector.find(':selected').data('ability');
 
-        let abilityData = data[0];
-        let newAbility = addPlatforms([abilityData])[0];
-        
+        let newAbility = addPlatforms(data)[0];
+
         if (!selectedAbility || selectedAbility.ability_id != newAbility.ability_id) {
             appendAbilityToList('phase-modal', newAbility);
         } else {
@@ -561,15 +560,15 @@
 
         var $to_replace = -1;
         $.each(exploits, function(i, ab) {
-            if (ab.ability_id === abilityData.ability_id) {
+            if (ab.ability_id === newAbility.ability_id) {
                 $to_replace = i;
                 return false;
             }
         });
         if ($to_replace != -1) {
-            exploits[$to_replace] = abilityData;
+            exploits[$to_replace] = newAbility;
         } else {
-            exploits.push(abilityData);
+            exploits.push(newAbility);
         }
         stream('Ability saved!');
 
