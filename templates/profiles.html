@@ -745,11 +745,13 @@
             parsers = (parsers || executor.parsers.length > 0);
             payloads = (payloads || executor.payloads.length > 0);
 
-            let executorName = executor.name;
-            if (executorName === 'psh') { executorName = 'powershell'; }
-            else if (executorName === 'pwsh') { executorName = 'powershell core'; }
-            else if (executorName === 'sh') { executorName = 'shell'; }
-            else if (executorName === 'cmd') { executorName = 'commandline'; }
+            let executorNames = new Map([
+              ['psh', 'powershell'],
+              ['pwsh', 'powershell core'],
+              ['sh', 'shell'],
+              ['cmd', 'commandline'],
+            ]);
+            let executorName = executorNames.get(executor.name) || executor.name;
 
             $('<div></div>')
                 .addClass('tooltip')
