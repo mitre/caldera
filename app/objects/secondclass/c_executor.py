@@ -13,12 +13,12 @@ class ExecutorSchema(ma.Schema):
     code = ma.fields.String(missing=None)
     language = ma.fields.String(missing=None)
     build_target = ma.fields.String(missing=None)
-    payloads = ma.fields.List(ma.fields.String(), missing=[])
-    uploads = ma.fields.List(ma.fields.String(), missing=[])
+    payloads = ma.fields.List(ma.fields.String())
+    uploads = ma.fields.List(ma.fields.String())
     timeout = ma.fields.Int(missing=60)
-    parsers = ma.fields.List(ma.fields.Nested(ParserSchema()), missing=[])
-    cleanup = ma.fields.List(ma.fields.String(), missing=[])
-    variations = ma.fields.List(ma.fields.Nested(VariationSchema()), missing=[])
+    parsers = ma.fields.List(ma.fields.Nested(ParserSchema()))
+    cleanup = ma.fields.List(ma.fields.String())
+    variations = ma.fields.List(ma.fields.Nested(VariationSchema()))
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
 
     @ma.post_load
