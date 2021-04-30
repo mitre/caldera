@@ -135,7 +135,7 @@ class RestApi(BaseWorld):
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
     async def bits_upload(self, request):
-        return await self.bitsupload_svc.handle_bits_post(request)
+        return await self.bitsadmin_svc.handle_bits_post(request)
 
     async def download_file(self, request):
         try:

@@ -6,15 +6,15 @@ from enum import Enum
 from app.utility.base_service import BaseService
 
 
-class BitsUploadService(BaseService):
+class BITSAdminService(BaseService):
     PROTOCOL_VERSION = "HTTP/1.1"
     # The only existing protocol version to date
     SUPPORTED_BITS_PROTOCOLS = {"{7df0354d-249b-430f-820d-3d2a9bef4931}"}
     FRAGMENT_SIZE_LIMIT = 100 * 1024 * 1024
 
     def __init__(self):
-        self.log = self.add_service('bitsupload_svc', self)
-        self.active_sessions = dict()  # Maps session ID to BITSUploadSession object
+        self.log = self.add_service('bitsadmin_svc', self)
+        self.active_upload_sessions = dict()  # Maps session ID to BITSUploadSession object
         self._handlers = {
             'create-session': self.handle_create_session,
             'close-session': self.handle_close_session,
@@ -64,7 +64,7 @@ class BitsUploadService(BaseService):
             dest_dir = self._generate_unique_id()
             session_id = self._generate_unique_id()
             self.log.debug("Creating BITS-Session-Id %s with dest dir %s", session_id, dest_dir)
-            self.active_sessions[session_id] = BITSUploadSession(session_id, dest_dir, self.FRAGMENT_SIZE_LIMIT)
+            self.active_upload_sessions[session_id] = BITSUploadSession(session_id, dest_dir, self.FRAGMENT_SIZE_LIMIT)
             headers[BITSProtocolHeaderKeys.SESSION_ID.value] = session_id
             headers[HTTPProtocolHeaderKeys.ACCEPT_ENCODING.value] = 'identity'
             return web.Response(headers=headers)
@@ -83,8 +83,6 @@ class BitsUploadService(BaseService):
         self.log.debug('Handling ping')
         return web.Response(headers={
             BITSProtocolHeaderKeys.PACKET_TYPE.value: BITSProtocolHeaderValues.ACK.value,
-            # BITSProtocolHeaderKeys.ERROR_CODE.value: '1',
-            # BITSProtocolHeaderKeys.ERROR_CONTEXT.value: '',
             HTTPProtocolHeaderKeys.CONTENT_LENGTH.value: '0'
         })
 
@@ -96,45 +94,47 @@ class BitsUploadService(BaseService):
         }
         session_id = request.headers.get(BITSProtocolHeaderKeys.SESSION_ID.value, '').lower()
         if session_id:
-            self.log.debug('Handling fragment for session %s', session_id)
-            length_val, name, _, range_val = self._get_fragment_request_headers(request)
-            if not name:
-                name = "testing"  # later change to filepath thing
-            if length_val and range_val:
-                content_range = range_val.split(' ')[-1]
-                headers[BITSProtocolHeaderKeys.SESSION_ID.value] = session_id
-                crange, total_length_str = content_range.split("/")
-                total_length = int(total_length_str)
-                range_start, range_end = [int(num) for num in crange.split("-")]
-                data = await request.content.read()
-                session = self.active_sessions.get(session_id)
-                if session:
-                    try:
-                        is_last_fragment = session.add_fragment(total_length, range_start, range_end, data)
-                    except InvalidFragment as e:
-                        return self._handle_invalid_fragment_exception(session_id, headers, e)
-                    except FragmentTooLarge as e:
-                        return self._handle_fragment_too_large_exception(session_id, headers, e)
-
-                    if is_last_fragment:
-                        self.log.debug('Received last fragment. Writing uploaded data.')
-                        await self._write_uploaded_data(session, name)
-                    headers[BITSProtocolHeaderKeys.RECEIVED_CONTENT_RANGE.value] = str(range_end + 1)
-                    self.log.debug('Process fragment bytes %d:%d', range_start, range_end)
-                    return web.Response(headers=headers)
-                else:
-                    self.log.error('Session not found for ID %s', session_id)
-                    headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.ERROR_CODE_GENERIC.value
-                    headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = \
-                        BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
-                    return web.HTTPInternalServerError(headers=headers)
-            else:
-                self.log.error('Missing length or range')
-                headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.ERROR_CODE_GENERIC.value
-                headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
-                return web.HTTPBadRequest(headers=headers)
+            return await self._handle_session_fragment(request, session_id, headers)
         else:
             return self._handle_missing_session_id(headers)
+
+    async def _handle_session_fragment(self, request, session_id, resp_headers):
+        self.log.debug('Handling fragment for session %s', session_id)
+        length_val, name, _, range_val = self._get_fragment_request_headers(request)
+        if not name:
+            name = "testing"  # later change to filepath thing
+        if length_val and range_val:
+            content_range = range_val.split(' ')[-1]
+            resp_headers[BITSProtocolHeaderKeys.SESSION_ID.value] = session_id
+            crange, total_length_str = content_range.split("/")
+            total_length = int(total_length_str)
+            range_start, range_end = [int(num) for num in crange.split("-")]
+            data = await request.content.read()
+            session = self.active_upload_sessions.get(session_id)
+            if session:
+                return await self._add_session_fragment(session, resp_headers, name, total_length, range_start,
+                                                        range_end, data)
+            else:
+                return self._handle_session_not_found(session_id, resp_headers)
+        else:
+            self.log.error('Missing length or range')
+            resp_headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.ERROR_CODE_GENERIC.value
+            resp_headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
+            return web.HTTPBadRequest(headers=resp_headers)
+
+    async def _add_session_fragment(self, session, resp_headers, filename, total_length, range_start, range_end, data):
+        try:
+            is_last_fragment = session.add_fragment(total_length, range_start, range_end, data)
+        except InvalidFragment as e:
+            return self._handle_invalid_fragment_exception(session.session_id, resp_headers, e)
+        except FragmentTooLarge as e:
+            return self._handle_fragment_too_large_exception(session.session_id, resp_headers, e)
+        if is_last_fragment:
+            self.log.debug('Received last fragment. Writing uploaded data.')
+            await self._write_uploaded_data(session, filename)
+        resp_headers[BITSProtocolHeaderKeys.RECEIVED_CONTENT_RANGE.value] = str(range_end + 1)
+        self.log.debug('Process fragment bytes %d:%d', range_start, range_end)
+        return web.Response(headers=resp_headers)
 
     async def _write_uploaded_data(self, session, filename):
         file_svc = self.get_service('file_svc')
@@ -173,12 +173,8 @@ class BitsUploadService(BaseService):
         }
         session_id = request.headers.get(BITSProtocolHeaderKeys.SESSION_ID.value, '').lower()
         if session_id:
-            if not self.active_sessions.pop(session_id):
-                # Session was not found
-                self.log.error('No session found for id %s', session_id)
-                headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.BG_E_SESSION_NOT_FOUND.value
-                headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
-                return web.HTTPBadRequest(headers=headers)
+            if not self.active_upload_sessions.pop(session_id):
+                return self._handle_session_not_found(session_id, headers)
             self.log.debug("Releasing resources for BITS-Session-Id: %s", session_id)
             return web.Response(headers=headers)
         else:
@@ -206,6 +202,12 @@ class BitsUploadService(BaseService):
         headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.E_INVALIDARG.value
         headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
         return web.HTTPBadRequest(headers=headers)
+
+    def _handle_session_not_found(self, session_id, resp_headers):
+        self.log.error('No session found for id %s', session_id)
+        resp_headers[BITSProtocolHeaderKeys.ERROR_CODE.value] = BITSHResult.BG_E_SESSION_NOT_FOUND.value
+        resp_headers[BITSProtocolHeaderKeys.ERROR_CONTEXT.value] = BITSHResult.BG_ERROR_CONTEXT_REMOTE_FILE.value
+        return web.HTTPBadRequest(headers=resp_headers)
 
     @staticmethod
     def _generate_unique_id():
