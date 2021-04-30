@@ -387,11 +387,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
         valid_executors = ability.find_executors(agent.platform, agent_executors)
 
-        all_facts_fulfilled = False
+        fact_dependency_fulfilled = False
         for executor in valid_executors:
             facts = re.findall(BasePlanningService.re_variable, executor.test) if executor.command else []
-            if all(fact in op_facts for fact in facts):
-                all_facts_fulfilled = True
+            if not facts or all(fact in op_facts for fact in facts):
+                fact_dependency_fulfilled = True
 
         if not agent.trusted:
             return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
@@ -399,7 +399,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         elif not valid_executors:
             return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif not all_facts_fulfilled:
+        elif not fact_dependency_fulfilled:
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
