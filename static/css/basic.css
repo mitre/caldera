@@ -325,7 +325,6 @@
 }
 .ttp-template #action {
     width: 100%;
-    border-bottom: 1px dotted var(--theme-color);
     margin-top: 0px;
     height: 20px;
     padding-top: 0px;
