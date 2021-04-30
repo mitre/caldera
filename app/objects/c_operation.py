@@ -17,8 +17,8 @@ from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
-
 
 NO_PREVIOUS_STATE = object()
 
@@ -389,7 +389,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
         any_facts_fulfilled = False
         for executor in valid_executors:
-            facts = re.findall(r'#{(.*?)}', executor.test, flags=re.DOTALL) if executor.command else []
+            facts = re.findall(BasePlanningService.re_variable, executor.test) if executor.command else []
             if all(fact in op_facts for fact in facts):
                 any_facts_fulfilled = True
 

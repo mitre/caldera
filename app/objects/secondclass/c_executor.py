@@ -35,6 +35,10 @@ class Executor(BaseObject):
 
     HOOKS = dict()
 
+    @classmethod
+    def is_global_variable(cls, variable):
+        return variable in cls.RESERVED
+
     @property
     def test(self):
         """Get command with app property variables replaced"""
