@@ -26,7 +26,7 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        self.bitsupload_svc = services.get('bitsupload_svc')
+        self.bitsadmin_svc_svc = services.get('bitsadmin_svc_svc')
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
