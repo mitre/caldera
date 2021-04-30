@@ -547,7 +547,7 @@ class RestService(RestServiceInterface, BaseService):
         ab['tactic'] = ab.get('tactic').lower()
 
         # Validate platforms, ability will not be loaded if empty
-        if not ab.get('platforms', dict()):
+        if not ab.get('platforms'):
             self.log.debug('At least one executor is required to save ability.')
             return []
 
