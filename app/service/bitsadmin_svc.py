@@ -133,7 +133,7 @@ class BITSAdminService(BaseService):
             self.log.debug('Received last fragment. Writing uploaded data.')
             await self._write_uploaded_data(session, filename)
         resp_headers[BITSProtocolHeaderKeys.RECEIVED_CONTENT_RANGE.value] = str(range_end + 1)
-        self.log.debug('Process fragment bytes %d:%d', range_start, range_end)
+        self.log.debug('Processed fragment bytes %d:%d', range_start, range_end)
         return web.Response(headers=resp_headers)
 
     async def _write_uploaded_data(self, session, filename):

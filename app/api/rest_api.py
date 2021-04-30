@@ -26,7 +26,7 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
-        self.bitsadmin_svc_svc = services.get('bitsadmin_svc_svc')
+        self.bitsadmin_svc = services.get('bitsadmin_svc')
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
@@ -135,7 +135,11 @@ class RestApi(BaseWorld):
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
     async def bits_upload(self, request):
-        return await self.bitsadmin_svc.handle_bits_post(request)
+        try:
+            return await self.bitsadmin_svc.handle_bits_post(request)
+        except Exception as e:
+            self.log.error(e)
+            raise e
 
     async def download_file(self, request):
         try:
