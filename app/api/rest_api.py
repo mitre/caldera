@@ -26,6 +26,7 @@ class RestApi(BaseWorld):
         self.auth_svc = services.get('auth_svc')
         self.file_svc = services.get('file_svc')
         self.rest_svc = services.get('rest_svc')
+        self.bitsupload_svc = services.get('bitsupload_svc')
         asyncio.get_event_loop().create_task(CampaignPack(services).enable())
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
@@ -39,7 +40,7 @@ class RestApi(BaseWorld):
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
-        self.app_svc.application.router.add_route('BITS_POST', '/file/bits_upload', self.bits_upload)
+        self.app_svc.application.router.add_route('BITS_POST', '/file/bitsupload', self.bits_upload)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
@@ -134,7 +135,7 @@ class RestApi(BaseWorld):
         return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
 
     async def bits_upload(self, request):
-
+        return await self.bitsupload_svc.handle_bits_post(request)
 
     async def download_file(self, request):
         try:

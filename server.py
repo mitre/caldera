@@ -15,6 +15,7 @@ from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
+from app.service.bitsupload_svc import BitsUploadService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService, DATA_BACKUP_DIR
 from app.service.event_svc import EventService
@@ -128,6 +129,7 @@ if __name__ == '__main__':
     file_svc = FileSvc()
     learning_svc = LearningService()
     event_svc = EventService()
+    bitsupload_svc = BitsUploadService()
 
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
