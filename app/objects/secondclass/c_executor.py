@@ -69,7 +69,7 @@ class Executor(BaseObject):
 
     def __getattr__(self, item):
         try:
-            return super().__getattribute__('additional_info')[item]
+            return self.additional_info[item]
         except KeyError:
             raise AttributeError(item)
 
