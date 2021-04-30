@@ -79,13 +79,14 @@ class Executor(BaseObject):
 
 def get_variations(data):
     variations = []
-    if data:
-        for v in data:
-            if isinstance(v, Variation):
-                description = v.description
-                command = v.command
-            else:
-                description = v['description']
-                command = v['command']
-            variations.append(Variation.load(dict(description=description, command=command)))
+    if not data:
+        return []
+    for v in data:
+        if isinstance(v, Variation):
+            description = v.description
+            command = v.command
+        else:
+            description = v['description']
+            command = v['command']
+        variations.append(Variation.load(dict(description=description, command=command)))
     return variations
