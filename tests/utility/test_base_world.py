@@ -105,3 +105,37 @@ class TestBaseWorld:
         f.write("test")
         ret = loop.run_until_complete(BaseWorld.walk_file_path(f.dirname, 'xorfile.txt'))
         assert ret == f
+
+    def test_remove_xored_extension(self):
+        test_value = 'example_file.exe.xored'
+        expected_value = 'example_file.exe'
+        ret = BaseWorld.remove_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_remove_xored_extension_to_non_xored_file(self):
+        test_value = 'example_file.exe'
+        expected_value = 'example_file.exe'
+        ret = BaseWorld.remove_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_add_xored_extension(self):
+        test_value = 'example_file.exe'
+        expected_value = 'example_file.exe.xored'
+        ret = BaseWorld.add_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_add_xored_extension_to_xored_file(self):
+        test_value = 'example_file.exe.xored'
+        expected_value = 'example_file.exe.xored'
+        ret = BaseWorld.add_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_is_extension_xored_true(self):
+        test_value = 'example_file.exe.xored'
+        ret = BaseWorld.is_extension_xored(test_value)
+        assert ret is True
+
+    def test_is_extension_xored_false(self):
+        test_value = 'example_file.exe'
+        ret = BaseWorld.is_extension_xored(test_value)
+        assert ret is False

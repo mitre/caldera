@@ -67,6 +67,35 @@ class TestFileService:
         assert payload == file_path
         assert content == new_payload_content
 
+    def test_xored_filename_removal(self, loop, mocker, tmpdir, file_svc, data_svc):
+        payload = 'unittestpayload.exe.xored'
+        payload_content = b'content'
+        new_payload_content = b'new_content'
+        packer_name = 'test_xored_filename_removal'
+        expected_display_name = 'unittestpayload.exe'
+
+        # create temp files
+        file = tmpdir.join(payload)
+        file.write(payload_content)
+
+        # start mocking up methods
+        packer = mocker.Mock(return_value=Future())
+        packer.return_value = packer
+        packer.pack = AsyncMock(return_value=(payload, new_payload_content))
+        data_svc.locate = AsyncMock(return_value=[])
+        module = mocker.Mock()
+        module.Packer = packer
+        file_svc.packers[packer_name] = module
+        file_svc.data_svc = data_svc
+        file_svc.read_file = AsyncMock(return_value=(payload, payload_content))
+
+        file_path, content, display_name = loop.run_until_complete(file_svc.get_file(headers=dict(file='%s:%s' % (packer_name, payload))))
+
+        packer.pack.assert_called_once()
+        assert payload == file_path
+        assert content == new_payload_content
+        assert display_name == expected_display_name
+
     def test_upload_file(self, loop, file_svc):
         upload_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory('test-upload'))
         upload_filename = 'uploadedfile.txt'
