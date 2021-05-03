@@ -171,6 +171,32 @@ class FileSvc(FileServiceInterface, BaseService):
                 exfil_files[exfil_key][file.split(os.sep)[-1]] = file
         return exfil_files
 
+    @staticmethod
+    async def walk_file_path(path, target):
+        for root, _, files in os.walk(path):
+            if target in files:
+                return os.path.join(root, target)
+            xored_target = FileSvc.add_xored_extension(target)
+            if xored_target in files:
+                return os.path.join(root, xored_target)
+        return None
+
+    @staticmethod
+    def remove_xored_extension(filename):
+        if FileSvc.is_extension_xored(filename):
+            return filename.replace('.xored', '')
+        return filename
+
+    @staticmethod
+    def is_extension_xored(filename):
+        return filename.endswith('.xored')
+
+    @staticmethod
+    def add_xored_extension(filename):
+        if FileSvc.is_extension_xored(filename):
+            return filename
+        return '%s.xored' % filename
+
     """ PRIVATE """
 
     def _save(self, filename, content, encrypt=True):

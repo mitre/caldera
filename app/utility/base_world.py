@@ -1,6 +1,5 @@
 import binascii
 import string
-import os
 import re
 import yaml
 import logging
@@ -108,32 +107,6 @@ class BaseWorld:
         if BaseWorld.re_base64.match(s):
             return True
         return False
-
-    @staticmethod
-    async def walk_file_path(path, target):
-        for root, _, files in os.walk(path):
-            if target in files:
-                return os.path.join(root, target)
-            xored_target = BaseWorld.add_xored_extension(target)
-            if xored_target in files:
-                return os.path.join(root, xored_target)
-        return None
-
-    @staticmethod
-    def remove_xored_extension(filename):
-        if BaseWorld.is_extension_xored(filename):
-            return filename.replace('.xored', '')
-        return filename
-
-    @staticmethod
-    def is_extension_xored(filename):
-        return filename.endswith('.xored')
-
-    @staticmethod
-    def add_xored_extension(filename):
-        if BaseWorld.is_extension_xored(filename):
-            return filename
-        return '%s.xored' % filename
 
     @staticmethod
     def check_requirement(params):
