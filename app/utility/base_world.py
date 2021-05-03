@@ -114,9 +114,26 @@ class BaseWorld:
         for root, _, files in os.walk(path):
             if target in files:
                 return os.path.join(root, target)
-            if '%s.xored' % target in files:
-                return os.path.join(root, '%s.xored' % target)
+            xored_target = BaseWorld.add_xored_extension(target)
+            if xored_target in files:
+                return os.path.join(root, xored_target)
         return None
+
+    @staticmethod
+    def remove_xored_extension(filename):
+        if BaseWorld.is_extension_xored(filename):
+            return filename.replace('.xored', '')
+        return filename
+
+    @staticmethod
+    def is_extension_xored(filename):
+        return filename.endswith('.xored')
+
+    @staticmethod
+    def add_xored_extension(filename):
+        if BaseWorld.is_extension_xored(filename):
+            return filename
+        return '%s.xored' % filename
 
     @staticmethod
     def check_requirement(params):
