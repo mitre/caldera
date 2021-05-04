@@ -10,6 +10,9 @@ from aiohttp import web
 import app.api.v2
 from app import version
 from app.api.rest_api import RestApi
+from app.objects.c_ability import Ability
+from app.objects.c_agent import Agent
+from app.objects.secondclass.c_link import Link
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
@@ -19,6 +22,7 @@ from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.utility.base_object import AppConfigGlobalVariableIdentifier
 from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
 
@@ -111,7 +115,14 @@ if __name__ == '__main__':
 
     data_svc = DataService()
     contact_svc = ContactService()
-    planning_svc = PlanningService()
+    planning_svc = PlanningService(
+        global_variable_owners=[
+            Ability,
+            Agent,
+            Link,
+            AppConfigGlobalVariableIdentifier
+        ]
+    )
     rest_svc = RestService()
     auth_svc = AuthService()
     file_svc = FileSvc()

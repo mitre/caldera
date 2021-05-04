@@ -123,6 +123,10 @@ class Link(BaseObject):
             to_status=value
         )
 
+    @classmethod
+    def is_global_variable(cls, variable):
+        return variable in cls.RESERVED
+
     def __init__(self, command, paw, ability, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None):
         super().__init__()

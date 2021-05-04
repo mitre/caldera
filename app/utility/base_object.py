@@ -1,5 +1,3 @@
-import re
-
 from app.utility.base_world import BaseWorld
 
 
@@ -91,8 +89,8 @@ class BaseObject(BaseWorld):
             decoded_test = self.decode_bytes(encoded_string)
             for k, v in self.get_config().items():
                 if k.startswith('app.'):
-                    re_variable = re.compile(r'#{(%s.*?)}' % k, flags=re.DOTALL)
-                    decoded_test = re.sub(re_variable, str(v).strip(), decoded_test)
+                    var = '#{%s}' % k
+                    decoded_test = decoded_test.replace(var, str(v).strip())
             return self.encode_string(decoded_test)
 
     @classmethod
@@ -103,3 +101,11 @@ class BaseObject(BaseWorld):
             return cls.schema.load(dict_obj)
         else:
             raise NotImplementedError
+
+
+class AppConfigGlobalVariableIdentifier:
+    @classmethod
+    def is_global_variable(cls, variable):
+        if variable.startswith('app.'):
+            return variable in BaseWorld.get_config()
+        return False

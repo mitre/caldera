@@ -9,9 +9,8 @@ from app.utility.rule_set import RuleSet
 
 
 class BasePlanningService(BaseService):
-
     # Matches facts/variables.
-    # Group 0 returns the trait, including any limits
+    # Group 1 returns the trait, including any limits
     # Ex: '#{server.malicious.url}' => 'server.malicious.url'
     # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'host.file.path[filters(technique=T1005,max=3)]'
     re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
@@ -32,6 +31,30 @@ class BasePlanningService(BaseService):
     # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'technique=T1005,max=3'
     re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
 
+    def __init__(self, global_variable_owners=None):
+        """Base class for Planning Service
+
+        Args:
+            global_variable_owners: List of objects/classes that expose an is_global_variable() method that accepts
+                an 'unwrapped' variable string (e.g. 'foo.bar.baz' and NOT '#{foo.bar.baz}') and returns True if
+                it is a global variable.
+        """
+        self._global_variable_owners = list(global_variable_owners or ())
+
+    def add_global_variable_owner(self, global_variable_owner):
+        """Adds a global variable owner to the internal registry.
+
+        These will be used for identification of global variables when performing variable-fact substitution.
+
+        Args:
+            global_variable_owner: An object that exposes an is_global_variable(...) method and accepts a string
+                containing a bare/unwrapped variable.
+        """
+        self._global_variable_owners.append(global_variable_owner)
+
+    def is_global_variable(self, variable):
+        return any(x.is_global_variable(variable) for x in self._global_variable_owners)
+
     async def trim_links(self, operation, links, agent):
         """
         Trim links in supplied list. Where 'trim' entails:
@@ -45,7 +68,7 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         links[:] = await self.add_test_variants(links, agent, operation.all_facts(), operation.rules)
-        links = await self.remove_links_missing_facts(links)
+        links = await self.remove_links_with_unset_variables(links)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
@@ -62,9 +85,10 @@ class BasePlanningService(BaseService):
         :return: updated list of links
         """
         link_variants = []
+
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
-            variables = set(re.findall(self.re_variable, decoded_test))
+            variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
 
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, facts)
@@ -89,8 +113,10 @@ class BasePlanningService(BaseService):
                         except Exception as ex:
                             logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
             else:
-                link.apply_id(agent.host)
+                # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
+                link.apply_id(agent.host)
+
         return links + link_variants
 
     @staticmethod
@@ -112,9 +138,9 @@ class BasePlanningService(BaseService):
                  not any([lnk.command == x.command for x in singleton_links]))]
 
     @staticmethod
-    async def remove_links_missing_facts(links):
+    async def remove_links_with_unset_variables(links):
         """
-        Remove any links that did not have facts encoded into command
+        Remove any links that contain variables that have not been filled in.
 
         :param links:
         :return: updated list of links
