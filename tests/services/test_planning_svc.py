@@ -5,10 +5,10 @@ import base64
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_source import Source
+from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_world import BaseWorld
-from app.utility.base_planning_svc import BasePlanningService
 
 
 stop_bucket_exhaustion_params = [
@@ -62,7 +62,7 @@ def planner_stub(**kwargs):
 def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, init_base_world):
     tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
                        cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
-    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin')
+    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin', server='http://127.0.0.1:8000')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=[tagent],
                            adversary=Adversary(name='test', description='test',
@@ -362,7 +362,7 @@ class TestPlanningService:
                                                                        [l0, l1, l2, l3]])
         assert 7 == len(flat_fil)
 
-    def test_trait_with_one_part(self, loop, setup_planning_test, planning_svc):
+    async def test_trait_with_one_part(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
 
         encoded_command = BaseWorld.encode_string('#{a}')
@@ -375,7 +375,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -383,7 +383,7 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('1') in found_commands
 
-    def test_trait_with_two_parts(self, loop, setup_planning_test, planning_svc):
+    async def test_trait_with_two_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a.b}')
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
@@ -395,7 +395,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -403,7 +403,7 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('2') in found_commands
 
-    def test_trait_with_three_parts(self, loop, setup_planning_test, planning_svc):
+    async def test_trait_with_three_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a.b.c}')
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
@@ -415,7 +415,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -423,7 +423,7 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('3') in found_commands
 
-    def test_trait_with_multiple_variations_of_parts(self, loop, setup_planning_test, planning_svc):
+    async def test_trait_with_multiple_variations_of_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a} #{a.b} #{a.b.c}')
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
@@ -435,7 +435,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=input_facts))
+        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -443,27 +443,54 @@ class TestPlanningService:
         assert encoded_command in found_commands
         assert BaseWorld.encode_string('1 2 3') in found_commands
 
-    async def test_remove_links_missing_facts_keeps_link_without_facts(self, ability):
+    async def test_global_variables_not_replaced_with_facts(self, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        encoded_command = BaseWorld.encode_string('#{server} #{origin_link_id}')
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+
+        input_facts = [
+            Fact(trait='server', value='bad.server'),
+            Fact(trait='origin_link_id', value='bad.origin_link_id')
+        ]
+
+        planning_svc.add_global_variable_owner(Agent)  # handles #{server}
+        planning_svc.add_global_variable_owner(Link)  # handles #{origin_link_id}
+
+        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        assert len(new_links) == 1
+        assert new_links[0].raw_command == f'{agent.server} {link.id}'
+
+    async def test_remove_links_missing_facts_keeps_link_without_facts(self, planning_svc, ability):
         cmd = 'a -b --foo={bar}'  # almost includes a fact, but missing a '#' in front of '{bar}'
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
-        await BasePlanningService.remove_links_missing_facts(links)
+        await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 1
         assert links[0].raw_command == cmd
 
-    async def test_remove_links_missing_facts_removes_one_part_fact(self, ability):
+    async def test_remove_links_missing_facts_removes_one_part_fact(self, planning_svc, ability):
         cmd = 'a -b --foo=#{bar}'
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
-        await BasePlanningService.remove_links_missing_facts(links)
+        await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
 
-    async def test_remove_links_missing_facts_removes_two_part_fact(self, ability):
+    async def test_remove_links_missing_facts_removes_two_part_fact(self, planning_svc, ability):
         cmd = 'a -b --foo=#{foo.bar}'
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
-        await BasePlanningService.remove_links_missing_facts(links)
+        await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
 
-    async def test_remove_links_missing_facts_removes_three_part_fact(self, ability):
+    async def test_remove_links_missing_facts_removes_three_part_fact(self, planning_svc, ability):
         cmd = 'a -b --foo=#{foo.bar.baz}'
         links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
-        await BasePlanningService.remove_links_missing_facts(links)
+        await planning_svc.remove_links_with_unset_variables(links)
+        assert len(links) == 0
+
+    async def test_remove_links_does_not_ignore_global_variables(self, planning_svc, ability):
+        cmd = 'a -b --foo=#{server} --bar=#{origin_link_id}'
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+
+        planning_svc.add_global_variable_owner(Agent)  # handles #{server}
+        planning_svc.add_global_variable_owner(Link)  # handles #{origin_link_id}
+
+        await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
