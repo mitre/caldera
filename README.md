@@ -44,6 +44,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 ### More
 These plugins are ready to use but are not included by default:
 - **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
+- **[SAML](https://github.com/mitre/saml)** (SAML authentication)
 
 ## Requirements
 
