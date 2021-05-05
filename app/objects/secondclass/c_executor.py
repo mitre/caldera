@@ -61,7 +61,14 @@ class Executor(BaseObject):
 
         self.timeout = timeout
         self.parsers = parsers if parsers else []
-        self.cleanup = [cleanup] if cleanup else []
+
+        if not cleanup:
+            self.cleanup = []
+        elif isinstance(cleanup, str):
+            self.cleanup = [cleanup]
+        else:
+            self.cleanup = cleanup
+
         self.variations = get_variations(variations)
 
         self.additional_info = additional_info or dict()
@@ -69,7 +76,7 @@ class Executor(BaseObject):
 
     def __getattr__(self, item):
         try:
-            return self.additional_info[item]
+            return super().__getattribute__('additional_info')[item]
         except KeyError:
             raise AttributeError(item)
 

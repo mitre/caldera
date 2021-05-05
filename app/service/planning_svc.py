@@ -371,14 +371,20 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-        for link in [l for l in operation.chain if l.paw == agent.paw]:
+        cleanup_commands = set()
+        for link in operation.chain:
+            if link.paw != agent.paw:
+                continue
+
             for cleanup in link.executor.cleanup:
                 decoded_cmd = agent.replace(self.encode_string(cleanup), file_svc=self.get_service('file_svc'))
                 variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
-                lnk = Link.load(dict(command=self.encode_string(variant), paw=agent.paw, cleanup=1,
-                                     ability=link.ability, executor=link.executor, score=0, jitter=2,
-                                     status=link_status))
-                if lnk.command not in [l.command for l in links]:
+                cleanup_command = self.encode_string(variant)
+                if cleanup_command and cleanup_command not in cleanup_commands:
+                    cleanup_commands.add(cleanup_command)
+                    lnk = Link.load(dict(command=cleanup_command, paw=agent.paw, cleanup=1,
+                                         ability=link.ability, executor=link.executor, score=0, jitter=2,
+                                         status=link_status))
                     lnk.apply_id(agent.host)
                     links.append(lnk)
         return links
