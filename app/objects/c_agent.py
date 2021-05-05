@@ -163,12 +163,14 @@ class Agent(FirstClassObjectInterface, BaseObject):
         """
         preferred_executor_name = self._get_preferred_executor_name()
         potential_executors = ability.find_executors(self.platform, self.executors)
-        if potential_executors:
-            for executor in potential_executors:
-                if executor.name == preferred_executor_name:
-                    return executor
-            return potential_executors[0]
-        return None
+
+        if not potential_executors:
+            return
+
+        for executor in potential_executors:
+            if executor.name == preferred_executor_name:
+                return executor
+        return potential_executors[0]
 
     async def heartbeat_modification(self, **kwargs):
         now = datetime.now()
