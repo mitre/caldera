@@ -98,12 +98,30 @@ class Ability(FirstClassObjectInterface, BaseObject):
         return None
 
     def find_executors(self, platform, names):
-        executors = set()
+        """Find executors for matching platform/executor names
+
+        Only the first instance of a matching executor will be returned,
+            as there should not be multiple executors matching a single
+            platform/executor name pair.
+
+        :param platform: Platform to search. ex: windows
+        :type platform: str
+        :param names: Executors to search. ex: ['psh', 'cmd']
+        :type names: list(str)
+        :return: List of executors ordered based on ordering of `names`
+        :rtype: list(Executor)
+        """
+        executors = []
+        seen_names = set()
         for name in names:
+            if name in seen_names:
+                continue
+            seen_names.add(name)
+
             matched_executor = self.find_executor(platform, name)
             if matched_executor:
-                executors.add(matched_executor)
-        return list(executors)
+                executors.append(matched_executor)
+        return executors
 
     def add_executor(self, executor):
         existing_executor = self.find_executor(executor.platform, executor.name)
