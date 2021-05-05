@@ -348,7 +348,11 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-        for ability, executor in await agent.capabilities_with_preferred_executor(abilities):
+        for ability in await agent.capabilities(abilities):
+            executor = await agent.get_preferred_executor(ability)
+            if not executor:
+                continue
+
             if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
                 await executor.HOOKS[executor.language](ability, executor)
             if executor.command:

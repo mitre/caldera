@@ -150,27 +150,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 abilities.append(ability)
         return abilities
 
-    async def capabilities_with_preferred_executor(self, ability_set):
-        """Get abilities that the agent is capable of running along with preferred executor
-
-        :param ability_set: List of abilities to check agent capability
-        :type ability_set: List[Ability]
-        :return: List of abilities with preferred executor
-        :rtype: List[(Ability, Executor)]
-        """
-        if not self.executors:
-            return []
-
-        ability_executors = []
-
-        for ability in ability_set:
-            if not self.privileged_to_run(ability):
-                continue
-            executor = await self.get_preferred_executor(ability)
-            if executor:
-                ability_executors.append((ability, executor))
-        return ability_executors
-
     async def get_preferred_executor(self, ability):
         """Get preferred executor for ability
 
