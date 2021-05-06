@@ -31,7 +31,7 @@ def _wrap_sync_method(method: types.MethodType):
 def _wrap_method(method: types.MethodType):
     if inspect.iscoroutinefunction(method):
         return _wrap_async_method(method)
-    return _wrap_method(method)
+    return _wrap_sync_method(method)
 
 
 def authentication_exempt(handler):
