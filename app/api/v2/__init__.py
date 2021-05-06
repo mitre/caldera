@@ -15,4 +15,7 @@ def make_app(services):
     from .handlers.health_api import HealthApi
     HealthApi(services).add_routes(app)
 
+    from .handlers.config_api import ConfigApi
+    ConfigApi(services).add_routes(app)
+
     return app
