@@ -3,7 +3,6 @@ from unittest import mock
 import pytest
 
 from app.objects.secondclass.c_link import Link
-from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_event_svc import EventServiceInterface
 from app.utility.base_service import BaseService
@@ -34,8 +33,8 @@ def fake_event_svc(loop):
 
 class TestLink:
 
-    def test_link_eq(self, ability):
-        test_executor = Executor(name='psh', platform='windows')
+    def test_link_eq(self, ability, executor):
+        test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
@@ -46,8 +45,8 @@ class TestLink:
         test_link2.used = [fact]
         assert test_link == test_link2
 
-    def test_link_neq(self, ability):
-        test_executor = Executor(name='psh', platform='windows')
+    def test_link_neq(self, ability, executor):
+        test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact_a = Fact(trait='host.user.name', value='a')
         fact_b = Fact(trait='host.user.name', value='b')
@@ -58,24 +57,32 @@ class TestLink:
         assert test_link_a != test_link_b
 
     @mock.patch.object(Link, '_emit_status_change_event')
-    def test_no_status_change_event_on_instantiation(self, mock_emit_status_change_method, ability):
-        Link(command='net user a', paw='123456', ability=ability())
+    def test_no_status_change_event_on_instantiation(self, mock_emit_status_change_method, ability, executor):
+        executor = executor('psh', 'windows')
+        ability = ability(executor=executor)
+        Link(command='net user a', paw='123456', ability=ability, executor=executor)
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
-    def test_no_status_change_event_fired_when_setting_same_status(self, mock_emit_status_change_method, ability):
-        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+    def test_no_status_change_event_fired_when_setting_same_status(self, mock_emit_status_change_method, ability, executor):
+        executor = executor('psh', 'windows')
+        ability = ability(executor=executor)
+        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
         link.status = link.status
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
-    def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability):
-        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+    def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability, executor):
+        executor = executor('psh', 'windows')
+        ability = ability(executor=executor)
+        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
         link.status = -5
         mock_emit_status_change_method.assert_called_with(from_status=-3, to_status=-5)
 
-    def test_emit_status_change_event(self, loop, fake_event_svc, ability):
-        link = Link(command='net user a', paw='123456', ability=ability(), status=-3)
+    def test_emit_status_change_event(self, loop, fake_event_svc, ability, executor):
+        executor = executor('psh', 'windows')
+        ability = ability(executor=executor)
+        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
         fake_event_svc.reset()
 
         loop.run_until_complete(
