@@ -127,11 +127,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 executors.append(self.find_executor(platform, name))
         return executors
 
-    def add_executors(self, executors):
-        """Create executor map from list of executor objects"""
-        for executor in executors:
-            self.add_executor(executor)
-
     def add_executor(self, executor):
         """Add executor to map
 
@@ -142,6 +137,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
         if unique_name in self._executor_map:
             del self._executor_map[unique_name]
         self._executor_map[unique_name] = executor
+
+    def add_executors(self, executors):
+        """Create executor map from list of executor objects"""
+        for executor in executors:
+            self.add_executor(executor)
 
     def remove_all_executors(self):
         self._executor_map = collections.OrderedDict()
