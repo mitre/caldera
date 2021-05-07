@@ -101,7 +101,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         return None
 
     def find_executor(self, platform, name):
-        return self._executor_map.get(f'{platform}-{name}')
+        return self._executor_map.get(self._make_executor_map_key(platform, name))
 
     def find_executors(self, platform, names):
         """Find executors for matching platform/executor names
@@ -124,7 +124,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 continue
             seen_names.add(name)
 
-            if f'{platform}-{name}' in self._executor_map:
+            if self._make_executor_map_key(platform, name) in self._executor_map:
                 executors.append(self.find_executor(platform, name))
         return executors
 
@@ -134,10 +134,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
         If the executor exists, delete the current entry and add the
             new executor to the bottom for FIFO
         """
-        unique_name = f'{executor.platform}-{executor.name}'
-        if unique_name in self._executor_map:
-            del self._executor_map[unique_name]
-        self._executor_map[unique_name] = executor
+        map_key = self._make_executor_map_key(executor.platform, executor.name)
+        if map_key in self._executor_map:
+            del self._executor_map[map_key]
+        self._executor_map[map_key] = executor
 
     def add_executors(self, executors):
         """Create executor map from list of executor objects"""
@@ -150,3 +150,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     async def add_bucket(self, bucket):
         if bucket not in self.buckets:
             self.buckets.append(bucket)
+
+    @staticmethod
+    def _make_executor_map_key(platform, name):
+        return platform, name
