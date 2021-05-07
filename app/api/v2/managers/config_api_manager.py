@@ -82,8 +82,6 @@ class ConfigApiManager:
                 value=value
             )
 
-        return self.get_config_with_name('main')
-
     async def update_global_agent_config(self, sleep_min=None, sleep_max=None, watchdog=None, untrusted_timer=None,
                                          implant_name=None, bootstrap_abilities=None, deadman_abilities=None):
 
@@ -103,8 +101,6 @@ class ConfigApiManager:
             await self._update_agent_ability_list_property(bootstrap_abilities, 'bootstrap_abilities')
         if deadman_abilities is not None:
             await self._update_agent_ability_list_property(deadman_abilities, 'deadman_abilities')
-
-        return self.get_config_with_name('agents')
 
     async def _update_agent_ability_list_property(self, ability_id_list, prop):
         """Set the specified agent config property with the specified abilities."""
