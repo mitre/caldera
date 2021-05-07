@@ -123,7 +123,7 @@ class TestRestSvc:
         # check that an ability reflects the value in app. property
         pre_ability = loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
         assert '0.0.0.0' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 0.0.0.0' == pre_ability[0].executors[0].test
+        assert 'curl 0.0.0.0' == next(pre_ability[0].executors).test
 
         # update property
         loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='app.contact.http', value='127.0.0.1')))
@@ -131,7 +131,7 @@ class TestRestSvc:
         # verify ability reflects new value
         post_ability = loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
         assert '127.0.0.1' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 127.0.0.1' == post_ability[0].executors[0].test
+        assert 'curl 127.0.0.1' == next(post_ability[0].executors).test
 
     def test_update_config_plugin(self, loop, rest_svc):
         internal_rest_svc = rest_svc(loop)
