@@ -100,20 +100,20 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 return plugin
         return None
 
-    def find_executor(self, platform, name):
-        return self._executor_map.get(self._make_executor_map_key(platform, name))
+    def find_executor(self, name, platform):
+        return self._executor_map.get(self._make_executor_map_key(name, platform))
 
-    def find_executors(self, platform, names):
+    def find_executors(self, names, platform):
         """Find executors for matching platform/executor names
 
         Only the first instance of a matching executor will be returned,
             as there should not be multiple executors matching a single
             platform/executor name pair.
 
-        :param platform: Platform to search. ex: windows
-        :type platform: str
         :param names: Executors to search. ex: ['psh', 'cmd']
         :type names: list(str)
+        :param platform: Platform to search. ex: windows
+        :type platform: str
         :return: List of executors ordered based on ordering of `names`
         :rtype: list(Executor)
         """
@@ -124,8 +124,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 continue
             seen_names.add(name)
 
-            if self._make_executor_map_key(platform, name) in self._executor_map:
-                executors.append(self.find_executor(platform, name))
+            if self._make_executor_map_key(name, platform) in self._executor_map:
+                executors.append(self.find_executor(name, platform))
         return executors
 
     def add_executor(self, executor):
@@ -134,7 +134,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         If the executor exists, delete the current entry and add the
             new executor to the bottom for FIFO
         """
-        map_key = self._make_executor_map_key(executor.platform, executor.name)
+        map_key = self._make_executor_map_key(executor.name, executor.platform)
         if map_key in self._executor_map:
             del self._executor_map[map_key]
         self._executor_map[map_key] = executor
@@ -152,5 +152,5 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.buckets.append(bucket)
 
     @staticmethod
-    def _make_executor_map_key(platform, name):
-        return platform, name
+    def _make_executor_map_key(name, platform):
+        return name, platform

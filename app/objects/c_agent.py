@@ -146,7 +146,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         """
         abilities = []
         for ability in ability_set:
-            if self.privileged_to_run(ability) and ability.find_executors(self.platform, self.executors):
+            if self.privileged_to_run(ability) and ability.find_executors(self.executors, self.platform):
                 abilities.append(ability)
         return abilities
 
@@ -162,7 +162,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         :rtype: Union[Executor, None]
         """
         preferred_executor_name = self._get_preferred_executor_name()
-        potential_executors = ability.find_executors(self.platform, self.executors)
+        potential_executors = ability.find_executors(self.executors, self.platform)
 
         if not potential_executors:
             return
@@ -246,7 +246,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
         links = []
         for ability in await self.capabilities(abilities):
-            executors = ability.find_executors(self.platform, self.executors)
+            executors = ability.find_executors(self.executors, self.platform)
             executors = sorted(executors, key=lambda ex: ex.name == preferred_executor_name, reverse=True)
 
             for executor in executors:

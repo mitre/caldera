@@ -385,7 +385,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if ability.ability_id in agent_ran:
             return
 
-        valid_executors = ability.find_executors(agent.platform, agent_executors)
+        valid_executors = ability.find_executors(agent_executors, agent.platform)
 
         fact_dependency_fulfilled = False
         for executor in valid_executors:
