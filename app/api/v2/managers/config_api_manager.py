@@ -22,7 +22,7 @@ SENSITIVE_CONFIG_PROPS = frozenset([
 
 
 def filter_sensitive_props(config_map):
-    """Return a copy of `config_map` with top-level senstive keys removed."""
+    """Return a copy of `config_map` with top-level sensitive keys removed."""
     filtered = {}
 
     for key, val in config_map.items():
@@ -74,7 +74,7 @@ class ConfigApiManager:
             )
 
             if value not in enabled_plugins:
-                enabled_plugins.append(value)  # Look into my plugin loading changes that drive the health endpoints
+                enabled_plugins.append(value)
         else:
             self._config_interface.set_config(
                 name='main',
