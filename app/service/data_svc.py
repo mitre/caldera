@@ -313,8 +313,6 @@ class DataService(DataServiceInterface, BaseService):
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, **kwargs)
-        for executor in executors:
-            ability.add_executor(executor)
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):

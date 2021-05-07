@@ -1,3 +1,4 @@
+import collections
 import os
 
 import marshmallow as ma
@@ -43,8 +44,12 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.ability_id
 
+    @property
+    def executors(self):
+        return list(self._executor_map.values())
+
     def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
-                 executors=None, requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
+                 executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, **kwargs):
         super().__init__()
         self.ability_id = ability_id
@@ -53,7 +58,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.technique_id = technique_id
         self.name = name
         self.description = description
-        self.executors = executors if executors else []
+
+        self._executor_map = collections.OrderedDict()
+        self.add_executors(executors)
+
         self.requirements = requirements if requirements else []
         self.privilege = privilege
         self.repeatable = repeatable
@@ -81,7 +89,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('technique_id', self.technique_id)
         existing.update('name', self.name)
         existing.update('description', self.description)
-        existing.update('executors', self.executors)
+        existing.update('_executor_map', self._executor_map)
         existing.update('privilege', self.privilege)
         return existing
 
@@ -92,10 +100,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         return None
 
     def find_executor(self, platform, name):
-        for executor in self.executors:
-            if executor.platform == platform and executor.name == name:
-                return executor
-        return None
+        return self._executor_map.get(f'{platform}-{name}')
 
     def find_executors(self, platform, names):
         """Find executors for matching platform/executor names
@@ -118,16 +123,28 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 continue
             seen_names.add(name)
 
-            matched_executor = self.find_executor(platform, name)
-            if matched_executor:
-                executors.append(matched_executor)
+            if f'{platform}-{name}' in self._executor_map:
+                executors.append(self.find_executor(platform, name))
         return executors
 
+    def add_executors(self, executors):
+        """Create executor map from list of executor objects"""
+        for executor in executors:
+            self.add_executor(executor)
+
     def add_executor(self, executor):
-        existing_executor = self.find_executor(executor.platform, executor.name)
-        if existing_executor:
-            self.executors.remove(existing_executor)
-        self.executors.append(executor)
+        """Add executor to map
+
+        If the executor exists, delete the current entry and add the
+            new executor to the bottom for FIFO
+        """
+        unique_name = f'{executor.platform}-{executor.name}'
+        if unique_name in self._executor_map:
+            del self._executor_map[unique_name]
+        self._executor_map[unique_name] = executor
+
+    def remove_all_executors(self):
+        self._executor_map = collections.OrderedDict()
 
     async def add_bucket(self, bucket):
         if bucket not in self.buckets:
