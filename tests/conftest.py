@@ -122,7 +122,7 @@ def adversary():
 
 @pytest.fixture
 def executor():
-    def _generate_executor(name, platform, *args, **kwargs):
+    def _generate_executor(name='psh', platform='windows', *args, **kwargs):
         return Executor(name, platform, *args, **kwargs)
 
     return _generate_executor
