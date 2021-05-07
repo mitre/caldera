@@ -55,7 +55,8 @@ class ConfigApiManager:
         self._data_svc = services['data_svc']
         self._log = logging.getLogger('config_api_manager')
 
-    def get_config_with_name(self, name):
+    def get_filtered_config(self, name):
+        """Return the configuration for the input `name` with sensitive fields removed."""
         try:
             config = self._config_interface.get_config(name=name)
         except KeyError:

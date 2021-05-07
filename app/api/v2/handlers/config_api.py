@@ -23,7 +23,7 @@ class ConfigApi(BaseApi):
         config_name = request.match_info['name']
 
         try:
-            config = self._api_manager.get_config_with_name(config_name)
+            config = self._api_manager.get_filtered_config(config_name)
         except ConfigNotFound:
             raise web.HTTPNotFound(text=f'Config not found: {config_name}')
         return web.json_response(config)
@@ -35,7 +35,7 @@ class ConfigApi(BaseApi):
         data = schema.load(await request.json())
 
         await self._api_manager.update_global_agent_config(**data)
-        agents_config = self._api_manager.get_config_with_name('agents')
+        agents_config = self._api_manager.get_filtered_config('agents')
         return web.json_response(agents_config)
 
     @aiohttp_apispec.docs(tags=['config'])
@@ -51,4 +51,4 @@ class ConfigApi(BaseApi):
         except ConfigUpdateNotAllowed:
             raise JsonHttpForbidden('Not allowed to update specified property')
 
-        return web.json_response(self._api_manager.get_config_with_name('main'))
+        return web.json_response(self._api_manager.get_filtered_config('main'))
