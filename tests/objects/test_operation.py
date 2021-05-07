@@ -110,7 +110,7 @@ def test_ability(ability, executor):
 @pytest.fixture
 def make_test_link(test_ability):
     def _make_link(link_id):
-        return Link(command='', paw='123456', ability=test_ability, id=link_id, executor=test_ability.executors[0])
+        return Link(command='', paw='123456', ability=test_ability, id=link_id, executor=next(test_ability.executors))
     return _make_link
 
 
