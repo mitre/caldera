@@ -7,7 +7,7 @@ class ConfigUpdateSchema(ma.Schema):
     value = fields.String(required=True)
 
     @ma.validates('prop')
-    def validate_prop(self, value):  # should this validate excluded/sensitive properties?
+    def validate_prop(self, value):
         if not value:
             raise ma.ValidationError('prop cannot be empty')
 
