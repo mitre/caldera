@@ -46,7 +46,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     @property
     def executors(self):
-        return list(self._executor_map.values())
+        for executor in self._executor_map.values():
+            yield executor
 
     def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
