@@ -10,7 +10,7 @@ from app.api.v2.managers.config_api_manager import ConfigApiManager, ConfigNotFo
 class ConfigApi(BaseApi):
     def __init__(self, services):
         super().__init__()
-        self._api_manager = ConfigApiManager(services)  # inject?
+        self._api_manager = ConfigApiManager(data_svc=services['data_svc'])
 
     def add_routes(self, app: web.Application):
         router = app.router
