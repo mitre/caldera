@@ -48,7 +48,10 @@ class ConfigApi(BaseApi):
                 prop=data['prop'],
                 value=data['value']
             )
-        except ConfigUpdateNotAllowed:
-            raise JsonHttpForbidden('Not allowed to update specified property')
+        except ConfigUpdateNotAllowed as ex:
+            raise JsonHttpForbidden(
+                error='Update not allowed',
+                details={'property': ex.property}
+            )
 
         return web.json_response(self._api_manager.get_filtered_config('main'))
