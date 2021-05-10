@@ -122,7 +122,6 @@ class Fact(BaseObject):
     @name.setter
     def name(self, value):
         # Keep both values in sync if changed. (backwards compatibility)
-        self._name = value
         self._trait = value
 
     @property
@@ -133,7 +132,6 @@ class Fact(BaseObject):
     def trait(self, value):
         # Keep both values in sync if changed. (backwards compatibility)
         self._trait = value
-        self._name = value
 
     def escaped(self, executor):
         if executor not in escape_ref:
