@@ -6,11 +6,6 @@ class ConfigUpdateSchema(ma.Schema):
     prop = fields.String(required=True)
     value = fields.String(required=True)
 
-    @ma.validates('prop')
-    def validate_prop(self, value):
-        if not value:
-            raise ma.ValidationError('prop cannot be empty')
-
 
 class AgentConfigUpdateSchema(ma.Schema):
     sleep_min = fields.Integer()

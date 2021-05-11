@@ -202,3 +202,10 @@ async def test_update_global_agent_config_throws_validation_error_bad_implant_na
 
     with pytest.raises(errors.DataValidationError):
         await manager.update_global_agent_config(implant_name="")
+
+
+async def test_update_main_config_throws_validation_error_empty_prop(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_main_config(prop='', value=1234)

@@ -72,6 +72,8 @@ class ConfigApiManager:
         return filter_sensitive_props(config)
 
     def update_main_config(self, prop, value):
+        validation.check_not_empty_string(prop, name='prop')
+
         if is_sensitive_prop(prop):
             raise ConfigUpdateNotAllowed(prop)
 
