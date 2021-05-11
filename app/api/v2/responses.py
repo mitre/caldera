@@ -1,8 +1,6 @@
-import json
-
-import marshmallow as ma
 from aiohttp import web
 
+from app.api.v2 import errors
 from app.api.v2.schemas.error_schemas import JsonHttpErrorSchema
 
 
@@ -15,12 +13,15 @@ class JsonHttpErrorResponse:
 
 class JsonHttpBadRequest(JsonHttpErrorResponse, web.HTTPBadRequest):
     """An HTTP 400 response with a json formatted body."""
-    pass
 
 
 class JsonHttpForbidden(JsonHttpErrorResponse, web.HTTPForbidden):
     """An HTTP 403 response with a json formatted body."""
     pass
+
+
+class JsonHttpNotFound(JsonHttpErrorResponse, web.HTTPNotFound):
+    """An HTTP 404 response with a json formatted body."""
 
 
 @web.middleware
@@ -30,8 +31,12 @@ async def json_request_validation_middleware(request, handler):
     """
     try:
         return await handler(request)
-    except ma.ValidationError as ex:
-        # Note that this is only raised when loading via marshmallow, not serialization
-        raise JsonHttpBadRequest('Received invalid json', details=ex.normalized_messages())
-    except json.JSONDecodeError:
-        raise JsonHttpBadRequest('Unexpected error occurred while parsing json')
+    except errors.DataValidationError as ex:
+        raise JsonHttpBadRequest(
+            error=str(ex),
+            details={ex.name: ex.value}
+        )
+    except errors.RequestValidationError as ex:
+        raise JsonHttpBadRequest('Received invalid json!', details=ex.errors)
+    except errors.RequestUnparsableJsonError:
+        raise JsonHttpBadRequest('Unexpected error occurred while parsing json!')

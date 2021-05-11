@@ -2,7 +2,7 @@ import aiohttp_apispec
 from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
-from app.api.v2.responses import JsonHttpForbidden
+from app.api.v2.responses import JsonHttpForbidden, JsonHttpNotFound
 from app.api.v2.schemas.config_schemas import ConfigUpdateSchema, AgentConfigUpdateSchema
 from app.api.v2.managers.config_api_manager import ConfigApiManager, ConfigNotFound, ConfigUpdateNotAllowed
 
@@ -25,14 +25,16 @@ class ConfigApi(BaseApi):
         try:
             config = self._api_manager.get_filtered_config(config_name)
         except ConfigNotFound:
-            raise web.HTTPNotFound(text=f'Config not found: {config_name}')
+            raise JsonHttpNotFound(f'Config not found: {config_name}')
         return web.json_response(config)
 
     @aiohttp_apispec.docs(tags=['config'])
     @aiohttp_apispec.request_schema(AgentConfigUpdateSchema)
     async def update_agents_config(self, request):
-        schema = AgentConfigUpdateSchema()
-        data = schema.load(await request.json())
+        data = await self.parse_json_body(
+            request,
+            schema=AgentConfigUpdateSchema()
+        )
 
         await self._api_manager.update_global_agent_config(**data)
         agents_config = self._api_manager.get_filtered_config('agents')
@@ -41,7 +43,10 @@ class ConfigApi(BaseApi):
     @aiohttp_apispec.docs(tags=['config'])
     @aiohttp_apispec.request_schema(ConfigUpdateSchema)
     async def update_main_config(self, request):
-        data = ConfigUpdateSchema().load(await request.json())
+        data = await self.parse_json_body(
+            request,
+            schema=ConfigUpdateSchema()
+        )
 
         try:
             self._api_manager.update_main_config(

@@ -1,5 +1,8 @@
 import logging
 
+from typing import List
+
+from app.api.v2 import validation
 from app.utility.base_world import BaseWorld
 
 
@@ -87,20 +90,24 @@ class ConfigApiManager:
                 value=value
             )
 
-    async def update_global_agent_config(self, sleep_min=None, sleep_max=None, watchdog=None, untrusted_timer=None,
-                                         implant_name=None, bootstrap_abilities=None, deadman_abilities=None):
-
+    async def update_global_agent_config(self, sleep_min: int = None, sleep_max: int = None, watchdog: int = None,
+                                         untrusted_timer: int = None, implant_name: str = None, bootstrap_abilities: List[str] = None, deadman_abilities=None):
         set_config = self._config_interface.set_config
 
         if sleep_min is not None:
+            validation.check_positive_integer(sleep_min, name='sleep_min')
             set_config(name='agents', prop='sleep_min', value=sleep_min)
         if sleep_max is not None:
+            validation.check_positive_integer(sleep_max, name='sleep_max')
             set_config(name='agents', prop='sleep_max', value=sleep_max)
         if untrusted_timer is not None:
+            validation.check_positive_integer(untrusted_timer, name='untrusted_timer')
             set_config(name='agents', prop='untrusted_timer', value=untrusted_timer)
         if watchdog is not None:
+            validation.check_positive_integer(watchdog, name='watchdog')
             set_config(name='agents', prop='watchdog', value=watchdog)
         if implant_name is not None:
+            validation.check_not_empty_string(implant_name, name='implant_name')
             set_config(name='agents', prop='implant_name', value=implant_name)
         if bootstrap_abilities is not None:
             await self._update_agent_ability_list_property(bootstrap_abilities, 'bootstrap_abilities')
