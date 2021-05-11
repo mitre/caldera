@@ -1,5 +1,6 @@
 import pytest
 
+from app.api.v2 import errors
 from app.api.v2.managers import config_api_manager
 from app.api.v2.managers.config_api_manager import ConfigApiManager, ConfigNotFound, ConfigUpdateNotAllowed
 from app.utility.base_world import BaseWorld
@@ -166,3 +167,38 @@ async def test_update_global_agent_config_updates_list_properties(base_world, ab
     agent_config = manager.get_filtered_config('agents')
     assert agent_config['deadman_abilities'] == ['ability-1', 'ability-2']
     assert agent_config['bootstrap_abilities'] == ['ability-3']
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_sleep_min(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(sleep_min=-1)
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_sleep_max(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(sleep_max=-1)
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_watchdog(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(watchdog=-1)
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_untrusted_timer(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(untrusted_timer=-1)
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_implant_name(base_world, data_svc):
+    manager = ConfigApiManager(data_svc)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(implant_name="")

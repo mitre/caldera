@@ -1,10 +1,8 @@
-import json
-import marshmallow as ma
 import pytest
 from aiohttp import web
 
 
-from app.api.v2 import responses
+from app.api.v2 import errors, responses
 from app.utility.base_world import BaseWorld
 
 
@@ -29,15 +27,15 @@ def base_world():
 @pytest.fixture
 def simple_webapp(loop, base_world):
     async def raise_validation_error(request):
-        raise ma.ValidationError(
-            message={
+        raise errors.RequestValidationError(
+            errors={
                 'foo': 'invalid type',
                 'bar': 'invalid value'
             }
         )
 
-    async def raise_json_decode_error(request):
-        json.loads('{this is invalid json}')
+    async def raise_request_unparsable_json_error(request):
+        raise errors.RequestUnparsableJsonError
 
     async def success(request):
         return web.Response(status=200, text='OK')
@@ -49,7 +47,7 @@ def simple_webapp(loop, base_world):
     )
 
     app.router.add_get('/validation-error', raise_validation_error)
-    app.router.add_get('/json-decode-error', raise_json_decode_error)
+    app.router.add_get('/unparsable-json-error', raise_request_unparsable_json_error)
     app.router.add_get('/success', success)
 
     return app
@@ -75,7 +73,7 @@ async def test_middleware_transforms_marshmallow_validation_error(simple_webapp,
 
 async def test_middleware_transforms_json_decode_error(simple_webapp, aiohttp_client):
     client = await aiohttp_client(simple_webapp)
-    resp = await client.get('/json-decode-error')
+    resp = await client.get('/unparsable-json-error')
     assert resp.status == 400
 
     json_body = await resp.json()
