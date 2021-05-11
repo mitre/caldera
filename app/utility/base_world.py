@@ -35,9 +35,10 @@ class BaseWorld:
     @staticmethod
     def get_config(prop=None, name=None):
         name = name if name else 'main'
-        if prop:
-            return BaseWorld._app_configuration[name].get(prop)
-        return BaseWorld._app_configuration[name]
+        if name in BaseWorld._app_configuration:
+            if prop:
+                return BaseWorld._app_configuration[name].get(prop)
+            return BaseWorld._app_configuration[name]
 
     @staticmethod
     def set_config(name, prop, value):
