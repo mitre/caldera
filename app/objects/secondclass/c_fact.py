@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 import marshmallow as ma
+import marshmallow_enum as ma_enum
 
 from app.utility.base_object import BaseObject
 
@@ -40,48 +41,6 @@ class Type(Enum):
     IMPORTED = 3
 
 
-class RestrictionField(ma.fields.Field):
-    """
-    Custom field to handle the Restriction Enum.
-    """
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        return value.value
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return Restriction[value]
-
-
-class SourceField(ma.fields.Field):
-    """
-    Custom field to handle the Source Enum.
-    """
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        return value.value
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return Source[value]
-
-
-class TypeField(ma.fields.Field):
-    """
-    Custom field to handle the Type Enum.
-    """
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        return value.value
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return Type[value]
-
-
 class FactSchema(ma.Schema):
 
     class Meta:
@@ -93,11 +52,11 @@ class FactSchema(ma.Schema):
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
     timestamp = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     score = ma.fields.Integer()
-    source = SourceField()
-    type = TypeField()
+    source = ma_enum.EnumField(Source)
+    type = ma_enum.EnumField(Type)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
-    restriction = RestrictionField()
+    restriction = ma_enum.EnumField(Restriction)
     collected_by = ma.fields.String(allow_none=True)
     technique_id = ma.fields.String(allow_none=True)
 
