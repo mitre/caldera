@@ -101,3 +101,6 @@ class TestKnowledgeService:
         fuzzy2 = loop.run_until_complete(knowledge_svc.get_rules(dict(match='3.2.1')))
         assert len(fuzzy2) == 1
         assert fuzzy2[0].action == 'ALLOW'
+        fuzzy3 = loop.run_until_complete(knowledge_svc.get_rules(dict(match='2.*')))
+        assert len(fuzzy3) == 2
+
