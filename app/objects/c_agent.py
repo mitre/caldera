@@ -161,12 +161,11 @@ class Agent(FirstClassObjectInterface, BaseObject):
         :return: Preferred executor or None
         :rtype: Union[Executor, None]
         """
-        preferred_executor_name = self._get_preferred_executor_name()
         potential_executors = ability.find_executors(self.executors, self.platform)
-
         if not potential_executors:
-            return
+            return None
 
+        preferred_executor_name = self._get_preferred_executor_name()
         for executor in potential_executors:
             if executor.name == preferred_executor_name:
                 return executor

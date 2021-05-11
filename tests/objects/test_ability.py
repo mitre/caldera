@@ -52,20 +52,21 @@ class TestAbility:
         ))
         assert agent.privileged_to_run(ability)
 
-    def test_executor_store(self, loop, ability, executor):
+    def test_executor_store(self, ability, executor):
         test_executor = executor()
         test_ability = ability(executors=[test_executor])
 
         assert len(list(test_ability.executors)) == 1
 
-    def test_executor_store_multiple(self, loop, ability, executor):
+    def test_executor_store_multiple(self, ability, executor):
         test_executor_windows = executor(name='psh', platform='windows')
         test_executor_linux = executor(name='sh', platform='linux')
         test_ability = ability(executors=[test_executor_windows, test_executor_linux])
 
         assert len(list(test_ability.executors)) == 2
+        assert list(test_ability.executors) == [test_executor_windows, test_executor_linux]
 
-    def test_executor_store_duplicate(self, loop, ability, executor):
+    def test_executor_store_duplicate(self, ability, executor):
         test_executor_1 = executor()
         test_executor_2 = executor()
         test_ability = ability(executors=[test_executor_1, test_executor_2])
@@ -73,7 +74,7 @@ class TestAbility:
         assert len(list(test_ability.executors)) == 1
         assert next(test_ability.executors) is test_executor_2  # Overwrite
 
-    def test_executor_store_duplicate_check_order(self, loop, ability, executor):
+    def test_executor_store_duplicate_check_order(self, ability, executor):
         test_executor_1 = executor(name='psh', platform='windows')
         test_executor_2 = executor(name='sh', platform='linux')
         test_executor_3 = executor(name='psh', platform='windows')
@@ -81,13 +82,13 @@ class TestAbility:
 
         assert list(test_ability.executors) == [test_executor_2, test_executor_3]  # FIFO
 
-    def test_executor_search(self, loop, ability, executor):
+    def test_executor_search(self, ability, executor):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(executors=[test_executor])
 
         assert test_ability.find_executor(name='psh', platform='windows') is test_executor
 
-    def test_executor_search_duplicate(self, loop, ability, executor):
+    def test_executor_search_duplicate(self, ability, executor):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(executors=[test_executor])
 
@@ -95,7 +96,16 @@ class TestAbility:
         assert len(found_executors) == 1
         assert found_executors[0] is test_executor
 
-    def test_executor_removal(self, loop, ability, executor):
+    def test_executor_search_duplicate_and_ordered(self, ability, executor):
+        test_executor_psh = executor(name='psh', platform='windows')
+        test_executor_cmd = executor(name='cmd', platform='windows')
+        test_ability = ability(executors=[test_executor_psh, test_executor_cmd])
+
+        found_executors = test_ability.find_executors(names=['psh', 'cmd', 'psh'], platform='windows')
+        assert len(found_executors) == 2
+        assert found_executors == [test_executor_psh, test_executor_cmd]
+
+    def test_executor_removal(self, ability, executor):
         test_ability = ability(executors=[executor()])
         test_ability.remove_all_executors()
 

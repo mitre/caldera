@@ -10,12 +10,12 @@ import warnings
 from importlib import import_module
 
 from app.objects.c_ability import Ability
-from app.objects.secondclass.c_executor import Executor
 from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -358,12 +358,12 @@ class DataService(DataServiceInterface, BaseService):
                     payload_name = payload
                     if self.is_uuid4(payload):
                         payload_name, _ = self.get_service('file_svc').get_payload_name_from_uuid(payload)
-                    if any(payload_name.endswith(extension) for extension in special_extensions) or \
-                            (executor.code and payload_name == executor.build_target):
+                    if (executor.code and payload_name == executor.build_target) or \
+                            any(payload_name.endswith(extension) for extension in special_extensions):
                         continue
                     _, path = await self.get_service('file_svc').find_file_path(payload_name)
                     if not path:
-                        self.log.warning('Payload referenced in %s but not found: %s' % (ability.ability_id, payload))
+                        self.log.warning('Payload referenced in %s but not found: %s', ability.ability_id, payload)
                         continue
 
                     for cleanup_ability in cleanup_abilities:

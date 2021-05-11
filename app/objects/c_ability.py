@@ -17,7 +17,7 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema()))
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema()), missing=None)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema()), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -46,8 +46,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     @property
     def executors(self):
-        for executor in self._executor_map.values():
-            yield executor
+        yield from self._executor_map.values()
 
     def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
@@ -124,8 +123,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
                 continue
             seen_names.add(name)
 
-            if self._make_executor_map_key(name, platform) in self._executor_map:
-                executors.append(self.find_executor(name, platform))
+            executor = self.find_executor(name, platform)
+            if executor:
+                executors.append(executor)
+
         return executors
 
     def add_executor(self, executor):
