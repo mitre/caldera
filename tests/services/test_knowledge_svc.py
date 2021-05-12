@@ -27,20 +27,23 @@ class TestKnowledgeService:
 
     def test_remove_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234')))
+                                                            collected_by='thin_air', technique_id='T1234'),
+                                                       constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.delete_fact(dict(trait='test')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='test')))
         assert len(facts) == 0
 
     def test_remove_rules(self, loop, knowledge_svc):
-        loop.run_until_complete(knowledge_svc.add_rule(Rule(action='BLOCK', trait='a.c', match='.*')))
+        loop.run_until_complete(knowledge_svc.add_rule(Rule(action='BLOCK', trait='a.c', match='.*'),
+                                                       constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.delete_rule(dict(trait='a.c')))
         rules = loop.run_until_complete(knowledge_svc.get_rules(dict(trait='a.c')))
         assert len(rules) == 0
 
     def test_remove_relationship(self, loop, knowledge_svc):
         dummy = Fact(trait='test', value='demo', score=1, collected_by='thin_air', technique_id='T1234')
-        loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='potato', target=dummy)))
+        loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='potato', target=dummy),
+                                                               constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.delete_relationship(dict(edge='potato')))
         relationships = loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='potato')))
         assert len(relationships) == 0
