@@ -85,32 +85,27 @@ class BaseKnowledgeService(BaseService):
             self.fact_ram['rules'].append(rule)
 
     def _get_rules(self, criteria):
-        def _check_rule(rule, desired_quals):
-            criteria_matches = []
-            for k, v in desired_quals.items():
-                if getattr(rule, k) == v:
-                    criteria_matches.append(True)
-                elif k == 'match':
-                    val = getattr(rule, k)
-                    local_stub = val.split('*')
-                    input_stub = v.split('*')
-                    if all(x in v for x in local_stub) or all(x in val for x in input_stub):
-                        criteria_matches.append(True)
-            if len(criteria_matches) == len(desired_quals):
-                return True
-        return [x for x in self.fact_ram['rules'] if _check_rule(x, criteria)]
+        return [x for x in self.fact_ram['rules'] if self._check_rule(x, criteria, True)]
 
     def _delete_rule(self, criteria):
         """Remove an existing rule from the system"""
-        def _check_rule(rule, desired_quals):
-            criteria_matches = []
-            for k, v in desired_quals.items():
-                if getattr(rule, k) == v:
-                    criteria_matches.append(True)
-            if len(criteria_matches) == len(desired_quals):
-                return True
-        self.fact_ram['rules'][:] = [x for x in self.fact_ram['rules'] if not _check_rule(x, criteria)]
+        self.fact_ram['rules'][:] = [x for x in self.fact_ram['rules'] if not self._check_rule(x, criteria)]
         return
+
+    @staticmethod
+    def _check_rule(rule, desired_quals, wildcard=False):
+        criteria_matches = []
+        for k, v in desired_quals.items():
+            if getattr(rule, k) == v:
+                criteria_matches.append(True)
+            elif k == 'match' and wildcard:  # support wildcard matching
+                val = getattr(rule, k)
+                local_stub = val.split('*')
+                input_stub = v.split('*')
+                if all(x in v for x in local_stub) or all(x in val for x in input_stub):
+                    criteria_matches.append(True)
+        if len(criteria_matches) == len(desired_quals):
+            return True
 
     # --- New Inferencing API ---
     # NOT IMPLEMENTED YET
@@ -125,7 +120,7 @@ class BaseKnowledgeService(BaseService):
         """
         raise NotImplemented
 
-    def _fact_value_distribution(self, trait, agent=None, group=None):
+    def _fact_value_distribution(self, critera, agent=None, group=None):
         """return the value distribution for the given fact, and further filtered down
         to agent/group if supplied
 
@@ -135,7 +130,7 @@ class BaseKnowledgeService(BaseService):
         """
         raise NotImplemented
 
-    def _best_guess(self, trait, agent=None, group=None):
+    def _best_guess(self, criteria, agent=None, group=None):
         """wrapper around 'fact_value_distribution', just returning highest probable value"""
         raise NotImplemented
 

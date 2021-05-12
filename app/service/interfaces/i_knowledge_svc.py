@@ -85,7 +85,7 @@ class KnowledgeServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def fact_value_distribution(self, trait, agent=None, group=None):
+    async def fact_value_distribution(self, criteria, agent=None, group=None):
         """return the value distribution for the given fact, and further filtered down
         to agent/group if supplied
 
@@ -96,7 +96,7 @@ class KnowledgeServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def best_guess(self, trait, agent=None, group=None):
+    async def best_guess(self, criteria, agent=None, group=None):
         """wrapper around 'fact_value_distribution', just returning highest probable value"""
         pass
 

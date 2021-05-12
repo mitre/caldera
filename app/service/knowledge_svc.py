@@ -100,7 +100,7 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         """
         return self.__loaded_knowledge_module._similar_facts(fact, agent, group)
 
-    async def fact_value_distribution(self, trait, agent=None, group=None):
+    async def fact_value_distribution(self, criteria, agent=None, group=None):
         """return the value distribution for the given fact, and further filtered down
         to agent/group if supplied
 
@@ -108,11 +108,11 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         Ex: fact value distribution for 'host.user.name' on group 'workstations':
             --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
         """
-        return self.__loaded_knowledge_module._fact_value_distribution(trait, agent, group)
+        return self.__loaded_knowledge_module._fact_value_distribution(criteria, agent, group)
 
-    async def best_guess(self, trait, agent=None, group=None):
+    async def best_guess(self, criteria, agent=None, group=None):
         """wrapper around 'fact_value_distribution', just returning highest probable value"""
-        return self.__loaded_knowledge_module._best_guess(trait, agent, group)
+        return self.__loaded_knowledge_module._best_guess(criteria, agent, group)
 
     async def best_facts(self, agent=None, group=None, metric='usage_success'):
         """best facts based on requested metric
