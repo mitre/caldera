@@ -30,6 +30,7 @@ class ConfigApi(BaseApi):
 
     @aiohttp_apispec.docs(tags=['config'])
     @aiohttp_apispec.request_schema(AgentConfigUpdateSchema)
+    @aiohttp_apispec.response_schema(AgentConfigUpdateSchema)
     async def update_agents_config(self, request):
         data = await self.parse_json_body(
             request,

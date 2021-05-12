@@ -15,3 +15,4 @@ class AgentConfigUpdateSchema(ma.Schema):
     implant_name = fields.String()
     bootstrap_abilities = fields.List(fields.String)
     deadman_abilities = fields.List(fields.String)
+    deployments = fields.List(fields.String, dump_only=True)
