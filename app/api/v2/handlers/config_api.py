@@ -32,14 +32,12 @@ class ConfigApi(BaseApi):
     @aiohttp_apispec.request_schema(AgentConfigUpdateSchema)
     @aiohttp_apispec.response_schema(AgentConfigUpdateSchema)
     async def update_agents_config(self, request):
-        data = await self.parse_json_body(
-            request,
-            schema=AgentConfigUpdateSchema()
-        )
+        schema = AgentConfigUpdateSchema()
+        data = await self.parse_json_body(request, schema)
 
         await self._api_manager.update_global_agent_config(**data)
         agents_config = self._api_manager.get_filtered_config('agents')
-        return web.json_response(agents_config)
+        return web.json_response(schema.dump(agents_config))
 
     @aiohttp_apispec.docs(tags=['config'])
     @aiohttp_apispec.request_schema(ConfigUpdateSchema)
