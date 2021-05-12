@@ -41,14 +41,14 @@ def test_check_not_empty_string_throws_on_non_string():
 
 def test_check_not_empty_string_throws_on_empty_string():
     with pytest.raises(errors.DataValidationError):
-        validation.check_not_empty_string("")
+        validation.check_not_empty_string('')
 
 
 def test_check_not_empty_string_passes_on_non_empty_string():
     thrown = None
 
     try:
-        validation.check_not_empty_string("foobar")
+        validation.check_not_empty_string('foobar')
     except Exception as ex:
         thrown = ex
     assert thrown is None
