@@ -37,6 +37,6 @@ async def json_request_validation_middleware(request, handler):
             details={ex.name: ex.value}
         )
     except errors.RequestValidationError as ex:
-        raise JsonHttpBadRequest('Received invalid json!', details=ex.errors)
+        raise JsonHttpBadRequest('Received invalid json', details=ex.errors)
     except errors.RequestUnparsableJsonError:
-        raise JsonHttpBadRequest('Unexpected error occurred while parsing json!')
+        raise JsonHttpBadRequest('Unexpected error occurred while parsing json')
