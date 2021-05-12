@@ -5,6 +5,8 @@ from app.api.v2.schemas.error_schemas import JsonHttpErrorSchema
 
 
 class JsonHttpErrorResponse:
+    """Base class for json formatted versions of aiohttp responses."""
+
     def __init__(self, error, details=None, **kwargs):
         kwargs['content_type'] = 'application/json'
         kwargs['text'] = JsonHttpErrorSchema.serialize(error, details)
