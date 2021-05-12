@@ -28,13 +28,13 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return getattr(module, module_type)(module_info)
 
     # -- Fact API --
-    async def add_fact(self, fact):
-        """facts can now be highly controlled, with visibility at the
-        operation level, agent(s) level, or custom groupings"""
+    async def add_fact(self, fact, constraints=None):
+        """Add a new fact to the knowledge service"""
         if isinstance(fact, Fact):
-            return self.__loaded_knowledge_module._add_fact(fact)
+            return self.__loaded_knowledge_module._add_fact(fact, constraints)
 
     async def update_fact(self, criteria, updates):
+        """Update an existing fact"""
         return self.__loaded_knowledge_module._update_fact(criteria, updates)
 
     async def get_facts(self, criteria):
@@ -43,7 +43,7 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return self.__loaded_knowledge_module._get_facts(criteria)
 
     async def delete_fact(self, criteria):
-        """Delete existing facts based on provided information"""
+        """Delete existing fact based on provided information"""
         return self.__loaded_knowledge_module._delete_fact(criteria)
 
     async def get_meta_facts(self, meta_fact=None, agent=None, group=None):
@@ -58,21 +58,26 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
     # -- Relationships API --
 
     async def get_relationships(self, criteria):
+        """Retrieve a relationship from the knowledge service"""
         return self.__loaded_knowledge_module._get_relationships(criteria)
 
-    async def add_relationship(self, relationship):
+    async def add_relationship(self, relationship, constraints=None):
+        """Add a relationship to the knowledge service"""
         if isinstance(relationship, Relationship):
-            return self.__loaded_knowledge_module._add_relationship(relationship)
+            return self.__loaded_knowledge_module._add_relationship(relationship, constraints)
 
     async def update_relationship(self, criteria, updates):
+        """Update a relationship"""
         return self.__loaded_knowledge_module._update_relationship(criteria, updates)
 
     async def delete_relationship(self, criteria):
+        """Remove a relationship from the knowledge service"""
         return self.__loaded_knowledge_module._delete_relationship(criteria)
 
     # --- Rule API ---
-    async def add_rule(self, rule):
+    async def add_rule(self, rule, constraints=None):
         """
+        Add a rule to the knowledge service
         Args:
             rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
                 the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
@@ -80,12 +85,14 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
                 at any one time.
         """
         if isinstance(rule, Rule):
-            return self.__loaded_knowledge_module._add_rule(rule)
+            return self.__loaded_knowledge_module._add_rule(rule, constraints)
 
     async def get_rules(self, criteria):
+        """Retrieve rules from the knowledge service"""
         return self.__loaded_knowledge_module._get_rules(criteria)
 
     async def delete_rule(self, criteria):
+        """Delete a rule from the knowledge service"""
         return self.__loaded_knowledge_module._delete_rule(criteria)
 
     # --- New Inferencing API ---
@@ -122,7 +129,9 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return self.__loaded_knowledge_module._best_guess(agent, group, metric)
 
     async def save_state(self):
+        """Save knowledge service state to disc"""
         return await self.__loaded_knowledge_module._save_state()
 
     async def restore_state(self):
+        """Restore knowledge service state from disc"""
         return await self.__loaded_knowledge_module._restore_state()

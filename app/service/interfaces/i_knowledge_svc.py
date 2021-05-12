@@ -4,7 +4,7 @@ import abc
 class KnowledgeServiceInterface(abc.ABC):
 
     @abc.abstractmethod
-    async def add_fact(self, fact):
+    async def add_fact(self, fact, constraints=None):
         """facts can now be highly controlled, with visibility at the
         operation level, agent(s) level, or custom groupings"""
         pass
@@ -40,7 +40,7 @@ class KnowledgeServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def add_relationship(self, relationship):
+    async def add_relationship(self, relationship, constraints=None):
         pass
 
     @abc.abstractmethod
@@ -53,7 +53,7 @@ class KnowledgeServiceInterface(abc.ABC):
 
     # --- Rule API ---
     @abc.abstractmethod
-    async def add_rule(self, rule):
+    async def add_rule(self, rule, constraints=None):
         """
         Args:
             rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that

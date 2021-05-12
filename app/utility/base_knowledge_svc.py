@@ -3,6 +3,7 @@ import os
 import shutil
 import pickle
 import tarfile
+import uuid
 
 from datetime import datetime
 
@@ -16,17 +17,30 @@ class BaseKnowledgeService(BaseService):
 
     def __init__(self):
         self.log = self.add_service('knowledge_svc', self)
-        self.schema = dict(facts=[], relationships=[], rules=[])
+        self.schema = dict(facts=[], relationships=[], rules=[], constraints=dict())
         self.fact_ram = copy.deepcopy(self.schema)
 
     # -- Fact API --
-    def _add_fact(self, fact):
+    def _add_fact(self, fact, constraints=None):
+        """
+        Add a fact to the internal store
+        :param fact: Fact to add
+        :param constraints: any potential constraints
+        """
         """facts can now be highly controlled, with visibility at the
         operation level, agent(s) level, or custom groupings"""
         if not any(x == fact for x in self.fact_ram['facts']):
+            fact._knowledge_id = uuid.uuid4()
             self.fact_ram['facts'].append(fact)
+            if constraints:
+                self.fact_ram['constraints'][fact._knowledge_id] = constraints
 
     def _update_fact(self, criteria, updates):
+        """
+        Update a fact in the internal store
+        :param criteria: dictionary containing fields to match on
+        :param updates: dictionary containing fields to replace
+        """
         matches = self._get_facts(criteria)
         for match in matches:
             for k, v in updates.items():
@@ -34,11 +48,18 @@ class BaseKnowledgeService(BaseService):
                     setattr(match, k, v)
 
     def _get_facts(self, criteria):
-        """Becomes a powerful function, because it sorts and filters out facts based on
-        input (values, groupings) as well as underlying mechanisms such as fact mutexs"""
+        """
+        Retrieve a fact from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of facts matching the criteria
+        """
         return self._locate('facts', query=criteria)
 
     def _delete_fact(self, criteria):
+        """
+        Delete a fact from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
         """Delete existing facts based on provided information"""
         return self._remove('facts', criteria)
 
@@ -54,14 +75,32 @@ class BaseKnowledgeService(BaseService):
     # -- Relationships API --
 
     def _get_relationships(self, criteria):
+        """
+        Retrieve relationships from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of matching relationships
+        """
         return self._locate('relationships', query=criteria)
 
-    def _add_relationship(self, relationship):
+    def _add_relationship(self, relationship, constraints=None):
+        """
+        Add a relationship to the internal store
+        :param relationship: Relationship object to add
+        :param constraints: optional constraints on the use of the relationship
+        """
         if not any((x.source == relationship.source) and (x.edge == relationship.edge) and
                    (x.target == relationship.target) for x in self.fact_ram['relationships']):
+            relationship._knowledge_id = uuid.uuid4()
             self.fact_ram['relationships'].append(relationship)
+            if constraints:
+                self.fact_ram['constraints'][relationship._knowledge_id] = constraints
 
     def _update_relationship(self, criteria, updates):
+        """
+        Update a relationship in the internal store
+        :param criteria: dictionary containing fields to match on
+        :param updates: dictionary containing fields to modify
+        """
         matches = self._get_relationships(criteria)
         for match in matches:
             for k, v in updates.items():
@@ -69,31 +108,59 @@ class BaseKnowledgeService(BaseService):
                     setattr(match, k, v)
 
     def _delete_relationship(self, criteria):
+        """
+        Remove a relationship from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
         return self._remove('relationships', criteria)
 
     # --- Rule API ---
 
-    def _add_rule(self, rule):
+    def _add_rule(self, rule, constraints=None):
         """
-        Args:
+        Add a rule to the internal store
+        :param rule: Rule object to add
+        :param constraints: dictionary containing fields to match on
+        """
+        """
             rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
                 the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
                 specified for. Essentially a fact is binded to mutex, and only one action can be using the fact
                 at any one time.
         """
         if not any((x.action == rule.action) and (x.trait == rule.trait) for x in self.fact_ram['rules']):
+            rule._knowledge_id = uuid.uuid4()
             self.fact_ram['rules'].append(rule)
+            if constraints:
+                self.fact_ram['constraints'][rule._knowledge_id] = constraints
 
     def _get_rules(self, criteria):
+        """
+        Retrieve rules from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of matching rules
+        """
         return [x for x in self.fact_ram['rules'] if self._check_rule(x, criteria, True)]
 
     def _delete_rule(self, criteria):
-        """Remove an existing rule from the system"""
-        self.fact_ram['rules'][:] = [x for x in self.fact_ram['rules'] if not self._check_rule(x, criteria)]
+        """
+        Remove a rule from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
+        sublist = [x for x in self.fact_ram['rules'] if self._check_rule(x, criteria)]
+        self._clear_matching_constraints(sublist)
+        self.fact_ram['rules'][:] = [x for x in self.fact_ram['rules'] if x not in sublist]
         return
 
     @staticmethod
     def _check_rule(rule, desired_quals, wildcard=False):
+        """
+        Check whether or not a rule matches the provided criteria
+        :param rule: Rule object to check
+        :param desired_quals: dictionary containing fields to match on
+        :param wildcard: whether or not to do wildcard matching on the 'match' field
+        :return:
+        """
         criteria_matches = []
         for k, v in desired_quals.items():
             if getattr(rule, k) == v:
@@ -144,16 +211,46 @@ class BaseKnowledgeService(BaseService):
         raise NotImplemented
 
     def _locate(self, object_name, query=None):
+        """
+        Locate a matching object in the internal store
+        :param object_name: object type
+        :param query: dictionary of fields to match on
+        :return: list of matching objects
+        """
         try:
             return [obj for obj in self.fact_ram[object_name] if obj.match(query)]
         except Exception as e:
             self.log.error('[!] LOCATE: %s' % e)
 
     def _remove(self, object_name, query):
+        """
+        Remove objects from the internal store
+        :param object_name: object type
+        :param query: dictionary of fields to match on
+        """
         try:
-            self.fact_ram[object_name][:] = [obj for obj in self.fact_ram[object_name] if not obj.match(query)]
+            sublist = self.fact_ram[object_name] = [obj for obj in self.fact_ram[object_name] if obj.match(query)]
+            self._clear_matching_constraints(sublist)
+            self.fact_ram[object_name][:] = [obj for obj in self.fact_ram[object_name] if obj not in sublist]
         except Exception as e:
             self.log.error('[!] REMOVE: %s' % e)
+
+    def _clear_matching_constraints(self, objs):
+        """
+        Remove constraints associated with objects as part of deletion
+        :param objs: list of objects being removed
+        """
+        need_to_remove = self._get_matching_constraints(objs)
+        for obj in need_to_remove:
+            del self.fact_ram['constraints'][obj._knowledge_id]
+
+    def _get_matching_constraints(self, objs):
+        """
+        Identify matching contstraings associated with objects
+        :param objs: list of objects to get constraints for
+        :return: list of relevant constraints
+        """
+        return [obj for obj in objs if obj._knowledge_id in self.fact_ram['constraints']]
 
     @staticmethod
     def _delete_file(path):
@@ -183,13 +280,14 @@ class BaseKnowledgeService(BaseService):
             BaseKnowledgeService._delete_file(FACT_STORE_PATH)
 
     async def _save_state(self):
+        """
+        Save the current internal store state
+        """
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.fact_ram), 'data')
 
     async def _restore_state(self):
         """
-        Restore the object database
-
-        :return:
+        Restore a saved internal store state
         """
         if os.path.exists(FACT_STORE_PATH):
             _, store = await self.get_service('file_svc').read_file(FACT_STORE_PATH.split(os.path.sep)[1],
@@ -201,10 +299,16 @@ class BaseKnowledgeService(BaseService):
                 self.fact_ram[key] = []
                 for c_object in ram[key]:
                     handle = self._load_wrapper(key)
-                    handle(c_object)
+                    constraints = self._clear_matching_constraints([ram[key][c_object]])
+                    handle(c_object, constraints=constraints)
             self.log.debug('Restored data from persistent storage')
 
     def _load_wrapper(self, key):
+        """
+        Support wrapper to process different object types during load
+        :param key: type of object to load
+        :return: function handle to the correct loader function for the associated object type
+        """
         if key == 'facts':
             return self._add_fact
         elif key == 'relationships':
