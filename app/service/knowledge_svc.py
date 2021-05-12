@@ -8,6 +8,7 @@ from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
 
+
 class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     def __init__(self):

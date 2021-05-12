@@ -13,6 +13,7 @@ from app.utility.base_service import BaseService
 DATA_BACKUP_DIR = app.service.data_svc.DATA_BACKUP_DIR
 FACT_STORE_PATH = "data/fact_store"
 
+
 class BaseKnowledgeService(BaseService):
 
     def __init__(self):
@@ -65,12 +66,12 @@ class BaseKnowledgeService(BaseService):
 
     def _get_meta_facts(self, meta_fact=None, agent=None, group=None):
         """Returns the complete set of facts associated with a meta-fact construct"""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _get_fact_origin(self, fact):
         """Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
         identify the host it was discovered on."""
-        raise NotImplemented
+        raise NotImplementedError
 
     # -- Relationships API --
 
@@ -185,7 +186,7 @@ class BaseKnowledgeService(BaseService):
             - other facts for the group/agent
             - other facts with same value
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _fact_value_distribution(self, critera, agent=None, group=None):
         """return the value distribution for the given fact, and further filtered down
@@ -195,11 +196,11 @@ class BaseKnowledgeService(BaseService):
         Ex: fact value distribution for 'host.user.name' on group 'workstations':
             --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _best_guess(self, criteria, agent=None, group=None):
         """wrapper around 'fact_value_distribution', just returning highest probable value"""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _best_facts(self, agent=None, group=None, metric='usage_success'):
         """best facts based on requested metric
@@ -208,7 +209,7 @@ class BaseKnowledgeService(BaseService):
         Args:
             metric: ['usage_success', 'most_recent_success', ...]
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _locate(self, object_name, query=None):
         """

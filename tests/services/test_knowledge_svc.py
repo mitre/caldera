@@ -2,6 +2,7 @@ from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
 
+
 class TestKnowledgeService:
 
     def test_no_duplicate_fact(self, loop, knowledge_svc):
@@ -51,8 +52,8 @@ class TestKnowledgeService:
     def test_update_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='utest', value='udemo', score=1,
                                                             collected_by='thin_air', technique_id='T1234')))
-        loop.run_until_complete(knowledge_svc.update_fact(criteria=dict(trait='utest'),updates=dict(trait='utest2',
-                                                                                                   value='udemo2')))
+        loop.run_until_complete(knowledge_svc.update_fact(criteria=dict(trait='utest'),
+                                                          updates=dict(trait='utest2', value='udemo2')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='utest2')))
         assert len(facts) == 1
         assert facts[0].value == 'udemo2'
