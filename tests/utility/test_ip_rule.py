@@ -20,6 +20,12 @@ class TestIPRule:
     rule = Rule(trait='host.ip.address', action=RuleAction.DENY, match=subnet1)
     rs = RuleSet(rules=[rule])
 
+    def test_rule_display(self):
+        rule_display = self.rule.display
+        assert rule_display['trait'] == 'host.ip.address'
+        assert rule_display['action'] == 'DENY'
+        assert rule_display['match'] == self.subnet1
+
     async def test_is_ip_rule_match(self):
         assert await self.rs._is_ip_rule_match(self.rule, self.fact1)
         assert (not await self.rs._is_ip_rule_match(self.rule, self.fact2))
