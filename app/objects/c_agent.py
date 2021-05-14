@@ -136,19 +136,19 @@ class Agent(FirstClassObjectInterface, BaseObject):
     async def calculate_sleep(self):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
-    async def capabilities(self, ability_set):
+    async def capabilities(self, abilities):
         """Get abilities that the agent is capable of running
 
-        :param ability_set: List of abilities to check agent capability
-        :type ability_set: List[Ability]
+        :param abilities: List of abilities to check agent capability
+        :type abilities: List[Ability]
         :return: List of abilities the agents is capable of running
         :rtype: List[Ability]
         """
-        abilities = []
-        for ability in ability_set:
+        capabilities = []
+        for ability in abilities:
             if self.privileged_to_run(ability) and ability.find_executors(self.executors, self.platform):
-                abilities.append(ability)
-        return abilities
+                capabilities.append(ability)
+        return capabilities
 
     async def get_preferred_executor(self, ability):
         """Get preferred executor for ability
