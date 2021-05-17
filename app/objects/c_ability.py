@@ -70,6 +70,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def raw_command(self):
         return self.decode_bytes(self._test) if self._test else ""
 
+    @classmethod
+    def is_global_variable(cls, variable):
+        return variable in cls.RESERVED
+
     def __init__(self, ability_id, tactic=None, technique_id=None, technique=None, name=None, test=None,
                  description=None, cleanup=None, executor=None, platform=None, payloads=None, parsers=None,
                  requirements=None, privilege=None, timeout=60, repeatable=False, buckets=None, access=None,
