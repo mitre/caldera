@@ -8,6 +8,7 @@ pyyaml>=5.1
 cryptography>=3.2
 websockets==8.1
 Sphinx==3.0.4
+docutils==0.16 # Broken bullet lists in sphinx_rtd_theme https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
 sphinx_rtd_theme==0.4.3
 recommonmark==0.6.0
 marshmallow==3.5.1
