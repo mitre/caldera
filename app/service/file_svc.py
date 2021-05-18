@@ -59,8 +59,10 @@ class FileSvc(FileServiceInterface, BaseService):
         contents = await self._perform_data_encoding(headers, contents)
         return file_path, contents, display_name
 
-    async def save_file(self, filename, payload, target_dir, encrypt=True, encoding=None):
-        if encoding:
+    async def save_file(self, filename, payload, target_dir, encrypt=True, link_id=None, encoding=None):
+        if link_id:
+            payload = await self._decode_contents_for_link_id(payload, link_id)
+        elif encoding:
             payload = await self._decode_contents(payload, encoding)
         self._save(os.path.join(target_dir, filename), payload, encrypt)
 
@@ -79,7 +81,7 @@ class FileSvc(FileServiceInterface, BaseService):
                 if not field:
                     break
                 _, filename = os.path.split(field.filename)
-                await self.save_file(filename, bytes(await field.read()), target_dir,
+                await self.save_file(filename, bytes(await field.read()), target_dir, link_id=headers.get('x-link-id'),
                                      encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
@@ -232,12 +234,24 @@ class FileSvc(FileServiceInterface, BaseService):
             self.log.error('Error loading extension handler=%s, %s' % (payload, e))
 
     async def _perform_data_encoding(self, headers, contents):
+        link_id = headers.get('x-link-id')
         requested_encoding = headers.get('x-file-encoding')
-        if requested_encoding:
+        if link_id:
+            # See if the file request associated with this link requires any encoding.
+            try:
+                return await self._encode_contents_for_link_id(contents, link_id)
+            except Exception as e:
+                self.log.error(e)
+        elif requested_encoding:
             return await self._encode_contents(contents, requested_encoding)
         return contents
 
-    async def _get_encoder_by_name(self, encoding):
+    async def _get_encoder_name_from_link_id(self, link_id):
+        link = await self.get_service('app_svc').find_link(link_id)
+        if link:
+            return link.file_encoding
+
+    async def _get_encoder_from_encoder_name(self, encoding):
         if encoding:
             encoders = await self.data_svc.locate('data_encoders', match=dict(name=encoding))
             if encoders:
@@ -246,21 +260,29 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def _encode_contents(self, contents, encoder_name):
         self.log.debug('Encoding file contents using %s encoding' % encoder_name)
-        encoder = await self._get_encoder_by_name(encoder_name)
+        encoder = await self._get_encoder_from_encoder_name(encoder_name)
         if encoder:
             return encoder.encode(contents)
         else:
             self.log.error('Failed to encode contents. Returning original contents')
             return contents
 
+    async def _encode_contents_for_link_id(self, contents, link_id):
+        encoder_name = await self._get_encoder_name_from_link_id(link_id)
+        return await self._encode_contents(contents, encoder_name)
+
     async def _decode_contents(self, contents, encoder_name):
         self.log.debug('Decoding file contents using %s encoding' % encoder_name)
-        encoder = await self._get_encoder_by_name(encoder_name)
+        encoder = await self._get_encoder_from_encoder_name(encoder_name)
         if encoder:
             return encoder.decode(contents)
         else:
             self.log.error('Failed to decode contents. Returning original contents')
             return contents
+
+    async def _decode_contents_for_link_id(self, contents, link_id):
+        encoder_name = await self._get_encoder_name_from_link_id(link_id)
+        return await self._decode_contents(contents, encoder_name)
 
 
 def _go_vars(arch, platform):
