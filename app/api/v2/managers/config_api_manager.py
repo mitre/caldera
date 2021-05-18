@@ -6,14 +6,8 @@ from app.utility.base_world import BaseWorld
 
 
 SENSITIVE_CONFIG_PROPS = frozenset([
-    'ability_refresh',
     'api_key_blue',
     'api_key_red',
-    'app.contact.gist',
-    'app.contact.tunnel.ssh.host_key_file',
-    'app.contact.tunnel.ssh.host_key_passphrase',
-    'app.contact.tunnel.ssh.user_name',
-    'app.contact.tunnel.ssh.user_password',
     'auth.login.handler.module',
     'crypt_salt',
     'encryption_key',
