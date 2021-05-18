@@ -323,6 +323,14 @@
 .ability-viewer select {
     width: 30%;
 }
+.ttp-template #action {
+    width: 100%;
+    margin-top: 0px;
+    height: 20px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    border-radius: 0px;
+}
 .ttp-template input {
     height: 20px;
     width: 50%;
