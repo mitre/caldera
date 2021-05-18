@@ -8,6 +8,7 @@ from app.objects.secondclass.c_parser import ParserSchema
 from app.objects.secondclass.c_requirement import RequirementSchema
 from app.objects.secondclass.c_variation import Variation, VariationSchema
 from app.utility.base_object import BaseObject
+from app.utility.base_service import BaseService
 from app.utility.base_world import AccessSchema
 
 
@@ -139,8 +140,9 @@ class Ability(FirstClassObjectInterface, BaseObject):
         return existing
 
     async def which_plugin(self):
+        file_svc = BaseService.get_service('file_svc')
         for plugin in os.listdir('plugins'):
-            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.ability_id):
+            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.ability_id):
                 return plugin
         return None
 

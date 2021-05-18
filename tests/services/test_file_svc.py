@@ -13,6 +13,14 @@ from app.utility.file_decryptor import decrypt
 )
 class TestFileService:
 
+    @pytest.fixture
+    def text_file(self, tmpdir):
+        txt_str = 'Hello world!'
+        f = tmpdir.mkdir('txt').join('test.txt')
+        f.write(txt_str)
+        assert f.read() == txt_str
+        yield f
+
     def test_save_file(self, loop, file_svc, tmp_path):
         filename = "test_file.txt"
         payload = b'These are the file contents.'
@@ -127,3 +135,51 @@ class TestFileService:
         os.remove(uploaded_file_path)
         os.remove(decrypted_file_path)
         os.rmdir(upload_dir)
+
+    def test_walk_file_path_exists_nonxor(self, loop, text_file, file_svc):
+        ret = loop.run_until_complete(file_svc.walk_file_path(text_file.dirname, text_file.basename))
+        assert ret == text_file
+
+    def test_walk_file_path_notexists(self, loop, text_file, file_svc):
+        ret = loop.run_until_complete(file_svc.walk_file_path(text_file.dirname, 'not-a-real.file'))
+        assert ret is None
+
+    def test_walk_file_path_xor_fn(self, loop, tmpdir, file_svc):
+        f = tmpdir.mkdir('txt').join('xorfile.txt.xored')
+        f.write("test")
+        ret = loop.run_until_complete(file_svc.walk_file_path(f.dirname, 'xorfile.txt'))
+        assert ret == f
+
+    def test_remove_xored_extension(self, file_svc):
+        test_value = 'example_file.exe.xored'
+        expected_value = 'example_file.exe'
+        ret = file_svc.remove_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_remove_xored_extension_to_non_xored_file(self, file_svc):
+        test_value = 'example_file.exe'
+        expected_value = 'example_file.exe'
+        ret = file_svc.remove_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_add_xored_extension(self, file_svc):
+        test_value = 'example_file.exe'
+        expected_value = 'example_file.exe.xored'
+        ret = file_svc.add_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_add_xored_extension_to_xored_file(self, file_svc):
+        test_value = 'example_file.exe.xored'
+        expected_value = 'example_file.exe.xored'
+        ret = file_svc.add_xored_extension(test_value)
+        assert ret == expected_value
+
+    def test_is_extension_xored_true(self, file_svc):
+        test_value = 'example_file.exe.xored'
+        ret = file_svc.is_extension_xored(test_value)
+        assert ret is True
+
+    def test_is_extension_xored_false(self, file_svc):
+        test_value = 'example_file.exe'
+        ret = file_svc.is_extension_xored(test_value)
+        assert ret is False

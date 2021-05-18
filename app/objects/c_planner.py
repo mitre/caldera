@@ -4,6 +4,7 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_service import BaseService
 from app.objects.secondclass.c_fact import Fact, FactSchema
 
 
@@ -54,8 +55,9 @@ class Planner(FirstClassObjectInterface, BaseObject):
         return existing
 
     async def which_plugin(self):
+        file_svc = BaseService.get_service('file_svc')
         for plugin in os.listdir('plugins'):
-            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.planner_id):
+            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.planner_id):
                 return plugin
         return None
 
