@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import glob
+import itertools
 import os
 import pathlib
 import uuid
@@ -181,15 +182,14 @@ class RestService(RestServiceInterface, BaseService):
             self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
 
     async def list_payloads(self):
-        file_svc = self.get_service('file_svc')
         payload_dirs = [pathlib.Path.cwd() / 'data' / 'payloads']
         payload_dirs.extend(pathlib.Path.cwd() / 'plugins' / plugin.name / 'payloads'
                             for plugin in await self.get_service('data_svc').locate('plugins') if plugin.enabled)
-        payloads = set()
-        for p_dir in payload_dirs:
-            for p in p_dir.glob('[!.]*'):
-                if p.is_file():
-                    payloads.add(file_svc.remove_xored_extension(p.name))
+        payloads = {
+            self.remove_xored_extension(p.name)
+            for p in itertools.chain.from_iterable(p_dir.glob('[!.]*') for p_dir in payload_dirs)
+            if p.is_file()
+        }
         return payloads
 
     async def find_abilities(self, paw):

@@ -3,6 +3,7 @@ import string
 import re
 import yaml
 import logging
+import os
 import subprocess
 import distutils.version
 from base64 import b64encode, b64decode
@@ -142,6 +143,32 @@ class BaseWorld:
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
             return False
+
+    @staticmethod
+    async def walk_file_path(path, target):
+        for root, _, files in os.walk(path):
+            if target in files:
+                return os.path.join(root, target)
+            xored_target = BaseWorld.add_xored_extension(target)
+            if xored_target in files:
+                return os.path.join(root, xored_target)
+        return None
+
+    @staticmethod
+    def remove_xored_extension(filename):
+        if BaseWorld.is_extension_xored(filename):
+            return filename.replace('.xored', '')
+        return filename
+
+    @staticmethod
+    def is_extension_xored(filename):
+        return filename.endswith('.xored')
+
+    @staticmethod
+    def add_xored_extension(filename):
+        if BaseWorld.is_extension_xored(filename):
+            return filename
+        return '%s.xored' % filename
 
     class Access(Enum):
         APP = 0
