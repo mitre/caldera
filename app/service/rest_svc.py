@@ -206,7 +206,7 @@ class RestService(RestServiceInterface, BaseService):
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self._build_potential_abilities(operation)
         operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
-        return dict(links=[l.display for l in operation.potential_links])
+        return dict(links=[s_link.display for s_link in operation.potential_links])
 
     async def apply_potential_link(self, link):
         operation = await self.get_service('app_svc').find_op_with_link(link.id)
@@ -340,7 +340,6 @@ class RestService(RestServiceInterface, BaseService):
                          state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)), access=allowed,
                          obfuscator=data.pop('obfuscator', 'plain-text'),
                          auto_close=bool(int(data.pop('auto_close', 0))), visibility=int(data.pop('visibility', '50')),
-                         timeout=int(data.pop('timeout', 30)),
                          use_learning_parsers=bool(int(data.pop('use_learning_parsers', 0))))
 
     def _get_allowed_from_access(self, access):
@@ -391,7 +390,8 @@ class RestService(RestServiceInterface, BaseService):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
         if adv:
             return copy.deepcopy(adv[0])
-        return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile', atomic_ordering=[]))
+        return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile',
+                                   atomic_ordering=[]))
 
     async def _update_global_props(self, sleep_min, sleep_max, watchdog, untrusted, implant_name,
                                    bootstrap_abilities, deadman_abilities):
