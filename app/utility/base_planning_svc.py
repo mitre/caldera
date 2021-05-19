@@ -104,7 +104,8 @@ class BasePlanningService(BaseService):
                         try:
                             copy_test = copy.copy(decoded_test)
                             copy_link = copy.deepcopy(link)
-                            variant, score, used = await self._build_single_test_variant(copy_test, combo, link.ability.executor)
+                            variant, score, used = await self._build_single_test_variant(copy_test, combo,
+                                                                                         link.ability.executor)
                             copy_link.command = self.encode_string(variant)
                             copy_link.score = score
                             copy_link.used.extend(used)
@@ -145,23 +146,24 @@ class BasePlanningService(BaseService):
         :param links:
         :return: updated list of links
         """
-        links[:] = [l for l in links if not BasePlanningService.re_variable.findall(b64decode(l.command).decode('utf-8'))]
+        links[:] = [s_link for s_link in links if not
+                    BasePlanningService.re_variable.findall(b64decode(s_link.command).decode('utf-8'))]
         return links
 
     async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [l for l in links if l.cleanup or await self._do_enforcements(l, operation)]
+        links[:] = [s_link for s_link in links if s_link.cleanup or await self._do_enforcements(s_link, operation)]
         return links
 
     @staticmethod
     async def remove_links_above_visibility(links, operation):
-        links[:] = [l for l in links if operation.visibility >= l.visibility.score]
+        links[:] = [s_link for s_link in links if operation.visibility >= s_link.visibility.score]
         return links
 
     async def obfuscate_commands(self, agent, obfuscator, links):
         o = (await self.get_service('data_svc').locate('obfuscators', match=dict(name=obfuscator)))[0]
         mod = o.load(agent)
-        for l in links:
-            l.command = self.encode_string(mod.run(l))
+        for s_link in links:
+            s_link.command = self.encode_string(mod.run(s_link))
         return links
 
     """ PRIVATE """
@@ -214,7 +216,8 @@ class BasePlanningService(BaseService):
             # Ex: Matches ${a.b.c[filters(max=3)]}
             pattern = r'#{(%s(?=[\[}]).*?)}' % re.escape(var.trait)
             re_variable = re.compile(pattern, flags=re.DOTALL)
-            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'), copy_test)
+            copy_test = re.sub(re_variable, str(var.escaped(executor)).strip().encode('unicode-escape').decode('utf-8'),
+                               copy_test)
         return copy_test, score, used
 
     @staticmethod
