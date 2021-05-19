@@ -41,8 +41,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             links = await self.get_links(operation, [bucket], agent)
             if len(links) == 0:
                 break
-            for l in links:
-                l_id = await operation.apply(l)
+            for s_link in links:
+                l_id = await operation.apply(s_link)
                 if batch:
                     l_ids.append(l_id)
                 else:
@@ -118,7 +118,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type planner: LogicalPlanner
         :param publish_transitions: flag to publish bucket transitions as
           events to the event service
-        :type publish tranitions: bool
+        :type publish_transitions: bool
         """
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
@@ -402,8 +402,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :param links: Links to apply adjustments to
         :type links: list(Link)
         """
-        for l in links:
-            for adjustment in [a for a in operation.source.adjustments if a.ability_id == l.ability.ability_id]:
+        for a_link in links:
+            for adjustment in [a for a in operation.source.adjustments if a.ability_id == a_link.ability.ability_id]:
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
-                    l.visibility.apply(adjustment)
-                    l.status = l.states['HIGH_VIZ']
+                    a_link.visibility.apply(adjustment)
+                    a_link.status = a_link.states['HIGH_VIZ']

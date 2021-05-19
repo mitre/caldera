@@ -42,7 +42,7 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], objectives=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -241,6 +241,7 @@ class DataService(DataServiceInterface, BaseService):
             for task in async_tasks:
                 await task
             await self._load_extensions()
+            await self._load_data_encoders(plugins)
             await self._verify_data_sets()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
@@ -305,6 +306,15 @@ class DataService(DataServiceInterface, BaseService):
             if await packer.check_dependencies(self.get_service('app_svc')):
                 plug_packers[packer.name] = packer
         self.get_service('file_svc').packers.update(plug_packers)
+
+    async def _load_data_encoders(self, plugins):
+        glob_paths = ['app/data_encoders/**.py'] + \
+                     ['plugins/%s/app/data_encoders/**.py' % plugin.name for plugin in plugins]
+        for glob_path in glob_paths:
+            for module_path in glob.iglob(glob_path):
+                imported_module = import_module(module_path.replace('/', '.').replace('\\', '.').replace('.py', ''))
+                encoder = imported_module.load()
+                await self.store(encoder)
 
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
