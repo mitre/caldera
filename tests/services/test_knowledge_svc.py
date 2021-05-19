@@ -30,9 +30,12 @@ class TestKnowledgeService:
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='rtest', value='rdemo', score=1,
                                                             collected_by='thin_air', technique_id='T1234'),
                                                        constraints=dict(test_field='test_value')))
+        loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='ktest', value='rdemo', score=1,
+                                                            collected_by='thin_air', technique_id='T1234'),
+                                                       constraints=dict(test_field='test_value2')))
         loop.run_until_complete(knowledge_svc.delete_fact(dict(trait='rtest')))
-        facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='rtest')))
-        assert len(facts) == 0
+        facts = loop.run_until_complete(knowledge_svc.get_facts(dict(value='rdemo')))
+        assert len(facts) == 1
 
     def test_remove_rules(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_rule(Rule(action='rBLOCK', trait='ra.c', match='.*'),

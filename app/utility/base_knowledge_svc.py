@@ -230,7 +230,7 @@ class BaseKnowledgeService(BaseService):
         :param query: dictionary of fields to match on
         """
         try:
-            sublist = self.fact_ram[object_name] = [obj for obj in self.fact_ram[object_name] if obj.match(query)]
+            sublist = [obj for obj in self.fact_ram[object_name] if obj.match(query)]
             self._clear_matching_constraints(sublist)
             self.fact_ram[object_name][:] = [obj for obj in self.fact_ram[object_name] if obj not in sublist]
         except Exception as e:
@@ -247,7 +247,7 @@ class BaseKnowledgeService(BaseService):
 
     def _get_matching_constraints(self, objs):
         """
-        Identify matching contstraings associated with objects
+        Identify matching constraints associated with objects
         :param objs: list of objects to get constraints for
         :return: list of relevant constraints
         """
@@ -284,7 +284,7 @@ class BaseKnowledgeService(BaseService):
         """
         Save the current internal store state
         """
-        await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.fact_ram), 'data')
+        await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram), 'data')
 
     async def _restore_state(self):
         """
