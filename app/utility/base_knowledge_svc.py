@@ -1,7 +1,7 @@
 import copy
 import os
-import shutil
 import pickle
+import shutil
 import tarfile
 import uuid
 
@@ -28,8 +28,8 @@ class BaseKnowledgeService(BaseService):
         :param fact: Fact to add
         :param constraints: any potential constraints
         """
-        """facts can now be highly controlled, with visibility at the
-        operation level, agent(s) level, or custom groupings"""
+        # facts can now be highly controlled, with visibility at the operation level, agent(s) level, or
+        # custom groupings
         if not any(x == fact for x in self.fact_ram['facts']):
             fact._knowledge_id = uuid.uuid4()
             self.fact_ram['facts'].append(fact)
@@ -61,16 +61,16 @@ class BaseKnowledgeService(BaseService):
         Delete a fact from the internal store
         :param criteria: dictionary containing fields to match on
         """
-        """Delete existing facts based on provided information"""
+        # Delete existing facts based on provided information
         return self._remove('facts', criteria)
 
     def _get_meta_facts(self, meta_fact=None, agent=None, group=None):
-        """Returns the complete set of facts associated with a meta-fact construct"""
+        # Returns the complete set of facts associated with a meta-fact construct
         raise NotImplementedError
 
     def _get_fact_origin(self, fact):
-        """Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
-        identify the host it was discovered on."""
+        # Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
+        # identify the host it was discovered on.
         raise NotImplementedError
 
     # -- Relationships API --
@@ -123,12 +123,12 @@ class BaseKnowledgeService(BaseService):
         :param rule: Rule object to add
         :param constraints: dictionary containing fields to match on
         """
-        """
-            rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
-                the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
-                specified for. Essentially a fact is binded to mutex, and only one action can be using the fact
-                at any one time.
-        """
+        ###
+        #    rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
+        #        the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
+        #        specified for. Essentially a fact is binded to mutex, and only one action can be using the fact
+        #        at any one time.
+        ###
         if not any((x.action == rule.action) and (x.trait == rule.trait) for x in self.fact_ram['rules']):
             rule._knowledge_id = uuid.uuid4()
             self.fact_ram['rules'].append(rule)
@@ -178,37 +178,38 @@ class BaseKnowledgeService(BaseService):
     # --- New Inferencing API ---
     # NOT IMPLEMENTED YET
     def _similar_facts(self, fact, agent, group):
-        """return facts that are close to supplied fact.
-
-
-        Ex:
-            - other facts for an agent with given trait/value
-            - other facts for the group/agent
-            - other facts with same value
-        """
+        ###
+        # return facts that are close to supplied fact.
+        #
+        #
+        # Ex:
+        #    - other facts for an agent with given trait/value
+        #    - other facts for the group/agent
+        #    - other facts with same value
+        ###
         raise NotImplementedError
 
     def _fact_value_distribution(self, critera, agent=None, group=None):
-        """return the value distribution for the given fact, and further filtered down
-        to agent/group if supplied
-
-
-        Ex: fact value distribution for 'host.user.name' on group 'workstations':
-            --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
-        """
+        ###
+        # return the value distribution for the given fact, and further filtered down to agent/group if supplied
+        #
+        #
+        # Ex: fact value distribution for 'host.user.name' on group 'workstations':
+        #     --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
+        ###
         raise NotImplementedError
 
     def _best_guess(self, criteria, agent=None, group=None):
-        """wrapper around 'fact_value_distribution', just returning highest probable value"""
+        # wrapper around 'fact_value_distribution', just returning highest probable value
         raise NotImplementedError
 
     def _best_facts(self, agent=None, group=None, metric='usage_success'):
-        """best facts based on requested metric
-
-
-        Args:
-            metric: ['usage_success', 'most_recent_success', ...]
-        """
+        ###
+        # best facts based on requested metric
+        #
+        # Args:
+        #    metric: ['usage_success', 'most_recent_success', ...]
+        ###
         raise NotImplementedError
 
     def _locate(self, object_name, query=None):
@@ -264,12 +265,13 @@ class BaseKnowledgeService(BaseService):
 
     @staticmethod
     def _destroy():
-        """Reset the caldera data directory and server state.
-
-        This creates a gzipped tarball backup of the data files tracked by caldera.
-        Paths are preserved within the tarball, with all files having "data/" as the
-        root.
-        """
+        ###
+        # Reset the caldera data directory and server state.
+        #
+        # This creates a gzipped tarball backup of the data files tracked by caldera.
+        # Paths are preserved within the tarball, with all files having "data/" as the
+        # root.
+        ###
         if not os.path.exists(DATA_BACKUP_DIR):
             os.mkdir(DATA_BACKUP_DIR)
 
@@ -281,15 +283,15 @@ class BaseKnowledgeService(BaseService):
             BaseKnowledgeService._delete_file(FACT_STORE_PATH)
 
     async def _save_state(self):
-        """
-        Save the current internal store state
-        """
+        ###
+        # Save the current internal store state
+        ###
         await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram), 'data')
 
     async def _restore_state(self):
-        """
-        Restore a saved internal store state
-        """
+        ###
+        # Restore a saved internal store state
+        ###
         if os.path.exists(FACT_STORE_PATH):
             _, store = await self.get_service('file_svc').read_file(FACT_STORE_PATH.split(os.path.sep)[1],
                                                                     FACT_STORE_PATH.split(os.path.sep)[0])
