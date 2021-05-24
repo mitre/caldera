@@ -88,7 +88,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 timeout=30, use_learning_parsers=True):
+                 use_learning_parsers=True):
         super().__init__()
         self.id = str(id)
         self.start, self.finish = None, None
@@ -374,7 +374,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):
-        return [l for l in self.chain if l.paw == paw and not l.finish and not l.can_ignore()]
+        return [link for link in self.chain if link.paw == paw and not link.finish and not link.can_ignore()]
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
         abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
