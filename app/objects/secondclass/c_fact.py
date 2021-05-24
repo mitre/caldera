@@ -29,12 +29,7 @@ class Restriction(Enum):
     SINGLE = 1
 
 
-class Source(Enum):
-    YAML = 0
-    OPERATION = 1
-
-
-class Type(Enum):
+class OriginType(Enum):
     DOMAIN = 0
     SEEDED = 1
     LEARNED = 2
@@ -50,10 +45,10 @@ class FactSchema(ma.Schema):
     trait = ma.fields.String()
     name = ma.fields.String()
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    timestamp = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     score = ma.fields.Integer()
-    source = ma_enum.EnumField(Source)
-    type = ma_enum.EnumField(Type)
+    source = ma.fields.String()
+    type = ma_enum.EnumField(OriginType)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
     restriction = ma_enum.EnumField(Restriction)
@@ -110,7 +105,7 @@ class Fact(BaseObject):
         super().__init__()
         self.trait = trait
         self.value = value
-        self.timestamp = datetime.now()
+        self.created = datetime.now()
         self.score = score
         self.source = source
         self.type = type

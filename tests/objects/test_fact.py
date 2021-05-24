@@ -1,4 +1,4 @@
-from app.objects.secondclass.c_fact import Fact, Restriction, Source, Type
+from app.objects.secondclass.c_fact import Fact, Restriction, OriginType
 
 
 class TestFact:
@@ -44,13 +44,13 @@ class TestFact:
         assert fact_display['restriction'] == 'UNIQUE'
 
     def test_fact_source(self):
-        test_fact = Fact('test', 'test value', source=Source.YAML)
+        test_fact = Fact('test', 'test value', source='123456')
         fact_display = test_fact.display
-        assert test_fact.source == Source.YAML
-        assert fact_display['source'] == 'YAML'
+        assert test_fact.source == '123456'
+        assert fact_display['source'] == '123456'
 
     def test_fact_type(self):
-        test_fact = Fact('test', 'test value', type=Type.DOMAIN)
+        test_fact = Fact('test', 'test value', type=OriginType.DOMAIN)
         fact_display = test_fact.display
-        assert test_fact.type == Type.DOMAIN
+        assert test_fact.type == OriginType.DOMAIN
         assert fact_display['type'] == 'DOMAIN'
