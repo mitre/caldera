@@ -106,6 +106,7 @@ class ContactService(ContactServiceInterface, BaseService):
                 link.pid = int(result.pid)
                 link.finish = self.get_service('data_svc').get_current_timestamp()
                 link.status = int(result.status)
+                link.agent_reported_time = self.get_timestamp_from_string(result.agent_reported_time)
                 if result.output:
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link.ability)

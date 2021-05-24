@@ -44,6 +44,7 @@ class LinkSchema(ma.Schema):
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
+    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -151,6 +152,7 @@ class Link(BaseObject):
         self._pin = pin
         self.output = False
         self.deadman = deadman
+        self.agent_reported_time = None
 
     def __eq__(self, other):
         if isinstance(other, Link):
