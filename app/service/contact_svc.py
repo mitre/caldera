@@ -55,12 +55,14 @@ class ContactService(ContactServiceInterface, BaseService):
             await agent.heartbeat_modification(**kwargs)
             self.log.debug('Incoming %s beacon from %s' % (agent.contact, agent.paw))
             for result in results:
-                self.log.debug('Received result for link %s from agent %s via contact %s' % (result['id'], agent.paw, agent.contact))
+                self.log.debug('Received result for link %s from agent %s via contact %s' % (result['id'], agent.paw,
+                                                                                             agent.contact))
                 await self._save(Result(**result))
                 operation = await self.get_service('app_svc').find_op_with_link(result['id'])
                 access = operation.access if operation else self.Access.RED
                 await self.get_service('event_svc').fire_event(exchange='link', queue='completed', agent=agent.display,
-                                                               pid=result['pid'], link_id=result['id'], access=access.value)
+                                                               pid=result['pid'], link_id=result['id'],
+                                                               access=access.value)
             return agent, await self._get_instructions(agent)
         agent = await self.get_service('data_svc').store(
             Agent.load(dict(sleep_min=self.get_config(name='agents', prop='sleep_min'),
@@ -73,7 +75,8 @@ class ContactService(ContactServiceInterface, BaseService):
         data_svc = self.get_service('data_svc')
         await agent.bootstrap(data_svc)
         if agent.deadman_enabled:
-            self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." % agent.paw)
+            self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." %
+                           agent.paw)
             await agent.deadman(data_svc)
         return agent, await self._get_instructions(agent)
 
@@ -113,13 +116,15 @@ class ContactService(ContactServiceInterface, BaseService):
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.ability.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
-                        loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link, result.output))
+                        loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link,
+                                                                                result.output))
                     elif not operation:
                         loop.create_task(link.parse(None, result.output))
                     elif link.ability.parsers:
                         loop.create_task(link.parse(operation, result.output))
                     elif operation.use_learning_parsers:
-                        loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link, result.output))
+                        loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link,
+                                                                                result.output))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception:
@@ -146,7 +151,7 @@ class ContactService(ContactServiceInterface, BaseService):
         for link in [c for op in ops for c in op.chain
                      if c.paw == agent.paw and not c.collect and c.status == c.states['EXECUTE']]:
             instructions.append(self._convert_link_to_instruction(link))
-        for link in [l for l in agent.links if not l.collect]:
+        for link in [s_link for s_link in agent.links if not s_link.collect]:
             instructions.append(self._convert_link_to_instruction(link))
         return instructions
 
