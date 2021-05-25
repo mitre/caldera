@@ -49,8 +49,8 @@ class TestFact:
         assert test_fact.source == '123456'
         assert fact_display['source'] == '123456'
 
-    def test_fact_type(self):
-        test_fact = Fact('test', 'test value', type=OriginType.DOMAIN)
+    def test_fact_origin_type(self):
+        test_fact = Fact('test', 'test value', origin_type=OriginType.DOMAIN)
         fact_display = test_fact.display
-        assert test_fact.type == OriginType.DOMAIN
-        assert fact_display['type'] == 'DOMAIN'
+        assert test_fact.origin_type == OriginType.DOMAIN
+        assert fact_display['origin_type'] == 'DOMAIN'

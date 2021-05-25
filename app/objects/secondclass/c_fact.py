@@ -48,7 +48,7 @@ class FactSchema(ma.Schema):
     created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     score = ma.fields.Integer()
     source = ma.fields.String()
-    type = ma_enum.EnumField(OriginType)
+    origin_type = ma_enum.EnumField(OriginType)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
     restriction = ma_enum.EnumField(Restriction)
@@ -100,7 +100,7 @@ class Fact(BaseObject):
             return self.unique == other.unique
         return False
 
-    def __init__(self, trait, value=None, score=1, source=None, type=None, links=None,
+    def __init__(self, trait, value=None, score=1, source=None, origin_type=None, links=None,
                  relationships=None, restriction=None, collected_by=None, technique_id=None):
         super().__init__()
         self.trait = trait
@@ -108,7 +108,7 @@ class Fact(BaseObject):
         self.created = datetime.now()
         self.score = score
         self.source = source
-        self.type = type
+        self.origin_type = origin_type
         self.links = links or []
         self.relationships = relationships or []
         self.restriction = restriction
