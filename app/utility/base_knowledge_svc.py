@@ -48,13 +48,14 @@ class BaseKnowledgeService(BaseService):
                 if getattr(match, k, False):
                     setattr(match, k, v)
 
-    def _get_facts(self, criteria):
+    def _get_facts(self, criteria, restrictions=None):
         """
         Retrieve a fact from the internal store
         :param criteria: dictionary containing fields to match on
         :return: list of facts matching the criteria
         """
-        return self._locate('facts', query=criteria)
+        complete_list = self._locate('facts', query=criteria)
+        return self._apply_restrictions(complete_list, restrictions)
 
     def _delete_fact(self, criteria):
         """
@@ -75,13 +76,14 @@ class BaseKnowledgeService(BaseService):
 
     # -- Relationships API --
 
-    def _get_relationships(self, criteria):
+    def _get_relationships(self, criteria, restrictions=None):
         """
         Retrieve relationships from the internal store
         :param criteria: dictionary containing fields to match on
         :return: list of matching relationships
         """
-        return self._locate('relationships', query=criteria)
+        complete_list = self._locate('relationships', query=criteria)
+        return self._apply_restrictions(complete_list, restrictions)
 
     def _add_relationship(self, relationship, constraints=None):
         """
@@ -135,13 +137,14 @@ class BaseKnowledgeService(BaseService):
             if constraints:
                 self.fact_ram['constraints'][rule._knowledge_id] = constraints
 
-    def _get_rules(self, criteria):
+    def _get_rules(self, criteria, restrictions=None):
         """
         Retrieve rules from the internal store
         :param criteria: dictionary containing fields to match on
         :return: list of matching rules
         """
-        return [x for x in self.fact_ram['rules'] if self._check_rule(x, criteria, True)]
+        complete_list = [x for x in self.fact_ram['rules'] if self._check_rule(x, criteria, True)]
+        return self._apply_restrictions(complete_list, restrictions)
 
     def _delete_rule(self, criteria):
         """
@@ -318,3 +321,25 @@ class BaseKnowledgeService(BaseService):
             return self._add_relationship
         elif key == 'rules':
             return self._add_rule
+
+    def _apply_restrictions(self, complete_list, restrictions):
+        """
+        Apply restrictions to a list of objects (type agnostic)
+        :param complete_list: List of objects to apply restrictions to
+        :param restrictions: The restrictions to be applied (checked against the constraints internal store)
+        :return: filtered list of input objects
+        """
+        def _check_restrictions(existing_limitations, desired_limitations):
+            for restriction_name, restriction_value in desired_limitations:
+                if restriction_name in existing_limitations:
+                    if existing_limitations[restriction_name] != restriction_value:
+                        return False
+            return True
+        if not restrictions:
+            return complete_list
+        ret = []
+        for entry in complete_list:
+            constraints = self._get_matching_constraints([entry])
+            if _check_restrictions(constraints, restrictions):
+                ret.append(entry)
+        return ret

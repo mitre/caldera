@@ -14,7 +14,7 @@ class KnowledgeServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_facts(self, criteria):
+    async def get_facts(self, criteria, restrictions=None):
         """Becomes a powerful function, because it sorts and filters out facts based on
         input (values, groupings) as well as underlying mechanisms such as fact mutexs"""
         pass
@@ -36,7 +36,7 @@ class KnowledgeServiceInterface(abc.ABC):
 
     # -- Relationships API --
     @abc.abstractmethod
-    async def get_relationships(self, criteria):
+    async def get_relationships(self, criteria, restrictions=None):
         pass
 
     @abc.abstractmethod
@@ -64,7 +64,7 @@ class KnowledgeServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_rules(self, criteria):
+    async def get_rules(self, criteria, restrictions=None):
         pass
 
     @abc.abstractmethod

@@ -37,12 +37,12 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         # Update an existing fact
         return self.__loaded_knowledge_module._update_fact(criteria, updates)
 
-    async def get_facts(self, criteria):
+    async def get_facts(self, criteria, restrictions=None):
         ###
         # Becomes a powerful function, because it sorts and filters out facts based on
         # input (values, groupings) as well as underlying mechanisms such as fact mutexs
         ###
-        return self.__loaded_knowledge_module._get_facts(criteria)
+        return self.__loaded_knowledge_module._get_facts(criteria, restrictions)
 
     async def delete_fact(self, criteria):
         # Delete existing fact based on provided information
@@ -61,9 +61,9 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     # -- Relationships API --
 
-    async def get_relationships(self, criteria):
+    async def get_relationships(self, criteria, restrictions=None):
         # Retrieve a relationship from the knowledge service
-        return self.__loaded_knowledge_module._get_relationships(criteria)
+        return self.__loaded_knowledge_module._get_relationships(criteria, restrictions)
 
     async def add_relationship(self, relationship, constraints=None):
         # Add a relationship to the knowledge service
@@ -91,7 +91,7 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         if isinstance(rule, Rule):
             return self.__loaded_knowledge_module._add_rule(rule, constraints)
 
-    async def get_rules(self, criteria):
+    async def get_rules(self, criteria, restrictions=None):
         # Retrieve rules from the knowledge service
         return self.__loaded_knowledge_module._get_rules(criteria)
 
