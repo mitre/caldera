@@ -1,4 +1,4 @@
-from app.objects.secondclass.c_fact import Fact, Restriction, OriginType
+from app.objects.secondclass.c_fact import Fact, OriginType
 
 
 class TestFact:
@@ -38,10 +38,10 @@ class TestFact:
         assert test_fact.name == expected_value
 
     def test_fact_restriction(self):
-        test_fact = Fact('test', 'test value', restriction=Restriction.UNIQUE)
+        test_fact = Fact('test', 'test value', limit_count=2)
         fact_display = test_fact.display
-        assert test_fact.restriction == Restriction.UNIQUE
-        assert fact_display['restriction'] == 'UNIQUE'
+        assert test_fact.limit_count == 2
+        assert fact_display['limit_count'] == 2
 
     def test_fact_source(self):
         test_fact = Fact('test', 'test value', source='123456')

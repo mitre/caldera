@@ -24,11 +24,6 @@ escape_ref = {
 }
 
 
-class Restriction(Enum):
-    UNIQUE = 0
-    SINGLE = 1
-
-
 class OriginType(Enum):
     DOMAIN = 0
     SEEDED = 1
@@ -51,7 +46,7 @@ class FactSchema(ma.Schema):
     origin_type = ma_enum.EnumField(OriginType)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
-    restriction = ma_enum.EnumField(Restriction)
+    limit_count = ma.fields.Integer()
     collected_by = ma.fields.String(allow_none=True)
     technique_id = ma.fields.String(allow_none=True)
 
@@ -101,7 +96,7 @@ class Fact(BaseObject):
         return False
 
     def __init__(self, trait, value=None, score=1, source=None, origin_type=None, links=None,
-                 relationships=None, restriction=None, collected_by=None, technique_id=None):
+                 relationships=None, limit_count=-1, collected_by=None, technique_id=None):
         super().__init__()
         self.trait = trait
         self.value = value
@@ -111,6 +106,6 @@ class Fact(BaseObject):
         self.origin_type = origin_type
         self.links = links or []
         self.relationships = relationships or []
-        self.restriction = restriction
+        self.limit_count = limit_count
         self.collected_by = collected_by
         self.technique_id = technique_id
