@@ -1,6 +1,5 @@
 import binascii
 import string
-import os
 import re
 import yaml
 import logging
@@ -108,15 +107,6 @@ class BaseWorld:
         if BaseWorld.re_base64.match(s):
             return True
         return False
-
-    @staticmethod
-    async def walk_file_path(path, target):
-        for root, _, files in os.walk(path):
-            if target in files:
-                return os.path.join(root, target)
-            if '%s.xored' % target in files:
-                return os.path.join(root, '%s.xored' % target)
-        return None
 
     @staticmethod
     def check_requirement(params):

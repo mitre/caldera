@@ -20,6 +20,23 @@ class TestIPRule:
     rule = Rule(trait='host.ip.address', action=RuleAction.DENY, match=subnet1)
     rs = RuleSet(rules=[rule])
 
+    def test_rule_serialize(self):
+        rule_display = self.rule.display
+        assert rule_display['trait'] == 'host.ip.address'
+        assert rule_display['action'] == 'DENY'
+        assert rule_display['match'] == self.subnet1
+
+    def test_rule_deserialize(self):
+        rule_serialized = {
+            "trait": "host.ip.address",
+            "action": "DENY",
+            "match": self.subnet1,
+        }
+        test_rule = Rule.load(rule_serialized)
+        assert test_rule.trait == 'host.ip.address'
+        assert test_rule.action == RuleAction.DENY
+        assert test_rule.match == self.subnet1
+
     async def test_is_ip_rule_match(self):
         assert await self.rs._is_ip_rule_match(self.rule, self.fact1)
         assert (not await self.rs._is_ip_rule_match(self.rule, self.fact2))
