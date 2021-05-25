@@ -6,7 +6,7 @@ from aiohttp import web
 import app
 from app.api.v2 import security
 from app.api.v2.handlers.base_api import BaseApi
-from app.api.v2.schemas.caldera_info import CalderaInfoSchema
+from app.api.v2.schemas.caldera_info_schemas import CalderaInfoSchema
 
 
 class HealthApi(BaseApi):
