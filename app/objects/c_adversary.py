@@ -4,6 +4,7 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_service import BaseService
 
 
 class AdversarySchema(ma.Schema):
@@ -77,8 +78,9 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         return False
 
     async def which_plugin(self):
+        file_svc = BaseService.get_service('file_svc')
         for plugin in os.listdir('plugins'):
-            if await self.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.adversary_id):
+            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.adversary_id):
                 return plugin
         return None
 

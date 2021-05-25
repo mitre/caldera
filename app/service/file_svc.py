@@ -55,8 +55,7 @@ class FileSvc(FileServiceInterface, BaseService):
             contents = xor_bytes(contents, xor_key.encode())
         if headers.get('name'):
             display_name = headers.get('name')
-        if file_path.endswith('.xored'):
-            display_name = file_path.replace('.xored', '')
+        display_name = self.remove_xored_extension(file_path)
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir, encrypt=True):
@@ -96,7 +95,7 @@ class FileSvc(FileServiceInterface, BaseService):
     async def read_file(self, name, location='payloads'):
         _, file_name = await self.find_file_path(name, location=location)
         if file_name:
-            if file_name.endswith('.xored'):
+            if self.is_extension_xored(file_name):
                 return name, xor_file(file_name)
             return name, self._read(file_name)
         raise FileNotFoundError
@@ -170,6 +169,32 @@ class FileSvc(FileServiceInterface, BaseService):
             for file in [f.path for f in os.scandir(d) if f.is_file()]:
                 exfil_files[exfil_key][file.split(os.sep)[-1]] = file
         return exfil_files
+
+    @staticmethod
+    async def walk_file_path(path, target):
+        for root, _, files in os.walk(path):
+            if target in files:
+                return os.path.join(root, target)
+            xored_target = FileSvc.add_xored_extension(target)
+            if xored_target in files:
+                return os.path.join(root, xored_target)
+        return None
+
+    @staticmethod
+    def remove_xored_extension(filename):
+        if FileSvc.is_extension_xored(filename):
+            return filename.replace('.xored', '')
+        return filename
+
+    @staticmethod
+    def is_extension_xored(filename):
+        return filename.endswith('.xored')
+
+    @staticmethod
+    def add_xored_extension(filename):
+        if FileSvc.is_extension_xored(filename):
+            return filename
+        return '%s.xored' % filename
 
     """ PRIVATE """
 
