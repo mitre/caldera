@@ -30,8 +30,9 @@ class Contact(BaseWorld):
                 for instruction in instructions:
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
-                        status, _, response = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
-                        beacon = dict(paw=session.paw, results=[dict(id=instruction.id, output=self.encode_string(response), status=status)])
+                        status, _, response, agent_reported_time = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
+                        beacon = dict(paw=session.paw,
+                                      results=[dict(id=instruction.id, output=self.encode_string(response), status=status, agent_reported_time=agent_reported_time)])
                         await self.contact_svc.handle_heartbeat(**beacon)
                         await asyncio.sleep(instruction.sleep)
                     except Exception as e:
@@ -81,7 +82,7 @@ class TcpSessionHandler(BaseWorld):
             conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
-            return response['status'], response["pwd"], response['response']
+            return response['status'], response["pwd"], response['response'], response.get('agent_reported_time', None)
         except Exception as e:
             return 1, '~$ ', e
 
