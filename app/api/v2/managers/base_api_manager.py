@@ -28,7 +28,6 @@ class BaseApiManager:
 
     @staticmethod
     def dump_with_include_exclude(obj, include: List[str] = None, exclude: List[str] = None):
-        obj.schema.dump(obj)
         dumped = obj.display
         if include:
             exclude_attributes = list(set(dumped.keys()) - set(include))
