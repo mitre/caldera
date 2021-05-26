@@ -5,23 +5,37 @@ class KnowledgeServiceInterface(abc.ABC):
 
     @abc.abstractmethod
     async def add_fact(self, fact, constraints=None):
-        """facts can now be highly controlled, with visibility at the
-        operation level, agent(s) level, or custom groupings"""
+        """
+        Add a fact to the internal store
+        :param fact: Fact to add
+        :param constraints: any potential constraints
+        """
         pass
 
     @abc.abstractmethod
     async def update_fact(self, criteria, updates):
+        """
+        Update a fact in the internal store
+        :param criteria: dictionary containing fields to match on
+        :param updates: dictionary containing fields to replace
+        """
         pass
 
     @abc.abstractmethod
     async def get_facts(self, criteria, restrictions=None):
-        """Becomes a powerful function, because it sorts and filters out facts based on
-        input (values, groupings) as well as underlying mechanisms such as fact mutexs"""
+        """
+        Retrieve a fact from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of facts matching the criteria
+        """
         pass
 
     @abc.abstractmethod
     async def delete_fact(self, criteria):
-        """Delete existing facts based on provided information"""
+        """
+        Delete a fact from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
         pass
 
     @abc.abstractmethod
@@ -31,44 +45,71 @@ class KnowledgeServiceInterface(abc.ABC):
 
     @abc.abstractmethod
     async def get_fact_origin(self, fact):
-        """Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to identify the host it was discovered on."""
+        """Retrieve the specific origin of a fact. If it was learned in the current operation, parse through
+        links to identify the host it was discovered on."""
         pass
 
     # -- Relationships API --
     @abc.abstractmethod
     async def get_relationships(self, criteria, restrictions=None):
+        """
+        Retrieve relationships from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of matching relationships
+        """
         pass
 
     @abc.abstractmethod
     async def add_relationship(self, relationship, constraints=None):
+        """
+        Add a relationship to the internal store
+        :param relationship: Relationship object to add
+        :param constraints: optional constraints on the use of the relationship
+        """
         pass
 
     @abc.abstractmethod
     async def update_relationship(self, criteria, updates):
+        """
+        Update a relationship in the internal store
+        :param criteria: dictionary containing fields to match on
+        :param updates: dictionary containing fields to modify
+        """
         pass
 
     @abc.abstractmethod
     async def delete_relationship(self, criteria):
+        """
+        Remove a relationship from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
         pass
 
     # --- Rule API ---
     @abc.abstractmethod
     async def add_rule(self, rule, constraints=None):
         """
-        Args:
-            rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
-                the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
-                specified for. Essentially a fact is binded to mutex, and only one action can be using the fact
-                at any one time.
+        Add a rule to the internal store
+        :param rule: Rule object to add
+        :param constraints: dictionary containing fields to match on
         """
         pass
 
     @abc.abstractmethod
     async def get_rules(self, criteria, restrictions=None):
+        """
+        Retrieve rules from the internal store
+        :param criteria: dictionary containing fields to match on
+        :return: list of matching rules
+        """
         pass
 
     @abc.abstractmethod
     async def delete_rule(self, criteria):
+        """
+        Remove a rule from the internal store
+        :param criteria: dictionary containing fields to match on
+        """
         pass
 
     # --- New Inferencing API ---
