@@ -25,7 +25,7 @@ class PlannerSchema(ma.Schema):
 class Planner(FirstClassObjectInterface, BaseObject):
 
     schema = PlannerSchema()
-    display_schema = PlannerSchema(exclude=['planner_id', 'ignore_enforcement_modules'])
+    display_schema = PlannerSchema(exclude=['module', 'ignore_enforcement_modules'])
 
     @property
     def unique(self):

@@ -7,23 +7,27 @@ from aiohttp import web
 
 from app.api.v2.errors import RequestUnparsableJsonError, RequestValidationError
 
-
 DEFAULT_LOGGER_NAME = 'rest_api'
 
 
 class BaseApi(abc.ABC):
-    def __init__(self, logger=None):
-        self._logger = logger or self._create_default_logger()
+    def __init__(self, auth_svc, logger=None):
+        self._auth_svc = auth_svc
+        self._log = logger or self._create_default_logger()
 
     @property
-    def logger(self):
-        return self._logger
+    def log(self):
+        return self._log
 
     @abc.abstractmethod
     def add_routes(self, app: web.Application):
         pass
 
-    async def parse_json_body(self, request: web.Request, schema: ma.Schema):
+    async def get_request_permissions(self, request: web.Request):
+        return dict(access=tuple(await self._auth_svc.get_permissions(request)))
+
+    @staticmethod
+    async def parse_json_body(request: web.Request, schema: ma.Schema):
         try:
             parsed = schema.load(await request.json())
         except (TypeError, json.JSONDecodeError):
@@ -35,5 +39,6 @@ class BaseApi(abc.ABC):
             )
         return parsed
 
-    def _create_default_logger(self):
+    @staticmethod
+    def _create_default_logger():
         return logging.getLogger(DEFAULT_LOGGER_NAME)
