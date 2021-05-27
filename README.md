@@ -59,7 +59,7 @@ These requirements are for the computer running the core framework:
 
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 3.0.0
+git clone https://github.com/mitre/caldera.git --recursive --branch 3.1.0
 ```
 
 Next, install the PIP requirements:
