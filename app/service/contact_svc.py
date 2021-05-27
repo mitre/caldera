@@ -111,16 +111,16 @@ class ContactService(ContactServiceInterface, BaseService):
                 link.status = int(result.status)
                 if result.output:
                     link.output = True
-                    result.output = await self._postprocess_link_result(result.output, link.ability)
+                    result.output = await self._postprocess_link_result(result.output, link)
                     self.get_service('file_svc').write_result_file(result.id, result.output)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
-                    if not operation and not link.ability.parsers:
+                    if not operation and not link.executor.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
                         loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link,
                                                                                 result.output))
                     elif not operation:
                         loop.create_task(link.parse(None, result.output))
-                    elif link.ability.parsers:
+                    elif link.executor.parsers:
                         loop.create_task(link.parse(operation, result.output))
                     elif operation.use_learning_parsers:
                         loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link,
@@ -130,9 +130,9 @@ class ContactService(ContactServiceInterface, BaseService):
         except Exception:
             self.log.exception('Unexpected error occurred while saving link')
 
-    async def _postprocess_link_result(self, result, ability):
-        if ability.HOOKS and ability.executor in ability.HOOKS:
-            return self.encode_string(await ability.HOOKS[ability.executor].postprocess(b64decode(result)))
+    async def _postprocess_link_result(self, result, link):
+        if link.ability.HOOKS and link.executor.name in link.ability.HOOKS:
+            return self.encode_string(await link.ability.HOOKS[link.executor.name].postprocess(b64decode(result)))
         return result
 
     async def _start_c2_channel(self, contact):
@@ -158,13 +158,13 @@ class ContactService(ContactServiceInterface, BaseService):
     @staticmethod
     def _convert_link_to_instruction(link):
         link.collect = datetime.now()
-        payloads = [] if link.cleanup else link.ability.payloads
-        uploads = [] if link.cleanup else link.ability.uploads
+        payloads = [] if link.cleanup else link.executor.payloads
+        uploads = [] if link.cleanup else link.executor.uploads
         return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
-                           executor=link.ability.executor,
-                           timeout=link.ability.timeout,
+                           executor=link.executor.name,
+                           timeout=link.executor.timeout,
                            payloads=payloads,
                            uploads=uploads,
                            deadman=link.deadman)

@@ -22,6 +22,7 @@ from app.objects.c_ability import Ability
 from app.objects.c_operation import Operation
 from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 
@@ -120,13 +121,19 @@ def adversary():
 
 
 @pytest.fixture
+def executor():
+    def _generate_executor(name='psh', platform='windows', *args, **kwargs):
+        return Executor(name, platform, *args, **kwargs)
+
+    return _generate_executor
+
+
+@pytest.fixture
 def ability():
-    def _generate_ability(ability_id=None, variations=None, *args, **kwargs):
+    def _generate_ability(ability_id=None, *args, **kwargs):
         if not ability_id:
             ability_id = random.randint(0, 999999)
-        if not variations:
-            variations = []
-        return Ability(ability_id=ability_id, variations=variations, *args, **kwargs)
+        return Ability(ability_id=ability_id, *args, **kwargs)
 
     return _generate_ability
 
@@ -165,8 +172,8 @@ def agent():
 
 @pytest.fixture
 def link():
-    def _generate_link(command, paw, ability, *args, **kwargs):
-        return Link.load(dict(ability=ability, command=command, paw=paw, *args, **kwargs))
+    def _generate_link(command, paw, ability, executor, *args, **kwargs):
+        return Link.load(dict(ability=ability, executor=executor, command=command, paw=paw, *args, **kwargs))
 
     return _generate_link
 
