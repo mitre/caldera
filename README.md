@@ -75,7 +75,7 @@ python3 server.py --insecure
 
 Collectively this would be:
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 3.0.0
+git clone https://github.com/mitre/caldera.git --recursive --branch 3.1.0
 cd caldera
 pip3 install -r requirements.txt
 python3 server.py --insecure
