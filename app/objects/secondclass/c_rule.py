@@ -1,28 +1,15 @@
 import marshmallow as ma
+import marshmallow_enum as ma_enum
 
 from app.utility.base_object import BaseObject
 from app.utility.rule_set import RuleAction
-
-
-class RuleActionField(ma.fields.Field):
-    """
-    Custom field to handle the RuleAction Enum.
-    """
-
-    def _serialize(self, value, attr, obj, **kwargs):
-        if value is None:
-            return None
-        return value.value
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        return RuleAction[value]
 
 
 class RuleSchema(ma.Schema):
 
     trait = ma.fields.String()
     match = ma.fields.String()
-    action = RuleActionField()
+    action = ma_enum.EnumField(RuleAction)
 
     @ma.post_load
     def build_rule(self, data, **_):

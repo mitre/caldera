@@ -6,6 +6,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_operation import Operation
 from app.objects.c_objective import Objective
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_goal import Goal
 from app.objects.c_planner import Planner
 from app.objects.c_source import Source
@@ -21,17 +22,20 @@ def setup_rest_svc_test(loop, data_svc):
                                                 'encryption_key': 'ADMIN123',
                                                 'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='123', test=BaseWorld.encode_string('curl #{app.contact.http}'), variations=[],
-                executor='psh', platform='windows'))
-    )
+        Ability(ability_id='123', executors=[
+            Executor(name='psh', platform='windows', command='curl #{app.contact.http}')
+        ])
+    ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='456', test=BaseWorld.encode_string('whoami'), variations=[],
-                executor='sh', platform='linux'))
-    )
+        Ability(ability_id='456', executors=[
+            Executor(name='sh', platform='linux', command='whoami')
+        ])
+    ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='789', test=BaseWorld.encode_string('hostname'), variations=[],
-                executor='sh', platform='linux'))
-    )
+        Ability(ability_id='789', executors=[
+            Executor(name='sh', platform='linux', command='hostname')
+        ])
+    ))
     adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[])
     loop.run_until_complete(data_svc.store(adversary))
 
@@ -119,7 +123,7 @@ class TestRestSvc:
         # check that an ability reflects the value in app. property
         pre_ability = loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
         assert '0.0.0.0' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 0.0.0.0' == BaseWorld.decode_bytes(pre_ability[0].test)
+        assert 'curl 0.0.0.0' == next(pre_ability[0].executors).test
 
         # update property
         loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='app.contact.http', value='127.0.0.1')))
@@ -127,7 +131,7 @@ class TestRestSvc:
         # verify ability reflects new value
         post_ability = loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
         assert '127.0.0.1' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 127.0.0.1' == BaseWorld.decode_bytes(post_ability[0].test)
+        assert 'curl 127.0.0.1' == next(post_ability[0].executors).test
 
     def test_update_config_plugin(self, loop, rest_svc):
         internal_rest_svc = rest_svc(loop)
