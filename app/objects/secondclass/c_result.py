@@ -8,11 +8,17 @@ class ResultSchema(ma.Schema):
     output = ma.fields.String()
     pid = ma.fields.String()
     status = ma.fields.String()
-    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
 
     @ma.post_load
     def build_result(self, data, **_):
         return Result(**data)
+
+    @ma.post_dump()
+    def prepare_dump(self, data, **_):
+        if data.get('agent_reported_time', None) is None:
+            data.pop('agent_reported_time', None)
+        return data
 
 
 class Result(BaseObject):
