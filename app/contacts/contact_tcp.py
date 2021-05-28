@@ -82,7 +82,7 @@ class TcpSessionHandler(BaseWorld):
             conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(conn, 3)
             response = json.loads(response)
-            return response['status'], response["pwd"], response['response'], response.get('agent_reported_time', None)
+            return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', None)
         except Exception as e:
             return 1, '~$ ', e
 
