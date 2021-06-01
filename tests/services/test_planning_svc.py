@@ -59,9 +59,9 @@ def planner_stub(**kwargs):
 
 
 @pytest.fixture
-def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, init_base_world):
-    tability = ability(ability_id='123', executor='sh', platform='darwin', test=BaseWorld.encode_string('mkdir test'),
-                       cleanup=BaseWorld.encode_string('rm -rf test'), variations=[], repeatable=True, buckets=['test'])
+def setup_planning_test(loop, executor, ability, agent, operation, data_svc, event_svc, init_base_world):
+    texecutor = executor(name='sh', platform='darwin', command='mkdir test', cleanup='rm -rf test')
+    tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin', server='http://127.0.0.1:8000')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=[tagent],
@@ -70,8 +70,8 @@ def setup_planning_test(loop, ability, agent, operation, data_svc, event_svc, in
                                                adversary_id='XYZ'),
                            source=tsource)
 
-    cability = ability(ability_id='321', executor='sh', platform='darwin', test=BaseWorld.encode_string(test_string),
-                       cleanup=BaseWorld.encode_string('whoami'), singleton=True, variations=[])
+    cexecutor = executor(name='sh', platform='darwin', command=test_string, cleanup='whoami')
+    cability = ability(ability_id='321', executors=[cexecutor], singleton=True)
 
     loop.run_until_complete(data_svc.store(tability))
     loop.run_until_complete(data_svc.store(cability))
@@ -92,7 +92,7 @@ def stop_bucket_exhaustion_setup(request, setup_planning_test):
     """
     _, _, operation, _ = setup_planning_test
     planner = planner_stub(stopping_condition_met=request.param['stopping_condition_met'])
-    operation.state = operation.states[request.param["operation_state"]]
+    operation.state = operation.states[request.param['operation_state']]
     return planner, operation, request.param['condition_stop'], request.param['assert_value']
 
 
@@ -103,7 +103,7 @@ class TestPlanningService:
         ability, agent, operation, _ = setup_planning_test
         # Add a link to operation.chain
         operation.add_link(Link.load(
-            dict(command='', paw=agent.paw, ability=ability, status=0)))
+            dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0)))
         # Set id to match planner.operation.chain[0].id
         operation.chain[0].id = "123"
         planner = PlannerFake(operation)
@@ -141,7 +141,7 @@ class TestPlanningService:
         # PART B: Fill in facts to allow "cability" to be returned in "links"
         #   in addition to "tability"
         operation.add_link(Link.load(
-            dict(command='', paw=agent.paw, ability=tability, status=0)))
+            dict(command='', paw=agent.paw, ability=tability, executor=next(tability.executors), status=0)))
 
         operation.chain[0].facts.append(Fact(trait='1_2_3', value='0'))
         operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
@@ -160,7 +160,7 @@ class TestPlanningService:
         ability, agent, operation, _ = setup_planning_test
         operation.adversary.atomic_ordering = ["123"]
         operation.add_link(Link.load(
-            dict(command='', paw=agent.paw, ability=ability, status=0)))
+            dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0)))
         operation.chain[0].finish = True
         planner = PlannerFake(operation)
         bucket = "test"
@@ -200,14 +200,15 @@ class TestPlanningService:
 
     def test_check_stopping_conditions(self, loop, fact, link, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
+        executor = next(ability.executors)
         operation.source.facts = []
         stopping_conditions = [fact(trait='s.o.f.', value='seldon')]
 
         # first verify stopping conditions not met
         assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) is False
         # add stopping condition to a fact, then to a link, then the link to the operation
-        l0 = link(command='test', paw='0', ability=ability)
-        l1 = link(command='test1', paw='1', ability=ability)
+        l0 = link(command='test', paw='0', ability=ability, executor=executor)
+        l1 = link(command='test1', paw='1', ability=ability, executor=executor)
         loop.run_until_complete(l1._save_fact(operation, stopping_conditions[0], 1))  # directly attach fact to link
         operation.add_link(l0)
         operation.add_link(l1)
@@ -227,7 +228,7 @@ class TestPlanningService:
         loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
         assert p.stopping_condition_met is False
         # add stopping condition to a fact, then to a link, then the link to the operation
-        l1 = link(command='test1', paw='1', ability=ability)
+        l1 = link(command='test1', paw='1', ability=ability, executor=next(ability.executors))
         loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1))  # directly attach fact to link
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
@@ -236,9 +237,10 @@ class TestPlanningService:
 
     def test_sort_links(self, loop, link, planning_svc, setup_planning_test):
         a, _, _, _ = setup_planning_test
-        l1 = link(command='m', paw='1', ability=a, score=1)
-        l2 = link(command='a', paw='2', ability=a, score=2)
-        l3 = link(command='l', paw='3', ability=a, score=3)
+        executor = next(a.executors)
+        l1 = link(command='m', paw='1', ability=a, executor=executor, score=1)
+        l2 = link(command='a', paw='2', ability=a, executor=executor, score=2)
+        l3 = link(command='l', paw='3', ability=a, executor=executor, score=3)
         sl = loop.run_until_complete(planning_svc.sort_links([l2, l1, l3]))
         assert sl[0] == l3
         assert sl[1] == l2
@@ -292,13 +294,14 @@ class TestPlanningService:
 
     def test_get_cleanup_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
-        operation.add_link(Link.load(dict(command='', paw=agent.paw, ability=ability, status=0)))
+        executor = next(ability.executors)
+        operation.add_link(Link.load(dict(command='', paw=agent.paw, ability=ability, executor=executor, status=0)))
         links = loop.run_until_complete(
             planning_svc.get_cleanup_links(operation=operation, agent=agent)
         )
         link_list = list(links)
         assert len(link_list) == 1
-        assert link_list[0].command == ability.cleanup[0]
+        assert BaseWorld.decode_bytes(link_list[0].command) == executor.cleanup[0]
 
     def test_generate_and_trim_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
@@ -307,7 +310,8 @@ class TestPlanningService:
 
     def test_link_fact_coverage(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
-        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
+                              executor=next(ability.executors), status=0))
 
         f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
@@ -321,7 +325,8 @@ class TestPlanningService:
 
     def test_filter_bs(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
-        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
+                              executor=next(ability.executors), status=0))
 
         f0 = Fact(trait='1_2_3', value='0')
         f1 = Fact(trait='a.b.c', value='1')
@@ -339,10 +344,10 @@ class TestPlanningService:
     def test_duplicate_lateral_filter(self, loop, setup_planning_test, planning_svc, link, fact):
         ability, agent, operation, sability = setup_planning_test
 
-        l0 = link(command='a0', paw='0', ability=ability)
-        l1 = link(command='a1', paw='0', ability=sability)
-        l2 = link(command='a0', paw='0', ability=ability)
-        l3 = link(command='a1', paw='0', ability=sability)
+        l0 = link(command='a0', paw='0', ability=ability, executor=next(ability.executors))
+        l1 = link(command='a1', paw='0', ability=sability, executor=next(sability.executors))
+        l2 = link(command='a0', paw='0', ability=ability, executor=next(ability.executors))
+        l3 = link(command='a1', paw='0', ability=sability, executor=next(sability.executors))
 
         l0.status = l0.states['SUCCESS']
         l1.status = l1.states['SUCCESS']
@@ -366,7 +371,8 @@ class TestPlanningService:
         _, agent, operation, ability = setup_planning_test
 
         encoded_command = BaseWorld.encode_string('#{a}')
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=next(ability.executors),
+                              status=0))
 
         input_facts = [
             Fact(trait='a', value='1'),
@@ -386,7 +392,8 @@ class TestPlanningService:
     async def test_trait_with_two_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a.b}')
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=next(ability.executors),
+                              status=0))
 
         input_facts = [
             Fact(trait='a', value='1'),
@@ -406,7 +413,8 @@ class TestPlanningService:
     async def test_trait_with_three_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a.b.c}')
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=next(ability.executors),
+                              status=0))
 
         input_facts = [
             Fact(trait='a', value='1'),
@@ -426,7 +434,8 @@ class TestPlanningService:
     async def test_trait_with_multiple_variations_of_parts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{a} #{a.b} #{a.b.c}')
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=next(ability.executors),
+                              status=0))
 
         input_facts = [
             Fact(trait='a', value='1'),
@@ -446,7 +455,8 @@ class TestPlanningService:
     async def test_global_variables_not_replaced_with_facts(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
         encoded_command = BaseWorld.encode_string('#{server} #{origin_link_id}')
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, status=0))
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=next(ability.executors),
+                              status=0))
 
         input_facts = [
             Fact(trait='server', value='bad.server'),
@@ -460,34 +470,34 @@ class TestPlanningService:
         assert len(new_links) == 1
         assert new_links[0].raw_command == f'{agent.server} {link.id}'
 
-    async def test_remove_links_missing_facts_keeps_link_without_facts(self, planning_svc, ability):
+    async def test_remove_links_missing_facts_keeps_link_without_facts(self, planning_svc, ability, executor):
         cmd = 'a -b --foo={bar}'  # almost includes a fact, but missing a '#' in front of '{bar}'
-        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability(), executor=executor())]
         await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 1
         assert links[0].raw_command == cmd
 
-    async def test_remove_links_missing_facts_removes_one_part_fact(self, planning_svc, ability):
+    async def test_remove_links_missing_facts_removes_one_part_fact(self, planning_svc, ability, executor):
         cmd = 'a -b --foo=#{bar}'
-        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability(), executor=executor())]
         await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
 
-    async def test_remove_links_missing_facts_removes_two_part_fact(self, planning_svc, ability):
+    async def test_remove_links_missing_facts_removes_two_part_fact(self, planning_svc, ability, executor):
         cmd = 'a -b --foo=#{foo.bar}'
-        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability(), executor=executor())]
         await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
 
-    async def test_remove_links_missing_facts_removes_three_part_fact(self, planning_svc, ability):
+    async def test_remove_links_missing_facts_removes_three_part_fact(self, planning_svc, ability, executor):
         cmd = 'a -b --foo=#{foo.bar.baz}'
-        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability(), executor=executor())]
         await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
 
-    async def test_remove_links_does_not_ignore_global_variables(self, planning_svc, ability):
+    async def test_remove_links_does_not_ignore_global_variables(self, planning_svc, ability, executor):
         cmd = 'a -b --foo=#{server} --bar=#{origin_link_id}'
-        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability())]
+        links = [Link(command=BaseWorld.encode_string(cmd), paw='1', ability=ability(), executor=executor())]
 
         planning_svc.add_global_variable_owner(Agent)  # handles #{server}
         planning_svc.add_global_variable_owner(Link)  # handles #{origin_link_id}
