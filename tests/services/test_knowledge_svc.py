@@ -31,11 +31,11 @@ class TestKnowledgeService:
                                                             collected_by='thin_air', technique_id='T1234'),
                                                        constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='ktest', value='rdemo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234'),
-                                                       constraints=dict(test_field='test_value2')))
+                                                            collected_by='thin_air', technique_id='T1234')))
         loop.run_until_complete(knowledge_svc.delete_fact(dict(trait='rtest')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(value='rdemo')))
         assert len(facts) == 1
+        assert len(knowledge_svc._KnowledgeService__loaded_knowledge_module.fact_ram['constraints']) == 0
 
     def test_remove_rules(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_rule(Rule(action='rBLOCK', trait='ra.c', match='.*'),
@@ -43,6 +43,7 @@ class TestKnowledgeService:
         loop.run_until_complete(knowledge_svc.delete_rule(dict(trait='ra.c')))
         rules = loop.run_until_complete(knowledge_svc.get_rules(dict(trait='ra.c')))
         assert len(rules) == 0
+        assert len(knowledge_svc._KnowledgeService__loaded_knowledge_module.fact_ram['constraints']) == 0
 
     def test_remove_relationship(self, loop, knowledge_svc):
         dummy = Fact(trait='rtest', value='rdemo', score=1, collected_by='thin_air', technique_id='T1234')
@@ -51,6 +52,7 @@ class TestKnowledgeService:
         loop.run_until_complete(knowledge_svc.delete_relationship(dict(edge='rpotato')))
         relationships = loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='rpotato')))
         assert len(relationships) == 0
+        assert len(knowledge_svc._KnowledgeService__loaded_knowledge_module.fact_ram['constraints']) == 0
 
     def test_update_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='utest', value='udemo', score=1,

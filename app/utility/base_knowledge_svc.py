@@ -62,7 +62,6 @@ class BaseKnowledgeService(BaseService):
         Delete a fact from the internal store
         :param criteria: dictionary containing fields to match on
         """
-        # Delete existing facts based on provided information
         return self._remove('facts', criteria)
 
     def _get_meta_facts(self, meta_fact=None, agent=None, group=None):
@@ -245,9 +244,9 @@ class BaseKnowledgeService(BaseService):
         Remove constraints associated with objects as part of deletion
         :param objs: list of objects being removed
         """
-        need_to_remove = self._get_matching_constraints(objs)
-        for obj in need_to_remove:
-            del self.fact_ram['constraints'][obj._knowledge_id]
+        for obj in objs:
+            if obj._knowledge_id in self.fact_ram['constraints']:
+                del self.fact_ram['constraints'][obj._knowledge_id]
 
     def _get_matching_constraints(self, objs):
         """
@@ -255,7 +254,9 @@ class BaseKnowledgeService(BaseService):
         :param objs: list of objects to get constraints for
         :return: list of relevant constraints
         """
-        return [obj for obj in objs if obj._knowledge_id in self.fact_ram['constraints']]
+        k_ids = [obj._knowledge_id for obj in objs]
+        return [self.fact_ram['constraints'][constraint] for constraint in self.fact_ram['constraints']
+                if constraint in k_ids]
 
     @staticmethod
     def _delete_file(path):
@@ -289,7 +290,8 @@ class BaseKnowledgeService(BaseService):
         ###
         # Save the current internal store state
         ###
-        await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram), 'data')
+        await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram),
+                                                     FACT_STORE_PATH.split('/')[0])
 
     async def _restore_state(self):
         ###
@@ -335,6 +337,7 @@ class BaseKnowledgeService(BaseService):
                     if existing_limitations[restriction_name] != restriction_value:
                         return False
             return True
+
         if not restrictions:
             return complete_list
         ret = []
