@@ -136,19 +136,40 @@ class Agent(FirstClassObjectInterface, BaseObject):
     async def calculate_sleep(self):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
-    async def capabilities(self, ability_set):
-        abilities = []
-        if self.executors:
-            preferred = self._get_preferred_executor()
-            executors = self.executors
-            for ai in set([pa.ability_id for pa in ability_set]):
-                total_ability = [ab for ab in ability_set if (ab.ability_id == ai)
-                                 and (ab.platform == self.platform) and (ab.executor in executors)]
-                if len(total_ability) > 0:
-                    val = next((ta for ta in total_ability if ta.executor == preferred), total_ability[0])
-                    if self.privileged_to_run(val):
-                        abilities.append(val)
-        return abilities
+    async def capabilities(self, abilities):
+        """Get abilities that the agent is capable of running
+
+        :param abilities: List of abilities to check agent capability
+        :type abilities: List[Ability]
+        :return: List of abilities the agents is capable of running
+        :rtype: List[Ability]
+        """
+        capabilities = []
+        for ability in abilities:
+            if self.privileged_to_run(ability) and ability.find_executors(self.executors, self.platform):
+                capabilities.append(ability)
+        return capabilities
+
+    async def get_preferred_executor(self, ability):
+        """Get preferred executor for ability
+
+        Will return None if the agent is not capable of running any
+        executors in the given ability.
+
+        :param ability: Ability to get preferred executor for
+        :type ability: Ability
+        :return: Preferred executor or None
+        :rtype: Union[Executor, None]
+        """
+        potential_executors = ability.find_executors(self.executors, self.platform)
+        if not potential_executors:
+            return None
+
+        preferred_executor_name = self._get_preferred_executor_name()
+        for executor in potential_executors:
+            if executor.name == preferred_executor_name:
+                return executor
+        return potential_executors[0]
 
     async def heartbeat_modification(self, **kwargs):
         now = datetime.now()
@@ -216,12 +237,26 @@ class Agent(FirstClassObjectInterface, BaseObject):
         await self.task(abilities, obfuscator='plain-text', deadman=True)
 
     async def task(self, abilities, obfuscator, facts=(), deadman=False):
+        if not self.executors:
+            return []
+
         bps = BasePlanningService()
-        potential_links = [Link.load(dict(command=i.test, paw=self.paw, ability=i, deadman=deadman)) for i in await self.capabilities(abilities)]
+        preferred_executor_name = self._get_preferred_executor_name()
+
         links = []
-        for valid in await bps.remove_links_with_unset_variables(
-                await bps.add_test_variants(links=potential_links, agent=self, facts=facts)):
-            links.append(valid)
+        for ability in await self.capabilities(abilities):
+            executors = ability.find_executors(self.executors, self.platform)
+            executors = sorted(executors, key=lambda ex: ex.name == preferred_executor_name, reverse=True)
+
+            for executor in executors:
+                ex_links = [Link.load(dict(command=self.encode_string(executor.test), paw=self.paw, ability=ability,
+                                           executor=executor, deadman=deadman))]
+                valid_links = await bps.remove_links_with_unset_variables(
+                    await bps.add_test_variants(links=ex_links, agent=self, facts=facts))
+                if valid_links:
+                    links.extend(valid_links)
+                    break
+
         links = await bps.obfuscate_commands(self, obfuscator, links)
         self.links.extend(links)
         return links
@@ -238,7 +273,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 decoded_cmd = decoded_cmd.replace('#{payload:%s}' % uuid, display_name)
         return decoded_cmd
 
-    def _get_preferred_executor(self):
+    def _get_preferred_executor_name(self):
         if 'psh' in self.executors:
             return 'psh'
         elif 'sh' in self.executors:
