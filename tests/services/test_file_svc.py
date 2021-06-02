@@ -64,7 +64,7 @@ class TestFileService:
         content = b'this will be encoded and decoded as plaintext'
         self._test_upload_file_with_encoding_via_link(loop, file_svc, data_svc, app_svc, encoding='plain-text',
                                                       upload_content=content, decoded_content=content)
-        self._test_upload_file_with_encoding(loop, file_svc, encoding='plain-text', upload_content=content,
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, encoding='plain-text', upload_content=content,
                                              decoded_content=content)
 
     def test_upload_decode_b64(self, loop, file_svc, data_svc, app_svc):
@@ -72,7 +72,7 @@ class TestFileService:
         upload_content = b64encode(original_content)
         self._test_upload_file_with_encoding_via_link(loop, file_svc, data_svc, app_svc, encoding='base64',
                                                       upload_content=upload_content, decoded_content=original_content)
-        self._test_upload_file_with_encoding(loop, file_svc, encoding='base64', upload_content=upload_content,
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, encoding='base64', upload_content=upload_content,
                                              decoded_content=original_content)
 
     def test_download_plaintext_file(self, loop, file_svc, data_svc, app_svc):
@@ -247,7 +247,8 @@ class TestFileService:
             else:
                 return file_svc.get_services().get(requested_service)
 
-        test_link = Link(command='net user a', paw='123456', ability=None, id=123456, file_encoding=encoding)
+        test_link = Link(command='net user a', paw='123456', ability=None, executor=None, id=123456,
+                         file_encoding=encoding)
         app_svc.find_link = AsyncMock(return_value=test_link)
         file_svc.get_service = mock.Mock(side_effect=_mocked_get_service)
         file_svc.data_svc = data_svc
@@ -284,7 +285,8 @@ class TestFileService:
             else:
                 return file_svc.get_services().get(requested_service)
 
-        test_link = Link(command='net user a', paw='123456', ability=None, id=123456, file_encoding=encoding)
+        test_link = Link(command='net user a', paw='123456', ability=None, executor=None, id=123456,
+                         file_encoding=encoding)
         app_svc.find_link = AsyncMock(return_value=test_link)
         file_svc.get_service = mock.Mock(side_effect=_mocked_get_service)
         file_svc.data_svc = data_svc
