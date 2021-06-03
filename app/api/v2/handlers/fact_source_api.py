@@ -17,6 +17,7 @@ class FactSourceApi(BaseApi):
         router = app.router
         router.add_get('/sources', self.get_fact_sources)
         router.add_get('/sources/{source_id}', self.get_fact_source_by_id)
+        router.add_post('/sources', self.create_fact_source)
 
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -48,3 +49,11 @@ class FactSourceApi(BaseApi):
             raise JsonHttpNotFound(f'Fact source not found: {source_id}')
 
         return web.json_response(source)
+
+    @aiohttp_apispec.docs(tags=['sources'])
+    @aiohttp_apispec.request_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema)
+    async def create_fact_source(self, request: web.Request):
+        source_data = await request.json()
+        source = self._api_manager.store_json_as_schema(SourceSchema, source_data)
+        return web.json_response(source.display)

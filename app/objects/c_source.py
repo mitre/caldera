@@ -1,4 +1,5 @@
 from collections import namedtuple
+import uuid
 
 import marshmallow as ma
 
@@ -26,12 +27,12 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 class SourceSchema(ma.Schema):
 
-    id = ma.fields.String()
+    id = ma.fields.String(required=False)
     name = ma.fields.String()
-    facts = ma.fields.List(ma.fields.Nested(FactSchema()))
-    rules = ma.fields.List(ma.fields.Nested(RuleSchema()))
-    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema(), required=False))
-    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
+    facts = ma.fields.List(ma.fields.Nested(FactSchema()), required=False)
+    rules = ma.fields.List(ma.fields.Nested(RuleSchema()), required=False)
+    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema()), required=False, load_only=True)
+    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()), required=False)
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):
@@ -48,7 +49,6 @@ class SourceSchema(ma.Schema):
 
     @ma.post_load()
     def build_source(self, data, **_):
-        data['id'] = data.pop('id')
         return Source(**data)
 
 
@@ -61,9 +61,9 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, id, name, facts, relationships=(), rules=(), adjustments=()):
+    def __init__(self, name, id='', facts=(), relationships=(), rules=(), adjustments=()):
         super().__init__()
-        self.id = id
+        self.id = id if id else str(uuid.uuid4())
         self.name = name
         self.facts = facts
         self.rules = rules

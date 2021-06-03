@@ -1,4 +1,5 @@
 import logging
+from marshmallow.schema import SchemaMeta
 from typing import List
 
 
@@ -25,6 +26,12 @@ class BaseApiManager:
         for obj in self._data_svc.ram[object_name]:
             if not search or obj.match(search):
                 return self.dump_with_include_exclude(obj, include, exclude)
+
+    def store_json_as_schema(self, schema: SchemaMeta, data: dict):
+        obj_schema = schema()
+        obj = obj_schema.load(data)
+        obj.store(self._data_svc.ram)
+        return obj
 
     @staticmethod
     def dump_with_include_exclude(obj, include: List[str] = None, exclude: List[str] = None):
