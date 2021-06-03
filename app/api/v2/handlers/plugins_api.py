@@ -37,10 +37,10 @@ class PluginApi(BaseApi):
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
 
-        search = dict(plugin_name=plugin_name)
+        search = dict(name=plugin_name)
 
         plugin = self._api_manager.get_object_with_filters('plugins', search=search, include=include, exclude=exclude)
         if not plugin:
-            raise JsonHttpNotFound(f'Planner not found: {plugin_name}')
+            raise JsonHttpNotFound(f'Plugin not found: {plugin_name}')
 
         return web.json_response(plugin)
