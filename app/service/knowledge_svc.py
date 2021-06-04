@@ -12,18 +12,16 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('knowledge_svc', self)
-        if self.get_config('app.knowledge_svc.module'):
-            try:
-                self.__loaded_knowledge_module = self.load_module('BaseKnowledgeService', {})
-            except Exception as e:
-                self.log.warning(f"Unable to properly load knowledge service module "
-                                 f"{self.get_config('app.knowledge_svc.module')} ({e}). Reverting to default.")
-                self.__loaded_knowledge_module = BaseKnowledgeService()
-        else:
+        target_module = self.get_config('app.knowledge_svc.module')
+        try:
+            self.__loaded_knowledge_module = self._load_module(target_module, {})
+        except Exception as e:
+            self.log.warning(f"Unable to properly load knowledge service module "
+                             f"{self.get_config('app.knowledge_svc.module')} ({e}). Reverting to default.")
             self.__loaded_knowledge_module = BaseKnowledgeService()
 
     @staticmethod
-    async def _load_module(module_type, module_info):
+    def _load_module(module_type, module_info):
         module = import_module(module_info['module'])
         return getattr(module, module_type)(module_info)
 
