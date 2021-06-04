@@ -35,9 +35,10 @@ class Relationship(BaseObject):
         return self.clean(dict(source=self.source, edge=self.edge,
                                target=[self.target if self.target else 'Not Used'][0], score=self.score))
 
-    def __init__(self, source, edge=None, target=None, score=1):
+    def __init__(self, source, edge=None, target=None, score=1, origin=None):
         super().__init__()
         self.source = source
         self.edge = edge
         self.target = target
         self.score = score
+        self.origin = origin

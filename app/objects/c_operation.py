@@ -132,8 +132,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
     def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source else []
-        learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        seeded_facts = []
+        if self.source:
+            seeded_facts = knowledge_svc_handle.get_facts(criteria=dict(source=self.source))
+        learned_facts = knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
+        learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
 
     def has_fact(self, trait, value):
@@ -143,8 +147,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return False
 
     def all_relationships(self):
-        seeded_relationships = [r for r in self.source.relationships] if self.source else []
-        learned_relationships = [r for lnk in self.chain for r in lnk.relationships]
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        seeded_relationships = []
+        if self.source:
+            seeded_relationships = knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source))
+        learned_relationships = knowledge_svc_handle.get_relationships(criteria=dict(origin=self.id))
         return seeded_relationships + learned_relationships
 
     def ran_ability_id(self, ability_id):
