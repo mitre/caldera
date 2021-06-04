@@ -26,6 +26,16 @@ class BaseApiManager:
             if not search or obj.match(search):
                 return self.dump_with_include_exclude(obj, include, exclude)
 
+    def delete_object(self, object_name: str, search: dict = None):
+        for obj in self._data_svc.ram[object_name]:
+            if not search or obj.match(search):
+                data = self._data_svc.ram[object_name].copy()
+                data.remove(obj)
+                self._data_svc.ram[object_name] = data
+
+    def update_object(self, object_name: str, parameters: dict):
+        pass
+
     @staticmethod
     def dump_with_include_exclude(obj, include: List[str] = None, exclude: List[str] = None):
         dumped = obj.display

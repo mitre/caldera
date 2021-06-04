@@ -17,7 +17,7 @@ class AbilityApi(BaseApi):
         router = app.router
         router.add_get('/abilities', self.get_abilities)
         router.add_get('/abilities/{ability_id}', self.get_ability_by_id)
-        router.add_post('/abilities', self.post_abilities)
+        router.add_post('/abilities', self.create_abilities)
         router.add_put('/abilities/{ability_id}', self.put_ability_by_id)
         router.add_patch('/abilities/{ability_id}', self.patch_ability_by_id)
         router.add_delete('/abilities/{ability_id}', self.delete_ability_by_id)
@@ -45,30 +45,57 @@ class AbilityApi(BaseApi):
 
         ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include, exclude=exclude)
         if not ability:
-            raise JsonHttpNotFound(f'Planner not found: {ability_id}')
+            raise JsonHttpNotFound(f'Ability not found: {ability_id}')
 
         return web.json_response(ability)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema(many=True))
-    async def post_abilities(self, request: web.Request):
+    async def create_abilities(self, request: web.Request):
         pass
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def put_ability_by_id(self, request: web.Request):
-        pass
+        ability_id = request.match_info['ability_id']
+        include = request['querystring'].get('include')
+        exclude = request['querystring'].get('exclude')
+
+        search = dict(ability_id=ability_id)
+
+        ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include,
+                                                            exclude=exclude)
+        if not ability:
+            ability_data = await request.json()
+            ability = self._api_manager.store_json_as_schema(AbilitySchema, ability_data)
+            return web.json_response(ability.display)
+        else:
+            params = {}
+            self._api_manager.update_object('abilities', parameters=params)
+            return web.Response(status=200)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def patch_ability_by_id(self, request: web.Request):
+        # Check if ability exists
+        # If ability exists, update fields.
+        # Else, return error.
         pass
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def delete_ability_by_id(self, request: web.Request):
-        pass
+        ability_id = request.match_info['ability_id']
+
+        search = dict(ability_id=ability_id)
+
+        ability = self._api_manager.get_object_with_filters('abilities', search=search)
+        if not ability:
+            raise JsonHttpNotFound(f'Ability not found: {ability_id}')
+
+        self._api_manager.delete_object('abilities', search=search)
+        return web.Response(status=204)
