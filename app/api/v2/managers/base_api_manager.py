@@ -38,7 +38,7 @@ class BaseApiManager:
         dumped = obj.display
         if include:
             exclude_attributes = list(set(dumped.keys()) - set(include))
-            exclude = list(set(exclude + exclude_attributes)) if exclude else exclude_attributes
+            exclude = set(exclude + exclude_attributes) if exclude else exclude_attributes
         if exclude:
             for exclude_attribute in exclude:
                 dumped.pop(exclude_attribute, None)
