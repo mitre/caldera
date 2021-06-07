@@ -17,6 +17,7 @@ from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.service.knowledge_svc import KnowledgeService
 from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
 from app.objects.c_operation import Operation
@@ -25,6 +26,8 @@ from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_relationship import Relationship
+from app.objects.secondclass.c_rule import Rule
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -51,6 +54,11 @@ def app_svc():
 @pytest.fixture(scope='class')
 def data_svc():
     return DataService()
+
+
+@pytest.fixture(scope='class')
+def knowledge_svc():
+    return KnowledgeService()
 
 
 @pytest.fixture(scope='class')
@@ -184,6 +192,22 @@ def fact():
         return Fact(trait=trait, *args, **kwargs)
 
     return _generate_fact
+
+
+@pytest.fixture
+def rule():
+    def _generate_rule(action, trait, *args, **kwargs):
+        return Rule(action=action, trait=trait, *args, **kwargs)
+
+    return _generate_rule
+
+
+@pytest.fixture
+def relationship():
+    def _generate_relationship(source, edge, target, *args, **kwargs):
+        return Relationship(source=source, edge=edge, target=target, *args, **kwargs)
+
+    return _generate_relationship
 
 
 @pytest.fixture
