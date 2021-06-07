@@ -24,9 +24,13 @@ class PluginApi(BaseApi):
     async def get_plugins(self, request: web.Request):
         sort = request['querystring'].get('sort', 'name')
         include = request['querystring'].get('include')
+
         exclude = request['querystring'].get('exclude')
 
-        plugins = self._api_manager.get_objects_with_filters('plugins', sort=sort, include=include, exclude=exclude)
+        access = await self.get_request_permissions(request)
+
+        plugins = self._api_manager.get_objects_with_filters(object_name='plugins', search=access, sort=sort,
+                                                             include=include, exclude=exclude)
         return web.json_response(plugins)
 
     @aiohttp_apispec.docs(tags=['plugins'])
@@ -37,9 +41,12 @@ class PluginApi(BaseApi):
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
 
-        search = dict(name=plugin_name)
+        access = await self.get_request_permissions(request)
+        query = dict(name=plugin_name)
+        search = {**query, **access}
 
-        plugin = self._api_manager.get_object_with_filters('plugins', search=search, include=include, exclude=exclude)
+        plugin = self._api_manager.get_object_with_filters(object_name='plugins', search=search,
+                                                           include=include, exclude=exclude)
         if not plugin:
             raise JsonHttpNotFound(f'Plugin not found: {plugin_name}')
 
