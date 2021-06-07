@@ -9,7 +9,7 @@ from app.api.v2.managers.config_api_manager import ConfigApiManager, ConfigNotFo
 
 class ConfigApi(BaseApi):
     def __init__(self, services):
-        super().__init__()
+        super().__init__(auth_svc=services['auth_svc'])
         self._api_manager = ConfigApiManager(data_svc=services['data_svc'])
 
     def add_routes(self, app: web.Application):
