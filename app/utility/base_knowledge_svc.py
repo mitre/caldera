@@ -17,7 +17,7 @@ FACT_STORE_PATH = "data/fact_store"
 class BaseKnowledgeService(BaseService):
 
     def __init__(self):
-        self.log = self.add_service('knowledge_svc', self)
+        self.log = self.create_logger('knowledge_svc')
         self.schema = dict(facts=[], relationships=[], rules=[], constraints=dict())
         self.fact_ram = copy.deepcopy(self.schema)
 
@@ -91,7 +91,8 @@ class BaseKnowledgeService(BaseService):
         :param constraints: optional constraints on the use of the relationship
         """
         if not any((x.source == relationship.source) and (x.edge == relationship.edge) and
-                   (x.target == relationship.target) for x in self.fact_ram['relationships']):
+                   (x.target == relationship.target) and (x.origin == relationship.origin or not relationship.origin)
+                   for x in self.fact_ram['relationships']):
             relationship._knowledge_id = uuid.uuid4()
             self.fact_ram['relationships'].append(relationship)
             if constraints:
@@ -283,8 +284,9 @@ class BaseKnowledgeService(BaseService):
         tarball_path = os.path.join(DATA_BACKUP_DIR, f'backup-{timestamp}.tar.gz')
 
         with tarfile.open(tarball_path, 'w:gz') as tarball:
-            tarball.add(FACT_STORE_PATH)
-            BaseKnowledgeService._delete_file(FACT_STORE_PATH)
+            if os.path.isdir(FACT_STORE_PATH):
+                tarball.add(FACT_STORE_PATH)
+                BaseKnowledgeService._delete_file(FACT_STORE_PATH)
 
     async def _save_state(self):
         ###
@@ -307,7 +309,9 @@ class BaseKnowledgeService(BaseService):
                 self.fact_ram[key] = []
                 for c_object in ram[key]:
                     handle = self._load_wrapper(key)
-                    constraints = self._clear_matching_constraints([ram[key][c_object]])
+                    constraints = []
+                    if c_object._knowledge_id in ram[key]:
+                        constraints = ram[key][c_object._knowledge_id]
                     handle(c_object, constraints=constraints)
             self.log.debug('Restored data from persistent storage')
 

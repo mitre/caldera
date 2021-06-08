@@ -3,7 +3,7 @@ from collections import namedtuple
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
-from app.objects.secondclass.c_fact import FactSchema
+from app.objects.secondclass.c_fact import FactSchema, OriginType
 from app.objects.secondclass.c_rule import RuleSchema
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.utility.base_object import BaseObject
@@ -44,6 +44,17 @@ class SourceSchema(ma.Schema):
                         x.append(dict(ability_id=ability_id, trait=trait, value=change.get('value'),
                                       offset=change.get('offset')))
         in_data['adjustments'] = x
+        if 'facts' in in_data:
+            for y in in_data['facts']:
+                y['origin_type'] = OriginType.IMPORTED.name
+                y['source'] = in_data['id']
+        if 'relationships' in in_data:
+            for y in in_data['relationships']:
+                y['source']['origin_type'] = OriginType.IMPORTED.name
+                y['source']['source'] = in_data['id']
+                if 'target' in y:
+                    y['target']['origin_type'] = OriginType.IMPORTED.name
+                    y['target']['source'] = in_data['id']
         return in_data
 
     @ma.post_load()

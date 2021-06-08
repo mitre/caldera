@@ -35,6 +35,16 @@ class Relationship(BaseObject):
         return self.clean(dict(source=self.source, edge=self.edge,
                                target=[self.target if self.target else 'Not Used'][0], score=self.score))
 
+    @property
+    def shorthand(self):
+        # compute a visual representation of a relationship for recording purposes
+        stub = f"{self.source.name}({self.source.value})"
+        if self.edge:
+            stub += f" : {self.edge}"
+            if self.target and self.target.name:
+                stub += f" : {self.target.name}({self.target.value})"
+        return stub
+
     def __init__(self, source, edge=None, target=None, score=1, origin=None):
         super().__init__()
         self.source = source

@@ -141,5 +141,6 @@ if __name__ == '__main__':
     if args.fresh:
         logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
+        asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
     run_tasks(services=app_svc.get_services())

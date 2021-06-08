@@ -131,27 +131,27 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def has_link(self, link_id):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
-    def all_facts(self):
+    async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         seeded_facts = []
         if self.source:
-            seeded_facts = knowledge_svc_handle.get_facts(criteria=dict(source=self.source))
-        learned_facts = knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
+            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source))
+        learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
         learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
 
-    def has_fact(self, trait, value):
-        for f in self.all_facts():
+    async def has_fact(self, trait, value):
+        for f in await self.all_facts():
             if f.trait == trait and f.value == value:
                 return True
         return False
 
-    def all_relationships(self):
+    async def all_relationships(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         seeded_relationships = []
         if self.source:
-            seeded_relationships = knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source))
-        learned_relationships = knowledge_svc_handle.get_relationships(criteria=dict(origin=self.id))
+            seeded_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source))
+        learned_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.id))
         return seeded_relationships + learned_relationships
 
     def ran_ability_id(self, ability_id):
@@ -214,7 +214,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
-                or (self.objective and self.objective.completed(self.all_facts())):
+                or (self.objective and self.objective.completed(await self.all_facts())):
             return True
         return False
 
@@ -240,7 +240,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
-                                                     op_facts=[f.trait for f in self.all_facts()],
+                                                     op_facts=[f.trait for f in await self.all_facts()],
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
@@ -257,10 +257,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                           steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
                           jitter=self.jitter, objectives=self.objective.display,
-                          facts=[f.display for f in self.all_facts()])
+                          facts=[f.display for f in await self.all_facts()])
             agents_steps = {a.paw: {'steps': []} for a in self.agents}
             for step in self.chain:
-                step_report = dict(ability_id=step.ability.ability_id,
+                step_report = dict(link_id=step.id,
+                                   ability_id=step.ability.ability_id,
                                    command=step.command,
                                    delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                    run=step.finish,

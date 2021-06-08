@@ -9,7 +9,7 @@ import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
-from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
@@ -219,31 +219,33 @@ class Link(BaseObject):
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
             relationship.origin = operation.id if operation else self.id
-            await self._save_fact(operation, relationship.source, relationship.score, relationship)
-            await self._save_fact(operation, relationship.target, relationship.score, relationship)
+            await self._save_fact(operation, relationship.source, relationship.score, relationship.shorthand)
+            await self._save_fact(operation, relationship.target, relationship.score, relationship.shorthand)
             if all((relationship.source.trait, relationship.edge)):
                 knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-                knowledge_svc_handle.add_relationship(relationship)
+                await knowledge_svc_handle.add_relationship(relationship)
                 self.relationships.append(relationship)
 
     async def _save_fact(self, operation, fact, score, relationship):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-        all_facts = operation.all_facts() if operation else self.facts
+        all_facts = await operation.all_facts() if operation else self.facts
         source = operation.id if operation else self.id
         if all([fact.trait, fact.value]):
             if await self._is_new_fact(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
-                             technique_id=self.ability.technique_id, links=[self.id], relationships=[relationship])
+                             technique_id=self.ability.technique_id, links=[self.id], relationships=[relationship],
+                             origin_type=OriginType.LEARNED)
                 self.facts.append(f_gen)
-                knowledge_svc_handle.add_fact(f_gen)
+                await knowledge_svc_handle.add_fact(f_gen)
             else:
-                existing_fact = knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait, value=fact.value))[0]
+                existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
+                                                                                   value=fact.value)))[0]
                 existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
-                knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value),
-                                                 updates=dict(links=existing_fact.links,
-                                                              relationships=existing_fact.relationships))
+                await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value),
+                                                       updates=dict(links=existing_fact.links,
+                                                                    relationships=existing_fact.relationships))
                 existing_local_record = [x for x in self.facts if x.trait == fact.trait and x.value == fact.value]
                 if existing_local_record:
                     existing_local_record[0].links = existing_fact.links
@@ -262,7 +264,7 @@ class Link(BaseObject):
 
     async def _update_scores(self, operation, increment):
         for uf in self.used:
-            all_facts = operation.all_facts() if operation else self.facts
+            all_facts = await operation.all_facts() if operation else self.facts
             for found_fact in all_facts:
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment

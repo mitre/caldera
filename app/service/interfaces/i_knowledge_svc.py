@@ -150,3 +150,7 @@ class KnowledgeServiceInterface(abc.ABC):
             metric: ['usage_success', 'most_recent_success', ...]
         """
         pass
+
+    async def destroy(self):
+        """Delete data stores"""
+        pass

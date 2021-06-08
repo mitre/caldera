@@ -139,3 +139,7 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
     async def restore_state(self):
         # Restore knowledge service state from disc
         return await self.__loaded_knowledge_module._restore_state()
+
+    async def destroy(self):
+        # Delete data stores
+        return self.__loaded_knowledge_module._destroy()
