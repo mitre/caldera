@@ -2,7 +2,7 @@ import aiohttp_apispec
 from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
-from app.api.v2.managers.base_api_manager import BaseApiManager
+from app.api.v2.managers.ability_api_manager import AbilityApiManager
 from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_ability import AbilitySchema
@@ -11,7 +11,7 @@ from app.objects.c_ability import AbilitySchema
 class AbilityApi(BaseApi):
     def __init__(self, services):
         super().__init__(auth_svc=services['auth_svc'])
-        self._api_manager = BaseApiManager(data_svc=services['data_svc'])
+        self._api_manager = AbilityApiManager(data_svc=services['data_svc'], rest_svc=services['rest_svc'])
 
     def add_routes(self, app: web.Application):
         router = app.router
@@ -48,7 +48,8 @@ class AbilityApi(BaseApi):
         query = dict(ability_id=ability_id)
         search = {**query, **access}
 
-        ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include, exclude=exclude)
+        ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include,
+                                                            exclude=exclude)
         if not ability:
             raise JsonHttpNotFound(f'Ability not found: {ability_id}')
 
@@ -58,8 +59,10 @@ class AbilityApi(BaseApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema(many=True))
     async def create_abilities(self, request: web.Request):
-        # data = await request.json()
-        pass
+        ability_list = await request.json()
+        source = self._api_manager.create_abilities(ability_list)
+
+        return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
@@ -75,13 +78,9 @@ class AbilityApi(BaseApi):
         ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include,
                                                             exclude=exclude)
         if not ability:
-            ability_data = await request.json()
-            ability = self._api_manager.store_json_as_schema(AbilitySchema, ability_data)
-            return web.json_response(ability.display)
+            pass
         else:
-            params = {}
-            self._api_manager.update_object('abilities', parameters=params)
-            return web.Response(status=200)
+            pass
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
@@ -98,11 +97,12 @@ class AbilityApi(BaseApi):
     async def delete_ability_by_id(self, request: web.Request):
         ability_id = request.match_info['ability_id']
 
-        search = dict(ability_id=ability_id)
+        ability_dict = dict(ability_id=ability_id)
 
-        ability = self._api_manager.get_object_with_filters('abilities', search=search)
+        ability = self._api_manager.get_object_with_filters('abilities', search=ability_dict)
         if not ability:
             raise JsonHttpNotFound(f'Ability not found: {ability_id}')
 
-        self._api_manager.delete_object('abilities', search=search)
+        await self._api_manager.delete_ability(ability_dict)
+
         return web.Response(status=204)
