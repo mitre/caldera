@@ -6,20 +6,29 @@
 //    This will compile your SASS sheets into CSS to import into your HTML template.
 
 // Set brand colors
-$red: #0B0000
+$red: #8B0000
+$red-hover: #690000
 $blue: #191970
 
-$body-background-dark: #121212
-$box-background-dark: #1d1d1d
+$body-background-dark: #161616
 
 // Update Bulma's global variables
-$family-sans-serif: Arial, Helvetica Neue, Helvetica, sans-serif
-$primary: $blue
+$family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
+$primary: $red
 
 // Update some of Bulma's component variables
 $body-background-color: $body-background-dark
 
-$box-radius: 4px
+$tabs-boxed-link-active-background-color: $red
+$tabs-boxed-link-active-border-color: $red
+$tabs-boxed-link-radius: 6px
+$tabs-border-bottom-color: $red
+$tabs-boxed-link-hover-background-color: $red-hover
+$tabs-boxed-link-hover-border-bottom-color: $red-hover
+
+$menu-item-color: #ffffff
+
+$box-radius: 6px
 
 // Import core Bulma
 @import 'bulma/bulma'

@@ -1,0 +1,113 @@
+<html>
+<head>
+    <title>Red | Dashboard</title>
+    <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+    <link rel="stylesheet" href="/gui/css/red.css">
+    <link rel="stylesheet" href="/gui/css/shared.css">
+    <link rel="stylesheet" href="/gui/css/navigate.css">
+    <link rel="stylesheet" href="/gui/css/modal.css">
+    <link rel="stylesheet" href="/gui/css/basic.css">
+    <link rel="stylesheet" href="/gui/css/timeline.css">
+    <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
+</head>
+<body>
+    <div class="navbar-buffer">
+        <div class="navbar">
+            <span style="font-size:30px;cursor:pointer;" onclick="openNav()">&#9776; navigate</span>
+        </div>
+    </div>
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <br>
+        <center>
+            <img src="/gui/img/back-red.png"/>
+        </center>
+        <br>
+        <div class="nav-header">
+            <p>Campaigns</p>
+        </div>
+        <a onclick="viewSection('agents', '/campaign/agents')">agents</a>
+        <a onclick="viewSection('profiles', '/campaign/profiles')">adversaries</a>
+        <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
+        <div class="nav-header">
+            <p>Plugins</p>
+        </div>
+        {% for plugin in plugins | sort(attribute='name') %}
+            {% if plugin.address %}
+                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
+            {% else %}
+                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
+            {% endif %}
+        {% endfor %}
+        <div class="nav-header">
+            <p>Advanced</p>
+        </div>
+        <a onclick="viewSection('sources', '/advanced/sources')">fact sources</a>
+        <a onclick="viewSection('objectives', '/advanced/objectives')">objectives</a>
+        <a onclick="viewSection('planners', '/advanced/planners')">planners</a>
+        <a onclick="viewSection('contacts', '/advanced/contacts')">contacts</a>
+        <a onclick="viewSection('obfuscators', '/advanced/obfuscators')">obfuscators</a>
+        <a onclick="viewSection('configuration', '/advanced/configurations')">configuration</a>
+        <a onclick="viewSection('exfilled', '/advanced/exfills')">exfilled files</a>
+        <div class="nav-header">
+            <p>Administrative</p>
+        </div>
+        <a onclick="display_errors({{ errors }})">Startup errors</a>
+        <a href="/logout">Log out</a>
+        <br>
+    </div>
+
+    <div id="main">
+
+        <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
+
+        <div id="alert-modal" class="modal">
+            <form class="modal-content">
+                <div class="container modal-box">
+                    <div class="row duk-modal">
+                        <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <div class="column" style="flex:92%">
+                            <p id="alert-text" style="color: white"></p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="list-modal" class="modal">
+            <form class="modal-content">
+                <div class="container modal-box">
+                    <div class="transparent-row">
+                        <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
+                        <ul id="info-list"></ul>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <li id="infolist-template" style="display: none">
+            <div class="infolist-item">
+                <div class="infolist-icon">
+                    <img src="/gui/img/errors.png">
+                </div>
+                <div class="infolist-contents">
+                    <p></p>
+                </div>
+            </div>
+        </li>
+
+        <center>
+            <div id="section-container"></div>
+        </center>
+
+    </div>
+
+    <div class="footer">
+        <p id="streamer"></p>
+    </div>
+
+    <script src="/gui/jquery/jquery.js"></script>
+    <script src="/gui/jquery/jquery.multi-select.js"></script>
+    <script src="/gui/js/shared.js"></script>
+</body>
+</html>

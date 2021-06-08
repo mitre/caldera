@@ -1,113 +1,101 @@
 <html>
-<head>
-    <title>Red | Dashboard</title>
-    <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-    <link rel="stylesheet" href="/gui/css/red.css">
-    <link rel="stylesheet" href="/gui/css/shared.css">
-    <link rel="stylesheet" href="/gui/css/navigate.css">
-    <link rel="stylesheet" href="/gui/css/modal.css">
-    <link rel="stylesheet" href="/gui/css/basic.css">
-    <link rel="stylesheet" href="/gui/css/timeline.css">
-    <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
-</head>
-<body>
-    <div class="navbar-buffer">
-        <div class="navbar">
-            <span style="font-size:30px;cursor:pointer;" onclick="openNav()">&#9776; navigate</span>
-        </div>
-    </div>
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <br>
-        <center>
-            <img src="/gui/img/back-red.png"/>
-        </center>
-        <br>
-        <div class="nav-header">
-            <p>Campaigns</p>
-        </div>
-        <a onclick="viewSection('agents', '/campaign/agents')">agents</a>
-        <a onclick="viewSection('profiles', '/campaign/profiles')">adversaries</a>
-        <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
-        <div class="nav-header">
-            <p>Plugins</p>
-        </div>
-        {% for plugin in plugins | sort(attribute='name') %}
-            {% if plugin.address %}
-                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
-            {% else %}
-                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
-            {% endif %}
-        {% endfor %}
-        <div class="nav-header">
-            <p>Advanced</p>
-        </div>
-        <a onclick="viewSection('sources', '/advanced/sources')">fact sources</a>
-        <a onclick="viewSection('objectives', '/advanced/objectives')">objectives</a>
-        <a onclick="viewSection('planners', '/advanced/planners')">planners</a>
-        <a onclick="viewSection('contacts', '/advanced/contacts')">contacts</a>
-        <a onclick="viewSection('obfuscators', '/advanced/obfuscators')">obfuscators</a>
-        <a onclick="viewSection('configuration', '/advanced/configurations')">configuration</a>
-        <a onclick="viewSection('exfilled', '/advanced/exfills')">exfilled files</a>
-        <div class="nav-header">
-            <p>Administrative</p>
-        </div>
-        <a onclick="display_errors({{ errors }})">Startup errors</a>
-        <a href="/logout">Log out</a>
-        <br>
-    </div>
+    <head>
+        <title>Red | Dashboard</title>
+        <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+        <link rel="stylesheet" href="/gui/css/shared.css">
+        <link rel="stylesheet" href="/gui/css/core.css">
+        <link rel="stylesheet" href="/gui/css/modal.css">
+        <link rel="stylesheet" href="/gui/css/basic.css">
+        <link rel="stylesheet" href="/gui/css/timeline.css">
+        <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
+        <link rel="stylesheet" href="/gui/css/custom-bulma.css">
+        <script src="/gui/js/feather.min.js"></script>
+    </head>
+    <body>
+        <main class="main">
+            <div class="navigation">
+                <div class="nav-logo"></div>
+                <aside class="menu">
+                    <p class="menu-label">Campaigns</p>
+                    <ul class="menu-list">
+                      <li><a onclick="viewSection('agents', '/campaign/agents')">agents</a></li>
+                      <li onclick="viewSection('agents', '/campaign/profiles')"><a>adversaries</a></li>
+                      <li onclick="viewSection('agents', '/campaign/operations')"><a>operations</a></li>
+                    </ul>
+                    <p class="menu-label">Plugins</p>
+                    <ul class="menu-list">
+                        {% for plugin in plugins | sort(attribute='name') %}
+                            <li><a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    <p class="menu-label">Configuration</p>
+                    <ul class="menu-list">
+                        <li><a onclick="viewSection('sources', '/advanced/sources')">fact sources</a></li>
+                        <li><a onclick="viewSection('objectives', '/advanced/objectives')">objectives</a></li>
+                        <li><a onclick="viewSection('planners', '/advanced/planners')">planners</a></li>
+                        <li><a onclick="viewSection('contacts', '/advanced/contacts')">contacts</a></li>
+                        <li><a onclick="viewSection('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
+                        <li><a onclick="viewSection('configuration', '/advanced/configurations')">configuration</a></li>
+                        <li><a onclick="viewSection('exfilled', '/advanced/exfills')">exfilled files</a></li>
+                    </ul>
+                    <p class="menu-label">Administrative</p>
+                    <ul class="menu-list">
+                        <li><a onclick="display_errors({{ errors }})">Startup errors</a></li>
+                        <li><a href="/logout">Log out</a></li>
+                    </ul>
+                  </aside>
+                  <div class="has-text-centered">
+                    <span class="icon"><i data-feather="chevrons-left"></i></span>
+                  </div>
+            </div>
 
-    <div id="main">
-
-        <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
-
-        <div id="alert-modal" class="modal">
-            <form class="modal-content">
-                <div class="container modal-box">
-                    <div class="row duk-modal">
-                        <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                        <div class="column" style="flex:92%">
-                            <p id="alert-text" style="color: white"></p>
-                        </div>
-                    </div>
+            <div class="main-content">
+                <div class="tabs is-boxed">
+                    <!-- TODO: Create a new tab for each window user opens, or switch to the tab if already exists -->
+                    <!-- TODO: Make these tabs toggle-able (i.e., I can click into "agents" and have the contents appear in the space beneath) -->
+                    <!-- TODO: Make tabs re-arrangeable (may require external library) -->
+                    <ul>
+                        <li class="is-active">
+                            <a>
+                                <span>Example Tab 1</span>
+                                <span class="icon is-small"><i data-feather="x"></i></span>
+                                <!-- TODO: Have "X" icon close the tab -->
+                            </a>
+                        </li>
+                        <li>
+                            <a>
+                                <span>Example Tab 2</span>
+                                <span class="icon is-small"><i data-feather="x"></i></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a>
+                                <span>Example Tab 3</span>
+                                <span class="icon is-small"><i data-feather="x"></i></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a>
+                                <span>Example Tab 4</span>
+                                <span class="icon is-small"><i data-feather="x"></i></span>
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-            </form>
-        </div>
 
-        <div id="list-modal" class="modal">
-            <form class="modal-content">
-                <div class="container modal-box">
-                    <div class="transparent-row">
-                        <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                        <ul id="info-list"></ul>
-                    </div>
-                </div>
-            </form>
-        </div>
+                <div id="active-tab-display" class="container">
 
-        <li id="infolist-template" style="display: none">
-            <div class="infolist-item">
-                <div class="infolist-icon">
-                    <img src="/gui/img/errors.png">
-                </div>
-                <div class="infolist-contents">
-                    <p></p>
                 </div>
             </div>
-        </li>
+        </main>
 
-        <center>
-            <div id="section-container"></div>
-        </center>
-
-    </div>
-
-    <div class="footer">
-        <p id="streamer"></p>
-    </div>
-
-    <script src="/gui/jquery/jquery.js"></script>
-    <script src="/gui/jquery/jquery.multi-select.js"></script>
-    <script src="/gui/js/shared.js"></script>
-</body>
+        <!-- TODO: Remove JQuery as dependency (when possible) -->
+        <script src="/gui/jquery/jquery.js"></script>
+        <script src="/gui/jquery/jquery.multi-select.js"></script>
+        <script src="/gui/js/shared.js"></script>
+        <script>
+            // Add logos where specified in template
+            feather.replace()
+        </script>
+    </body>
 </html>
