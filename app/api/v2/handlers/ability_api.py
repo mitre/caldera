@@ -30,7 +30,10 @@ class AbilityApi(BaseApi):
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
 
-        abilities = self._api_manager.get_objects_with_filters('abilities', sort=sort, include=include, exclude=exclude)
+        access = await self.get_request_permissions(request)
+
+        abilities = self._api_manager.get_objects_with_filters('abilities', search=access, sort=sort,
+                                                               include=include, exclude=exclude)
         return web.json_response(abilities)
 
     @aiohttp_apispec.docs(tags=['abilities'])
@@ -41,7 +44,9 @@ class AbilityApi(BaseApi):
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
 
-        search = dict(ability_id=ability_id)
+        access = await self.get_request_permissions(request)
+        query = dict(ability_id=ability_id)
+        search = {**query, **access}
 
         ability = self._api_manager.get_object_with_filters('abilities', search=search, include=include, exclude=exclude)
         if not ability:
@@ -53,12 +58,14 @@ class AbilityApi(BaseApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema(many=True))
     async def create_abilities(self, request: web.Request):
+        # data = await request.json()
         pass
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def put_ability_by_id(self, request: web.Request):
+        # data = await request.json()
         ability_id = request.match_info['ability_id']
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
