@@ -1,0 +1,25 @@
+@charset "utf-8"
+
+//    In order to compile, you'll need to install the CLI tool: https://sass-lang.com/install
+//    The command should look like (from project root):
+//        $ sass static/scss/custom-bulma.sass static/css/custom-bulma.css
+//    This will compile your SASS sheets into CSS to import into your HTML template.
+
+// Set brand colors
+$red: #0B0000
+$blue: #191970
+
+$body-background-dark: #121212
+$box-background-dark: #1d1d1d
+
+// Update Bulma's global variables
+$family-sans-serif: Arial, Helvetica Neue, Helvetica, sans-serif
+$primary: $blue
+
+// Update some of Bulma's component variables
+$body-background-color: $body-background-dark
+
+$box-radius: 4px
+
+// Import core Bulma
+@import 'bulma/bulma'
