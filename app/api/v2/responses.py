@@ -1,5 +1,6 @@
 from aiohttp import web
 from json import JSONDecodeError
+from marshmallow.exceptions import ValidationError
 
 from app.api.v2 import errors
 from app.api.v2.schemas.error_schemas import JsonHttpErrorSchema
@@ -35,13 +36,22 @@ async def apispec_request_validation_middleware(request, handler):
     try:
         return await handler(request)
     except TypeError as ex:
+        # ex: Schema `post_load()` instantiates an object, but required
+        #   argument is missing
         raise JsonHttpBadRequest(
             error='Error parsing JSON',
             details=str(ex)
         )
     except AttributeError as ex:
+        # ex: JSON contains attribute that does not exist in Schema
         raise JsonHttpBadRequest(
             error='Error parsing JSON: Invalid attribute',
+            details=str(ex)
+        )
+    except ValidationError as ex:
+        # ex: List of objects sent when single object expected
+        raise JsonHttpBadRequest(
+            error='Error parsing JSON: Could not validate Schema',
             details=str(ex)
         )
     except JSONDecodeError as ex:
