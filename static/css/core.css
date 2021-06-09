@@ -2,6 +2,11 @@ html, body {
   min-height: 100%;
 }
 
+.icon.is-close:hover {
+  background-color: #854747;
+  border-radius: 50%;
+}
+
 main.main {
   min-height: 100%;
   width: 100%;
@@ -35,6 +40,10 @@ main.main {
   background-color: black;
 }
 
+#nav-footer {
+  padding: 20px;
+}
+
 .nav-logo {
   background-image: url('/gui/img/back-red.png');
   background-size: contain;
@@ -48,6 +57,7 @@ main.main {
 }
 .tabs.is-boxed a {
   border-radius: 6px !important;
+  margin-right: 4px;
 }
 .tabs ul {
   padding-bottom: 10px;
