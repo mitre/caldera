@@ -11,6 +11,8 @@ class StubDataService:
 
 
 class TestSchema(ma.Schema):
+    __test__ = False
+
     name = ma.fields.String()
     value = ma.fields.String()
 
@@ -20,6 +22,8 @@ class TestSchema(ma.Schema):
 
 
 class TestObject(FirstClassObjectInterface, BaseObject):
+    __test__ = False
+
     schema = TestSchema()
     display_schema = TestSchema()
 
