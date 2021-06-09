@@ -36,19 +36,19 @@ class FactSchema(ma.Schema):
     class Meta:
         unknown = ma.EXCLUDE
 
-    unique = ma.fields.String()
+    unique = ma.fields.String(dump_only=True)
     trait = ma.fields.String()
-    name = ma.fields.String()
+    name = ma.fields.String(dump_only=True)
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
-    score = ma.fields.Integer()
-    source = ma.fields.String()
-    origin_type = ma_enum.EnumField(OriginType)
-    links = ma.fields.List(ma.fields.String())
-    relationships = ma.fields.List(ma.fields.String())
-    limit_count = ma.fields.Integer()
-    collected_by = ma.fields.String(allow_none=True)
-    technique_id = ma.fields.String(allow_none=True)
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    score = ma.fields.Integer(required=False)
+    source = ma.fields.String(required=False, allow_none=True)
+    origin_type = ma_enum.EnumField(OriginType, required=False, allow_none=True)
+    links = ma.fields.List(ma.fields.String(), required=False)
+    relationships = ma.fields.List(ma.fields.String(), required=False)
+    limit_count = ma.fields.Integer(required=False)
+    collected_by = ma.fields.String(required=False, allow_none=True)
+    technique_id = ma.fields.String(required=False, allow_none=True)
 
     @ma.post_load()
     def build_fact(self, data, **_):

@@ -63,14 +63,15 @@ class FactSourceApi(BaseApi):
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema)
     async def update_fact_source(self, request: web.Request):
-        source_id = request.match_info['source_id']
         source_data = await request.json()
+        source_data.pop('id', None)
 
+        source_id = request.match_info['source_id']
         access = await self.get_request_permissions(request)
         query = dict(id=source_id)
         search = {**query, **access}
 
-        source = self._api_manager.update_object('sources', source_data, search)
+        source = self._api_manager.update_object('sources', 'id', source_data, search)
         if not source:
             raise JsonHttpNotFound(f'Fact source not found: {source_id}')
 

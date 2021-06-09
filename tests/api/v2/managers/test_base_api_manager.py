@@ -187,6 +187,18 @@ def test_store_json_as_schema():
     assert obj.name == 'test_name' and obj.value == 'test_value'
 
 
+def test_store_json_as_schema_duplicate():
+    stub_data_svc = StubDataService()
+    stub_data_svc.ram['tests'] = []
+    manager = BaseApiManager(data_svc=stub_data_svc)
+
+    data = {'name': 'test_name', 'value': 'test_value'}
+    manager.store_json_as_schema(TestSchema, data)
+    manager.store_json_as_schema(TestSchema, data)
+
+    assert len(stub_data_svc.ram) == 1
+
+
 def test_update_object(agent):
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = [
@@ -197,8 +209,23 @@ def test_update_object(agent):
 
     data = {'value': 'value1'}
     search = {'name': 'name0'}
-    manager.update_object('tests', data, search)
+    manager.update_object('tests', 'name', data, search)
 
     assert len(stub_data_svc.ram['tests']) == 2
     for test_obj in stub_data_svc.ram['tests']:
         assert test_obj.value == 'value1'
+
+
+def test_update_object_try_to_overwrite_id(agent):
+    stub_data_svc = StubDataService()
+    stub_data_svc.ram['tests'] = [
+        TestObject(name='name_original', value='value0')
+    ]
+    manager = BaseApiManager(data_svc=stub_data_svc)
+
+    data = {'name': 'name_updated'}
+    search = {'name': 'name_original'}
+    manager.update_object('tests', 'name', data, search)
+
+    assert len(stub_data_svc.ram['tests']) == 1
+    assert stub_data_svc.ram['tests'][0].name == 'name_original'

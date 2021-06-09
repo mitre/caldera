@@ -40,11 +40,16 @@ class BaseApiManager:
         obj.store(self._data_svc.ram)
         return obj
 
-    def update_object(self, object_name: str, data: dict, search: dict = None):
+    def update_object(self, object_name: str, id_key: str, data: dict, search: dict = None):
+        data.pop(id_key, None)
         for obj in self.find_objects(object_name, search):
-            for key, value in data.items():
-                obj.update(key, value)
-            return obj
+            dumped_obj = obj.schema.dump(obj)
+            for key, value in dumped_obj.items():
+                if key not in data:
+                    data[key] = value
+            new_obj = obj.schema.load(data)
+            new_obj.store(self._data_svc.ram)
+            return new_obj
 
     @staticmethod
     def dump_object_with_filters(obj, include: List[str] = None, exclude: List[str] = None):
