@@ -5,11 +5,16 @@ from app.utility.base_object import BaseObject
 
 class GoalSchema(ma.Schema):
 
-    target = ma.fields.String()
-    value = ma.fields.String()
-    count = ma.fields.Integer()
-    achieved = ma.fields.Boolean()
-    operator = ma.fields.String()
+    target = ma.fields.String(required=False)
+    value = ma.fields.String(required=False)
+    count = ma.fields.Integer(required=False)
+    operator = ma.fields.String(required=False)
+    achieved = ma.fields.Boolean(dump_only=True)
+
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('achieved', None)
+        return data
 
     @ma.post_load
     def build_goal(self, data, **_):
