@@ -18,10 +18,11 @@ class FactSourceApi(BaseApi):
         router.add_get('/sources', self.get_fact_sources)
         router.add_get('/sources/{source_id}', self.get_fact_source_by_id)
         router.add_post('/sources', self.create_fact_source)
+        router.add_patch('/sources/{source_id}', self.update_fact_source)
 
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(SourceSchema(many=True))
+    @aiohttp_apispec.response_schema(SourceSchema(many=True, partial=True))
     async def get_fact_sources(self, request: web.Request):
         sort = request['querystring'].get('sort', 'name')
         include = request['querystring'].get('include')
@@ -29,12 +30,12 @@ class FactSourceApi(BaseApi):
 
         access = await self.get_request_permissions(request)
 
-        sources = self._api_manager.get_objects_with_filters('sources', access, sort, include, exclude)
+        sources = self._api_manager.find_and_dump_objects('sources', access, sort, include, exclude)
         return web.json_response(sources)
 
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema(partial=True))
     async def get_fact_source_by_id(self, request: web.Request):
         source_id = request.match_info['source_id']
         include = request['querystring'].get('include')
@@ -44,7 +45,7 @@ class FactSourceApi(BaseApi):
         query = dict(id=source_id)
         search = {**query, **access}
 
-        source = self._api_manager.get_object_with_filters('sources', search, include, exclude)
+        source = self._api_manager.find_and_dump_object('sources', search, include, exclude)
         if not source:
             raise JsonHttpNotFound(f'Fact source not found: {source_id}')
 
@@ -56,4 +57,21 @@ class FactSourceApi(BaseApi):
     async def create_fact_source(self, request: web.Request):
         source_data = await request.json()
         source = self._api_manager.store_json_as_schema(SourceSchema, source_data)
+        return web.json_response(source.display)
+
+    @aiohttp_apispec.docs(tags=['sources'])
+    @aiohttp_apispec.request_schema(SourceSchema(partial=True))
+    @aiohttp_apispec.response_schema(SourceSchema)
+    async def update_fact_source(self, request: web.Request):
+        source_id = request.match_info['source_id']
+        source_data = await request.json()
+
+        access = await self.get_request_permissions(request)
+        query = dict(id=source_id)
+        search = {**query, **access}
+
+        source = self._api_manager.update_object('sources', source_data, search)
+        if not source:
+            raise JsonHttpNotFound(f'Fact source not found: {source_id}')
+
         return web.json_response(source.display)

@@ -27,6 +27,25 @@ class JsonHttpNotFound(JsonHttpErrorResponse, web.HTTPNotFound):
 
 
 @web.middleware
+async def apispec_request_validation_middleware(request, handler):
+    """Middleware to handle errors thrown by schema validation
+
+    Must be added before `validation_middleware`"""
+    try:
+        return await handler(request)
+    except TypeError as ex:
+        raise JsonHttpBadRequest(
+            error='Error parsing JSON',
+            details=str(ex)
+        )
+    except AttributeError as ex:
+        raise JsonHttpBadRequest(
+            error='Error parsing JSON: Invalid attribute',
+            details=str(ex)
+        )
+
+
+@web.middleware
 async def json_request_validation_middleware(request, handler):
     """Middleware that converts json decoding and marshmallow validation
     errors into 400 responses w/ json bodies.

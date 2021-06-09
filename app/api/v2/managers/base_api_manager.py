@@ -15,17 +15,24 @@ class BaseApiManager:
     def log(self):
         return self._log
 
-    def get_objects_with_filters(self, object_name: str, search: dict = None, sort: str = None, include: List[str] = None,
-                                 exclude: List[str] = None):
-        objs = [self.dump_with_include_exclude(obj, include, exclude) for obj in self._data_svc.ram[object_name]
-                if not search or obj.match(search)]
-        return sorted(objs, key=lambda p: p.get(sort, 0))
-
-    def get_object_with_filters(self, object_name: str, search: dict = None, include: List[str] = None,
-                                exclude: List[str] = None):
+    def find_objects(self, object_name: str, search: dict = None):
+        """Find objects matching the given criteria"""
         for obj in self._data_svc.ram[object_name]:
             if not search or obj.match(search):
-                return self.dump_with_include_exclude(obj, include, exclude)
+                yield obj
+
+    def find_and_dump_objects(self, object_name: str, search: dict = None, sort: str = None, include: List[str] = None,
+                              exclude: List[str] = None):
+        matched_objs = []
+        for obj in self.find_objects(object_name, search):
+            dumped_obj = self.dump_object_with_filters(obj, include, exclude)
+            matched_objs.append(dumped_obj)
+        return sorted(matched_objs, key=lambda p: p.get(sort, 0))
+
+    def find_and_dump_object(self, object_name: str, search: dict = None, include: List[str] = None,
+                             exclude: List[str] = None):
+        for obj in self.find_objects(object_name, search):
+            return self.dump_object_with_filters(obj, include, exclude)
 
     def store_json_as_schema(self, schema: SchemaMeta, data: dict):
         obj_schema = schema()
@@ -33,8 +40,14 @@ class BaseApiManager:
         obj.store(self._data_svc.ram)
         return obj
 
+    def update_object(self, object_name: str, data: dict, search: dict = None):
+        for obj in self.find_objects(object_name, search):
+            for key, value in data.items():
+                obj.update(key, value)
+            return obj
+
     @staticmethod
-    def dump_with_include_exclude(obj, include: List[str] = None, exclude: List[str] = None):
+    def dump_object_with_filters(obj, include: List[str] = None, exclude: List[str] = None):
         dumped = obj.display
         if include:
             exclude_attributes = list(set(dumped.keys()) - set(include))

@@ -48,8 +48,8 @@ class SourceSchema(ma.Schema):
         return in_data
 
     @ma.post_load()
-    def build_source(self, data, **_):
-        return Source(**data)
+    def build_source(self, data, **kwargs):
+        return None if kwargs['partial'] else Source(**data)
 
 
 class Source(FirstClassObjectInterface, BaseObject):
