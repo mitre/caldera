@@ -17,13 +17,17 @@ from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
 from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
+from app.service.knowledge_svc import KnowledgeService
 from app.objects.c_adversary import Adversary
 from app.objects.c_ability import Ability
 from app.objects.c_operation import Operation
 from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_relationship import Relationship
+from app.objects.secondclass.c_rule import Rule
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -50,6 +54,11 @@ def app_svc():
 @pytest.fixture(scope='class')
 def data_svc():
     return DataService()
+
+
+@pytest.fixture(scope='class')
+def knowledge_svc():
+    return KnowledgeService()
 
 
 @pytest.fixture(scope='class')
@@ -120,13 +129,19 @@ def adversary():
 
 
 @pytest.fixture
+def executor():
+    def _generate_executor(name='psh', platform='windows', *args, **kwargs):
+        return Executor(name, platform, *args, **kwargs)
+
+    return _generate_executor
+
+
+@pytest.fixture
 def ability():
-    def _generate_ability(ability_id=None, variations=None, *args, **kwargs):
+    def _generate_ability(ability_id=None, *args, **kwargs):
         if not ability_id:
             ability_id = random.randint(0, 999999)
-        if not variations:
-            variations = []
-        return Ability(ability_id=ability_id, variations=variations, *args, **kwargs)
+        return Ability(ability_id=ability_id, *args, **kwargs)
 
     return _generate_ability
 
@@ -165,8 +180,8 @@ def agent():
 
 @pytest.fixture
 def link():
-    def _generate_link(command, paw, ability, *args, **kwargs):
-        return Link.load(dict(ability=ability, command=command, paw=paw, *args, **kwargs))
+    def _generate_link(command, paw, ability, executor, *args, **kwargs):
+        return Link.load(dict(ability=ability, executor=executor, command=command, paw=paw, *args, **kwargs))
 
     return _generate_link
 
@@ -177,6 +192,22 @@ def fact():
         return Fact(trait=trait, *args, **kwargs)
 
     return _generate_fact
+
+
+@pytest.fixture
+def rule():
+    def _generate_rule(action, trait, *args, **kwargs):
+        return Rule(action=action, trait=trait, *args, **kwargs)
+
+    return _generate_rule
+
+
+@pytest.fixture
+def relationship():
+    def _generate_relationship(source, edge, target, *args, **kwargs):
+        return Relationship(source=source, edge=edge, target=target, *args, **kwargs)
+
+    return _generate_relationship
 
 
 @pytest.fixture

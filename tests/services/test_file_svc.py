@@ -2,14 +2,24 @@ import os
 import pytest
 import yaml
 
+from base64 import b64encode
 from tests import AsyncMock
 from asyncio import Future
 
+from app.data_encoders.base64_basic import Base64Encoder
+from app.data_encoders.plain_text import PlainTextEncoder
 from app.utility.file_decryptor import decrypt
 
 
+@pytest.fixture
+def store_encoders(loop, data_svc):
+    loop.run_until_complete(data_svc.store(PlainTextEncoder()))
+    loop.run_until_complete(data_svc.store(Base64Encoder()))
+
+
 @pytest.mark.usefixtures(
-    'init_base_world'
+    'init_base_world',
+    'store_encoders'
 )
 class TestFileService:
 
@@ -47,6 +57,28 @@ class TestFileService:
         # read output data
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         assert output_data == output
+
+    def test_upload_decode_plaintext(self, loop, file_svc, data_svc):
+        content = b'this will be encoded and decoded as plaintext'
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, encoding='plain-text', upload_content=content,
+                                             decoded_content=content)
+
+    def test_upload_decode_b64(self, loop, file_svc, data_svc):
+        original_content = b'this will be encoded and decoded as base64'
+        upload_content = b64encode(original_content)
+        self._test_upload_file_with_encoding(loop, file_svc, data_svc, encoding='base64', upload_content=upload_content,
+                                             decoded_content=original_content)
+
+    def test_download_plaintext_file(self, loop, file_svc, data_svc):
+        payload_content = b'plaintext content'
+        self._test_download_file_with_encoding(loop, file_svc, data_svc, encoding='plain-text',
+                                               original_content=payload_content, encoded_content=payload_content)
+
+    def test_download_base64_file(self, loop, file_svc, data_svc):
+        payload_content = b'b64 content'
+        self._test_download_file_with_encoding(loop, file_svc, data_svc, encoding='base64',
+                                               original_content=payload_content,
+                                               encoded_content=b64encode(payload_content))
 
     def test_pack_file(self, loop, mocker, tmpdir, file_svc, data_svc):
         payload = 'unittestpayload'
@@ -183,3 +215,30 @@ class TestFileService:
         test_value = 'example_file.exe'
         ret = file_svc.is_extension_xored(test_value)
         assert ret is False
+
+    @staticmethod
+    def _test_download_file_with_encoding(loop, file_svc, data_svc, encoding, original_content, encoded_content):
+        filename = 'testencodedpayload.txt'
+        file_svc.read_file = AsyncMock(return_value=(filename, original_content))
+        file_svc.data_svc = data_svc
+        file_path, content, display_name = loop.run_until_complete(
+            file_svc.get_file(headers={'file': filename, 'x-file-encoding': encoding})
+        )
+        assert file_path == filename
+        assert content == encoded_content
+        assert display_name == filename
+
+    @staticmethod
+    def _test_upload_file_with_encoding(loop, file_svc, data_svc, encoding, upload_content, decoded_content):
+        file_svc.data_svc = data_svc
+        upload_dir = loop.run_until_complete(file_svc.create_exfil_sub_directory('testencodeduploaddir'))
+        upload_filename = 'testencodedupload.txt'
+        loop.run_until_complete(file_svc.save_file(upload_filename, upload_content, upload_dir, encrypt=False,
+                                                   encoding=encoding))
+        uploaded_file_path = os.path.join(upload_dir, upload_filename)
+        assert os.path.isfile(uploaded_file_path)
+        with open(uploaded_file_path, 'rb') as file:
+            written_data = file.read()
+        assert written_data == decoded_content
+        os.remove(uploaded_file_path)
+        os.rmdir(upload_dir)

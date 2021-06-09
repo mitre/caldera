@@ -12,8 +12,8 @@ import app.api.v2
 from app import version
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
-from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     contact_svc = ContactService()
     planning_svc = PlanningService(
         global_variable_owners=[
-            Ability,
+            Executor,
             Agent,
             Link,
             AppConfigGlobalVariableIdentifier
