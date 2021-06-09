@@ -15,8 +15,8 @@ class TestSchema(ma.Schema):
     value = ma.fields.String()
 
     @ma.post_load()
-    def build_test_object(self, data, **_):
-        return TestObject(**data)
+    def build_test_object(self, data, **kwargs):
+        return None if kwargs.get('partial') else TestObject(**data)
 
 
 class TestObject(FirstClassObjectInterface, BaseObject):
@@ -181,3 +181,20 @@ def test_store_json_as_schema():
     obj = manager.store_json_as_schema(TestSchema, data)
 
     assert obj.name == 'test_name' and obj.value == 'test_value'
+
+
+def test_update_object(agent):
+    stub_data_svc = StubDataService()
+    stub_data_svc.ram['tests'] = [
+        TestObject(name='name0', value='value0'),
+        TestObject(name='name1', value='value1'),
+    ]
+    manager = BaseApiManager(data_svc=stub_data_svc)
+
+    data = {'value': 'value1'}
+    search = {'name': 'name0'}
+    manager.update_object('tests', data, search)
+
+    assert len(stub_data_svc.ram['tests']) == 2
+    for test_obj in stub_data_svc.ram['tests']:
+        assert test_obj.value == 'value1'

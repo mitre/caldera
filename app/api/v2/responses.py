@@ -1,4 +1,5 @@
 from aiohttp import web
+from json import JSONDecodeError
 
 from app.api.v2 import errors
 from app.api.v2.schemas.error_schemas import JsonHttpErrorSchema
@@ -41,6 +42,11 @@ async def apispec_request_validation_middleware(request, handler):
     except AttributeError as ex:
         raise JsonHttpBadRequest(
             error='Error parsing JSON: Invalid attribute',
+            details=str(ex)
+        )
+    except JSONDecodeError as ex:
+        raise JsonHttpBadRequest(
+            error='Unexpected error occurred while parsing json',
             details=str(ex)
         )
 
