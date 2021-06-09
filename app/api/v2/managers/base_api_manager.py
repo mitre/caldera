@@ -1,6 +1,6 @@
 import logging
 from marshmallow.schema import SchemaMeta
-from typing import List
+from typing import Any, List
 
 
 DEFAULT_LOGGER_NAME = 'rest_api_manager'
@@ -34,25 +34,31 @@ class BaseApiManager:
         for obj in self.find_objects(object_name, search):
             return self.dump_object_with_filters(obj, include, exclude)
 
-    def store_json_as_schema(self, schema: SchemaMeta, data: dict):
+    def find_and_update_object(self, object_name: str, data: dict, search: dict = None):
+        for obj in self.find_objects(object_name, search):
+            new_obj = self.update_object(obj, data)
+            return new_obj
+
+    def create_object_from_schema(self, schema: SchemaMeta, data: dict):
         obj_schema = schema()
         obj = obj_schema.load(data)
         obj.store(self._data_svc.ram)
         return obj
 
-    def update_object(self, object_name: str, id_key: str, data: dict, search: dict = None):
-        data.pop(id_key, None)
-        for obj in self.find_objects(object_name, search):
-            dumped_obj = obj.schema.dump(obj)
-            for key, value in dumped_obj.items():
-                if key not in data:
-                    data[key] = value
-            new_obj = obj.schema.load(data)
-            new_obj.store(self._data_svc.ram)
-            return new_obj
+    def update_object(self, obj: Any, data: dict):
+        dumped_obj = obj.schema.dump(obj)
+        for key, value in dumped_obj.items():
+            if key not in data:
+                data[key] = value
+        return self.replace_object(obj, data)
+
+    def replace_object(self, obj: Any, data: dict):
+        new_obj = obj.schema.load(data)
+        new_obj.store(self._data_svc.ram)
+        return new_obj
 
     @staticmethod
-    def dump_object_with_filters(obj, include: List[str] = None, exclude: List[str] = None):
+    def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None):
         dumped = obj.display
         if include:
             exclude_attributes = list(set(dumped.keys()) - set(include))

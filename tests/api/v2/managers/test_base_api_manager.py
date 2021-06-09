@@ -31,7 +31,7 @@ class TestObject(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.name)
 
-    def __init__(self, name, value):
+    def __init__(self, name, value=''):
         super().__init__()
         self.name = name
         self.value = value
@@ -176,30 +176,30 @@ def test_find_and_dump_object(agent):
     assert dumped_agent == test_agent.display
 
 
-def test_store_json_as_schema():
+def test_create_object_from_schema():
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = []
     manager = BaseApiManager(data_svc=stub_data_svc)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    obj = manager.store_json_as_schema(TestSchema, data)
+    obj = manager.create_object_from_schema(TestSchema, data)
 
     assert obj.name == 'test_name' and obj.value == 'test_value'
 
 
-def test_store_json_as_schema_duplicate():
+def test_create_object_from_schema_duplicate():
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = []
     manager = BaseApiManager(data_svc=stub_data_svc)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    manager.store_json_as_schema(TestSchema, data)
-    manager.store_json_as_schema(TestSchema, data)
+    manager.create_object_from_schema(TestSchema, data)
+    manager.create_object_from_schema(TestSchema, data)
 
     assert len(stub_data_svc.ram) == 1
 
 
-def test_update_object(agent):
+def test_find_and_update_object(agent):
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = [
         TestObject(name='name0', value='value0'),
@@ -209,23 +209,21 @@ def test_update_object(agent):
 
     data = {'value': 'value1'}
     search = {'name': 'name0'}
-    manager.update_object('tests', 'name', data, search)
+    manager.find_and_update_object('tests', data, search)
 
     assert len(stub_data_svc.ram['tests']) == 2
     for test_obj in stub_data_svc.ram['tests']:
         assert test_obj.value == 'value1'
 
 
-def test_update_object_try_to_overwrite_id(agent):
+def test_replace_object(agent):
     stub_data_svc = StubDataService()
-    stub_data_svc.ram['tests'] = [
-        TestObject(name='name_original', value='value0')
-    ]
+    test_obj = TestObject(name='name0', value='value0')
+    stub_data_svc.ram['tests'] = [test_obj]
     manager = BaseApiManager(data_svc=stub_data_svc)
 
-    data = {'name': 'name_updated'}
-    search = {'name': 'name_original'}
-    manager.update_object('tests', 'name', data, search)
+    data = {'name': 'name0'}
+    manager.replace_object(test_obj, data)
 
     assert len(stub_data_svc.ram['tests']) == 1
-    assert stub_data_svc.ram['tests'][0].name == 'name_original'
+    assert not stub_data_svc.ram['tests'][0].value

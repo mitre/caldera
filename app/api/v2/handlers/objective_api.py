@@ -3,7 +3,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound
+from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_objective import ObjectiveSchema
 
@@ -19,6 +19,7 @@ class ObjectiveApi(BaseApi):
         router.add_get('/objectives/{objective_id}', self.get_objective_by_id)
         router.add_post('/objectives', self.create_objective)
         router.add_patch('/objectives/{objective_id}', self.update_objective)
+        router.add_put('/objectives/{objective_id}', self.create_or_update_objective)
 
     @aiohttp_apispec.docs(tags=['objectives'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -56,7 +57,7 @@ class ObjectiveApi(BaseApi):
     @aiohttp_apispec.response_schema(ObjectiveSchema)
     async def create_objective(self, request: web.Request):
         objective_data = await request.json()
-        objective = self._api_manager.store_json_as_schema(ObjectiveSchema, objective_data)
+        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data)
         return web.json_response(objective.display)
 
     @aiohttp_apispec.docs(tags=['objectives'])
@@ -65,13 +66,33 @@ class ObjectiveApi(BaseApi):
     async def update_objective(self, request: web.Request):
         objective_id = request.match_info['objective_id']
         objective_data = await request.json()
+        objective_data['id'] = objective_id
 
         access = await self.get_request_permissions(request)
         query = dict(id=objective_id)
         search = {**query, **access}
 
-        objective = self._api_manager.update_object('objectives', 'id', objective_data, search)
+        objective = self._api_manager.find_and_update_object('objectives', objective_data, search)
         if not objective:
             raise JsonHttpNotFound(f'Objective not found: {objective_id}')
 
+        return web.json_response(objective.display)
+
+    @aiohttp_apispec.docs(tags=['objectives'])
+    @aiohttp_apispec.request_schema(ObjectiveSchema(partial=True))
+    @aiohttp_apispec.response_schema(ObjectiveSchema)
+    async def create_or_update_objective(self, request: web.Request):
+        objective_id = request.match_info['objective_id']
+        objective_data = await request.json()
+        objective_data['id'] = objective_id
+
+        access = await self.get_request_permissions(request)
+        query = dict(id=objective_id)
+        search = {**query, **access}
+
+        search_objective = next(self._api_manager.find_objects('objectives', search), None)
+        if search_objective is not None and search_objective.access not in access['access']:
+            raise JsonHttpForbidden(f'Cannot update objectives due to insufficient permissions: {objective_id}')
+
+        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data)
         return web.json_response(objective.display)
