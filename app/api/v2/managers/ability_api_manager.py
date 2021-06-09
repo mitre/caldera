@@ -19,8 +19,9 @@ class AbilityApiManager(BaseApiManager):
         super().__init__(data_svc=data_svc)
         self._rest_svc = rest_svc
 
-    def create_abilities(self, ability_list):
-        pass
+    async def create_abilities(self, access, ability_list):
+        data = dict(bulk=ability_list)
+        return await self._rest_svc.persist_ability(access=access, data=data)
 
     def update_ability(self, prop, value):
         pass

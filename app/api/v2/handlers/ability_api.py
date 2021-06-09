@@ -60,9 +60,11 @@ class AbilityApi(BaseApi):
     @aiohttp_apispec.response_schema(AbilitySchema(many=True))
     async def create_abilities(self, request: web.Request):
         ability_list = await request.json()
-        source = self._api_manager.create_abilities(ability_list)
+        access = await self.get_request_permissions(request)
 
-        return web.json_response(source.display)
+        source = await self._api_manager.create_abilities(access=access, ability_list=ability_list)
+
+        return web.json_response(source)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
