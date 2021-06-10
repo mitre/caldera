@@ -5,6 +5,7 @@ import os
 import sys
 
 import aiohttp_apispec
+from aiohttp_apispec import validation_middleware
 from aiohttp import web
 
 import app.api.v2
@@ -81,6 +82,7 @@ def init_swagger_documentation(app):
         url="/api/docs/swagger.json",
         static_path="/static/swagger"
     )
+    app.middlewares.append(validation_middleware)
 
 
 if __name__ == '__main__':

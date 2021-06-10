@@ -11,7 +11,7 @@ from app.api.v2.schemas.caldera_info_schemas import CalderaInfoSchema
 
 class HealthApi(BaseApi):
     def __init__(self, services):
-        super().__init__()
+        super().__init__(auth_svc=services['auth_svc'])
         self._app_svc = services['app_svc']
 
     def add_routes(self, app: web.Application):

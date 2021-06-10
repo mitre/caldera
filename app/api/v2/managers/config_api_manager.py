@@ -1,7 +1,7 @@
-import logging
 from typing import List
 
 from app.api.v2 import validation
+from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.utility.base_world import BaseWorld
 
 
@@ -50,11 +50,10 @@ class ConfigNotFound(Exception):
         self.config_name = config_name
 
 
-class ConfigApiManager:
+class ConfigApiManager(BaseApiManager):
     def __init__(self, data_svc, config_interface=None):
+        super().__init__(data_svc=data_svc)
         self._config_interface = config_interface or BaseWorld
-        self._data_svc = data_svc
-        self._log = logging.getLogger('config_api_manager')
 
     def get_filtered_config(self, name):
         """Return the configuration for the input `name` with sensitive fields removed."""
@@ -125,6 +124,6 @@ class ConfigApiManager:
             elif ability_id in loaded_ability_ids:
                 abilities_to_set.append(ability_id)
             else:
-                self._log.debug('Could not find ability with id "%s"', ability_id)
+                self.log.debug('Could not find ability with id "%s"', ability_id)
 
         self._config_interface.set_config(name='agents', prop=prop, value=abilities_to_set)
