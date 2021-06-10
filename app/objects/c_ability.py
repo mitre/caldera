@@ -154,6 +154,9 @@ class Ability(FirstClassObjectInterface, BaseObject):
         if bucket not in self.buckets:
             self.buckets.append(bucket)
 
+    def verify(self, log):
+        pass
+
     @staticmethod
     def _make_executor_map_key(name, platform):
         return name, platform
