@@ -44,8 +44,9 @@ async def apispec_request_validation_middleware(request, handler):
         )
     except AttributeError as ex:
         # ex: JSON contains attribute that does not exist in Schema
+        # Or any other AttributeError...
         raise JsonHttpBadRequest(
-            error='Error parsing JSON: Invalid attribute',
+            error='AttributeError',
             details=str(ex)
         )
     except ValidationError as ex:

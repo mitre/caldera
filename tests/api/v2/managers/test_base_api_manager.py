@@ -9,6 +9,7 @@ from app.utility.base_world import BaseWorld
 class StubDataService:
     def __init__(self):
         self.ram = {}
+        self.Access = BaseWorld.Access
 
 
 class TestSchema(ma.Schema):
@@ -96,10 +97,9 @@ def test_find_object(agent):
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     search = {search_property: search_value}
-    agents = list(manager.find_objects('agents', search=search))
+    agent = manager.find_object('agents', search=search)
 
-    assert len(agents) == 1
-    assert agents[0] == test_agent
+    assert agent == test_agent
 
 
 def test_dump(data_svc, agent):
@@ -166,24 +166,14 @@ def test_find_and_dump_objects_with_sort(agent):
         prev_paw = dumped_agent[sort_property]
 
 
-def test_find_and_dump_object(agent):
-    test_agent = agent(paw='agent0', sleep_min=1, sleep_max=5, watchdog=0)
-    stub_data_svc = StubDataService()
-    stub_data_svc.ram['agents'] = [test_agent]
-    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
-
-    dumped_agent = manager.find_and_dump_object('agents')
-
-    assert dumped_agent == test_agent.display
-
-
 def test_create_object_from_schema():
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = []
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    obj = manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
+    access = {'access': (BaseWorld.Access.RED, BaseWorld.Access.APP)}
+    obj = manager.create_object_from_schema(TestSchema, data, access)
 
     assert obj.name == 'test_name' and obj.value == 'test_value'
 
@@ -194,8 +184,9 @@ def test_create_object_from_schema_duplicate():
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
-    manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
+    access = {'access': (BaseWorld.Access.RED, BaseWorld.Access.APP)}
+    manager.create_object_from_schema(TestSchema, data, access)
+    manager.create_object_from_schema(TestSchema, data, access)
 
     assert len(stub_data_svc.ram) == 1
 
