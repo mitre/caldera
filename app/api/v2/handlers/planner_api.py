@@ -11,7 +11,7 @@ from app.objects.c_planner import PlannerSchema
 class PlannerApi(BaseApi):
     def __init__(self, services):
         super().__init__(auth_svc=services['auth_svc'])
-        self._api_manager = BaseApiManager(data_svc=services['data_svc'])
+        self._api_manager = BaseApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
 
     def add_routes(self, app: web.Application):
         router = app.router

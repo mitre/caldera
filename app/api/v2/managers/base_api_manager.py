@@ -1,14 +1,20 @@
 import logging
+import os
+import yaml
+
 from marshmallow.schema import SchemaMeta
 from typing import Any, List
+
+from app.utility.base_world import BaseWorld
 
 
 DEFAULT_LOGGER_NAME = 'rest_api_manager'
 
 
-class BaseApiManager:
-    def __init__(self, data_svc, logger=None):
+class BaseApiManager(BaseWorld):
+    def __init__(self, data_svc, file_svc, logger=None):
         self._data_svc = data_svc
+        self._file_svc = file_svc
         self._log = logger or self._create_default_logger()
 
     @property
@@ -57,8 +63,19 @@ class BaseApiManager:
         new_obj.store(self._data_svc.ram)
         return new_obj
 
+    async def remove_object_from_memory_by_id(self, ram_key: str, id_value: str, id_attribute: str):
+        await self._data_svc.remove(ram_key, {id_attribute: id_value})
+
+    async def remove_object_from_disk_by_id(self, ram_key: str, id_value: str):
+        _, file_path = await self._file_svc.find_file_path(f'{id_value}.yml', location='data')
+        if not file_path:
+            file_path = f'data/{ram_key}/{id_value}.yml'
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
     @staticmethod
-    def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None):
+    def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:
         dumped = obj.display
         if include:
             exclude_attributes = list(set(dumped.keys()) - set(include))
@@ -67,6 +84,28 @@ class BaseApiManager:
             for exclude_attribute in exclude:
                 dumped.pop(exclude_attribute, None)
         return dumped
+
+    def _get_allowed_from_access(self, access) -> BaseWorld.Access:
+        if self._data_svc.Access.HIDDEN in access['access']:
+            return self._data_svc.Access.HIDDEN
+        elif self._data_svc.Access.BLUE in access['access']:
+            return self._data_svc.Access.BLUE
+        else:
+            return self._data_svc.Access.RED
+
+    async def _get_new_object_file_path(self, ram_key: str, identifier: str) -> str:
+        """Create file path for new object"""
+        return f'data/{ram_key}/{identifier}.yml'
+
+    async def _get_existing_object_file_path(self, identifier: str) -> str:
+        """Find file path for existing object (by id)"""
+        _, file_path = await self._file_svc.find_file_path(f'{identifier}.yml', location='data')
+        return file_path
+
+    async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
+        """Save data as YAML and reload from disk into memory"""
+        await self._file_svc.save_file(file_path, yaml.dump(data, encoding='utf-8', sort_keys=False), '', encrypt=False)
+        await self._data_svc.load_yaml_file(obj_type, file_path, access)
 
     @staticmethod
     def _create_default_logger():

@@ -27,4 +27,7 @@ def make_app(services):
     from .handlers.objective_api import ObjectiveApi
     ObjectiveApi(services).add_routes(app)
 
+    from .handlers.adversary_api import AdversaryApi
+    AdversaryApi(services).add_routes(app)
+
     return app
