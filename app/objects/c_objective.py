@@ -1,3 +1,5 @@
+import uuid
+
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
@@ -7,15 +9,20 @@ from app.utility.base_object import BaseObject
 
 class ObjectiveSchema(ma.Schema):
 
-    id = ma.fields.String()
-    name = ma.fields.String()
-    description = ma.fields.String()
-    goals = ma.fields.List(ma.fields.Nested(GoalSchema()))
-    percentage = ma.fields.Float()
+    id = ma.fields.String(required=False)
+    name = ma.fields.String(required=False)
+    description = ma.fields.String(required=False)
+    goals = ma.fields.List(ma.fields.Nested(GoalSchema), required=False)
+    percentage = ma.fields.Float(dump_only=True)
+
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('percentage', None)
+        return data
 
     @ma.post_load
-    def build_objective(self, data, **_):
-        return Objective(**data)
+    def build_objective(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Objective(**data)
 
 
 class Objective(FirstClassObjectInterface, BaseObject):
@@ -37,7 +44,7 @@ class Objective(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, id='', name='', description='', goals=None):
         super().__init__()
-        self.id = id
+        self.id = id if id else str(uuid.uuid4())
         self.name = name
         self.description = description
         self.goals = goals if goals else []
