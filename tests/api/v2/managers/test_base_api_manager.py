@@ -3,6 +3,7 @@ import marshmallow as ma
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 
 class StubDataService:
@@ -182,7 +183,7 @@ def test_create_object_from_schema():
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    obj = manager.create_object_from_schema(TestSchema, data)
+    obj = manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
 
     assert obj.name == 'test_name' and obj.value == 'test_value'
 
@@ -193,8 +194,8 @@ def test_create_object_from_schema_duplicate():
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
-    manager.create_object_from_schema(TestSchema, data)
-    manager.create_object_from_schema(TestSchema, data)
+    manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
+    manager.create_object_from_schema(TestSchema, data, BaseWorld.Access.RED)
 
     assert len(stub_data_svc.ram) == 1
 

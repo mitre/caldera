@@ -3,7 +3,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.api.v2.responses import JsonHttpBadRequest, JsonHttpForbidden, JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_objective import ObjectiveSchema
 
@@ -57,7 +57,17 @@ class ObjectiveApi(BaseApi):
     @aiohttp_apispec.response_schema(ObjectiveSchema)
     async def create_objective(self, request: web.Request):
         objective_data = await request.json()
-        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data)
+
+        objective_id = objective_data.get('id')
+        if objective_id:
+            search = dict(id=objective_id)
+            search_objective = next(self._api_manager.find_objects('objectives', search), None)
+            if search_objective is not None:
+                raise JsonHttpBadRequest(f'An fact source exists with the given id: {objective_id}')
+
+        access = await self.get_request_permissions(request)
+
+        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data, access)
         return web.json_response(objective.display)
 
     @aiohttp_apispec.docs(tags=['objectives'])
@@ -87,12 +97,11 @@ class ObjectiveApi(BaseApi):
         objective_data['id'] = objective_id
 
         access = await self.get_request_permissions(request)
-        query = dict(id=objective_id)
-        search = {**query, **access}
+        search = dict(id=objective_id)
 
         search_objective = next(self._api_manager.find_objects('objectives', search), None)
         if search_objective is not None and search_objective.access not in access['access']:
-            raise JsonHttpForbidden(f'Cannot update objectives due to insufficient permissions: {objective_id}')
+            raise JsonHttpForbidden(f'Cannot update objective due to insufficient permissions: {objective_id}')
 
-        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data)
+        objective = self._api_manager.create_object_from_schema(ObjectiveSchema, objective_data, access)
         return web.json_response(objective.display)

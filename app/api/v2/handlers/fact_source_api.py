@@ -3,7 +3,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.api.v2.responses import JsonHttpBadRequest, JsonHttpForbidden, JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_source import SourceSchema
 
@@ -57,7 +57,17 @@ class FactSourceApi(BaseApi):
     @aiohttp_apispec.response_schema(SourceSchema)
     async def create_fact_source(self, request: web.Request):
         source_data = await request.json()
-        source = self._api_manager.create_object_from_schema(SourceSchema, source_data)
+
+        source_id = source_data.get('id')
+        if source_id:
+            search = dict(id=source_id)
+            search_source = next(self._api_manager.find_objects('sources', search), None)
+            if search_source is not None:
+                raise JsonHttpBadRequest(f'An fact source exists with the given id: {source_id}')
+
+        access = await self.get_request_permissions(request)
+
+        source = self._api_manager.create_object_from_schema(SourceSchema, source_data, access)
         return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['sources'])
@@ -87,12 +97,11 @@ class FactSourceApi(BaseApi):
         source_data['id'] = source_id
 
         access = await self.get_request_permissions(request)
-        query = dict(id=source_data)
-        search = {**query, **access}
+        search = dict(id=source_id)
 
         search_source = next(self._api_manager.find_objects('sources', search), None)
         if search_source is not None and search_source.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update fact source due to insufficient permissions: {source_id}')
 
-        objective = self._api_manager.create_object_from_schema(SourceSchema, source_data)
+        objective = self._api_manager.create_object_from_schema(SourceSchema, source_data, access)
         return web.json_response(objective.display)

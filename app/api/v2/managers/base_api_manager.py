@@ -45,9 +45,10 @@ class BaseApiManager(BaseWorld):
             new_obj = self.update_object(obj, data)
             return new_obj
 
-    def create_object_from_schema(self, schema: SchemaMeta, data: dict):
+    def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
         obj = obj_schema.load(data)
+        obj.access = self._get_allowed_from_access(access)
         obj.store(self._data_svc.ram)
         return obj
 
