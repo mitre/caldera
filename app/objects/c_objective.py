@@ -22,7 +22,7 @@ class ObjectiveSchema(ma.Schema):
 
     @ma.post_load
     def build_objective(self, data, **kwargs):
-        return None if kwargs.get('partial') else Objective(**data)
+        return None if kwargs.get('partial') is True else Objective(**data)
 
 
 class Objective(FirstClassObjectInterface, BaseObject):

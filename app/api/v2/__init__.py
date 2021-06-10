@@ -30,4 +30,7 @@ def make_app(services):
     from .handlers.adversary_api import AdversaryApi
     AdversaryApi(services).add_routes(app)
 
+    from .handlers.agent_api import AgentApi
+    AgentApi(services).add_routes(app)
+
     return app

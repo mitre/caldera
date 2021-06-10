@@ -39,9 +39,14 @@ class AdversarySchema(ma.Schema):
             del adversary['phases']
         return adversary
 
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('has_repeatable_abilities', None)
+        return data
+
     @ma.post_load
     def build_adversary(self, data, **kwargs):
-        return None if kwargs.get('partial') else Adversary(**data)
+        return None if kwargs.get('partial') is True else Adversary(**data)
 
 
 class Adversary(FirstClassObjectInterface, BaseObject):

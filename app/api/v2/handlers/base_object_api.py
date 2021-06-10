@@ -121,7 +121,7 @@ class BaseObjectApi(BaseApi):
 
     """DELETE"""
 
-    async def delete_on_disk_object(self, request: web.Request):
+    async def delete_object(self, request: web.Request):
         obj_id = request.match_info.get(self.id_property)
 
         access = await self.get_request_permissions(request)
@@ -131,9 +131,14 @@ class BaseObjectApi(BaseApi):
         if not self._api_manager.find_object(self.ram_key, search):
             raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
 
-        await self._api_manager.remove_object_from_memory_by_id(id_value=obj_id, ram_key=self.ram_key,
+        await self._api_manager.remove_object_from_memory_by_id(identifier=obj_id, ram_key=self.ram_key,
                                                                 id_property=self.id_property)
-        await self._api_manager.remove_object_from_disk_by_id(id_value=obj_id, ram_key=self.ram_key)
+
+    async def delete_on_disk_object(self, request: web.Request):
+        await self.delete_object(request)
+
+        obj_id = request.match_info.get(self.id_property)
+        await self._api_manager.remove_object_from_disk_by_id(identifier=obj_id, ram_key=self.ram_key)
 
     """Helpers"""
 

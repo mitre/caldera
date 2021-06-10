@@ -20,7 +20,7 @@ class TestSchema(ma.Schema):
 
     @ma.post_load()
     def build_test_object(self, data, **kwargs):
-        return None if kwargs.get('partial') else TestObject(**data)
+        return None if kwargs.get('partial') is True else TestObject(**data)
 
 
 class TestObject(FirstClassObjectInterface, BaseObject):
