@@ -64,7 +64,7 @@ class AbilityApi(BaseApi):
 
         source = await self._api_manager.create_abilities(access=access, ability_list=ability_list)
 
-        return web.json_response(source)
+        return web.json_response(source, status=201)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
@@ -98,10 +98,9 @@ class AbilityApi(BaseApi):
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def delete_ability_by_id(self, request: web.Request):
         ability_id = request.match_info['ability_id']
-
         ability_dict = dict(ability_id=ability_id)
-
         ability = self._api_manager.get_object_with_filters('abilities', search=ability_dict)
+
         if not ability:
             raise JsonHttpNotFound(f'Ability not found: {ability_id}')
 
