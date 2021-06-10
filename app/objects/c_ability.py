@@ -12,7 +12,7 @@ from app.utility.base_world import AccessSchema
 
 
 class AbilitySchema(ma.Schema):
-    ability_id = ma.fields.String()
+    ability_id = ma.fields.String(required=False)
     tactic = ma.fields.String(missing=None)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
@@ -27,11 +27,17 @@ class AbilitySchema(ma.Schema):
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
+    @ma.pre_load
+    def fix_id(self, ability, **_):
+        if 'id' in ability:
+            ability['ability_id'] = ability.pop('id')
+        return ability
+
     @ma.post_load
-    def build_ability(self, data, **_):
+    def build_ability(self, data, **kwargs):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return Ability(**data)
+        return None if kwargs.get('partial') is True else Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):

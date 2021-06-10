@@ -24,14 +24,14 @@ class AbilityApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(AbilitySchema(many=True))
+    @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True))
     async def get_abilities(self, request: web.Request):
         abilities = await self.get_all_objects(request)
         return web.json_response(abilities)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(AbilitySchema)
+    @aiohttp_apispec.response_schema(AbilitySchema(partial=True))
     async def get_ability_by_id(self, request: web.Request):
         ability = await self.get_object(request)
         return web.json_response(ability)
@@ -45,7 +45,7 @@ class AbilityApi(BaseObjectApi):
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
-    @aiohttp_apispec.request_schema(AbilitySchema)
+    @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def create_or_update_ability(self, request: web.Request):
         ability = await self.create_or_update_on_disk_object(request)
@@ -53,7 +53,7 @@ class AbilityApi(BaseObjectApi):
         return web.json_response(ability)
 
     @aiohttp_apispec.docs(tags=['abilities'])
-    @aiohttp_apispec.request_schema(AbilitySchema)
+    @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def update_ability(self, request: web.Request):
         ability = await self.update_on_disk_object(request)
