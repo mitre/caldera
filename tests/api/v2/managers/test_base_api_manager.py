@@ -53,7 +53,7 @@ def test_find_objects(agent):
         agent(paw='agent0', sleep_min=2, sleep_max=5, watchdog=0),
         agent(paw='agent1', sleep_min=2, sleep_max=5, watchdog=0)
     ]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     agents = list(manager.find_objects('agents'))
 
@@ -71,7 +71,7 @@ def test_find_objects_with_search(agent):
         agent(paw='agent2', sleep_min=2, sleep_max=5, watchdog=0),
         agent(paw='agent3', sleep_min=3, sleep_max=5, watchdog=0),
     ]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     search = {search_property: search_value}
     agents = list(manager.find_objects('agents', search=search))
@@ -92,7 +92,7 @@ def test_find_object(agent):
         agent(paw='agent2', sleep_min=2, sleep_max=5, watchdog=0),
         test_agent,
     ]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     search = {search_property: search_value}
     agents = list(manager.find_objects('agents', search=search))
@@ -105,7 +105,7 @@ def test_dump(data_svc, agent):
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc)
+    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent)
 
     for key in manager_dumped_agent:
@@ -118,7 +118,7 @@ def test_dump_with_exclude(data_svc, agent):
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc)
+    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent, exclude=[exclude_key])
 
     assert exclude_key in dumped_agent
@@ -133,7 +133,7 @@ def test_dump_with_include(data_svc, agent):
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc)
+    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent, include=[include_key])
 
     assert include_key in dumped_agent
@@ -154,7 +154,7 @@ def test_find_and_dump_objects_with_sort(agent):
         agent(paw='agent4', sleep_min=2, sleep_max=5, watchdog=0),
         agent(paw='agent2', sleep_min=2, sleep_max=5, watchdog=0),
     ]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     dumped_agents = manager.find_and_dump_objects('agents', sort=sort_property)
 
@@ -169,7 +169,7 @@ def test_find_and_dump_object(agent):
     test_agent = agent(paw='agent0', sleep_min=1, sleep_max=5, watchdog=0)
     stub_data_svc = StubDataService()
     stub_data_svc.ram['agents'] = [test_agent]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     dumped_agent = manager.find_and_dump_object('agents')
 
@@ -179,7 +179,7 @@ def test_find_and_dump_object(agent):
 def test_create_object_from_schema():
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = []
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
     obj = manager.create_object_from_schema(TestSchema, data)
@@ -190,7 +190,7 @@ def test_create_object_from_schema():
 def test_create_object_from_schema_duplicate():
     stub_data_svc = StubDataService()
     stub_data_svc.ram['tests'] = []
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'test_name', 'value': 'test_value'}
     manager.create_object_from_schema(TestSchema, data)
@@ -205,7 +205,7 @@ def test_find_and_update_object(agent):
         TestObject(name='name0', value='value0'),
         TestObject(name='name1', value='value1'),
     ]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'value': 'value1'}
     search = {'name': 'name0'}
@@ -220,7 +220,7 @@ def test_replace_object(agent):
     stub_data_svc = StubDataService()
     test_obj = TestObject(name='name0', value='value0')
     stub_data_svc.ram['tests'] = [test_obj]
-    manager = BaseApiManager(data_svc=stub_data_svc)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
 
     data = {'name': 'name0'}
     manager.replace_object(test_obj, data)

@@ -73,7 +73,8 @@ class TestRestSvc:
         # PART A: Create an operation
         expected_operation = {'name': 'My Test Operation',
                               'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc',
-                                            'adversary_id': 'ad-hoc', 'atomic_ordering': [], 'objective': None,
+                                            'adversary_id': 'ad-hoc', 'atomic_ordering': [],
+                                            'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
                                             'tags': [], 'has_repeatable_abilities': False}, 'state': 'finished',
                               'planner': {'name': 'test', 'description': None, 'module': 'test',
                                           'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
@@ -143,7 +144,8 @@ class TestRestSvc:
     def test_create_operation(self, loop, rest_svc, data_svc):
         want = {'name': 'Test',
                 'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc', 'adversary_id': 'ad-hoc',
-                              'atomic_ordering': [], 'objective': None, 'tags': [], 'has_repeatable_abilities': False},
+                              'atomic_ordering': [], 'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc', 'tags': [],
+                              'has_repeatable_abilities': False},
                 'state': 'finished',
                 'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
                             'params': {},
