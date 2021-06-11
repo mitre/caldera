@@ -1,5 +1,7 @@
 import collections
 import os
+import re
+import uuid
 
 import marshmallow as ma
 
@@ -12,13 +14,13 @@ from app.utility.base_world import AccessSchema
 
 
 class AbilitySchema(ma.Schema):
-    ability_id = ma.fields.String(required=False)
-    tactic = ma.fields.String(missing=None)
+    ability_id = ma.fields.String()
+    tactic = ma.fields.String(required=True)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), required=True)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -55,7 +57,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def executors(self):
         yield from self._executor_map.values()
 
-    def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
+    def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, **kwargs):
         super().__init__()
@@ -161,7 +163,24 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.buckets.append(bucket)
 
     def verify(self, log):
-        pass
+        # Set ability ID if undefined
+        if not self.ability_id:
+            self.ability_id = str(uuid.uuid4())
+        # Validate ID, used for file creation
+        validator = re.compile(r'^[a-zA-Z0-9-_]+$')
+        if not self.ability_id or not validator.match(self.ability_id):
+            self.log.debug('Invalid ability ID "%s". IDs can only contain '
+                           'alphanumeric characters, hyphens, and underscores.' % self.ability_id)
+
+        # Validate tactic, used for directory creation, lower case if present
+        if not self.tactic or not validator.match(self.tactic):
+            self.log.debug('Invalid ability tactic "%s". Tactics can only contain '
+                           'alphanumeric characters, hyphens, and underscores.' % self.tactic)
+        self.tactic = self.tactic.lower()
+
+        # Validate platforms, ability will not be loaded if empty
+        if not self._executor_map:
+            self.log.debug('At least one executor is required to save ability.')
 
     @staticmethod
     def _make_executor_map_key(name, platform):
