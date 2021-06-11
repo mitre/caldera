@@ -22,17 +22,17 @@ def setup_rest_svc_test(loop, data_svc):
                                                 'encryption_key': 'ADMIN123',
                                                 'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='123', executors=[
+        Ability(ability_id='123', tactic='test', executors=[
             Executor(name='psh', platform='windows', command='curl #{app.contact.http}')
         ])
     ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='456', executors=[
+        Ability(ability_id='456', tactic='test', executors=[
             Executor(name='sh', platform='linux', command='whoami')
         ])
     ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='789', executors=[
+        Ability(ability_id='789', tactic='test', executors=[
             Executor(name='sh', platform='linux', command='hostname')
         ])
     ))

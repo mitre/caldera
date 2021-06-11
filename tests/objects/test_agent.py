@@ -10,21 +10,21 @@ class TestAgent:
 
     def test_task_no_facts(self, loop, data_svc, obfuscator, init_base_world):
         executor = Executor(name='psh', platform='windows', command='whoami')
-        ability = Ability(ability_id='123', executors=[executor])
+        ability = Ability(ability_id='123', tactic='test', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
         loop.run_until_complete(agent.task([ability], obfuscator='plain-text'))
         assert 1 == len(agent.links)
 
     def test_task_missing_fact(self, loop, obfuscator, init_base_world):
         executor = Executor(name='psh', platform='windows', command='net user #{domain.user.name} /domain')
-        ability = Ability(ability_id='123', executors=[executor])
+        ability = Ability(ability_id='123', tactic='test', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
         loop.run_until_complete(agent.task([ability], obfuscator='plain-text'))
         assert 0 == len(agent.links)
 
     def test_task_with_facts(self, loop, obfuscator, init_base_world):
         executor = Executor(name='psh', platform='windows', command='net user #{domain.user.name} /domain')
-        ability = Ability(ability_id='123', executors=[executor])
+        ability = Ability(ability_id='123', tactic='test', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
         fact = Fact(trait='domain.user.name', value='bob')
 
@@ -34,7 +34,7 @@ class TestAgent:
     def test_builtin_fact_replacement(self, loop, obfuscator, init_base_world):
         executor = Executor(name='psh', platform='windows',
                             command='echo #{paw} #{server} #{group} #{location} #{exe_name} #{upstream_dest}')
-        ability = Ability(ability_id='123', executors=[executor])
+        ability = Ability(ability_id='123', tactic='test', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows',
                       group='my_group', server='http://localhost:8888', location='testlocation', exe_name='testexe')
         loop.run_until_complete(agent.task([ability], 'plain-text', []))
@@ -47,7 +47,7 @@ class TestAgent:
     def test_builtin_fact_replacement_with_upstream_dest(self, loop, obfuscator, init_base_world):
         executor = Executor(name='psh', platform='windows',
                             command='echo #{paw} #{server} #{group} #{location} #{exe_name} #{upstream_dest}')
-        ability = Ability(ability_id='123', executors=[executor])
+        ability = Ability(ability_id='123', tactic='test', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows',
                       group='my_group', server='http://10.10.10.10:8888', location='testlocation', exe_name='testexe',
                       upstream_dest='http://127.0.0.1:12345')
@@ -62,7 +62,7 @@ class TestAgent:
         executor_test = executor(name='test', platform='windows')
         executor_cmd = executor(name='cmd', platform='windows')
         executor_psh = executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123', executors=[executor_test, executor_cmd, executor_psh])
+        test_ability = ability(ability_id='123', tactic='test', executors=[executor_test, executor_cmd, executor_psh])
 
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['psh', 'cmd'], platform='windows')
 
@@ -73,7 +73,7 @@ class TestAgent:
         executor_test = executor(name='test', platform='windows')
         executor_cmd = executor(name='cmd', platform='windows')
         executor_psh = executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123', executors=[executor_test, executor_cmd, executor_psh])
+        test_ability = ability(ability_id='123', tactic='test', executors=[executor_test, executor_cmd, executor_psh])
 
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
 
