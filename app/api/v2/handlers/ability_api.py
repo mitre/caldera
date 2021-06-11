@@ -40,8 +40,7 @@ class AbilityApi(BaseObjectApi):
     @aiohttp_apispec.request_schema(AbilitySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def create_ability(self, request: web.Request):
-        ability = await self.create_or_update_on_disk_object(request)
-        ability = await self._api_manager.verify_ability(ability)
+        ability = await self.create_on_disk_object(request)
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
@@ -49,15 +48,13 @@ class AbilityApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def create_or_update_ability(self, request: web.Request):
         ability = await self.create_or_update_on_disk_object(request)
-        ability = await self._api_manager.verify_ability(ability)
-        return web.json_response(ability)
+        return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
     @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def update_ability(self, request: web.Request):
         ability = await self.update_on_disk_object(request)
-        ability = await self._api_manager.verify_ability(ability)
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
