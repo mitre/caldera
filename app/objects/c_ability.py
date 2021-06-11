@@ -1,7 +1,5 @@
 import collections
 import os
-import re
-import uuid
 
 import marshmallow as ma
 
@@ -15,12 +13,12 @@ from app.utility.base_world import AccessSchema
 
 class AbilitySchema(ma.Schema):
     ability_id = ma.fields.String()
-    tactic = ma.fields.String()
+    tactic = ma.fields.String(required=True)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), required=True)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -161,26 +159,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
     async def add_bucket(self, bucket):
         if bucket not in self.buckets:
             self.buckets.append(bucket)
-
-    def verify(self, log):
-        # Set ability ID if undefined
-        if not self.ability_id:
-            self.ability_id = str(uuid.uuid4())
-        # Validate ID, used for file creation
-        validator = re.compile(r'^[a-zA-Z0-9-_]+$')
-        if not self.ability_id or not validator.match(self.ability_id):
-            self.log.debug('Invalid ability ID "%s". IDs can only contain '
-                           'alphanumeric characters, hyphens, and underscores.' % self.ability_id)
-
-        # Validate tactic, used for directory creation, lower case if present
-        if not self.tactic or not validator.match(self.tactic):
-            self.log.debug('Invalid ability tactic "%s". Tactics can only contain '
-                           'alphanumeric characters, hyphens, and underscores.' % self.tactic)
-        self.tactic = self.tactic.lower()
-
-        # Validate platforms, ability will not be loaded if empty
-        if not self._executor_map:
-            self.log.debug('At least one executor is required to save ability.')
 
     @staticmethod
     def _make_executor_map_key(name, platform):
