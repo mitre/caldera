@@ -284,7 +284,7 @@ class BaseKnowledgeService(BaseService):
         tarball_path = os.path.join(DATA_BACKUP_DIR, f'backup-{timestamp}.tar.gz')
 
         with tarfile.open(tarball_path, 'w:gz') as tarball:
-            if os.path.isdir(FACT_STORE_PATH):
+            if os.path.isfile(FACT_STORE_PATH):
                 tarball.add(FACT_STORE_PATH)
                 BaseKnowledgeService._delete_file(FACT_STORE_PATH)
 

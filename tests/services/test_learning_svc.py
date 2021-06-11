@@ -20,17 +20,20 @@ def setup_learning_service(loop, data_svc, ability, operation, link):
 
 class TestLearningSvc:
 
-    def test_learn(self, loop, setup_learning_service, learning_svc):
+    def test_learn(self, loop, setup_learning_service, learning_svc, knowledge_svc):
         operation, link = setup_learning_service
         operation.add_link(link)
+        all_facts = loop.run_until_complete(operation.all_facts())
         loop.run_until_complete(learning_svc.learn(
-            facts=operation.all_facts(),
+            facts=all_facts,
             link=link,
             blob=BaseWorld.encode_string('i contain 1 ip address 192.168.0.1 and one file /etc/host.txt. that is all.'))
         )
+        knowledge_facts = loop.run_until_complete(knowledge_svc.get_facts(dict(source=link.id)))
         assert len(link.facts) == 2
+        assert len(knowledge_facts) == 2
 
-    def test_build_relationships(self, loop, setup_learning_service, learning_svc):
+    def test_build_relationships(self, loop, setup_learning_service, learning_svc, knowledge_svc):
         _, link = setup_learning_service
         learning_svc.model.add(frozenset({'host.user.name', 'target.org.name'}))
         learning_svc.model.add(frozenset({'host.file.extension', 'host.user.name', 'domain.user.name'}))

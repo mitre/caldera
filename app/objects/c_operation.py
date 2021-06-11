@@ -15,6 +15,7 @@ from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
 from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
+from app.objects.secondclass.c_fact import OriginType
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
@@ -135,7 +136,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         seeded_facts = []
         if self.source:
-            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source))
+            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source.id))
         learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
         learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
@@ -150,7 +151,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         seeded_relationships = []
         if self.source:
-            seeded_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source))
+            seeded_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source.id))
         learned_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.id))
         return seeded_relationships + learned_relationships
 
@@ -290,6 +291,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 if not step.can_ignore()]
 
     async def run(self, services):
+        await self._init_source()
         # load objective
         data_svc = services.get('data_svc')
         await self._load_objective(data_svc)
@@ -341,6 +343,18 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if output and link.output:
             event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
         return event_dict
+
+    async def _init_source(self):
+        # seed knowledge_svc with source facts
+        if self.source:
+            knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+            for f in self.source.facts:
+                f.origin_type = OriginType.SEEDED
+                f.source = self.source.id
+                await knowledge_svc_handle.add_fact(f)
+            for r in self.source.relationships:
+                r.origin = self.source.id
+                await knowledge_svc_handle.add_relationship(r)
 
     async def _cleanup_operation(self, services):
         cleanup_count = 0

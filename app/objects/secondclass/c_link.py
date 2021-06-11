@@ -239,7 +239,7 @@ class Link(BaseObject):
                 await knowledge_svc_handle.add_fact(f_gen)
             else:
                 existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
-                                                                                   value=fact.value)))[0]
+                                                                                    value=fact.value)))[0]
                 existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
@@ -263,9 +263,12 @@ class Link(BaseObject):
         return new_fact.name[:5] == 'host.' and self.paw != fact.collected_by
 
     async def _update_scores(self, operation, increment):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         for uf in self.used:
             all_facts = await operation.all_facts() if operation else self.facts
             for found_fact in all_facts:
                 if found_fact.unique == uf.unique:
                     found_fact.score += increment
+                    knowledge_svc_handle.update_fact(dict(trait=found_fact.trait, value=found_fact.value,
+                                                          source=found_fact.source), dict(score=found_fact.score))
                     break

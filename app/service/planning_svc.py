@@ -245,8 +245,9 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if all stopping conditions have not been met
         :rtype: bool
         """
+        all_facts = await operation.all_facts()
         for sc in stopping_conditions:
-            if not await self._stopping_condition_met(operation.all_facts(), sc):
+            if not await self._stopping_condition_met(all_facts, sc):
                 return False
         return True
 
