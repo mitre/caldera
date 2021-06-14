@@ -37,11 +37,18 @@ class TestLink:
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
+        executor_changes = dict(
+            executor='psh',
+            action='update-path',
+            value='C:\\Users\\Public\\p2.exe'
+        )
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
-                         paw='123456', ability=test_ability, id=111111, executor=test_executor)
+                         paw='123456', ability=test_ability, id=111111, executor=test_executor,
+                         executor_changes=executor_changes)
         test_link.used = [fact]
         test_link2 = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 222222"',
-                          paw='123456', ability=test_ability, id=222222, executor=test_executor)
+                          paw='123456', ability=test_ability, id=222222, executor=test_executor,
+                          executor_changes=executor_changes)
         test_link2.used = [fact]
         assert test_link == test_link2
 

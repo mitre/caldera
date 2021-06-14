@@ -47,6 +47,7 @@ class LinkSchema(ma.Schema):
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
     agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
+    executor_changes = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -138,7 +139,8 @@ class Link(BaseObject):
         return variable in cls.RESERVED
 
     def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
-                 host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
+                 host=None, deadman=False, used=None, relationships=None, agent_reported_time=None,
+                 executor_changes=None):
         super().__init__()
         self.id = str(id)
         self.command = command
@@ -163,6 +165,7 @@ class Link(BaseObject):
         self.output = False
         self.deadman = deadman
         self.agent_reported_time = agent_reported_time
+        self.executor_changes = executor_changes if executor_changes else {}
 
     def __eq__(self, other):
         if isinstance(other, Link):
