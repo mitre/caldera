@@ -270,13 +270,15 @@ class BaseKnowledgeService(BaseService):
 
     @staticmethod
     def _destroy():
-        ###
-        # Reset the caldera data directory and server state.
-        #
-        # This creates a gzipped tarball backup of the data files tracked by caldera.
-        # Paths are preserved within the tarball, with all files having "data/" as the
-        # root.
-        ###
+        """
+        Reset the caldera data directory and server state.
+
+        This creates a gzipped tarball backup of the data files tracked by caldera.
+        Paths are preserved within the tarball, with all files having "data/" as the
+        root.
+
+        :return: None
+        """
         if not os.path.exists(DATA_BACKUP_DIR):
             os.mkdir(DATA_BACKUP_DIR)
 
@@ -289,16 +291,20 @@ class BaseKnowledgeService(BaseService):
                 BaseKnowledgeService._delete_file(FACT_STORE_PATH)
 
     async def _save_state(self):
-        ###
-        # Save the current internal store state
-        ###
+        """
+        Saves the current internal store state to disk
+
+        :return: None
+        """
         await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram),
                                                      FACT_STORE_PATH.split('/')[0])
 
     async def _restore_state(self):
-        ###
-        # Restore a saved internal store state
-        ###
+        """
+        Loads the internal store state from disk
+
+        :return: None
+        """
         if os.path.exists(FACT_STORE_PATH):
             _, store = await self.get_service('file_svc').read_file(FACT_STORE_PATH.split(os.path.sep)[1],
                                                                     FACT_STORE_PATH.split(os.path.sep)[0])

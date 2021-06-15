@@ -6,6 +6,7 @@ from importlib import import_module
 
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_fact import OriginType
+from app.objects.secondclass.c_link import _update_scores
 from app.service.interfaces.i_learning_svc import LearningServiceInterface
 from app.utility.base_service import BaseService
 
@@ -46,21 +47,10 @@ class LearningService(LearningServiceInterface, BaseService):
                     found_facts.append(fact)
             except Exception as e:
                 self.log.error(e)
-        await self._update_scores(link, facts, increment=len(found_facts))
+        await _update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
         await self._build_relationships(link, found_facts, operation)
 
     """ PRIVATE """
-
-    @staticmethod
-    async def _update_scores(link, facts, increment):
-        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-        for uf in link.facts:
-            for found_fact in facts:
-                if found_fact.unique == uf.unique:
-                    found_fact.score += increment
-                    knowledge_svc_handle.update_fact(dict(trait=found_fact.trait, value=found_fact.value,
-                                                          source=found_fact.source), dict(score=found_fact.score))
-                    break
 
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):

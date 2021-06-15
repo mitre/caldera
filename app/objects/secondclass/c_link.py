@@ -169,7 +169,7 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
-                await self._update_scores(operation, increment=len(relationships))
+                await _update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
                 await self._create_relationships(relationships, operation)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
@@ -262,13 +262,14 @@ class Link(BaseObject):
     def _is_new_host_fact(self, new_fact, fact):
         return new_fact.name[:5] == 'host.' and self.paw != fact.collected_by
 
-    async def _update_scores(self, operation, increment):
-        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-        for uf in self.used:
-            all_facts = await operation.all_facts() if operation else self.facts
-            for found_fact in all_facts:
-                if found_fact.unique == uf.unique:
-                    found_fact.score += increment
-                    knowledge_svc_handle.update_fact(dict(trait=found_fact.trait, value=found_fact.value,
-                                                          source=found_fact.source), dict(score=found_fact.score))
-                    break
+
+async def _update_scores(operation, increment, used, facts):
+    knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+    for uf in used:
+        all_facts = await operation.all_facts() if operation else facts
+        for found_fact in all_facts:
+            if found_fact.unique == uf.unique:
+                found_fact.score += increment
+                await knowledge_svc_handle.update_fact(dict(trait=found_fact.trait, value=found_fact.value,
+                                                            source=found_fact.source), dict(score=found_fact.score))
+                break
