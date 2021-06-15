@@ -6,32 +6,20 @@ function sharedData() {
         openTabs: [],
         activeTabIndex: 0,
 
-        async setTabContent(data) {
-            console.log('got data', data);
-            if (!window.DOMParser) return false;
-            var parser = new DOMParser();
-            try {
-                const parsedData = parser.parseFromString(data, 'text/html');
-                console.log('PARSED', parsedData);
-                this.openTabs[this.activeTabIndex].content = parsedData;
-                console.log('after', this.openTabs[this.activeTabIndex])
-                return parsedData;
-            } catch(err) {
-                return false;
-            }
+        setTabContent(tab, data) {
+            data.text().then(result => {
+                document.getElementById(this.openTabs[this.activeTabIndex].contentID).innerHTML = result.toString();
+            })
         },
 
-        getTabContent(tab, address) {
-            restRequest('GET', null, this.setTabContent, address);
+        getTabContent(tab) {
+            restRequest('GET', null, (data) => { this.setTabContent(tab, data)}, tab.address);
         },
 
         addTab(tabName, address) {
-            const tab = { name: tabName, content: null};
-            this.getTabContent(tab, address)
+            const tab = {name: tabName, contentID: 'tab-'+tabName, address: address};
             this.openTabs.push(tab);
             this.activeTabIndex = this.openTabs.length - 1;
-            console.log('new tab in tabs ', this.openTabs);
-            console.log('active', this.activeTabIndex, this.openTabs[this.activeTabIndex])
         },
     }
 }
@@ -39,13 +27,15 @@ function sharedData() {
 
 /* HELPFUL functions to call */
 
-function restRequest(requestType, data, callback = () => { console.log('do nothing')}, endpoint = '/api/rest') {
+function restRequest(requestType, data, callback = () => {
+    console.log('do nothing')
+}, endpoint = '/api/rest') {
     const requestData = requestType === 'GET' ?
-        { method: requestType, headers: {'Content-Type': 'application/json'} } :
-        { method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) }
+        {method: requestType, headers: {'Content-Type': 'application/json'}} :
+        {method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}
 
     fetch(endpoint, requestData)
-        .then(response => callback(response))
+        .then(data => callback(data))
         .catch((error) => console.error(error));
 }
 

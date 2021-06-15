@@ -12,31 +12,32 @@
         <script src="/gui/js/feather.min.js"></script>
     </head>
     <body>
-        <main class="main" x-data="sharedData()" x-init="$watch('openTabs', (tabs) => openTabs = tabs)">
+        <main class="main" x-data="sharedData()">
             <div class="navigation" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
                 <div class="nav-logo"></div>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
                     <ul class="menu-list">
-                      <li><a onclick="viewSection('agents', '/campaign/agents')">agents</a></li>
-                      <li onclick="viewSection('agents', '/campaign/profiles')"><a>adversaries</a></li>
-                      <li onclick="viewSection('agents', '/campaign/operations')"><a>operations</a></li>
+                      <li><a x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
+                      <li x-on:click="addTab('adversaries', '/campaign/profiles')"><a>adversaries</a></li>
+                      <li x-on:click="addTab('operations', '/campaign/operations')"><a>operations</a></li>
                     </ul>
                     <p class="menu-label">Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
-                            <li><a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
+                            <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
                         {% endfor %}
                     </ul>
                     <p class="menu-label">Configuration</p>
                     <ul class="menu-list">
-                        <li><a onclick="viewSection('sources', '/advanced/sources')">fact sources</a></li>
-                        <li><a onclick="viewSection('objectives', '/advanced/objectives')">objectives</a></li>
-                        <li><a onclick="viewSection('planners', '/advanced/planners')">planners</a></li>
-                        <li><a onclick="viewSection('contacts', '/advanced/contacts')">contacts</a></li>
-                        <li><a onclick="viewSection('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
-                        <li><a onclick="viewSection('configuration', '/advanced/configurations')">configuration</a></li>
-                        <li><a onclick="viewSection('exfilled', '/advanced/exfills')">exfilled files</a></li>
+                        <li><a x-on:click="addTab('example', 0)">example</a></li>
+                        <li><a x-on:click="addTab('sources', '/advanced/sources')">fact sources</a></li>
+                        <li><a x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
+                        <li><a x-on:click="addTab('planners', '/advanced/planners')">planners</a></li>
+                        <li><a x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
+                        <li><a x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
+                        <li><a x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
+                        <li><a x-on:click="addTab('exfilled', '/advanced/exfills')">exfilled files</a></li>
                     </ul>
                     <p class="menu-label">Administrative</p>
                     <ul class="menu-list">
@@ -66,36 +67,22 @@
                     <!-- TODO: Make these tabs toggle-able (i.e., I can click into "agents" and have the contents appear in the space beneath) -->
                     <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
-                        <li class="is-active" draggable="true">
-                            <a>
-                                <span>Example Tab 1</span>
-                                <span class="icon is-small is-close"><i data-feather="x"></i></span>
-                                <!-- TODO: Have "X" icon close the tab -->
-                            </a>
-                        </li>
-                        <li draggable="true">
-                            <a>
-                                <span>Example Tab 2</span>
-                                <span class="icon is-small is-close"><i data-feather="x"></i></span>
-                            </a>
-                        </li>
-                        <li draggable="true">
-                            <a>
-                                <span>Example Tab 3</span>
-                                <span class="icon is-small is-close"><i data-feather="x"></i></span>
-                            </a>
-                        </li>
-                        <li draggable="true">
-                            <a>
-                                <span>Example Tab 4</span>
-                                <span class="icon is-small is-close"><i data-feather="x"></i></span>
-                            </a>
-                        </li>
+                        <template x-for="(tab, index) in openTabs" :key="index">
+                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
+                                <a x-on:click="activeTabIndex = index">
+                                    <span x-text="tab.name"></span>
+                                    <span class="icon is-small is-close"><i data-feather="x"></i></span>
+                                    <!-- TODO: Have "X" icon close the tab -->
+                                </a>
+                            </li>
+                        </template>
                     </ul>
                 </div>
 
                 <div id="active-tab-display" class="container">
-
+                    <template x-for="(tab, index) in openTabs" :key="index">
+                        <div x-bind:id="tab.contentID" x-init="getTabContent(tab)" x-show="openTabs[activeTabIndex] === tab"></div>
+                    </template>
                 </div>
             </div>
         </main>
