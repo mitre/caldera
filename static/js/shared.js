@@ -6,10 +6,6 @@ function sharedData() {
         openTabs: [],
         activeTabIndex: 0,
 
-        initTabWatcher() {
-            this.$watch('openTabs', (tabs) => this.openTabs = tabs)
-        },
-
         async setTabContent(data) {
             console.log('got data', data);
             if (!window.DOMParser) return false;

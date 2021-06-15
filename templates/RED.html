@@ -12,7 +12,7 @@
         <script src="/gui/js/feather.min.js"></script>
     </head>
     <body>
-        <main class="main" x-data="sharedData()" x-init="initTabWatcher">
+        <main class="main" x-data="sharedData()" x-init="$watch('openTabs', (tabs) => openTabs = tabs)">
             <div class="navigation" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
                 <div class="nav-logo"></div>
                 <aside class="menu">
