@@ -36,8 +36,15 @@ main.main {
 }
 
 .navigation {
-  width: 300px;
   background-color: black;
+}
+
+.navigation.expanded {
+  width: 300px;
+}
+
+.navigation.collapsed {
+  width: 200px;
 }
 
 #nav-footer {
@@ -48,7 +55,9 @@ main.main {
   background-image: url('/gui/img/back-red.png');
   background-size: contain;
   width: 100%;
-  height: 240px;
+  height: 15vw;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .tabs {

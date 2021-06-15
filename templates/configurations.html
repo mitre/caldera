@@ -62,11 +62,11 @@
     });
     function updateConfig(prop) {
         stream('You updated property "'+prop+'". Good work!');
-        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value});
     }
     function enablePlugin(name) {
         stream(name + ' plugin will be enabled on the next server restart.');
-        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
+        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name});
     }
     //# sourceURL=configurations.js
 </script>

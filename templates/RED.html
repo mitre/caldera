@@ -12,8 +12,8 @@
         <script src="/gui/js/feather.min.js"></script>
     </head>
     <body>
-        <main class="main">
-            <div class="navigation">
+        <main class="main" x-data="sharedData()" x-init="initTabWatcher">
+            <div class="navigation" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
                 <div class="nav-logo"></div>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
@@ -45,7 +45,18 @@
                     </ul>
                   </aside>
                   <div id="nav-footer" class="has-text-centered">
-                    <a><span class="icon"><i data-feather="chevrons-left"></i></span></a>
+<!--                      TODO: need to fix button icon-->
+                      <a x-on:click="isNavMinimized = !isNavMinimized"><span class="icon"><i data-feather="chevrons-left"></i></span></a>
+                      <a x-on:click="isNavMinimized = !isNavMinimized">
+                        <span class="icon">
+                            <template x-if="isNavMinimized">
+                                <i data-feather="chevrons-right"></i>
+                            </template>
+                            <template x-if="!isNavMinimized">
+                                <i data-feather="chevrons-left"></i>
+                            </template>
+                        </span>
+                      </a>
                   </div>
             </div>
 
@@ -93,6 +104,7 @@
         <script src="/gui/jquery/jquery.js"></script>
         <script src="/gui/jquery/jquery.multi-select.js"></script>
         <script src="/gui/js/shared.js"></script>
+        <script defer src="/gui/js/alpine.min.js"></script>
         <script>
             // Add logos where specified in template
             feather.replace()

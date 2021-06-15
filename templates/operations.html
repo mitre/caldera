@@ -365,7 +365,7 @@
         function deleteCallback(data){
             // Remove operation from main view
             $('.op-selected').css('visibility', 'hidden');
-            
+
             // Remove operation from sidebar dropdown
             $('#operation-list option[value="' + operation_id + '"]').remove();
             $('#operationDefault').prop('selected', true);
@@ -384,7 +384,7 @@
         let op = buildOperationObject();
         let time = document.getElementById("schedule-time").value;
         restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule':
-                {'hour': parseInt(time.split(":")[0]), 'minute': parseInt(time.split(":")[1])}}, doNothing);
+                {'hour': parseInt(time.split(":")[0]), 'minute': parseInt(time.split(":")[1])}});
         stream('New operation scheduled!');
     }
 
@@ -429,14 +429,14 @@
     function changeCurrentOperationState(newState){
         let op_id = $('#operation-list option:selected').attr('value');
         stream('Changing operation state to '+newState);
-        restRequest('POST', {'index':'operation','op_id': op_id, 'state': newState}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id, 'state': newState}, `/api/rest`);
     }
 
     function updateObfuscation() {
         let op_id = $('#operation-list option:selected').attr('value');
         let newObfuscation = $('#currentObfuscation').val();
         stream('Changing operation obfuscation to '+newObfuscation);
-        restRequest('POST', {'index':'operation','op_id': op_id, 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id, 'obfuscator': newObfuscation}, `/api/rest`);
     }
 
     function handleStartActionCallback(data){
@@ -874,12 +874,12 @@
         if(command) {
             data['command'] = command;
         }
-        restRequest('PUT', data, doNothing);
+        restRequest('PUT', data);
     }
 
     function toggleHil(){
         let op_id = $('#operation-list option:selected').attr('value');
-        restRequest('POST', {'index':'operation','op_id': op_id,'autonomous':'toggleMe'}, doNothing, `/api/rest`);
+        restRequest('POST', {'index':'operation','op_id': op_id,'autonomous':'toggleMe'}, `/api/rest`);
     }
 
     function checkOpformValid(){
