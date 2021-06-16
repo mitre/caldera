@@ -7,9 +7,8 @@ function sharedData() {
         activeTabIndex: 0,
 
         setTabContent(tab, data) {
-            data.text().then(result => {
-                document.getElementById(this.openTabs[this.activeTabIndex].contentID).innerHTML = result.toString();
-            })
+            data.text().then(result => setInnerHTML(
+                document.getElementById(this.openTabs[this.activeTabIndex].contentID), result.toString()))
         },
 
         getTabContent(tab) {
@@ -95,6 +94,18 @@ function stream(msg, speak = false) {
 }
 
 /* SECTIONS */
+
+// Alternative to JQuery parseHTML(keepScripts=true)
+function setInnerHTML(elm, html) {
+    elm.innerHTML = html;
+    Array.from(elm.querySelectorAll("script")).forEach( oldScript => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes)
+            .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
 
 function viewSection(name, address) {
     function display(data) {
