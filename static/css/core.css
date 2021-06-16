@@ -3,7 +3,7 @@ html, body {
 }
 
 .icon.is-close:hover {
-  background-color: #854747;
+  background-color: #929292;
   border-radius: 50%;
 }
 
@@ -14,12 +14,14 @@ main.main {
   flex-direction: row;
 }
 
-.main-content {
+.main-content.collapsed {
   width: calc(100% - 320px);
+}
+.main-content.expanded {
+  width: calc(100% - 220px);
 }
 
 .menu-label {
-  background-color: #8B0000;
   color: white !important;
   padding: 8px;
   border-radius: 6px;
@@ -70,4 +72,5 @@ main.main {
 }
 .tabs ul {
   padding-bottom: 10px;
+  min-height: 52px;
 }

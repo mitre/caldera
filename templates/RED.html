@@ -8,12 +8,12 @@
         <link rel="stylesheet" href="/gui/css/basic.css">
         <link rel="stylesheet" href="/gui/css/timeline.css">
         <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
-        <link rel="stylesheet" href="/gui/css/custom-bulma.css">
-        <script src="/gui/js/lib/feather.min.js"></script>
+        <link rel="stylesheet" href="/gui/css/custom-bulma-red.css">
+        <link href="/gui/css/fa-all.min.css" rel="stylesheet">
     </head>
     <body>
         <main class="main" x-data="sharedData()">
-            <div class="navigation" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
+            <div class="navigation" x-bind:class="isNavMinimized ? 'collapsed' : 'expanded'">
                 <div class="nav-logo"></div>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
@@ -46,33 +46,28 @@
                     </ul>
                   </aside>
                   <div id="nav-footer" class="has-text-centered">
-<!--                      TODO: need to fix button icon-->
-                      <a x-on:click="isNavMinimized = !isNavMinimized"><span class="icon"><i data-feather="chevrons-left"></i></span></a>
                       <a x-on:click="isNavMinimized = !isNavMinimized">
                         <span class="icon">
                             <template x-if="isNavMinimized">
-                                <i data-feather="chevrons-right"></i>
+                                <i class="fas fa-chevron-right"></i>
                             </template>
                             <template x-if="!isNavMinimized">
-                                <i data-feather="chevrons-left"></i>
+                                <i class="fas fa-chevron-left"></i>
                             </template>
                         </span>
                       </a>
                   </div>
             </div>
 
-            <div class="main-content">
+            <div class="main-content" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
                 <div class="tabs is-boxed">
-                    <!-- TODO: Create a new tab for each window user opens, or switch to the tab if already exists -->
-                    <!-- TODO: Make these tabs toggle-able (i.e., I can click into "agents" and have the contents appear in the space beneath) -->
                     <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
                             <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
                                 <a x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
-                                    <span x-on:click="deleteTab(index)" class="icon is-small is-close"><i data-feather="x"></i></span>
-                                    <!-- TODO: Have "X" icon close the tab -->
+                                    <span x-on:click="deleteTab(index)" class="icon is-small is-close"><i class="fas fa-times"></i></span>
                                 </a>
                             </li>
                         </template>
@@ -92,9 +87,5 @@
         <script src="/gui/jquery/jquery.multi-select.js"></script>
         <script src="/gui/js/shared.js"></script>
         <script defer src="/gui/js/lib/alpine.min.js"></script>
-        <script>
-            // Add logos where specified in template
-            feather.replace();
-        </script>
     </body>
 </html>

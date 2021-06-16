@@ -1,11 +1,12 @@
 bootstrap_abilities:
 - 43b3754c-def4-4699-a673-1d85648fda6a
+deployments:
+- 0ab383be-b819-41bf-91b9-1bd4404d83bf
+- 1837b43e-4fff-46b2-a604-a602f7540469
+- 2f34977d-9558-4c12-abad-349716777c6b
+- 356d1722-7784-40c4-822b-0cf864b0b36d
 implant_name: splunkd
 sleep_max: 60
 sleep_min: 30
 untrusted_timer: 90
 watchdog: 0
-deployments:
-  - 2f34977d-9558-4c12-abad-349716777c6b #54ndc47
-  - 356d1722-7784-40c4-822b-0cf864b0b36d #Manx
-  - 0ab383be-b819-41bf-91b9-1bd4404d83bf #Ragdoll

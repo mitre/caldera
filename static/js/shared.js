@@ -13,7 +13,7 @@ function sharedData() {
         },
 
         getTabContent(tab) {
-            restRequest('GET', null, (data) => { this.setTabContent(tab, data)}, tab.address);
+            restRequest('GET', null, (data) => { this.setTabContent(tab, data) }, tab.address);
         },
 
         addTab(tabName, address) {
