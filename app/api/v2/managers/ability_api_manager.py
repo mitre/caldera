@@ -43,7 +43,7 @@ class AbilityApiManager(BaseApiManager):
         return await super().create_on_disk_object(data, access, ram_key, id_property, obj_class)
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
-        self.validate_ability_data(create=True, data=data)
+        self.validate_ability_data(create=False, data=data)
         return await super().replace_on_disk_object(obj, data, ram_key, id_property)
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
