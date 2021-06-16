@@ -1,0 +1,18 @@
+{
+  "name": "caldera",
+  "description": "CALDERA core",
+  "repository": "https://github.com/mitre/caldera",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-html": "6.1.2",
+    "eslint-plugin-import": "^2.22.1"
+  },
+  "scripts": {
+    "lint-js": "eslint ./static/js/*.js ./templates/*.html",
+    "lint-js-fix": "eslint ./static/js/*.js ./templates/*.html --fix",
+    "lint-html": "",
+    "lint-css": ""
+  }
+}

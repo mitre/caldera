@@ -138,34 +138,32 @@
 </li>
 
 <script>
-    $(document).ready(function () {
-        stream('New sources will be created after each operation, containing the intelligence that was learned.')
+    $(document).ready(() => {
+        stream('New sources will be created after each operation, containing the intelligence that was learned.');
     });
-    let refresher = setInterval(refresh, 15000);
-    $('.section-profile').bind('destroyed', function() {
-        console.log('sources refresh off');
+    const refresher = setInterval(refresh, 15000);
+    $('.section-profile').bind('destroyed', () => {
         clearInterval(refresher);
     });
 
-    function refresh(){
-        function sourceCallback(data){
-            data.forEach(function(s) {
+    function refresh() {
+        function sourceCallback(data) {
+            data.forEach((s) => {
                 let found = false;
-                $("#profile-source-name > option").each(function() {
-                    if($(this).val() === s.id) {
+                $('#profile-source-name > option').each(function () {
+                    if ($(this).val() === s.id) {
                         found = true;
                     }
                 });
-                if(!found){
+                if (!found) {
                     $('#profile-source-name')
                         .append($('<option></option>')
                             .text(s.name)
-                            .val(s.id)
-                        );
+                            .val(s.id));
                 }
             });
         }
-        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
+        restRequest('POST', { index: 'sources' }, sourceCallback, '/api/rest');
     }
 
     function toggleSourceView() {
@@ -174,11 +172,11 @@
         clearFactCanvas();
     }
 
-    function clearFactCanvas(){
+    function clearFactCanvas() {
         $('#factTbl tbody tr').remove();
         $('#source-rules').empty();
         $('#source-relationships').empty();
-        if($('#source-name').data('id')){
+        if ($('#source-name').data('id')) {
             $('#source-name').data('id', null);
         }
     }
@@ -186,8 +184,8 @@
     function loadSource() {
         function loadSourceCallback(data) {
             clearFactCanvas();
-            let source = $('#source-name');
-            data[0].facts.forEach(f => {
+            const source = $('#source-name');
+            data[0].facts.forEach((f) => {
                 addFactRow(f.trait, f.value);
             });
             source.data('id', data[0].id);
@@ -196,108 +194,101 @@
             populateRelationships(data[0].relationships);
         }
         stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
+        restRequest('POST', { index: 'sources', id: $('#profile-source-name').val() }, loadSourceCallback);
     }
 
-    function addFactRow(trait, value){
+    function addFactRow(trait, value) {
         $('#factTbl tbody').append($('<tr></tr>')
             .append($('<td></td>')
                 .append($('<p></p>')
                     .text(trait)
-                    .attr('contenteditable', 'true')
-                )
-            )
+                    .attr('contenteditable', 'true')))
             .append($('<td></td>')
                 .append($('<p></p>')
                     .text(value)
-                    .attr('contenteditable', 'true')
-                )
-            )
+                    .attr('contenteditable', 'true')))
             .append($('<td></td>')
                 .append($('<p></p>')
                     .html('&#x274C;')
                     .attr('contenteditable', 'true')
-                    .click(event => {
-                        $(event.currentTarget).closest('tr').remove()
+                    .click((event) => {
+                        $(event.currentTarget).closest('tr').remove();
                     })
-                    .css('cursor', 'pointer')
-                )
-            )
-        );
+                    .css('cursor', 'pointer'))));
     }
 
-    function saveSource(){
+    function saveSource() {
         function saveSourceCallback(data) {
             stream('New fact source saved!');
         }
-        let source = $('#source-name');
-        let name = source.text();
+        const source = $('#source-name');
+        const name = source.text();
         let id = source.data('id');
-        if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
+        if (!name) { warn('Please enter a name!'); return; }
+        if (!id) {
             id = uuidv4();
             source.data('id', id);
         }
-        let data = {};
-        data['index'] = 'sources';
-        data['id'] = id;
-        data['name'] = name;
-        data['facts'] = [];
-        data['rules'] = [];
-        data['relationships'] = []
+        const data = {};
+        data.index = 'sources';
+        data.id = id;
+        data.name = name;
+        data.facts = [];
+        data.rules = [];
+        data.relationships = [];
 
         $('#factTbl tbody tr').each(function () {
-            let trait = $(this.cells[0]).text();
-            let value = $(this.cells[1]).text();
-            data['facts'].push({'trait':trait,'value':value});
+            const trait = $(this.cells[0]).text();
+            const value = $(this.cells[1]).text();
+            data.facts.push({ trait, value });
         });
 
         let invalidRules = 0;
-        $('#source-rules li').each(function() {
-            let trait = $(this).find('#trait').val();
-            let match = $(this).find('#match').val();
-            let action = $(this).find('#action').val();
-            if(trait === undefined || match === undefined || action === undefined){
+        $('#source-rules li').each(function () {
+            const trait = $(this).find('#trait').val();
+            const match = $(this).find('#match').val();
+            const action = $(this).find('#action').val();
+            if (trait === undefined || match === undefined || action === undefined) {
                 return;
             }
-            if(action !== 'ALLOW' && action !== 'DENY') {
+            if (action !== 'ALLOW' && action !== 'DENY') {
                 invalidRules += 1;
             }
-            data['rules'].push({'trait': trait, 'match': match, 'action': action});
+            data.rules.push({ trait, match, action });
         });
-        if(invalidRules > 0) {
-            warn(invalidRules + ' invalid rules! Action must be either ALLOW or DENY.');
+        if (invalidRules > 0) {
+            warn(`${invalidRules} invalid rules! Action must be either ALLOW or DENY.`);
             return;
         }
-        if(data['facts'].length === 0 && data['rules'].length === 0) { warn('Sources must have at least one rule or one fact specified'); return; }
-        $('#source-relationships li').each(function() {
-            let sourceTrait = $(this).find('#sourceTrait').val();
-            let sourceValue = $(this).find('#sourceValue').val();
-            let edge = $(this).find('#edge').val();
-            let targetTrait = $(this).find('#targetTrait').val();
-            let targetValue = $(this).find('#targetValue').val();
-            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){
+        if (data.facts.length === 0 && data.rules.length === 0) { warn('Sources must have at least one rule or one fact specified'); return; }
+        $('#source-relationships li').each(function () {
+            const sourceTrait = $(this).find('#sourceTrait').val();
+            const sourceValue = $(this).find('#sourceValue').val();
+            const edge = $(this).find('#edge').val();
+            const targetTrait = $(this).find('#targetTrait').val();
+            const targetValue = $(this).find('#targetValue').val();
+            if (sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined) {
                 return;
             }
-            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
+            data.relationships.push({ source: { trait: sourceTrait, value: sourceValue }, edge, target: { trait: targetTrait, value: targetValue } });
         });
-        if(data['relationships'].length > 0 && data['facts'].length === 0) { warn('Relationships require at least one fact to be specified.'); return; }
+        if (data.relationships.length > 0 && data.facts.length === 0) { warn('Relationships require at least one fact to be specified.'); return; }
         restRequest('PUT', data, saveSourceCallback);
     }
 
-    function viewRules(){
-        document.getElementById("rule-modal").style.display = "block";
-        let sourceName = $('#source-name').text();
+    function viewRules() {
+        document.getElementById('rule-modal').style.display = 'block';
+        const sourceName = $('#source-name').text();
         $('#rules-name').text(sourceName);
     }
 
-    function applyRules(rules){
-        rules.forEach(r => {
-            let template = $("#rule-template").clone();
+    function applyRules(rules) {
+        rules.forEach((r) => {
+            const template = $('#rule-template').clone();
             template.removeAttr('id');
             template.find('#trait').val(r.trait);
             template.find('#match').val(r.match);
-            if(r.action === 0) {
+            if (r.action === 0) {
                 template.find('#action').val('DENY');
             } else if (r.action === 1) {
                 template.find('#action').val('ALLOW');
@@ -307,16 +298,16 @@
         });
     }
 
-    function addRuleBlock(){
-        let template = $("#rule-template").clone();
+    function addRuleBlock() {
+        const template = $('#rule-template').clone();
         template.removeAttr('id');
         template.show();
         $('#source-rules').append(template);
     }
 
-    function populateRelationships(relationships){
-        relationships.forEach(r => {
-            let template = $("#relationship-template").clone();
+    function populateRelationships(relationships) {
+        relationships.forEach((r) => {
+            const template = $('#relationship-template').clone();
             template.removeAttr('id');
             template.find('#sourceTrait').val(r.source.trait);
             template.find('#sourceValue').val(r.source.value);
@@ -328,18 +319,18 @@
         });
     }
 
-    function viewRelationships(){
-        document.getElementById("relationship-modal").style.display = "block";
-        let sourceName = $('#source-name').text();
+    function viewRelationships() {
+        document.getElementById('relationship-modal').style.display = 'block';
+        const sourceName = $('#source-name').text();
         $('#relationship-name').text(sourceName);
     }
 
-    function addRelationshipBlock(){
-        let template = $("#relationship-template").clone();
+    function addRelationshipBlock() {
+        const template = $('#relationship-template').clone();
         template.removeAttr('id');
         template.show();
         $('#source-relationships').append(template);
     }
 
-    //# sourceURL=sources.js
+    // # sourceURL=sources.js
 </script>

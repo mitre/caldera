@@ -1,3 +1,4 @@
+/* eslint-disable */
 /* Alpine.js data & functions called from templates within CALDERA core */
 
 function sharedData() {
