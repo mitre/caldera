@@ -8,9 +8,8 @@ function sharedData() {
         activeTabIndex: 0,
 
         setTabContent(tab, data) {
-            data.text().then(result => {
-                document.getElementById(this.openTabs[this.activeTabIndex].contentID).innerHTML = result.toString();
-            })
+            data.text().then(result => setInnerHTML(
+                document.getElementById(this.openTabs[this.activeTabIndex].contentID), result.toString()))
         },
 
         getTabContent(tab) {
@@ -22,6 +21,10 @@ function sharedData() {
             this.openTabs.push(tab);
             this.activeTabIndex = this.openTabs.length - 1;
         },
+
+        deleteTab(index) {
+            if (this.openTabs.length > 0) this.openTabs.splice(index, 1);
+        }
     }
 }
 
@@ -40,12 +43,6 @@ function restRequest(requestType, data, callback = () => {
         .catch((error) => console.error(error));
 }
 
-function validateFormState(conditions, selector) {
-    (conditions) ?
-        updateButtonState(selector, 'valid') :
-        updateButtonState(selector, 'invalid');
-}
-
 function downloadReport(endpoint, filename, data = {}) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
@@ -61,11 +58,14 @@ function downloadReport(endpoint, filename, data = {}) {
     restRequest('POST', data, downloadObjectAsJson, endpoint);
 }
 
-function updateButtonState(selector, state) {
-    (state === 'valid') ?
-        $(selector).attr('class', 'button-success atomic-button') :
-        $(selector).attr('class', 'button-notready atomic-button');
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
+
+// TODO: JQuery functions
 
 function showHide(show, hide) {
     $(show).each(function () {
@@ -76,11 +76,16 @@ function showHide(show, hide) {
     });
 }
 
-function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
+function validateFormState(conditions, selector) {
+    (conditions) ?
+        updateButtonState(selector, 'valid') :
+        updateButtonState(selector, 'invalid');
+}
+
+function updateButtonState(selector, state) {
+    (state === 'valid') ?
+        $(selector).attr('class', 'button-success atomic-button') :
+        $(selector).attr('class', 'button-notready atomic-button');
 }
 
 function stream(msg, speak = false) {
@@ -97,21 +102,37 @@ function stream(msg, speak = false) {
 
 /* SECTIONS */
 
-function viewSection(name, address) {
-    function display(data) {
-        let plugin = $($.parseHTML(data, keepScripts = true));
-        $('#section-container').append('<div id="section-' + name + '"></div>');
-        let newSection = $('#section-' + name);
-        newSection.html(plugin);
-        $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
-    }
-
-    restRequest('GET', null, display, address);
+// Alternative to JQuery parseHTML(keepScripts=true)
+function setInnerHTML(elm, html) {
+    elm.innerHTML = html;
+    Array.from(elm.querySelectorAll("script")).forEach( oldScript => {
+        const newScript = document.createElement("script");
+        Array.from(oldScript.attributes)
+            .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
 }
 
+
+// TODO: remove this from all individual plugins in future, as close (x) will be in the tab rather than inside the plugins itself
 function removeSection(identifier) {
     $('#' + identifier).remove();
 }
+
+
+//
+// function viewSection(name, address) {
+//     function display(data) {
+//         let plugin = $($.parseHTML(data, keepScripts = true));
+//         $('#section-container').append('<div id="section-' + name + '"></div>');
+//         let newSection = $('#section-' + name);
+//         newSection.html(plugin);
+//         $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
+//     }
+//
+//     restRequest('GET', null, display, address);
+// }
 
 function toggleSidebar(identifier) {
     let sidebar = $('#' + identifier);

@@ -71,7 +71,7 @@
                             <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
                                 <a x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
-                                    <span class="icon is-small is-close"><i data-feather="x"></i></span>
+                                    <span x-on:click="deleteTab(index)" class="icon is-small is-close"><i data-feather="x"></i></span>
                                     <!-- TODO: Have "X" icon close the tab -->
                                 </a>
                             </li>
