@@ -20,6 +20,10 @@ function sharedData() {
             this.openTabs.push(tab);
             this.activeTabIndex = this.openTabs.length - 1;
         },
+
+        deleteTab(index) {
+            if (this.openTabs.length > 1) this.openTabs.splice(index, 1);
+        }
     }
 }
 
@@ -38,12 +42,6 @@ function restRequest(requestType, data, callback = () => {
         .catch((error) => console.error(error));
 }
 
-function validateFormState(conditions, selector) {
-    (conditions) ?
-        updateButtonState(selector, 'valid') :
-        updateButtonState(selector, 'invalid');
-}
-
 function downloadReport(endpoint, filename, data = {}) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
@@ -59,11 +57,14 @@ function downloadReport(endpoint, filename, data = {}) {
     restRequest('POST', data, downloadObjectAsJson, endpoint);
 }
 
-function updateButtonState(selector, state) {
-    (state === 'valid') ?
-        $(selector).attr('class', 'button-success atomic-button') :
-        $(selector).attr('class', 'button-notready atomic-button');
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
+
+// TODO: JQuery functions
 
 function showHide(show, hide) {
     $(show).each(function () {
@@ -74,11 +75,16 @@ function showHide(show, hide) {
     });
 }
 
-function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
+function validateFormState(conditions, selector) {
+    (conditions) ?
+        updateButtonState(selector, 'valid') :
+        updateButtonState(selector, 'invalid');
+}
+
+function updateButtonState(selector, state) {
+    (state === 'valid') ?
+        $(selector).attr('class', 'button-success atomic-button') :
+        $(selector).attr('class', 'button-notready atomic-button');
 }
 
 function stream(msg, speak = false) {
@@ -107,21 +113,25 @@ function setInnerHTML(elm, html) {
     });
 }
 
-function viewSection(name, address) {
-    function display(data) {
-        let plugin = $($.parseHTML(data, keepScripts = true));
-        $('#section-container').append('<div id="section-' + name + '"></div>');
-        let newSection = $('#section-' + name);
-        newSection.html(plugin);
-        $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
-    }
 
-    restRequest('GET', null, display, address);
-}
-
+// TODO: remove this from all individual plugins in future, as close (x) will be in the tab rather than inside the plugins itself
 function removeSection(identifier) {
     $('#' + identifier).remove();
 }
+
+
+//
+// function viewSection(name, address) {
+//     function display(data) {
+//         let plugin = $($.parseHTML(data, keepScripts = true));
+//         $('#section-container').append('<div id="section-' + name + '"></div>');
+//         let newSection = $('#section-' + name);
+//         newSection.html(plugin);
+//         $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
+//     }
+//
+//     restRequest('GET', null, display, address);
+// }
 
 function toggleSidebar(identifier) {
     let sidebar = $('#' + identifier);
