@@ -8,6 +8,7 @@ function restRequest(requestType, data, callback = () => {
         {method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}
 
     fetch(endpoint, requestData)
+        .then(response => response.text())
         .then(data => callback(data))
         .catch((error) => console.error(error));
 }
