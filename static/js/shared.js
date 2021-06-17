@@ -17,13 +17,16 @@ function sharedData() {
         },
 
         addTab(tabName, address) {
-            const tab = {name: tabName, contentID: 'tab-'+tabName, address: address};
-            this.openTabs.push(tab);
-            this.activeTabIndex = this.openTabs.length - 1;
+            if (!this.openTabs.some(tab => tab.name === tabName)) {
+                const tab = {name: tabName, contentID: 'tab-' + tabName, address: address};
+                this.openTabs.push(tab);
+                this.activeTabIndex = this.openTabs.length - 1;
+            }
         },
 
         deleteTab(index) {
             if (this.openTabs.length > 0) this.openTabs.splice(index, 1);
+            this.activeTabIndex = this.openTabs.length > 0 ? this.openTabs.length - 1 : 0;
         }
     }
 }
