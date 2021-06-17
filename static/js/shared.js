@@ -17,10 +17,13 @@ function sharedData() {
         },
 
         addTab(tabName, address) {
-            if (!this.openTabs.some(tab => tab.name === tabName)) {
+            const existingTabIndex = this.openTabs.findIndex(tab => tab.name === tabName);
+            if (existingTabIndex === -1) {
                 const tab = {name: tabName, contentID: 'tab-' + tabName, address: address};
                 this.openTabs.push(tab);
                 this.activeTabIndex = this.openTabs.length - 1;
+            } else {
+                this.activeTabIndex = existingTabIndex;
             }
         },
 
