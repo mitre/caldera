@@ -12,7 +12,7 @@
         <link href="/gui/css/fa-all.min.css" rel="stylesheet">
     </head>
     <body>
-        <main class="main" x-data="sharedData()">
+        <main class="main" x-data="_alpNavigation()">
             <div class="navigation" x-bind:class="isNavMinimized ? 'collapsed' : 'expanded'">
                 <div class="nav-logo"></div>
                 <aside class="menu">
@@ -85,6 +85,7 @@
         <script src="/gui/jquery/jquery.js"></script>
         <script src="/gui/jquery/jquery.multi-select.js"></script>
         <script src="/gui/js/shared.js"></script>
+        <script src="/gui/js/core.js"></script>
         <script defer src="/gui/js/lib/alpine.min.js"></script>
     </body>
 </html>
