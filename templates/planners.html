@@ -1,4 +1,4 @@
-<div id="planners" class="section-profile planners">
+<div id="planners" class="section-profile planners" x-data="_alpPlanners()">
   <div class="advanced row">
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('planners-sidebar')" src="/gui/img/expand.png"></div>
     <div class="topleft duk-icon"><img onclick="removeSection('planners')" src="/gui/img/x.png"></div>
@@ -12,39 +12,42 @@
       </p>
       <br>
       <div id="viewPlanner">
-          <select id="planner-select" style="margin-top:-15px" onchange="loadPlanner()">
+          <select id="planner-select" style="margin-top:-15px" x-on:change="loadPlanner()" x-model="selectedPlanner">
             <option value="" disabled selected>Select an existing planner</option>
             {% for p in planners %}
-              <option value="{{ p.name }}">{{ p.name }} planner</option>
+              <option :value="'{{ p.name }}'">{{ p.name }} planner</option>
             {% endfor %}
           </select>
       </div>
     </div>
 
     <div id="planner-info" class="column planner-header" style="flex:75%;text-align: left">
-      <h3 id="planner-title"></h3>
-      <p id="planner-description"></p>
+      <h3 x-text="title"></h3>
+      <p x-text="description"></p>
     </div>
   </div>
 </div>
 
 <script>
     /* eslint-disable */
+    function _alpPlanners() {
+      return {
+        selectedPlanner: '',
+        title: '',
+        description: '',
 
-    function loadPlanner() {
-        function loadPlannerCallback(data) {
-            // remove old text before displaying new text
-            $('#planner-title').empty();
-            $('#planner-description').empty();
-            $('#planner-stop-conditions').empty();
+        loadPlannerCallback(self, data) {
+          const parsedData = JSON.parse(data)[0];
+          if (parsedData) {
+            self.title = parsedData.name;
+            self.description = parsedData.description;
+          }
+        },
 
-            // fill text from API callback
-            $('#add_sc_button').show();
-            $('#planner-title').text(data[0]['name']);
-            $('#planner-description').text(data[0]['description']);
+        loadPlanner() {
+          restRequest('POST', {'index':'planners', 'name': this.selectedPlanner}, (data) => { this.loadPlannerCallback(this, data) });
         }
-        restRequest('POST', {'index':'planners', 'name': $('#planner-select').val()}, loadPlannerCallback);
+      }
     }
-
     //# sourceURL=planners.js
 </script>
