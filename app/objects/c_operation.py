@@ -41,8 +41,8 @@ class OperationSchema(ma.Schema):
     use_learning_parsers = ma.fields.Boolean()
 
     @ma.post_load
-    def build_planner(self, data, **_):
-        return Operation(**data)
+    def build_planner(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Operation(**data)
 
 
 class Operation(FirstClassObjectInterface, BaseObject):

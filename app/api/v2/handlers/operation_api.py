@@ -1,9 +1,9 @@
-# import aiohttp_apispec
+import aiohttp_apispec
 from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.base_api_manager import BaseApiManager
-# from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
+from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 
 
@@ -32,41 +32,71 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
         router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_link)
 
-    def get_operations(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True))
+    def get_operations(self, request: web.Request):
+        operations = await self.get_all_objects(request)
+        return web.json_response(operations)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    def get_operation_by_id(self, request: web.Request):
+        operation = await self.get_object(request)
+        return web.json_response(operation)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema)
+    def create_operation(self, request: web.Request):
+        operation = await self.create_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema)
+    def create_or_update_operation(self, request: web.Request):
+        operation = await self.create_or_update_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    def update_operation(self, request: web.Request):
+        operation = await self.update_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema)
+    def delete_operation(self, request: web.Request):
+        await self.delete_object(request)
+        return web.HTTPNoContent()
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    def get_operation_report(self, request: web.Request):
         pass
 
-    def get_operation_by_id(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def get_operation_links(self, request: web.Request):
         pass
 
-    def create_operation(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def get_operation_link(self, request: web.Request):
         pass
 
-    def create_or_update_operation(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def create_or_update_operation_link(self, request: web.Request):
         pass
 
-    def update_operation(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def create_potential_links(self, request: web.Request):
         pass
 
-    def delete_operation(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def get_potential_links(self, request: web.Request):
         pass
 
-    def get_operation_report(self):
-        pass
-
-    def get_operation_links(self):
-        pass
-
-    def get_operation_link(self):
-        pass
-
-    def create_or_update_operation_link(self):
-        pass
-
-    def create_potential_links(self):
-        pass
-
-    def get_potential_links(self):
-        pass
-
-    def get_potential_link(self):
+    @aiohttp_apispec.docs(tags=['operations'])
+    def get_potential_link(self, request: web.Request):
         pass
