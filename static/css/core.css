@@ -1,5 +1,10 @@
 html, body {
   min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+#active-tab-display {
+  color: white;
 }
 
 .icon.is-close:hover {
@@ -24,7 +29,7 @@ main.main {
 .menu-label {
   color: white !important;
   padding: 8px;
-  border-radius: 6px;
+  border-radius: 4px;
   margin: 10px;
 }
 
@@ -33,7 +38,7 @@ main.main {
 }
 
 .menu-list a:hover {
-  border-radius: 6px;
+  border-radius: 4px;
   margin: 0 10px;
 }
 
@@ -62,12 +67,22 @@ main.main {
   background-repeat: no-repeat;
 }
 
+#no-open-tabs {
+  width: 100%;
+  height: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
 .tabs {
   display: block !important;
+  margin-bottom: 0 !important;
   padding: 10px;
 }
 .tabs.is-boxed a {
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   margin-right: 4px;
 }
 .tabs ul {

@@ -322,7 +322,7 @@ pre {
 }
 
 body {
-  color: #4a4a4a;
+  color: white;
   font-size: 1em;
   font-weight: 400;
   line-height: 1.5;
@@ -349,7 +349,7 @@ code {
 }
 
 hr {
-  background-color: whitesmoke;
+  background-color: #191970;
   border: none;
   display: block;
   height: 2px;
@@ -376,7 +376,7 @@ span {
 }
 
 strong {
-  color: #363636;
+  color: white;
   font-weight: 700;
 }
 
@@ -387,7 +387,7 @@ fieldset {
 pre {
   -webkit-overflow-scrolling: touch;
   background-color: whitesmoke;
-  color: #4a4a4a;
+  color: white;
   font-size: 0.875em;
   overflow-x: auto;
   padding: 1.25rem 1.5rem;
@@ -410,7 +410,7 @@ table th:not([align]) {
   text-align: inherit;
 }
 table th {
-  color: #363636;
+  color: white;
 }
 
 @keyframes spinAround {
@@ -424,9 +424,9 @@ table th {
 /* Bulma Elements */
 .box {
   background-color: white;
-  border-radius: 6px;
+  border-radius: 4px;
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
-  color: #4a4a4a;
+  color: white;
   display: block;
   padding: 1.25rem;
 }
@@ -442,7 +442,7 @@ a.box:active {
   background-color: white;
   border-color: #dbdbdb;
   border-width: 1px;
-  color: #363636;
+  color: white;
   cursor: pointer;
   justify-content: center;
   padding-bottom: calc(0.5em - 1px);
@@ -489,16 +489,16 @@ a.box:active {
 .button.is-text {
   background-color: transparent;
   border-color: transparent;
-  color: #4a4a4a;
+  color: white;
   text-decoration: underline;
 }
 .button.is-text:hover, .button.is-text.is-hovered, .button.is-text:focus, .button.is-text.is-focused {
   background-color: whitesmoke;
-  color: #363636;
+  color: white;
 }
 .button.is-text:active, .button.is-text.is-active {
   background-color: #e8e8e8;
-  color: #363636;
+  color: white;
 }
 .button.is-text[disabled], fieldset[disabled] .button.is-text {
   background-color: transparent;
@@ -1467,7 +1467,7 @@ a.box:active {
 .button.is-static {
   background-color: whitesmoke;
   border-color: #dbdbdb;
-  color: #7a7a7a;
+  color: white;
   box-shadow: none;
   pointer-events: none;
 }
@@ -1603,7 +1603,7 @@ a.box:active {
 .content h4,
 .content h5,
 .content h6 {
-  color: #363636;
+  color: white;
   font-weight: 600;
   line-height: 1.125;
 }
@@ -1719,7 +1719,7 @@ a.box:active {
   vertical-align: top;
 }
 .content table th {
-  color: #363636;
+  color: white;
 }
 .content table th:not([align]) {
   text-align: inherit;
@@ -1727,12 +1727,12 @@ a.box:active {
 .content table thead td,
 .content table thead th {
   border-width: 0 0 2px;
-  color: #363636;
+  color: white;
 }
 .content table tfoot td,
 .content table tfoot th {
   border-width: 2px 0 0;
-  color: #363636;
+  color: white;
 }
 .content table tbody tr:last-child td,
 .content table tbody tr:last-child th {
@@ -2013,13 +2013,13 @@ div.icon-text {
   background-color: #ededed;
 }
 .progress::-webkit-progress-value {
-  background-color: #4a4a4a;
+  background-color: white;
 }
 .progress::-moz-progress-bar {
-  background-color: #4a4a4a;
+  background-color: white;
 }
 .progress::-ms-fill {
-  background-color: #4a4a4a;
+  background-color: white;
   border: none;
 }
 .progress.is-white::-webkit-progress-value {
@@ -2148,7 +2148,7 @@ div.icon-text {
   animation-name: moveIndeterminate;
   animation-timing-function: linear;
   background-color: #ededed;
-  background-image: linear-gradient(to right, #4a4a4a 30%, #ededed 30%);
+  background-image: linear-gradient(to right, white 30%, #ededed 30%);
   background-position: top left;
   background-repeat: no-repeat;
   background-size: 150% 150%;
@@ -2182,7 +2182,7 @@ div.icon-text {
 }
 .table {
   background-color: white;
-  color: #363636;
+  color: white;
 }
 .table td,
 .table th {
@@ -2272,7 +2272,7 @@ div.icon-text {
   vertical-align: middle;
 }
 .table th {
-  color: #363636;
+  color: white;
 }
 .table th:not([align]) {
   text-align: inherit;
@@ -2296,7 +2296,7 @@ div.icon-text {
 .table thead td,
 .table thead th {
   border-width: 0 0 2px;
-  color: #363636;
+  color: white;
 }
 .table tfoot {
   background-color: transparent;
@@ -2304,7 +2304,7 @@ div.icon-text {
 .table tfoot td,
 .table tfoot th {
   border-width: 2px 0 0;
-  color: #363636;
+  color: white;
 }
 .table tbody {
   background-color: transparent;
@@ -2405,7 +2405,7 @@ div.icon-text {
   align-items: center;
   background-color: whitesmoke;
   border-radius: 4px;
-  color: #4a4a4a;
+  color: white;
   display: inline-flex;
   font-size: 0.75rem;
   height: 2em;
@@ -2566,7 +2566,7 @@ a.tag:hover {
 }
 
 .title {
-  color: #363636;
+  color: white;
   font-size: 2rem;
   font-weight: 600;
   line-height: 1.125;
@@ -2604,13 +2604,13 @@ a.tag:hover {
 }
 
 .subtitle {
-  color: #4a4a4a;
+  color: white;
   font-size: 1.25rem;
   font-weight: 400;
   line-height: 1.25;
 }
 .subtitle strong {
-  color: #363636;
+  color: white;
   font-weight: 600;
 }
 .subtitle:not(.is-spaced) + .title {
@@ -2674,47 +2674,47 @@ a.tag:hover {
 
 /* Bulma Form */
 .select select, .textarea, .input {
-  background-color: white;
-  border-color: #dbdbdb;
+  background-color: #262626;
+  border-color: #191970;
   border-radius: 4px;
-  color: #363636;
+  color: white;
 }
 .select select::-moz-placeholder, .textarea::-moz-placeholder, .input::-moz-placeholder {
-  color: rgba(54, 54, 54, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select::-webkit-input-placeholder, .textarea::-webkit-input-placeholder, .input::-webkit-input-placeholder {
-  color: rgba(54, 54, 54, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select:-moz-placeholder, .textarea:-moz-placeholder, .input:-moz-placeholder {
-  color: rgba(54, 54, 54, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select:-ms-input-placeholder, .textarea:-ms-input-placeholder, .input:-ms-input-placeholder {
-  color: rgba(54, 54, 54, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select:hover, .textarea:hover, .input:hover, .select select.is-hovered, .is-hovered.textarea, .is-hovered.input {
   border-color: #b5b5b5;
 }
 .select select:focus, .textarea:focus, .input:focus, .select select.is-focused, .is-focused.textarea, .is-focused.input, .select select:active, .textarea:active, .input:active, .select select.is-active, .is-active.textarea, .is-active.input {
   border-color: #191970;
-  box-shadow: 0 0 0 0.125em rgba(25, 25, 112, 0.25);
+  box-shadow: 0 0 0 0.125em #19197050;
 }
 .select select[disabled], [disabled].textarea, [disabled].input, fieldset[disabled] .select select, .select fieldset[disabled] select, fieldset[disabled] .textarea, fieldset[disabled] .input {
   background-color: whitesmoke;
   border-color: whitesmoke;
   box-shadow: none;
-  color: #7a7a7a;
+  color: white;
 }
 .select select[disabled]::-moz-placeholder, [disabled].textarea::-moz-placeholder, [disabled].input::-moz-placeholder, fieldset[disabled] .select select::-moz-placeholder, .select fieldset[disabled] select::-moz-placeholder, fieldset[disabled] .textarea::-moz-placeholder, fieldset[disabled] .input::-moz-placeholder {
-  color: rgba(122, 122, 122, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select[disabled]::-webkit-input-placeholder, [disabled].textarea::-webkit-input-placeholder, [disabled].input::-webkit-input-placeholder, fieldset[disabled] .select select::-webkit-input-placeholder, .select fieldset[disabled] select::-webkit-input-placeholder, fieldset[disabled] .textarea::-webkit-input-placeholder, fieldset[disabled] .input::-webkit-input-placeholder {
-  color: rgba(122, 122, 122, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select[disabled]:-moz-placeholder, [disabled].textarea:-moz-placeholder, [disabled].input:-moz-placeholder, fieldset[disabled] .select select:-moz-placeholder, .select fieldset[disabled] select:-moz-placeholder, fieldset[disabled] .textarea:-moz-placeholder, fieldset[disabled] .input:-moz-placeholder {
-  color: rgba(122, 122, 122, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 .select select[disabled]:-ms-input-placeholder, [disabled].textarea:-ms-input-placeholder, [disabled].input:-ms-input-placeholder, fieldset[disabled] .select select:-ms-input-placeholder, .select fieldset[disabled] select:-ms-input-placeholder, fieldset[disabled] .textarea:-ms-input-placeholder, fieldset[disabled] .input:-ms-input-placeholder {
-  color: rgba(122, 122, 122, 0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .textarea, .input {
@@ -2845,12 +2845,12 @@ a.tag:hover {
   cursor: pointer;
 }
 .radio:hover, .checkbox:hover {
-  color: #363636;
+  color: white;
 }
 [disabled].radio, [disabled].checkbox, fieldset[disabled] .radio, fieldset[disabled] .checkbox,
 .radio input[disabled],
 .checkbox input[disabled] {
-  color: #7a7a7a;
+  color: white;
   cursor: not-allowed;
 }
 
@@ -2900,7 +2900,7 @@ a.tag:hover {
   padding: 0.5em 1em;
 }
 .select:not(.is-multiple):not(.is-loading):hover::after {
-  border-color: #363636;
+  border-color: white;
 }
 .select.is-white:not(:hover)::after {
   border-color: white;
@@ -3033,7 +3033,7 @@ a.tag:hover {
   font-size: 1.5rem;
 }
 .select.is-disabled::after {
-  border-color: #7a7a7a;
+  border-color: white;
 }
 .select.is-fullwidth {
   width: 100%;
@@ -3359,14 +3359,14 @@ a.tag:hover {
 }
 .file-label:hover .file-cta {
   background-color: #eeeeee;
-  color: #363636;
+  color: white;
 }
 .file-label:hover .file-name {
   border-color: #d5d5d5;
 }
 .file-label:active .file-cta {
   background-color: #e8e8e8;
-  color: #363636;
+  color: white;
 }
 .file-label:active .file-name {
   border-color: #cfcfcf;
@@ -3394,7 +3394,7 @@ a.tag:hover {
 
 .file-cta {
   background-color: whitesmoke;
-  color: #4a4a4a;
+  color: white;
 }
 
 .file-name {
@@ -3421,7 +3421,7 @@ a.tag:hover {
 }
 
 .label {
-  color: #363636;
+  color: white;
   display: block;
   font-size: 1rem;
   font-weight: 700;
@@ -3651,7 +3651,7 @@ a.tag:hover {
 .control.has-icons-left .input:focus ~ .icon,
 .control.has-icons-left .select:focus ~ .icon, .control.has-icons-right .input:focus ~ .icon,
 .control.has-icons-right .select:focus ~ .icon {
-  color: #4a4a4a;
+  color: white;
 }
 .control.has-icons-left .input.is-small ~ .icon,
 .control.has-icons-left .select.is-small ~ .icon, .control.has-icons-right .input.is-small ~ .icon,
@@ -3730,7 +3730,7 @@ a.tag:hover {
   padding-left: 0;
 }
 .breadcrumb li.is-active a {
-  color: #363636;
+  color: white;
   cursor: default;
   pointer-events: none;
 }
@@ -3785,7 +3785,7 @@ a.tag:hover {
   background-color: white;
   border-radius: 0.25rem;
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
-  color: #4a4a4a;
+  color: white;
   max-width: 100%;
   position: relative;
 }
@@ -3808,7 +3808,7 @@ a.tag:hover {
 
 .card-header-title {
   align-items: center;
-  color: #363636;
+  color: white;
   display: flex;
   flex-grow: 1;
   font-weight: 700;
@@ -3906,7 +3906,7 @@ a.tag:hover {
 }
 
 .dropdown-item {
-  color: #4a4a4a;
+  color: white;
   display: block;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -4120,8 +4120,8 @@ button.dropdown-item.is-active {
   padding: 0.5em 0.75em;
 }
 .menu-list a:hover {
-  background-color: whitesmoke;
-  color: #363636;
+  background-color: #19197050;
+  color: white;
 }
 .menu-list a.is-active {
   background-color: #191970;
@@ -4134,7 +4134,7 @@ button.dropdown-item.is-active {
 }
 
 .menu-label {
-  color: #7a7a7a;
+  color: white;
   background-color: #191970;
   font-size: 0.75em;
   letter-spacing: 0.1em;
@@ -4277,9 +4277,9 @@ button.dropdown-item.is-active {
 
 .message-header {
   align-items: center;
-  background-color: #4a4a4a;
+  background-color: white;
   border-radius: 4px 4px 0 0;
-  color: #fff;
+  color: rgba(0, 0, 0, 0.7);
   display: flex;
   font-weight: 700;
   justify-content: space-between;
@@ -4303,7 +4303,7 @@ button.dropdown-item.is-active {
   border-radius: 4px;
   border-style: solid;
   border-width: 0 0 0 4px;
-  color: #4a4a4a;
+  color: white;
   padding: 1.25em 1.5em;
 }
 .message-body code,
@@ -4383,7 +4383,7 @@ button.dropdown-item.is-active {
 }
 
 .modal-card-title {
-  color: #363636;
+  color: white;
   flex-grow: 1;
   flex-shrink: 0;
   font-size: 1.5rem;
@@ -5028,7 +5028,7 @@ body.has-navbar-fixed-bottom {
 }
 
 .navbar-burger {
-  color: #4a4a4a;
+  color: white;
   cursor: pointer;
   display: block;
   height: 3.25rem;
@@ -5076,7 +5076,7 @@ body.has-navbar-fixed-bottom {
 
 .navbar-item,
 .navbar-link {
-  color: #4a4a4a;
+  color: white;
   display: block;
   line-height: 1.5;
   padding: 0.5rem 0.75rem;
@@ -5464,7 +5464,7 @@ body.has-spaced-navbar-fixed-bottom {
 .pagination-next,
 .pagination-link {
   border-color: #dbdbdb;
-  color: #363636;
+  color: white;
   min-width: 2.5em;
 }
 .pagination-previous:hover,
@@ -5489,7 +5489,7 @@ body.has-spaced-navbar-fixed-bottom {
   background-color: #dbdbdb;
   border-color: #dbdbdb;
   box-shadow: none;
-  color: #7a7a7a;
+  color: white;
   opacity: 0.5;
 }
 
@@ -5691,7 +5691,7 @@ body.has-spaced-navbar-fixed-bottom {
 .panel-heading {
   background-color: #ededed;
   border-radius: 6px 6px 0 0;
-  color: #363636;
+  color: white;
   font-size: 1.25em;
   font-weight: 700;
   line-height: 1.25;
@@ -5715,7 +5715,7 @@ body.has-spaced-navbar-fixed-bottom {
 }
 
 .panel-list a {
-  color: #4a4a4a;
+  color: white;
 }
 .panel-list a:hover {
   color: #191970;
@@ -5723,7 +5723,7 @@ body.has-spaced-navbar-fixed-bottom {
 
 .panel-block {
   align-items: center;
-  color: #363636;
+  color: white;
   display: flex;
   justify-content: flex-start;
   padding: 0.5em 0.75em;
@@ -5768,7 +5768,7 @@ label.panel-block:hover {
   text-align: center;
   vertical-align: top;
   width: 1em;
-  color: #7a7a7a;
+  color: white;
   margin-right: 0.75em;
 }
 .panel-icon .fa {
@@ -5791,7 +5791,7 @@ label.panel-block:hover {
   border-bottom-color: #191970;
   border-bottom-style: solid;
   border-bottom-width: 1px;
-  color: #4a4a4a;
+  color: white;
   display: flex;
   justify-content: center;
   margin-bottom: -1px;
@@ -5799,8 +5799,8 @@ label.panel-block:hover {
   vertical-align: top;
 }
 .tabs a:hover {
-  border-bottom-color: #363636;
-  color: #363636;
+  border-bottom-color: white;
+  color: white;
 }
 .tabs li {
   display: block;
@@ -5846,7 +5846,7 @@ label.panel-block:hover {
 }
 .tabs.is-boxed a {
   border: 1px solid transparent;
-  border-radius: 6px 6px 0 0;
+  border-radius: 4px 4px 0 0;
 }
 .tabs.is-boxed a:hover {
   background-color: #0f0f4c;

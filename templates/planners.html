@@ -1,26 +1,32 @@
-<div class="" x-data="_alpPlanners()">
-    <div class="small-head">
-        <div class="content-header">
+<div x-data="_alpPlanners()">
+    <div>
+        <div>
             <h2>Planners</h2>
-            <p class="section-description">
+            <p>
                 A planner is a module which contains logic for how a running operation should make decisions about
                 which abilities to use and in what order. Specifically, a planner's logic contains the decision making
                 to
                 execute a single phase of an operation.
             </p>
         </div>
-        <div class="content-body">
+        <hr>
+        <div>
+            <form>
+                <div class="field">
+                    <label class="label">Choose a planner:</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="planner-select" x-on:change="loadPlanner()" x-model="selectedPlanner">
+                                <option value="" disabled selected>Select an existing planner</option>
+                                {% for p in planners %}
+                                <option :value="'{{ p.name }}'">{{ p.name }} planner</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
             <div>
-                <label for="planner-select">Choose a planner:</label>
-                <select id="planner-select" x-on:change="loadPlanner()"
-                        x-model="selectedPlanner">
-                    <option value="" disabled selected>Select an existing planner</option>
-                    {% for p in planners %}
-                    <option :value="'{{ p.name }}'">{{ p.name }} planner</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="column planner-header" style="flex:75%;text-align: left">
                 <h3 x-text="title"></h3>
                 <p x-text="description"></p>
             </div>
@@ -29,7 +35,6 @@
 </div>
 
 <script>
-    /* eslint-disable */
     function _alpPlanners() {
         return {
             selectedPlanner: '',
@@ -41,6 +46,7 @@
                 if (parsedData) {
                     self.title = parsedData.name;
                     self.description = parsedData.description;
+                    console.log(self.title, self.description)
                 }
             },
 
