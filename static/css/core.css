@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   min-height: 100%;
   scroll-behavior: smooth;
 }
@@ -22,6 +23,7 @@ main.main {
 .main-content.collapsed {
   width: calc(100% - 320px);
 }
+
 .main-content.expanded {
   width: calc(100% - 220px);
 }
@@ -81,10 +83,12 @@ main.main {
   margin-bottom: 0 !important;
   padding: 10px;
 }
+
 .tabs.is-boxed a {
   border-radius: 4px !important;
   margin-right: 4px;
 }
+
 .tabs ul {
   padding-bottom: 10px;
   min-height: 52px;

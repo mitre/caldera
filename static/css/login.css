@@ -1,26 +1,32 @@
 * {
   box-sizing: border-box;
 }
+
 *:focus {
-	outline: none;
+  outline: none;
 }
+
 .login {
-    border: 1px solid var(--secondary-background);
-    margin: 200px auto;
-    width: 300px;
+  border: 1px solid var(--secondary-background);
+  margin: 200px auto;
+  width: 300px;
 }
+
 .login-screen {
-    background-color: #FFF;
-    padding: 20px;
-    border-radius: 5px
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
 }
+
 .app-title {
-    text-align: center;
-    color: #777;
+  text-align: center;
+  color: #777;
 }
+
 .login-form {
-    text-align: center;
+  text-align: center;
 }
+
 .control-group {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
