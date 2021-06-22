@@ -8,6 +8,7 @@ from app.objects.c_operation import Operation
 from app.objects.c_objective import Objective
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_goal import Goal
+from app.objects.secondclass.c_fact import wildcard_string
 from app.objects.c_planner import Planner
 from app.objects.c_source import Source
 from app.utility.base_world import BaseWorld
@@ -196,6 +197,40 @@ class TestRestSvc:
         objs[0]['goals'][0].pop('achieved')
         assert req.items() <= objs[0].items()
 
+    def test_add_fact(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        fact_data = {
+            'trait': 'demo',
+            'value': 'test'
+        }
+        response = loop.run_until_complete(internal_rest_svc.add_fact(fact_data))
+        assert response[0]['trait'] == 'demo'
+        assert response[0]['value'] == 'test'
+
+    def test_add_relationship(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        fact_data_a = {
+            'trait': 'a',
+            'value': '1',
+        }
+        fact_data_b = {
+            'trait': 'b',
+            'value': '2'
+        }
+        relationship_data = {
+            'source': fact_data_a,
+            'edge': 'tango',
+            'target': fact_data_b
+        }
+        expected_response = f"{fact_data_a['trait']}({fact_data_a['value']}) : " \
+                            f"tango : {fact_data_b['trait']}({fact_data_b['value']})"
+        response = loop.run_until_complete(internal_rest_svc.add_relationship(relationship_data))
+        assert response[0]['source']['trait'] == fact_data_a['trait']
+        assert response[0]['target']['value'] == fact_data_b['value']
+        assert response[0]['edge'] == 'tango'
+        assert response[0]['source']['relationships'] == response[0]['target']['relationships']
+        assert response[0]['source']['relationships'][0] == expected_response
+
     def test_persist_objective_single_existing(self, loop, rest_svc, file_svc):
         internal_rest_svc = rest_svc(loop)
         req = {
@@ -331,3 +366,85 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(loop)
         agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
         assert agent_config.get('deadman_abilities') == want
+
+    def test_display_facts(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        fact_data = {
+            'trait': 'demo',
+            'value': 'test'
+        }
+        loop.run_until_complete(internal_rest_svc.add_fact(fact_data))
+        response = loop.run_until_complete(internal_rest_svc.display_objects('facts',
+                                                                             data=dict(trait='demo',
+                                                                                       source='dummy_operation_id')))
+        assert len(response) == 1
+        assert response[0]['trait'] == 'demo'
+        assert response[0]['value'] == 'test'
+        assert response[0]['source'] == wildcard_string
+
+    def test_display_relationships(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        op_id_test = 'this_is_a_valid_operation_id'
+        fact_data_a = {
+            'trait': 'a',
+            'value': '1',
+        }
+        fact_data_b = {
+            'trait': 'b',
+            'value': '2'
+        }
+        relationship_data = {
+            'source': fact_data_a,
+            'edge': 'gamma',
+            'target': fact_data_b,
+            'origin': op_id_test
+        }
+        loop.run_until_complete(internal_rest_svc.add_relationship(relationship_data))
+        response = loop.run_until_complete(internal_rest_svc.display_objects('relationships', data=dict(edge='gamma')))
+        assert len(response) == 1
+        assert response[0]['source']['trait'] == 'a'
+        assert response[0]['source']['value'] == '1'
+        assert response[0]['edge'] == 'gamma'
+        assert response[0]['origin'] == 'this_is_a_valid_operation_id'
+        assert response[0]['source']['source'] == 'this_is_a_valid_operation_id'
+
+    def test_remove_fact(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        fact_data = {
+            'trait': 'demo',
+            'value': 'test'
+        }
+        loop.run_until_complete(internal_rest_svc.add_fact(fact_data))
+        pre = loop.run_until_complete(internal_rest_svc.display_objects('facts',
+                                                                        data=dict(trait='demo',
+                                                                                  source='dummy_operation_id')))
+        loop.run_until_complete(internal_rest_svc.delete_fact(data=dict(trait='demo')))
+        post = loop.run_until_complete(internal_rest_svc.display_objects('facts',
+                                                                         data=dict(trait='demo',
+                                                                                   source='dummy_operation_id')))
+        assert len(pre) == 1
+        assert len(post) == 0
+
+    def test_remove_relationship(self, loop, rest_svc, knowledge_svc):
+        internal_rest_svc = rest_svc(loop)
+        op_id_test = 'this_is_a_valid_operation_id'
+        fact_data_a = {
+            'trait': 'a',
+            'value': '1',
+        }
+        fact_data_b = {
+            'trait': 'b',
+            'value': '2'
+        }
+        relationship_data = {
+            'source': fact_data_a,
+            'edge': 'alpha',
+            'target': fact_data_b,
+            'origin': op_id_test
+        }
+        loop.run_until_complete(internal_rest_svc.add_relationship(relationship_data))
+        pre = loop.run_until_complete(internal_rest_svc.display_objects('relationships', data=dict(edge='alpha')))
+        loop.run_until_complete(internal_rest_svc.delete_relationship(data=dict(edge='alpha')))
+        post = loop.run_until_complete(internal_rest_svc.display_objects('relationships', data=dict(edge='alpha')))
+        assert len(pre) == 1
+        assert len(post) == 0
