@@ -74,15 +74,18 @@ function stream(msg, speak = false) {
 /* SECTIONS */
 
 // Alternative to JQuery parseHTML(keepScripts=true)
-function setInnerHTML(elm, html) {
-    elm.innerHTML = html;
-    Array.from(elm.querySelectorAll("script")).forEach( oldScript => {
-        const newScript = document.createElement("script");
-        Array.from(oldScript.attributes)
-            .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
-        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-    });
+function setInnerHTML(elem, html) {
+    elem.innerHTML = html;
+    const scripts = Array.from(elem.querySelectorAll("script"));
+    if (scripts) {
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement("script");
+            Array.from(oldScript.attributes)
+                .forEach( attr => newScript.setAttribute(attr.name, attr.value) );
+            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+    }
 }
 
 
