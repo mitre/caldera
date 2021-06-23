@@ -71,6 +71,7 @@ class SourceSchema(ma.Schema):
                     y['target']['origin_type'] = OriginType.IMPORTED.name
                     y['target']['source'] = input_data['id']
 
+
 class Source(FirstClassObjectInterface, BaseObject):
 
     schema = SourceSchema()
