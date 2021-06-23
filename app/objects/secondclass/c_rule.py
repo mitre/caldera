@@ -7,9 +7,9 @@ from app.utility.rule_set import RuleAction
 
 class RuleSchema(ma.Schema):
 
-    trait = ma.fields.String()
-    match = ma.fields.String(required=False)
-    action = ma_enum.EnumField(RuleAction)
+    action = ma_enum.EnumField(RuleAction, required=True)
+    trait = ma.fields.String(required=True)
+    match = ma.fields.String()
 
     @ma.post_load
     def build_rule(self, data, **_):
