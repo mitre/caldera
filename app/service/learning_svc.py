@@ -48,7 +48,7 @@ class LearningService(LearningServiceInterface, BaseService):
             except Exception as e:
                 self.log.error(e)
         await _update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
-        await self._build_relationships(link, found_facts, operation)
+        await self._store_results(link, found_facts, operation)
 
     """ PRIVATE """
 
@@ -66,7 +66,7 @@ class LearningService(LearningServiceInterface, BaseService):
             await knowledge_svc_handle.add_fact(fact)
             link.facts.append(fact)
 
-    async def _build_relationships(self, link, facts, operation=None):
+    async def _store_results(self, link, facts, operation=None):
         facts_covered = []
         for relationship in self.model:
             matches = []
@@ -75,7 +75,8 @@ class LearningService(LearningServiceInterface, BaseService):
                     matches.append(fact)
                     facts_covered.append(fact)
                 else:
-                    await self._save_fact(link, facts, fact)
+                    #await self._save_fact(link, facts, fact)
+                    await link._save_fact(operation=operation, fact=fact, score=link.score, relationship=None)
             for pair in itertools.combinations(matches, r=2):
                 if pair[0].trait != pair[1].trait:
                     await link._create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],

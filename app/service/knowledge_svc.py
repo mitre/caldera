@@ -57,6 +57,22 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         ###
         return await self.__loaded_knowledge_module._get_fact_origin(fact)
 
+    async def check_new_fact(self, fact, listing=None):
+        """
+        Check to see if a fact already exists in the knowledge store, or if a listing is provided, in said listing
+        :param fact: The fact to check for
+        :param listing: Optional specific listing to examine
+        :return: Bool indicating whether or not the fact is already present
+        """
+        searchable = fact.display
+        if not listing:
+            results = await self.get_facts(criteria=searchable)
+        else:
+            results = any([fact == x for x in listing])
+        if results:
+            return True
+        return False
+
     # -- Relationships API --
 
     async def get_relationships(self, criteria, restrictions=None):
