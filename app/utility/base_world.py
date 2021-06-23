@@ -82,6 +82,10 @@ class BaseWorld:
         return datetime.now().strftime(date_format)
 
     @staticmethod
+    def get_timestamp_from_string(datetime_str, date_format='%Y-%m-%d %H:%M:%S'):
+        return datetime.strptime(datetime_str, date_format)
+
+    @staticmethod
     async def load_module(module_type, module_info):
         module = import_module(module_info['module'])
         return getattr(module, module_type)(module_info)
