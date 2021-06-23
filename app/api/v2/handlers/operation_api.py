@@ -4,6 +4,7 @@ from aiohttp import web
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
+from app.objects.secondclass.c_link import LinkSchema
 from app.objects.c_operation import Operation, OperationSchema
 
 
@@ -83,12 +84,16 @@ class OperationApi(BaseObjectApi):
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
     async def get_operation_links(self, request: web.Request):
         operation_id = request.match_info.get('id')
         links = await self._api_manager.get_operation_links(operation_id)
         return web.json_response(links)
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
     async def get_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
@@ -96,24 +101,33 @@ class OperationApi(BaseObjectApi):
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(LinkSchema(partial=True))
+    @aiohttp_apispec.response_schema(LinkSchema)
     async def create_or_update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
+        access = await self.get_request_permissions(request)
         data = await request.json()
-        link = await self._api_manager.create_or_update_operation_link(operation_id, link_id, data)
+        link = await self._api_manager.create_or_update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema)
     async def create_potential_links(self, request: web.Request):
         pass
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
     async def get_potential_links(self, request: web.Request):
         operation_id = request.match_info.get('id')
         potential_links = await self._api_manager.get_potential_links(operation_id)
         return web.json_response(potential_links)
 
     @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
     async def get_potential_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         paw = request.match_info.get('paw')
