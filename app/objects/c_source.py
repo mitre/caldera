@@ -44,17 +44,7 @@ class SourceSchema(ma.Schema):
                         x.append(dict(ability_id=ability_id, trait=trait, value=change.get('value'),
                                       offset=change.get('offset')))
         in_data['adjustments'] = x
-        if 'facts' in in_data:
-            for y in in_data['facts']:
-                y['origin_type'] = OriginType.IMPORTED.name
-                y['source'] = in_data['id']
-        if 'relationships' in in_data:
-            for y in in_data['relationships']:
-                y['source']['origin_type'] = OriginType.IMPORTED.name
-                y['source']['source'] = in_data['id']
-                if 'target' in y:
-                    y['target']['origin_type'] = OriginType.IMPORTED.name
-                    y['target']['source'] = in_data['id']
+        self._fix_loaded_object_origins(in_data)
         return in_data
 
     @ma.post_load()
@@ -62,6 +52,24 @@ class SourceSchema(ma.Schema):
         data['id'] = data.pop('id')
         return Source(**data)
 
+    @staticmethod
+    def _fix_loaded_object_origins(input_data):
+        """
+        Sort through input_data's facts and relationships, and patch them to include origin and references
+        :param input_data: A 'source' dictionary
+        :return: input_data with updated facts/relationships (patched in place)
+        """
+        if 'facts' in input_data:
+            for y in input_data['facts']:
+                y['origin_type'] = OriginType.IMPORTED.name
+                y['source'] = input_data['id']
+        if 'relationships' in input_data:
+            for y in input_data['relationships']:
+                y['source']['origin_type'] = OriginType.IMPORTED.name
+                y['source']['source'] = input_data['id']
+                if 'target' in y:
+                    y['target']['origin_type'] = OriginType.IMPORTED.name
+                    y['target']['source'] = input_data['id']
 
 class Source(FirstClassObjectInterface, BaseObject):
 

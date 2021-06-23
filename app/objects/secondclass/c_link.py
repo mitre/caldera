@@ -230,10 +230,11 @@ class Link(BaseObject):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         all_facts = await operation.all_facts() if operation else self.facts
         source = operation.id if operation else self.id
+        rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
-            if await self._is_new_fact(fact, all_facts):
+            if not await knowledge_svc_handle.check_new_fact(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
-                             technique_id=self.ability.technique_id, links=[self.id], relationships=[relationship],
+                             technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
                              origin_type=OriginType.LEARNED)
                 self.facts.append(f_gen)
                 await knowledge_svc_handle.add_fact(f_gen)
@@ -251,16 +252,6 @@ class Link(BaseObject):
                     existing_local_record[0].links = existing_fact.links
                 else:
                     self.facts.append(existing_fact)
-
-    async def _is_new_fact(self, fact, facts):
-        return all(not self._fact_exists(fact, f) or self._is_new_host_fact(fact, f) for f in facts)
-
-    @staticmethod
-    def _fact_exists(new_fact, fact):
-        return new_fact.name == fact.name and new_fact.value == fact.value
-
-    def _is_new_host_fact(self, new_fact, fact):
-        return new_fact.name[:5] == 'host.' and self.paw != fact.collected_by
 
 
 async def _update_scores(operation, increment, used, facts):

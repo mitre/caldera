@@ -144,9 +144,18 @@ def op_without_learning_parser(ability, adversary):
 
 
 @pytest.fixture
-def op_with_learning_and_seeded(ability, adversary):
+def op_with_learning_and_seeded(ability, adversary, operation_agent):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
+    # patch operation to make it 'realistic'
+    op.start = datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S')
+    op.adversary = op.adversary()
+    op.planner = Planner(planner_id='12345', name='test_planner',
+                                                  module='not.an.actual.planner', params=None)
+    op.objective = Objective(id='6428', name='not_an_objective')
+    t_operation_agent = operation_agent
+    t_operation_agent.paw = '123456'
+    op.agents = [t_operation_agent]
     return op
 
 
@@ -368,18 +377,9 @@ class TestOperation:
         assert len(test_link.facts) == 0
 
     def test_facts(self, loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
-                   op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc, operation_agent):
+                   op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)
-        # patch operation to make it 'realistic'
-        op_with_learning_and_seeded.start = datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S')
-        op_with_learning_and_seeded.adversary = op_with_learning_and_seeded.adversary()
-        op_with_learning_and_seeded.planner = Planner(planner_id='12345', name='test_planner',
-                                                      module='not.an.actual.planner', params=None)
-        op_with_learning_and_seeded.objective = Objective(id='6428', name='not_an_objective')
-        t_operation_agent = operation_agent
-        t_operation_agent.paw = '123456'
-        op_with_learning_and_seeded.agents = [t_operation_agent]
 
         test_result = make_test_result(test_link.id)
         loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))

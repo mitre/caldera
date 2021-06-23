@@ -44,5 +44,5 @@ class TestLearningSvc:
             Fact(trait='domain.user.name', value='user'),
             Fact(trait='not.really.here', value='should never be found')
         ]
-        loop.run_until_complete(learning_svc._build_relationships(link, facts))
+        loop.run_until_complete(learning_svc._store_results(link, facts))
         assert len(link.relationships) == 4

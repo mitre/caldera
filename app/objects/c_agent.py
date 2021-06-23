@@ -270,7 +270,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-        return knowledge_svc_handle.get_facts(dict(source=self.paw))
+        return await knowledge_svc_handle.get_facts(dict(source=self.paw))
 
     """ PRIVATE """
 
