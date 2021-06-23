@@ -277,6 +277,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                technique_id=step.ability.technique_id))
                 if output and step.output:
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
+                if step.agent_reported_time:
+                    step_report['agent_reported_time'] = step.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
@@ -342,6 +344,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
         if output and link.output:
             event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
+        if link.agent_reported_time:
+            event_dict['agent_reported_time'] = link.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
         return event_dict
 
     async def _init_source(self):
