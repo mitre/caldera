@@ -36,7 +36,7 @@ class LinkSchema(ma.Schema):
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     used = ma.fields.List(ma.fields.Nested(FactSchema()))
-    unique = ma.fields.String(required=True)
+    unique = ma.fields.String()
     collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
@@ -61,6 +61,19 @@ class LinkSchema(ma.Schema):
             executor = link.pop('executor')
             link['executor'] = executor.schema.dump(executor)
         return link
+
+    @ma.pre_load()
+    def remove_properties(self, data, **_):
+        data.pop('unique', None)
+        data.pop('decide', None)
+        data.pop('pid', None)
+        data.pop('facts', None)
+        data.pop('collect', None)
+        data.pop('finish', None)
+        data.pop('visibility', None)
+        data.pop('output', None)
+        data.pop('used.unique', None)
+        return data
 
     @ma.post_load()
     def build_link(self, data, **kwargs):
