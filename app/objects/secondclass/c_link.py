@@ -46,6 +46,7 @@ class LinkSchema(ma.Schema):
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
+    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -64,6 +65,12 @@ class LinkSchema(ma.Schema):
     @ma.post_load()
     def build_link(self, data, **kwargs):
         return None if kwargs.get('partial') is True else Link(**data)
+
+    @ma.post_dump()
+    def prepare_dump(self, data, **_):
+        if data.get('agent_reported_time', None) is None:
+            data.pop('agent_reported_time', None)
+        return data
 
 
 class Link(BaseObject):
@@ -131,7 +138,7 @@ class Link(BaseObject):
         return variable in cls.RESERVED
 
     def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
-                 host=None, deadman=False, used=None, relationships=None):
+                 host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
         self.command = command
@@ -155,6 +162,7 @@ class Link(BaseObject):
         self._pin = pin
         self.output = False
         self.deadman = deadman
+        self.agent_reported_time = agent_reported_time
 
     def __eq__(self, other):
         if isinstance(other, Link):
