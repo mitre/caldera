@@ -40,6 +40,14 @@ class OperationSchema(ma.Schema):
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
 
+    @ma.pre_load()
+    def remove_properties(self, data, **_):
+        data.pop('host_group', None)
+        data.pop('start', None)
+        data.pop('chain', None)
+        data.pop('objective', None)
+        return data
+
     @ma.post_load
     def build_planner(self, data, **kwargs):
         return None if kwargs.get('partial') is True else Operation(**data)
@@ -86,7 +94,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             to_state=value
         )
 
-    def __init__(self, name, agents, adversary, id='', jitter='2/8', source=None, planner=None, state='running',
+    def __init__(self, name, adversary, agents=None, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
                  use_learning_parsers=True):
         super().__init__()
@@ -96,7 +104,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.link_timeout = 30
         self.name = name
         self.group = group
-        self.agents = agents
+        self.agents = [] if not agents else agents
         self.adversary = adversary
         self.jitter = jitter
         self.source = source

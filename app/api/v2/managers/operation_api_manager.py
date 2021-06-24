@@ -1,7 +1,7 @@
 from marshmallow.schema import SchemaMeta
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
 from app.objects.secondclass.c_link import LinkSchema
 from app.utility.base_world import BaseWorld
 
@@ -61,8 +61,19 @@ class OperationApiManager(BaseApiManager):
             return new_link.display
         raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
 
-    async def create_potential_links(self, operation_id: str, link_id: str, data: dict):
-        pass
+    async def create_potential_link(self, operation_id: str, link_data: dict, access: BaseWorld.Access):
+        try:
+            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
+        except Exception:
+            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+
+        link_id = link_data['id']
+        for entry in operation.potential_links:
+            if entry.id == link_id:
+                raise JsonHttpBadRequest(f'Link with given id already exists: {link_id}')
+        new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
+        operation.potential_links.append(new_link)
+        return new_link.display
 
     async def get_potential_links(self, operation_id: str):
         try:
@@ -73,16 +84,19 @@ class OperationApiManager(BaseApiManager):
 
         return potential_links
 
-    async def get_potential_link(self, operation_id: str, paw: str):
+    async def get_potential_links_by_paw(self, operation_id: str, paw: str):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
         except Exception:
             raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
 
+        output_links = []
         for link in operation.potential_links:
             if link.paw == paw:
-                return link.display
-        raise JsonHttpNotFound(f'Potential link {paw} was not found in Operation {operation_id}')
+                output_links.append(link.display)
+        if not output_links:
+            raise JsonHttpNotFound(f'paw {paw} was not found in potential links for Operation {operation_id}')
+        return output_links
 
     """Object Creation Helpers"""
     def create_secondclass_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):

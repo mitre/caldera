@@ -30,9 +30,9 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations/{id}/links/{link_id}', self.get_operation_link)
         router.add_put('/operations/{id}/links/{link_id}', self.create_or_update_operation_link)
 
-        router.add_post('/operations/{id}/potential-links', self.create_potential_links)
+        router.add_post('/operations/{id}/potential-links', self.create_potential_link)
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
-        router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_link)
+        router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_links_by_paw)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -70,7 +70,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema)
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
@@ -112,10 +112,14 @@ class OperationApi(BaseObjectApi):
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema)
-    @aiohttp_apispec.response_schema(OperationSchema)
-    async def create_potential_links(self, request: web.Request):
-        pass
+    @aiohttp_apispec.request_schema(LinkSchema)
+    @aiohttp_apispec.response_schema(LinkSchema)
+    async def create_potential_link(self, request: web.Request):
+        operation_id = request.match_info.get('id')
+        access = await self.get_request_permissions(request)
+        data = await request.json()
+        potential_link = await self._api_manager.create_potential_link(operation_id, data, access)
+        return web.json_response(potential_link)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -128,8 +132,8 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(partial=True))
-    async def get_potential_link(self, request: web.Request):
+    async def get_potential_links_by_paw(self, request: web.Request):
         operation_id = request.match_info.get('id')
         paw = request.match_info.get('paw')
-        potential_link = await self._api_manager.get_potential_link(operation_id, paw)
-        return web.json_response(potential_link)
+        potential_links = await self._api_manager.get_potential_links_by_paw(operation_id, paw)
+        return web.json_response(potential_links)
