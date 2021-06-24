@@ -153,7 +153,7 @@ class Link(BaseObject):
     def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
-        self.id = str(id)
+        self.id = str(id) if id else str(uuid.uuid4())
         self.command = command
         self.command_hash = None
         self.paw = paw

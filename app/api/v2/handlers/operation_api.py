@@ -77,7 +77,6 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         report = await self._api_manager.get_operation_report(operation_id)

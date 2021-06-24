@@ -98,13 +98,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
                  use_learning_parsers=True):
         super().__init__()
-        self.id = str(id)
+        self.id = str(id) if id else str(uuid.uuid4())
         self.start, self.finish = None, None
         self.base_timeout = 180
         self.link_timeout = 30
         self.name = name
         self.group = group
-        self.agents = [] if not agents else agents
+        self.agents = agents if agents else []
         self.adversary = adversary
         self.jitter = jitter
         self.source = source
