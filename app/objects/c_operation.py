@@ -24,7 +24,7 @@ NO_PREVIOUS_STATE = object()
 
 
 class OperationSchema(ma.Schema):
-    id = ma.fields.String()
+    id = ma.fields.String(required=True)
     name = ma.fields.String()
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
@@ -34,7 +34,7 @@ class OperationSchema(ma.Schema):
     state = ma.fields.String()
     obfuscator = ma.fields.String()
     autonomous = ma.fields.Integer()
-    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain], allow_none=True, dump_only=True)
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())

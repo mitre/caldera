@@ -36,7 +36,7 @@ class LinkSchema(ma.Schema):
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     used = ma.fields.List(ma.fields.Nested(FactSchema()))
-    unique = ma.fields.String()
+    unique = ma.fields.String(required=True)
     collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
@@ -62,8 +62,8 @@ class LinkSchema(ma.Schema):
         return link
 
     @ma.post_load()
-    def build_link(self, data, **_):
-        return Link(**data)
+    def build_link(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Link(**data)
 
 
 class Link(BaseObject):
