@@ -240,7 +240,7 @@ class Link(BaseObject):
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
-            if not await knowledge_svc_handle.check_new_fact(fact, all_facts):
+            if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
                              technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
                              origin_type=OriginType.LEARNED)

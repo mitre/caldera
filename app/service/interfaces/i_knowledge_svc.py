@@ -49,6 +49,11 @@ class KnowledgeServiceInterface(abc.ABC):
         links to identify the host it was discovered on."""
         pass
 
+    @abc.abstractmethod
+    async def check_fact_exists(self, fact, listing=None):
+        """Check to see if a fact already exists in the knowledge store, or if a listing is provided, in said listing"""
+        pass
+
     # -- Relationships API --
     @abc.abstractmethod
     async def get_relationships(self, criteria, restrictions=None):
