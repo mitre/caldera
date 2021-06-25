@@ -34,19 +34,15 @@ class AgentFieldsSchema(ma.Schema):
     exe_name = ma.fields.String()
     host = ma.fields.String()
     contact = ma.fields.String()
-    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
-                                     allow_none=True)
-    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
-    origin_link_id = ma.fields.Integer()
-    deadman_enabled = ma.fields.Boolean(allow_none=True)
-    available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
-    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
-
-    display_name = ma.fields.String(dump_only=True)
-    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
-    last_seen = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
-    links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
     pending_contact = ma.fields.String()
+    links = ma.fields.List(ma.fields.Nested(LinkSchema()))
+    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
+    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
+    origin_link_id = ma.fields.String()
+    deadman_enabled = ma.fields.Boolean()
+    available_contacts = ma.fields.List(ma.fields.String())
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    host_ip_addrs = ma.fields.List(ma.fields.String())
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -98,8 +94,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
+                 proxy_receivers=None, proxy_chain=None, origin_link_id='', deadman_enabled=False,
+                 available_contacts=None, host_ip_addrs=None, upstream_dest=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
