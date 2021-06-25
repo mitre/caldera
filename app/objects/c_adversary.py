@@ -13,12 +13,12 @@ DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 
 class AdversarySchema(ma.Schema):
 
-    adversary_id = ma.fields.String(required=False)
-    name = ma.fields.String()
-    description = ma.fields.String(required=False)
-    atomic_ordering = ma.fields.List(ma.fields.String(), required=False)
-    objective = ma.fields.String(required=False)
-    tags = ma.fields.List(ma.fields.String(), required=False, allow_none=True)
+    adversary_id = ma.fields.String()
+    name = ma.fields.String(required=True)
+    description = ma.fields.String()
+    atomic_ordering = ma.fields.List(ma.fields.String())
+    objective = ma.fields.String()
+    tags = ma.fields.List(ma.fields.String(), allow_none=True)
     has_repeatable_abilities = ma.fields.Boolean(dump_only=True)
 
     @ma.pre_load

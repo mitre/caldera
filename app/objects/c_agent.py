@@ -13,32 +13,32 @@ from app.utility.base_planning_svc import BasePlanningService
 
 class AgentFieldsSchema(ma.Schema):
 
-    paw = ma.fields.String(required=False, allow_none=True)
-    sleep_min = ma.fields.Integer()
-    sleep_max = ma.fields.Integer()
+    paw = ma.fields.String(allow_none=True)
+    sleep_min = ma.fields.Integer(required=True)
+    sleep_max = ma.fields.Integer(required=True)
     watchdog = ma.fields.Integer()
-    group = ma.fields.String(required=False)
-    architecture = ma.fields.String(required=False)
-    platform = ma.fields.String(required=False)
-    server = ma.fields.String(required=False)
-    upstream_dest = ma.fields.String(required=False, allow_none=True)
-    username = ma.fields.String(required=False)
-    location = ma.fields.String(required=False)
-    pid = ma.fields.Integer(required=False)
-    ppid = ma.fields.Integer(required=False)
-    trusted = ma.fields.Boolean(required=False)
-    executors = ma.fields.List(ma.fields.String(), required=False)
-    privilege = ma.fields.String(required=False)
-    exe_name = ma.fields.String(required=False)
-    host = ma.fields.String(required=False)
-    contact = ma.fields.String(required=False)
+    group = ma.fields.String()
+    architecture = ma.fields.String()
+    platform = ma.fields.String()
+    server = ma.fields.String()
+    upstream_dest = ma.fields.String(allow_none=True)
+    username = ma.fields.String()
+    location = ma.fields.String()
+    pid = ma.fields.Integer()
+    ppid = ma.fields.Integer()
+    trusted = ma.fields.Boolean()
+    executors = ma.fields.List(ma.fields.String())
+    privilege = ma.fields.String()
+    exe_name = ma.fields.String()
+    host = ma.fields.String()
+    contact = ma.fields.String()
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
-                                     required=False, allow_none=True)
-    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), required=False, allow_none=True)
-    origin_link_id = ma.fields.Integer(required=False)
-    deadman_enabled = ma.fields.Boolean(required=False, allow_none=True)
-    available_contacts = ma.fields.List(ma.fields.String(), required=False, allow_none=True)
-    host_ip_addrs = ma.fields.List(ma.fields.String(), required=False, allow_none=True)
+                                     allow_none=True)
+    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
+    origin_link_id = ma.fields.Integer()
+    deadman_enabled = ma.fields.Boolean(allow_none=True)
+    available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
+    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
 
     display_name = ma.fields.String(dump_only=True)
     created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
@@ -94,7 +94,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return True
         return False
 
-    def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min, sleep_max, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
