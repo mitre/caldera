@@ -32,20 +32,22 @@ class OperationApiManager(BaseApiManager):
     async def create_or_update_operation_link(self, operation_id: str, link_id: str,
                                               link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation(operation_id)
-        link = None
+        existing_link = None
         for entry in operation.chain:
             if entry.id == link_id:
-                link = entry
+                existing_link = entry
                 break
-        if link and link.access in access['access']:
-            new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
+        if existing_link and existing_link.access not in access['access']:
+            raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
+
+        new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
+        if existing_link:
             for entry in operation.chain:
                 if entry.id == link_id:
-                    del entry
+                    operation.chain.remove(entry)
                     break
-            operation.chain.append(new_link)
-            return new_link.display
-        raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
+        operation.chain.append(new_link)
+        return new_link.display
 
     async def create_potential_link(self, operation_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation(operation_id)
