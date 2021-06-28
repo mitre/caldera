@@ -36,14 +36,14 @@ class FactSchema(ma.Schema):
     class Meta:
         unknown = ma.EXCLUDE
 
-    unique = ma.fields.String()
-    trait = ma.fields.String()
-    name = ma.fields.String()
+    unique = ma.fields.String(dump_only=True)
+    trait = ma.fields.String(required=True)
+    name = ma.fields.String(dump_only=True)
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
     score = ma.fields.Integer()
-    source = ma.fields.String()
-    origin_type = ma_enum.EnumField(OriginType)
+    source = ma.fields.String(allow_none=True)
+    origin_type = ma_enum.EnumField(OriginType, allow_none=True)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
     limit_count = ma.fields.Integer()

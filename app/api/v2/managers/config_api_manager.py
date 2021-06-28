@@ -51,8 +51,8 @@ class ConfigNotFound(Exception):
 
 
 class ConfigApiManager(BaseApiManager):
-    def __init__(self, data_svc, config_interface=None):
-        super().__init__(data_svc=data_svc)
+    def __init__(self, data_svc, file_svc, config_interface=None):
+        super().__init__(data_svc=data_svc, file_svc=file_svc)
         self._config_interface = config_interface or BaseWorld
 
     def get_filtered_config(self, name):

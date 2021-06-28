@@ -92,7 +92,7 @@ class FileSvc(FileServiceInterface, BaseService):
                 file_path = await self.walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
                 if file_path:
                     return plugin.name, file_path
-        file_path = await self.walk_file_path(os.path.join('data'), name)
+        file_path = await self.walk_file_path(os.path.join('data', location), name)
         if file_path:
             return None, file_path
         return None, await self.walk_file_path('%s' % location, name)

@@ -11,6 +11,7 @@ from aiohttp import web
 import app.api.v2
 from app import version
 from app.api.rest_api import RestApi
+from app.api.v2.responses import apispec_request_validation_middleware
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
@@ -76,12 +77,13 @@ def init_swagger_documentation(app):
     """
     aiohttp_apispec.setup_aiohttp_apispec(
         app=app,
-        title="CALDERA",
+        title='CALDERA',
         version=version.get_version(),
-        swagger_path="/api/docs",
-        url="/api/docs/swagger.json",
-        static_path="/static/swagger"
+        swagger_path='/api/docs',
+        url='/api/docs/swagger.json',
+        static_path='/static/swagger'
     )
+    app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
 
 
