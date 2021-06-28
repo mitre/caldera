@@ -27,12 +27,12 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 
 class SourceSchema(ma.Schema):
 
-    id = ma.fields.String(required=False)
-    name = ma.fields.String()
-    facts = ma.fields.List(ma.fields.Nested(FactSchema), required=False)
-    rules = ma.fields.List(ma.fields.Nested(RuleSchema), required=False)
-    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema), required=False)
-    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema), required=False)
+    id = ma.fields.String()
+    name = ma.fields.String(required=True)
+    facts = ma.fields.List(ma.fields.Nested(FactSchema))
+    rules = ma.fields.List(ma.fields.Nested(RuleSchema))
+    adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
+    relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema))
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):

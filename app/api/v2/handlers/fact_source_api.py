@@ -49,7 +49,7 @@ class FactSourceApi(BaseObjectApi):
         source = await self.update_on_disk_object(request)
         return web.json_response(source.display)
 
-    @aiohttp_apispec.docs(tags=['objectives'])
+    @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema)
     async def create_or_update_source(self, request: web.Request):

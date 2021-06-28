@@ -5,10 +5,10 @@ from app.utility.base_object import BaseObject
 
 class GoalSchema(ma.Schema):
 
-    target = ma.fields.String(required=False)
-    value = ma.fields.String(required=False)
-    count = ma.fields.Integer(required=False)
-    operator = ma.fields.String(required=False)
+    target = ma.fields.String()
+    value = ma.fields.String()
+    count = ma.fields.Integer()
+    operator = ma.fields.String()
     achieved = ma.fields.Boolean(dump_only=True)
 
     @ma.pre_load

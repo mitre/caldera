@@ -9,10 +9,10 @@ from app.utility.base_object import BaseObject
 
 class ObjectiveSchema(ma.Schema):
 
-    id = ma.fields.String(required=False)
-    name = ma.fields.String(required=False)
-    description = ma.fields.String(required=False)
-    goals = ma.fields.List(ma.fields.Nested(GoalSchema), required=False)
+    id = ma.fields.String()
+    name = ma.fields.String()
+    description = ma.fields.String()
+    goals = ma.fields.List(ma.fields.Nested(GoalSchema))
     percentage = ma.fields.Float(dump_only=True)
 
     @ma.pre_load
