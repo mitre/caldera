@@ -1,5 +1,6 @@
 import re
 import uuid
+import os
 
 from typing import Any
 
@@ -11,7 +12,30 @@ class AbilityApiManager(BaseApiManager):
     def __init__(self, data_svc, file_svc):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
-    def validate_ability_data(self, create: bool, data: dict):
+    async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
+        self._validate_ability_data(create=True, data=data)
+        obj_id = data.get(id_property) or str(uuid.uuid4())
+        data[id_property] = obj_id
+
+        tactic_dir = os.path.join('data', 'abilities', data.get('tactic'))
+        if not os.path.exists(tactic_dir):
+            os.makedirs(tactic_dir)
+        file_path = os.path.join(tactic_dir, '%s.yml' % data['ability_id'])
+        allowed = self._get_allowed_from_access(access)
+        await self._save_and_reload_object(file_path, data, obj_class, allowed)
+        return next(self.find_objects(ram_key, {id_property: obj_id}))
+
+    async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
+        self._validate_ability_data(create=False, data=data)
+        return await super().replace_on_disk_object(obj, data, ram_key, id_property)
+
+    async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
+        self._validate_ability_data(create=False, data=data)
+        return await super().update_on_disk_object(obj, data, ram_key, id_property, obj_class)
+
+    '''Helpers'''
+
+    def _validate_ability_data(self, create: bool, data: dict):
         # If a new ability is being created, ensure required fields present.
         if create:
             # Set ability ID if undefined
@@ -37,15 +61,3 @@ class AbilityApiManager(BaseApiManager):
         # Validate platforms, ability will not be loaded if empty
         if 'executors' in data and not data['executors']:
             raise JsonHttpBadRequest('At least one executor is required to save ability.')
-
-    async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
-        self.validate_ability_data(create=True, data=data)
-        return await super().create_on_disk_object(data, access, ram_key, id_property, obj_class)
-
-    async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
-        self.validate_ability_data(create=False, data=data)
-        return await super().replace_on_disk_object(obj, data, ram_key, id_property)
-
-    async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
-        self.validate_ability_data(create=False, data=data)
-        return await super().update_on_disk_object(obj, data, ram_key, id_property, obj_class)

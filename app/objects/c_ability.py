@@ -13,12 +13,12 @@ from app.utility.base_world import AccessSchema
 
 class AbilitySchema(ma.Schema):
     ability_id = ma.fields.String()
-    tactic = ma.fields.String(required=True)
+    tactic = ma.fields.String(missing=None)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), required=True)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -26,6 +26,11 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
+
+    @ma.pre_load
+    def fix_tactic(self, ability, **_):
+        if 'tactic' in ability:
+            ability['tactic'] = ability['tactic'].lower()
 
     @ma.pre_load
     def fix_id(self, ability, **_):
