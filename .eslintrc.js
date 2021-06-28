@@ -1,6 +1,7 @@
 module.exports = {
     plugins: [
-        "html"
+        "html",
+        "jinja2"
     ],
     extends: "airbnb-base",
     env: {
