@@ -42,10 +42,7 @@ class OperationApiManager(BaseApiManager):
 
         new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
         if existing_link:
-            for entry in operation.chain:
-                if entry.id == link_id:
-                    operation.chain.remove(entry)
-                    break
+            operation.chain.remove(entry)
         operation.chain.append(new_link)
         return new_link.display
 
