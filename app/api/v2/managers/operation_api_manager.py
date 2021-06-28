@@ -11,29 +11,19 @@ class OperationApiManager(BaseApiManager):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
     async def get_operation_report(self, operation_id: str):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+        operation = await self.get_operation(operation_id)
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
 
         return report
 
     async def get_operation_links(self, operation_id: str):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+        operation = await self.get_operation(operation_id)
         links = [link.display for link in operation.chain]
 
         return links
 
     async def get_operation_link(self, operation_id: str, link_id: str):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
-
+        operation = await self.get_operation(operation_id)
         for link in operation.chain:
             if link.id == link_id:
                 return link.display
@@ -41,11 +31,7 @@ class OperationApiManager(BaseApiManager):
 
     async def create_or_update_operation_link(self, operation_id: str, link_id: str,
                                               link_data: dict, access: BaseWorld.Access):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
-
+        operation = await self.get_operation(operation_id)
         link = None
         for entry in operation.chain:
             if entry.id == link_id:
@@ -62,11 +48,7 @@ class OperationApiManager(BaseApiManager):
         raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
 
     async def create_potential_link(self, operation_id: str, link_data: dict, access: BaseWorld.Access):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
-
+        operation = await self.get_operation(operation_id)
         link_id = link_data['id']
         for entry in operation.potential_links:
             if entry.id == link_id:
@@ -76,19 +58,13 @@ class OperationApiManager(BaseApiManager):
         return new_link.display
 
     async def get_potential_links(self, operation_id: str):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+        operation = await self.get_operation(operation_id)
         potential_links = [potential_link.display for potential_link in operation.potential_links]
 
         return potential_links
 
     async def get_potential_links_by_paw(self, operation_id: str, paw: str):
-        try:
-            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+        operation = await self.get_operation(operation_id)
 
         output_links = []
         for link in operation.potential_links:
@@ -99,6 +75,13 @@ class OperationApiManager(BaseApiManager):
         return output_links
 
     """Object Creation Helpers"""
+    async def get_operation(self, operation_id: str):
+        try:
+            operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
+            return operation
+        except Exception:
+            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+
     def create_secondclass_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
         obj = obj_schema.load(data)

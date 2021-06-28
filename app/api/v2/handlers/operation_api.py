@@ -13,7 +13,6 @@ class OperationApi(BaseObjectApi):
         super().__init__(description='operation', obj_class=Operation, schema=OperationSchema, ram_key='operations',
                          id_property='id', auth_svc=services['auth_svc'])
         self._api_manager = OperationApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
-        self._services = services
 
     def add_routes(self, app: web.Application):
         router = app.router
