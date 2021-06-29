@@ -147,18 +147,31 @@ class DataService(DataServiceInterface, BaseService):
     async def load_ability_file(self, filename, access):
         for entries in self.strip_yml(filename):
             for ab in entries:
-                ability_id = ab.pop('id', None)
+                ability_id = ab.pop('id') if 'id' in ab else ab.pop('ability_id', None)
                 name = ab.pop('name', '')
                 description = ab.pop('description', '')
                 tactic = ab.pop('tactic', None)
-                technique_id = ab.get('technique', dict()).get('attack_id')
-                technique_name = ab.pop('technique', dict()).get('name')
+                if 'technique_id' in ab:
+                    technique_id = ab.pop('technique_id')
+                else:
+                    technique_id = ab.get('technique', dict()).get('attack_id')
+                if 'technique_name' in ab:
+                    technique_name = ab.pop('technique_name')
+                else:
+                    technique_name = ab.pop('technique', dict()).get('name')
                 privilege = ab.pop('privilege', None)
                 repeatable = ab.pop('repeatable', False)
                 singleton = ab.pop('singleton', False)
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
-                executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
+                if 'executors' in ab:
+                    executors = await self.load_executors_from_list(ab.pop('executors', dict()))
+                else:
+                    executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
+
+                if 'access' in ab and ab['access']:
+                    access = ab['access']
+                ab.pop('access', None)
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
@@ -202,6 +215,28 @@ class DataService(DataServiceInterface, BaseService):
                                                   payloads=payloads, uploads=uploads, timeout=timeout,
                                                   parsers=parsers, cleanup=cleanup, variations=variations))
         return executors
+
+    async def load_executors_from_list(self, executors: list):
+        output_list = []
+        for entry in executors:
+            name = entry.pop('name', None)
+            platform = entry.pop('platform', None)
+            command = entry.pop('command', None)
+            code = entry.pop('code', None)
+            language = entry.pop('language', None)
+            build_target = entry.pop('build_target', None)
+            payloads = entry.pop('payloads', None)
+            uploads = entry.pop('uploads', None)
+            timeout = entry.pop('timeout', None)
+            parsers = entry.pop('parsers', None)
+            cleanup = entry.pop('cleanup', None)
+            variations = entry.pop('variations', None)
+            additional_info = entry.pop('additional_info', None)
+            output_list.append(Executor(name=name, platform=platform, command=command, code=code, language=language,
+                                        build_target=build_target, payloads=payloads, uploads=uploads, timeout=timeout,
+                                        parsers=parsers, cleanup=cleanup, variations=variations,
+                                        additional_info=additional_info))
+        return output_list
 
     async def load_adversary_file(self, filename, access):
         warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
