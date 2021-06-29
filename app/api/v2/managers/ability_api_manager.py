@@ -23,7 +23,8 @@ class AbilityApiManager(BaseApiManager):
         if not os.path.exists(tactic_dir):
             os.makedirs(tactic_dir)
         file_path = os.path.join(tactic_dir, '%s.yml' % data['ability_id'])
-        await self._save_and_reload_object(file_path, data, obj_class, access)
+        allowed = self._get_allowed_from_access(access)
+        await self._save_and_reload_object(file_path, data, obj_class, allowed)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
@@ -64,8 +65,7 @@ class AbilityApiManager(BaseApiManager):
             raise JsonHttpBadRequest('At least one executor is required to save ability.')
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
-        allowed = self._get_allowed_from_access(access)
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),
                                        '', encrypt=False)
         await self._data_svc.remove('abilities', dict(ability_id=data['ability_id']))
-        await self._data_svc.load_ability_file(file_path, allowed)
+        await self._data_svc.load_ability_file(file_path, access)

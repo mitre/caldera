@@ -18,31 +18,26 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema()), missing=None)
-    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema()), missing=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
+    requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema())
+    access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
     @ma.pre_load
-    def fix_tactic(self, ability, **_):
-        if 'tactic' in ability:
-            ability['tactic'] = ability['tactic'].lower()
-
-    @ma.pre_load
-    def fix_id(self, ability, **_):
-        if 'id' in ability:
-            ability['ability_id'] = ability.pop('id')
-        return ability
+    def fix_id(self, data, **_):
+        if 'id' in data:
+            data['ability_id'] = data.pop('id')
+        return data
 
     @ma.post_load
-    def build_ability(self, data, **kwargs):
+    def build_ability(self, data, **_):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return None if kwargs.get('partial') is True else Ability(**data)
+        return Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
@@ -60,7 +55,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def executors(self):
         yield from self._executor_map.values()
 
-    def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
+    def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, **kwargs):
         super().__init__()
@@ -117,11 +112,9 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def find_executors(self, names, platform):
         """Find executors for matching platform/executor names
-
         Only the first instance of a matching executor will be returned,
             as there should not be multiple executors matching a single
             platform/executor name pair.
-
         :param names: Executors to search. ex: ['psh', 'cmd']
         :type names: list(str)
         :param platform: Platform to search. ex: windows
@@ -144,7 +137,6 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def add_executor(self, executor):
         """Add executor to map
-
         If the executor exists, delete the current entry and add the
             new executor to the bottom for FIFO
         """
