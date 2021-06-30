@@ -171,8 +171,7 @@ class ContactService(ContactServiceInterface, BaseService):
                            timeout=link.executor.timeout,
                            payloads=payloads,
                            uploads=uploads,
-                           deadman=link.deadman,
-                           executor_changes=link.executor_changes,)
+                           deadman=link.deadman)
 
     async def _add_agent_to_operation(self, agent):
         """Determine which operation(s) incoming agent belongs to and
