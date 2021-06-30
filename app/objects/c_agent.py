@@ -15,47 +15,58 @@ from app.utility.base_service import BaseService
 
 class AgentFieldsSchema(ma.Schema):
 
-    paw = ma.fields.String()
+    paw = ma.fields.String(allow_none=True)
+    sleep_min = ma.fields.Integer(required=True)
+    sleep_max = ma.fields.Integer(required=True)
+    watchdog = ma.fields.Integer()
     group = ma.fields.String()
     architecture = ma.fields.String()
     platform = ma.fields.String()
     server = ma.fields.String()
-    upstream_dest = ma.fields.String()
+    upstream_dest = ma.fields.String(allow_none=True)
     username = ma.fields.String()
     location = ma.fields.String()
     pid = ma.fields.Integer()
     ppid = ma.fields.Integer()
     trusted = ma.fields.Boolean()
-    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
-    sleep_min = ma.fields.Integer()
-    sleep_max = ma.fields.Integer()
     executors = ma.fields.List(ma.fields.String())
     privilege = ma.fields.String()
-    display_name = ma.fields.String()
     exe_name = ma.fields.String()
     host = ma.fields.String()
-    watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    pending_contact = ma.fields.String()
-    links = ma.fields.List(ma.fields.Nested(LinkSchema()))
-    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
-    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
+    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
+                                     allow_none=True)
+    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
     origin_link_id = ma.fields.Integer()
-    deadman_enabled = ma.fields.Boolean()
-    available_contacts = ma.fields.List(ma.fields.String())
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
-    host_ip_addrs = ma.fields.List(ma.fields.String())
+    deadman_enabled = ma.fields.Boolean(allow_none=True)
+    available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
+    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
+
+    display_name = ma.fields.String(dump_only=True)
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
+    pending_contact = ma.fields.String(dump_only=True)
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
         return {k: v for k, v in in_data.items() if v is not None}
 
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('display_name', None)
+        data.pop('created', None)
+        data.pop('last_seen', None)
+        data.pop('links', None)
+        data.pop('pending_contact', None)
+        return data
+
 
 class AgentSchema(AgentFieldsSchema):
 
     @ma.post_load
-    def build_agent(self, data, **_):
-        return Agent(**data)
+    def build_agent(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Agent(**data)
 
 
 class Agent(FirstClassObjectInterface, BaseObject):
@@ -85,7 +96,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return True
         return False
 
-    def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min, sleep_max, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
