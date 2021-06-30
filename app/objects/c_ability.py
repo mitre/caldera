@@ -24,7 +24,7 @@ class AbilitySchema(ma.Schema):
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema, missing=None)
+    access = ma.fields.Nested(AccessSchema, missing=None, dump_only=True)
     singleton = ma.fields.Bool(missing=None)
 
     @ma.pre_load
@@ -34,10 +34,10 @@ class AbilitySchema(ma.Schema):
         return data
 
     @ma.post_load
-    def build_ability(self, data, **_):
+    def build_ability(self, data, **kwargs):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return Ability(**data)
+        return None if kwargs.get('partial') is True else Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
