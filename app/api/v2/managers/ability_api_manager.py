@@ -33,7 +33,14 @@ class AbilityApiManager(BaseApiManager):
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
         self._validate_ability_data(create=False, data=data)
-        return await super().update_on_disk_object(obj, data, ram_key, id_property, obj_class)
+        obj_id = getattr(obj, id_property)
+        file_path = await self._get_existing_object_file_path(obj_id, ram_key)
+
+        existing_obj_data = dict(self.strip_yml(file_path)[0][0])
+        existing_obj_data.update(data)
+
+        await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
+        return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     '''Helpers'''
 
