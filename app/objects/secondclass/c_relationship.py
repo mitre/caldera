@@ -6,10 +6,10 @@ from app.objects.secondclass.c_fact import FactSchema
 
 class RelationshipSchema(ma.Schema):
 
-    unique = ma.fields.String()
-    source = ma.fields.Nested(FactSchema())
-    edge = ma.fields.String()
-    target = ma.fields.Nested(FactSchema())
+    unique = ma.fields.String(dump_only=True)
+    source = ma.fields.Nested(FactSchema, required=True)
+    edge = ma.fields.String(allow_none=True)
+    target = ma.fields.Nested(FactSchema, allow_none=True)
     score = ma.fields.Integer()
 
     @ma.post_load

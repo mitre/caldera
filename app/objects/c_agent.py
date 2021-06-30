@@ -13,47 +13,58 @@ from app.utility.base_planning_svc import BasePlanningService
 
 class AgentFieldsSchema(ma.Schema):
 
-    paw = ma.fields.String()
+    paw = ma.fields.String(allow_none=True)
+    sleep_min = ma.fields.Integer(required=True)
+    sleep_max = ma.fields.Integer(required=True)
+    watchdog = ma.fields.Integer()
     group = ma.fields.String()
     architecture = ma.fields.String()
     platform = ma.fields.String()
     server = ma.fields.String()
-    upstream_dest = ma.fields.String()
+    upstream_dest = ma.fields.String(allow_none=True)
     username = ma.fields.String()
     location = ma.fields.String()
     pid = ma.fields.Integer()
     ppid = ma.fields.Integer()
     trusted = ma.fields.Boolean()
-    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
-    sleep_min = ma.fields.Integer()
-    sleep_max = ma.fields.Integer()
     executors = ma.fields.List(ma.fields.String())
     privilege = ma.fields.String()
-    display_name = ma.fields.String()
     exe_name = ma.fields.String()
     host = ma.fields.String()
-    watchdog = ma.fields.Integer()
     contact = ma.fields.String()
-    pending_contact = ma.fields.String()
-    links = ma.fields.List(ma.fields.Nested(LinkSchema()))
-    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()))
-    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()))
+    proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
+                                     allow_none=True)
+    proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
     origin_link_id = ma.fields.Integer()
-    deadman_enabled = ma.fields.Boolean()
-    available_contacts = ma.fields.List(ma.fields.String())
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
-    host_ip_addrs = ma.fields.List(ma.fields.String())
+    deadman_enabled = ma.fields.Boolean(allow_none=True)
+    available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
+    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
+
+    display_name = ma.fields.String(dump_only=True)
+    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
+    pending_contact = ma.fields.String(dump_only=True)
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
         return {k: v for k, v in in_data.items() if v is not None}
 
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('display_name', None)
+        data.pop('created', None)
+        data.pop('last_seen', None)
+        data.pop('links', None)
+        data.pop('pending_contact', None)
+        return data
+
 
 class AgentSchema(AgentFieldsSchema):
 
     @ma.post_load
-    def build_agent(self, data, **_):
-        return Agent(**data)
+    def build_agent(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Agent(**data)
 
 
 class Agent(FirstClassObjectInterface, BaseObject):
@@ -83,7 +94,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return True
         return False
 
-    def __init__(self, sleep_min, sleep_max, watchdog, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min, sleep_max, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
@@ -125,6 +136,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             self.upstream_dest = '%s://%s:%s' % (upstream_url.scheme, upstream_url.hostname, upstream_url.port)
         else:
             self.upstream_dest = self.server
+        self._executor_change_to_assign = None
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -186,13 +198,15 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('username', kwargs.get('username'))
         self.update('architecture', kwargs.get('architecture'))
         self.update('platform', kwargs.get('platform'))
-        self.update('executors', kwargs.get('executors'))
         self.update('proxy_receivers', kwargs.get('proxy_receivers'))
         self.update('proxy_chain', kwargs.get('proxy_chain'))
         self.update('deadman_enabled', kwargs.get('deadman_enabled'))
         self.update('contact', kwargs.get('contact'))
         self.update('host_ip_addrs', kwargs.get('host_ip_addrs'))
         self.update('upstream_dest', kwargs.get('upstream_dest'))
+        if not self._executor_change_to_assign:
+            # Don't update executors if we're waiting to assign an executor change to the agent.
+            self.update('executors', kwargs.get('executors'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
@@ -264,7 +278,33 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def all_facts(self):
         return [f for lnk in self.links for f in lnk.facts if f.score > 0]
 
+    @property
+    def executor_change_to_assign(self):
+        return self._executor_change_to_assign
+
+    @executor_change_to_assign.setter
+    def executor_change_to_assign(self, executor_change_dict):
+        """Set pending executor change dict for the agent."""
+        if executor_change_dict:
+            self._executor_change_to_assign = executor_change_dict
+            if executor_change_dict.get('action') == 'remove':
+                # Remove the executor server-side so planners can generate appropriate links immediately.
+                self._remove_executor(executor_change_dict.get('executor'))
+
+    def assign_pending_executor_change(self):
+        """Return the executor change dict and remove pending change to assign.
+
+        :return: Dict (string, string) representing the executor change that is assigned.
+        """
+        executor_change = self.executor_change_to_assign
+        self._executor_change_to_assign = None
+        return executor_change
+
     """ PRIVATE """
+
+    def _remove_executor(self, executor_name):
+        if executor_name in self.executors:
+            self.executors.remove(executor_name)
 
     def _replace_payload_data(self, decoded_cmd, file_svc):
         for uuid in re.findall(self.RESERVED['payload'], decoded_cmd):

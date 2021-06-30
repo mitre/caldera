@@ -391,11 +391,4 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _verify_adversary_profiles(self):
         for adv in await self.locate('adversaries'):
-            if not adv.objective:
-                adv.objective = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
-            if not next((objective for objective in self.ram['objectives'] if objective.id == adv.objective), None):
-                self.log.warning('Objective referenced in %s but not found: %s' % (adv.adversary_id, adv.objective))
-            for ability_id in adv.atomic_ordering:
-                if not next((ability for ability in self.ram['abilities'] if ability.ability_id == ability_id), None):
-                    self.log.warning('Ability referenced in %s but not found: %s' % (adv.adversary_id, ability_id))
-            adv.has_repeatable_abilities = adv.check_repeatable_abilities(self.ram['abilities'])
+            adv.verify(log=self.log, abilities=self.ram['abilities'], objectives=self.ram['objectives'])
