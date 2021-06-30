@@ -6,7 +6,7 @@ from importlib import import_module
 
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_fact import OriginType
-from app.objects.secondclass.c_link import _update_scores
+from app.objects.secondclass.c_link import update_scores
 from app.service.interfaces.i_learning_svc import LearningServiceInterface
 from app.utility.base_service import BaseService
 
@@ -47,21 +47,20 @@ class LearningService(LearningServiceInterface, BaseService):
                     found_facts.append(fact)
             except Exception as e:
                 self.log.error(e)
-        await _update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
+        await update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
         await self._store_results(link, found_facts, operation)
 
     """ PRIVATE """
 
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):
-        if all(fact.trait) and not any(f.trait == fact.trait and f.value == fact.value and f.source == link.id
-                                       for f in facts):
+        fact.source_type = OriginType.LEARNED.name
+        fact.source = operation.id if operation else link.id
+        if all(fact.trait) and not any(fact == f for f in facts):
             fact.collected_by = link.paw
             fact.technique_id = link.ability.technique_id
             fact.links = [link]
             fact.relationships = []
-            fact.source_type = OriginType.LEARNED.name
-            fact.source = operation.id if operation else link.id
             knowledge_svc_handle = BaseService.get_service('knowledge_svc')
             await knowledge_svc_handle.add_fact(fact)
             link.facts.append(fact)
@@ -81,5 +80,8 @@ class LearningService(LearningServiceInterface, BaseService):
                     await link._create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],
                                                      operation=operation)
         # make sure we always record all the facts, even if there isn't a model set, or it would slip through otherwise
+        e_facts = link.facts
+        if operation:
+            e_facts = await operation.all_facts()
         for f in [x for x in facts if x not in facts_covered]:
-            await self._save_fact(link, facts, f, operation)
+            await self._save_fact(link, e_facts, f, operation)

@@ -177,7 +177,7 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
-                await _update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
+                await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
                 await self._create_relationships(relationships, operation)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
@@ -248,11 +248,13 @@ class Link(BaseObject):
                 await knowledge_svc_handle.add_fact(f_gen)
             else:
                 existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
-                                                                                    value=fact.value)))[0]
+                                                                                    value=fact.value,
+                                                                                    source=fact.source)))[0]
                 existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
-                await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value),
+                await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
+                                                                     source=fact.source),
                                                        updates=dict(links=existing_fact.links,
                                                                     relationships=existing_fact.relationships))
                 existing_local_record = [x for x in self.facts if x.trait == fact.trait and x.value == fact.value]
@@ -262,7 +264,7 @@ class Link(BaseObject):
                     self.facts.append(existing_fact)
 
 
-async def _update_scores(operation, increment, used, facts):
+async def update_scores(operation, increment, used, facts):
     knowledge_svc_handle = BaseService.get_service('knowledge_svc')
     for uf in used:
         all_facts = await operation.all_facts() if operation else facts
