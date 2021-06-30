@@ -127,6 +127,7 @@ class AppService(AppServiceInterface, BaseService):
         await self._destroy_plugins()
         await self._save_configurations(main_config_file=main_config_file)
         await self._services.get('data_svc').save_state()
+        await self._services.get('knowledge_svc').save_state()
         await self._write_reports()
         self.log.debug('[!] shutting down server...good-bye')
 
