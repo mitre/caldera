@@ -110,7 +110,12 @@ class BaseKnowledgeService(BaseService):
         for match in matches:
             for k, v in updates.items():
                 if getattr(match, k, False):
-                    setattr(match, k, v)
+                    if isinstance(getattr(match, k), Fact) and not isinstance(v, Fact):
+                        handle = getattr(match, k)
+                        for x in v.keys():
+                            setattr(handle, x, v[x])
+                    else:
+                        setattr(match, k, v)
 
     async def _delete_relationship(self, criteria):
         """
@@ -359,8 +364,7 @@ class BaseKnowledgeService(BaseService):
                 ret.append(entry)
         return ret
 
-    @staticmethod
-    def _wildcard_match(obj, criteria):
+    def _wildcard_match(self, obj, criteria):
         """
         Modified variant of the normal `match` method for objects that will return matches for wildcard fields
             [fact object].source
@@ -379,6 +383,12 @@ class BaseKnowledgeService(BaseService):
             else:
                 if getattr(obj, k) == v:
                     criteria_matches.append(True)
+                elif isinstance(getattr(obj, k), Fact): # this is a match based on a fact object in a relationship
+                    if isinstance(v, Fact):
+                        if getattr(obj, k) == v:
+                            criteria_matches.append(True)
+                    elif self._wildcard_match(getattr(obj, k), v):
+                        criteria_matches.append(True)
                 else: # Wildcard match check
                     if ((k == 'source' and isinstance(obj, Fact)) or
                         (k == 'origin' and isinstance(obj, Relationship))) and getattr(obj, k) == wildcard_string:

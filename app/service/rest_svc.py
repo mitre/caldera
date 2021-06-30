@@ -19,8 +19,7 @@ from app.objects.c_source import Source
 from app.objects.c_schedule import Schedule
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
-from app.objects.secondclass.c_relationship import Relationship
-from app.objects.secondclass.c_fact import Fact, OriginType, wildcard_string
+from app.objects.secondclass.c_fact import Fact
 from app.service.interfaces.i_rest_svc import RestServiceInterface
 from app.utility.base_service import BaseService
 
@@ -94,72 +93,6 @@ class RestService(RestServiceInterface, BaseService):
             r.extend(await self._persist_objective(access, obj))
         return r
 
-    async def add_fact(self, data):
-        if data.get('bulk', False):
-            data = data['bulk']
-        else:
-            data = [data]
-        r = []
-        for fact in data:
-            r.extend(await self._add_fact(fact))
-        return r
-
-    async def _add_fact(self, fact_data):
-        knowledge_svc_handle = self.get_service('knowledge_svc')
-        try:
-            new_fact = Fact.load(fact_data)
-            if 'source' not in fact_data:
-                new_fact.source = wildcard_string
-            new_fact.source_type = OriginType.USER.name
-            await knowledge_svc_handle.add_fact(new_fact)
-            store = await knowledge_svc_handle.get_facts(criteria=dict(trait=fact_data['trait'],
-                                                                       value=fact_data['value'],
-                                                                       source=wildcard_string,
-                                                                       source_type=OriginType.USER.name))
-            return [x.display for x in store]
-        except Exception as e:
-            self.log.warning(f'Encountered issue saving fact {fact_data} - {e}')
-
-    async def add_relationship(self, data):
-        if data.get('bulk', False):
-            data = data['bulk']
-        else:
-            data = [data]
-        r = []
-        for relationship in data:
-            r.extend(await self._add_relationship(relationship))
-        return r
-
-    async def _add_relationship(self, relationship_data):
-        knowledge_svc_handle = self.get_service('knowledge_svc')
-        try:
-            origin_target = wildcard_string
-            new_relationship = Relationship.load(relationship_data)
-            if 'origin' in relationship_data:
-                origin_target = relationship_data['origin']
-            else:
-                new_relationship.origin = origin_target
-            shorthand = new_relationship.shorthand
-            new_relationship.source.relationships = [shorthand]
-            new_relationship.source.source = origin_target
-            new_relationship.source.source_type = OriginType.USER.name
-            if 'target' in relationship_data:
-                new_relationship.target.source = origin_target
-                new_relationship.target.source_type = OriginType.USER.name
-                new_relationship.target.relationships = [shorthand]
-                await knowledge_svc_handle.add_fact(new_relationship.target)
-            await knowledge_svc_handle.add_fact(new_relationship.source)
-            await knowledge_svc_handle.add_relationship(new_relationship)
-
-            store = await knowledge_svc_handle.get_relationships(
-                criteria=dict(source=new_relationship.source,
-                              edge=new_relationship.edge if 'edge' in relationship_data else None,
-                              target=new_relationship.target if 'target' in relationship_data else None,
-                              origin=origin_target))
-            return [x.flat_display for x in store]
-        except Exception as e:
-            self.log.warning(f'Encountered issue saving fact {relationship_data} - {e}')
-
     async def delete_agent(self, data):
         await self.get_service('data_svc').remove('agents', data)
         return 'Delete action completed'
@@ -181,24 +114,9 @@ class RestService(RestServiceInterface, BaseService):
                 os.remove(f)
         return 'Delete action completed'
 
-    async def delete_fact(self, data):
-        return await self.get_service('knowledge_svc').delete_fact(criteria=data)
-
-    async def delete_relationship(self, data):
-        return await self.get_service('knowledge_svc').delete_relationship(criteria=data)
-
     async def display_objects(self, object_name, data):
-        if object_name in ['facts', 'relationships']:
-            knowledge_svc_handle = self.get_service('knowledge_svc')
-            if object_name == 'facts':
-                ret = await knowledge_svc_handle.get_facts(criteria=data)
-                return [x.display for x in ret]
-            else:
-                ret = await knowledge_svc_handle.get_relationships(criteria=data)
-                return [x.flat_display for x in ret]
-        else:
-            results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
-            return await self._explode_display_results(object_name, results)
+        results = [o.display for o in await self.get_service('data_svc').locate(object_name, match=data)]
+        return await self._explode_display_results(object_name, results)
 
     async def display_result(self, data):
         link_id = str(data.pop('link_id'))
