@@ -6,9 +6,13 @@ from app.utility.base_object import BaseObject
 
 class ScheduleSchema(ma.Schema):
 
-    name = ma.fields.String()
-    schedule = ma.fields.Time()
+    name = ma.fields.String(required=True)
+    schedule = ma.fields.Time(dump_only=True)
     task = ma.fields.Function(lambda obj: obj.task.display)
+
+    @ma.post_load
+    def build_schedule(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Schedule(**data)
 
 
 class Schedule(FirstClassObjectInterface, BaseObject):
