@@ -128,7 +128,7 @@ class TestPlanningService:
             timeout = True
         assert timeout is True
 
-    def test_get_links(self, loop, setup_planning_test, planning_svc, data_svc):
+    def test_get_links(self, loop, setup_planning_test, planning_svc, data_svc, knowledge_svc):
         # PART A: Don't fill in facts for "cability" so only "tability"
         #   is returned in "links"
         tability, agent, operation, cability = setup_planning_test
@@ -143,10 +143,10 @@ class TestPlanningService:
         operation.add_link(Link.load(
             dict(command='', paw=agent.paw, ability=tability, executor=next(tability.executors), status=0)))
 
-        operation.chain[0].facts.append(Fact(trait='1_2_3', value='0'))
-        operation.chain[0].facts.append(Fact(trait='a.b.c', value='1'))
-        operation.chain[0].facts.append(Fact(trait='a.b.d', value='2'))
-        operation.chain[0].facts.append(Fact(trait='a.b.e', value='3'))
+        loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='1_2_3', value='0', source=operation.id)))
+        loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='a.b.c', value='1', source=operation.id)))
+        loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='a.b.d', value='2', source=operation.id)))
+        loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='a.b.e', value='3', source=operation.id)))
 
         links = loop.run_until_complete(planning_svc.get_links
                                         (operation=operation, buckets=None,
@@ -209,10 +209,10 @@ class TestPlanningService:
         # add stopping condition to a fact, then to a link, then the link to the operation
         l0 = link(command='test', paw='0', ability=ability, executor=executor)
         l1 = link(command='test1', paw='1', ability=ability, executor=executor)
-        loop.run_until_complete(l1._save_fact(operation, stopping_conditions[0], 1))  # directly attach fact to link
+        loop.run_until_complete(l1._save_fact(operation, stopping_conditions[0], 1, "dummy_relationship_visual_string"))
         operation.add_link(l0)
         operation.add_link(l1)
-        # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
+        # now verify stopping condition is met since we directly inserted fact that matches stopping condition
         assert loop.run_until_complete(planning_svc.check_stopping_conditions(stopping_conditions, operation)) is True
 
     def test_update_stopping_condition_met(self, loop, fact, link, setup_planning_test, planning_svc):
@@ -229,7 +229,7 @@ class TestPlanningService:
         assert p.stopping_condition_met is False
         # add stopping condition to a fact, then to a link, then the link to the operation
         l1 = link(command='test1', paw='1', ability=ability, executor=next(ability.executors))
-        loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1))  # directly attach fact to link
+        loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1, "dummy_relationship_visual_string"))
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
         loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
