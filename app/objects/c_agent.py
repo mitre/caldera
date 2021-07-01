@@ -7,8 +7,10 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_link import Link, LinkSchema
+from app.objects.secondclass.c_fact import OriginType
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
+from app.utility.base_service import BaseService
 
 
 class AgentFieldsSchema(ma.Schema):
@@ -272,11 +274,17 @@ class Agent(FirstClassObjectInterface, BaseObject):
                     break
 
         links = await bps.obfuscate_commands(self, obfuscator, links)
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        for fact in facts:
+            fact.source = self.paw
+            fact.origin_type = OriginType.SEEDED.name
+            await knowledge_svc_handle.add_fact(fact)
         self.links.extend(links)
         return links
 
-    def all_facts(self):
-        return [f for lnk in self.links for f in lnk.facts if f.score > 0]
+    async def all_facts(self):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        return await knowledge_svc_handle.get_facts(dict(source=self.paw))
 
     @property
     def executor_change_to_assign(self):
