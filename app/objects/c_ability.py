@@ -24,7 +24,7 @@ class AbilitySchema(ma.Schema):
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema, missing=None, dump_only=True)
+    access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
     @ma.pre_load
