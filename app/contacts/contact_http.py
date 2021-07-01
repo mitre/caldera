@@ -32,6 +32,9 @@ class Contact(BaseWorld):
             if agent.pending_contact != agent.contact:
                 response['new_contact'] = agent.pending_contact
                 self.log.debug('Sending agent instructions to switch from C2 channel %s to %s' % (agent.contact, agent.pending_contact))
+            if agent.executor_change_to_assign:
+                response['executor_change'] = agent.assign_pending_executor_change()
+                self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
             return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
         except Exception as e:
             self.log.error('Malformed beacon: %s' % e)

@@ -151,6 +151,9 @@ class Contact(BaseWorld):
         if agent.pending_contact != agent.contact:
             response['new_contact'] = agent.pending_contact
             self.log.debug('Sending agent instructions to switch from C2 channel %s to %s' % (agent.contact, agent.pending_contact))
+        if agent.executor_change_to_assign:
+            response['executor_change'] = agent.assign_pending_executor_change()
+            self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
         await self._post_instructions(self._encode_string(json.dumps(response).encode('utf-8')), agent.paw)
 
     async def _post_instructions(self, text, paw):
