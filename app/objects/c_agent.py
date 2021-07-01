@@ -7,8 +7,10 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_link import Link, LinkSchema
+from app.objects.secondclass.c_fact import OriginType
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
+from app.utility.base_service import BaseService
 
 
 class AgentFieldsSchema(ma.Schema):
@@ -136,6 +138,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             self.upstream_dest = '%s://%s:%s' % (upstream_url.scheme, upstream_url.hostname, upstream_url.port)
         else:
             self.upstream_dest = self.server
+        self._executor_change_to_assign = None
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -197,13 +200,15 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('username', kwargs.get('username'))
         self.update('architecture', kwargs.get('architecture'))
         self.update('platform', kwargs.get('platform'))
-        self.update('executors', kwargs.get('executors'))
         self.update('proxy_receivers', kwargs.get('proxy_receivers'))
         self.update('proxy_chain', kwargs.get('proxy_chain'))
         self.update('deadman_enabled', kwargs.get('deadman_enabled'))
         self.update('contact', kwargs.get('contact'))
         self.update('host_ip_addrs', kwargs.get('host_ip_addrs'))
         self.update('upstream_dest', kwargs.get('upstream_dest'))
+        if not self._executor_change_to_assign:
+            # Don't update executors if we're waiting to assign an executor change to the agent.
+            self.update('executors', kwargs.get('executors'))
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
@@ -269,13 +274,45 @@ class Agent(FirstClassObjectInterface, BaseObject):
                     break
 
         links = await bps.obfuscate_commands(self, obfuscator, links)
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        for fact in facts:
+            fact.source = self.paw
+            fact.origin_type = OriginType.SEEDED.name
+            await knowledge_svc_handle.add_fact(fact)
         self.links.extend(links)
         return links
 
-    def all_facts(self):
-        return [f for lnk in self.links for f in lnk.facts if f.score > 0]
+    async def all_facts(self):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        return await knowledge_svc_handle.get_facts(dict(source=self.paw))
+
+    @property
+    def executor_change_to_assign(self):
+        return self._executor_change_to_assign
+
+    @executor_change_to_assign.setter
+    def executor_change_to_assign(self, executor_change_dict):
+        """Set pending executor change dict for the agent."""
+        if executor_change_dict:
+            self._executor_change_to_assign = executor_change_dict
+            if executor_change_dict.get('action') == 'remove':
+                # Remove the executor server-side so planners can generate appropriate links immediately.
+                self._remove_executor(executor_change_dict.get('executor'))
+
+    def assign_pending_executor_change(self):
+        """Return the executor change dict and remove pending change to assign.
+
+        :return: Dict (string, string) representing the executor change that is assigned.
+        """
+        executor_change = self.executor_change_to_assign
+        self._executor_change_to_assign = None
+        return executor_change
 
     """ PRIVATE """
+
+    def _remove_executor(self, executor_name):
+        if executor_name in self.executors:
+            self.executors.remove(executor_name)
 
     def _replace_payload_data(self, decoded_cmd, file_svc):
         for uuid in re.findall(self.RESERVED['payload'], decoded_cmd):

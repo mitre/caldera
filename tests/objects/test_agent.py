@@ -22,7 +22,7 @@ class TestAgent:
         loop.run_until_complete(agent.task([ability], obfuscator='plain-text'))
         assert 0 == len(agent.links)
 
-    def test_task_with_facts(self, loop, obfuscator, init_base_world):
+    def test_task_with_facts(self, loop, obfuscator, init_base_world, knowledge_svc):
         executor = Executor(name='psh', platform='windows', command='net user #{domain.user.name} /domain')
         ability = Ability(ability_id='123', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
@@ -79,3 +79,34 @@ class TestAgent:
 
         preferred_executor = loop.run_until_complete(agent.get_preferred_executor(test_ability))
         assert preferred_executor is executor_cmd  # prefer agent's first executor, not ability's
+
+    def test_set_pending_executor_path_update(self):
+        original_executors = ['cmd', 'test']
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=original_executors, platform='windows')
+        executor_change = dict(executor='test', action='update-path', value='new path')
+        assert agent.executor_change_to_assign is None
+        agent.executor_change_to_assign = executor_change
+        assert agent.executor_change_to_assign == executor_change
+        assert agent.executors == original_executors
+
+    def test_assign_executor_change(self):
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
+        executor_change = dict(executor='test', action='update-path', value='new path')
+        agent.executor_change_to_assign = executor_change
+        assert agent.assign_pending_executor_change() == executor_change
+        assert agent.executor_change_to_assign is None
+
+    def test_set_pending_executor_removal(self):
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
+        executor_change = dict(executor='test', action='remove')
+        agent.executor_change_to_assign = executor_change
+        assert agent.executor_change_to_assign == executor_change
+        assert agent.executors == ['cmd']
+
+    def test_heartbeat_modification_during_pending_executor_removal(self, loop):
+        original_executors = ['cmd', 'test']
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=original_executors, platform='windows')
+        executor_change = dict(executor='test', action='remove')
+        agent.executor_change_to_assign = executor_change
+        loop.run_until_complete(agent.heartbeat_modification(executors=original_executors))
+        assert agent.executors == ['cmd']
