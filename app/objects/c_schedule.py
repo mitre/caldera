@@ -7,7 +7,7 @@ from app.utility.base_object import BaseObject
 class ScheduleSchema(ma.Schema):
 
     name = ma.fields.String(required=True)
-    schedule = ma.fields.Time(dump_only=True)
+    schedule = ma.fields.Time()
     task = ma.fields.Function(lambda obj: obj.task.display)
 
     @ma.post_load
