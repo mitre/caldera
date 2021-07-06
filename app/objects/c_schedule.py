@@ -1,6 +1,7 @@
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
+from app.objects.c_operation import OperationSchema
 from app.utility.base_object import BaseObject
 
 
@@ -8,7 +9,7 @@ class ScheduleSchema(ma.Schema):
 
     name = ma.fields.String(required=True)
     schedule = ma.fields.Time()
-    task = ma.fields.Function(lambda obj: obj.task.display)
+    task = ma.fields.Nested(OperationSchema())
 
     @ma.post_load
     def build_schedule(self, data, **kwargs):
