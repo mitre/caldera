@@ -9,7 +9,7 @@ from app.utility.base_object import BaseObject
 
 
 class PluginSchema(ma.Schema):
-    name = ma.fields.String()
+    name = ma.fields.String(required=True)
     enabled = ma.fields.Boolean()
     address = ma.fields.String()
     description = ma.fields.String()
@@ -17,8 +17,8 @@ class PluginSchema(ma.Schema):
     access = ma.fields.Integer()
 
     @ma.post_load
-    def build_plugin(self, data, **_):
-        return Plugin(**data)
+    def build_plugin(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Plugin(**data)
 
 
 class Plugin(FirstClassObjectInterface, BaseObject):
