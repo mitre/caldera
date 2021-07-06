@@ -13,6 +13,10 @@ class ObfuscatorSchema(ma.Schema):
     description = ma.fields.String()
     module = ma.fields.String()
 
+    @ma.post_load
+    def build_obfuscator(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Obfuscator(**data)
+
 
 class Obfuscator(FirstClassObjectInterface, BaseObject):
     schema = ObfuscatorSchema()
