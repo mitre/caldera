@@ -150,7 +150,7 @@ class FactApi(BaseObjectApi):
             try:
                 if 'criteria' in fact_data and 'updates' in fact_data:
                     await knowledge_svc_handle.update_fact(criteria=fact_data['criteria'],
-                                                            updates=fact_data['updates'])
+                                                           updates=fact_data['updates'])
                     temp = copy.deepcopy(fact_data['criteria'])
                     for k in fact_data['updates']:
                         temp[k] = fact_data['updates'][k]
@@ -172,7 +172,7 @@ class FactApi(BaseObjectApi):
             try:
                 if 'criteria' in relationship_data and 'updates' in relationship_data:
                     await knowledge_svc_handle.update_relationship(criteria=relationship_data['criteria'],
-                                                            updates=relationship_data['updates'])
+                                                                   updates=relationship_data['updates'])
                     temp = copy.deepcopy(relationship_data['criteria'])
                     for k in relationship_data['updates']:
                         if isinstance(relationship_data['updates'][k], dict):

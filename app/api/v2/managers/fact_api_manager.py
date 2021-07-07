@@ -34,4 +34,4 @@ class FactApiManager(BaseApiManager):
                 out.append(x.flat_display)
             except Exception as e:
                 self.log.warning(f"Unable to properly display relationship {x}. Specific error encountered - {e}.")
-            return out
+        return out
