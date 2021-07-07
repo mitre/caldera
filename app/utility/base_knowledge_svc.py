@@ -383,15 +383,15 @@ class BaseKnowledgeService(BaseService):
             else:
                 if getattr(obj, k) == v:
                     criteria_matches.append(True)
-                elif isinstance(getattr(obj, k), Fact): # this is a match based on a fact object in a relationship
+                elif isinstance(getattr(obj, k), Fact):  # this is a match based on a fact object in a relationship
                     if isinstance(v, Fact):
                         if getattr(obj, k) == v:
                             criteria_matches.append(True)
                     elif self._wildcard_match(getattr(obj, k), v):
                         criteria_matches.append(True)
-                else: # Wildcard match check
-                    if ((k == 'source' and isinstance(obj, Fact)) or
-                        (k == 'origin' and isinstance(obj, Relationship))) and getattr(obj, k) == wildcard_string:
-                        criteria_matches.append(True)
+                else:  # Wildcard match check
+                    if (k == 'source' and isinstance(obj, Fact)) or (k == 'origin' and isinstance(obj, Relationship)):
+                        if getattr(obj, k) == wildcard_string:
+                            criteria_matches.append(True)
         if len(criteria_matches) >= len(criteria) and all(criteria_matches):
             return obj

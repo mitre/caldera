@@ -8,6 +8,7 @@ from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema
 from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType, wildcard_string
 from app.objects.secondclass.c_relationship import Relationship, RelationshipSchema
 
+
 class FactApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='adversary', obj_class=Fact, schema=FactSchema, ram_key='adversaries',
@@ -30,7 +31,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
     async def get_facts(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         if fact_data:
             try:
@@ -44,7 +45,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
     async def get_relationships(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         if relationship_data:
             try:
@@ -58,7 +59,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.request_schema(FactSchema)
     @aiohttp_apispec.response_schema(FactSchema)
     async def add_facts(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         if fact_data:
             try:
@@ -80,7 +81,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.request_schema(RelationshipSchema)
     @aiohttp_apispec.response_schema(RelationshipSchema)
     async def add_relationships(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         if relationship_data:
             try:
@@ -115,7 +116,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.response_schema(FactSchema)
     async def delete_facts(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         if fact_data:
             try:
@@ -129,7 +130,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.response_schema(RelationshipSchema)
     async def delete_relationships(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         if relationship_data:
             try:
@@ -144,7 +145,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
     @aiohttp_apispec.response_schema(FactSchema)
     async def update_facts(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         if fact_data:
             try:
@@ -166,7 +167,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     @aiohttp_apispec.response_schema(RelationshipSchema)
     async def update_relationships(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager._knowledge_svc
+        knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         if relationship_data:
             try:

@@ -8,7 +8,6 @@ from app.objects.c_operation import Operation
 from app.objects.c_objective import Objective
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_goal import Goal
-from app.objects.secondclass.c_fact import wildcard_string
 from app.objects.c_planner import Planner
 from app.objects.c_source import Source
 from app.utility.base_world import BaseWorld
@@ -332,4 +331,3 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(loop)
         agent_config = loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
         assert agent_config.get('deadman_abilities') == want
-

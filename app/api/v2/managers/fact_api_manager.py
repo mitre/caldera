@@ -3,10 +3,11 @@ from json import JSONDecodeError
 from app.api.v2.responses import JsonHttpBadRequest
 from aiohttp import web
 
+
 class FactApiManager(BaseApiManager):
     def __init__(self, data_svc, file_svc, knowledge_svc):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
-        self._knowledge_svc = knowledge_svc
+        self.knowledge_svc = knowledge_svc
 
     @staticmethod
     async def extract_data(request: web.Request):

@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import web
 
-from app.service.auth_svc import AuthService, HEADER_API_KEY, CONFIG_API_KEY_RED, COOKIE_SESSION
+from app.service.auth_svc import AuthService, CONFIG_API_KEY_RED
 from app.service.file_svc import FileSvc
 from app.utility.base_world import BaseWorld
 from app.api.v2.handlers.fact_api import FactApi
@@ -12,6 +12,7 @@ from app.service.knowledge_svc import KnowledgeService
 
 cakr = 'abc123'
 headers = {'key': cakr, 'Content-Type': 'application/json'}
+
 
 @pytest.fixture
 def base_world():
@@ -40,8 +41,7 @@ def knowledge_webapp(loop, app_svc, base_world, data_svc):
     link = app_svc(loop)
     link.add_service('auth_svc', AuthService())
     link.add_service('knowledge_svc', KnowledgeService())
-    link.add_service('file_svc', FileSvc())  # This needs to be done this way, or it won't boot due to not having
-                                                 # a valid base world configuration
+    link.add_service('file_svc', FileSvc())  # This needs to be done this way, or it we won't have a valid BaseWorld
     services = link.get_services()
     app = web.Application(
         middlewares=[
