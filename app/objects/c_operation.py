@@ -50,7 +50,7 @@ class OperationSchema(ma.Schema):
         return data
 
     @ma.post_load
-    def build_planner(self, data, **kwargs):
+    def build_operation(self, data, **kwargs):
         return None if kwargs.get('partial') is True else Operation(**data)
 
 
