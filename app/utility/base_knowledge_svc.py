@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import os
 import pickle
@@ -71,7 +72,20 @@ class BaseKnowledgeService(BaseService):
     async def _get_fact_origin(self, fact):
         # Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
         # identify the host it was discovered on.
-        raise NotImplementedError
+        if isinstance(fact, Fact):
+            if fact.links:
+                return str(fact.links[0].host)
+            else:
+                return str(fact.source)
+        elif isinstance(fact, dict):
+            foundFacts = await self._get_facts(fact)
+            if foundFacts and len(foundFacts) >= 1:
+                if foundFacts[0].links:
+                    return str(foundFacts[0].links[0].host)
+                else:
+                    return str(foundFacts[0].source)
+
+        return str(None)
 
     # -- Relationships API --
 
