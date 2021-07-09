@@ -78,6 +78,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
                     exe_name='#{exe_name}', upstream_dest='#{upstream_dest}',
                     payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
 
+    log = BaseObject.create_logger('agent')
+
     @property
     def unique(self):
         return self.hash(self.paw)
@@ -301,6 +303,9 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 # Remove the executor server-side so planners can generate appropriate links immediately.
                 self.executors.remove(executor_name)
                 self._executor_change_to_assign = dict(action='remove', executor=executor_name)
+        else:
+            self.log.error('Invalid executor name format. Please provide non-empty string. Provided value: {0}',
+                           executor_name)
 
     def set_pending_executor_path_update(self, executor_name, new_binary_path):
         """Mark specified executor to update its binary path to the new path.
@@ -314,6 +319,10 @@ class Agent(FirstClassObjectInterface, BaseObject):
             if executor_name in self.executors:
                 self._executor_change_to_assign = dict(action='update_path', executor=executor_name,
                                                        value=new_binary_path)
+        else:
+            self.log.error('Invalid format for executor name or new binary path. Please provide non-empty strings. '
+                           'Provided values: {0}, {1}',
+                           executor_name, new_binary_path)
 
     def assign_pending_executor_change(self):
         """Return the executor change dict and remove pending change to assign.
