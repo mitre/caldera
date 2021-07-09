@@ -2,6 +2,7 @@ from app.api.v2.managers.base_api_manager import BaseApiManager
 from json import JSONDecodeError
 from app.api.v2.responses import JsonHttpBadRequest
 from aiohttp import web
+import copy
 
 
 class FactApiManager(BaseApiManager):
@@ -36,3 +37,7 @@ class FactApiManager(BaseApiManager):
             except Exception as e:
                 self.log.warning(f"Unable to properly display relationship {x}. Specific error encountered - {e}.")
         return out
+
+    @staticmethod
+    async def copy_object(obj):
+        return copy.deepcopy(obj)

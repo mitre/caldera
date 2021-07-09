@@ -32,8 +32,8 @@ class OriginType(Enum):
     USER = 4
 
 
-wildcard_string = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
-
+WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
+wildcard_string = ''
 
 class FactSchema(ma.Schema):
 

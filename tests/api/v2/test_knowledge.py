@@ -7,7 +7,7 @@ from app.utility.base_world import BaseWorld
 from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
-from app.objects.secondclass.c_fact import wildcard_string
+from app.objects.secondclass.c_fact import WILDCARD_STRING
 from app.service.knowledge_svc import KnowledgeService
 
 cakr = 'abc123'
@@ -70,7 +70,7 @@ async def test_display_facts(knowledge_webapp, aiohttp_client):
     assert len(response) == 1
     assert response[0]['trait'] == 'demo'
     assert response[0]['value'] == 'test'
-    assert response[0]['source'] == wildcard_string
+    assert response[0]['source'] == WILDCARD_STRING
 
 
 async def test_display_relationships(knowledge_webapp, aiohttp_client):

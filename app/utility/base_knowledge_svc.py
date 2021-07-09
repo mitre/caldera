@@ -9,7 +9,7 @@ from datetime import datetime
 
 import app.service.data_svc
 from app.utility.base_service import BaseService
-from app.objects.secondclass.c_fact import Fact, wildcard_string
+from app.objects.secondclass.c_fact import Fact, WILDCARD_STRING
 from app.objects.secondclass.c_relationship import Relationship
 
 DATA_BACKUP_DIR = app.service.data_svc.DATA_BACKUP_DIR
@@ -391,7 +391,7 @@ class BaseKnowledgeService(BaseService):
                         criteria_matches.append(True)
                 else:  # Wildcard match check
                     if (k == 'source' and isinstance(obj, Fact)) or (k == 'origin' and isinstance(obj, Relationship)):
-                        if getattr(obj, k) == wildcard_string:
+                        if getattr(obj, k) == WILDCARD_STRING:
                             criteria_matches.append(True)
         if len(criteria_matches) >= len(criteria) and all(criteria_matches):
             return obj

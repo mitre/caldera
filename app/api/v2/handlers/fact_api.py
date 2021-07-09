@@ -1,17 +1,16 @@
 import aiohttp_apispec
-import copy
 from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.fact_api_manager import FactApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema
-from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType, wildcard_string
+from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType, WILDCARD_STRING
 from app.objects.secondclass.c_relationship import Relationship, RelationshipSchema
 
 
 class FactApi(BaseObjectApi):
     def __init__(self, services):
-        super().__init__(description='adversary', obj_class=Fact, schema=FactSchema, ram_key='adversaries',
+        super().__init__(description='adversary', obj_class=Fact, schema=FactSchema, ram_key='facts',
                          id_property='adversary_id', auth_svc=services['auth_svc'])
         self._api_manager = FactApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'],
                                            knowledge_svc=services['knowledge_svc'])
@@ -65,12 +64,12 @@ class FactApi(BaseObjectApi):
             try:
                 new_fact = Fact.load(fact_data)
                 if 'source' not in fact_data:
-                    new_fact.source = wildcard_string
+                    new_fact.source = WILDCARD_STRING
                 new_fact.source_type = OriginType.USER.name
                 await knowledge_svc_handle.add_fact(new_fact)
                 store = await knowledge_svc_handle.get_facts(criteria=dict(trait=fact_data['trait'],
                                                                            value=fact_data['value'],
-                                                                           source=wildcard_string,
+                                                                           source=WILDCARD_STRING,
                                                                            source_type=OriginType.USER.name))
                 resp = await self._api_manager.verify_fact_integrity(store)
                 return web.json_response(dict(added=resp))
@@ -85,7 +84,7 @@ class FactApi(BaseObjectApi):
         relationship_data = await self._api_manager.extract_data(request)
         if relationship_data:
             try:
-                origin_target = wildcard_string
+                origin_target = WILDCARD_STRING
                 new_relationship = Relationship.load(relationship_data)
                 if 'origin' in relationship_data:
                     origin_target = relationship_data['origin']
@@ -152,7 +151,7 @@ class FactApi(BaseObjectApi):
                 if 'criteria' in fact_data and 'updates' in fact_data:
                     await knowledge_svc_handle.update_fact(criteria=fact_data['criteria'],
                                                            updates=fact_data['updates'])
-                    temp = copy.deepcopy(fact_data['criteria'])
+                    temp = await self._api_manager.copy_object(fact_data['criteria'])
                     for k in fact_data['updates']:
                         temp[k] = fact_data['updates'][k]
                     store = await knowledge_svc_handle.get_facts(criteria=temp)
@@ -174,7 +173,7 @@ class FactApi(BaseObjectApi):
                 if 'criteria' in relationship_data and 'updates' in relationship_data:
                     await knowledge_svc_handle.update_relationship(criteria=relationship_data['criteria'],
                                                                    updates=relationship_data['updates'])
-                    temp = copy.deepcopy(relationship_data['criteria'])
+                    temp = await self._api_manager.copy_object(relationship_data['criteria'])
                     for k in relationship_data['updates']:
                         if isinstance(relationship_data['updates'][k], dict):
                             handle = dict()
