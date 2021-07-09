@@ -147,7 +147,7 @@ class DataService(DataServiceInterface, BaseService):
     async def load_ability_file(self, filename, access):
         for entries in self.strip_yml(filename):
             for ab in entries:
-                ability_id = ab.pop('id') if 'id' in ab else ab.pop('ability_id', None)
+                ability_id = ab.pop('id', None)
                 name = ab.pop('name', '')
                 description = ab.pop('description', '')
                 tactic = ab.pop('tactic', None)
@@ -165,13 +165,10 @@ class DataService(DataServiceInterface, BaseService):
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 if 'executors' in ab:
-                    executors = await self.load_executors_from_list(ab.pop('executors', dict()))
+                    executors = await self.load_executors_from_list(ab.pop('executors'))
                 else:
                     executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
-
-                if 'access' in ab and ab['access']:
-                    access = ab['access']
-                ab.pop('access', None)
+                access = ab.pop('access', None)
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
