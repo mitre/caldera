@@ -43,7 +43,7 @@ class AbilityApiManager(BaseApiManager):
 
     '''Helpers'''
     def _validate_ability_data(self, create: bool, data: dict):
-        # Prevent errors due to incorrect id property.
+        # Prevent errors due to incorrect expected schema id property.
         data.pop('id', None)
 
         # If a new ability is being created, ensure required fields present.
@@ -51,14 +51,14 @@ class AbilityApiManager(BaseApiManager):
             # Set ability ID if undefined
             data['id'] = data.pop('ability_id', str(uuid.uuid4()))
             if 'tactic' not in data:
-                raise JsonHttpBadRequest(f'Cannot create ability {data["ability_id"]} due to missing tactic')
+                raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
             if not data['executors']:
-                raise JsonHttpBadRequest(f'Cannot create ability {data["ability_id"]}: at least one executor required')
+                raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
 
         # Validate ID, used for file creation
         validator = re.compile(r'^[a-zA-Z0-9-_]+$')
-        if 'ability_id' in data and not validator.match(data['ability_id']):
-            raise JsonHttpBadRequest(f'Invalid ability ID {data["ability_id"]}. IDs can only contain '
+        if 'id' in data and not validator.match(data['id']):
+            raise JsonHttpBadRequest(f'Invalid ability ID {data["id"]}. IDs can only contain '
                                      'alphanumeric characters, hyphens, and underscores.')
 
         # Validate tactic, used for directory creation, lower case if present
