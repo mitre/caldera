@@ -33,7 +33,7 @@ class OriginType(Enum):
 
 
 WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
-wildcard_string = ''
+
 
 class FactSchema(ma.Schema):
 
