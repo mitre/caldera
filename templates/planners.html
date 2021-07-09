@@ -1,35 +1,33 @@
 <div x-data="alpinePlanners()">
     <div>
-        <div>
-            <h2>Planners</h2>
-            <p>
-                A planner is a module which contains logic for how a running operation should make decisions about
-                which abilities to use and in what order. Specifically, a planner's logic contains the decision making
-                to
-                execute a single phase of an operation.
-            </p>
-        </div>
-        <hr>
-        <div>
-            <form>
-                <div class="field">
-                    <label class="label">Choose a planner:</label>
-                    <div class="control">
-                        <div class="select">
-                            <select id="planner-select" x-on:change="loadPlanner()" x-model="selectedPlanner">
-                                <option value="" disabled selected>Select an existing planner</option>
-                                {% for p in planners %}
-                                <option :value="'{{ p.name }}'">{{ p.name }} planner</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+        <h2>Planners</h2>
+        <p>
+            A planner is a module which contains logic for how a running operation should make decisions about
+            which abilities to use and in what order. Specifically, a planner's logic contains the decision making
+            to
+            execute a single phase of an operation.
+        </p>
+    </div>
+    <hr>
+    <div>
+        <form>
+            <div class="field">
+                <label class="label">Choose a planner:</label>
+                <div class="control">
+                    <div class="select">
+                        <select id="planner-select" x-on:change="loadPlanner()" x-model="selectedPlanner">
+                            <option value="" disabled selected>Select an existing planner</option>
+                            {% for p in planners %}
+                            <option :value="'{{ p.name }}'">{{ p.name }} planner</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
-            </form>
-            <div>
-                <h3 x-text="title"></h3>
-                <p x-text="description"></p>
             </div>
+        </form>
+        <div>
+            <h3 x-text="title"></h3>
+            <p x-text="description"></p>
         </div>
     </div>
 </div>

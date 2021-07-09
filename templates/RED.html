@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="/gui/css/timeline.css">
         <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
         <link rel="stylesheet" href="/gui/css/lib/custom-bulma-red.css">
+        <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
     </head>
     <body>
@@ -20,6 +21,7 @@
                     <ul class="menu-list">
                         <li><a href="#home" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
                         <li><a href="#home" x-on:click="addTab('adversaries', '/campaign/profiles')">adversaries</a></li>
+                        <li><a href="#home" x-on:click="addTab('adversaries-old', '/campaign/profiles-old')">adversaries old</a></li>
                         <li><a href="#home" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
                     </ul>
                     <p class="menu-label">Plugins</p>
@@ -65,8 +67,8 @@
                         <template x-for="(tab, index) in openTabs" :key="index">
                             <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
                                 <a x-on:click="activeTabIndex = index">
-                                    <span x-text="tab.name"></span>
-                                    <span x-on:click="deleteTab(index, tab.contentID)" class="icon is-small is-close"><i class="fas fa-times"></i></span>
+                                    <span x-text="tab.name"></span>&nbsp;&nbsp;
+                                    <button class="delete" x-on:click="deleteTab(index, tab.contentID)"></button>
                                 </a>
                             </li>
                         </template>
@@ -92,5 +94,6 @@
         <script src="/gui/js/shared.js"></script>
         <script src="/gui/js/core.js"></script>
         <script defer src="/gui/js/lib/alpine.min.js"></script>
+        <script src="/gui/js/lib/bulma-toast.min.js"></script>
     </body>
 </html>

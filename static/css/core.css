@@ -8,6 +8,11 @@ body {
   color: white;
 }
 
+
+[data-tooltip]::before {
+  min-width: 150px;
+}
+
 .icon.is-close:hover {
   background-color: #929292;
   border-radius: 50%;
@@ -42,6 +47,20 @@ main.main {
 .menu-list a:hover {
   border-radius: 4px;
   margin: 0 10px;
+}
+
+.modal-card {
+  border: 1px solid #262626;
+  border-radius: 4px;
+}
+@media screen and (min-width: 1000px) {
+  .modal-card.wide {
+    width: 1000px;
+  } 
+}
+
+.modal-card-foot {
+  padding: 10px 20px !important;
 }
 
 .navigation {

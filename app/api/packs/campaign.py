@@ -18,6 +18,7 @@ class CampaignPack(BaseWorld):
     async def enable(self):
         self.app_svc.application.router.add_route('GET', '/campaign/agents', self._section_agent)
         self.app_svc.application.router.add_route('GET', '/campaign/profiles', self._section_profiles)
+        self.app_svc.application.router.add_route('GET', '/campaign/profiles-old', self._section_profilesold)
         self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
 
     """ PRIVATE """
@@ -35,6 +36,30 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('profiles.html')
     async def _section_profiles(self, request):
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        abilities = await self.data_svc.locate('abilities', match=access)
+        objs = await self.data_svc.locate('objectives', match=access)
+        platforms = dict()
+        for a in abilities:
+            for executor in a.executors:
+                if executor.platform in platforms:
+                    platforms[executor.platform].add(executor.name)
+                else:
+                    platforms[executor.platform] = set([executor.name])
+        for p in platforms:
+            platforms[p] = list(platforms[p])
+        tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
+        payloads = await self.rest_svc.list_payloads()
+        adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
+                             key=lambda a: a['name'])
+        exploits = sorted([a.display for a in abilities], key=operator.itemgetter('technique_id', 'name'))
+        objectives = sorted([a.display for a in objs], key=operator.itemgetter('id', 'name'))
+        return dict(adversaries=adversaries, exploits=exploits, payloads=payloads,
+                    tactics=tactics, platforms=platforms, objectives=objectives)
+
+    @check_authorization
+    @template('profilesOLD.html')
+    async def _section_profilesold(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=access)
         objs = await self.data_svc.locate('objectives', match=access)

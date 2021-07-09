@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="/gui/css/timeline.css">
         <link rel="stylesheet" href="/gui/css/multi-select.css">
         <link rel="stylesheet" href="/gui/css/lib/custom-bulma-blue.css">
+        <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
     </head>
     <body>
@@ -67,7 +68,7 @@
                             <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
                                 <a x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
-                                    <span x-on:click="deleteTab(index, tab.contentID)" class="icon is-small is-close"><i class="fas fa-times"></i></span>
+                                    <button class="delete" x-on:click="deleteTab(index, tab.contentID)"></button>
                                 </a>
                             </li>
                         </template>
@@ -93,5 +94,6 @@
         <script src="/gui/js/shared.js"></script>
         <script src="/gui/js/core.js"></script>
         <script defer src="/gui/js/lib/alpine.min.js"></script>
+        <script src="/gui/js/lib/bulma-toast.min.js"></script>
     </body>
 </html>

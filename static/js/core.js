@@ -1,5 +1,15 @@
 /* Alpine.js data & functions called from core navigation template */
 
+function toast(message, success) {
+    bulmaToast.toast({ 
+        message: message,
+        type: success ? 'is-success' : 'is-danger',
+        position: 'bottom-right',
+        duration: '3000',
+        pauseOnHover: true
+    });
+}
+
 function alpineNavigation() {
     return {
         isNavMinimized: false,

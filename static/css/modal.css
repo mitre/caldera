@@ -1,25 +1,3 @@
-input[type=text],
-input[type=password],
-input[type=number] {
-  width: 100%;
-  height: 30px;
-  padding: 12px 20px;
-  box-sizing: border-box;
-  margin-top: 15px;
-  border-radius: 10px;
-}
-
-select {
-  overflow: hidden;
-  background: white;
-  font-size: 14px;
-  height: 30px;
-  width: 100%;
-  padding: 5px 15px;
-  margin-top: 15px;
-  border-radius: 10px;
-}
-
 .modal button {
   color: white;
   padding: 14px 20px;
@@ -76,10 +54,6 @@ span.psw {
 .modal-content {
   margin: 5% auto 5% auto;
   width: 85%;
-}
-
-.modal p {
-  color: #333;
 }
 
 .modal-box {
