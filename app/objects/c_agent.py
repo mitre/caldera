@@ -11,7 +11,6 @@ from app.objects.secondclass.c_fact import OriginType
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
-from app.utility.base_world import BaseWorld
 
 
 class AgentFieldsSchema(ma.Schema):
