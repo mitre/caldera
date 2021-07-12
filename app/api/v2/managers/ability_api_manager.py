@@ -45,11 +45,14 @@ class AbilityApiManager(BaseApiManager):
     def _validate_ability_data(self, create: bool, data: dict):
         # Prevent errors due to incorrect expected schema id property.
         data.pop('id', None)
+        # Correct ability_id key for ability file saving.
+        data['id'] = data.pop('ability_id', '')
 
         # If a new ability is being created, ensure required fields present.
         if create:
             # Set ability ID if undefined
-            data['id'] = data.pop('ability_id', str(uuid.uuid4()))
+            if not data['id']:
+                data['id'] = str(uuid.uuid4())
             if 'tactic' not in data:
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
             if not data['executors']:
