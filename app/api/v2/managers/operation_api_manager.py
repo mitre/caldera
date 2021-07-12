@@ -9,14 +9,13 @@ class OperationApiManager(BaseApiManager):
     async def get_operation_report(self, operation_id: str, access: dict):
         operation = await self.get_operation_object(operation_id, access)
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
-
         return report
 
     """Object Creation Helpers"""
     async def get_operation_object(self, operation_id: str, access: dict):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
+        except IndexError:
             raise JsonHttpNotFound(f'Operation not found: {operation_id}')
         if operation.match(access):
             return operation

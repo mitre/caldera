@@ -18,7 +18,6 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations', self.get_operations)
         router.add_get('/operations/{id}', self.get_operation_by_id)
         router.add_delete('/operations/{id}', self.delete_operation)
-
         router.add_get('/operations/{id}/report', self.get_operation_report)
 
     @aiohttp_apispec.docs(tags=['operations'])
