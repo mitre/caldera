@@ -1,5 +1,4 @@
 from marshmallow.schema import SchemaMeta
-from base64 import b64encode
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
@@ -18,13 +17,11 @@ class OperationApiManager(BaseApiManager):
     async def get_operation_report(self, operation_id: str, access: dict):
         operation = await self.get_operation(operation_id, access)
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
-
         return report
 
     async def get_operation_links(self, operation_id: str, access: dict):
         operation = await self.get_operation(operation_id, access)
         links = [link.display for link in operation.chain]
-
         return links
 
     async def get_operation_link(self, operation_id: str, link_id: str, access: dict):
@@ -59,7 +56,7 @@ class OperationApiManager(BaseApiManager):
         if link_data['executor']['name'] not in agent.executors:
             return dict(error='Agent missing specified executor')
 
-        encoded_command = self.encode_string(link_data['executor']['command'])
+        encoded_command = self._encode_string(link_data['executor']['command'])
         ability_id = str(uuid.uuid4())
 
         executor = Executor(name=link_data['executor']['name'], platform=agent.platform,
@@ -71,34 +68,21 @@ class OperationApiManager(BaseApiManager):
                               executor=executor, status=operation.link_status()))
         link.apply_id(agent.host)
         operation.add_link(link)
-
-        '''
-        if 'id' not in link_data:
-            link_data['id'] = str(uuid.uuid4())
-        link_id = link_data.get('id')
-        for entry in operation.potential_links:
-            if entry.id == link_id:
-                raise JsonHttpBadRequest(f'Link with given id already exists: {link_id}')
-        new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
-        operation.apply(new_link)
-        '''
         return link.display
 
     async def get_potential_links(self, operation_id: str, access: dict):
         operation = await self.get_operation(operation_id, access)
         potential_links = [potential_link.display for potential_link in operation.potential_links]
-
         return potential_links
 
     async def get_potential_links_by_paw(self, operation_id: str, paw: str, access: dict):
         operation = await self.get_operation(operation_id, access)
-
         output_links = []
         for link in operation.potential_links:
             if link.paw == paw:
                 output_links.append(link.display)
         if not output_links:
-            raise JsonHttpNotFound(f'paw {paw} was not found in potential links for Operation {operation_id}')
+            raise JsonHttpNotFound(f'Agent {paw} was not found in potential links for Operation {operation_id}')
         return output_links
 
     """Object Creation Helpers"""
@@ -113,9 +97,10 @@ class OperationApiManager(BaseApiManager):
 
     async def get_agent(self, access: dict, data: dict):
         agent_search = {'paw': data['paw'], **access}
-        agent = next(iter(await self._data_svc.locate('agents', match=agent_search)), None)
-        if not agent:
-            return dict(error='Agent not found')
+        try:
+            agent = (await self._data_svc.locate('agents', match=agent_search))[0]
+        except IndexError:
+            raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
 
     def create_secondclass_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
@@ -123,7 +108,3 @@ class OperationApiManager(BaseApiManager):
         obj = obj_schema.load(data)
         obj.access = self._get_allowed_from_access(access)
         return obj
-
-    @staticmethod
-    def encode_string(s):
-        return str(b64encode(s.encode()), 'utf-8')

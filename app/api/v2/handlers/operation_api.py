@@ -22,13 +22,10 @@ class OperationApi(BaseObjectApi):
         router.add_put('/operations/{id}', self.create_or_update_operation)
         router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
-
         router.add_get('/operations/{id}/report', self.get_operation_report)
-
         router.add_get('/operations/{id}/links', self.get_operation_links)
         router.add_get('/operations/{id}/links/{link_id}', self.get_operation_link)
         router.add_put('/operations/{id}/links/{link_id}', self.create_or_update_operation_link)
-
         router.add_post('/operations/{id}/potential-links', self.create_potential_link)
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
         router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_links_by_paw)
