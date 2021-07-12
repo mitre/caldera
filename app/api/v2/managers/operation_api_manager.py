@@ -1,9 +1,14 @@
 from marshmallow.schema import SchemaMeta
+from base64 import b64encode
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
-from app.objects.secondclass.c_link import LinkSchema
+from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.objects.secondclass.c_link import LinkSchema, Link
+from app.objects.secondclass.c_executor import Executor
+from app.objects.c_ability import Ability
 from app.utility.base_world import BaseWorld
+
+import uuid
 
 
 class OperationApiManager(BaseApiManager):
@@ -39,22 +44,45 @@ class OperationApiManager(BaseApiManager):
                 break
         if existing_link and existing_link.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
+        if not existing_link and 'id' not in link_data:
+            link_data['id'] = str(uuid.uuid4())
 
         new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
         if existing_link:
             operation.chain.remove(entry)
-        operation.chain.append(new_link)
+        operation.add_link(new_link)
         return new_link.display
 
     async def create_potential_link(self, operation_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation(operation_id, access)
-        link_id = link_data['id']
+        agent = await self.get_agent(access, link_data)
+        if link_data['executor']['name'] not in agent.executors:
+            return dict(error='Agent missing specified executor')
+
+        encoded_command = self.encode_string(link_data['executor']['command'])
+        ability_id = str(uuid.uuid4())
+
+        executor = Executor(name=link_data['executor']['name'], platform=agent.platform,
+                            command=link_data['executor']['command'])
+        ability = Ability(ability_id=ability_id, tactic='auto-generated', technique_id='auto-generated',
+                          technique_name='auto-generated', name='Manual Command', description='Manual command ability',
+                          executors=[executor])
+        link = Link.load(dict(command=encoded_command, paw=agent.paw, cleanup=0, ability=ability, score=0, jitter=2,
+                              executor=executor, status=operation.link_status()))
+        link.apply_id(agent.host)
+        operation.add_link(link)
+
+        '''
+        if 'id' not in link_data:
+            link_data['id'] = str(uuid.uuid4())
+        link_id = link_data.get('id')
         for entry in operation.potential_links:
             if entry.id == link_id:
                 raise JsonHttpBadRequest(f'Link with given id already exists: {link_id}')
         new_link = self.create_secondclass_object_from_schema(LinkSchema, link_data, access)
-        operation.potential_links.append(new_link)
-        return new_link.display
+        operation.apply(new_link)
+        '''
+        return link.display
 
     async def get_potential_links(self, operation_id: str, access: dict):
         operation = await self.get_operation(operation_id, access)
@@ -83,8 +111,19 @@ class OperationApiManager(BaseApiManager):
             return operation
         raise JsonHttpForbidden(f'Insufficient permissions to view operation {operation_id}')
 
+    async def get_agent(self, access: dict, data: dict):
+        agent_search = {'paw': data['paw'], **access}
+        agent = next(iter(await self._data_svc.locate('agents', match=agent_search)), None)
+        if not agent:
+            return dict(error='Agent not found')
+        return agent
+
     def create_secondclass_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
         obj = obj_schema.load(data)
         obj.access = self._get_allowed_from_access(access)
         return obj
+
+    @staticmethod
+    def encode_string(s):
+        return str(b64encode(s.encode()), 'utf-8')
