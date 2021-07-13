@@ -9,7 +9,7 @@ import marshmallow as ma
 
 from app.objects.c_ability import Ability, AbilitySchema
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
-from app.objects.secondclass.c_fact import Fact, FactSchema
+from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
@@ -46,6 +46,7 @@ class LinkSchema(ma.Schema):
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
+    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -64,6 +65,12 @@ class LinkSchema(ma.Schema):
     @ma.post_load()
     def build_link(self, data, **_):
         return Link(**data)
+
+    @ma.post_dump()
+    def prepare_dump(self, data, **_):
+        if data.get('agent_reported_time', None) is None:
+            data.pop('agent_reported_time', None)
+        return data
 
 
 class Link(BaseObject):
@@ -131,7 +138,7 @@ class Link(BaseObject):
         return variable in cls.RESERVED
 
     def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
-                 host=None, deadman=False, used=None, relationships=None):
+                 host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
         self.command = command
@@ -155,6 +162,7 @@ class Link(BaseObject):
         self._pin = pin
         self.output = False
         self.deadman = deadman
+        self.agent_reported_time = agent_reported_time
 
     def __eq__(self, other):
         if isinstance(other, Link):
@@ -169,7 +177,7 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
-                await self._update_scores(operation, increment=len(relationships))
+                await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
                 await self._create_relationships(relationships, operation)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
@@ -218,31 +226,51 @@ class Link(BaseObject):
 
     async def _create_relationships(self, relationships, operation):
         for relationship in relationships:
-            await self._save_fact(operation, relationship.source, relationship.score)
-            await self._save_fact(operation, relationship.target, relationship.score)
+            relationship.origin = operation.id if operation else self.id
+            await self._save_fact(operation, relationship.source, relationship.score, relationship.shorthand)
+            await self._save_fact(operation, relationship.target, relationship.score, relationship.shorthand)
             if all((relationship.source.trait, relationship.edge)):
+                knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+                await knowledge_svc_handle.add_relationship(relationship)
                 self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, fact, score):
-        all_facts = operation.all_facts() if operation else self.facts
-        if all([fact.trait, fact.value]) and await self._is_new_fact(fact, all_facts):
-            self.facts.append(Fact(trait=fact.trait, value=fact.value, score=score, collected_by=self.paw,
-                                   technique_id=self.ability.technique_id))
+    async def _save_fact(self, operation, fact, score, relationship):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        all_facts = await operation.all_facts() if operation else self.facts
+        source = operation.id if operation else self.id
+        rl = [relationship] if relationship else []
+        if all([fact.trait, fact.value]):
+            if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
+                f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
+                             technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
+                             origin_type=OriginType.LEARNED)
+                self.facts.append(f_gen)
+                await knowledge_svc_handle.add_fact(f_gen)
+            else:
+                existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
+                                                                                    value=fact.value,
+                                                                                    source=fact.source)))[0]
+                existing_fact.links.append(self.id)
+                if relationship not in existing_fact.relationships:
+                    existing_fact.relationships.append(relationship)
+                await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
+                                                                     source=fact.source),
+                                                       updates=dict(links=existing_fact.links,
+                                                                    relationships=existing_fact.relationships))
+                existing_local_record = [x for x in self.facts if x.trait == fact.trait and x.value == fact.value]
+                if existing_local_record:
+                    existing_local_record[0].links = existing_fact.links
+                else:
+                    self.facts.append(existing_fact)
 
-    async def _is_new_fact(self, fact, facts):
-        return all(not self._fact_exists(fact, f) or self._is_new_host_fact(fact, f) for f in facts)
 
-    @staticmethod
-    def _fact_exists(new_fact, fact):
-        return new_fact.trait == fact.trait and new_fact.value == fact.value
-
-    def _is_new_host_fact(self, new_fact, fact):
-        return new_fact.trait[:5] == 'host.' and self.paw != fact.collected_by
-
-    async def _update_scores(self, operation, increment):
-        for uf in self.used:
-            all_facts = operation.all_facts() if operation else self.facts
-            for found_fact in all_facts:
-                if found_fact.unique == uf.unique:
-                    found_fact.score += increment
-                    break
+async def update_scores(operation, increment, used, facts):
+    knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+    for uf in used:
+        all_facts = await operation.all_facts() if operation else facts
+        for found_fact in all_facts:
+            if found_fact.unique == uf.unique:
+                found_fact.score += increment
+                await knowledge_svc_handle.update_fact(dict(trait=found_fact.trait, value=found_fact.value,
+                                                            source=found_fact.source), dict(score=found_fact.score))
+                break

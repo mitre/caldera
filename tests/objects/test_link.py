@@ -4,6 +4,7 @@ import pytest
 
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_relationship import Relationship
 from app.service.interfaces.i_event_svc import EventServiceInterface
 from app.utility.base_service import BaseService
 
@@ -99,3 +100,45 @@ class TestLink:
         assert event_kwargs['link'] == link.id
         assert event_kwargs['from_status'] == -3
         assert event_kwargs['to_status'] == -5
+
+    def test_link_agent_reported_time_not_present_when_none_roundtrip(self, ability, executor):
+        test_executor = executor(name='psh', platform='windows')
+        test_ability = ability(ability_id='123')
+        test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
+                         paw='123456', ability=test_ability, executor=test_executor, id=111111)
+        serialized_link = test_link.display
+        loaded_link = Link.load(serialized_link)
+
+        assert 'agent_reported_time' not in serialized_link
+        assert loaded_link.agent_reported_time is None
+
+    def test_link_agent_reported_time_present_when_set_roundtrip(self, ability, executor):
+        test_executor = executor(name='psh', platform='windows')
+        test_ability = ability(ability_id='123')
+        test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
+                         paw='123456', ability=test_ability, executor=test_executor, id=111111,
+                         agent_reported_time=BaseService.get_timestamp_from_string('2021-02-23 11:50:16'))
+        serialized_link = test_link.display
+        loaded_link = Link.load(serialized_link)
+
+        assert serialized_link['agent_reported_time'] == '2021-02-23 11:50:16'
+        assert loaded_link.agent_reported_time == BaseService.get_timestamp_from_string('2021-02-23 11:50:16')
+
+    def test_link_knowledge_svc_synchronization(self, loop, executor, ability, knowledge_svc):
+        test_executor = executor(name='psh', platform='windows')
+        test_ability = ability(ability_id='123', executors=[test_executor])
+        fact = Fact(trait='remote.host.fqdn', value='dc')
+        fact2 = Fact(trait='domain.user.name', value='Bob')
+        relationship = Relationship(source=fact, edge='has_admin', target=fact2)
+        test_link = Link(command='echo "this was a triumph"',
+                         paw='123456', ability=test_ability, id=111111, executor=test_executor)
+
+        loop.run_until_complete(test_link._create_relationships([relationship], None))
+        checkable = [(x.trait, x.value) for x in test_link.facts]
+        assert (fact.trait, fact.value) in checkable
+        assert (fact2.trait, fact2.value) in checkable
+        knowledge_base_f = loop.run_until_complete(knowledge_svc.get_facts(dict(source=test_link.id)))
+        assert len(knowledge_base_f) == 2
+        assert test_link.id in knowledge_base_f[0].links
+        knowledge_base_r = loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='has_admin')))
+        assert len(knowledge_base_r) == 1

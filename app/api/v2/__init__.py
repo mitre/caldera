@@ -21,4 +21,22 @@ def make_app(services):
     from .handlers.planner_api import PlannerApi
     PlannerApi(services).add_routes(app)
 
+    from .handlers.plugins_api import PluginApi
+    PluginApi(services).add_routes(app)
+
+    from .handlers.fact_source_api import FactSourceApi
+    FactSourceApi(services).add_routes(app)
+
+    from .handlers.objective_api import ObjectiveApi
+    ObjectiveApi(services).add_routes(app)
+
+    from .handlers.adversary_api import AdversaryApi
+    AdversaryApi(services).add_routes(app)
+
+    from .handlers.agent_api import AgentApi
+    AgentApi(services).add_routes(app)
+
+    from .handlers.obfuscator_api import ObfuscatorApi
+    ObfuscatorApi(services).add_routes(app)
+
     return app

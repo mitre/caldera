@@ -15,6 +15,7 @@ from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
 from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
+from app.objects.secondclass.c_fact import OriginType
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
@@ -131,20 +132,27 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def has_link(self, link_id):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
-    def all_facts(self):
-        seeded_facts = [f for f in self.source.facts] if self.source else []
-        learned_facts = [f for lnk in self.chain for f in lnk.facts if f.score > 0]
+    async def all_facts(self):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        seeded_facts = []
+        if self.source:
+            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source.id))
+        learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
+        learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
 
-    def has_fact(self, trait, value):
-        for f in self.all_facts():
+    async def has_fact(self, trait, value):
+        for f in await self.all_facts():
             if f.trait == trait and f.value == value:
                 return True
         return False
 
-    def all_relationships(self):
-        seeded_relationships = [r for r in self.source.relationships] if self.source else []
-        learned_relationships = [r for lnk in self.chain for r in lnk.relationships]
+    async def all_relationships(self):
+        knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        seeded_relationships = []
+        if self.source:
+            seeded_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.source.id))
+        learned_relationships = await knowledge_svc_handle.get_relationships(criteria=dict(origin=self.id))
         return seeded_relationships + learned_relationships
 
     def ran_ability_id(self, ability_id):
@@ -207,7 +215,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
-                or (self.objective and self.objective.completed(self.all_facts())):
+                or (self.objective and self.objective.completed(await self.all_facts())):
             return True
         return False
 
@@ -233,7 +241,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
-                                                     op_facts=[f.trait for f in self.all_facts()],
+                                                     op_facts=[f.trait for f in await self.all_facts()],
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
@@ -250,10 +258,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
                           steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
                           jitter=self.jitter, objectives=self.objective.display,
-                          facts=[f.display for f in self.all_facts()])
+                          facts=[f.display for f in await self.all_facts()])
             agents_steps = {a.paw: {'steps': []} for a in self.agents}
             for step in self.chain:
-                step_report = dict(ability_id=step.ability.ability_id,
+                step_report = dict(link_id=step.id,
+                                   ability_id=step.ability.ability_id,
                                    command=step.command,
                                    delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
                                    run=step.finish,
@@ -268,6 +277,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                technique_id=step.ability.technique_id))
                 if output and step.output:
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
+                if step.agent_reported_time:
+                    step_report['agent_reported_time'] = step.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
@@ -282,6 +293,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 if not step.can_ignore()]
 
     async def run(self, services):
+        await self._init_source()
         # load objective
         data_svc = services.get('data_svc')
         await self._load_objective(data_svc)
@@ -332,7 +344,21 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
         if output and link.output:
             event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
+        if link.agent_reported_time:
+            event_dict['agent_reported_time'] = link.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
         return event_dict
+
+    async def _init_source(self):
+        # seed knowledge_svc with source facts
+        if self.source:
+            knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+            for f in self.source.facts:
+                f.origin_type = OriginType.SEEDED
+                f.source = self.source.id
+                await knowledge_svc_handle.add_fact(f)
+            for r in self.source.relationships:
+                r.origin = self.source.id
+                await knowledge_svc_handle.add_relationship(r)
 
     async def _cleanup_operation(self, services):
         cleanup_count = 0

@@ -67,7 +67,7 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, operation.all_facts(), operation.rules)
+        links[:] = await self.add_test_variants(links, agent, await operation.all_facts(), operation.rules)
         links = await self.remove_links_with_unset_variables(links)
         links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)

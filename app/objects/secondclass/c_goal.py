@@ -8,8 +8,13 @@ class GoalSchema(ma.Schema):
     target = ma.fields.String()
     value = ma.fields.String()
     count = ma.fields.Integer()
-    achieved = ma.fields.Boolean()
     operator = ma.fields.String()
+    achieved = ma.fields.Boolean(dump_only=True)
+
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('achieved', None)
+        return data
 
     @ma.post_load
     def build_goal(self, data, **_):

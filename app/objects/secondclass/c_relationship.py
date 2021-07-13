@@ -6,10 +6,10 @@ from app.objects.secondclass.c_fact import FactSchema
 
 class RelationshipSchema(ma.Schema):
 
-    unique = ma.fields.String()
-    source = ma.fields.Nested(FactSchema())
-    edge = ma.fields.String()
-    target = ma.fields.Nested(FactSchema())
+    unique = ma.fields.String(dump_only=True)
+    source = ma.fields.Nested(FactSchema, required=True)
+    edge = ma.fields.String(allow_none=True)
+    target = ma.fields.Nested(FactSchema, allow_none=True)
     score = ma.fields.Integer()
 
     @ma.post_load
@@ -35,9 +35,20 @@ class Relationship(BaseObject):
         return self.clean(dict(source=self.source, edge=self.edge,
                                target=[self.target if self.target else 'Not Used'][0], score=self.score))
 
-    def __init__(self, source, edge=None, target=None, score=1):
+    @property
+    def shorthand(self):
+        # compute a visual representation of a relationship for recording purposes
+        stub = f"{self.source.name}({self.source.value})"
+        if self.edge:
+            stub += f" : {self.edge}"
+            if self.target and self.target.name:
+                stub += f" : {self.target.name}({self.target.value})"
+        return stub
+
+    def __init__(self, source, edge=None, target=None, score=1, origin=None):
         super().__init__()
         self.source = source
         self.edge = edge
         self.target = target
         self.score = score
+        self.origin = origin

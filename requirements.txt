@@ -6,7 +6,7 @@ aiohttp-apispec==2.2.1
 jinja2==2.11.3
 pyyaml>=5.1
 cryptography>=3.2
-websockets==8.1
+websockets==9.1
 Sphinx==3.0.4
 docutils==0.16 # Broken bullet lists in sphinx_rtd_theme https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
 sphinx_rtd_theme==0.4.3

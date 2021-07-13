@@ -11,6 +11,7 @@ from aiohttp import web
 import app.api.v2
 from app import version
 from app.api.rest_api import RestApi
+from app.api.v2.responses import apispec_request_validation_middleware
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
@@ -18,6 +19,7 @@ from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService, DATA_BACKUP_DIR
+from app.service.knowledge_svc import KnowledgeService
 from app.service.event_svc import EventService
 from app.service.file_svc import FileSvc
 from app.service.learning_svc import LearningService
@@ -51,6 +53,7 @@ def run_tasks(services):
     loop = asyncio.get_event_loop()
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
+    loop.run_until_complete(knowledge_svc.restore_state())
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
@@ -76,12 +79,13 @@ def init_swagger_documentation(app):
     """
     aiohttp_apispec.setup_aiohttp_apispec(
         app=app,
-        title="CALDERA",
+        title='CALDERA',
         version=version.get_version(),
-        swagger_path="/api/docs",
-        url="/api/docs/swagger.json",
-        static_path="/static/swagger"
+        swagger_path='/api/docs',
+        url='/api/docs/swagger.json',
+        static_path='/static/swagger'
     )
+    app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
 
 
@@ -116,6 +120,7 @@ if __name__ == '__main__':
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
 
     data_svc = DataService()
+    knowledge_svc = KnowledgeService()
     contact_svc = ContactService()
     planning_svc = PlanningService(
         global_variable_owners=[
@@ -138,5 +143,6 @@ if __name__ == '__main__':
     if args.fresh:
         logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
+        asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
     run_tasks(services=app_svc.get_services())
