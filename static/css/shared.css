@@ -13,7 +13,6 @@ pre {
 }
 
 select {
-  overflow: hidden;
   background: white;
   font-size: 14px;
   height: 30px;

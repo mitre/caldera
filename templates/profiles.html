@@ -38,8 +38,27 @@
     </form>
     <template x-if="selectedProfile && !isCreatingProfile">
         <div class="section">
-            <h3 x-text="selectedProfileName"></h3>
-            <p x-text="selectedProfileDescription"></p>
+            <div x-show="!isEdittingProfile">
+                <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEdittingProfile = true"></h3>
+                <p x-text="selectedProfileDescription" class="pointer" @click="isEdittingProfile = true"></p> <br>
+            </div>
+            <form x-show="isEdittingProfile">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" x-model="selectedProfileName" x-on:change="unsavedChanges = true" placeholder="Adversary Name">
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <input class="input is-small" x-model="selectedProfileDescription" placeholder="Adversary Description" x-on:change="unsavedChanges = true">
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <a class="button is-small is-primary" @click="isEdittingProfile = false">Done</a>
+                    </div>
+                </div>
+            </form>
             <div class="control-buttons is-flex is-flex-direction-row">
                 <button class="button is-small" @click="showAbilityModal = true">
                     <span class="icon"><i class="fas fa-plus"></i></span>
@@ -66,30 +85,30 @@
                                     <p class="ability-content">
                                         <strong x-text="ability.name"></strong>
                                         <br>
-                                        <code x-text="ability.tactic"></code>
+                                        <span x-text="ability.tactic"></span>
                                         <br>
                                         <span x-text="ability.technique_name"></span>
                                     </p>
                                 </div>
                                 <nav class="level is-mobile">
                                     <div class="level-left">
-                                        <template x-for="platform of ability.executors.platforms">
+                                        <template x-for="platform of ability.executorDetails.platforms">
                                             <a class="level-item has-tooltip-arrow" x-bind:data-tooltip="platform">
                                                 <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
                                             </a>
                                         </template>
                                     </div>
                                     <div class="level-right">
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executors.hasRequirements" data-tooltip="This ability has requirements">
+                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasRequirements" data-tooltip="This ability has requirements">
                                             <span class="icon is-small"><i class="fas fa-lock"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executors.hasCleanup" data-tooltip="This ability can clean itself up">
+                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasCleanup" data-tooltip="This ability can clean itself up">
                                             <span class="icon is-small"><i class="fas fa-trash"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executors.hasParser" data-tooltip="This ability unlocks other abilities">
+                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasParser" data-tooltip="This ability unlocks other abilities">
                                             <span class="icon is-small"><i class="fas fa-key"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executors.hasPayload" data-tooltip="This ability uses a payload">
+                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasPayload" data-tooltip="This ability uses a payload">
                                             <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
                                         </a> 
                                     </div>
@@ -305,7 +324,7 @@
                                             <input class="input is-small" x-model="selectedAbility.ability_id" disabled>
                                         </div>
                                         <div class="control">
-                                            <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID">
+                                            <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
                                                 <span class="icon is-small"><i class="fas fa-sync"></i></span>
                                             </a>
                                         </div>
@@ -375,7 +394,10 @@
                         </form>
                         <p class="has-text-centered">Executors</p>
                         <template x-for="(executor, index) of selectedAbility.executors">
-                            <div class="box" x-init="console.log(executor)">
+                            <div class="box">
+                                <div class="has-text-right">
+                                    <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
+                                </div>
                                 <form>
                                     <div class="field is-horizontal">
                                         <div class="field-label is-small">
@@ -385,7 +407,7 @@
                                             <div class="field ">
                                                 <div class="control">
                                                     <div class="select is-small">
-                                                        <select x-model="selectedAbility.executors[index].platform" x-on:change="exe">
+                                                        <select x-model="selectedAbility.executors[index].platform">
                                                             {% for platform, executors in platforms.items() %}
                                                             <option value="{{ platform }}">{{ platform }}</option>
                                                             {% endfor %}
@@ -403,7 +425,7 @@
                                             <div class="field ">
                                                 <div class="control">
                                                     <div class="select is-small">
-                                                        <select x-model="selectedAbility.executors[index].executor">
+                                                        <select x-model="selectedAbility.executors[index].name">
                                                             <template x-for="executor of platforms[selectedAbility.executors[index].platform]">
                                                                 <option x-bind:value="executor" x-text="executor"></option>
                                                             </template>
@@ -415,12 +437,36 @@
                                     </div>
                                     <div class="field is-horizontal">
                                         <div class="field-label is-small">
-                                            <label class="label">payload</label>
+                                            <label class="label">payloads</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field ">
+                                            <div class="field is-grouped is-grouped-multiline">
+                                                <p x-show="selectedAbility.executors[index].payloads.length === 0" class="help">No payloads selected</p>
+                                                <template x-for="(payload, index) of selectedAbility.executors[index].payloads">
+                                                    <div class="control">
+                                                        <div class="tags has-addons">
+                                                            <span class="tag is-small is-link" x-text="payload"></span>
+                                                            <a class="tag is-delete" x-on:click="selectedAbility.executors[index].payloads.splice(index, 1)"></a>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label"></label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
                                                 <div class="control">
-                                                    
+                                                    <div class="select is-small is-multiple is-fullwidth">
+                                                        <select class="select" multiple size="6">
+                                                            <template x-for="payload of payloads">
+                                                                <option x-show="selectedAbility.executors[index].payloads.indexOf(payload) === -1" x-on:click="selectedAbility.executors[index].payloads.push(payload)" x-text="payload"></option>
+                                                            </template>      
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -432,7 +478,7 @@
                                         <div class="field-body">
                                             <div class="field ">
                                                 <div class="control">
-                                                    <textarea class="textarea is-small" x-model="executor.command"></textarea>
+                                                    <textarea class="textarea is-small code" x-model="executor.command"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -444,7 +490,7 @@
                                         <div class="field-body">
                                             <div class="field ">
                                                 <div class="control">
-                                                    <input class="input is-small" x-model="executor.timeout">
+                                                    <input class="input is-small" type="number" x-model="executor.timeout">
                                                 </div>
                                             </div>
                                         </div>
@@ -456,7 +502,7 @@
                                         <div class="field-body">
                                             <div class="field ">
                                                 <div class="control">
-                                                    <input class="input is-small" x-model="executor.cleanup">
+                                                    <input class="input is-small code" x-model="executor.cleanup">
                                                 </div>
                                             </div>
                                         </div>
@@ -464,13 +510,28 @@
                                 </form>
                             </div>
                         </template>
+                        <div class="has-text-centered">
+                            <button class="button is-small is-primary" @click="selectedAbility.executors.push([])">+ Add Executor</button>
+                        </div>
                     </div>
                 </template>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-primary is-small" @click="">Save</button>
-                <button class="button is-primary is-small" @click="">Save and Add to Adversary</button>
-                <button class="button is-small" @click="showAbilityModal = false">Cancel</button>
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility(false)">Save</button>
+                        </div>
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility(true)">Save and Add to Adversary</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <p class="level-item">
+                            <button class="button is-small" @click="showAbilityModal = false; selectedAbility = '';">Close</button>
+                        </p>
+                    </div>
+                </nav>
             </footer>
         </div>
     </div>
@@ -481,6 +542,7 @@
     let objectives = {{ objectives | tojson }};
     let exploits = {{ exploits | tojson }};
     let platforms = {{ platforms | tojson }};
+    let payloads = {{ payloads | tojson }};
 
     function alpineAdversaries() {
         return {
@@ -490,6 +552,7 @@
             abilities: [],
             objectives: [],
 
+            isEdittingProfile: false,
             isCreatingProfile: false,
             createProfileNameError: false,
             createProfileDescriptionError: false,
@@ -519,6 +582,35 @@
             techniques: [],
             abilitiesAddModal: [],
 
+            addExecutorMetadata(ability) {
+                let executorNameMap = new Map([
+                    ['psh', 'powershell'],
+                    ['pwsh', 'powershell core'],
+                    ['sh', 'shell'],
+                    ['cmd', 'commandline'],
+                ]);
+                let platforms = [], hasCleanup = false, hasPayload = false, hasParser = false;
+                let hasRequirements = ability.requirements.length > 0;
+
+                ability.executors.forEach((executor) => {
+                    if (executor.cleanup.length > 0) hasCleanup = true;
+                    if (executor.parsers.length > 0) hasParser = true;
+                    if (executor.payloads.length > 0) hasPayload = true;
+                    platforms.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
+                });
+
+                return {
+                    ...ability,
+                    executorDetails: {
+                        platforms,
+                        hasRequirements,
+                        hasCleanup,
+                        hasParser,
+                        hasPayload,
+                    }
+                }
+            },
+
             loadProfile() {
                 if (!this.selectedProfile) return;
 
@@ -532,34 +624,7 @@
                     this.selectedProfileDescription = data.description;
                     this.selectedObjective = data.objective;
                     
-                    let executorNameMap = new Map([
-                        ['psh', 'powershell'],
-                        ['pwsh', 'powershell core'],
-                        ['sh', 'shell'],
-                        ['cmd', 'commandline'],
-                    ]);
-                    data.atomic_ordering.forEach((ability) => {
-                        let platforms = [], hasCleanup = false, hasPayload = false, hasParser = false;
-                        let hasRequirements = ability.requirements.length > 0;
-
-                        ability.executors.forEach((executor) => {
-                            if (executor.cleanup.length > 0) hasCleanup = true;
-                            if (executor.parsers.length > 0) hasParser = true;
-                            if (executor.payloads.length > 0) hasPayload = true;
-                            platforms.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
-                        });
-
-                        this.abilities.push({
-                            ...ability,
-                            executors: {
-                                platforms,
-                                hasRequirements,
-                                hasCleanup,
-                                hasParser,
-                                hasPayload,
-                            }
-                        });
-                    });
+                    data.atomic_ordering.forEach((ability) => ability = this.addExecutorMetadata(ability));
                 });
             },
 
@@ -681,6 +746,44 @@
                 this.unsavedChanges = true;
             },
 
+            saveAbility(addToAdversary) {
+                let platforms = {};
+                this.selectedAbility.executors.forEach((executor) => {
+                    if (!platforms[executor.platform]) {
+                        platforms[executor.platform] = {}
+                    }
+
+                    platforms[executor.platform][executor.name] = {
+                        'payloads': executor.payloads,
+                        'command': executor.command,
+                        'timeout': executor.timeout,
+                        'cleanup': executor.cleanup
+                    }
+                });
+
+                let requestBody = {
+                    'index': 'abilities',
+                    'id': this.selectedAbility.ability_id,
+                    'name': this.selectedAbility.name,
+                    'description': this.selectedAbility.description,
+                    'tactic': this.selectedAbility.tactic,
+                    'technique': {
+                        'attack_id': this.selectedAbility.technique_id,
+                        'name': this.selectedAbility.technique_name
+                    },
+                    'platforms': platforms
+                }
+                
+                restRequest('PUT', requestBody, (data) =>{
+                    toast('Saved ability!', true);
+
+                    if (addToAdversary) {
+                        this.abilities.push(this.addExecutorMetadata(this.selectedAbility));
+                        this.unsavedChanges = true;
+                    }
+                });
+            },
+
             removeAbility(index) {
                 this.abilities.splice(index, 1);
                 this.unsavedChanges = true;
@@ -736,12 +839,6 @@
 </script>
 
 <style>
-    code {
-        background-color: black;
-        color: white;
-        border-radius: 4px;
-    }
-
     .ability {
         width: 350px;
         border: 1px solid white !important;
@@ -770,12 +867,24 @@
         margin-bottom: 0 !important;
     }
 
+    .code {
+        font-family: monospace;
+    }
+
     .control-buttons>.button {
         margin: 0 10px 10px 0;
     }
 
+    .level {
+        width: 100%;
+    }
+
     .media + .media {
         margin-top: 0;
+    }
+
+    .pointer {
+        cursor: pointer;
     }
 
     .vr {

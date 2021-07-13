@@ -49,7 +49,7 @@ class CampaignPack(BaseWorld):
         for p in platforms:
             platforms[p] = list(platforms[p])
         tactics = sorted(list(set(a.tactic.lower() for a in abilities)))
-        payloads = await self.rest_svc.list_payloads()
+        payloads = list(await self.rest_svc.list_payloads())
         adversaries = sorted([a.display for a in await self.data_svc.locate('adversaries', match=access)],
                              key=lambda a: a['name'])
         exploits = sorted([a.display for a in abilities], key=operator.itemgetter('technique_id', 'name'))
