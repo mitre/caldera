@@ -92,23 +92,23 @@
                                 </div>
                                 <nav class="level is-mobile">
                                     <div class="level-left">
-                                        <template x-for="platform of ability.executorDetails.platforms">
+                                        <template x-for="platform of getExecutorDetail('platforms', ability)">
                                             <a class="level-item has-tooltip-arrow" x-bind:data-tooltip="platform">
                                                 <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
                                             </a>
                                         </template>
                                     </div>
                                     <div class="level-right">
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasRequirements" data-tooltip="This ability has requirements">
+                                        <a class="level-item has-tooltip-arrow" x-show="getExecutorDetail('requirements', ability)" data-tooltip="This ability has requirements">
                                             <span class="icon is-small"><i class="fas fa-lock"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasCleanup" data-tooltip="This ability can clean itself up">
+                                        <a class="level-item has-tooltip-arrow" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
                                             <span class="icon is-small"><i class="fas fa-trash"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasParser" data-tooltip="This ability unlocks other abilities">
+                                        <a class="level-item has-tooltip-arrow" x-show="getExecutorDetail('parser', ability)" data-tooltip="This ability unlocks other abilities">
                                             <span class="icon is-small"><i class="fas fa-key"></i></span>
                                         </a>
-                                        <a class="level-item has-tooltip-arrow" x-show="ability.executorDetails.hasPayload" data-tooltip="This ability uses a payload">
+                                        <a class="level-item has-tooltip-arrow" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                             <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
                                         </a> 
                                     </div>
@@ -190,13 +190,13 @@
                                 <span>
                                     <b x-text="ability.name"></b> | 
                                     <span x-text="ability.tactic"></span> |
-                                    <template x-for="platform of ability.executors.platforms">
+                                    <template x-for="platform of getExecutorDetail('platforms', ability)">
                                         <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
                                     </template> |
-                                    <span class="icon is-small" x-show="ability.executors.hasRequirements"><i class="fas fa-lock"></i></span>
-                                    <span class="icon is-small" x-show="ability.executors.hasCleanup"><i class="fas fa-trash"></i></span>
-                                    <span class="icon is-small" x-show="ability.executors.hasParser"><i class="fas fa-key"></i></span>
-                                    <span class="icon is-small" x-show="ability.executors.hasPayload"><i class="fas fa-weight-hanging"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('requirements', ability)"><i class="fas fa-lock"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('cleanup', ability)"><i class="fas fa-trash"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('parser', ability)"><i class="fas fa-key"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('payload', ability)"><i class="fas fa-weight-hanging"></i></span>
                                 </span>
                             </label>
                         </div>
@@ -528,7 +528,7 @@
                     </div>
                     <div class="level-right">
                         <p class="level-item">
-                            <button class="button is-small" @click="showAbilityModal = false; selectedAbility = '';">Close</button>
+                            <button class="button is-small" @click="closeAbilityModal()">Close</button>
                         </p>
                     </div>
                 </nav>
@@ -582,7 +582,7 @@
             techniques: [],
             abilitiesAddModal: [],
 
-            addExecutorMetadata(ability) {
+            getExecutorDetail(detail, ability) {
                 let executorNameMap = new Map([
                     ['psh', 'powershell'],
                     ['pwsh', 'powershell core'],
@@ -590,7 +590,6 @@
                     ['cmd', 'commandline'],
                 ]);
                 let platforms = [], hasCleanup = false, hasPayload = false, hasParser = false;
-                let hasRequirements = ability.requirements.length > 0;
 
                 ability.executors.forEach((executor) => {
                     if (executor.cleanup.length > 0) hasCleanup = true;
@@ -599,15 +598,19 @@
                     platforms.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
                 });
 
-                return {
-                    ...ability,
-                    executorDetails: {
-                        platforms,
-                        hasRequirements,
-                        hasCleanup,
-                        hasParser,
-                        hasPayload,
-                    }
+                switch (detail) {
+                    case 'cleanup':
+                        return hasCleanup;
+                    case 'parser':
+                        return hasParser;
+                    case 'payload':
+                        return hasPayload;
+                    case 'requirements':
+                        return ability.requirements.length > 0;
+                    case 'platforms':
+                        return platforms;
+                    default:
+                        return false;
                 }
             },
 
@@ -617,14 +620,17 @@
                 this.abilities = [];
                 this.isCreatingProfile = false;
 
-                restRequest('POST', { 'index': 'adversaries', 'adversary_id': this.selectedProfile }, (data) => {
+                apiRequest('POST', { 'index': 'adversaries', 'adversary_id': this.selectedProfile }).then((data) => {
                     data = JSON.parse(data)[0]
 
                     this.selectedProfileName = data.name;
                     this.selectedProfileDescription = data.description;
                     this.selectedObjective = data.objective;
                     
-                    data.atomic_ordering.forEach((ability) => ability = this.addExecutorMetadata(ability));
+                    this.abilities = data.atomic_ordering;
+                }).catch((error) => {
+                    toast('Error loading profile', false);
+                    console.error(error);
                 });
             },
 
@@ -633,38 +639,18 @@
 
                 this.abilitiesAddAdversary = [];
 
-                restRequest('POST', { 'index': 'adversaries', 'adversary_id': this.selectedAddAdversary }, (data) => {
+                apiRequest('POST', { 'index': 'adversaries', 'adversary_id': this.selectedAddAdversary }).then((data) => {
                     data = JSON.parse(data)[0]
                     
-                    let executorNameMap = new Map([
-                        ['psh', 'powershell'],
-                        ['pwsh', 'powershell core'],
-                        ['sh', 'shell'],
-                        ['cmd', 'commandline'],
-                    ]);
                     data.atomic_ordering.forEach((ability) => {
-                        let platforms = [], hasCleanup = false, hasPayload = false, hasParser = false;
-                        let hasRequirements = ability.requirements.length > 0;
-
-                        ability.executors.forEach((executor) => {
-                            if (executor.cleanup.length > 0) hasCleanup = true;
-                            if (executor.parsers.length > 0) hasParser = true;
-                            if (executor.payloads.length > 0) hasPayload = true;
-                            platforms.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
-                        });
-
                         this.abilitiesAddAdversary.push({
                             ...ability,
-                            selected: true,
-                            executors: {
-                                platforms,
-                                hasRequirements,
-                                hasCleanup,
-                                hasParser,
-                                hasPayload,
-                            }
+                            selected: true
                         });
                     });
+                }).catch((error) => {
+                    toast('Error loading adversary profile', false);
+                    console.error(error);
                 });
             },
 
@@ -692,13 +678,16 @@
                     "objective": objectives.find((o) => o.name === 'default').id
                 }
 
-                restRequest('PUT', requestBody, (data) => {
+                apiRequest('PUT', requestBody).then((data) => {
                     data = JSON.parse(data)[0]
                     adversaries.push(data);
                     this.selectedProfile = data.adversary_id;
                     this.loadProfile();
                     this.isCreatingProfile = false;
                     toast('Created profile!', true);
+                }).catch((error) => {
+                    toast('Error creating profile', false);
+                    console.error(error);
                 });
             },
 
@@ -721,19 +710,25 @@
                     "objective": "495a9828-cab1-44dd-a0ca-66e58177d8cc"
                 }
 
-                restRequest('PUT', requestBody, (data) =>{
+                apiRequest('PUT', requestBody).then((data) => {
                     this.unsavedChanges = false;
                     toast('Saved profile!', true);
+                }).catch((error) => {
+                    toast('Error saving profile', false);
+                    console.error(error);
                 });
             },
 
             deleteProfile() {
                 if (confirm('Are you sure you want to remove this adversary?')) {
-                    restRequest('DELETE', { 'index': 'adversaries', 'adversary_id': this.selectedProfile }, (data) => {
+                    apiRequest('DELETE', { 'index': 'adversaries', 'adversary_id': this.selectedProfile }).then((data) => {
                         adversaries.splice(adversaries.findIndex(a => a.adversary_id === this.selectedProfile), 1);
                         this.selectedProfile = null;
                         toast('Adversary profile deleted.', true);
-                    });
+                    }).catch((error => {
+                        toast('Error deleting profile', false);
+                        console.error(error);
+                    }));
                 }
             },
 
@@ -754,10 +749,10 @@
                     }
 
                     platforms[executor.platform][executor.name] = {
-                        'payloads': executor.payloads,
-                        'command': executor.command,
-                        'timeout': executor.timeout,
-                        'cleanup': executor.cleanup
+                        'payloads': [...executor.payloads],
+                        'command': executor.command.toString(),
+                        'timeout': executor.timeout.toString(),
+                        'cleanup': executor.cleanup.toString()
                     }
                 });
 
@@ -774,13 +769,16 @@
                     'platforms': platforms
                 }
                 
-                restRequest('PUT', requestBody, (data) =>{
+                apiRequest('PUT', requestBody).then((response) => {
                     toast('Saved ability!', true);
 
                     if (addToAdversary) {
-                        this.abilities.push(this.addExecutorMetadata(this.selectedAbility));
+                        this.abilities.push(this.selectedAbility);
                         this.unsavedChanges = true;
                     }
+                }).catch((error) => {
+                    toast('Error saving ability', false);
+                    console.error(error);
                 });
             },
 
@@ -789,6 +787,11 @@
                 this.unsavedChanges = true;
             },
             
+            closeAbilityModal() {
+                this.showAbilityModal = false; 
+                //this.selectedAbility = '';
+            },
+
             initExploits() {
                 exploits.forEach((exploit) => {
                     if (!this.abilitiesObject[exploit.tactic]) {

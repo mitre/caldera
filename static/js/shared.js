@@ -9,9 +9,23 @@ function restRequest(requestType, data, callback = () => {
         {method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}
 
     fetch(endpoint, requestData)
-        .then(response => response.text())
-        .then(data => callback(data))
-        .catch((error) => console.error(error));
+        .then(response => {
+            if (!response.ok) {
+                throw Error(response.statusText)
+            }
+            return response.text()
+        })
+        .then(data => callback(data));
+}
+
+function apiRequest(requestType, data, endpoint  = '/api/rest') {
+    const requestBody = requestType === 'GET' ?
+        { method: requestType, headers: { 'Content-Type': 'application/json' } } :
+        { method: requestType, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }
+
+    return new Promise((resolve, reject) => {
+        fetch(endpoint, requestBody).then(response => response.ok ? resolve(response.text()) : reject(response.statusText));
+    });
 }
 
 function downloadReport(endpoint, filename, data = {}) {
