@@ -1,10 +1,87 @@
 import pytest
+import yaml
+import os
+import aiohttp_apispec
+from aiohttp_apispec import validation_middleware
+
+from aiohttp import web
+from pathlib import Path
 from http import HTTPStatus
 
+from app import version
 from app.objects.c_operation import Operation
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_source import Source
+from app.utility.base_world import BaseWorld
+from app.api.v2.responses import json_request_validation_middleware
+from app.api.v2.security import authentication_required_middleware_factory
+from app.api.v2.responses import apispec_request_validation_middleware
+from app.service.app_svc import AppService
+from app.service.auth_svc import AuthService
+from app.service.contact_svc import ContactService
+from app.service.file_svc import FileSvc
+from app.service.learning_svc import LearningService
+from app.service.planning_svc import PlanningService
+from app.api.v2.handlers.operation_api import OperationApi
+from app.api.rest_api import RestApi
+
+
+@pytest.fixture
+def aiohttp_client(loop, aiohttp_client, data_svc):
+    async def initialize():
+        with open(Path(__file__).parents[4] / 'conf' / 'default.yml', 'r') as fle:
+            BaseWorld.apply_config('main', yaml.safe_load(fle))
+        with open(Path(__file__).parents[4] / 'conf' / 'payloads.yml', 'r') as fle:
+            BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+
+        _ = PlanningService()
+        _ = LearningService()
+        auth_svc = AuthService()
+        _ = ContactService()
+        _ = FileSvc()
+
+        def make_app(svcs):
+            app = web.Application(
+                middlewares=[
+                    authentication_required_middleware_factory(services['auth_svc']),
+                    json_request_validation_middleware
+                ]
+            )
+            OperationApi(svcs).add_routes(app)
+            return app
+
+        app_svc = AppService(web.Application())
+        services = app_svc.get_services()
+        os.chdir(str(Path(__file__).parents[4]))
+        app_svc.register_subapp('/api/v2', make_app(services))
+        aiohttp_apispec.setup_aiohttp_apispec(
+            app=app_svc.application,
+            title='CALDERA',
+            version=version.get_version(),
+            swagger_path='/api/docs',
+            url='/api/docs/swagger.json',
+            static_path='/static/swagger'
+        )
+        app_svc.application.middlewares.append(apispec_request_validation_middleware)
+        app_svc.application.middlewares.append(validation_middleware)
+
+        await app_svc.register_contacts()
+        _ = await RestApi(services).enable()
+        await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
+        await auth_svc.set_login_handlers(services)
+        return app_svc.application
+
+    app = loop.run_until_complete(initialize())
+    return loop.run_until_complete(aiohttp_client(app))
+
+
+@pytest.fixture
+def authorized_cookies(loop, aiohttp_client):
+    async def get_cookie():
+        r = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
+        return r.cookies
+    return loop.run_until_complete(get_cookie())
 
 
 @pytest.fixture
@@ -59,34 +136,34 @@ def setup_operations_api_test(loop, data_svc):
     "setup_operations_api_test"
 )
 class TestOperationsApi:
-    async def test_get_operations(self, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations', cookies=authorized_cookies)
+    async def test_get_operations(self, aiohttp_client, authorized_cookies):
+        resp = await aiohttp_client.get('/api/v2/operations', cookies=authorized_cookies)
         operations_list = await resp.json()
         assert len(operations_list) == 1
         operation_dict = operations_list[0]
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    async def test_get_operation_by_id(self, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
+    async def test_get_operation_by_id(self, aiohttp_client, authorized_cookies):
+        resp = await aiohttp_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         operation_dict = await resp.json()
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    async def test_unauthorized_get_operation_by_id(self, api_client):
-        resp = await api_client.get('/api/v2/operations')
+    async def test_unauthorized_get_operation_by_id(self, aiohttp_client):
+        resp = await aiohttp_client.get('/api/v2/operations')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_delete_operation_by_id(self, data_svc, api_client, authorized_cookies):
+    async def test_delete_operation_by_id(self, data_svc, aiohttp_client, authorized_cookies):
         op_exists = await data_svc.locate('operations', {'id': '123'})
         assert op_exists
-        resp = await api_client.delete('/api/v2/operations/123', cookies=authorized_cookies)
+        resp = await aiohttp_client.delete('/api/v2/operations/123', cookies=authorized_cookies)
         assert resp.status == HTTPStatus.NO_CONTENT
         op_exists = await data_svc.locate('operations', {'id': '123'})
         assert not op_exists
 
-    async def test_get_operation_report(self, data_svc, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
+    async def test_get_operation_report(self, data_svc, aiohttp_client, authorized_cookies):
+        resp = await aiohttp_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         report = await resp.json()
         assert report['name'] == 'My Test Operation'
         assert report['state'] == 'finished'
