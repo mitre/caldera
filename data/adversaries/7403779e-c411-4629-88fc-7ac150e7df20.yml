@@ -1,0 +1,6 @@
+name: Ab Adversary
+description: A test adversary
+atomic_ordering:
+- b007fe0c-c6b0-4fda-915c-255bbc070de2
+id: 7403779e-c411-4629-88fc-7ac150e7df20
+objective: 495a9828-cab1-44dd-a0ca-66e58177d8cc

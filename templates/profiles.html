@@ -77,7 +77,7 @@
             </div>
             <div class="is-flex is-flex-direction-row is-flex-wrap-wrap">
                 <template x-for="(ability, index) in abilities">
-                    <div x-on:dragover.prevent="swapAbilities(index)">
+                    <div x-on:dragover.prevent="swapAbilities(index)" @click="selectAbility(ability.ability_id)">
                         <article class="media ability" draggable="true" x-on:dragstart="startAbilitySwap(index)">
                             <div class="media-content">
                                 <div class="is-flex is-flex-direction-row">
@@ -272,7 +272,7 @@
                     </div>
                     <div class="field is-horizontal">
                         <div class="field-label is-small">
-                             <label class="label">Tactic</label>
+                             <label class="label">Technique</label>
                         </div>
                         <div class="field-body">
                             <div class="field">
@@ -297,7 +297,7 @@
                             <div class="field">
                                 <div class="control">
                                     <div class="select is-small is-fullwidth">
-                                        <select x-model="selectedAbilityId" x-bind:disabled="!selectedTechnique" x-on:change="selectedAbility = exploits.find((exploit) => exploit.ability_id === selectedAbilityId)">
+                                        <select x-model="selectedAbilityId" x-bind:disabled="!selectedTechnique" x-on:change="selectAbility(selectedAbilityId)">
                                             <option default>Choose an ability</option>
                                             <template x-for="ability of abilitiesAddModal">
                                                 <option x-bind:value="ability.id" x-text="ability.name"></option>
@@ -309,7 +309,7 @@
                         </div>
                     </div>
                 </form>
-                <template x-if="selectedAbility">
+                <template x-if="selectedAbility && selectedAbility.ability_id">
                     <div class="content">
                         <hr>
                         <p class="has-text-centered">Ability Details</p>
@@ -392,11 +392,15 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                </template>
+                <template x-if="selectedAbilityExecutors">
+                    <div>
                         <p class="has-text-centered">Executors</p>
-                        <template x-for="(executor, index) of selectedAbility.executors">
+                        <template x-for="(executor, index) of selectedAbilityExecutors">
                             <div class="box">
                                 <div class="has-text-right">
-                                    <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
+                                    <button class="delete" @click="selectedAbilityExecutors.splice(index, 1)"></button>
                                 </div>
                                 <form>
                                     <div class="field is-horizontal">
@@ -407,7 +411,7 @@
                                             <div class="field ">
                                                 <div class="control">
                                                     <div class="select is-small">
-                                                        <select x-model="selectedAbility.executors[index].platform">
+                                                        <select x-model="selectedAbilityExecutors[index].platform">
                                                             {% for platform, executors in platforms.items() %}
                                                             <option value="{{ platform }}">{{ platform }}</option>
                                                             {% endfor %}
@@ -425,8 +429,8 @@
                                             <div class="field ">
                                                 <div class="control">
                                                     <div class="select is-small">
-                                                        <select x-model="selectedAbility.executors[index].name">
-                                                            <template x-for="executor of platforms[selectedAbility.executors[index].platform]">
+                                                        <select x-model="selectedAbilityExecutors[index].name">
+                                                            <template x-for="executor of platforms[selectedAbilityExecutors[index].platform]">
                                                                 <option x-bind:value="executor" x-text="executor"></option>
                                                             </template>
                                                         </select>
@@ -441,12 +445,12 @@
                                         </div>
                                         <div class="field-body">
                                             <div class="field is-grouped is-grouped-multiline">
-                                                <p x-show="selectedAbility.executors[index].payloads.length === 0" class="help">No payloads selected</p>
-                                                <template x-for="(payload, index) of selectedAbility.executors[index].payloads">
+                                                <p x-show="selectedAbilityExecutors[index].payloads.length === 0" class="help">No payloads selected</p>
+                                                <template x-for="(payload, index) of selectedAbilityExecutors[index].payloads">
                                                     <div class="control">
                                                         <div class="tags has-addons">
                                                             <span class="tag is-small is-link" x-text="payload"></span>
-                                                            <a class="tag is-delete" x-on:click="selectedAbility.executors[index].payloads.splice(index, 1)"></a>
+                                                            <a class="tag is-delete" x-on:click="selectedAbilityExecutors[index].payloads.splice(index, 1)"></a>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -463,7 +467,7 @@
                                                     <div class="select is-small is-multiple is-fullwidth">
                                                         <select class="select" multiple size="6">
                                                             <template x-for="payload of payloads">
-                                                                <option x-show="selectedAbility.executors[index].payloads.indexOf(payload) === -1" x-on:click="selectedAbility.executors[index].payloads.push(payload)" x-text="payload"></option>
+                                                                <option x-show="selectedAbilityExecutors[index].payloads.indexOf(payload) === -1" x-on:click="selectedAbilityExecutors[index].payloads.push(payload)" x-text="payload"></option>
                                                             </template>      
                                                         </select>
                                                     </div>
@@ -511,9 +515,8 @@
                             </div>
                         </template>
                         <div class="has-text-centered">
-                            <button class="button is-small is-primary" @click="selectedAbility.executors.push([])">+ Add Executor</button>
+                            <button class="button is-small is-primary" @click="selectedAbilityExecutors.push([])">+ Add Executor</button>
                         </div>
-                    </div>
                 </template>
             </section>
             <footer class="modal-card-foot">
@@ -576,6 +579,7 @@
             selectedTechnique: '',
             selectedAbilityId: '',
             selectedAbility: null,
+            selectedAbilityExecutors: [],
             selectedPlatform: '',
             selectedExecutor: '',
             abilitiesObject: {},
@@ -741,9 +745,20 @@
                 this.unsavedChanges = true;
             },
 
+            selectAbility(id) {
+                this.selectedAbility = exploits.find((exploit) => exploit.ability_id === id);
+                this.selectedAbilityExecutors = this.selectedAbilityExecutors;
+                this.selectedTactic = this.selectedAbility.tactic;
+                this.filterTechniques();
+                this.selectedTechnique = this.selectedAbility.technique_id;
+                this.filterAbilities();
+                this.selectedAbilityId = id;
+                this.showAbilityModal = true;
+            },
+
             saveAbility(addToAdversary) {
                 let platforms = {};
-                this.selectedAbility.executors.forEach((executor) => {
+                this.selectedAbilityExecutors.forEach((executor) => {
                     if (!platforms[executor.platform]) {
                         platforms[executor.platform] = {}
                     }
@@ -789,7 +804,9 @@
             
             closeAbilityModal() {
                 this.showAbilityModal = false; 
-                //this.selectedAbility = '';
+                this.selectedAbilityId = '';
+                this.selectedAbility = {};
+                this.selectedAbilityExecutors = [];
             },
 
             initExploits() {
