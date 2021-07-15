@@ -34,7 +34,7 @@ class BaseObjectApi(BaseApi):
         return self._api_manager.find_and_dump_objects(self.ram_key, access, sort, include, exclude)
 
     async def get_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request, read_body=False)
 
         obj = self._api_manager.find_object(self.ram_key, query)
         if not obj:
@@ -77,7 +77,7 @@ class BaseObjectApi(BaseApi):
     """PATCH"""
 
     async def update_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request, read_body=True)
 
         obj = self._api_manager.find_and_update_object(self.ram_key, data, search)
         if not obj:
@@ -85,7 +85,7 @@ class BaseObjectApi(BaseApi):
         return obj
 
     async def update_on_disk_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request, read_body=True)
 
         obj = await self._api_manager.find_and_update_on_disk_object(data, search, self.ram_key, self.id_property,
                                                                      self.obj_class)
@@ -96,7 +96,7 @@ class BaseObjectApi(BaseApi):
     """PUT"""
 
     async def create_or_update_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request, read_body=True)
 
         matched_obj = self._api_manager.find_object(self.ram_key, query)
         if matched_obj and matched_obj.access not in access['access']:
@@ -105,7 +105,7 @@ class BaseObjectApi(BaseApi):
         return self._api_manager.create_object_from_schema(self.schema, data, access)
 
     async def create_or_update_on_disk_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request, read_body=True)
 
         matched_obj = self._api_manager.find_object(self.ram_key, query)
         if not matched_obj:
@@ -142,9 +142,9 @@ class BaseObjectApi(BaseApi):
 
     """Helpers"""
 
-    async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
+    async def _parse_common_data_from_request(self, request, read_body) -> (dict, dict, str, dict, dict):
         data = {}
-        if request.can_read_body:
+        if read_body:
             data = await request.json()
 
         obj_id = request.match_info.get(self.id_property, '')
