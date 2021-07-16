@@ -1,4 +1,5 @@
 import aiohttp_apispec
+
 from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
@@ -17,6 +18,9 @@ class OperationApi(BaseObjectApi):
         router = app.router
         router.add_get('/operations', self.get_operations)
         router.add_get('/operations/{id}', self.get_operation_by_id)
+        router.add_post('/operations', self.create_operation)
+        router.add_put('/operations/{id}', self.create_or_update_operation)
+        router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
         router.add_get('/operations/{id}/report', self.get_operation_report)
 
@@ -33,6 +37,27 @@ class OperationApi(BaseObjectApi):
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
         return web.json_response(operation)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema)
+    async def create_operation(self, request: web.Request):
+        operation = await self.create_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema)
+    async def create_or_update_operation(self, request: web.Request):
+        operation = await self.create_or_update_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    async def update_operation(self, request: web.Request):
+        operation = await self.update_object(request)
+        return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.response_schema(OperationSchema)
