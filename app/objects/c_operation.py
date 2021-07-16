@@ -25,8 +25,8 @@ NO_PREVIOUS_STATE = object()
 
 
 class OperationSchema(ma.Schema):
-    id = ma.fields.String(required=True)
-    name = ma.fields.String()
+    id = ma.fields.String()
+    name = ma.fields.String(required=True)
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
@@ -40,14 +40,6 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
-
-    @ma.pre_load()
-    def remove_properties(self, data, **_):
-        data.pop('host_group', None)
-        data.pop('start', None)
-        data.pop('chain', None)
-        data.pop('objective', None)
-        return data
 
     @ma.post_load
     def build_operation(self, data, **kwargs):
@@ -74,6 +66,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     FINISHED='finished',
                     CLEANUP='cleanup')
 
+    @staticmethod
+    def get_states():
+        return ['running', 'run_one_link', 'paused', 'out_of_time', 'finished', 'cleanup']
+
+    @staticmethod
+    def get_finished_states():
+        return ['out_of_time', 'finished', 'cleanup']
+
     @property
     def state(self):
         return self._state
@@ -95,7 +95,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             to_state=value
         )
 
-    def __init__(self, name, adversary, agents=None, id='', jitter='2/8', source=None, planner=None, state='running',
+    def __init__(self, name, adversary=None, agents=None, id='', jitter='2/8', source=None, planner=None, state='running',
                  autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
                  use_learning_parsers=True):
         super().__init__()
@@ -128,6 +128,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
+        if existing['state'] != self.states['FINISHED']:
+            existing.update('state', self.state)
+            if self.state == self.states['FINISHED']:
+                self.finish = self.get_current_timestamp()
+        existing.update('autonomous', self.autonomous)
+        existing.update('obfuscator', self.obfuscator)
         return existing
 
     def set_start_details(self):
