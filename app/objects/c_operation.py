@@ -26,7 +26,7 @@ NO_PREVIOUS_STATE = object()
 
 class OperationSchema(ma.Schema):
     id = ma.fields.String()
-    name = ma.fields.String(required=True)
+    name = ma.fields.String()
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
@@ -40,6 +40,13 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
+
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('chain', None)
+        data.pop('objective', None)
+        data.pop('start', None)
+        return data
 
     @ma.post_load
     def build_operation(self, data, **kwargs):
@@ -95,9 +102,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
             to_state=value
         )
 
-    def __init__(self, name, adversary=None, agents=None, id='', jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 use_learning_parsers=True):
+    def __init__(self, name, adversary=None, agents=None, id='', jitter='2/8', source=None, planner=None,
+                 state='running', autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50,
+                 access=None, use_learning_parsers=True):
         super().__init__()
         self.id = str(id) if id else str(uuid.uuid4())
         self.start, self.finish = None, None
@@ -128,10 +135,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
-        if existing['state'] != self.states['FINISHED']:
-            existing.update('state', self.state)
-            if self.state == self.states['FINISHED']:
-                self.finish = self.get_current_timestamp()
+        existing.update('state', self.state)
         existing.update('autonomous', self.autonomous)
         existing.update('obfuscator', self.obfuscator)
         return existing
