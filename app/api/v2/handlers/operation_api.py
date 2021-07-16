@@ -4,7 +4,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
-from app.api.v2.responses import JsonHttpForbidden
+from app.api.v2.responses import JsonHttpForbidden, JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 
@@ -74,7 +74,7 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_report(operation_id, access)
         return web.json_response(report)
 
-    '''Helpers'''
+    '''Overridden Methods'''
     async def create_object(self, request: web.Request):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
@@ -88,3 +88,10 @@ class OperationApi(BaseObjectApi):
         if matched_obj and matched_obj.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
         return await self._api_manager.create_object_from_schema(self.schema, data, access, matched_obj)
+
+    async def update_object(self, request: web.Request):
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        obj = await self._api_manager.find_and_update_object(self.ram_key, data, search)
+        if not obj:
+            raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
+        return obj

@@ -1,6 +1,7 @@
 import asyncio
 
 from marshmallow.schema import SchemaMeta
+from typing import Any
 
 from app.utility.base_world import BaseWorld
 
@@ -23,13 +24,22 @@ class OperationApiManager(BaseApiManager):
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
         if data.get('state'):
-            self.validate_operation_state(data, existing_operation)
+            await self.validate_operation_state(data, existing_operation)
         obj_schema = schema()
         operation = obj_schema.load(data)
         await self.setup_operation(operation, access)
         operation.store(self._data_svc.ram)
         asyncio.get_event_loop().create_task(operation.run(self.services))
         return operation
+
+    async def find_and_update_object(self, ram_key: str, data: dict, search: dict = None):
+        for obj in self.find_objects(ram_key, search):
+            new_obj = await self.update_object(obj, data)
+            return new_obj
+
+    async def update_object(self, obj: Any, data: dict):
+        await self.validate_operation_state(data, obj)
+        return super().update_object(obj, data)
 
     """Object Creation Helpers"""
     async def get_operation_object(self, operation_id: str, access: dict):
@@ -44,7 +54,7 @@ class OperationApiManager(BaseApiManager):
     async def setup_operation(self, operation: Operation, access: BaseWorld.Access):
         """Applies default settings to an operation if data is missing."""
         if not operation.planner:
-            operation.planner = await self.services['data_svc'].locate('planners', match=dict(name='atomic'))
+            operation.planner = (await self.services['data_svc'].locate('planners', match=dict(name='atomic')))[0]
         if not operation.adversary:
             operation.adversary = Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc',
                                                       description='an empty adversary profile',
@@ -57,15 +67,15 @@ class OperationApiManager(BaseApiManager):
         operation.access = self._get_allowed_from_access(access)
         operation.set_start_details()
 
-    def validate_operation_state(self, data: dict, existing: Operation = None):
+    async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:
             if data.get('state') in Operation.get_finished_states():
                 raise JsonHttpBadRequest('Cannot create a finished operation.')
             elif data.get('state') not in Operation.get_states():
-                raise JsonHttpBadRequest('state must be one of {}'.format(Operation.states))
+                raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
         else:
             # Ensure that we update the state of a preexisting operation appropriately.
             if await existing.is_finished() and data.get('state') not in Operation.get_finished_states():
                 raise JsonHttpBadRequest('This operation has already finished.')
             elif data.get('state') not in Operation.get_states():
-                raise JsonHttpBadRequest(body='state must be one of {}'.format(Operation.states.values()))
+                raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
