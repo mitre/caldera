@@ -1,10 +1,11 @@
 import asyncio
 
 from marshmallow.schema import SchemaMeta
+
 from app.utility.base_world import BaseWorld
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
 
@@ -19,7 +20,10 @@ class OperationApiManager(BaseApiManager):
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
         return report
 
-    async def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
+    async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
+                                        access: BaseWorld.Access, existing_operation: Operation = None):
+        if data.get('state'):
+            self.validate_operation_state(data, existing_operation)
         obj_schema = schema()
         operation = obj_schema.load(data)
         await self.setup_operation(operation, access)
@@ -52,3 +56,16 @@ class OperationApiManager(BaseApiManager):
             operation.agents = await self.services['data_svc'].locate('agents')
         operation.access = self._get_allowed_from_access(access)
         operation.set_start_details()
+
+    def validate_operation_state(self, data: dict, existing: Operation = None):
+        if not existing:
+            if data.get('state') in Operation.get_finished_states():
+                raise JsonHttpBadRequest('Cannot create a finished operation.')
+            elif data.get('state') not in Operation.get_states():
+                raise JsonHttpBadRequest('state must be one of {}'.format(Operation.states))
+        else:
+            # Ensure that we update the state of a preexisting operation appropriately.
+            if await existing.is_finished() and data.get('state') not in Operation.get_finished_states():
+                raise JsonHttpBadRequest('This operation has already finished.')
+            elif data.get('state') not in Operation.get_states():
+                raise JsonHttpBadRequest(body='state must be one of {}'.format(Operation.states.values()))

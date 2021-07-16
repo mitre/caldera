@@ -4,6 +4,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
+from app.api.v2.responses import JsonHttpForbidden
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 
@@ -79,3 +80,11 @@ class OperationApi(BaseObjectApi):
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
         return await self._api_manager.create_object_from_schema(self.schema, data, access)
+
+    async def create_or_update_object(self, request: web.Request):
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+
+        matched_obj = self._api_manager.find_object(self.ram_key, query)
+        if matched_obj and matched_obj.access not in access['access']:
+            raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
+        return await self._api_manager.create_object_from_schema(self.schema, data, access, matched_obj)
