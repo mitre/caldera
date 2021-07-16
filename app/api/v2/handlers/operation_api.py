@@ -72,3 +72,10 @@ class OperationApi(BaseObjectApi):
         access = await self.get_request_permissions(request)
         report = await self._api_manager.get_operation_report(operation_id, access)
         return web.json_response(report)
+
+    '''Helpers'''
+    async def create_object(self, request: web.Request):
+        data = await request.json()
+        await self._error_if_object_with_id_exists(data.get(self.id_property))
+        access = await self.get_request_permissions(request)
+        return await self._api_manager.create_object_from_schema(self.schema, data, access)
