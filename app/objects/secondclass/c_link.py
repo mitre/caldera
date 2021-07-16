@@ -62,22 +62,9 @@ class LinkSchema(ma.Schema):
             link['executor'] = executor.schema.dump(executor)
         return link
 
-    @ma.pre_load()
-    def remove_properties(self, data, **_):
-        data.pop('unique', None)
-        data.pop('decide', None)
-        data.pop('pid', None)
-        data.pop('facts', None)
-        data.pop('collect', None)
-        data.pop('finish', None)
-        data.pop('visibility', None)
-        data.pop('output', None)
-        data.pop('used.unique', None)
-        return data
-
     @ma.post_load()
-    def build_link(self, data, **kwargs):
-        return None if kwargs.get('partial') is True else Link(**data)
+    def build_link(self, data, **_):
+        return Link(**data)
 
     @ma.post_dump()
     def prepare_dump(self, data, **_):
@@ -153,7 +140,7 @@ class Link(BaseObject):
     def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
-        self.id = str(id) if id else str(uuid.uuid4())
+        self.id = str(id)
         self.command = command
         self.command_hash = None
         self.paw = paw

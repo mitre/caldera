@@ -35,7 +35,7 @@ class OperationSchema(ma.Schema):
     state = ma.fields.String()
     obfuscator = ma.fields.String()
     autonomous = ma.fields.Integer()
-    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain], allow_none=True)
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())

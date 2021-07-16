@@ -144,7 +144,7 @@ class BaseObjectApi(BaseApi):
 
     async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
         data = {}
-        if request.body_exists:
+        if request.has_body:
             data = await request.json()
 
         obj_id = request.match_info.get(self.id_property, '')
