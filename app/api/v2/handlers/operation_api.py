@@ -83,7 +83,6 @@ class OperationApi(BaseObjectApi):
 
     async def create_or_update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
-
         matched_obj = self._api_manager.find_object(self.ram_key, query)
         if matched_obj and matched_obj.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
