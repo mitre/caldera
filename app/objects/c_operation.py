@@ -26,7 +26,7 @@ NO_PREVIOUS_STATE = object()
 
 class OperationSchema(ma.Schema):
     id = ma.fields.String()
-    name = ma.fields.String()
+    name = ma.fields.String(required=True)
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
