@@ -15,7 +15,7 @@ class OperationApiManager(BaseApiManager):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
     async def get_operation_report(self, operation_id: str, access: dict):
-        operation = await self.get_operation(operation_id, access)
+        operation = await self.get_operation_object(operation_id, access)
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
         return report
 
@@ -86,11 +86,11 @@ class OperationApiManager(BaseApiManager):
         return output_links
 
     """Object Creation Helpers"""
-    async def get_operation(self, operation_id: str, access: dict):
+    async def get_operation_object(self, operation_id: str, access: dict):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
-        except Exception:
-            raise JsonHttpNotFound(f'Operation {operation_id} was not found.')
+        except IndexError:
+            raise JsonHttpNotFound(f'Operation not found: {operation_id}')
         if operation.match(access):
             return operation
         raise JsonHttpForbidden(f'Insufficient permissions to view operation {operation_id}')
