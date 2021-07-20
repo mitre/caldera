@@ -83,30 +83,46 @@ class TestAgent:
     def test_set_pending_executor_path_update(self):
         original_executors = ['cmd', 'test']
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=original_executors, platform='windows')
-        executor_change = dict(executor='test', action='update-path', value='new path')
+        executor_to_change = 'test'
+        new_path = 'new_path'
+        want = dict(action='update_path', executor=executor_to_change, value=new_path)
         assert agent.executor_change_to_assign is None
-        agent.executor_change_to_assign = executor_change
-        assert agent.executor_change_to_assign == executor_change
+        agent.set_pending_executor_path_update(executor_to_change, new_path)
+        assert agent.executor_change_to_assign == want
         assert agent.executors == original_executors
 
     def test_assign_executor_change(self):
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
-        executor_change = dict(executor='test', action='update-path', value='new path')
-        agent.executor_change_to_assign = executor_change
-        assert agent.assign_pending_executor_change() == executor_change
+        executor_to_change = 'test'
+        new_path = 'new_path'
+        want = dict(action='update_path', executor=executor_to_change, value=new_path)
+        agent.set_pending_executor_path_update(executor_to_change, new_path)
+        assert agent.assign_pending_executor_change() == want
         assert agent.executor_change_to_assign is None
 
     def test_set_pending_executor_removal(self):
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
-        executor_change = dict(executor='test', action='remove')
-        agent.executor_change_to_assign = executor_change
-        assert agent.executor_change_to_assign == executor_change
+        executor_to_remove = 'test'
+        want = dict(executor=executor_to_remove, action='remove')
+        agent.set_pending_executor_removal(executor_to_remove)
+        assert agent.executor_change_to_assign == want
         assert agent.executors == ['cmd']
+
+    def test_removing_nonexistent_executor(self):
+        original_executors = ['cmd', 'test']
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=original_executors, platform='windows')
+        agent.set_pending_executor_removal('idontexist')
+        assert agent.executor_change_to_assign is None
+        assert agent.executors == original_executors
+
+    def test_updating_nonexistent_executor(self):
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
+        agent.set_pending_executor_path_update('idontexist', 'fakepath')
+        assert agent.executor_change_to_assign is None
 
     def test_heartbeat_modification_during_pending_executor_removal(self, loop):
         original_executors = ['cmd', 'test']
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=original_executors, platform='windows')
-        executor_change = dict(executor='test', action='remove')
-        agent.executor_change_to_assign = executor_change
+        agent.set_pending_executor_removal('test')
         loop.run_until_complete(agent.heartbeat_modification(executors=original_executors))
         assert agent.executors == ['cmd']
