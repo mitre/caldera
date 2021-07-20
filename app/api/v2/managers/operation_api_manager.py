@@ -3,12 +3,11 @@ import asyncio
 from marshmallow.schema import SchemaMeta
 from typing import Any
 
-from app.utility.base_world import BaseWorld
-
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
 from app.objects.c_adversary import Adversary
 from app.objects.c_operation import Operation
+from app.utility.base_world import BaseWorld
 
 
 class OperationApiManager(BaseApiManager):
