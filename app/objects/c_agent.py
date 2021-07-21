@@ -108,7 +108,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.group = group
         self.architecture = architecture
         self.platform = platform.lower()
-        self.server = self.parse_server(server)
+        self.server = self.parse_endpoint(server)
         self.location = location
         self.pid = pid
         self.ppid = ppid
