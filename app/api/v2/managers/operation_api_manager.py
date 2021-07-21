@@ -1,15 +1,13 @@
-from marshmallow.schema import SchemaMeta
+import uuid
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
-from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden
+from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_executor import Executor
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.c_operation import Operation
 from app.utility.base_world import BaseWorld
-
-import uuid
 
 
 class OperationApiManager(BaseApiManager):
@@ -46,6 +44,7 @@ class OperationApiManager(BaseApiManager):
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
+        self.validate_link_data(data)
         operation = await self.get_operation_object(operation_id, access)
         link_id = data.get('id', str(uuid.uuid4()))
         if operation.has_link(link_id):
@@ -95,6 +94,16 @@ class OperationApiManager(BaseApiManager):
                 return link
         raise JsonHttpNotFound(f'Link {link_id} was not found in Operation {operation.id}')
 
+    def validate_link_data(self, link_data: dict):
+        if not link_data.get('executor'):
+            raise JsonHttpBadRequest("'executor' is a required field for link creation.")
+        if not link_data['executor'].get('name'):
+            raise JsonHttpBadRequest("'name' is a required field for link executor.")
+        if not link_data['executor'].get('command'):
+            raise JsonHttpBadRequest("'command' is a required field for link executor.")
+        if not link_data.get('paw'):
+            raise JsonHttpBadRequest("'paw' is a required field for link creation.")
+
     async def get_agent(self, access: dict, data: dict):
         agent_search = {'paw': data['paw'], **access}
         try:
@@ -102,12 +111,6 @@ class OperationApiManager(BaseApiManager):
         except IndexError:
             raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
-
-    def create_secondclass_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
-        obj_schema = schema()
-        obj = obj_schema.load(data)
-        obj.access = self._get_allowed_from_access(access)
-        return obj
 
     async def get_potential_abilities(self, operation: Operation):
         potential_abilities = []
