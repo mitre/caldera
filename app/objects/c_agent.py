@@ -185,7 +185,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
             self.last_trusted_seen = now
         self.update('pid', kwargs.get('pid'))
         self.update('ppid', kwargs.get('ppid'))
-        self.update('server', kwargs.get('server'))
+        new_server = kwargs.get('server')
+        self.update('server', self.parse_endpoint(new_server) if new_server else None)
         self.update('exe_name', kwargs.get('exe_name'))
         self.update('location', kwargs.get('location'))
         self.update('privilege', kwargs.get('privilege'))
