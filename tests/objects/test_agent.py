@@ -168,3 +168,18 @@ class TestAgent:
         want = 'mydomain.tld:7010'
         assert Agent.parse_endpoint(test) == want
         assert Agent.parse_endpoint(test_slash) == want
+
+    def test_heartbeat_modification_new_server(self, loop):
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows',
+                      server='unknown')
+        test = 'mydomain.tld:7010'
+        want = 'mydomain.tld:7010'
+        loop.run_until_complete(agent.heartbeat_modification(server=test))
+        assert agent.server == want
+
+    def test_heartbeat_modification_no_server_provided(self, loop):
+        want = 'mydomain.tld:7010'
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows',
+                      server=want)
+        loop.run_until_complete(agent.heartbeat_modification())
+        assert agent.server == want
