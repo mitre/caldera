@@ -108,8 +108,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.group = group
         self.architecture = architecture
         self.platform = platform.lower()
-        url = urlparse(server)
-        self.server = '%s://%s:%s' % (url.scheme, url.hostname, url.port)
+        self.server = self.parse_server(server)
         self.location = location
         self.pid = pid
         self.ppid = ppid
@@ -133,11 +132,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.available_contacts = available_contacts if available_contacts else [self.contact]
         self.pending_contact = contact
         self.host_ip_addrs = host_ip_addrs if host_ip_addrs else []
-        if upstream_dest:
-            upstream_url = urlparse(upstream_dest)
-            self.upstream_dest = '%s://%s:%s' % (upstream_url.scheme, upstream_url.hostname, upstream_url.port)
-        else:
-            self.upstream_dest = self.server
+        self.upstream_dest = self.parse_endpoint(upstream_dest) if upstream_dest else self.server
         self._executor_change_to_assign = None
         self.log = self.create_logger('agent')
 
@@ -326,6 +321,18 @@ class Agent(FirstClassObjectInterface, BaseObject):
         executor_change = self.executor_change_to_assign
         self._executor_change_to_assign = None
         return executor_change
+
+    @staticmethod
+    def parse_endpoint(server):
+        if re.search(r'^[^:/]+://[^:\s]+(:\d+)?/*$', server):
+            # E.g. http://127.0.0.1:8888
+            url = urlparse(server)
+            parsed = '%s://%s' % (url.scheme, url.hostname)
+            return parsed + ':%s' % url.port if url.port else parsed
+        elif re.search(r'^[^\s:]+:\d+/*$', server):
+            # E.g. 127.0.0.1:7010 or 127.0.0.1:7011/
+            return server.rstrip('/')
+        return 'unknown'
 
     """ PRIVATE """
 

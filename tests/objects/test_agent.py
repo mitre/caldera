@@ -126,3 +126,45 @@ class TestAgent:
         agent.set_pending_executor_removal('test')
         loop.run_until_complete(agent.heartbeat_modification(executors=original_executors))
         assert agent.executors == ['cmd']
+
+    def test_server_value_with_protocol_ip_port(self):
+        test = 'http://127.0.0.1:8888'
+        test_slash = 'http://127.0.0.1:8888/'
+        want = 'http://127.0.0.1:8888'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_with_protocol_ip_without_port(self):
+        test = 'http://127.0.0.1'
+        test_slash = 'http://127.0.0.1/'
+        want = 'http://127.0.0.1'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_with_protocol_domain_port(self):
+        test = 'http://mydomain.tld:8888'
+        test_slash = 'http://mydomain.tld:8888/'
+        want = 'http://mydomain.tld:8888'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_with_protocol_domain_without_port(self):
+        test = 'http://mydomain.tld'
+        test_slash = 'http://mydomain.tld/'
+        want = 'http://mydomain.tld'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_without_protocol_with_ip_port(self):
+        test = '127.0.0.1:7010'
+        test_slash = '127.0.0.1:7010/'
+        want = '127.0.0.1:7010'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_without_protocol_with_domain_port(self):
+        test = 'mydomain.tld:7010'
+        test_slash = 'mydomain.tld:7010/'
+        want = 'mydomain.tld:7010'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
