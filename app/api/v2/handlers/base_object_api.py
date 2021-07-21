@@ -1,4 +1,5 @@
 import abc
+import json
 
 from aiohttp import web
 
@@ -144,8 +145,9 @@ class BaseObjectApi(BaseApi):
 
     async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
         data = {}
-        if request.has_body:
-            data = await request.json()
+        raw_body = await request.read()
+        if raw_body:
+            data = json.loads(raw_body)
 
         obj_id = request.match_info.get(self.id_property, '')
         if obj_id:
