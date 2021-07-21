@@ -29,25 +29,18 @@ class OperationApiManager(BaseApiManager):
 
     async def get_operation_link(self, operation_id: str, link_id: str, access: dict):
         operation = await self.get_operation_object(operation_id, access)
-        for link in operation.chain:
-            if link.id == link_id:
-                return link.display
-        raise JsonHttpNotFound(f'Link {link_id} was not found in Operation {operation_id}')
+        link = self.search_operation_for_link(operation, link_id)
+        return link.display
 
     async def update_operation_link(self, operation_id: str, link_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation_object(operation_id, access)
-        link = None
-        for entry in operation.chain:
-            if entry.id == link_id:
-                link = entry
-                break
-        if not link:
-            raise JsonHttpNotFound(f'Link not found: {link_id}')
-        if link and link.access not in access['access']:
+        link = self.search_operation_for_link(operation, link_id)
+        if link.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
         if link.is_finished():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
-        link.status = link_data.get('status')
+        if link_data.get('status'):
+            link.status = link_data.get('status')
         if link_data.get('command'):
             link.command = link_data.get('command')
         return link.display
@@ -66,8 +59,8 @@ class OperationApiManager(BaseApiManager):
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), id=link_id, pin=data.get('pin', 0),
-                              host=agent.host, deadman=data.get('deadman', False), used=data.get('used', None),
-                              relationships=data.get('relationships', None)))
+                              host=agent.host, deadman=data.get('deadman', False), used=data.get('used', []),
+                              relationships=data.get('relationships', [])))
         link.replace_origin_link_id()
         await operation.apply(link)
         return link.display
@@ -76,6 +69,10 @@ class OperationApiManager(BaseApiManager):
         operation = await self.get_operation_object(operation_id, access)
         if operation.finish:
             return []
+        if paw:
+            agent = next((a for a in operation.agents if a.paw == paw), None)
+            if not agent:
+                raise JsonHttpNotFound(f'Agent not found: {paw}')
         agents = await self.services['data_svc'].locate('agents', match=dict(paw=paw)) if paw else operation.agents
         potential_abilities = await self.get_potential_abilities(operation)
         operation.potential_links = await self.find_potential_links(operation, agents, potential_abilities)
@@ -91,6 +88,12 @@ class OperationApiManager(BaseApiManager):
         if operation.match(access):
             return operation
         raise JsonHttpForbidden(f'Insufficient permissions to view operation {operation_id}')
+
+    def search_operation_for_link(self, operation: Operation, link_id: str):
+        for link in operation.chain:
+            if link.id == link_id:
+                return link
+        raise JsonHttpNotFound(f'Link {link_id} was not found in Operation {operation.id}')
 
     async def get_agent(self, access: dict, data: dict):
         agent_search = {'paw': data['paw'], **access}
@@ -129,7 +132,7 @@ class OperationApiManager(BaseApiManager):
                             build_target=data.get('build_target', None),
                             payloads=data.get('payloads', None),
                             uploads=data.get('uploads', None),
-                            timemout=data.get('timeout', None),
+                            timeout=data.get('timeout', 60),
                             parsers=data.get('parsers', None),
                             cleanup=data.get('cleanup', None),
                             variations=data.get('variations', None),
@@ -149,7 +152,7 @@ class OperationApiManager(BaseApiManager):
                           repeatable=data.get('repeatable', None),
                           buckets=data.get('buckets', None),
                           access=data.get('access', None),
-                          additional_info=data.get('additional_info', None),
+                          additional_info=data.get('additional_info', {}),
                           tags=data.get('tags', None),
                           singleton=())
         return ability
