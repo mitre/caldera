@@ -41,6 +41,8 @@ class OperationApiManager(BaseApiManager):
             link.status = link_data.get('status')
         if link_data.get('command'):
             link.command = link_data.get('command')
+            command_str = self._decode_string(link_data.get('command'))
+            link.executor.command = command_str
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
@@ -121,8 +123,8 @@ class OperationApiManager(BaseApiManager):
 
     async def find_potential_links(self, operation, agents, abilities):
         potential_links = []
-        for a in agents:
-            for pl in await self.services['planning_svc'].generate_and_trim_links(a, operation, abilities):
+        for agent in agents:
+            for pl in await self.services['planning_svc'].generate_and_trim_links(agent, operation, abilities):
                 potential_links.append(pl)
         return await self.services['planning_svc'].sort_links(potential_links)
 
