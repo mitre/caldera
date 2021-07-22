@@ -59,6 +59,7 @@ def setup_operations_api_test(loop, data_svc):
     "setup_operations_api_test"
 )
 class TestOperationsApi:
+    @pytest.mark.asyncio
     async def test_get_operations(self, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations', cookies=authorized_cookies)
         operations_list = await resp.json()
@@ -67,16 +68,19 @@ class TestOperationsApi:
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
+    @pytest.mark.asyncio
     async def test_get_operation_by_id(self, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         operation_dict = await resp.json()
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
+    @pytest.mark.asyncio
     async def test_unauthorized_get_operation_by_id(self, api_client):
         resp = await api_client.get('/api/v2/operations')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
+    @pytest.mark.asyncio
     async def test_delete_operation_by_id(self, data_svc, api_client, authorized_cookies):
         op_exists = await data_svc.locate('operations', {'id': '123'})
         assert op_exists
@@ -85,6 +89,7 @@ class TestOperationsApi:
         op_exists = await data_svc.locate('operations', {'id': '123'})
         assert not op_exists
 
+    @pytest.mark.asyncio
     async def test_get_operation_report(self, data_svc, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         report = await resp.json()
