@@ -60,7 +60,7 @@ class OperationApiManager(BaseApiManager):
         data['source'] = await self._construct_and_dump_source(fact_source_id)
         operation = OperationSchema().load(data)
         # Add Agents to Operation, set access, and update start time.
-        await operation.update_operation(self.services)
+        await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
         operation.set_operation_access(allowed)
         operation.set_start_details()

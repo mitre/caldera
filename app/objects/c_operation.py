@@ -422,7 +422,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         )
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
-    async def update_operation(self, services):
+    async def update_operation_agents(self, services):
         if self.group:
             self.agents = await services.get('data_svc').locate('agents', match=dict(group=self.group))
         else:
