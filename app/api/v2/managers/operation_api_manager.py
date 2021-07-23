@@ -59,7 +59,6 @@ class OperationApiManager(BaseApiManager):
         fact_source_id = data.pop('source', {}).get('id', '')
         data['source'] = await self._construct_and_dump_source(fact_source_id)
         operation = OperationSchema().load(data)
-        # Add Agents to Operation, set access, and update start time.
         await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
         operation.set_operation_access(allowed)
@@ -94,7 +93,6 @@ class OperationApiManager(BaseApiManager):
             elif data.get('state') not in Operation.get_states():
                 raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
         else:
-            # Ensure that we update the state of a preexisting operation appropriately.
             if await existing.is_finished() and data.get('state') not in Operation.get_finished_states():
                 raise JsonHttpBadRequest('This operation has already finished.')
             elif 'state' in data and data.get('state') not in Operation.get_states():
