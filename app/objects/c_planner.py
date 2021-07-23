@@ -33,7 +33,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash(self.name)
 
-    def __init__(self, name, planner_id='', module='', params=None, stopping_conditions=None, description=None,
+    def __init__(self, name='', planner_id='', module='', params=None, stopping_conditions=None, description=None,
                  ignore_enforcement_modules=(), allow_repeatable_abilities=False):
         super().__init__()
         self.name = name

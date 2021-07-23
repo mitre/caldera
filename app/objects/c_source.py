@@ -28,7 +28,7 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 class SourceSchema(ma.Schema):
 
     id = ma.fields.String()
-    name = ma.fields.String(required=True)
+    name = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema))
     rules = ma.fields.List(ma.fields.Nested(RuleSchema))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
@@ -81,7 +81,7 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, name, id='', facts=(), relationships=(), rules=(), adjustments=()):
+    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=()):
         super().__init__()
         self.id = id if id else str(uuid.uuid4())
         self.name = name

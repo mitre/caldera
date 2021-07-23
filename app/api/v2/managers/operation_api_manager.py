@@ -1,13 +1,14 @@
 import asyncio
-import copy
 
 from marshmallow.schema import SchemaMeta
 from typing import Any
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
-from app.objects.c_adversary import Adversary
-from app.objects.c_operation import Operation
+from app.objects.c_adversary import Adversary, AdversarySchema
+from app.objects.c_operation import Operation, OperationSchema
+from app.objects.c_planner import PlannerSchema
+from app.objects.c_source import SourceSchema
 from app.utility.base_world import BaseWorld
 
 
@@ -51,47 +52,40 @@ class OperationApiManager(BaseApiManager):
 
     async def setup_operation(self, data: dict, access: BaseWorld.Access):
         """Applies default settings to an operation if data is missing."""
-        planner_name = data.pop('planner', {}).get('name', '')
-        planner = await self._construct_planner(planner_name)
-        adversary_data = data.pop('adversary', {})
-        adversary_id = adversary_data.get('adversary_id', '')
-        adversary = await self._construct_adversary(adversary_id)
-        group_data = data.pop('host_group', '')
-        agents = await self._construct_agents(group_data)
-        sources = await self.services['data_svc'].locate('sources', match=dict(name='basic'))
+        planner_id = data.pop('planner', {}).get('id', '')
+        data['planner'] = await self._construct_and_dump_planner(planner_id)
+        adversary_id = data.pop('adversary', {}).get('adversary_id', '')
+        data['adversary'] = await self._construct_and_dump_adversary(adversary_id)
+        fact_source_id = data.pop('source', {}).get('id', '')
+        data['source'] = await self._construct_and_dump_source(fact_source_id)
+        operation = OperationSchema().load(data)
+        # Add Agents to Operation, set access, and update start time.
+        await operation.update_operation(self.services)
         allowed = self._get_allowed_from_access(access)
-        operation = Operation(name=data.pop('name'), id=data.pop('id', ''), planner=planner, agents=agents,
-                              adversary=adversary, jitter=data.pop('jitter', '2/8'), source=next(iter(sources), None),
-                              state=data.pop('state', 'running'), autonomous=int(data.pop('autonomous', 1)),
-                              access=allowed, obfuscator=data.pop('obfuscator', 'plain-text'),
-                              auto_close=bool(int(data.pop('auto_close', 0))),
-                              visibility=int(data.pop('visibility', '50')),
-                              use_learning_parsers=bool(int(data.pop('use_learning_parsers', 0))))
+        operation.set_operation_access(allowed)
         operation.set_start_details()
         return operation
 
-    async def _construct_planner(self, planner_name: str):
-        planner = (await self.services['data_svc'].locate('planners', match=dict(name=planner_name)))
+    async def _construct_and_dump_planner(self, planner_id: str):
+        planner = (await self.services['data_svc'].locate('planners', match=dict(id=planner_id)))
         if not planner:
-            planner = await self.services['data_svc'].locate('planners', match=dict(name='atomic'))
-        return planner[0]
+            planner = (await self.services['data_svc'].locate('planners', match=dict(name='atomic')))
+        return PlannerSchema().dump(planner[0])
 
-    async def _construct_adversary(self, adversary_id: str):
+    async def _construct_and_dump_adversary(self, adversary_id: str):
         adv = await self.services['data_svc'].locate('adversaries', match=dict(adversary_id=adversary_id))
-        if adv:
-            return copy.deepcopy(adv[0])
-        return Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile',
-                                   atomic_ordering=[]))
+        if not adv:
+            adv = Adversary.load(dict(adversary_id='ad-hoc', name='ad-hoc', description='an empty adversary profile',
+                                      atomic_ordering=[]))
+        else:
+            adv = adv[0]
+        return AdversarySchema().dump(adv)
 
-    async def _construct_agents(self, agents: list):
-        agent_list = []
-        if agents:
-            for agent in agents:
-                result = await self.services['data_svc'].locate('agents', match=dict(paw=agent.get('paw')))
-                if result:
-                    agent_list.append(copy.deepcopy(result[0]))
-            return agent_list
-        return await self.services['data_svc'].locate('agents')
+    async def _construct_and_dump_source(self, source_id: str):
+        source = await self.services['data_svc'].locate('sources', match=dict(id=source_id))
+        if not source:
+            source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
+        return SourceSchema().dump(source[0])
 
     async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:

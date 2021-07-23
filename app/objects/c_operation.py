@@ -13,6 +13,7 @@ import marshmallow as ma
 
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
+from app.objects.c_source import SourceSchema
 from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
 from app.objects.secondclass.c_fact import OriginType
@@ -20,6 +21,7 @@ from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
+from app.utility.base_world import BaseWorld
 
 NO_PREVIOUS_STATE = object()
 
@@ -27,7 +29,7 @@ NO_PREVIOUS_STATE = object()
 class OperationSchema(ma.Schema):
     id = ma.fields.String()
     name = ma.fields.String(required=True)
-    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
+    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents', dump_only=True)
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
     planner = ma.fields.Nested(PlannerSchema())
@@ -35,18 +37,13 @@ class OperationSchema(ma.Schema):
     state = ma.fields.String()
     obfuscator = ma.fields.String()
     autonomous = ma.fields.Integer()
-    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain], dump_only=True)
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
-    objective = ma.fields.Nested(ObjectiveSchema())
+    objective = ma.fields.Nested(ObjectiveSchema(), dump_only=True)
     use_learning_parsers = ma.fields.Boolean()
-
-    @ma.pre_load
-    def remove_properties(self, data, **_):
-        data.pop('chain', None)
-        data.pop('objective', None)
-        data.pop('start', None)
-        return data
+    group = ma.fields.String()
+    source = ma.fields.Nested(SourceSchema())
 
     @ma.post_load
     def build_operation(self, data, **kwargs):
@@ -143,6 +140,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def set_start_details(self):
         self.id = self.id if self.id else str(uuid.uuid4())
         self.start = datetime.now()
+
+    def set_operation_access(self, access: BaseWorld.Access):
+        self.access = access
 
     def add_link(self, link):
         self.chain.append(link)
@@ -415,7 +415,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
     async def update_operation(self, services):
-        self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
+        if self.group:
+            self.agents = await services.get('data_svc').locate('agents', match=dict(group=self.group))
+        else:
+            self.agents = await services.get('data_svc').locate('agents')
 
     async def _unfinished_links_for_agent(self, paw):
         return [link for link in self.chain if link.paw == paw and not link.finish and not link.can_ignore()]
