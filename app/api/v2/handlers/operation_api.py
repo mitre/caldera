@@ -40,21 +40,22 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operation)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.request_schema(OperationSchema(exclude=['host_group', 'start', 'chain', 'objective']))
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True,
+                                                    exclude=['host_group', 'start', 'chain', 'objective']))
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_or_update_operation(self, request: web.Request):
         operation = await self.create_or_update_object(request)
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']))
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)

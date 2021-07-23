@@ -29,21 +29,29 @@ NO_PREVIOUS_STATE = object()
 class OperationSchema(ma.Schema):
     id = ma.fields.String()
     name = ma.fields.String(required=True)
-    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents', dump_only=True)
+    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
     planner = ma.fields.Nested(PlannerSchema())
-    start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
     state = ma.fields.String()
     obfuscator = ma.fields.String()
     autonomous = ma.fields.Integer()
-    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain], dump_only=True)
+    chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
     visibility = ma.fields.Integer()
-    objective = ma.fields.Nested(ObjectiveSchema(), dump_only=True)
+    objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
     group = ma.fields.String()
     source = ma.fields.Nested(SourceSchema())
+
+    @ma.pre_load()
+    def remove_properties(self, data, **_):
+        data.pop('host_group', None)
+        data.pop('start', None)
+        data.pop('chain', None)
+        data.pop('objective', None)
+        return data
 
     @ma.post_load
     def build_operation(self, data, **kwargs):
