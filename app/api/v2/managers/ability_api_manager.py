@@ -26,7 +26,7 @@ class AbilityApiManager(BaseApiManager):
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
-        self._validate_ability_data(create=False, data=data)
+        self._validate_ability_data(create=True, data=data)
         return await super().replace_on_disk_object(obj, data, ram_key, id_property)
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
@@ -40,8 +40,6 @@ class AbilityApiManager(BaseApiManager):
 
     '''Helpers'''
     def _validate_ability_data(self, create: bool, data: dict):
-        # Prevent errors due to incorrect expected schema id property.
-        data.pop('id', None)
         # Correct ability_id key for ability file saving.
         data['id'] = data.pop('ability_id', '')
 
@@ -52,9 +50,8 @@ class AbilityApiManager(BaseApiManager):
                 data['id'] = str(uuid.uuid4())
             if 'tactic' not in data:
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
-            if not data['executors']:
+            if not data.get('executors'):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
-
         # Validate ID, used for file creation
         validator = re.compile(r'^[a-zA-Z0-9-_]+$')
         if 'id' in data and not validator.match(data['id']):
@@ -67,10 +64,6 @@ class AbilityApiManager(BaseApiManager):
                 raise JsonHttpBadRequest(f'Invalid ability tactic {data["tactic"]}. Tactics can only contain '
                                          'alphanumeric characters, hyphens, and underscores.')
             data['tactic'] = data['tactic'].lower()
-
-        # Validate platforms, ability will not be loaded if empty
-        if 'executors' in data and not data['executors']:
-            raise JsonHttpBadRequest('At least one executor is required to save ability.')
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),
