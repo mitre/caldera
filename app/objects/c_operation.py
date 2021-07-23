@@ -423,10 +423,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
     async def update_operation_agents(self, services):
-        if self.group:
-            self.agents = await services.get('data_svc').locate('agents', match=dict(group=self.group))
-        else:
-            self.agents = await services.get('data_svc').locate('agents')
+        self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):
         return [link for link in self.chain if link.paw == paw and not link.finish and not link.can_ignore()]
