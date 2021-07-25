@@ -103,7 +103,7 @@ class TestLink:
 
     def test_link_agent_reported_time_not_present_when_none_roundtrip(self, ability, executor):
         test_executor = executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123')
+        test_ability = ability(ability_id='123', tactic='test')
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
                          paw='123456', ability=test_ability, executor=test_executor, id=111111)
         serialized_link = test_link.display
@@ -114,7 +114,7 @@ class TestLink:
 
     def test_link_agent_reported_time_present_when_set_roundtrip(self, ability, executor):
         test_executor = executor(name='psh', platform='windows')
-        test_ability = ability(ability_id='123')
+        test_ability = ability(ability_id='123', tactic='test')
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
                          paw='123456', ability=test_ability, executor=test_executor, id=111111,
                          agent_reported_time=BaseService.get_timestamp_from_string('2021-02-23 11:50:16'))
