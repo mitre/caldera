@@ -17,7 +17,7 @@ class AbilitySchema(ma.Schema):
     tactic = ma.fields.String(required=True)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
-    name = ma.fields.String(required=True)
+    name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
     executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), required=True)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
@@ -25,7 +25,7 @@ class AbilitySchema(ma.Schema):
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema, dump_only=True)
+    access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
     @ma.pre_load
