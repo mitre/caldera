@@ -17,17 +17,20 @@ class AbilityApiManager(BaseApiManager):
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         self._validate_ability_data(create=True, data=data)
         obj_id = data.get('id')
-        tactic_dir = os.path.join('data', 'abilities', data.get('tactic'))
-        if not os.path.exists(tactic_dir):
-            os.makedirs(tactic_dir)
-        file_path = os.path.join(tactic_dir, '%s.yml' % obj_id)
+        file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         allowed = self._get_allowed_from_access(access)
         await self._save_and_reload_object(file_path, data, obj_class, allowed)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         self._validate_ability_data(create=True, data=data)
-        return await super().replace_on_disk_object(obj, data, ram_key, id_property)
+        obj_id = getattr(obj, id_property)
+        file_path = await self._get_existing_object_file_path(obj_id, ram_key)
+        if data.get('tactic') not in file_path:
+            await self.remove_object_from_disk_by_id(obj_id, ram_key)
+            file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
+        await self._save_and_reload_object(file_path, data, type(obj), obj.access)
+        return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
         self._validate_ability_data(create=False, data=data)
@@ -35,6 +38,9 @@ class AbilityApiManager(BaseApiManager):
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
         existing_obj_data = dict(self.strip_yml(file_path)[0][0])
         existing_obj_data.update(data)
+        if existing_obj_data.get('tactic') not in file_path:
+            await self.remove_object_from_disk_by_id(obj_id, ram_key)
+            file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
@@ -64,6 +70,15 @@ class AbilityApiManager(BaseApiManager):
                 raise JsonHttpBadRequest(f'Invalid ability tactic {data["tactic"]}. Tactics can only contain '
                                          'alphanumeric characters, hyphens, and underscores.')
             data['tactic'] = data['tactic'].lower()
+
+        if data.get('executor') and len(data.get('executor')) == 0:
+            raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
+
+    def _create_ability_filepath(self, tactic: str, obj_id: str):
+        tactic_dir = os.path.join('data', 'abilities', tactic)
+        if not os.path.exists(tactic_dir):
+            os.makedirs(tactic_dir)
+        return os.path.join(tactic_dir, '%s.yml' % obj_id)
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),

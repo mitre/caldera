@@ -168,8 +168,6 @@ class DataService(DataServiceInterface, BaseService):
                     executors = await self.load_executors_from_list(ab.pop('executors'))
                 else:
                     executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
-                if 'access' in ab:
-                    access = ab.get('access')
                 ab.pop('access', None)
 
                 if tactic and tactic not in filename:
