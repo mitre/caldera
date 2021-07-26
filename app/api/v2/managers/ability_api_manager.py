@@ -54,6 +54,8 @@ class AbilityApiManager(BaseApiManager):
             # Set ability ID if undefined
             if not data['id']:
                 data['id'] = str(uuid.uuid4())
+            if not data.get('name'):
+                raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing name')
             if 'tactic' not in data:
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
             if not data.get('executors'):
@@ -71,8 +73,11 @@ class AbilityApiManager(BaseApiManager):
                                          'alphanumeric characters, hyphens, and underscores.')
             data['tactic'] = data['tactic'].lower()
 
-        if data.get('executor') and len(data.get('executor')) == 0:
+        if 'executors' in data and not data.get('executors'):
             raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
+
+        if 'name' in data and not data.get('name'):
+            raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing name')
 
     def _create_ability_filepath(self, tactic: str, obj_id: str):
         tactic_dir = os.path.join('data', 'abilities', tactic)

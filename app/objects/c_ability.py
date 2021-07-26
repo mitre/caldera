@@ -17,7 +17,7 @@ class AbilitySchema(ma.Schema):
     tactic = ma.fields.String(required=True)
     technique_name = ma.fields.String(missing=None)
     technique_id = ma.fields.String(missing=None)
-    name = ma.fields.String(missing=None)
+    name = ma.fields.String(required=True)
     description = ma.fields.String(missing=None)
     executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), required=True)
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
@@ -25,7 +25,7 @@ class AbilitySchema(ma.Schema):
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
-    access = ma.fields.Nested(AccessSchema, missing=None)
+    access = ma.fields.Nested(AccessSchema, dump_only=True)
     singleton = ma.fields.Bool(missing=None)
 
     @ma.pre_load
@@ -117,9 +117,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def find_executors(self, names, platform):
         """Find executors for matching platform/executor names
+
         Only the first instance of a matching executor will be returned,
             as there should not be multiple executors matching a single
             platform/executor name pair.
+
         :param names: Executors to search. ex: ['psh', 'cmd']
         :type names: list(str)
         :param platform: Platform to search. ex: windows
@@ -142,6 +144,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def add_executor(self, executor):
         """Add executor to map
+
         If the executor exists, delete the current entry and add the
             new executor to the bottom for FIFO
         """
