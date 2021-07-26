@@ -99,6 +99,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('description', self.description)
         existing.update('_executor_map', self._executor_map)
         existing.update('privilege', self.privilege)
+        existing.update('repeatable', self.repeatable)
+        existing.update('buckets', self.buckets)
+        existing.update('tags', self.tags)
+        existing.update('singleton', self.singleton)
         return existing
 
     async def which_plugin(self):
