@@ -617,7 +617,7 @@ class RestService(RestServiceInterface, BaseService):
         Return ability (minus parsers) and parsers as seperate dict
         """
         parsers = {}
-        for platform, executors in ability['platforms'].items():
+        for platform, executors in ability.get('platforms', {}).items():
             parsers[platform] = {}
             for executor, d in executors.items():
                 if d.get('parsers', False):
@@ -630,7 +630,7 @@ class RestService(RestServiceInterface, BaseService):
         not an ability object but just the loaded dict from yaml
         ability file)
         """
-        for platform, executors in ability['platforms'].items():
+        for platform, executors in ability.get('platforms', {}).items():
             if parsers.get(platform, False):
                 for executor, _ in executors.items():
                     if parsers[platform].get(executor, False):
