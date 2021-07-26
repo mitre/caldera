@@ -72,21 +72,18 @@ class BaseKnowledgeService(BaseService):
     async def _get_fact_origin(self, fact):
         # Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
         # identify the host it was discovered on.
-        factOrigin = 'None'
-        try:
-            if fact.links:
-                factOrigin = str(fact.links[0].host)
-            else:
-                factOrigin = str(fact.source)
-        except AttributeError:
-            foundFacts = await self._get_facts(fact)
-            if foundFacts and len(foundFacts) >= 1:
-                if foundFacts[0].links:
-                    factOrigin = str(foundFacts[0].links[0].host)
-                else:
-                    factOrigin = str(foundFacts[0].source)
+        tempFact = fact
+        if getattr(fact, 'links', False) == False:
+            tempFact = await self._get_facts(fact)
+            if tempFact:
+                tempFact = tempFact[0]
 
-        return factOrigin
+        if tempFact.links:
+            return str(tempFact.links[0].host)
+        elif tempFact.source:
+            return str(tempFact.source)
+
+        return None
 
     # -- Relationships API --
 
