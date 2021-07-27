@@ -35,7 +35,7 @@ class OperationApiManager(BaseApiManager):
         link = self.search_operation_for_link(operation, link_id)
         if link.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
-        if link.is_finished():
+        if link.is_finished() or link.can_ignore():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
         if link_data.get('status'):
             link.status = link_data.get('status')
@@ -75,8 +75,8 @@ class OperationApiManager(BaseApiManager):
             if not agent:
                 raise JsonHttpNotFound(f'Agent not found: {paw}')
         agents = await self.services['data_svc'].locate('agents', match=dict(paw=paw)) if paw else operation.agents
-        potential_abilities = await self.get_potential_abilities(operation)
-        operation.potential_links = await self.find_potential_links(operation, agents, potential_abilities)
+        potential_abilities = await self.services['rest_svc'].build_potential_abilities(operation)
+        operation.potential_links = await self.services['rest_svc'].build_potential_links(operation, agents, potential_abilities)
         potential_links = [potential_link.display for potential_link in operation.potential_links]
         return potential_links
 
@@ -113,20 +113,6 @@ class OperationApiManager(BaseApiManager):
         except IndexError:
             raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
-
-    async def get_potential_abilities(self, operation: Operation):
-        potential_abilities = []
-        for a in await self.services['data_svc'].locate('abilities', match=dict(access=operation.access)):
-            if not operation.adversary.has_ability(a.ability_id):
-                potential_abilities.append(a)
-        return potential_abilities
-
-    async def find_potential_links(self, operation, agents, abilities):
-        potential_links = []
-        for agent in agents:
-            for pl in await self.services['planning_svc'].generate_and_trim_links(agent, operation, abilities):
-                potential_links.append(pl)
-        return await self.services['planning_svc'].sort_links(potential_links)
 
     def build_executor(self, data: dict, agent: Agent):
         executor = Executor(name=data['name'],
