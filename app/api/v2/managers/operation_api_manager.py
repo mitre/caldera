@@ -53,7 +53,7 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpForbidden(f'Operation {operation_id} already has link {link_id}')
         agent = await self.get_agent(access, data)
         if data['executor']['name'] not in agent.executors:
-            return dict(error='Agent missing specified executor')
+            raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
         encoded_command = self._encode_string(data['executor']['command'])
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
@@ -98,13 +98,13 @@ class OperationApiManager(BaseApiManager):
 
     def validate_link_data(self, link_data: dict):
         if not link_data.get('executor'):
-            raise JsonHttpBadRequest("'executor' is a required field for link creation.")
+            raise JsonHttpBadRequest('\'executor\' is a required field for link creation.')
         if not link_data['executor'].get('name'):
-            raise JsonHttpBadRequest("'name' is a required field for link executor.")
+            raise JsonHttpBadRequest('\'name\' is a required field for link executor.')
         if not link_data['executor'].get('command'):
-            raise JsonHttpBadRequest("'command' is a required field for link executor.")
+            raise JsonHttpBadRequest('\'command\' is a required field for link executor.')
         if not link_data.get('paw'):
-            raise JsonHttpBadRequest("'paw' is a required field for link creation.")
+            raise JsonHttpBadRequest('\'paw\' is a required field for link creation.')
 
     async def get_agent(self, access: dict, data: dict):
         agent_search = {'paw': data['paw'], **access}
