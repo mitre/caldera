@@ -4,8 +4,9 @@ from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_executor import Executor
-from app.objects.c_ability import Ability
+from app.objects.c_ability import AbilitySchema
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_executor import ExecutorSchema
 from app.objects.c_operation import Operation
 from app.utility.base_world import BaseWorld
 
@@ -59,10 +60,10 @@ class OperationApiManager(BaseApiManager):
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
-                              cleanup=data.get('cleanup', 0), id=link_id, pin=data.get('pin', 0),
+                              cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
                               host=agent.host, deadman=data.get('deadman', False), used=data.get('used', []),
                               relationships=data.get('relationships', [])))
-        link.replace_origin_link_id()
+        link.apply_id(agent.host)
         await operation.apply(link)
         return link.display
 
@@ -74,9 +75,12 @@ class OperationApiManager(BaseApiManager):
             agent = next((a for a in operation.agents if a.paw == paw), None)
             if not agent:
                 raise JsonHttpNotFound(f'Agent not found: {paw}')
-        agents = await self.services['data_svc'].locate('agents', match=dict(paw=paw)) if paw else operation.agents
+            agents = [agent]
+        else:
+            agents = operation.agents
         potential_abilities = await self.services['rest_svc'].build_potential_abilities(operation)
-        operation.potential_links = await self.services['rest_svc'].build_potential_links(operation, agents, potential_abilities)
+        operation.potential_links = await self.services['rest_svc'].build_potential_links(operation, agents,
+                                                                                          potential_abilities)
         potential_links = [potential_link.display for potential_link in operation.potential_links]
         return potential_links
 
@@ -115,35 +119,25 @@ class OperationApiManager(BaseApiManager):
         return agent
 
     def build_executor(self, data: dict, agent: Agent):
-        executor = Executor(name=data['name'],
-                            platform=agent.platform,
-                            command=data['command'],
-                            code=data.get('code', None),
-                            language=data.get('language', None),
-                            build_target=data.get('build_target', None),
-                            payloads=data.get('payloads', None),
-                            uploads=data.get('uploads', None),
-                            timeout=data.get('timeout', 60),
-                            parsers=data.get('parsers', None),
-                            cleanup=data.get('cleanup', None),
-                            variations=data.get('variations', None),
-                            additional_info=data.get('additional_info', None))
+        if not data.get('timeout'):
+            data['timeout'] = 60
+        data['platform'] = agent.platform
+        executor = ExecutorSchema().load(data)
         return executor
 
     def build_ability(self, data: dict, executor: Executor):
-        ability = Ability(ability_id=data.get('ability_id', str(uuid.uuid4())),
-                          tactic=data.get('tactic', 'auto-generated'),
-                          technique_id=data.get('technique_id', 'auto-generated'),
-                          technique_name=data.get('technique_name', 'auto-generated'),
-                          name=data.get('name', 'Manual Command'),
-                          description=data.get('description', 'Manual command ability'),
-                          executors=[executor],
-                          requirements=data.get('requirements', None),
-                          privilege=data.get('privilege', None),
-                          repeatable=data.get('repeatable', None),
-                          buckets=data.get('buckets', None),
-                          access=data.get('access', None),
-                          additional_info=data.get('additional_info', {}),
-                          tags=data.get('tags', None),
-                          singleton=())
+        if not data.get('ability_id'):
+            data['ability_id'] = str(uuid.uuid4())
+        if not data.get('tactic'):
+            data['tactic'] = 'auto-generated'
+        if not data.get('technique_id'):
+            data['technique_id'] = 'auto-generated'
+        if not data.get('technique_name'):
+            data['technique_name'] = 'auto-generated'
+        if not data.get('name'):
+            data['name'] = 'Manual Command'
+        if not data.get('description'):
+            data['description'] = 'Manual command ability'
+        data['executors'] = [ExecutorSchema().dump(executor)]
+        ability = AbilitySchema().load(data)
         return ability
