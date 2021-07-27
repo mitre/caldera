@@ -109,7 +109,7 @@ class BaseKnowledgeService(BaseService):
         matches = await self._get_relationships(criteria)
         for match in matches:
             for k, v in updates.items():
-                if getattr(match, k, "eMpTy") is not "eMpTy":
+                if getattr(match, k, "eMpTy") != "eMpTy":
                     if isinstance(getattr(match, k), Fact) and not isinstance(v, Fact):
                         handle = getattr(match, k)
                         for x in v.keys():
