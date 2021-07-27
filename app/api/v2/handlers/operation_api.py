@@ -4,7 +4,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
-from app.api.v2.responses import JsonHttpForbidden, JsonHttpNotFound
+from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 
@@ -20,7 +20,6 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations', self.get_operations)
         router.add_get('/operations/{id}', self.get_operation_by_id)
         router.add_post('/operations', self.create_operation)
-        router.add_put('/operations/{id}', self.create_or_update_operation)
         router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
         router.add_get('/operations/{id}/report', self.get_operation_report)
@@ -44,14 +43,6 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
-        return web.json_response(operation.display)
-
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True,
-                                                    exclude=['host_group', 'start', 'chain', 'objective']))
-    @aiohttp_apispec.response_schema(OperationSchema)
-    async def create_or_update_operation(self, request: web.Request):
-        operation = await self.create_or_update_object(request)
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
@@ -81,13 +72,6 @@ class OperationApi(BaseObjectApi):
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
         return await self._api_manager.create_object_from_schema(self.schema, data, access)
-
-    async def create_or_update_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
-        matched_obj = self._api_manager.find_object(self.ram_key, query)
-        if matched_obj and matched_obj.access not in access['access']:
-            raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
-        return await self._api_manager.create_object_from_schema(self.schema, data, access, matched_obj)
 
     async def update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
