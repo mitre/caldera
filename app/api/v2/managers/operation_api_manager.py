@@ -39,7 +39,10 @@ class OperationApiManager(BaseApiManager):
         if link.is_finished() or link.can_ignore():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
         if link_data.get('status'):
-            link.status = link_data.get('status')
+            link_status = link_data['status']
+            if not link.is_valid_status(link_status):
+                raise JsonHttpBadRequest(f'Cannot update link {link_id} due to invalid link status.')
+            link.status = link_status
         if link_data.get('command'):
             link.command = link_data.get('command')
             command_str = self._decode_string(link_data.get('command'))
@@ -49,9 +52,6 @@ class OperationApiManager(BaseApiManager):
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
         self.validate_link_data(data)
         operation = await self.get_operation_object(operation_id, access)
-        link_id = data.get('id', str(uuid.uuid4()))
-        if operation.has_link(link_id):
-            raise JsonHttpForbidden(f'Operation {operation_id} already has link {link_id}')
         agent = await self.get_agent(access, data)
         if data['executor']['name'] not in agent.executors:
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
@@ -72,10 +72,9 @@ class OperationApiManager(BaseApiManager):
         if operation.finish:
             return []
         if paw:
-            agent = next((a for a in operation.agents if a.paw == paw), None)
-            if not agent:
+            agents = [a for a in operation.agents if a.paw == paw]
+            if not agents:
                 raise JsonHttpNotFound(f'Agent not found: {paw}')
-            agents = [agent]
         else:
             agents = operation.agents
         potential_abilities = await self.services['rest_svc'].build_potential_abilities(operation)

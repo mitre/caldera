@@ -208,6 +208,9 @@ class Link(BaseObject):
         return self.status in [self.states['DISCARD'], self.states['SUCCESS'],
                                self.states['ERROR'], self.states['TIMEOUT']]
 
+    def is_valid_status(self, status):
+        return status in [val for key, val in self.states.items()]
+
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
