@@ -30,31 +30,6 @@ span.psw {
   padding-top: 16px;
 }
 
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 100; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  padding-top: 40px;
-  overflow-y: scroll;
-  height: 100%;
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
-}
-
-.modal-content {
-  margin: 5% auto 5% auto;
-  width: 85%;
-}
-
-.modal-box {
-  max-height: 80%;
-  overflow: auto;
-  overflow-y: auto;
-}
-
 .close {
   position: absolute;
   right: 25px;
