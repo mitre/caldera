@@ -153,7 +153,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def capabilities(self, abilities):
         """Get abilities that the agent is capable of running
-
         :param abilities: List of abilities to check agent capability
         :type abilities: List[Ability]
         :return: List of abilities the agents is capable of running
@@ -167,10 +166,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def get_preferred_executor(self, ability):
         """Get preferred executor for ability
-
         Will return None if the agent is not capable of running any
         executors in the given ability.
-
         :param ability: Ability to get preferred executor for
         :type ability: Ability
         :return: Preferred executor or None
@@ -293,7 +290,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def set_pending_executor_removal(self, executor_name):
         """Mark specified executor to remove.
-
         :param executor_name: name of executor for agent to remove
         :type executor_name: str
         """
@@ -308,7 +304,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def set_pending_executor_path_update(self, executor_name, new_binary_path):
         """Mark specified executor to update its binary path to the new path.
-
         :param executor_name: name of executor for agent to update binary path
         :type executor_name: str
         :param new_binary_path: new binary path for executor to reference
@@ -325,7 +320,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def assign_pending_executor_change(self):
         """Return the executor change dict and remove pending change to assign.
-
         :return: Dict representing the executor change that is assigned.
         :rtype: dict(str, str)
         """
