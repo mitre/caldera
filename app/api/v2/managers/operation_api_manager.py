@@ -66,7 +66,7 @@ class OperationApiManager(BaseApiManager):
         return operation
 
     async def _construct_and_dump_planner(self, planner_id: str):
-        planner = await self.services['data_svc'].locate('planners', match=dict(id=planner_id))
+        planner = await self.services['data_svc'].locate('planners', match=dict(planner_id=planner_id))
         if not planner:
             planner = await self.services['data_svc'].locate('planners', match=dict(name='atomic'))
         return PlannerSchema().dump(planner[0])
