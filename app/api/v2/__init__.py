@@ -45,4 +45,7 @@ def make_app(services):
     from .handlers.obfuscator_api import ObfuscatorApi
     ObfuscatorApi(services).add_routes(app)
 
+    from .handlers.fact_api import FactApi
+    FactApi(services).add_routes(app)
+
     return app
