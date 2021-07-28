@@ -117,45 +117,6 @@ class KnowledgeServiceInterface(abc.ABC):
         """
         pass
 
-    # --- New Inferencing API ---
-    @abc.abstractmethod
-    async def similar_facts(self, fact, agent, group):
-        """return facts that are close to supplied fact.
-
-
-        Ex:
-            - other facts for an agent with given trait/value
-            - other facts for the group/agent
-            - other facts with same value
-        """
-        pass
-
-    @abc.abstractmethod
-    async def fact_value_distribution(self, criteria, agent=None, group=None):
-        """return the value distribution for the given fact, and further filtered down
-        to agent/group if supplied
-
-
-        Ex: fact value distribution for 'host.user.name' on group 'workstations':
-            --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
-        """
-        pass
-
-    @abc.abstractmethod
-    async def best_guess(self, criteria, agent=None, group=None):
-        """wrapper around 'fact_value_distribution', just returning highest probable value"""
-        pass
-
-    @abc.abstractmethod
-    async def best_facts(self, agent=None, group=None, metric='usage_success'):
-        """best facts based on requested metric
-
-
-        Args:
-            metric: ['usage_success', 'most_recent_success', ...]
-        """
-        pass
-
     async def destroy(self):
         """Delete data stores"""
         pass
