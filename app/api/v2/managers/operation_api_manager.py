@@ -93,7 +93,7 @@ class OperationApiManager(BaseApiManager):
             elif data.get('state') not in Operation.get_states():
                 raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
         else:
-            if await existing.is_finished() and data.get('state') not in Operation.get_finished_states():
+            if await existing.is_finished():
                 raise JsonHttpBadRequest('This operation has already finished.')
             elif 'state' in data and data.get('state') not in Operation.get_states():
                 raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
