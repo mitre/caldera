@@ -95,8 +95,7 @@ class BaseApiManager(BaseWorld):
 
     def replace_object(self, obj: Any, data: dict):
         new_obj = obj.schema.load(data)
-        new_obj.store(self._data_svc.ram)
-        return new_obj
+        return new_obj.store(self._data_svc.ram)
 
     async def find_and_update_on_disk_object(self, data: dict, search: dict, ram_key: str, id_property: str, obj_class: type):
         for obj in self.find_objects(ram_key, search):
