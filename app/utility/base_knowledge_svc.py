@@ -185,43 +185,6 @@ class BaseKnowledgeService(BaseService):
         if len(criteria_matches) == len(desired_quals):
             return True
 
-    # --- New Inferencing API ---
-    # NOT IMPLEMENTED YET
-    async def _similar_facts(self, fact, agent, group):
-        ###
-        # return facts that are close to supplied fact.
-        #
-        #
-        # Ex:
-        #    - other facts for an agent with given trait/value
-        #    - other facts for the group/agent
-        #    - other facts with same value
-        ###
-        raise NotImplementedError
-
-    async def _fact_value_distribution(self, critera, agent=None, group=None):
-        ###
-        # return the value distribution for the given fact, and further filtered down to agent/group if supplied
-        #
-        #
-        # Ex: fact value distribution for 'host.user.name' on group 'workstations':
-        #     --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
-        ###
-        raise NotImplementedError
-
-    async def _best_guess(self, criteria, agent=None, group=None):
-        # wrapper around 'fact_value_distribution', just returning highest probable value
-        raise NotImplementedError
-
-    async def _best_facts(self, agent=None, group=None, metric='usage_success'):
-        ###
-        # best facts based on requested metric
-        #
-        # Args:
-        #    metric: ['usage_success', 'most_recent_success', ...]
-        ###
-        raise NotImplementedError
-
     async def _locate(self, object_name, query=None):
         """
         Locate a matching object in the internal store
