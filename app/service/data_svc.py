@@ -15,7 +15,7 @@ from app.objects.c_objective import Objective
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
 from app.objects.c_source import Source
-from app.objects.secondclass.c_executor import Executor
+from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
 from app.objects.secondclass.c_requirement import Requirement
@@ -165,7 +165,7 @@ class DataService(DataServiceInterface, BaseService):
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 if 'executors' in ab:
-                    executors = await self.load_executors_from_list(ab.pop('executors'))
+                    executors = await self.load_executors_from_list(ab.pop('executors', []))
                 else:
                     executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
                 ab.pop('access', None)
@@ -214,26 +214,7 @@ class DataService(DataServiceInterface, BaseService):
         return executors
 
     async def load_executors_from_list(self, executors: list):
-        output_list = []
-        for entry in executors:
-            name = entry.pop('name', None)
-            platform = entry.pop('platform', None)
-            command = entry.pop('command', None)
-            code = entry.pop('code', None)
-            language = entry.pop('language', None)
-            build_target = entry.pop('build_target', None)
-            payloads = entry.pop('payloads', None)
-            uploads = entry.pop('uploads', None)
-            timeout = entry.pop('timeout', None)
-            parsers = entry.pop('parsers', None)
-            cleanup = entry.pop('cleanup', None)
-            variations = entry.pop('variations', None)
-            additional_info = entry.pop('additional_info', None)
-            output_list.append(Executor(name=name, platform=platform, command=command, code=code, language=language,
-                                        build_target=build_target, payloads=payloads, uploads=uploads, timeout=timeout,
-                                        parsers=parsers, cleanup=cleanup, variations=variations,
-                                        additional_info=additional_info))
-        return output_list
+        return [ExecutorSchema().load(entry) for entry in executors]
 
     async def load_adversary_file(self, filename, access):
         warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
