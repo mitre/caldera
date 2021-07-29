@@ -209,7 +209,7 @@ class Link(BaseObject):
                                self.states['ERROR'], self.states['TIMEOUT']]
 
     def is_valid_status(self, status):
-        return status in [val for key, val in self.states.items()]
+        return status in self.states.values()
 
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)

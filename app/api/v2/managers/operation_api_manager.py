@@ -52,7 +52,7 @@ class OperationApiManager(BaseApiManager):
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
         self.validate_link_data(data)
         operation = await self.get_operation_object(operation_id, access)
-        agent = await self.get_agent(access, data)
+        agent = await self.get_agent(operation, data)
         if data['executor']['name'] not in agent.executors:
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
         encoded_command = self._encode_string(data['executor']['command'])
@@ -109,10 +109,10 @@ class OperationApiManager(BaseApiManager):
         if not link_data.get('paw'):
             raise JsonHttpBadRequest('\'paw\' is a required field for link creation.')
 
-    async def get_agent(self, access: dict, data: dict):
-        agent_search = {'paw': data['paw'], **access}
+    async def get_agent(self, operation: Operation, data: dict):
+        paw = data['paw']
         try:
-            agent = (await self._data_svc.locate('agents', match=agent_search))[0]
+            agent = [a for a in operation.agents if a.paw == paw][0]
         except IndexError:
             raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
