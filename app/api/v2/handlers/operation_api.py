@@ -75,7 +75,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(LinkSchema(partial=True, only=['status', 'command']))
+    @aiohttp_apispec.request_schema(LinkSchema(partial=True))
     @aiohttp_apispec.response_schema(LinkSchema)
     async def update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
@@ -86,7 +86,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(LinkSchema(exclude=['id']))
+    @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
