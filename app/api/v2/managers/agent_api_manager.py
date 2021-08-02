@@ -14,7 +14,7 @@ class AgentApiManager(BaseApiManager):
                 variations = [{'description': v.description, 'command': v.raw_command} for v in executor.variations]
                 raw_abilities.append({'platform': executor.platform, 'executor': executor.name,
                                       'description': ability.description, 'command': executor.command,
-                                      'variations': variations})
+                                      'variations': variations, 'name': ability.name})
 
         app_config = {k: v for k, v in self.get_config().items() if k.startswith('app.')}
         app_config.update({f'agents.{k}': v for k, v in self.get_config(name='agents').items()})
