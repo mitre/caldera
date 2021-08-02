@@ -4,6 +4,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
+from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 
@@ -19,7 +20,6 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations', self.get_operations)
         router.add_get('/operations/{id}', self.get_operation_by_id)
         router.add_post('/operations', self.create_operation)
-        router.add_put('/operations/{id}', self.create_or_update_operation)
         router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
         router.add_get('/operations/{id}/report', self.get_operation_report)
@@ -47,13 +47,6 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.request_schema(OperationSchema(partial=True))
-    @aiohttp_apispec.response_schema(OperationSchema)
-    async def create_or_update_operation(self, request: web.Request):
-        operation = await self.create_or_update_object(request)
-        return web.json_response(operation.display)
-
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
@@ -73,9 +66,16 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_report(operation_id, access)
         return web.json_response(report)
 
-    '''Helpers'''
+    '''Overridden Methods'''
     async def create_object(self, request: web.Request):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
         return await self._api_manager.create_object_from_schema(self.schema, data, access)
+
+    async def update_object(self, request: web.Request):
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        obj = await self._api_manager.find_and_update_object(self.ram_key, data, search)
+        if not obj:
+            raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
+        return obj

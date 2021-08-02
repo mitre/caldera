@@ -137,7 +137,7 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
+    def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
                  host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
