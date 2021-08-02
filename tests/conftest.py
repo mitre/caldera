@@ -257,13 +257,15 @@ def agent_profile():
 
 
 @pytest.fixture
-def api_client(loop, aiohttp_client, data_svc):
+def api_client(loop, aiohttp_client):
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
             BaseWorld.apply_config('main', yaml.safe_load(fle))
         with open(Path(__file__).parents[1] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
 
+        _ = DataService()
+        _ = RestService()
         _ = PlanningService()
         _ = LearningService()
         auth_svc = AuthService()

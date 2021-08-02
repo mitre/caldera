@@ -5,10 +5,11 @@ from app.objects.c_operation import Operation
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
 from app.objects.c_source import Source
+from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def setup_operations_api_test(loop, data_svc):
+def setup_operations_api_test(loop, api_client):
     expected_adversary = {'description': 'an empty adversary profile', 'name': 'ad-hoc',
                           'adversary_id': 'ad-hoc', 'atomic_ordering': [],
                           'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
@@ -42,24 +43,23 @@ def setup_operations_api_test(loop, data_svc):
     test_adversary = Adversary(name=expected_adversary['name'], adversary_id=expected_adversary['adversary_id'],
                                description=expected_adversary['description'], objective=expected_adversary['objective'],
                                tags=expected_adversary['tags'])
-    loop.run_until_complete(data_svc.store(test_adversary))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
 
     test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
-    loop.run_until_complete(data_svc.store(test_agent))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
 
     test_source = Source(id='123', name='test', facts=[], adjustments=[])
-    loop.run_until_complete(data_svc.store(test_source))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
 
     test_operation = Operation(name=expected_operation['name'], adversary=test_adversary, agents=[test_agent], id='123',
                                source=test_source, state=expected_operation['state'])
-    loop.run_until_complete(data_svc.store(test_operation))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
 
 
 @pytest.mark.usefixtures(
     "setup_operations_api_test"
 )
 class TestOperationsApi:
-    @pytest.mark.asyncio
     async def test_get_operations(self, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations', cookies=authorized_cookies)
         operations_list = await resp.json()
@@ -68,29 +68,25 @@ class TestOperationsApi:
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    @pytest.mark.asyncio
     async def test_get_operation_by_id(self, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         operation_dict = await resp.json()
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    @pytest.mark.asyncio
     async def test_unauthorized_get_operation_by_id(self, api_client):
         resp = await api_client.get('/api/v2/operations')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    @pytest.mark.asyncio
-    async def test_delete_operation_by_id(self, data_svc, api_client, authorized_cookies):
-        op_exists = await data_svc.locate('operations', {'id': '123'})
+    async def test_delete_operation_by_id(self, api_client, authorized_cookies):
+        op_exists = await BaseService.get_service('data_svc').locate('operations', {'id': '123'})
         assert op_exists
         resp = await api_client.delete('/api/v2/operations/123', cookies=authorized_cookies)
         assert resp.status == HTTPStatus.NO_CONTENT
-        op_exists = await data_svc.locate('operations', {'id': '123'})
+        op_exists = await BaseService.get_service('data_svc').locate('operations', {'id': '123'})
         assert not op_exists
 
-    @pytest.mark.asyncio
-    async def test_get_operation_report(self, data_svc, api_client, authorized_cookies):
+    async def test_get_operation_report(self, api_client, authorized_cookies):
         resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
         report = await resp.json()
         assert report['name'] == 'My Test Operation'
