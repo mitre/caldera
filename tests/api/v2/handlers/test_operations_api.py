@@ -1,49 +1,34 @@
 import pytest
+
 from http import HTTPStatus
 
-from app.objects.c_operation import Operation
-from app.objects.c_adversary import Adversary
+from app.objects.c_operation import OperationSchema
+from app.objects.c_adversary import Adversary, AdversarySchema
 from app.objects.c_agent import Agent
-from app.objects.c_source import Source
+from app.objects.c_planner import Planner, PlannerSchema
+from app.objects.c_source import Source, SourceSchema
 from app.utility.base_service import BaseService
 
 
 @pytest.fixture
 def setup_operations_api_test(loop, api_client):
-    expected_adversary = {'description': 'an empty adversary profile', 'name': 'ad-hoc',
-                          'adversary_id': 'ad-hoc', 'atomic_ordering': [],
+    expected_adversary = {'name': 'ad-hoc', 'description': 'an empty adversary profile',
+                          'adversary_id': 'ad-hoc',
                           'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
                           'tags': [], 'has_repeatable_abilities': False}
-    expected_operation = {'name': 'My Test Operation',
-                          'adversary': expected_adversary,
-                          'state': 'finished',
-                          'planner': {'name': 'test', 'description': None, 'module': 'test',
-                                      'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
-                                      'ignore_enforcement_modules': [], 'id': '123'}, 'jitter': '2/8',
-                          'host_group': [{'trusted': True, 'architecture': 'unknown', 'watchdog': 0,
-                                          'contact': 'unknown', 'username': 'unknown', 'links': [], 'sleep_max': 8,
-                                          'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
-                                          'sleep_min': 2, 'server': '://None:None', 'platform': 'windows',
-                                          'host': 'unknown', 'paw': '123', 'pid': 0,
-                                          'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown',
-                                          'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
-                                          'origin_link_id': 0, 'deadman_enabled': False,
-                                          'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                                          'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
-                          'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
-                          'obfuscator': 'plain-text', 'use_learning_parsers': False,
-                          'objective': {'goals': [{'value': 'complete',
-                                                   'operator': '==',
-                                                   'target': 'exhaustion',
-                                                   'achieved': False,
-                                                   'count': 1048576}],
-                                        'percentage': 0.0, 'description': '',
-                                        'id': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
-                                        'name': 'default'}}
+    expected_planner = {'name': 'test', 'description': 'test planner', 'module': 'test',
+                        'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
+                        'ignore_enforcement_modules': [], 'id': '123'}
     test_adversary = Adversary(name=expected_adversary['name'], adversary_id=expected_adversary['adversary_id'],
                                description=expected_adversary['description'], objective=expected_adversary['objective'],
                                tags=expected_adversary['tags'])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
+
+    test_planner = Planner(name=expected_planner['name'], planner_id=expected_planner['id'],
+                           description=expected_planner['description'], module=expected_planner['module'],
+                           params=expected_planner['params'],
+                           stopping_conditions=expected_planner['stopping_conditions'])
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_planner))
 
     test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
@@ -51,8 +36,23 @@ def setup_operations_api_test(loop, api_client):
     test_source = Source(id='123', name='test', facts=[], adjustments=[])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
 
-    test_operation = Operation(name=expected_operation['name'], adversary=test_adversary, agents=[test_agent], id='123',
-                               source=test_source, state=expected_operation['state'])
+    expected_operation = {'name': 'My Test Operation',
+                          'adversary': AdversarySchema().dump(test_adversary),
+                          'state': 'paused',
+                          'id': '123',
+                          'group': 'red',
+                          'host_group': [],
+                          'autonomous': 0,
+                          'start': '2021-08-02 14:31:33',
+                          'planner': PlannerSchema().dump(test_planner),
+                          'source': SourceSchema().dump(test_source),
+                          'jitter': '2/8',
+                          'visibility': 50,
+                          'auto_close': False,
+                          'obfuscator': 'plain-text',
+                          'use_learning_parsers': False}
+
+    test_operation = OperationSchema().load(expected_operation)
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
 
 
@@ -60,34 +60,52 @@ def setup_operations_api_test(loop, api_client):
     "setup_operations_api_test"
 )
 class TestOperationsApi:
-    async def test_get_operations(self, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations', cookies=authorized_cookies)
+    async def test_get_operations(self, api_client, api_cookies):
+        resp = await api_client.get('/api/v2/operations', cookies=api_cookies)
         operations_list = await resp.json()
         assert len(operations_list) == 1
         operation_dict = operations_list[0]
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    async def test_get_operation_by_id(self, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
+    async def test_get_operation_by_id(self, api_client, api_cookies):
+        resp = await api_client.get('/api/v2/operations/123', cookies=api_cookies)
         operation_dict = await resp.json()
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    async def test_unauthorized_get_operation_by_id(self, api_client):
+    async def test_unauthroized_get_operation_by_id(self, api_client):
         resp = await api_client.get('/api/v2/operations')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_delete_operation_by_id(self, api_client, authorized_cookies):
+    async def test_delete_operation_by_id(self, api_client, api_cookies):
         op_exists = await BaseService.get_service('data_svc').locate('operations', {'id': '123'})
         assert op_exists
-        resp = await api_client.delete('/api/v2/operations/123', cookies=authorized_cookies)
+        resp = await api_client.delete('/api/v2/operations/123', cookies=api_cookies)
         assert resp.status == HTTPStatus.NO_CONTENT
         op_exists = await BaseService.get_service('data_svc').locate('operations', {'id': '123'})
         assert not op_exists
 
-    async def test_get_operation_report(self, api_client, authorized_cookies):
-        resp = await api_client.get('/api/v2/operations/123', cookies=authorized_cookies)
+    async def test_get_operation_report(self, api_client, api_cookies):
+        resp = await api_client.get('/api/v2/operations/123', cookies=api_cookies)
         report = await resp.json()
         assert report['name'] == 'My Test Operation'
         assert report['state'] == 'finished'
+
+    async def test_create_operation(self, api_client, api_cookies):
+        payload = dict(name='post_test', planner={'id': '123'},
+                       adversary={'adversary_id': '123'}, source={'id': '123'})
+        resp = await api_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.OK
+        op_data = await resp.json()
+        assert op_data.get('name') == "post_test"
+        op_exists = await BaseService.get_service('data_svc').locate('operations', {'name': 'post_test'})
+        assert op_exists
+
+    async def test_update_operation(self, api_client, api_cookies):
+        payload = dict(state='running', obfuscator='base64')
+        resp = await api_client.patch('/api/v2/operations/123', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.OK
+        op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
+        assert op.state == payload['state']
+        assert op.obfuscator == payload['obfuscator']

@@ -258,12 +258,23 @@ def agent_profile():
 
 @pytest.fixture
 def api_client(loop, aiohttp_client):
+    def make_app(svcs):
+        app = web.Application(
+            middlewares=[
+                authentication_required_middleware_factory(svcs['auth_svc']),
+                json_request_validation_middleware
+            ]
+        )
+        OperationApi(svcs).add_routes(app)
+        return app
+
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
             BaseWorld.apply_config('main', yaml.safe_load(fle))
         with open(Path(__file__).parents[1] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
 
+        app_svc = AppService(web.Application(client_max_size=5120 ** 2))
         _ = DataService()
         _ = RestService()
         _ = PlanningService()
@@ -271,21 +282,17 @@ def api_client(loop, aiohttp_client):
         auth_svc = AuthService()
         _ = ContactService()
         _ = FileSvc()
-
-        def make_app(svcs):
-            app = web.Application(
-                middlewares=[
-                    authentication_required_middleware_factory(services['auth_svc']),
-                    json_request_validation_middleware
-                ]
-            )
-            OperationApi(svcs).add_routes(app)
-            return app
-
-        app_svc = AppService(web.Application())
+        _ = EventService()
         services = app_svc.get_services()
         os.chdir(str(Path(__file__).parents[1]))
-        app_svc.register_subapp('/api/v2', make_app(services))
+
+        await app_svc.register_contacts()
+        await app_svc.load_plugins(['sandcat', 'ssl'])
+        _ = await RestApi(services).enable()
+        await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
+        await auth_svc.set_login_handlers(services)
+
+        app_svc.register_subapp('/api/v2', make_app(svcs=services))
         aiohttp_apispec.setup_aiohttp_apispec(
             app=app_svc.application,
             title='CALDERA',
@@ -297,10 +304,6 @@ def api_client(loop, aiohttp_client):
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
 
-        await app_svc.register_contacts()
-        _ = await RestApi(services).enable()
-        await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
-        await auth_svc.set_login_handlers(services)
         return app_svc.application
 
     app = loop.run_until_complete(initialize())
@@ -308,7 +311,7 @@ def api_client(loop, aiohttp_client):
 
 
 @pytest.fixture
-def authorized_cookies(loop, api_client):
+def api_cookies(loop, api_client):
     async def get_cookie():
         r = await api_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
         return r.cookies
