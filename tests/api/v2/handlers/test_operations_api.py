@@ -2,11 +2,14 @@ import pytest
 
 from http import HTTPStatus
 
+from app.objects.c_ability import AbilitySchema
 from app.objects.c_operation import OperationSchema
 from app.objects.c_adversary import Adversary, AdversarySchema
 from app.objects.c_agent import Agent
 from app.objects.c_planner import Planner, PlannerSchema
 from app.objects.c_source import Source, SourceSchema
+from app.objects.secondclass.c_executor import ExecutorSchema
+from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
 
@@ -30,9 +33,6 @@ def setup_operations_api_test(loop, api_client):
                            stopping_conditions=expected_planner['stopping_conditions'])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_planner))
 
-    test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
-    loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
-
     test_source = Source(id='123', name='test', facts=[], adjustments=[])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
 
@@ -53,6 +53,23 @@ def setup_operations_api_test(loop, api_client):
                           'use_learning_parsers': False}
 
     test_operation = OperationSchema().load(expected_operation)
+
+    test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux')
+    test_operation.agents.append(test_agent)
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
+    test_executor = ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='linux',
+                                               command='d2hvYW1p'))
+    test_ability = AbilitySchema().load(dict(ability_id='123', tactic='discovery', technique_id='auto-generated',
+                                             technique_name='auto-generated', name='Manual Command',
+                                             description='test ability',
+                                             executors=[ExecutorSchema().dump(test_executor)]))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_ability))
+    test_link = Link.load(dict(command=test_executor.command, paw=test_agent.paw, ability=test_ability,
+                               executor=test_executor, status=test_operation.link_status(), score=0, jitter=0,
+                               cleanup=0, pin=0, host=test_agent.host, deadman=False, used=[], id='456',
+                               relationships=[]))
+    test_link.host = test_agent.host
+    test_operation.chain.append(test_link)
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
 
 
@@ -90,7 +107,7 @@ class TestOperationsApi:
         resp = await api_client.get('/api/v2/operations/123', cookies=api_cookies)
         report = await resp.json()
         assert report['name'] == 'My Test Operation'
-        assert report['state'] == 'finished'
+        assert report['state'] == 'paused'
 
     async def test_create_operation(self, api_client, api_cookies):
         payload = dict(name='post_test', planner={'id': '123'},
@@ -109,3 +126,36 @@ class TestOperationsApi:
         op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
         assert op.state == payload['state']
         assert op.obfuscator == payload['obfuscator']
+
+    async def test_get_links(self, api_client, api_cookies):
+        resp = await api_client.get('/api/v2/operations/123/links', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        links = await resp.json()
+        assert len(links) == 1
+
+    async def test_get_operation_link(self, api_client, api_cookies):
+        resp = await api_client.get('/api/v2/operations/123/links/456', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        link = await resp.json()
+        assert link
+        assert link['command'] == 'd2hvYW1p'
+
+    async def test_update_operation_link(self, api_client, api_cookies):
+        payload = dict(command='bHM=')
+        resp = await api_client.patch('/api/v2/operations/123/links/456', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.OK
+        op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
+        assert op.chain[0].command == payload['command']
+
+    async def test_get_potential_links(self, api_client, api_cookies):
+        # resp = await api_client.get('/api/v2/operations/123/potential-links', cookies=api_cookies)
+        pass
+
+    async def test_get_potential_link_by_paw(self, api_client, api_cookies):
+        # resp = await api_client.get('/api/v2/operations/123/potential-links/123', cookies=api_cookies)
+        pass
+
+    async def test_create_potential_link(self, api_client, api_cookies):
+        # payload = dict()
+        # resp = await api_client.patch('/api/v2/operations/123/potential-links', cookies=api_cookies, json=payload)
+        pass
