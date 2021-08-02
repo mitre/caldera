@@ -29,6 +29,10 @@ class OriginType(Enum):
     SEEDED = 1
     LEARNED = 2
     IMPORTED = 3
+    USER = 4
+
+
+WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
 
 
 class FactSchema(ma.Schema):
