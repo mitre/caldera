@@ -64,11 +64,8 @@ class Contact(BaseWorld):
         # Instantiate FTP server on local host and listen on 1026
         self.server = MyServer(u, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
                                self.pword, self.directory, self.home)
-        '''server = aioftp.Server(u, maximum_connections=256)
-        server.s'''
 
     async def ftp_server(self):
-        # await self.server.run(host=self.host, port=self.port)
         await self.server.start(host=self.host, port=self.port)
 
 
