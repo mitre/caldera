@@ -28,6 +28,17 @@ function apiRequest(requestType, data, endpoint  = '/api/rest') {
     });
 }
 
+function apiV2(requestType, endpoint, body = null) {
+    let requestBody = { method: requestType, headers: { 'Content-Type': 'application/json' } };
+    if (requestType !== 'GET') requestBody.body = JSON.stringify(body);
+
+    return new Promise((resolve, reject) => {
+        fetch(endpoint, requestBody).then((response) => {
+            response.ok ? resolve(response.json()) : reject(response.statusText);
+        });
+    });
+}
+
 function downloadReport(endpoint, filename, data = {}) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
