@@ -23,7 +23,7 @@ class AgentApi(BaseObjectApi):
         router.add_put('/agents/{paw}', self.create_or_update_agent)
         router.add_delete('/agents/{paw}', self.delete_agent)
 
-        router.add_get('/deploy_commands/{ability_id}', self.get_deploy_commands)
+        router.add_get('/deploy_commands', self.get_deploy_commands)
 
     @aiohttp_apispec.docs(tags=['agents'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -69,6 +69,5 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['agents'])
     @aiohttp_apispec.response_schema(DeployCommandsSchema)
     async def get_deploy_commands(self, request: web.Request):
-        ability_id = request.match_info.get('ability_id')
-        deploy_commands = await self._api_manager.get_deploy_commands(ability_id)
+        deploy_commands = await self._api_manager.get_deploy_commands()
         return web.json_response(deploy_commands)
