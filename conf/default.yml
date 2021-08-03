@@ -3,17 +3,24 @@ api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
 app.contact.dns.domain: mycaldera.caldera
 app.contact.dns.socket: 0.0.0.0:8853
+app.contact.ftp.host: 0.0.0.0
+app.contact.ftp.port: 2222
+app.contact.ftp.pword: caldera
+app.contact.ftp.server.dir: /tmp/caldera
+app.contact.ftp.user: caldera_user
+app.contact.ftp.user.dir: /tmp/caldera
 app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://0.0.0.0:8888
+app.contact.tcp: 0.0.0.0:7010
 app.contact.tunnel.ssh.host_key_file: REPLACE_WITH_KEY_FILE_PATH
 app.contact.tunnel.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
 app.contact.tunnel.ssh.socket: 0.0.0.0:8022
 app.contact.tunnel.ssh.user_name: sandcat
 app.contact.tunnel.ssh.user_password: s4ndc4t!
-app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
+auth.login.handler.module: default
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
@@ -32,7 +39,6 @@ plugins:
 - training
 port: 8888
 reports_dir: /tmp
-auth.login.handler.module: default
 requirements:
   go:
     command: go version

@@ -37,10 +37,10 @@ class Contact(BaseWorld):
             aioftp.User(
                 str(self.user),
                 str(self.pword),
-                home_path=str(self.directory),
+                home_path=self.directory,
                 permissions=(
                     aioftp.Permission("/", readable=False, writable=False),
-                    aioftp.Permission(str(self.directory), readable=True, writable=True),
+                    aioftp.Permission(self.directory, readable=True, writable=True),
                 ),
                 maximum_connections=256,
                 read_speed_limit=1024 * 1024,
@@ -64,9 +64,12 @@ class Contact(BaseWorld):
         # Instantiate FTP server on local host and listen on 1026
         self.server = MyServer(u, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
                                self.pword, self.directory, self.home)
+        '''server = aioftp.Server(u, maximum_connections=256)
+        server.s'''
 
     async def ftp_server(self):
-        await self.server.run(host=self.host, port=self.port)
+        # await self.server.run(host=self.host, port=self.port)
+        await self.server.start(host=self.host, port=self.port)
 
 
 class MyServer(aioftp.Server):
