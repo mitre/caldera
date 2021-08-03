@@ -240,6 +240,7 @@ class Link(BaseObject):
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
+            fact.source = source  # Manual addition to ensure the check works correctly
             if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
                              technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
@@ -250,7 +251,8 @@ class Link(BaseObject):
                 existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
                                                                                     value=fact.value,
                                                                                     source=fact.source)))[0]
-                existing_fact.links.append(self.id)
+                if self.id not in existing_fact.links:
+                    existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
                 await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
