@@ -23,3 +23,9 @@ svglib==1.0.1  # debrief
 Markdown==3.3.3  # training
 dnspython==2.1.0
 asyncssh==2.5.0
+
+multidict~=4.7.6
+aioftp~=0.18.1
+pytest~=6.2.4
+requests~=2.25.1
+urllib3~=1.26.5
