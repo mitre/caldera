@@ -63,6 +63,7 @@ def setup_operations_api_test(loop, api_client):
                                              technique_name='auto-generated', name='Manual Command',
                                              description='test ability',
                                              executors=[ExecutorSchema().dump(test_executor)]))
+    test_operation.adversary.atomic_ordering.append(test_ability)
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_ability))
     test_link = Link.load(dict(command=test_executor.command, paw=test_agent.paw, ability=test_ability,
                                executor=test_executor, status=test_operation.link_status(), score=0, jitter=0,
@@ -156,6 +157,6 @@ class TestOperationsApi:
         pass
 
     async def test_create_potential_link(self, api_client, api_cookies):
-        # payload = dict()
+        # payload = dict(executor={'name': 'linux'})
         # resp = await api_client.patch('/api/v2/operations/123/potential-links', cookies=api_cookies, json=payload)
         pass
