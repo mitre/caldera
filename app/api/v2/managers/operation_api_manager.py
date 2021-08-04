@@ -128,7 +128,7 @@ class OperationApiManager(BaseApiManager):
         operation = OperationSchema().load(data)
         await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
-        operation.set_operation_access(allowed)
+        operation.access = allowed
         operation.set_start_details()
         return operation
 
