@@ -204,8 +204,8 @@ class RestService(RestServiceInterface, BaseService):
         if operation.finish:
             return []
         agents = await self.get_service('data_svc').locate('agents', match=dict(paw=paw)) if paw else operation.agents
-        potential_abilities = await self._build_potential_abilities(operation)
-        operation.potential_links = await self._build_potential_links(operation, agents, potential_abilities)
+        potential_abilities = await self.build_potential_abilities(operation)
+        operation.potential_links = await self.build_potential_links(operation, agents, potential_abilities)
         return dict(links=[s_link.display for s_link in operation.potential_links])
 
     async def apply_potential_link(self, link):
@@ -327,6 +327,20 @@ class RestService(RestServiceInterface, BaseService):
                     files.pop(key, None)
         return files
 
+    async def build_potential_abilities(self, operation):
+        potential_abilities = []
+        for a in await self.get_service('data_svc').locate('abilities', match=dict(access=operation.access)):
+            if not operation.adversary.has_ability(a.ability_id):
+                potential_abilities.append(a)
+        return potential_abilities
+
+    async def build_potential_links(self, operation, agents, abilities):
+        potential_links = []
+        for a in agents:
+            for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
+                potential_links.append(pl)
+        return await self.get_service('planning_svc').sort_links(potential_links)
+
     """ PRIVATE """
 
     async def _build_operation_object(self, access, data):
@@ -374,20 +388,6 @@ class RestService(RestServiceInterface, BaseService):
         new_stopping_conditions = data.get('stopping_conditions')
         if new_stopping_conditions:
             return [{s.get('trait'): s.get('value')} for s in new_stopping_conditions]
-
-    async def _build_potential_abilities(self, operation):
-        potential_abilities = []
-        for a in await self.get_service('data_svc').locate('abilities', match=dict(access=operation.access)):
-            if not operation.adversary.has_ability(a.ability_id):
-                potential_abilities.append(a)
-        return potential_abilities
-
-    async def _build_potential_links(self, operation, agents, abilities):
-        potential_links = []
-        for a in agents:
-            for pl in await self.get_service('planning_svc').generate_and_trim_links(a, operation, abilities):
-                potential_links.append(pl)
-        return await self.get_service('planning_svc').sort_links(potential_links)
 
     async def _construct_adversary_for_op(self, adversary_id):
         adv = await self.get_service('data_svc').locate('adversaries', match=dict(adversary_id=adversary_id))
