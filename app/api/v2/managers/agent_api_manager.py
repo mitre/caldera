@@ -5,11 +5,13 @@ class AgentApiManager(BaseApiManager):
     def __init__(self, data_svc, file_svc):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
-    async def get_deploy_commands(self):
-        deployment_ability_ids = tuple(self.get_config(name='agents', prop='deployments'))
+    async def get_deploy_commands(self, ability_id: str = None):
         deployment_abilities = []
-        for id in deployment_ability_ids:
-            deployment_abilities.append((await self._data_svc.locate('abilities', {'ability_id': id}))[0])
+        if ability_id:
+            deployment_abilities.extend(await self._data_svc.locate('abilities', {'ability_id': ability_id}))
+        else:
+            for deployment_id in list(self.get_config(name='agents', prop='deployments')):
+                deployment_abilities.extend(await self._data_svc.locate('abilities', {'ability_id': deployment_id}))
 
         raw_abilities = []
         for ability in deployment_abilities:
