@@ -1,8 +1,10 @@
 import aiohttp_apispec
+
 from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
+from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_operation import Operation, OperationSchema
 from app.objects.secondclass.c_link import LinkSchema
@@ -18,6 +20,8 @@ class OperationApi(BaseObjectApi):
         router = app.router
         router.add_get('/operations', self.get_operations)
         router.add_get('/operations/{id}', self.get_operation_by_id)
+        router.add_post('/operations', self.create_operation)
+        router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
         router.add_get('/operations/{id}/report', self.get_operation_report)
         router.add_get('/operations/{id}/links', self.get_operation_links)
@@ -40,6 +44,20 @@ class OperationApi(BaseObjectApi):
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
         return web.json_response(operation)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema)
+    async def create_operation(self, request: web.Request):
+        operation = await self.create_object(request)
+        return web.json_response(operation.display)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    async def update_operation(self, request: web.Request):
+        operation = await self.update_object(request)
+        return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.response_schema(OperationSchema)
@@ -113,3 +131,17 @@ class OperationApi(BaseObjectApi):
         access = await self.get_request_permissions(request)
         potential_links = await self._api_manager.get_potential_links(operation_id, access, paw)
         return web.json_response(potential_links)
+
+    '''Overridden Methods'''
+    async def create_object(self, request: web.Request):
+        data = await request.json()
+        await self._error_if_object_with_id_exists(data.get(self.id_property))
+        access = await self.get_request_permissions(request)
+        return await self._api_manager.create_object_from_schema(self.schema, data, access)
+
+    async def update_object(self, request: web.Request):
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        obj = await self._api_manager.find_and_update_object(self.ram_key, data, search)
+        if not obj:
+            raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
+        return obj

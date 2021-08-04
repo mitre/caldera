@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import marshmallow as ma
 
@@ -19,8 +20,8 @@ class PlannerSchema(ma.Schema):
     allow_repeatable_abilities = ma.fields.Boolean()
 
     @ma.post_load()
-    def build_planner(self, data, **_):
-        return Planner(**data)
+    def build_planner(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Planner(**data)
 
 
 class Planner(FirstClassObjectInterface, BaseObject):
@@ -32,13 +33,13 @@ class Planner(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash(self.name)
 
-    def __init__(self, planner_id, name, module, params, stopping_conditions=None, description=None,
+    def __init__(self, name='', planner_id='', module='', params=None, stopping_conditions=None, description=None,
                  ignore_enforcement_modules=(), allow_repeatable_abilities=False):
         super().__init__()
-        self.planner_id = planner_id
         self.name = name
+        self.planner_id = planner_id if planner_id else str(uuid.uuid4())
         self.module = module
-        self.params = params
+        self.params = params if params else {}
         self.description = description
         self.stopping_conditions = self._set_stopping_conditions(stopping_conditions)
         self.ignore_enforcement_modules = ignore_enforcement_modules
