@@ -5,6 +5,7 @@ import yaml
 
 from marshmallow.schema import SchemaMeta
 from typing import Any, List
+from base64 import b64encode, b64decode
 
 from app.utility.base_world import BaseWorld
 
@@ -155,3 +156,11 @@ class BaseApiManager(BaseWorld):
     @staticmethod
     def _create_default_logger():
         return logging.getLogger(DEFAULT_LOGGER_NAME)
+
+    @staticmethod
+    def _encode_string(s):
+        return str(b64encode(s.encode()), 'utf-8')
+
+    @staticmethod
+    def _decode_string(s):
+        return str(b64decode(s), 'utf-8')
