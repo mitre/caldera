@@ -151,23 +151,14 @@ class DataService(DataServiceInterface, BaseService):
                 name = ab.pop('name', '')
                 description = ab.pop('description', '')
                 tactic = ab.pop('tactic', None)
-                if 'technique_id' in ab:
-                    technique_id = ab.pop('technique_id')
-                else:
-                    technique_id = ab.get('technique', dict()).get('attack_id')
-                if 'technique_name' in ab:
-                    technique_name = ab.pop('technique_name')
-                else:
-                    technique_name = ab.pop('technique', dict()).get('name')
+                executors = await self.convert_v0_ability_executor(ab)
+                technique_id = self.convert_v0_ability_technique_id(ab)
+                technique_name = self.convert_v0_ability_technique_name(ab)
                 privilege = ab.pop('privilege', None)
                 repeatable = ab.pop('repeatable', False)
                 singleton = ab.pop('singleton', False)
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
-                if 'executors' in ab:
-                    executors = await self.load_executors_from_list(ab.pop('executors', []))
-                else:
-                    executors = await self.load_executors_from_platform_dict(ab.pop('platforms', dict()))
                 ab.pop('access', None)
 
                 if tactic and tactic not in filename:
@@ -178,6 +169,24 @@ class DataService(DataServiceInterface, BaseService):
                                            executors=executors, requirements=requirements, privilege=privilege,
                                            repeatable=repeatable, buckets=buckets, access=access, singleton=singleton,
                                            **ab)
+
+    async def convert_v0_ability_executor(self, ability_data: dict):
+        """Checks if ability file follows v0 executor format, otherwise assumes v1 ability formatting."""
+        if 'platforms' in ability_data:
+            return await self.load_executors_from_platform_dict(ability_data.pop('platforms', dict()))
+        return await self.load_executors_from_list(ability_data.pop('executors', []))
+
+    def convert_v0_ability_technique_name(self, ability_data: dict):
+        """Checks if ability file follows v0 technique_name format, otherwise assumes v1 ability formatting."""
+        if 'technique' in ability_data:
+            return ability_data.pop('technique', dict()).get('name')
+        return ability_data.pop('technique_name')
+
+    def convert_v0_ability_technique_id(self, ability_data: dict):
+        """Checks if ability file follows v0 technique_id format, otherwise assumes v1 ability formatting."""
+        if 'technique' in ability_data:
+            return ability_data.get('technique', dict()).get('attack_id')
+        return ability_data.pop('technique_id')
 
     async def load_executors_from_platform_dict(self, platforms):
         executors = []
