@@ -7,6 +7,7 @@ from typing import Any
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpBadRequest
+from app.objects.c_ability import AbilitySchema
 from app.utility.base_world import BaseWorld
 
 
@@ -33,11 +34,11 @@ class AbilityApiManager(BaseApiManager):
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
-        self._validate_ability_data(create=False, data=data)
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
-        existing_obj_data = dict(self.strip_yml(file_path)[0][0])
+        existing_obj_data = AbilitySchema().dump(obj)
         existing_obj_data.update(data)
+        self._validate_ability_data(create=False, data=existing_obj_data)
         if existing_obj_data.get('tactic') not in file_path:
             await self.remove_object_from_disk_by_id(obj_id, ram_key)
             file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
