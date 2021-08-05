@@ -30,7 +30,11 @@ class Contact(BaseWorld):
                 for instruction in instructions:
                     try:
                         self.log.debug('TCP instruction: %s' % instruction.id)
-                        status, _, response, agent_reported_time = await self.tcp_handler.send(session.id, self.decode_bytes(instruction.command))
+                        status, _, response, agent_reported_time = await self.tcp_handler.send(
+                            session.id,
+                            self.decode_bytes(instruction.command),
+                            timeout=instruction.timeout
+                        )
                         beacon = dict(paw=session.paw,
                                       results=[dict(id=instruction.id, output=self.encode_string(response), status=status, agent_reported_time=agent_reported_time)])
                         await self.contact_svc.handle_heartbeat(**beacon)
@@ -73,18 +77,19 @@ class TcpSessionHandler(BaseWorld):
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
         new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
         self.sessions.append(new_session)
-        await self.send(new_session.id, agent.paw)
+        await self.send(new_session.id, agent.paw, timeout=5)
 
-    async def send(self, session_id, cmd):
+    async def send(self, session_id, cmd, timeout=60):
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
             conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(conn, 3)
+            response = await self._attempt_connection(session_id, conn, timeout=timeout)
             response = json.loads(response)
             return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', None)
         except Exception as e:
-            return 1, '~$ ', e
+            self.log.exception(e)
+            return 1, '~$ ', e, None
 
     """ PRIVATE """
 
@@ -93,11 +98,11 @@ class TcpSessionHandler(BaseWorld):
         profile_bites = (await reader.readline()).strip()
         return json.loads(profile_bites)
 
-    @staticmethod
-    async def _attempt_connection(connection, max_tries):
-        attempts = 0
+    async def _attempt_connection(self, session_id, connection, timeout=60):
         buffer = 4096
         data = b''
+        waited_seconds = 0
+        time.sleep(0.1)  # initial wait for fast operations.
         while True:
             try:
                 part = connection.recv(buffer)
@@ -105,8 +110,10 @@ class TcpSessionHandler(BaseWorld):
                 if len(part) < buffer:
                     break
             except BlockingIOError as err:
-                if attempts > max_tries:
+                if waited_seconds < timeout:
+                    time.sleep(1)
+                    waited_seconds += 1
+                else:
+                    self.log.error("Timeout reached for session %s", session_id)
                     return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
-                attempts += 1
-                time.sleep(.1 * attempts)
         return str(data, 'utf-8')
