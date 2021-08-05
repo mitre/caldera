@@ -33,9 +33,20 @@ function apiV2(requestType, endpoint, body = null) {
     if (requestType !== 'GET') requestBody.body = JSON.stringify(body);
 
     return new Promise((resolve, reject) => {
-        fetch(endpoint, requestBody).then((response) => {
-            response.ok ? resolve(response.json()) : reject(response.statusText);
-        });
+        fetch(endpoint, requestBody)
+            .then((response) => {
+                if (!response.ok) {
+                    reject(response.statusText);
+                }
+                return response.text();
+            })
+            .then((text) => {
+                try {
+                    resolve(JSON.parse(text));
+                } catch {
+                    resolve(text);
+                }
+            });
     });
 }
 

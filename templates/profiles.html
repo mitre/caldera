@@ -14,31 +14,21 @@
     <!-- ADVERSARY SELECTION -->
 
     <form>
-        <div class="field is-horizontal">
-            <div class="field-label is-normal">
-                <label class="label">Select a profile</label>
-            </div>
-            <div class="field-body">
-                <div class="field is-grouped">
-                    <label class="label"></label>
-                    <div class="control is-expanded">
-                        <div class="select">
-                            <select x-on:change="loadProfile()" x-model="selectedProfile">
-                                <option value="" default selected>Chose one...</option>
-                                {% for adv in adversaries %}
-                                <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
-                                <option disabled class="has-text-grey-lighter is-italic">&nbsp;&nbsp;&nbsp;{{ adv.description }}</option> 
-                                {% endfor %}}
-                            </select>
-                        </div>
-                    </div>
-                    <p class="control">
-                        <a class="button is-primary" @click="isCreatingProfile = true">
-                            <span class="icon"><i class="far fa-plus-square"></i></span>
-                            <span>Create a profile</span>
-                        </a>
-                    </p>
+        <div id="select-adversary" class="field has-addons">
+            <label class="label">Select a profile &nbsp;&nbsp;&nbsp;</label>
+            <div class="control is-expanded">
+                <div class="select is-small is-fullwidth">
+                    <select x-on:change="loadProfile()" x-model="selectedProfile">
+                        <option value="" default selected>Chose one...</option>
+                        {% for adv in adversaries %}
+                        <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
+                        <option disabled class="has-text-grey-lighter is-italic">&nbsp;&nbsp;&nbsp;{{ adv.description }}</option> 
+                        {% endfor %}}
+                    </select>
                 </div>
+            </div>
+            <div class="control">
+                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New</button>
             </div>
         </div>
     </form>
@@ -146,7 +136,7 @@
                 <span class="icon has-text-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                 </span>
-                <span>One or more of the abilities have unmet requirements, which may result in a failed operation.</span>
+                <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
             </div>
         </div>
     </template>
@@ -158,25 +148,25 @@
             <h3>Create a profile</h3>
             <form>
                 <div class="field">
-                    <label class="label">Profile Name</label>
+                    <label class="label is-small">Profile Name</label>
                     <div class="control">
-                        <input x-model="createProfileName" class="input" type="text" placeholder="Enter a name...">
+                        <input x-model="createProfileName" class="input is-small" type="text" placeholder="Enter a name...">
                     </div>
                     <p class="help is-danger has-text-weight-bold" x-show="createProfileNameError" x-text="createProfileNameError"></p>
                 </div>
                 <div class="field">
-                    <label class="label">Profile Description</label>
+                    <label class="label is-small">Profile Description</label>
                     <div class="control">
-                        <input x-model="createProfileDescription" class="input" type="text" placeholder="Enter a description...">
+                        <input x-model="createProfileDescription" class="input is-small" type="text" placeholder="Enter a description...">
                     </div>
                     <p class="help is-danger has-text-weight-bold" x-show="createProfileDescriptionError" x-text="createProfileDescriptionError"></p>
                 </div>
                 <div class="field is-grouped">
                     <div class="control">
-                        <a class="button is-primary" @click="createProfile()">Create</a>
+                        <a class="button is-primary is-small" @click="createProfile()">Create</a>
                     </div>
                     <div class="control">
-                        <a class="button is-light is-outlined" @click="cancelCreateProfile()">Cancel</a>
+                        <a class="button is-small" @click="cancelCreateProfile()">Cancel</a>
                     </div>
                 </div>
             </form>
@@ -1036,6 +1026,11 @@
 
     th {
         border: 0 !important;
+    }
+
+    #select-adversary {
+        max-width: 800px;
+        margin: 0 auto;
     }
 
     .code {

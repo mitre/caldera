@@ -6,6 +6,7 @@ body {
 
 #active-tab-display {
   color: white;
+  max-width: initial;
 }
 
 [data-tooltip]::before {
