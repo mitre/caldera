@@ -520,8 +520,8 @@
                     reqBody.sleep_min = 3;
                     reqBody.sleep_max = 3;
            
-                    apiV2('PUT', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
-                        this.agents.splice(this.agents.findIndex((agent) => agent.paw === paw), 1);
+                    apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
+                        this.agents.splice(this.agents.findIndex((a) => a.paw === agent.paw), 1);
                         toast('Agent will be kill after its next beacon.', true)
                     }).catch((error) => {
                         toast('Error killing the agent', false);
