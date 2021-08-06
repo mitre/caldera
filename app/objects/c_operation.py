@@ -21,7 +21,6 @@ from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
-from app.utility.base_world import BaseWorld
 
 NO_PREVIOUS_STATE = object()
 
@@ -71,20 +70,15 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     @property
     def states(self):
-        return dict(RUNNING='running',
-                    RUN_ONE_LINK='run_one_link',
-                    PAUSED='paused',
-                    OUT_OF_TIME='out_of_time',
-                    FINISHED='finished',
-                    CLEANUP='cleanup')
+        return {state.name: state.value for state in self.States}
 
-    @staticmethod
-    def get_states():
-        return ['running', 'run_one_link', 'paused', 'out_of_time', 'finished', 'cleanup']
+    @classmethod
+    def get_states(cls):
+        return [state.value for state in cls.States]
 
-    @staticmethod
-    def get_finished_states():
-        return ['out_of_time', 'finished', 'cleanup']
+    @classmethod
+    def get_finished_states(cls):
+        return [cls.States.OUT_OF_TIME.value, cls.States.FINISHED.value, cls.States.CLEANUP.value]
 
     @property
     def state(self):
@@ -148,9 +142,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def set_start_details(self):
         self.id = self.id if self.id else str(uuid.uuid4())
         self.start = datetime.now()
-
-    def set_operation_access(self, access: BaseWorld.Access):
-        self.access = access
 
     def add_link(self, link):
         self.chain.append(link)
@@ -520,3 +511,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         PRIVILEGE = 3
         OP_RUNNING = 4
         UNTRUSTED = 5
+
+    class States(Enum):
+        RUNNING = 'running'
+        RUN_ONE_LINK = 'run_one_link'
+        PAUSED = 'paused'
+        OUT_OF_TIME = 'out_of_time'
+        FINISHED = 'finished'
+        CLEANUP = 'cleanup'

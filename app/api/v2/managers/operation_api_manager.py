@@ -107,7 +107,7 @@ class OperationApiManager(BaseApiManager):
         potential_links = [potential_link.display for potential_link in operation.potential_links]
         return potential_links
 
-    """Operation Creation Helpers"""
+    """Object Creation Helpers"""
     async def get_operation_object(self, operation_id: str, access: dict):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
@@ -128,7 +128,7 @@ class OperationApiManager(BaseApiManager):
         operation = OperationSchema().load(data)
         await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
-        operation.set_operation_access(allowed)
+        operation.access = allowed
         operation.set_start_details()
         return operation
 
