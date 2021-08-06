@@ -1,3 +1,4 @@
+import asyncio
 import os.path
 
 import pytest
@@ -316,3 +317,12 @@ def api_cookies(loop, api_client):
         r = await api_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
         return r.cookies
     return loop.run_until_complete(get_cookie())
+
+
+@pytest.fixture
+def async_return():
+    def _async_return(return_param):
+        f = asyncio.Future()
+        f.set_result(return_param)
+        return f
+    return _async_return

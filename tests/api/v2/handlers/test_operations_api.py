@@ -9,6 +9,7 @@ from app.objects.c_agent import Agent
 from app.objects.c_planner import Planner, PlannerSchema
 from app.objects.c_source import Source, SourceSchema
 from app.objects.secondclass.c_executor import ExecutorSchema
+from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_link import Link
 from app.utility.base_service import BaseService
 
@@ -33,7 +34,8 @@ def setup_operations_api_test(loop, api_client):
                            stopping_conditions=expected_planner['stopping_conditions'])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_planner))
 
-    test_source = Source(id='123', name='test', facts=[], adjustments=[])
+    test_fact = Fact(trait='remote.host.fqdn', value='dc')
+    test_source = Source(id='123', name='test', facts=[test_fact], adjustments=[])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
 
     expected_operation = {'name': 'My Test Operation',
@@ -148,15 +150,43 @@ class TestOperationsApi:
         op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
         assert op.chain[0].command == payload['command']
 
-    async def test_get_potential_links(self, api_client, api_cookies):
-        # resp = await api_client.get('/api/v2/operations/123/potential-links', cookies=api_cookies)
-        pass
+    async def test_get_potential_links(self, api_client, api_cookies, mocker, async_return):
+        with mocker.patch('app.service.rest_svc.RestService.build_potential_abilities') as mock_build_abilities:
+            mock_build_abilities.return_value = async_return([])
+            with mocker.patch('app.service.rest_svc.RestService.build_potential_links') as mock_potential_links:
+                test_operation = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
+                mock_potential_links.return_value = async_return([test_operation.chain[0]])
+                resp = await api_client.get('/api/v2/operations/123/potential-links', cookies=api_cookies)
+                result = await resp.json()
+                assert len(result) == 1
+                assert result[0]['id'] == '456'
 
-    async def test_get_potential_link_by_paw(self, api_client, api_cookies):
-        # resp = await api_client.get('/api/v2/operations/123/potential-links/123', cookies=api_cookies)
-        pass
+    async def test_get_potential_link_by_paw(self, api_client, api_cookies, mocker, async_return):
+        with mocker.patch('app.service.rest_svc.RestService.build_potential_abilities') as mock_build_abilities:
+            mock_build_abilities.return_value = async_return([])
+            with mocker.patch('app.service.rest_svc.RestService.build_potential_links') as mock_potential_links:
+                test_operation = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
+                mock_potential_links.return_value = async_return([test_operation.chain[0]])
+                resp = await api_client.get('/api/v2/operations/123/potential-links/123', cookies=api_cookies)
+                result = await resp.json()
+                assert len(result) == 1
+                assert result[0]['id'] == '456'
 
-    async def test_create_potential_link(self, api_client, api_cookies):
-        # payload = dict(executor={'name': 'linux'})
-        # resp = await api_client.patch('/api/v2/operations/123/potential-links', cookies=api_cookies, json=payload)
-        pass
+    async def test_create_potential_link(self, api_client, api_cookies, mocker, async_return):
+        with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
+            mock_apply.return_value = async_return(None)
+            payload = {
+                "paw": "123",
+                "executor": {
+                    "platform": "linux",
+                    "name": "sh",
+                    "command": "ls -a"
+                },
+                "status": -1
+            }
+            resp = await api_client.post('/api/v2/operations/123/potential-links', cookies=api_cookies, json=payload)
+            result = await resp.json()
+            assert result['paw'] == payload['paw']
+            assert result['id']
+            assert result['ability']
+            assert result['executor']
