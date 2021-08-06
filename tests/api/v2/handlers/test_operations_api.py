@@ -94,7 +94,7 @@ class TestOperationsApi:
         assert operation_dict['name'] == 'My Test Operation'
         assert operation_dict['id'] == '123'
 
-    async def test_unauthroized_get_operation_by_id(self, api_client):
+    async def test_unauthorized_get_operation_by_id(self, api_client):
         resp = await api_client.get('/api/v2/operations')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
@@ -154,23 +154,23 @@ class TestOperationsApi:
         with mocker.patch('app.service.rest_svc.RestService.build_potential_abilities') as mock_build_abilities:
             mock_build_abilities.return_value = async_return([])
             with mocker.patch('app.service.rest_svc.RestService.build_potential_links') as mock_potential_links:
-                test_operation = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
-                mock_potential_links.return_value = async_return([test_operation.chain[0]])
+                test_link = Link(command='whoami', paw='123456', id='789')
+                mock_potential_links.return_value = async_return([test_link])
                 resp = await api_client.get('/api/v2/operations/123/potential-links', cookies=api_cookies)
                 result = await resp.json()
                 assert len(result) == 1
-                assert result[0]['id'] == '456'
+                assert result[0]['id'] == '789'
 
-    async def test_get_potential_link_by_paw(self, api_client, api_cookies, mocker, async_return):
+    async def test_get_potential_link_by_paw(self, api_client, api_cookies, mocker, async_return, ability, executor):
         with mocker.patch('app.service.rest_svc.RestService.build_potential_abilities') as mock_build_abilities:
             mock_build_abilities.return_value = async_return([])
             with mocker.patch('app.service.rest_svc.RestService.build_potential_links') as mock_potential_links:
-                test_operation = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
-                mock_potential_links.return_value = async_return([test_operation.chain[0]])
+                test_link = Link(command='whoami', paw='123456', id='789')
+                mock_potential_links.return_value = async_return([test_link])
                 resp = await api_client.get('/api/v2/operations/123/potential-links/123', cookies=api_cookies)
                 result = await resp.json()
                 assert len(result) == 1
-                assert result[0]['id'] == '456'
+                assert result[0]['id'] == '789'
 
     async def test_create_potential_link(self, api_client, api_cookies, mocker, async_return):
         with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
