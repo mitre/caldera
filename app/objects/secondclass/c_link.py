@@ -42,7 +42,7 @@ class LinkSchema(ma.Schema):
     ability = ma.fields.Nested(AbilitySchema())
     executor = ma.fields.Nested(ExecutorSchema())
     cleanup = ma.fields.Integer(missing=0)
-    visibility = ma.fields.Nested(VisibilitySchema)
+    visibility = ma.fields.Nested(VisibilitySchema())
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
@@ -150,10 +150,10 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command, paw, ability, executor, status=-3, score=0, jitter=0, cleanup=0, id='', pin=0,
-                 host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
+    def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
+                 pin=0, host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
-        self.id = str(id) if id else str(uuid.uuid4())
+        self.id = str(id)
         self.command = command
         self.command_hash = None
         self.paw = paw
@@ -204,6 +204,13 @@ class Link(BaseObject):
     def can_ignore(self):
         return self.status in [self.states['DISCARD'], self.states['HIGH_VIZ']]
 
+    def is_finished(self):
+        return self.status in [self.states['DISCARD'], self.states['SUCCESS'],
+                               self.states['ERROR'], self.states['TIMEOUT']]
+
+    def is_valid_status(self, status):
+        return status in self.states.values()
+
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
@@ -253,6 +260,7 @@ class Link(BaseObject):
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
+            fact.source = source  # Manual addition to ensure the check works correctly
             if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
                              technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
@@ -263,7 +271,8 @@ class Link(BaseObject):
                 existing_fact = (await knowledge_svc_handle.get_facts(criteria=dict(trait=fact.trait,
                                                                                     value=fact.value,
                                                                                     source=fact.source)))[0]
-                existing_fact.links.append(self.id)
+                if self.id not in existing_fact.links:
+                    existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
                 await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
