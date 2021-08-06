@@ -13,6 +13,7 @@ import marshmallow as ma
 
 from app.objects.c_adversary import AdversarySchema
 from app.objects.c_agent import AgentSchema
+from app.objects.c_source import SourceSchema
 from app.objects.c_planner import PlannerSchema
 from app.objects.c_objective import ObjectiveSchema
 from app.objects.secondclass.c_fact import OriginType
@@ -25,9 +26,9 @@ NO_PREVIOUS_STATE = object()
 
 
 class OperationSchema(ma.Schema):
-    id = ma.fields.String(required=True)
-    name = ma.fields.String()
-    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents')
+    id = ma.fields.String()
+    name = ma.fields.String(required=True)
+    host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents', dump_only=True)
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
     planner = ma.fields.Nested(PlannerSchema())
@@ -40,6 +41,8 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
+    group = ma.fields.String(missing='')
+    source = ma.fields.Nested(SourceSchema())
 
     @ma.pre_load()
     def remove_properties(self, data, **_):
@@ -67,12 +70,15 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     @property
     def states(self):
-        return dict(RUNNING='running',
-                    RUN_ONE_LINK='run_one_link',
-                    PAUSED='paused',
-                    OUT_OF_TIME='out_of_time',
-                    FINISHED='finished',
-                    CLEANUP='cleanup')
+        return {state.name: state.value for state in self.States}
+
+    @classmethod
+    def get_states(cls):
+        return [state.value for state in cls.States]
+
+    @classmethod
+    def get_finished_states(cls):
+        return [cls.States.OUT_OF_TIME.value, cls.States.FINISHED.value, cls.States.CLEANUP.value]
 
     @property
     def state(self):
@@ -95,9 +101,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
             to_state=value
         )
 
-    def __init__(self, name, adversary, agents=None, id='', jitter='2/8', source=None, planner=None, state='running',
-                 autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50, access=None,
-                 use_learning_parsers=True):
+    def __init__(self, name, adversary=None, agents=None, id='', jitter='2/8', source=None, planner=None,
+                 state='running', autonomous=True, obfuscator='plain-text', group=None, auto_close=True, visibility=50,
+                 access=None, use_learning_parsers=True):
         super().__init__()
         self.id = str(id) if id else str(uuid.uuid4())
         self.start, self.finish = None, None
@@ -128,6 +134,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['operations'].append(self)
             return self.retrieve(ram['operations'], self.unique)
+        existing.update('state', self.state)
+        existing.update('autonomous', self.autonomous)
+        existing.update('obfuscator', self.obfuscator)
         return existing
 
     def set_start_details(self):
@@ -404,7 +413,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         )
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
-    async def update_operation(self, services):
+    async def update_operation_agents(self, services):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 
     async def _unfinished_links_for_agent(self, paw):
@@ -502,3 +511,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         PRIVILEGE = 3
         OP_RUNNING = 4
         UNTRUSTED = 5
+
+    class States(Enum):
+        RUNNING = 'running'
+        RUN_ONE_LINK = 'run_one_link'
+        PAUSED = 'paused'
+        OUT_OF_TIME = 'out_of_time'
+        FINISHED = 'finished'
+        CLEANUP = 'cleanup'
