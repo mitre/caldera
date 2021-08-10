@@ -76,6 +76,7 @@ class Contact(BaseWorld):
     async def ftp_server_python_new(self):
         await self.server.run(host=self.host, port=self.port)
 
+
 class MyServer(aioftp.Server):
     def __init__(self, user, contact, file, log, host_ip, port_in, username, password, user_dir, start,
                  *,  max_con=256):
