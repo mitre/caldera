@@ -11,6 +11,7 @@ class RelationshipSchema(ma.Schema):
     edge = ma.fields.String(allow_none=True)
     target = ma.fields.Nested(FactSchema, allow_none=True)
     score = ma.fields.Integer()
+    origin = ma.fields.String(allow_none=True)
 
     @ma.post_load
     def build_relationship(self, data, **_):
@@ -34,6 +35,16 @@ class Relationship(BaseObject):
     def display(self):
         return self.clean(dict(source=self.source, edge=self.edge,
                                target=[self.target if self.target else 'Not Used'][0], score=self.score))
+
+    @property
+    def flat_display(self):
+        temp = self.display
+        temp['source'] = temp['source'].display
+        if self.target:
+            temp['target'] = temp['target'].display
+        if self.origin:
+            temp['origin'] = self.origin
+        return temp
 
     @property
     def shorthand(self):

@@ -91,6 +91,8 @@ class TestRestSvc:
                                               'host_ip_addrs': [], 'upstream_dest': 'unknown'}],
                               'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
                               'obfuscator': 'plain-text', 'use_learning_parsers': False,
+                              'group': '',
+                              'source': '',
                               'objective': {'goals': [{'value': 'complete',
                                                                 'operator': '==',
                                                                 'target': 'exhaustion',
@@ -151,6 +153,8 @@ class TestRestSvc:
                             'params': {},
                             'ignore_enforcement_modules': [], 'id': '123', 'allow_repeatable_abilities': False},
                 'jitter': '2/8',
+                'group': '',
+                'source': '',
                 'host_group': [
                     {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown',
                      'username': 'unknown', 'links': [], 'sleep_max': 8, 'exe_name': 'unknown',

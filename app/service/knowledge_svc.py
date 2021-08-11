@@ -96,43 +96,6 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
     async def delete_rule(self, criteria):
         return await self.__loaded_knowledge_module._delete_rule(criteria)
 
-    # --- New Inferencing API ---
-    # NOT IMPLEMENTED YET
-    async def similar_facts(self, fact, agent, group):
-        """
-        # return facts that are close to supplied fact.
-        #
-        # Ex:
-        #    - other facts for an agent with given trait/value
-        #    - other facts for the group/agent
-        #    - other facts with same value
-        """
-        return await self.__loaded_knowledge_module._similar_facts(fact, agent, group)
-
-    async def fact_value_distribution(self, criteria, agent=None, group=None):
-        """
-        # return the value distribution for the given fact, and further filtered down
-        # to agent/group if supplied
-        #
-        # Ex: fact value distribution for 'host.user.name' on group 'workstations':
-        #    --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
-        """
-        return await self.__loaded_knowledge_module._fact_value_distribution(criteria, agent, group)
-
-    async def best_guess(self, criteria, agent=None, group=None):
-        """
-        wrapper around 'fact_value_distribution', just returning highest probable value
-        """
-        return await self.__loaded_knowledge_module._best_guess(criteria, agent, group)
-
-    async def best_facts(self, agent=None, group=None, metric='usage_success'):
-        """
-        # best facts based on requested metric
-        # Args:
-        #    metric: ['usage_success', 'most_recent_success', ...]
-        """
-        return await self.__loaded_knowledge_module._best_guess(agent, group, metric)
-
     async def save_state(self):
         return await self.__loaded_knowledge_module._save_state()
 

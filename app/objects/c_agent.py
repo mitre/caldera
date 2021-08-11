@@ -16,8 +16,8 @@ from app.utility.base_service import BaseService
 class AgentFieldsSchema(ma.Schema):
 
     paw = ma.fields.String(allow_none=True)
-    sleep_min = ma.fields.Integer(required=True)
-    sleep_max = ma.fields.Integer(required=True)
+    sleep_min = ma.fields.Integer()
+    sleep_max = ma.fields.Integer()
     watchdog = ma.fields.Integer()
     group = ma.fields.String()
     architecture = ma.fields.String()
@@ -96,7 +96,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return True
         return False
 
-    def __init__(self, sleep_min, sleep_max, watchdog=0, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
