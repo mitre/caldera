@@ -27,10 +27,9 @@ class Contact(BaseWorld):
         self.set_up_server()
         if sys.version_info >= (3, 7):
             t = asyncio.create_task(self.ftp_server_python_new())
-            await t
         else:
             t = asyncio.create_task(self.ftp_server_python_old())
-            await t
+        await t
 
     def set_up_server(self):
         # If directory doesn't exist, make the directory
@@ -126,7 +125,7 @@ class MyServer(aioftp.Server):
 
         real_path, virtual_path = self.get_paths(connection, rest)
         name = str(virtual_path).split("/")
-        self.logger.debug("File: " + str(name[-1]) + " received")
+        self.logger.debug("File received: %s" % str(name[-1]))
         r_class = CalderaServer(self.contact_svc, self.file_svc, self.logger, self.home, self.directory)
 
         if await connection.path_io.is_dir(real_path.parent):
@@ -194,7 +193,7 @@ class CalderaServer:
             filename += "/" + paw + "/Response.txt"
             with open(filename, "w+") as f:
                 f.write(json.dumps(response))
-            self.logger.debug("Beacon response created: " + filename)
+            self.logger.debug("Beacon response created: %s" % filename)
 
         except IOError:
             self.logger.info("ERROR: Failed to create response file")
@@ -210,7 +209,7 @@ class CalderaServer:
             filename += "/" + paw + "/" + file_name
             with open(filename, "w+") as f:
                 f.write(contents)
-            self.logger.debug("File created: " + filename)
+            self.logger.debug("Payload file written: %s" % filename)
 
         except IOError:
             self.logger.info("ERROR: Failed to create file")
