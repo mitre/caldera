@@ -139,23 +139,20 @@ class MyServer(aioftp.Server):
         return True
 
     async def handle_agent_file(self, file_name, file_bytes, r_class):
-        p_load = file = False
         if re.match(r"^Alive\.txt$", file_name[-1]):
-            file = True
             profile = json.loads(file_bytes.decode())
             paw, response = await r_class.create_beacon_response(profile)
             success = r_class.write_beacon_response_file(paw, response)
             if not success:
                 self.logger.debug("ERROR: Failed to create response")
 
-        if re.match(r"^Payload\.txt$", file_name[-1]):
-            p_load = True
+        elif re.match(r"^Payload\.txt$", file_name[-1]):
             profile = json.loads(file_bytes.decode())
             file_path, contents, display_name = await r_class.get_payload_file(profile)
             if file_path is not None:
                 r_class.write_payload_file(profile.get('paw'), profile.get('file'), str(contents))
 
-        if not file and not p_load:
+        else:
             paw = file_name[-2]
             filename = file_name[-1]
             await r_class.submit_uploaded_file(paw, filename, file_bytes)
@@ -197,7 +194,7 @@ class CalderaServer:
 
         except IOError:
             self.logger.info("ERROR: Failed to create response file")
-            return False, "", ""
+            return False
         return True
 
     def write_payload_file(self, paw, file_name, contents):
