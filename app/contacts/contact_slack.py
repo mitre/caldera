@@ -229,8 +229,8 @@ class Contact(BaseWorld):
         await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
         return [
             [await self._fetch_content(i["files"][0]["url_private"]),
-            i["text"].split(" | ")[1],
-            i["text"].split(" | ")[0]]
+             i["text"].split(" | ")[1],
+             i["text"].split(" | ")[0]]
             for i in data
         ]
         return [i["text"].split(" | ")[1:] for i in data]
