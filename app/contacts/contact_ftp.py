@@ -31,10 +31,6 @@ class Contact(BaseWorld):
         await t
 
     def set_up_server(self):
-        # If directory doesn't exist, make the directory
-        if not os.path.exists(self.directory):
-            os.makedirs(self.directory)
-
         # Define a new user with full r/w permissions
         user = (
             aioftp.User(
