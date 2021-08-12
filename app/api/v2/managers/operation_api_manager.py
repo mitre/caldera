@@ -165,7 +165,6 @@ class OperationApiManager(BaseApiManager):
             elif 'state' in data and data.get('state') not in Operation.get_states():
                 raise JsonHttpBadRequest('state must be one of {}'.format(Operation.get_states()))
 
-    """Link Creation Helpers"""
     def search_operation_for_link(self, operation: Operation, link_id: str):
         for link in operation.chain:
             if link.id == link_id:
