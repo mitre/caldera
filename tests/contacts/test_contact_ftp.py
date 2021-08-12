@@ -68,7 +68,6 @@ class TestFtpServer:
         assert ftp_c2.directory == '/tmp/caldera'
         assert ftp_c2.user == 'caldera_user'
         assert ftp_c2.pword == 'caldera'
-        assert ftp_c2.home == os.getcwd()
         assert ftp_c2.server is None
 
     @staticmethod
@@ -84,4 +83,3 @@ class TestFtpServer:
         assert ftp_c2_my_server.login == 'caldera_user'
         assert ftp_c2_my_server.pword == 'caldera'
         assert ftp_c2_my_server.directory == '/tmp/caldera'
-        assert ftp_c2_my_server.home == os.getcwd()
