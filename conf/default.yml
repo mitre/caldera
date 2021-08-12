@@ -6,7 +6,7 @@ app.contact.dns.socket: 0.0.0.0:8853
 app.contact.ftp.host: 0.0.0.0
 app.contact.ftp.port: 2222
 app.contact.ftp.pword: caldera
-app.contact.ftp.server.dir: /tmp/caldera
+app.contact.ftp.server.dir: /ftp_dir
 app.contact.ftp.user: caldera_user
 app.contact.gist: API_KEY
 app.contact.html: /weather
