@@ -20,7 +20,6 @@ class Contact(BaseWorld):
         self.directory = self.get_config('app.contact.ftp.server.dir')
         self.user = self.get_config('app.contact.ftp.user')
         self.pword = self.get_config('app.contact.ftp.pword')
-        self.home = os.getcwd()
         self.server = None
 
     async def start(self):
@@ -67,7 +66,7 @@ class Contact(BaseWorld):
         )
         # Instantiate FTP server on local host and listen on 1026
         self.server = MyServer(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
-                               self.pword, self.directory, self.home)
+                               self.pword, self.directory)
 
     async def ftp_server_python_old(self):
         await self.server.start(host=self.host, port=self.port)
@@ -77,7 +76,7 @@ class Contact(BaseWorld):
 
 
 class MyServer(aioftp.Server):
-    def __init__(self, user, contact, file, log, host_ip, port_in, username, password, user_dir, start,
+    def __init__(self, user, contact, file, log, host_ip, port_in, username, password, user_dir,
                  *,  max_con=256):
         super().__init__(user, maximum_connections=max_con)
         self.contact_svc = contact
@@ -88,7 +87,6 @@ class MyServer(aioftp.Server):
         self.login = username
         self.pword = password
         self.directory = user_dir
-        self.home = start
 
     @aioftp.ConnectionConditions(
         aioftp.ConnectionConditions.login_required,
@@ -126,7 +124,7 @@ class MyServer(aioftp.Server):
         real_path, virtual_path = self.get_paths(connection, rest)
         name = str(virtual_path).split("/")
         self.logger.debug("File received: %s" % str(name[-1]))
-        r_class = CalderaServer(self.contact_svc, self.file_svc, self.logger, self.home, self.directory)
+        r_class = CalderaServer(self.contact_svc, self.file_svc, self.logger, self.directory)
 
         if await connection.path_io.is_dir(real_path.parent):
             coro = stor_worker(self, connection, rest)
@@ -159,11 +157,11 @@ class MyServer(aioftp.Server):
 
 
 class CalderaServer:
-    def __init__(self, contact, file, log, home, directory):
+    def __init__(self, contact, file, log, directory):
         self.contact_svc = contact
         self.file_svc = file
         self.logger = log
-        self.home = home
+        self.home = os.getcwd()
         self.directory = directory
 
     async def create_beacon_response(self, profile):
