@@ -73,7 +73,6 @@ class TestFtpServer:
     @staticmethod
     def test_set_up_server(ftp_c2):
         ftp_c2.set_up_server()
-        assert os.path.exists(ftp_c2.directory)
         assert ftp_c2.server is not None
 
     @staticmethod
