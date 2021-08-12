@@ -1,4 +1,3 @@
-import os
 import pytest
 
 from app.contacts import contact_ftp
