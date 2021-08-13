@@ -221,7 +221,6 @@ class Contact(BaseWorld):
 
     async def _get_slack_content(self, comm_type):
         data = await self._get_raw_slack_data(comm_type=comm_type)
-        self.log.debug(data)
         await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
         return [
             [await self._fetch_content(i["files"][0]["url_private"]),
