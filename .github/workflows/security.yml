@@ -9,8 +9,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python-version: 3.6
-            toxenv: safety
           - python-version: 3.7
             toxenv: safety
           - python-version: 3.8
