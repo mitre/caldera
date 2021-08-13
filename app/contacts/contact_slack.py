@@ -234,7 +234,6 @@ class Contact(BaseWorld):
              i["text"].split(" | ")[0]]
             for i in data
         ]
-        return [i["text"].split(" | ")[1:] for i in data]
 
     async def _get_raw_slack_data(self, comm_type):
         return [message for message in await self._get_slack()
