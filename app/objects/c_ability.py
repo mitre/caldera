@@ -19,7 +19,7 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -28,11 +28,17 @@ class AbilitySchema(ma.Schema):
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
+    @ma.pre_load
+    def fix_id(self, data, **_):
+        if 'id' in data:
+            data['ability_id'] = data.pop('id')
+        return data
+
     @ma.post_load
-    def build_ability(self, data, **_):
+    def build_ability(self, data, **kwargs):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return Ability(**data)
+        return None if kwargs.get('partial') is True else Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
@@ -93,6 +99,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('description', self.description)
         existing.update('_executor_map', self._executor_map)
         existing.update('privilege', self.privilege)
+        existing.update('repeatable', self.repeatable)
+        existing.update('buckets', self.buckets)
+        existing.update('tags', self.tags)
+        existing.update('singleton', self.singleton)
         return existing
 
     async def which_plugin(self):
