@@ -214,14 +214,17 @@ class Contact(BaseWorld):
                 return True
         return False
 
-    async def _get_slack_data(self, comm_type):
+    async def _get_raw_slack_data_and_delete(self, comm_type):
         data = await self._get_raw_slack_data(comm_type=comm_type)
         await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
+        return data
+
+    async def _get_slack_data(self, comm_type):
+        data = await self._get_raw_slack_data_and_delete(comm_type=comm_type)
         return [i["text"].split(" | ")[1:] for i in data]
 
     async def _get_slack_content(self, comm_type):
-        data = await self._get_raw_slack_data(comm_type=comm_type)
-        await self._delete_slack_messages(timestamps=[i["ts"] for i in data])
+        data = await self._get_raw_slack_data_and_delete(comm_type=comm_type)
         return [
             [await self._fetch_content(i["files"][0]["url_private"]),
              i["text"].split(" | ")[1],
