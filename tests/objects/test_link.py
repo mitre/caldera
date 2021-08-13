@@ -69,7 +69,6 @@ class TestLink:
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
         link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
-        link.status = link.status
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
