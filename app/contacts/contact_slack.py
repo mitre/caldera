@@ -53,7 +53,6 @@ class Contact(BaseWorld):
         self.channelid = ''
         self.botid = ''
 
-        # TODO
         # Stores uploaded file chunks. Maps paw to dict that maps upload ID to SlackUpload object
         self.pending_uploads = defaultdict(lambda: dict())
 
@@ -62,9 +61,9 @@ class Contact(BaseWorld):
 
     async def start(self):
         if await self.valid_config():
-            self.key = self.get_config('app.contact.slack')
-            self.channelid = self.get_config('app.contact.slackchannelid')
-            self.botid = self.get_config('app.contact.slackbotid')
+            self.key = self.get_config('app.contact.slack.api_key')
+            self.channelid = self.get_config('app.contact.slack.channel_id')
+            self.botid = self.get_config('app.contact.slack.bot_id')
             loop = asyncio.get_event_loop()
             loop.create_task(self.slack_operation_loop())
 
@@ -72,14 +71,12 @@ class Contact(BaseWorld):
         while True:
             await self.handle_beacons(await self.get_results())
             await self.handle_beacons(await self.get_beacons())
-            # TODO
             await self.handle_uploads(await self.get_uploads())
             await asyncio.sleep(15)
 
     async def valid_config(self):
-        return re.compile(pattern='xoxb-[0-9]{13,13}-[0-9]{13,13}-[a-zA-Z0-9]{24,24}').match(self.get_config('app.contact.slack'))
+        return re.compile(pattern='xoxb-[0-9]{13,13}-[0-9]{13,13}-[a-zA-Z0-9]{24,24}').match(self.get_config('app.contact.slack.api_key'))
 
-    # TODO: THIS LATER
     async def handle_beacons(self, beacons):
         """
         Handles various beacons types (beacon and results)
@@ -119,7 +116,6 @@ class Contact(BaseWorld):
             self.log.error('Retrieving beacons over c2 (%s) failed: %s' % (self.__class__.__name__, e))
             return []
 
-    # TODO
     async def handle_uploads(self, upload_slack_info):
         for upload in upload_slack_info:
             self.log.debug("Handling upload...")
@@ -142,7 +138,6 @@ class Contact(BaseWorld):
                 self.log.debug('Upload %s complete for paw %s, filename %s' % (upload_id, paw, filename))
                 await self._submit_uploaded_file(paw, upload_id)
 
-    # TODO
     async def get_uploads(self):
         """
         Retrieve all SLACK posted file uploads for this C2's api key
