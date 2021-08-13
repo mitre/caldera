@@ -33,9 +33,9 @@ plugins:
 - sandcat
 - stockpile
 - training
-auth.login.handler.module: default
 port: 8888
 reports_dir: /tmp
+auth.login.handler.module: default
 requirements:
   go:
     command: go version
