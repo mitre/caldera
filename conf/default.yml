@@ -9,15 +9,14 @@ app.contact.http: http://0.0.0.0:8888
 app.contact.slack: SLACK_TOKEN
 app.contact.slackbotid: SLACK_BOT_ID
 app.contact.slackchannelid: SLACK_CHANNEL_ID
-app.contact.tcp: 0.0.0.0:7010
 app.contact.tunnel.ssh.host_key_file: REPLACE_WITH_KEY_FILE_PATH
 app.contact.tunnel.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
 app.contact.tunnel.ssh.socket: 0.0.0.0:8022
 app.contact.tunnel.ssh.user_name: sandcat
 app.contact.tunnel.ssh.user_password: s4ndc4t!
+app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
-auth.login.handler.module: default
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
@@ -34,6 +33,7 @@ plugins:
 - sandcat
 - stockpile
 - training
+auth.login.handler.module: default
 port: 8888
 reports_dir: /tmp
 requirements:
