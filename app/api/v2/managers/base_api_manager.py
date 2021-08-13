@@ -5,6 +5,7 @@ import yaml
 
 from marshmallow.schema import SchemaMeta
 from typing import Any, List
+from base64 import b64encode, b64decode
 
 from app.utility.base_world import BaseWorld
 
@@ -95,8 +96,7 @@ class BaseApiManager(BaseWorld):
 
     def replace_object(self, obj: Any, data: dict):
         new_obj = obj.schema.load(data)
-        new_obj.store(self._data_svc.ram)
-        return new_obj
+        return new_obj.store(self._data_svc.ram)
 
     async def find_and_update_on_disk_object(self, data: dict, search: dict, ram_key: str, id_property: str, obj_class: type):
         for obj in self.find_objects(ram_key, search):
@@ -155,3 +155,11 @@ class BaseApiManager(BaseWorld):
     @staticmethod
     def _create_default_logger():
         return logging.getLogger(DEFAULT_LOGGER_NAME)
+
+    @staticmethod
+    def _encode_string(s):
+        return str(b64encode(s.encode()), 'utf-8')
+
+    @staticmethod
+    def _decode_string(s):
+        return str(b64decode(s), 'utf-8')

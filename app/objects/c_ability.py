@@ -1,5 +1,6 @@
 import collections
 import os
+import uuid
 
 import marshmallow as ma
 
@@ -49,11 +50,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def executors(self):
         yield from self._executor_map.values()
 
-    def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
+    def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, **kwargs):
         super().__init__()
-        self.ability_id = ability_id
+        self.ability_id = ability_id if ability_id else str(uuid.uuid4())
         self.tactic = tactic.lower() if tactic else None
         self.technique_name = technique_name
         self.technique_id = technique_id

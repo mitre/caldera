@@ -65,14 +65,6 @@ class TestLink:
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
-    def test_no_status_change_event_fired_when_setting_same_status(self, mock_emit_status_change_method, ability, executor):
-        executor = executor('psh', 'windows')
-        ability = ability(executor=executor)
-        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
-        link.status = link.status
-        mock_emit_status_change_method.assert_not_called()
-
-    @mock.patch.object(Link, '_emit_status_change_event')
     def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)

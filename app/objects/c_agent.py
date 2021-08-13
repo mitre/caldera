@@ -16,8 +16,8 @@ from app.utility.base_service import BaseService
 class AgentFieldsSchema(ma.Schema):
 
     paw = ma.fields.String(allow_none=True)
-    sleep_min = ma.fields.Integer(required=True)
-    sleep_max = ma.fields.Integer(required=True)
+    sleep_min = ma.fields.Integer()
+    sleep_max = ma.fields.Integer()
     watchdog = ma.fields.Integer()
     group = ma.fields.String()
     architecture = ma.fields.String()
@@ -43,8 +43,8 @@ class AgentFieldsSchema(ma.Schema):
     host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
 
     display_name = ma.fields.String(dump_only=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
-    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
+    last_seen = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
     pending_contact = ma.fields.String(dump_only=True)
 
@@ -96,7 +96,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             return True
         return False
 
-    def __init__(self, sleep_min, sleep_max, watchdog=0, platform='unknown', server='unknown', host='unknown',
+    def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
@@ -153,7 +153,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def capabilities(self, abilities):
         """Get abilities that the agent is capable of running
-
         :param abilities: List of abilities to check agent capability
         :type abilities: List[Ability]
         :return: List of abilities the agents is capable of running
@@ -167,10 +166,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def get_preferred_executor(self, ability):
         """Get preferred executor for ability
-
         Will return None if the agent is not capable of running any
         executors in the given ability.
-
         :param ability: Ability to get preferred executor for
         :type ability: Ability
         :return: Preferred executor or None
@@ -293,7 +290,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def set_pending_executor_removal(self, executor_name):
         """Mark specified executor to remove.
-
         :param executor_name: name of executor for agent to remove
         :type executor_name: str
         """
@@ -308,7 +304,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def set_pending_executor_path_update(self, executor_name, new_binary_path):
         """Mark specified executor to update its binary path to the new path.
-
         :param executor_name: name of executor for agent to update binary path
         :type executor_name: str
         :param new_binary_path: new binary path for executor to reference
@@ -325,7 +320,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def assign_pending_executor_change(self):
         """Return the executor change dict and remove pending change to assign.
-
         :return: Dict representing the executor change that is assigned.
         :rtype: dict(str, str)
         """
