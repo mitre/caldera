@@ -17,11 +17,11 @@ class AdversaryApi(BaseObjectApi):
         router = app.router
         adversaries_by_id_path = '/adversaries/{adversary_id}'
         router.add_get('/adversaries', self.get_adversaries)
-        router.add_get(adversaries_by_id, self.get_adversary_by_id)
+        router.add_get(adversaries_by_id_path, self.get_adversary_by_id)
         router.add_post('/adversaries', self.create_adversary)
-        router.add_patch(adversaries_by_id, self.update_adversary)
-        router.add_put(adversaries_by_id, self.create_or_update_adversary)
-        router.add_delete(adversaries_by_id, self.delete_adversary)
+        router.add_patch(adversaries_by_id_path, self.update_adversary)
+        router.add_put(adversaries_by_id_path, self.create_or_update_adversary)
+        router.add_delete(adversaries_by_id_path, self.delete_adversary)
 
     @aiohttp_apispec.docs(tags=['adversaries'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
