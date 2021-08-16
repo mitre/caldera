@@ -6,6 +6,9 @@ app.contact.dns.socket: 0.0.0.0:8853
 app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://0.0.0.0:8888
+app.contact.slack.api_key: SLACK_TOKEN
+app.contact.slack.bot_id: SLACK_BOT_ID
+app.contact.slack.channel_id: SLACK_CHANNEL_ID
 app.contact.tunnel.ssh.host_key_file: REPLACE_WITH_KEY_FILE_PATH
 app.contact.tunnel.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
 app.contact.tunnel.ssh.socket: 0.0.0.0:8022
