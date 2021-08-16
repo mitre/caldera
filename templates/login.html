@@ -39,10 +39,10 @@
 	</style>
 
 	<script>
-		document.cookie.split(";").forEach(function(c) { 
-			document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-		});
+        document.cookie.split(';').forEach((c) => {
+            document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+        });
 
-		//# sourceURL=login.js
+        // # sourceURL=login.js
 	</script>
 </html>

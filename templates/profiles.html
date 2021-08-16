@@ -586,8 +586,8 @@
 
 <script>
     // Jinja variables
-    let platforms = {{ platforms | tojson }};
-    let payloads = {{ payloads | tojson }};
+    const platforms = {{ platforms | tojson }};
+    const payloads = {{ payloads | tojson }};
 
     function alpineAdversaries() {
         return {
@@ -648,7 +648,7 @@
                     return apiV2('GET', '/api/v2/abilities');
                 }).then((abilities) => {
                     this.abilities = abilities;
-                    return apiV2('GET', '/api/v2/objectives')
+                    return apiV2('GET', '/api/v2/objectives');
                 }).then((objectives) => {
                     this.objectives = objectives;
                 }).catch((error) => {
@@ -663,25 +663,23 @@
                 this.selectedProfileAbilities = [];
                 this.isCreatingProfile = false;
 
-                let selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === this.selectedProfileId);
+                const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === this.selectedProfileId);
                 this.selectedProfileName = selectedAdversary.name;
                 this.selectedProfileDescription = selectedAdversary.description;
-                this.selectedObjective = this.objectives.find((objective) => objective.id === selectedAdversary.objective)
-                this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => {
-                    return {...this.abilities.find((ability) => ability.ability_id === ability_id)};
-                });
+                this.selectedObjective = this.objectives.find((objective) => objective.id === selectedAdversary.objective);
+                this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
 
                 this.findAbilityDependencies();
             },
 
             saveProfile() {
-                let requestBody = {
-                    'name': this.selectedProfileName,
-                    'description': this.selectedProfileDescription,
-                    'objective': this.selectedObjective.id,
-                    'tags': [],
-                    'atomic_ordering': this.selectedProfileAbilities.map((ability) => ability.ability_id)
-                }
+                const requestBody = {
+                    name: this.selectedProfileName,
+                    description: this.selectedProfileDescription,
+                    objective: this.selectedObjective.id,
+                    tags: [],
+                    atomic_ordering: this.selectedProfileAbilities.map((ability) => ability.ability_id),
+                };
 
                 apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, requestBody).then((data) => {
                     this.unsavedChanges = false;
@@ -695,16 +693,16 @@
             deleteProfile() {
                 if (confirm('Are you sure you want to remove this adversary? This cannot be undone.')) {
                     apiV2('DELETE', `/api/v2/adversaries/${this.selectedProfileId}`).then((response) => {
-                        this.adversaries.splice(this.adversaries.findIndex(a => a.adversary_id === this.selectedProfileId), 1);
+                        this.adversaries.splice(this.adversaries.findIndex((a) => a.adversary_id === this.selectedProfileId), 1);
                         this.selectedProfileId = '';
                         toast('Adversary profile deleted.', true);
-                    }).catch((error => {
+                    }).catch((error) => {
                         toast('Error deleting profile', false);
                         console.error(error);
-                    }));
+                    });
                 }
             },
-            
+
             createProfile() {
                 // Verify user input
                 this.createProfileNameError = '';
@@ -712,23 +710,25 @@
                 if (this.createProfileName.length === 0) {
                     this.createProfileNameError = 'You must enter a profile name';
                     return;
-                } else if (this.adversaries.map(a => a.name).indexOf(this.createProfileName) > -1) {
+                }
+                if (this.adversaries.map((a) => a.name).indexOf(this.createProfileName) > -1) {
                     this.createProfileNameError = 'Profile name already exists';
                     return;
-                } else if (this.createProfileDescription.length === 0) {
+                }
+                if (this.createProfileDescription.length === 0) {
                     this.createProfileDescriptionError = 'You must enter a profile description';
                     return;
                 }
 
-                let newId = uuidv4();
-                let requestBody = {
-                    'adversary_id': newId,
-                    'name': this.createProfileName,
-                    'description': this.createProfileDescription,
-                    'atomic_ordering': [],
-                    'objective': this.objectives.find((o) => o.name === 'default').id,
-                    'tags': []
-                }
+                const newId = uuidv4();
+                const requestBody = {
+                    adversary_id: newId,
+                    name: this.createProfileName,
+                    description: this.createProfileDescription,
+                    atomic_ordering: [],
+                    objective: this.objectives.find((o) => o.name === 'default').id,
+                    tags: [],
+                };
 
                 apiV2('POST', '/api/v2/adversaries', requestBody).then((response) => {
                     this.adversaries.push(requestBody);
@@ -749,63 +749,70 @@
             },
 
             getExecutorDetail(detail, ability) {
-                let executorNameMap = new Map([
+                const executorNameMap = new Map([
                     ['psh', 'powershell'],
                     ['pwsh', 'powershell core'],
                     ['sh', 'shell'],
                     ['cmd', 'commandline'],
                 ]);
-                let platforms = [], hasCleanup = false, hasPayload = false, hasParser = false;
+                const plats = [];
+                let hasCleanup = false;
+                let hasPayload = false;
+                let hasParser = false;
 
                 ability.executors.forEach((executor) => {
                     if (executor.cleanup.length > 0) hasCleanup = true;
                     if (executor.parsers.length > 0) hasParser = true;
                     if (executor.payloads.length > 0) hasPayload = true;
-                    platforms.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
+                    plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
                 });
 
                 switch (detail) {
-                    case 'cleanup':
-                        return hasCleanup;
-                    case 'parser':
-                        return hasParser;
-                    case 'payload':
-                        return hasPayload;
-                    case 'requirements':
-                        return ability.requirements.length > 0;
-                    case 'platforms':
-                        return platforms;
-                    default:
-                        return false;
+                case 'cleanup':
+                    return hasCleanup;
+                case 'parser':
+                    return hasParser;
+                case 'payload':
+                    return hasPayload;
+                case 'requirements':
+                    return ability.requirements.length > 0;
+                case 'platforms':
+                    return plats;
+                default:
+                    return false;
                 }
             },
 
             findAbilityDependencies() {
-                let types = {};
+                const types = {};
 
                 this.selectedProfileAbilities.forEach((ability, index) => {
-                    let requireTypes = [], enableTypes = [];
+                    let requireTypes = [];
+                    let enableTypes = [];
 
                     // Get all parser types from executors
                     ability.executors.forEach((executor) => {
-                        executor.parsers.map((parser) => {
+                        executor.parsers.forEach((parser) => {
                             enableTypes = enableTypes.concat(parser.relationships.map((rel) => rel.source));
                         });
                     });
-                    
+
                     // Get all requirement types
                     ability.requirements.forEach((requirement) => {
                         requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
                     });
 
-                    types[ability.ability_id] = {  
+                    types[ability.ability_id] = {
                         enableTypes: [...new Set(enableTypes)],
                         requireTypes: [...new Set(requireTypes)]
                     };
                 });
 
                 this.selectedProfileAbilities.forEach((ability, index) => {
-                    let enablesAbilityIds = [], requiresAbilityIds = [], requireTypesMet = [];
+                    const enablesAbilityIds = [];
+                    const requiresAbilityIds = [];
+                    const requireTypesMet = [];
+
                     // For each parser, look at and forward for any ability it unlocks
                     types[ability.ability_id].enableTypes.forEach((key) => {
                         for (let i = index; i < this.selectedProfileAbilities.length; i++) {
@@ -828,19 +835,25 @@
                     });
 
                     this.abilityDependencies[ability.ability_id] = {
-                        enablesAbilityIds: [...new Set(enablesAbilityIds)],  // The ability IDs that this ability will enable
-                        requiresAbilityIds: [...new Set(requiresAbilityIds)],  // The ability IDs that this ability is dependent on
-                        enableTypes: types[ability.ability_id].enableTypes,  // The names of the parser requirements this ability enables
-                        requireTypes: types[ability.ability_id].requireTypes,  // The names of the requirements this ability needs from a parser
-                        requireTypesMet: requireTypesMet  // Same dimension as requireTypes, but true/false if requirement has been met
-                    }
+                        // The ability IDs that this ability will enable
+                        enablesAbilityIds: [...new Set(enablesAbilityIds)],
+                        // The ability IDs that this ability is dependent on
+                        requiresAbilityIds: [...new Set(requiresAbilityIds)],
+                        // The names of the parser requirements this ability enables
+                        enableTypes: types[ability.ability_id].enableTypes,
+                        // The names of the requirements this ability needs from a parser
+                        requireTypes: types[ability.ability_id].requireTypes,
+                        // Same dimension as requireTypes, but true/false if requirement has been met
+                        requireTypesMet: requireTypesMet,
+                    };
                 });
 
                 this.hasMetAbilityDependencies();
             },
 
             hasMetAbilityDependencies() {
-                let keys = [], isMet = true;
+                const keys = [];
+                let isMet = true;
                 this.needsParser = [];
 
                 Object.keys(this.abilityDependencies).forEach((abilityId) => {
@@ -848,7 +861,9 @@
                         isMet = false;
                         try {
                             this.needsParser.push(this.selectedProfileAbilities.find((ability) => ability.ability_id === abilityId).name);
-                        } catch {}
+                        } catch {
+                            this.needsParser.push();
+                        }
                     }
                 });
 
@@ -873,12 +888,10 @@
                 this.abilitiesAddAdversary = [];
 
                 apiV2('GET', `/api/v2/adversaries/${this.selectedAddAdversary}`).then((adversary) => {
-                    this.abilitiesAddAdversary = adversary.atomic_ordering.map((ability_id) => {
-                        return {
-                            ...this.abilities.find((ability) => ability.ability_id === ability_id),
-                            selected: true
-                        };
-                    });
+                    this.abilitiesAddAdversary = adversary.atomic_ordering.map((ability_id) => ({
+                        ...this.abilities.find((ability) => ability.ability_id === ability_id),
+                        selected: true
+                    }));
                 }).catch((error) => {
                     toast('Error loading adversary profile', false);
                     console.error(error);
@@ -886,7 +899,7 @@
             },
 
             addAbilitiesFromAdversary() {
-                let selectedAbilities = this.abilitiesAddAdversary.filter((a) => a.selected);
+                const selectedAbilities = this.abilitiesAddAdversary.filter((a) => a.selected);
                 this.selectedProfileAbilities = this.selectedProfileAbilities.concat(selectedAbilities);
                 this.showAddAdversaryModal = false;
                 this.selectedAddAdversary = '';
@@ -895,7 +908,7 @@
             },
 
             addExecutorToAbility(bOrA) {
-                let template = {
+                const template = {
                     payloads: [],
                     platform: 'linux'
                 };
@@ -935,7 +948,7 @@
                     toast('Saved ability!', true);
 
                     // Replace ability in list with updated info
-                    let index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbilityId);
+                    const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbilityId);
                     this.abilities[index] = response;
 
                     if (addToAdversary) {
@@ -959,25 +972,25 @@
             },
 
             swapAbilitiesHover(event) {
-                let children = Array.from(event.target.parentNode.parentNode.children);
+                const children = Array.from(event.target.parentNode.parentNode.children);
 
                 if (children.indexOf(event.target.parentNode) > children.indexOf(this.abilityTableDragTarget)) {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
                 } else {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
                 }
             },
 
             swapAbilities(event) {
-                let fromIndex = parseInt(this.abilityTableDragTarget.children[1].innerHTML) - 1;
-                let toIndex = this.abilityTableDragEndIndex - 1;
-                let temp = this.selectedProfileAbilities[fromIndex];
+                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].innerHTML, 10) - 1;
+                const toIndex = this.abilityTableDragEndIndex - 1;
+                const temp = this.selectedProfileAbilities[fromIndex];
                 this.selectedProfileAbilities[fromIndex] = this.selectedProfileAbilities[toIndex];
                 this.selectedProfileAbilities[toIndex] = temp;
 
                 this.unsavedChanges = true;
                 this.abilityTableDragHoverId = undefined;
-                this.abilityTableDragEndIndex = undefined
+                this.abilityTableDragEndIndex = undefined;
             },
 
         };
