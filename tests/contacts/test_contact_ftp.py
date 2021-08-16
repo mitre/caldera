@@ -25,13 +25,12 @@ def base_world():
     BaseWorld.apply_config(name='main', config={'app.contact.ftp.host': '0.0.0.0',
                                                 'app.contact.ftp.port': '2222',
                                                 'app.contact.ftp.pword': 'caldera',
-                                                'app.contact.ftp.server.dir': '/tmp/caldera',
+                                                'app.contact.ftp.server.dir': 'ftp_dir',
                                                 'app.contact.ftp.user': 'caldera_user',
                                                 'plugins': ['sandcat', 'stockpile'],
                                                 'crypt_salt': 'BLAH',
                                                 'api_key': 'ADMIN123',
-                                                'encryption_key': 'ADMIN123',
-                                                'exfil_dir': '/tmp'})
+                                                'encryption_key': 'ADMIN123'})
     BaseWorld.apply_config(name='agents', config={'sleep_max': 5,
                                                   'sleep_min': 5,
                                                   'untrusted_timer': 90,
@@ -64,7 +63,7 @@ class TestFtpServer:
         assert ftp_c2.description == 'Accept agent beacons through ftp'
         assert ftp_c2.host == '0.0.0.0'
         assert ftp_c2.port == '2222'
-        assert ftp_c2.directory == '/tmp/caldera'
+        assert ftp_c2.directory == '/ftp_dir'
         assert ftp_c2.user == 'caldera_user'
         assert ftp_c2.pword == 'caldera'
         assert ftp_c2.server is None
@@ -80,4 +79,4 @@ class TestFtpServer:
         assert ftp_c2_my_server.port == '2222'
         assert ftp_c2_my_server.login == 'caldera_user'
         assert ftp_c2_my_server.pword == 'caldera'
-        assert ftp_c2_my_server.directory == '/tmp/caldera'
+        assert ftp_c2_my_server.directory == '/ftp_dir'

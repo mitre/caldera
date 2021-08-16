@@ -17,7 +17,7 @@ class Contact(BaseWorld):
         self.logger = BaseWorld.create_logger('contact_ftp')
         self.host = self.get_config('app.contact.ftp.host')
         self.port = self.get_config('app.contact.ftp.port')
-        self.directory = self.get_config('app.contact.ftp.server.dir')
+        self.directory = '/' + self.get_config('app.contact.ftp.server.dir')
         self.user = self.get_config('app.contact.ftp.user')
         self.pword = self.get_config('app.contact.ftp.pword')
         self.server = None
@@ -139,7 +139,6 @@ class MyServer(aioftp.Server):
             success = r_class.write_beacon_response_file(paw, response)
             if not success:
                 self.logger.debug("ERROR: Failed to create response")
-
         elif re.match(r"^Payload\.txt$", file_name[-1]):
             profile = json.loads(file_bytes.decode())
             file_path, contents, display_name = await r_class.get_payload_file(profile)
