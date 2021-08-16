@@ -1,21 +1,17 @@
 /* eslint-disable */
 /* HELPFUL functions to call */
 
-function restRequest(requestType, data, callback = () => {
-    console.log('do nothing')
+function restRequest(requestType, data, callback = (r) => {
+    console.log('Fetch Success', r);
 }, endpoint = '/api/rest') {
     const requestData = requestType === 'GET' ?
         {method: requestType, headers: {'Content-Type': 'application/json'}} :
         {method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}
 
     fetch(endpoint, requestData)
-        .then(response => {
-            if (!response.ok) {
-                throw Error(response.statusText)
-            }
-            return response.text()
-        })
-        .then(data => callback(data));
+        .then(response => response.text())
+        .then(data => callback(data))
+        .catch((error) => console.error(error));
 }
 
 function apiRequest(requestType, data, endpoint  = '/api/rest') {
@@ -48,6 +44,15 @@ function apiV2(requestType, endpoint, body = null) {
                 }
             });
     });
+}
+
+function sortAlphabetically(list) {
+    return list.sort((a, b) => {
+        let x = a.toLowerCase(), y = b.toLowerCase();
+        if (x < y) return -1;
+        else if (x > y) return 1;
+        else return 0;
+    })
 }
 
 function downloadReport(endpoint, filename, data = {}) {
