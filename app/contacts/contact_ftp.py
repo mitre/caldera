@@ -17,7 +17,8 @@ class Contact(BaseWorld):
         self.logger = BaseWorld.create_logger('contact_ftp')
         self.host = self.get_config('app.contact.ftp.host')
         self.port = self.get_config('app.contact.ftp.port')
-        self.directory = '/' + self.get_config('app.contact.ftp.server.dir')
+        self.directory = self.get_config('app.contact.ftp.server.dir').lstrip('/')
+        self.home = os.path.join('/', self.directory)
         self.user = self.get_config('app.contact.ftp.user')
         self.pword = self.get_config('app.contact.ftp.pword')
         self.server = None
@@ -36,10 +37,10 @@ class Contact(BaseWorld):
             aioftp.User(
                 str(self.user),
                 str(self.pword),
-                home_path=self.directory,
+                home_path=self.home,
                 permissions=(
                     aioftp.Permission('/', readable=False, writable=False),
-                    aioftp.Permission(self.directory, readable=True, writable=True),
+                    aioftp.Permission(self.home, readable=True, writable=True),
                 ),
                 maximum_connections=256,
                 read_speed_limit=1024 * 1024,
@@ -156,8 +157,7 @@ class CalderaServer:
         self.contact_svc = contact
         self.file_svc = file
         self.logger = log
-        self.home = os.getcwd()
-        self.directory = directory
+        self.ftp_server_dir = os.path.join(os.getcwd(), directory)
 
     async def create_beacon_response(self, profile):
         paw = profile.get('paw')
@@ -175,12 +175,11 @@ class CalderaServer:
         return agent.paw, response
 
     def write_beacon_response_file(self, paw, response):
-        filename = str(self.home + self.directory)
         try:
-            if not os.path.exists(filename):
-                os.makedirs(filename)
+            if not os.path.exists(self.ftp_server_dir):
+                os.makedirs(self.ftp_server_dir)
 
-            filename += "/" + paw + "/Response.txt"
+            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), "Response.txt")
             with open(filename, "w+") as f:
                 f.write(json.dumps(response))
             self.logger.debug("Beacon response created: %s" % filename)
@@ -191,15 +190,14 @@ class CalderaServer:
         return True
 
     def write_payload_file(self, paw, file_name, contents):
-        filename = str(self.home + self.directory)
         try:
-            if not os.path.exists(filename):
-                os.makedirs(filename)
+            if not os.path.exists(self.ftp_server_dir):
+                os.makedirs(self.ftp_server_dir)
 
-            filename += "/" + paw + "/" + file_name
+            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), file_name)
             with open(filename, "w+") as f:
                 f.write(contents)
-            self.logger.debug("Payload file written: %s" % filename)
+            self.logger.debug("Payload file written: %s" % self.ftp_server_dir)
 
         except IOError:
             self.logger.info("ERROR: Failed to create file")

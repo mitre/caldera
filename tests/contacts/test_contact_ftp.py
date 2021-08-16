@@ -63,7 +63,7 @@ class TestFtpServer:
         assert ftp_c2.description == 'Accept agent beacons through ftp'
         assert ftp_c2.host == '0.0.0.0'
         assert ftp_c2.port == '2222'
-        assert ftp_c2.directory == '/ftp_dir'
+        assert ftp_c2.directory == 'ftp_dir'
         assert ftp_c2.user == 'caldera_user'
         assert ftp_c2.pword == 'caldera'
         assert ftp_c2.server is None
@@ -79,4 +79,4 @@ class TestFtpServer:
         assert ftp_c2_my_server.port == '2222'
         assert ftp_c2_my_server.login == 'caldera_user'
         assert ftp_c2_my_server.pword == 'caldera'
-        assert ftp_c2_my_server.directory == '/ftp_dir'
+        assert ftp_c2_my_server.directory == 'ftp_dir'
