@@ -424,6 +424,7 @@
                 // If the tab is closed, we don't want to keep refreshing the agents list
                 let observer = new MutationObserver((mutationsList) => {
                     if (mutationsList.every(mutation => mutation.addedNodes.length === 0 && mutation.removedNodes.length > 0)) {
+                        console.log('page exit')
                         clearInterval(this.refreshAgentInterval);
                     }
                 });
