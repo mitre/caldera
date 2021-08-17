@@ -261,11 +261,11 @@
                                                     <textarea id="edit-command"
                                                               class="code"
                                                               contenteditable
-                                                              x-model="editedCommand"
+                                                              x-model="editableCommand"
                                                               spellcheck="false"></textarea>
                                                     <button type="button"
                                                             class="button is-primary is-small"
-                                                            x-on:click="updateLinkState(selectedLink?.id, -3, editedCommand); showLinkEditCommandID = null;">
+                                                            x-on:click="updateLinkState(selectedLink?.id, -3, editableCommand); showLinkEditCommandID = null;">
                                                         Update
                                                     </button>
                                                 </div>
@@ -274,22 +274,26 @@
 
                                         <!--OUTPUT/FACTS COLUMN-->
                                         <td>
-                                            <template x-if="selectedLink === link">
-                                                <template x-if="selectedLinkOutput">
-                                                    <div class="mb-5">
-                                                        <p>Output: </p>
-                                                        <code x-text="selectedLinkOutput"></code>
-                                                    </div>
-                                                </template>
-                                                <template x-if="!selectedLinkOutput">
-                                                    <p>No output available.</p>
-                                                </template>
-                                                <template x-for="fact in selectedLinkFacts">
-                                                    <p class="highlight" x-text="fact"></p>
-                                                </template>
-                                                <template x-if="selectedLinkFacts.length < 1">
-                                                    <p>No facts available.</p>
-                                                </template>
+                                            <template x-if="selectedLink === link && selectedLinkOutput">
+                                                <div class="mb-5">
+                                                    <p class="is-size-7">Output: </p>
+                                                    <code x-text="selectedLinkOutput"></code>
+                                                </div>
+                                            </template>
+                                            <template x-if="selectedLink === link && !selectedLinkOutput">
+                                                <p class="is-size-7">No output available.</p>
+                                            </template>
+                                            <template x-if="selectedLink === link && selectedLinkFacts?.length > 0">
+                                                <div class="mb-5">
+                                                    <p class="is-size-7">Facts: </p>
+                                                    <template x-for="(fact, index) in selectedLinkFacts">
+                                                        <code x-bind:id="index" class="highlight" x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
+<!--                                                        TODO fix selectedLinkFacts length error-->
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="selectedLink === link && selectedLinkFacts?.length < 1">
+                                                <p class="is-size-7">No facts available.</p>
                                             </template>
                                         </td>
                                     </tr>
@@ -924,7 +928,7 @@
             filteredLinksList: [],
             schedule: "",
             showLinkEditCommandID: null,
-            editedCommand: null,
+            editableCommand: null,
             isOperationsControlsExpanded: true,
             showOperationsMenuCaret: true,
             addNewRow: false,
@@ -1032,25 +1036,22 @@
                     });
             },
 
-            // TODO check with mock fact data
             getResults(linkID) {
-                restRequest('POST', {'index': 'result', 'link_id': linkID}, (data) => {
-                    if (data) {
-                        data = JSON.parse(data);
-                        this.selectedLinkOutput = b64DecodeUnicode(data.output);
-                        if (data.link.facts) {
-                            this.selectedLinkFacts = Array.from(data.link.facts, fact => fact.value.toString());
-                            this.selectedLinkFacts = Array.from(new Set(this.selectedLinkFacts));
-                            this.selectedLinkFacts.sort((a, b) => b.length - a.length);
+                apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${linkID}`)
+                    .then((res) => {
+                        this.selectedLinkOutput = res.output;
+                        if (res.facts) {
+                            this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score)
                         }
-                        this.selectedLinkCommand = b64DecodeUnicode(data.link.command);
-                        this.editedCommand = b64DecodeUnicode(data.link.command);
-                    } else {
+                        this.selectedLinkCommand = b64DecodeUnicode(res.command);
+                        this.editableCommand = b64DecodeUnicode(res.command);
+                    })
+                    .catch((error) => {
                         this.selectedLinkOutput = null;
                         this.selectedLinkFacts = null;
                         this.selectedLinkCommand = null;
-                    }
-                });
+                        toast('Error getting link results.');
+                    });
             },
 
             handleManualCommand() {
@@ -1437,6 +1438,10 @@
     .modal-card code, table code {
         color: #ff8181;
         background-color: #262626;
+    }
+
+    table .highlight {
+        width: fit-content !important;
     }
 
     /*TOGGLE STYLE*/
