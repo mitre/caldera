@@ -23,6 +23,7 @@ class BaseWorld:
     _app_configuration = dict()
 
     re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
+    TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
     @staticmethod
     def apply_config(name, config):
@@ -78,11 +79,11 @@ class BaseWorld:
             f.write(line.rstrip('\r\n') + '\n' + content)
 
     @staticmethod
-    def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
+    def get_current_timestamp(date_format=TIME_FORMAT):
         return datetime.now().strftime(date_format)
 
     @staticmethod
-    def get_timestamp_from_string(datetime_str, date_format='%Y-%m-%d %H:%M:%S'):
+    def get_timestamp_from_string(datetime_str, date_format=TIME_FORMAT):
         return datetime.strptime(datetime_str, date_format)
 
     @staticmethod

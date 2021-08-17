@@ -202,8 +202,6 @@ class DataService(DataServiceInterface, BaseService):
                     if code_path:
                         _, code_data = await self.get_service('file_svc').read_file(code)
                         code = code_data.decode('utf-8').strip()
-                    else:
-                        code = code
 
                 language = executor.get('language')
                 build_target = executor.get('build_target')
