@@ -206,7 +206,8 @@
                                 <template x-if="selectedOperation.chain.length === 0">
                                     <tbody>
                                     <tr>
-                                        <td colspan="6"><em>No links––click the buttons on the right to add commands/links.</em>
+                                        <td colspan="6"><em>No links––click the buttons on the right to add
+                                            commands/links.</em>
                                         </td>
                                     </tr>
                                     </tbody>
@@ -406,7 +407,7 @@
                                         <div>
                                             <label for="basic-adversary">Adversary:</label>
                                             <div class="modal-form-fields" id="basic-adversary">
-                                                <select x-model="startOperation.adversary_id">
+                                                <select x-model="startOperation.adversary.adversary_id">
                                                     <option value="" selected>No adversary (manual)</option>
                                                     {% for adv in adversaries %}
                                                     <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
@@ -507,10 +508,10 @@
                                             <label for="autonomous-use_learning_parsers">Parser:</label>
                                             <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                                 <input type="radio" id="parsers-default"
-                                                       x-model="startOperation.use_learning_parsers" value="true" checked>
+                                                       x-model="startOperation.use_learning_parsers" value="1" checked>
                                                 <label for="parsers-default">Use default parsers</label>
                                                 <input type="radio" id="parsers-no_default"
-                                                       x-model="startOperation.use_learning_parsers" value="false">
+                                                       x-model="startOperation.use_learning_parsers" value="0">
                                                 <label for="parsers-no_default">Do not use default parsers</label>
                                             </div>
                                         </div>
@@ -520,11 +521,11 @@
                                             <div class="modal-form-fields" id="basic-keep">
                                                 <input type="radio" id="keep-open"
                                                        x-model="startOperation.auto_close"
-                                                       value="false" checked>
+                                                       value="0" checked>
                                                 <label for="keep-open">Keep open forever</label>
                                                 <input type="radio" id="auto-close"
                                                        x-model="startOperation.auto_close"
-                                                       value="true">
+                                                       value="1">
                                                 <label for="auto-close">Auto close operation</label>
                                             </div>
                                         </div>
@@ -782,22 +783,23 @@
     };
     const emptyOperationsObject = {
         // TODO ID and objective field? timeout?
-        id: "",
+        // id: "",
         name: "",
         group: "",
-        adversary: "",
-        auto_close: false,
+        adversary: {"adversary_id": ""},
+        auto_close: 0,
         state: "running",
         autonomous: 1,
-        planner: {"id":"atomic"},
-        objective: {"id":""},
+        planner: {"id": "atomic"},
+        // objective: {"id": ""},
         source: {"id": "basic"},
-        use_learning_parsers: true,
+        use_learning_parsers: 1,
         // timeout: "30",
         obfuscator: "plain-text",
         jitter: "4/8",
         visibility: "50",
     }
+
     // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
     function getHumanFriendlyTime(date) {
         // i.e. format 2021-08-03 19:37:08
@@ -988,18 +990,22 @@
                 if (!this.startOperation.name) {
                     toast('Error: Operation name field is empty.');
                 } else {
-                    this.startOperation.autonomous = Number()
-                    apiV2('POST', endpoint, this.startOperation).then((res) => {
-                        toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
-                        this.resetOperation();
-                        this.getOperations();
-                        this.selectedOperationID = res[0].id;
-                        this.getOperation();
-                        toast('Started operation ' + this.startOperation.name + "!", true);
-                        this.openModal = null;
-                    }).catch((error) => {
-                        toast('Error adding operation');
-                    });
+                    this.startOperation.autonomous = Number(this.startOperation.autonomous);
+                    this.startOperation.use_learning_parsers = parseInt(this.startOperation.use_learning_parsers) === 1;
+                    this.startOperation.auto_close = parseInt(this.startOperation.auto_close) === 1;
+
+                    apiV2('POST', endpoint, this.startOperation)
+                        .then((res) => {
+                            toast('Started operation ' + this.startOperation.name + "!", true);
+                            this.resetOperation();
+                            this.getOperations();
+                            this.selectedOperationID = res.id;
+                            this.getOperation();
+                            this.openModal = null;
+                            toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
+                        }).catch((error) => {
+                            toast('Error adding operation');
+                        });
                 }
             },
 
