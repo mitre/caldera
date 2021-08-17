@@ -116,6 +116,14 @@ def expected_link(test_executor, test_agent, test_ability):
 
 
 @pytest.fixture
+def setup_finished_operation(loop, expected_operation):
+    finished_operation = OperationSchema().load(expected_operation)
+    finished_operation.id = '000'
+    finished_operation.state = 'finished'
+    loop.run_until_complete(BaseService.get_service('data_svc').store(finished_operation))
+
+
+@pytest.fixture
 def setup_operations_api_test(loop, api_client, expected_operation, test_agent, test_ability, expected_link):
     test_operation = OperationSchema().load(expected_operation)
     test_operation.agents.append(test_agent)
@@ -207,8 +215,9 @@ class TestOperationsApi:
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_update_operation(self, api_client, api_cookies, mocker, async_return, expected_operation):
-        with mocker.patch('app.objects.c_operation.Operation.is_finished') as mock_is_finished:
-            mock_is_finished.return_value = async_return(False)
+        op_manager_path = 'app.api.v2.managers.operation_api_manager.OperationApiManager.validate_operation_state'
+        with mocker.patch(op_manager_path) as mock_validate:
+            mock_validate.return_value = async_return(True)
             payload = dict(state='running', obfuscator='base64')
             resp = await api_client.patch('/api/v2/operations/123', cookies=api_cookies, json=payload)
             assert resp.status == HTTPStatus.OK
@@ -230,16 +239,21 @@ class TestOperationsApi:
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_disallowed_fields_update_operation(self, api_client, api_cookies, mocker, async_return, expected_operation):
-        with mocker.patch('app.objects.c_operation.Operation.is_finished') as mock_is_finished:
-            mock_is_finished.return_value = async_return(False)
-            payload = dict(name='new operation', id='500', planner={'id': '999'}, adversary={'adversary_id': '999'})
+        op_manager_path = 'app.api.v2.managers.operation_api_manager.OperationApiManager.validate_operation_state'
+        with mocker.patch(op_manager_path) as mock_validate:
+            mock_validate.return_value = async_return(True)
+            payload = dict(name='new operation', id='500')
             resp = await api_client.patch('/api/v2/operations/123', cookies=api_cookies, json=payload)
             assert resp.status == HTTPStatus.OK
             op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
             assert op.id == expected_operation['id']
             assert op.name == expected_operation['name']
-            assert op.planner.planner_id == expected_operation['planner']['id']
-            assert op.adversary.adversary_id == expected_operation['adversary']['adversary_id']
+            assert op.planner.name == expected_operation['planner']['name']
+
+    async def test_update_finished_operation(self, api_client, api_cookies, setup_finished_operation):
+        payload = dict(state='running', obfuscator='base64')
+        resp = await api_client.patch('/api/v2/operations/000', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.BAD_REQUEST
 
     async def test_get_links(self, api_client, api_cookies, expected_link):
         resp = await api_client.get('/api/v2/operations/123/links', cookies=api_cookies)
