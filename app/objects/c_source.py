@@ -28,7 +28,7 @@ Adjustment = namedtuple('Adjustment', 'ability_id trait value offset')
 class SourceSchema(ma.Schema):
 
     id = ma.fields.String()
-    name = ma.fields.String(required=True)
+    name = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema))
     rules = ma.fields.List(ma.fields.Nested(RuleSchema))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
@@ -38,7 +38,7 @@ class SourceSchema(ma.Schema):
     def fix_adjustments(self, in_data, **_):
         x = []
         raw_adjustments = in_data.pop('adjustments', {})
-        if raw_adjustments:
+        if raw_adjustments and type(raw_adjustments) == dict:
             for ability_id, adjustments in raw_adjustments.items():
                 for trait, block in adjustments.items():
                     for change in block:
@@ -81,7 +81,7 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, name, id='', facts=(), relationships=(), rules=(), adjustments=()):
+    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=()):
         super().__init__()
         self.id = id if id else str(uuid.uuid4())
         self.name = name

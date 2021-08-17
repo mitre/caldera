@@ -14,7 +14,7 @@ DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 class AdversarySchema(ma.Schema):
 
     adversary_id = ma.fields.String()
-    name = ma.fields.String(required=True)
+    name = ma.fields.String()
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
     objective = ma.fields.String()
@@ -57,7 +57,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, name, adversary_id='', description='', atomic_ordering=(), objective='', tags=None):
+    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None):
         super().__init__()
         self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name

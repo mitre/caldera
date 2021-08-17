@@ -36,7 +36,7 @@
             {% if plugin.address %}
                 <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
             {% else %}
-                <a onclick="warn('No GUI component to this plugin')">{{ plugin.name }}</a>
+                <a onclick="warn('Plugin loaded successfully, but there is no GUI component to this plugin')">{{ plugin.name }}</a>
             {% endif %}
         {% endfor %}
         <div class="nav-header">

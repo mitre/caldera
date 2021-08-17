@@ -49,7 +49,7 @@ class FileSvc(FileServiceInterface, BaseService):
             if packer in self.packers:
                 file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
             else:
-                self.log.warning('packer <%s> not available for payload <%s>, returning unpacked' % (packer, payload))
+                self.log.warning('packer not available for payload, returning unpacked')
         if headers.get('xor_key'):
             xor_key = headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
