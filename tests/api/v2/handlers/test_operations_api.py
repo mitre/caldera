@@ -97,7 +97,7 @@ def test_ability(test_executor, loop):
 
 
 @pytest.fixture
-def expected_link(test_executor, test_agent, test_ability):
+def active_link(test_executor, test_agent, test_ability):
     return {
         'command': test_executor.command,
         'paw': test_agent.paw,
@@ -116,6 +116,22 @@ def expected_link(test_executor, test_agent, test_ability):
 
 
 @pytest.fixture
+def finished_link(test_executor, test_agent, test_ability):
+    return {
+        'command': test_executor.command,
+        'paw': test_agent.paw,
+        'ability': test_ability,
+        'executor': test_executor,
+        'host': test_agent.host,
+        'deadman': False,
+        'used': [],
+        'id': '789',
+        'relationships': [],
+        'status': 0
+    }
+
+
+@pytest.fixture
 def setup_finished_operation(loop, expected_operation):
     finished_operation = OperationSchema().load(expected_operation)
     finished_operation.id = '000'
@@ -124,14 +140,18 @@ def setup_finished_operation(loop, expected_operation):
 
 
 @pytest.fixture
-def setup_operations_api_test(loop, api_client, expected_operation, test_agent, test_ability, expected_link):
+def setup_operations_api_test(loop, api_client, expected_operation, test_agent, test_ability,
+                              active_link, finished_link):
     test_operation = OperationSchema().load(expected_operation)
     test_operation.agents.append(test_agent)
     test_operation.set_start_details()
     test_operation.adversary.atomic_ordering.append(test_ability)
-    test_link = Link.load(expected_link)
+    test_link = Link.load(active_link)
     test_link.host = test_agent.host
+    finished_link = Link.load(finished_link)
+    finished_link.host = test_agent.host
     test_operation.chain.append(test_link)
+    test_operation.chain.append(finished_link)
     test_objective = Objective(id='123', name='test objective', description='test', goals=[])
     test_operation.objective = test_objective
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
@@ -261,26 +281,26 @@ class TestOperationsApi:
         resp = await api_client.patch('/api/v2/operations/000', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
-    async def test_get_links(self, api_client, api_cookies, expected_link):
+    async def test_get_links(self, api_client, api_cookies, active_link):
         resp = await api_client.get('/api/v2/operations/123/links', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         links = await resp.json()
-        assert len(links) == 1
-        assert links[0]['id'] == expected_link['id']
-        assert links[0]['paw'] == expected_link['paw']
-        assert links[0]['command'] == expected_link['command']
+        assert len(links) == 2
+        assert links[0]['id'] == active_link['id']
+        assert links[0]['paw'] == active_link['paw']
+        assert links[0]['command'] == active_link['command']
 
     async def test_unauthorized_get_links(self, api_client):
         resp = await api_client.get('/api/v2/operations/123/links')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_get_operation_link(self, api_client, api_cookies, expected_link):
+    async def test_get_operation_link(self, api_client, api_cookies, active_link):
         resp = await api_client.get('/api/v2/operations/123/links/456', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         link = await resp.json()
-        assert link['id'] == expected_link['id']
-        assert link['paw'] == expected_link['paw']
-        assert link['command'] == expected_link['command']
+        assert link['id'] == active_link['id']
+        assert link['paw'] == active_link['paw']
+        assert link['command'] == active_link['command']
 
     async def test_unauthorized_get_operation_link(self, api_client):
         resp = await api_client.get('/api/v2/operations/123/links/456')
@@ -294,16 +314,16 @@ class TestOperationsApi:
         resp = await api_client.get('/api/v2/operations/123/links/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_update_operation_link(self, api_client, api_cookies, expected_link):
-        original_command = expected_link['command']
+    async def test_update_operation_link(self, api_client, api_cookies, active_link):
+        original_command = active_link['command']
         payload = dict(command='bHM=')
         resp = await api_client.patch('/api/v2/operations/123/links/456', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.OK
         op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
         assert op.chain[0].command != original_command
         assert op.chain[0].command == payload['command']
-        assert op.chain[0].id == expected_link['id']
-        assert op.chain[0].paw == expected_link['paw']
+        assert op.chain[0].id == active_link['id']
+        assert op.chain[0].paw == active_link['paw']
 
     async def test_unauthorized_update_operation_link(self, api_client):
         payload = dict(command='bHM=')
@@ -319,6 +339,11 @@ class TestOperationsApi:
         payload = dict(command='bHM=')
         resp = await api_client.patch('/api/v2/operations/123/links/999', json=payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
+
+    async def test_update_finished_operation_link(self, api_client, api_cookies):
+        payload = dict(command='bHM=', status=-1)
+        resp = await api_client.patch('/api/v2/operations/123/links/789', json=payload, cookies=api_cookies)
+        assert resp.status == HTTPStatus.FORBIDDEN
 
     async def test_get_potential_links(self, api_client, api_cookies, mocker, async_return):
         BaseService.get_service('rest_svc').build_potential_abilities = mocker.Mock()
