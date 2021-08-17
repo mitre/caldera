@@ -737,24 +737,24 @@
 
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
-                                <button class="button p-0 ml-2 is-primary width-100" x-on:click="openModal = null">
+                                <button class="button ml-2 is-primary width-100" x-on:click="openModal = null">
                                     Close
                                 </button>
                             </template>
                             <template x-if="!(openModal === 'addLink' || openModal === 'showDownloadMenu')">
-                                <button class="button p-0 ml-2" x-on:click="openModal = null">
+                                <button class="button ml-2" x-on:click="openModal = null">
                                     Cancel
                                 </button>
                             </template>
                             <template x-if="openModal === 'deleteOperationModal'">
-                                <button class="button p-0 is-primary"
+                                <button class="button is-primary"
                                         x-on:click="deleteOperation(); openModal = null;">
                                     Yes
                                 </button>
                             </template>
                             <!--                            TODO bug with pressing Enter in create new operation form (it should start operation instead)-->
                             <template x-if="openModal === 'addOperation'">
-                                <button type="button" class="button p-0 is-primary" x-on:click="addOperation(false)"
+                                <button type="button" class="button is-primary" x-on:click="addOperation(false)"
                                         x-text="schedule ? 'Schedule' : 'Start'"></button>
                             </template>
                         </footer>
