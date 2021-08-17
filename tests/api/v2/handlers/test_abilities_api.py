@@ -44,7 +44,7 @@ class TestAbilitiesApi:
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_get_nonexistent_ability_by_id(self, api_client, api_cookies):
-        resp = await api_client.get('/api/v2/abilities/123', cookies=api_cookies)
+        resp = await api_client.get('/api/v2/abilities/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_create_ability(self, api_client, api_cookies, mocker, async_return):
@@ -89,6 +89,8 @@ class TestAbilitiesApi:
         assert ability.tactic == payload['tactic']
         assert ability.ability_id == test_ability.ability_id
         assert ability.description == test_ability.description
+        assert ability.technique_id == test_ability.technique_id
+        assert ability.technique_name == test_ability.technique_name
 
     async def test_unauthorized_update_ability(self, api_client, test_ability):
         payload = dict(name='an updated test ability', tactic='defense-evasion')
@@ -97,7 +99,7 @@ class TestAbilitiesApi:
 
     async def test_update_nonexistent_ability(self, api_client, api_cookies):
         payload = dict(name='an updated test ability', tactic='defense-evasion')
-        resp = await api_client.patch('/api/v2/abilities/123', cookies=api_cookies, json=payload)
+        resp = await api_client.patch('/api/v2/abilities/999', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_replace_ability(self, api_client, api_cookies, test_ability):
@@ -131,6 +133,7 @@ class TestAbilitiesApi:
         assert ability['technique_name'] == payload['technique_name']
         assert ability['technique_id'] == payload['technique_id']
         assert ability['tactic'] == payload['tactic']
+        assert ability['ability_id'] == '123'
 
     async def test_invalid_replace_ability(self, api_client, api_cookies, test_ability):
         payload = dict(name='replaced test ability', tactic='collection', technique_name='discovery', technique_id='2',
