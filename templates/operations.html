@@ -287,8 +287,9 @@
                                                 <div class="mb-5">
                                                     <p class="is-size-7">Facts: </p>
                                                     <template x-for="(fact, index) in selectedLinkFacts">
-                                                        <code x-bind:id="index" class="highlight" x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
-<!--                                                        TODO fix selectedLinkFacts length error-->
+                                                        <code x-bind:id="index" class="highlight"
+                                                              x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
+                                                        <!--                                                        TODO fix selectedLinkFacts length error-->
                                                     </template>
                                                 </div>
                                             </template>
@@ -318,7 +319,7 @@
                                                 </template>
                                             </select>
                                         </td>
-                                        <td x-show="selectedAgentInde">
+                                        <td x-show="selectedAgentIndex">
                                             <select x-model="manualCommand.executor"
                                                     id="manual-executor"
                                                     class="column executor-selector">
@@ -667,7 +668,7 @@
                                                         <p x-text="link.ability.name"></p>
                                                         <button type="button"
                                                                 class="button is-primary is-small"
-                                                                x-on:click="addLink(link)">
+                                                                x-on:click="addPotentialLink(link)">
                                                             Add Link
                                                         </button>
                                                     </li>
@@ -786,8 +787,8 @@
         '124': 'timeout'
     };
     const emptyOperationsObject = {
-        // TODO ID and objective field? timeout?
-        // id: "",
+        // TODO objective field
+        // objective: {"id": ""},
         name: "",
         group: "",
         adversary: {"adversary_id": ""},
@@ -795,7 +796,6 @@
         state: "running",
         autonomous: 1,
         planner: {"id": "atomic"},
-        // objective: {"id": ""},
         source: {"id": "basic"},
         use_learning_parsers: 1,
         // timeout: "30",
@@ -1076,12 +1076,18 @@
                 })
             },
 
-            addLink(link) {
-                restRequest('PUT', {...link, index: "link"}, () => {
-                    this.getOperations();
-                    this.getAgents();
-                    this.openModal = null;
-                });
+            // TODO potential link filter by agent, technique OR tactic
+            addPotentialLink(link) {
+                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, link)
+                    .then((res) => {
+                        toast('Added potential link.', true);
+                        this.getOperations();
+                        this.getAgents();
+                        this.openModal = null;
+                    })
+                    .catch((error) => {
+                        toast('Error adding potential link.');
+                    })
             },
 
             updateOperationState(newState) {
