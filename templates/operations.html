@@ -96,20 +96,20 @@
                                     </div>
                                     <div class="controls-container is-flex is-justify-content-center is-align-items-center">
                                         <button class="button no-style is-large"
-                                                x-on:click="updateOperationState('cleanup')"><i
+                                                x-on:click="updateOperation('state', 'cleanup')"><i
                                                 alt="stop" class="fas fa-stop"></i></button>
                                         <template x-if="selectedOperation.state ==='running'">
                                             <button class="button no-style is-larger"
-                                                    x-on:click="updateOperationState('paused')"><i
+                                                    x-on:click="updateOperation('state', 'paused')"><i
                                                     alt="pause" class="fas fa-pause-circle"></i></button>
                                         </template>
                                         <template x-if="selectedOperation.state !== 'running'">
                                             <button class="button no-style is-larger"
-                                                    x-on:click="updateOperationState('running')">
+                                                    x-on:click="updateOperation('state', 'running')">
                                                 <i alt="run" class="fas fa-play-circle"></i></button>
                                         </template>
                                         <button class="button no-style is-medium"
-                                                x-on:click="updateOperationState('run_one_link')">
+                                                x-on:click="updateOperation('state', 'run_one_link')">
                                             <i alt="run one step" class="fas fa-play"><sub>1</sub></i></button>
                                     </div>
 
@@ -140,7 +140,7 @@
                                                 {% for o in obfuscators %}
                                                 <button x-bind:class="selectedOperation.obfuscator === `{{ o.name|e }}` ? 'selected' : ''"
                                                         class="no-style chip-select"
-                                                        x-on:click="updateObfuscator(`{{ o.name|e }}`)">
+                                                        x-on:click="updateOperation('obfuscator', `{{ o.name|e }}`)">
                                                     {{ o.name|e }}
                                                 </button>
                                                 {% endfor %}
@@ -154,10 +154,9 @@
                                                     <input type="checkbox"
                                                            id="toggleAutonomous"
                                                            x-model="selectedOperation.autonomous"
-                                                           x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"
-                                                           x-on:change="updateOperationToggle()"/>
+                                                           x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
                                                     <span class="toggleSlider toggleSliderRound"
-                                                          x-on:click="selectedOperation.autonomous = !selectedOperation.autonomous; updateOperationToggle()"
+                                                          x-on:click="selectedOperation.autonomous = !selectedOperation.autonomous; updateOperation('autonomous', Number(selectedOperation.autonomous))"
                                                           x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
                                                 <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
                                             </span>
@@ -216,7 +215,7 @@
                                     <tbody :key="index">
                                     <tr x-bind:id="link.id"
                                         x-bind:class="selectedLink === link ? 'selected' : ''"
-                                        x-on:click="selectedLink = link; getLinkResults(link.id);">
+                                        x-on:click="selectedLink = link; getLink(link.id);">
                                         <td class="decideColumn">
                                             <span x-text="getHumanFriendlyTime(link.decide)"></span>
                                             <span x-bind:class="'status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"
@@ -265,7 +264,7 @@
                                                               spellcheck="false"></textarea>
                                                     <button type="button"
                                                             class="button is-primary is-small"
-                                                            x-on:click="updateLinkState(selectedLink?.id, -3, editableCommand); showLinkEditCommandID = null;">
+                                                            x-on:click="updateLinkState(-3, editableCommand); showLinkEditCommandID = null;">
                                                         Update
                                                     </button>
                                                 </div>
@@ -1071,7 +1070,7 @@
                     })
             },
 
-            getLinkResults(linkID) {
+            getLink(linkID) {
                 apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${linkID}`)
                     .then((res) => {
                         this.selectedLinkOutput = res.output;
@@ -1089,53 +1088,33 @@
                     });
             },
 
-            updateOperationState(newState) {
-                this.selectedOperation.state = newState;
+            // TODO
+            updateLinkState(status, command = null) {
+                const updateLink = this.selectedLink;
+                if (command) {
+                    updateLink.command = command;
+                }
+                updateLink.status = status;
+                apiV2('PATCH', endpoint + `/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
+                    .then((res) => {
+                        this.getOperation();
+                        toast('Updating link status to: ' + linkStatuses[status], true);
+                    })
+                    // TODO have clearer error messaging here
+                    .catch((error) => toast('Error updating link state.'));
+            },
+
+            updateOperation(field, updateValue) {
+                this.selectedOperation[field] = updateValue;
                 apiV2('PATCH', endpoint + '/' + this.selectedOperationID, this.selectedOperation)
                     .then((rest) => {
-                        toast('Changing operation state to: ' + this.selectedOperation.state, true);
+                        toast(`Updated operation ${field} to: ${updateValue}`, true);
                         this.getOperation();
                     })
                     .catch((error) => {
-                        toast('Error updating operation state. Operation may have already finished running.');
+                        // TODO have clearer error messaging here
+                        toast(`Error updating operation ${field}. Operation may have already finished running.`);
                     });
-            },
-
-            updateOperationToggle() {
-                restRequest('POST', {
-                    'index': 'operation',
-                    'op_id': this.selectedOperationID,
-                    'autonomous': 'toggleMe'
-                });
-            },
-
-            updateObfuscator(newObfuscator) {
-                this.selectedOperation.obfuscator = newObfuscator;
-                restRequest('POST', {
-                    'index': 'operation',
-                    'op_id': this.selectedOperationID,
-                    'obfuscator': this.selectedOperation.obfuscator
-                });
-            },
-
-            updateLinkState(linkID, status, command = null) {
-                const data = {
-                    'index': 'chain',
-                    'link_id': linkID,
-                    'status': status
-                };
-                if (command) {
-                    data['command'] = command;
-                }
-                restRequest('POST', data, (data) => {
-                        if (data['error']) {
-                            toast('Error: ' + data['error']);
-                            return;
-                        }
-                        this.getOperation();
-                        toast('Updating link status to: ' + linkStatuses[status], true);
-                    }
-                );
             },
 
             downloadInfo(formatType) {
