@@ -21,6 +21,9 @@ def make_app(services):
     from .handlers.planner_api import PlannerApi
     PlannerApi(services).add_routes(app)
 
+    from .handlers.ability_api import AbilityApi
+    AbilityApi(services).add_routes(app)
+
     from .handlers.plugins_api import PluginApi
     PluginApi(services).add_routes(app)
 
