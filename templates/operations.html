@@ -694,20 +694,20 @@
                                                 <input id="agent-output" type="checkbox"
                                                        class="mr-1"
                                                        x-model="isAgentOutputSelected">
-                                                <label for="agent-output">include</label>
+                                                <label for="agent-output">include agent output</label>
                                             </div>
                                         </div>
                                         <div>
                                             <label for="report-type">Report type:</label>
                                             <div class="modal-form-fields download-buttons-container" id="report-type">
-                                                <button title="download full report"
-                                                        class="button is-primary is-small ml-2"
+                                                <button type="button" title="download full report"
+                                                        class="button type=button is-primary is-small ml-2"
                                                         x-on:click="downloadInfo('full-report')"><i
                                                         class="pr-1 fas fa-arrow-down"></i>
                                                     Full report
-                                                </button>
-                                                <button title="download event logs"
-                                                        class="button is-primary is-small ml-2"
+                                                </button tye=button>
+                                                <button type="button" title="download event logs"
+                                                        class="button type=button is-primary is-small ml-2"
                                                         x-on:click="downloadInfo('event-logs')"><i
                                                         class="pr-1 fas fa-arrow-down"></i>
                                                     Event logs
@@ -802,7 +802,7 @@
         jitter: "4/8",
         visibility: "50",
     };
-    const emptyManualCommandObject =  {
+    const emptyManualCommandObject = {
         paw: "",
         executor: {
             name: "",
@@ -1118,19 +1118,11 @@
             },
 
             downloadInfo(formatType) {
-                if (!this.selectedOperationID) {
-                    toast('Select a valid operation to download.');
-                } else {
-                    restRequest('POST', {
-                        'index': 'operation_report',
-                        'op_id': this.selectedOperationID,
-                        'agent_output': Number(this.isAgentOutputSelected),
-                        'format': formatType
-                    }, (data) => {
-                        data = JSON.parse(data);
-                        this.createDownloadReport(data, this.selectedOperation.name + '_' + formatType);
+                apiV2('GET', endpoint + `/${this.selectedOperationID}/report`)
+                    .then((res) => {
+                        this.createDownloadReport(res, this.selectedOperation.name + '_' + formatType);
                     })
-                }
+                    .catch((error) => toast('Error generating operation report.'));
             },
 
             //
