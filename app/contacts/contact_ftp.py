@@ -61,7 +61,7 @@ class Contact(BaseWorld):
                 write_speed_limit_per_connection=100 * 1024
             ),
         )
-        # Instantiate FTP server on local host and listen on 1026
+        # Instantiate FTP server on local host and listen on port indicated in config
         self.server = MyServer(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
                                self.pword, self.directory)
 
@@ -73,14 +73,13 @@ class Contact(BaseWorld):
 
 
 class MyServer(aioftp.Server):
-    def __init__(self, user, contact, file, log, host_ip, port_in, username, password, user_dir,
-                 *,  max_con=256):
+    def __init__(self, user, contact_svc, file_svc, logger, host, port, username, password, user_dir, *,  max_con=256):
         super().__init__(user, maximum_connections=max_con)
-        self.contact_svc = contact
-        self.file_svc = file
-        self.logger = log
-        self.host = host_ip
-        self.port = port_in
+        self.contact_svc = contact_svc
+        self.file_svc = file_svc
+        self.logger = logger
+        self.host = host
+        self.port = port
         self.login = username
         self.pword = password
         self.directory = user_dir
@@ -133,22 +132,19 @@ class MyServer(aioftp.Server):
         connection.response(code, info)
         return True
 
-    async def handle_agent_file(self, file_name, file_bytes, r_class):
-        if re.match(r'^Alive\.txt$', file_name[-1]):
+    async def handle_agent_file(self, split_file_path, file_bytes, r_class):
+        if re.match(r'^Alive\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
-            paw, response = await r_class.create_beacon_response(profile)
-            success = r_class.write_beacon_response_file(paw, response)
-            if not success:
-                self.logger.debug('ERROR: Failed to create response')
-        elif re.match(r'^Payload\.txt$', file_name[-1]):
+            paw, contents = await r_class.create_beacon_response(profile)
+            r_class.write_file(paw, 'Response.txt', json.dumps(contents))
+        elif re.match(r'^Payload\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
             file_path, contents, display_name = await r_class.get_payload_file(profile)
             if file_path is not None:
-                r_class.write_payload_file(profile.get('paw'), profile.get('file'), str(contents))
-
+                r_class.write_file(profile.get('paw'), profile.get('file'), str(contents))
         else:
-            paw = file_name[-2]
-            filename = file_name[-1]
+            paw = split_file_path[-2]
+            filename = split_file_path[-1]
             await r_class.submit_uploaded_file(paw, filename, file_bytes)
 
 
@@ -174,35 +170,16 @@ class CalderaServer:
                               % (agent.contact, agent.pending_contact))
         return agent.paw, response
 
-    def write_beacon_response_file(self, paw, response):
+    def write_file(self, paw, file_name, contents):
         try:
             if not os.path.exists(self.ftp_server_dir):
                 os.makedirs(self.ftp_server_dir)
-
-            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), 'Response.txt')
-            with open(filename, 'w+') as f:
-                f.write(json.dumps(response))
-            self.logger.debug('Beacon response created: %s' % filename)
-
-        except IOError:
-            self.logger.info('ERROR: Failed to create response file')
-            return False
-        return True
-
-    def write_payload_file(self, paw, file_name, contents):
-        try:
-            if not os.path.exists(self.ftp_server_dir):
-                os.makedirs(self.ftp_server_dir)
-
             filename = os.path.join(os.path.join(self.ftp_server_dir, paw), file_name)
             with open(filename, 'w+') as f:
                 f.write(contents)
-            self.logger.debug('Payload file written: %s' % self.ftp_server_dir)
-
+            self.logger.debug('File written to: %s' % os.path.join(self.ftp_server_dir, paw))
         except IOError:
-            self.logger.info('ERROR: Failed to create file')
-            return False
-        return True
+            self.logger.error('Failed to write file %s for paw %s', file_name, paw)
 
     async def get_payload_file(self, payload_dict):
         return await self.file_svc.get_file(payload_dict)
