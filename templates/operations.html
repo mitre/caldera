@@ -320,7 +320,7 @@
                                             </select>
                                         </td>
                                         <td x-show="selectedAgentIndex">
-                                            <select x-model="manualCommand.executor"
+                                            <select x-model="manualCommand.executor.name"
                                                     id="manual-executor"
                                                     class="column executor-selector">
                                                 <option>Choose executor</option>
@@ -335,7 +335,7 @@
                                         <td x-show="selectedAgentIndex">
                                             <label x-show="false" for="input-command">Type manual command:</label>
                                             <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
-                                                <textarea x-model="manualCommand.command"
+                                                <textarea x-model="manualCommand.executor.command"
                                                           class="input executor-command"
                                                           id="input-command"
                                                           type="text"
@@ -345,12 +345,12 @@
                                                 <div class="is-flex is-flex-direction-row is-align-items-flex-end">
                                                     <button type="button"
                                                             class="button is-small mr-2"
-                                                            x-on:click="addNewRow = false;">
+                                                            x-on:click="addNewRow = false">
                                                         Cancel
                                                     </button>
                                                     <button type="button"
                                                             class="button is-primary is-small mt-2"
-                                                            x-on:click="handleManualCommand();">
+                                                            x-on:click="addManualCommand()">
                                                         Add Command
                                                     </button>
                                                 </div>
@@ -802,7 +802,15 @@
         obfuscator: "plain-text",
         jitter: "4/8",
         visibility: "50",
-    }
+    };
+    const emptyManualCommandObject =  {
+        paw: "",
+        executor: {
+            name: "",
+            platform: "",
+            command: "",
+        }
+    };
 
     // https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting
     function getHumanFriendlyTime(date) {
@@ -911,13 +919,7 @@
             startOperation: emptyOperationsObject,
             jitterMin: 4,
             jitterMax: 8,
-            manualCommand: {
-                index: "manual_command",
-                agent: "",
-                operation: "",
-                executor: "",
-                command: ""
-            },
+            manualCommand: emptyManualCommandObject,
             potentialLink: {
                 agent: "",
                 tactic: "",
@@ -1036,6 +1038,39 @@
                     });
             },
 
+            addManualCommand() {
+                if (!this.manualCommand.executor.command) {
+                    toast('Enter manual command.');
+                    return;
+                }
+                this.manualCommand.paw = this.selectedAgent.paw;
+                this.manualCommand.executor.name = document.getElementById('manual-executor').selectedOptions[0].value;
+                this.manualCommand.executor.platform = this.selectedAgent.platform;
+
+                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, this.manualCommand)
+                    .then((res) => {
+                        toast('Added manual command.', true);
+                        this.addNewRow = false;
+                        this.getOperation();
+                        this.manualCommand = emptyManualCommandObject;
+                        this.selectedAgentIndex = null;
+                    })
+                    .catch((error) => toast('Error adding manual command.'));
+            },
+
+            addPotentialLink(link) {
+                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, link)
+                    .then((res) => {
+                        toast('Added potential link.', true);
+                        this.getOperations();
+                        this.getAgents();
+                        this.openModal = null;
+                    })
+                    .catch((error) => {
+                        toast('Error adding potential link.');
+                    })
+            },
+
             getLinkResults(linkID) {
                 apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${linkID}`)
                     .then((res) => {
@@ -1052,42 +1087,6 @@
                         this.selectedLinkCommand = null;
                         toast('Error getting link results.');
                     });
-            },
-
-            handleManualCommand() {
-                if (!this.manualCommand.command) {
-                    toast('Enter manual command.');
-                    this.addNewRow = false;
-                    return;
-                }
-                this.manualCommand.agent = this.selectedAgent.paw;
-                this.manualCommand.operation = this.selectedOperationID;
-                this.manualCommand.executor = document.getElementById('manual-executor').selectedOptions[0].value;
-                restRequest('PUT', this.manualCommand, (data) => {
-                    data = JSON.parse(data);
-                    this.openModal = null;
-                    if (data['error']) toast('Error: ' + data['error']);
-                    else {
-                        toast('Added manual command.', true);
-                        this.getOperation();
-                        this.resetObject(this.manualCommand);
-                        this.selectedAgentIndex = null;
-                    }
-                })
-            },
-
-            // TODO potential link filter by agent, technique OR tactic
-            addPotentialLink(link) {
-                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, link)
-                    .then((res) => {
-                        toast('Added potential link.', true);
-                        this.getOperations();
-                        this.getAgents();
-                        this.openModal = null;
-                    })
-                    .catch((error) => {
-                        toast('Error adding potential link.');
-                    })
             },
 
             updateOperationState(newState) {
@@ -1212,6 +1211,7 @@
                 this.getOperationsMenuCaretDisplay();
             },
 
+            // TODO potential link filter by agent, technique OR tactic (API call) rather than filtering on the client-side
             filterAbilities() {
                 this.filteredLinksList = this.potentialLink.agent.links.filter((link) => {
                     let match = true;
