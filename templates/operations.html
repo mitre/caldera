@@ -1023,9 +1023,13 @@
             },
 
             getAgents() {
-                restRequest('POST', {'index': 'agents'}, (data) => {
-                    this.updateAgentGroups(JSON.parse(data));
-                });
+                apiV2('GET', 'api/v2/agents')
+                    .then((res) => {
+                        this.updateAgentGroups(res);
+                    })
+                    .catch((error) => {
+                        toast('Error getting agents.');
+                    });
             },
 
             // TODO check with mock fact data
