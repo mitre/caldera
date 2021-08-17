@@ -1,7 +1,8 @@
 import abc
+from app.service.interfaces.i_object_svc import ObjectServiceInterface
 
 
-class KnowledgeServiceInterface(abc.ABC):
+class KnowledgeServiceInterface(ObjectServiceInterface):
 
     @abc.abstractmethod
     async def add_fact(self, fact, constraints=None):
@@ -115,8 +116,4 @@ class KnowledgeServiceInterface(abc.ABC):
         Remove a rule from the internal store
         :param criteria: dictionary containing fields to match on
         """
-        pass
-
-    async def destroy(self):
-        """Delete data stores"""
         pass

@@ -272,7 +272,12 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :return: Sorted links
         :rtype: list(Link)
         """
-        return sorted(links, key=lambda k: (-k.score))
+        normals = [x for x in links if not x.ability.repeatable]
+        repeats = [x for x in links if x.ability.repeatable] # sort the links list so that repeatable
+                                                             # abilities are sent to the back of the list
+        normals = sorted(normals, key=lambda k: (-k.score))
+        repeats = sorted(repeats, key=lambda k: (-k.score))
+        return normals + repeats
 
     """ PRIVATE """
 
