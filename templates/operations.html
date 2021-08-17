@@ -1090,12 +1090,15 @@
             },
 
             updateOperationState(newState) {
-                toast('Changing operation state to: ' + newState, true);
-                restRequest('POST', {
-                    'index': 'operation',
-                    'op_id': this.selectedOperationID,
-                    'state': newState
-                }, () => this.getOperation());
+                this.selectedOperation.state = newState;
+                apiV2('PATCH', endpoint + '/' + this.selectedOperationID, this.selectedOperation)
+                    .then((rest) => {
+                        toast('Changing operation state to: ' + this.selectedOperation.state, true);
+                        this.getOperation();
+                    })
+                    .catch((error) => {
+                        toast('Error updating operation state. Operation may have already finished running.');
+                    });
             },
 
             updateOperationToggle() {
