@@ -10,6 +10,8 @@ from datetime import datetime
 
 import app.service.data_svc
 from app.utility.base_service import BaseService
+from app.objects.secondclass.c_fact import Fact, WILDCARD_STRING
+from app.objects.secondclass.c_relationship import Relationship
 
 DATA_BACKUP_DIR = app.service.data_svc.DATA_BACKUP_DIR
 FACT_STORE_PATH = "data/fact_store"
@@ -119,8 +121,13 @@ class BaseKnowledgeService(BaseService):
         matches = await self._get_relationships(criteria)
         for match in matches:
             for k, v in updates.items():
-                if getattr(match, k, False):
-                    setattr(match, k, v)
+                if getattr(match, k, "eMpTy") != "eMpTy":
+                    if isinstance(getattr(match, k), Fact) and not isinstance(v, Fact):
+                        handle = getattr(match, k)
+                        for x in v.keys():
+                            setattr(handle, x, v[x])
+                    else:
+                        setattr(match, k, v)
 
     async def _delete_relationship(self, criteria):
         """
@@ -190,43 +197,6 @@ class BaseKnowledgeService(BaseService):
         if len(criteria_matches) == len(desired_quals):
             return True
 
-    # --- New Inferencing API ---
-    # NOT IMPLEMENTED YET
-    async def _similar_facts(self, fact, agent, group):
-        ###
-        # return facts that are close to supplied fact.
-        #
-        #
-        # Ex:
-        #    - other facts for an agent with given trait/value
-        #    - other facts for the group/agent
-        #    - other facts with same value
-        ###
-        raise NotImplementedError
-
-    async def _fact_value_distribution(self, critera, agent=None, group=None):
-        ###
-        # return the value distribution for the given fact, and further filtered down to agent/group if supplied
-        #
-        #
-        # Ex: fact value distribution for 'host.user.name' on group 'workstations':
-        #     --> [{'admin': .4}, {'system': .4}, {'michael': .1}, {'workstation1': .1}]
-        ###
-        raise NotImplementedError
-
-    async def _best_guess(self, criteria, agent=None, group=None):
-        # wrapper around 'fact_value_distribution', just returning highest probable value
-        raise NotImplementedError
-
-    async def _best_facts(self, agent=None, group=None, metric='usage_success'):
-        ###
-        # best facts based on requested metric
-        #
-        # Args:
-        #    metric: ['usage_success', 'most_recent_success', ...]
-        ###
-        raise NotImplementedError
-
     async def _locate(self, object_name, query=None):
         """
         Locate a matching object in the internal store
@@ -235,7 +205,7 @@ class BaseKnowledgeService(BaseService):
         :return: list of matching objects
         """
         try:
-            return [obj for obj in self.fact_ram[object_name] if obj.match(query)]
+            return [obj for obj in self.fact_ram[object_name] if self._wildcard_match(obj, query)]
         except Exception as e:
             self.log.error('[!] LOCATE: %s' % e)
 
@@ -246,7 +216,7 @@ class BaseKnowledgeService(BaseService):
         :param query: dictionary of fields to match on
         """
         try:
-            sublist = [obj for obj in self.fact_ram[object_name] if obj.match(query)]
+            sublist = [obj for obj in self.fact_ram[object_name] if self._wildcard_match(obj, query)]
             await self._clear_matching_constraints(sublist)
             self.fact_ram[object_name][:] = [obj for obj in self.fact_ram[object_name] if obj not in sublist]
         except Exception as e:
@@ -368,3 +338,35 @@ class BaseKnowledgeService(BaseService):
             if _check_restrictions(constraints, restrictions):
                 ret.append(entry)
         return ret
+
+    def _wildcard_match(self, obj, criteria):
+        """
+        Modified variant of the normal `match` method for objects that will return matches for wildcard fields
+            [fact object].source
+            [relationship object].origin
+        :param obj: The object to validate
+        :param criteria: The values to check against
+        """
+        if not criteria:
+            return obj
+        criteria_matches = []
+        for k, v in criteria.items():
+            if type(v) is tuple:
+                for val in v:
+                    if getattr(obj, k) == val:
+                        criteria_matches.append(True)
+            else:
+                if getattr(obj, k) == v:
+                    criteria_matches.append(True)
+                elif isinstance(getattr(obj, k), Fact):  # this is a match based on a fact object in a relationship
+                    if isinstance(v, Fact):
+                        if getattr(obj, k) == v:
+                            criteria_matches.append(True)
+                    elif self._wildcard_match(getattr(obj, k), v):
+                        criteria_matches.append(True)
+                else:  # Wildcard match check
+                    if (k == 'source' and isinstance(obj, Fact)) or (k == 'origin' and isinstance(obj, Relationship)):
+                        if getattr(obj, k) == WILDCARD_STRING:
+                            criteria_matches.append(True)
+        if len(criteria_matches) >= len(criteria) and all(criteria_matches):
+            return obj

@@ -29,6 +29,10 @@ class OriginType(Enum):
     SEEDED = 1
     LEARNED = 2
     IMPORTED = 3
+    USER = 4
+
+
+WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
 
 
 class FactSchema(ma.Schema):
@@ -40,7 +44,7 @@ class FactSchema(ma.Schema):
     trait = ma.fields.String(required=True)
     name = ma.fields.String(dump_only=True)
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     score = ma.fields.Integer()
     source = ma.fields.String(allow_none=True)
     origin_type = ma_enum.EnumField(OriginType, allow_none=True)

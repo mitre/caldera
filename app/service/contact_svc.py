@@ -16,7 +16,7 @@ def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
         log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
-                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                   date=BaseWorld.get_current_timestamp())
         args[0].report[agent.contact].append(log)
         return agent, instructions
 
@@ -186,4 +186,4 @@ class ContactService(ContactServiceInterface, BaseService):
         """
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             if op.group == agent.group or not op.group:
-                await op.update_operation(self.get_services())
+                await op.update_operation_agents(self.get_services())

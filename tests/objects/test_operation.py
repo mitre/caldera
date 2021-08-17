@@ -18,6 +18,8 @@ from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
 
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
 
 @pytest.fixture
 def operation_agent(agent):
@@ -68,17 +70,17 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
                             command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
-                            decide=datetime.strptime('2021-01-01 08:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 08:01:00', '%Y-%m-%d %H:%M:%S'),
+                            decide=datetime.strptime('2021-01-01 08:00:00', TIME_FORMAT),
+                            collect=datetime.strptime('2021-01-01 08:01:00', TIME_FORMAT),
                             finish='2021-01-01 08:02:00')
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                             command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
-                            decide=datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 09:01:00', '%Y-%m-%d %H:%M:%S'),
+                            decide=datetime.strptime('2021-01-01 09:00:00', TIME_FORMAT),
+                            collect=datetime.strptime('2021-01-01 09:01:00', TIME_FORMAT),
                             finish='2021-01-01 09:02:00')
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                                     command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
-                                    decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
+                                    decide=datetime.strptime('2021-01-01 10:00:00', TIME_FORMAT))
     op.chain = [link_1, link_2, discarded_link]
     return op
 
@@ -148,7 +150,7 @@ def op_with_learning_and_seeded(ability, adversary, operation_agent):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
     # patch operation to make it 'realistic'
-    op.start = datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S')
+    op.start = datetime.strptime('2021-01-01 09:00:00', TIME_FORMAT)
     op.adversary = op.adversary()
     op.planner = Planner(planner_id='12345', name='test_planner',
                                                   module='not.an.actual.planner', params=None)
@@ -169,8 +171,8 @@ class TestOperation:
     def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
+        start_time = op_for_event_logs.start.strftime(TIME_FORMAT)
+        agent_creation_time = operation_agent.created.strftime(TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -239,8 +241,8 @@ class TestOperation:
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
 
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
+        start_time = op_for_event_logs.start.strftime(TIME_FORMAT)
+        agent_creation_time = operation_agent.created.strftime(TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',

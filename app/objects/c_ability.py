@@ -1,5 +1,6 @@
 import collections
 import os
+import uuid
 
 import marshmallow as ma
 
@@ -18,7 +19,7 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -27,11 +28,17 @@ class AbilitySchema(ma.Schema):
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
 
+    @ma.pre_load
+    def fix_id(self, data, **_):
+        if 'id' in data:
+            data['ability_id'] = data.pop('id')
+        return data
+
     @ma.post_load
-    def build_ability(self, data, **_):
+    def build_ability(self, data, **kwargs):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return Ability(**data)
+        return None if kwargs.get('partial') is True else Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
@@ -49,11 +56,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def executors(self):
         yield from self._executor_map.values()
 
-    def __init__(self, ability_id, name=None, description=None, tactic=None, technique_id=None, technique_name=None,
+    def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, **kwargs):
         super().__init__()
-        self.ability_id = ability_id
+        self.ability_id = ability_id if ability_id else str(uuid.uuid4())
         self.tactic = tactic.lower() if tactic else None
         self.technique_name = technique_name
         self.technique_id = technique_id
@@ -92,6 +99,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('description', self.description)
         existing.update('_executor_map', self._executor_map)
         existing.update('privilege', self.privilege)
+        existing.update('repeatable', self.repeatable)
+        existing.update('buckets', self.buckets)
+        existing.update('tags', self.tags)
+        existing.update('singleton', self.singleton)
         return existing
 
     async def which_plugin(self):
