@@ -208,6 +208,12 @@ class TestOperationsApi:
         resp = await api_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
+    async def test_create_finished_operation(self, api_client, api_cookies, expected_operation):
+        payload = dict(name='post_test', id='111', planner={'id': '123'},
+                       adversary={'adversary_id': '123'}, source={'id': '123'}, state='finished')
+        resp = await api_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.BAD_REQUEST
+
     async def test_unauthorized_create_operation(self, api_client):
         payload = dict(name='post_test', planner={'id': '123'},
                        adversary={'adversary_id': '123'}, source={'id': '123'})
