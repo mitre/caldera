@@ -89,20 +89,20 @@ class MyServer(aioftp.Server):
         aioftp.ConnectionConditions.login_required,
         aioftp.ConnectionConditions.passive_server_started)
     @aioftp.PathPermissions(aioftp.PathPermissions.writable)
-    async def stor(self, connection, rest, mode="wb"):
+    async def stor(self, connection, rest, mode='wb'):
 
         @aioftp.ConnectionConditions(
             aioftp.ConnectionConditions.data_connection_made,
             wait=True,
-            fail_code="425",
-            fail_info="Can't open data connection")
+            fail_code='425',
+            fail_info='Can not open data connection')
         @aioftp.worker
         async def stor_worker(self, connection, rest):
             bytes_obj = b''
             stream = connection.data_connection
             del connection.data_connection
             if connection.restart_offset:
-                file_mode = "r+b"
+                file_mode = 'r+b'
             else:
                 file_mode = mode
             file_out = connection.path_io.open(real_path, mode=file_mode)
@@ -113,34 +113,34 @@ class MyServer(aioftp.Server):
                 async for data in stream.iter_by_block(connection.block_size):
                     bytes_obj += data
 
-            await self.handle_agent_file(name, bytes_obj, r_class)
-            connection.response("226", "data transfer done")
+            await self.handle_agent_file(split_path, bytes_obj, r_class)
+            connection.response('226', 'data transfer done')
             del stream
             return True
 
         real_path, virtual_path = self.get_paths(connection, rest)
-        name = str(virtual_path).split("/")
-        self.logger.debug("File received: %s" % str(name[-1]))
+        split_path = str(virtual_path).split('/')
+        self.logger.debug('File received: %s' % str(split_path[-1]))
         r_class = CalderaServer(self.contact_svc, self.file_svc, self.logger, self.directory)
 
         if await connection.path_io.is_dir(real_path.parent):
             coro = stor_worker(self, connection, rest)
             task = asyncio.create_task(coro)
             connection.extra_workers.add(task)
-            code, info = "150", "data transfer started"
+            code, info = '150', 'data transfer started'
         else:
-            code, info = "550", "path unreachable"
+            code, info = '550', 'path unreachable'
         connection.response(code, info)
         return True
 
     async def handle_agent_file(self, file_name, file_bytes, r_class):
-        if re.match(r"^Alive\.txt$", file_name[-1]):
+        if re.match(r'^Alive\.txt$', file_name[-1]):
             profile = json.loads(file_bytes.decode())
             paw, response = await r_class.create_beacon_response(profile)
             success = r_class.write_beacon_response_file(paw, response)
             if not success:
-                self.logger.debug("ERROR: Failed to create response")
-        elif re.match(r"^Payload\.txt$", file_name[-1]):
+                self.logger.debug('ERROR: Failed to create response')
+        elif re.match(r'^Payload\.txt$', file_name[-1]):
             profile = json.loads(file_bytes.decode())
             file_path, contents, display_name = await r_class.get_payload_file(profile)
             if file_path is not None:
@@ -179,13 +179,13 @@ class CalderaServer:
             if not os.path.exists(self.ftp_server_dir):
                 os.makedirs(self.ftp_server_dir)
 
-            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), "Response.txt")
-            with open(filename, "w+") as f:
+            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), 'Response.txt')
+            with open(filename, 'w+') as f:
                 f.write(json.dumps(response))
-            self.logger.debug("Beacon response created: %s" % filename)
+            self.logger.debug('Beacon response created: %s' % filename)
 
         except IOError:
-            self.logger.info("ERROR: Failed to create response file")
+            self.logger.info('ERROR: Failed to create response file')
             return False
         return True
 
@@ -195,12 +195,12 @@ class CalderaServer:
                 os.makedirs(self.ftp_server_dir)
 
             filename = os.path.join(os.path.join(self.ftp_server_dir, paw), file_name)
-            with open(filename, "w+") as f:
+            with open(filename, 'w+') as f:
                 f.write(contents)
-            self.logger.debug("Payload file written: %s" % self.ftp_server_dir)
+            self.logger.debug('Payload file written: %s' % self.ftp_server_dir)
 
         except IOError:
-            self.logger.info("ERROR: Failed to create file")
+            self.logger.info('ERROR: Failed to create file')
             return False
         return True
 
