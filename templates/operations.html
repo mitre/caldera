@@ -1004,22 +1004,22 @@
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
-                            toast('Error adding operation');
-                        });
+                        toast('Error adding operation');
+                    });
                 }
             },
 
             deleteOperation() {
-                restRequest('DELETE', {'index': 'operations', 'id': this.selectedOperationID}, (res) => {
-                    // TODO check this error
-                    if (!res) toast('Error deleting operation.');
-                    else {
+                apiV2('DELETE', endpoint + '/' + this.selectedOperationID)
+                    .then(() => {
                         this.getOperations();
                         this.selectedOperation = null;
                         this.selectedOperationID = null;
                         toast('Deleted operation.', true);
-                    }
-                })
+                    })
+                    .catch((error) => {
+                        toast('Error deleting operation.');
+                    })
             },
 
             getAgents() {
