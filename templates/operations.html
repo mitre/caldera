@@ -216,7 +216,7 @@
                                     <tbody :key="index">
                                     <tr x-bind:id="link.id"
                                         x-bind:class="selectedLink === link ? 'selected' : ''"
-                                        x-on:click="selectedLink = link; getResults(link.id);">
+                                        x-on:click="selectedLink = link; getLinkResults(link.id);">
                                         <td class="decideColumn">
                                             <span x-text="getHumanFriendlyTime(link.decide)"></span>
                                             <span x-bind:class="'status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"
@@ -1036,7 +1036,7 @@
                     });
             },
 
-            getResults(linkID) {
+            getLinkResults(linkID) {
                 apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${linkID}`)
                     .then((res) => {
                         this.selectedLinkOutput = res.output;
