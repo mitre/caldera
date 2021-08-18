@@ -62,7 +62,7 @@ class Contact(BaseWorld):
             ),
         )
         # Instantiate FTP server on local host and listen on port indicated in config
-        self.server = MyServer(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
+        self.server = FtpHandler(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
                                self.pword, self.directory)
 
     async def ftp_server_python_old(self):
@@ -72,7 +72,7 @@ class Contact(BaseWorld):
         await self.server.run(host=self.host, port=self.port)
 
 
-class MyServer(aioftp.Server):
+class FtpHandler(aioftp.Server):
     def __init__(self, user, contact_svc, file_svc, logger, host, port, username, password, user_dir, *,  max_con=256):
         super().__init__(user, maximum_connections=max_con)
         self.contact_svc = contact_svc
@@ -82,7 +82,8 @@ class MyServer(aioftp.Server):
         self.port = port
         self.login = username
         self.pword = password
-        self.directory = user_dir
+        self.ftp_server_dir = os.path.join(os.getcwd(), user_dir)
+        self._check_ftp_server_dir()
 
     @aioftp.ConnectionConditions(
         aioftp.ConnectionConditions.login_required,
@@ -112,7 +113,7 @@ class MyServer(aioftp.Server):
                 async for data in stream.iter_by_block(connection.block_size):
                     bytes_obj += data
 
-            await self.handle_agent_file(split_path, bytes_obj, r_class)
+            await self.handle_agent_file(split_path, bytes_obj)
             connection.response('226', 'data transfer done')
             del stream
             return True
@@ -120,7 +121,6 @@ class MyServer(aioftp.Server):
         real_path, virtual_path = self.get_paths(connection, rest)
         split_path = str(virtual_path).split('/')
         self.logger.debug('File received: %s' % str(split_path[-1]))
-        r_class = CalderaServer(self.contact_svc, self.file_svc, self.logger, self.directory)
 
         if await connection.path_io.is_dir(real_path.parent):
             coro = stor_worker(self, connection, rest)
@@ -132,28 +132,20 @@ class MyServer(aioftp.Server):
         connection.response(code, info)
         return True
 
-    async def handle_agent_file(self, split_file_path, file_bytes, r_class):
+    async def handle_agent_file(self, split_file_path, file_bytes):
         if re.match(r'^Alive\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
-            paw, contents = await r_class.create_beacon_response(profile)
-            r_class.write_file(paw, 'Response.txt', json.dumps(contents))
+            paw, contents = await self.create_beacon_response(profile)
+            self.write_file(paw, 'Response.txt', json.dumps(contents))
         elif re.match(r'^Payload\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
-            file_path, contents, display_name = await r_class.get_payload_file(profile)
+            file_path, contents, display_name = await self.get_payload_file(profile)
             if file_path is not None:
-                r_class.write_file(profile.get('paw'), profile.get('file'), str(contents))
+                self.write_file(profile.get('paw'), profile.get('file'), str(contents))
         else:
             paw = split_file_path[-2]
             filename = split_file_path[-1]
-            await r_class.submit_uploaded_file(paw, filename, file_bytes)
-
-
-class CalderaServer:
-    def __init__(self, contact, file, log, directory):
-        self.contact_svc = contact
-        self.file_svc = file
-        self.logger = log
-        self.ftp_server_dir = os.path.join(os.getcwd(), directory)
+            await self.submit_uploaded_file(paw, filename, file_bytes)
 
     async def create_beacon_response(self, profile):
         paw = profile.get('paw')
@@ -171,10 +163,11 @@ class CalderaServer:
         return agent.paw, response
 
     def write_file(self, paw, file_name, contents):
+        file_path = os.path.join(self.ftp_server_dir, paw)
         try:
-            if not os.path.exists(self.ftp_server_dir):
-                os.makedirs(self.ftp_server_dir)
-            filename = os.path.join(os.path.join(self.ftp_server_dir, paw), file_name)
+            if not os.path.exists(file_path):
+                os.makedirs(file_path)
+            filename = os.path.join(file_path, file_name)
             with open(filename, 'w+') as f:
                 f.write(contents)
             self.logger.debug('File written to: %s' % os.path.join(self.ftp_server_dir, paw))
@@ -189,3 +182,7 @@ class CalderaServer:
         saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
         await self.file_svc.save_file(filename, data, saveto_dir)
         self.logger.debug('Uploaded file: %s/%s' % (saveto_dir, filename))
+
+    def _check_ftp_server_dir(self):
+        if not os.path.exists(self.ftp_server_dir):
+            os.makedirs(self.ftp_server_dir)
