@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from app.contacts import contact_ftp
 from app.utility.base_world import BaseWorld
@@ -79,4 +80,5 @@ class TestFtpServer:
         assert ftp_c2_my_server.port == '2222'
         assert ftp_c2_my_server.login == 'caldera_user'
         assert ftp_c2_my_server.pword == 'caldera'
-        assert ftp_c2_my_server.directory == 'ftp_dir'
+        assert ftp_c2_my_server.ftp_server_dir == os.path.join(os.getcwd(), 'ftp_dir')
+        assert os.path.exists(ftp_c2_my_server.ftp_server_dir)
