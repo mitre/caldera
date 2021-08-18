@@ -63,7 +63,7 @@ class Contact(BaseWorld):
         )
         # Instantiate FTP server on local host and listen on port indicated in config
         self.server = FtpHandler(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
-                               self.pword, self.directory)
+                                 self.pword, self.directory)
 
     async def ftp_server_python_old(self):
         await self.server.start(host=self.host, port=self.port)

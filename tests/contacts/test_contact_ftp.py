@@ -82,3 +82,4 @@ class TestFtpServer:
         assert ftp_c2_my_server.pword == 'caldera'
         assert ftp_c2_my_server.ftp_server_dir == os.path.join(os.getcwd(), 'ftp_dir')
         assert os.path.exists(ftp_c2_my_server.ftp_server_dir)
+        os.rmdir(ftp_c2_my_server.ftp_server_dir)
