@@ -1,6 +1,7 @@
-from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_fact import Fact, OriginType
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
+from app.objects.secondclass.c_link import Link
 
 
 class TestKnowledgeService:
@@ -112,3 +113,24 @@ class TestKnowledgeService:
         assert fuzzy2[0].action == 'tALLOW'
         fuzzy3 = loop.run_until_complete(knowledge_svc.get_rules(dict(trait='ta.d', match='5.*')))
         assert len(fuzzy3) == 2
+
+    def test_fact_origin(self, loop, knowledge_svc, ability, executor):
+        texecutor = executor(name='sh', platform='darwin', command='mkdir test', cleanup='rm -rf test')
+        tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'])
+        link = Link.load(dict(command='', paw='n1234', ability=tability, executor=next(tability.executors), status=0,
+                              id='ganymede'))
+        type1_fact = Fact(trait='t1', value='d1', score=1, collected_by='thin_air', technique_id='T1234',
+                          links=[link.id], origin_type=OriginType.LEARNED)
+        type2_fact = Fact(trait='t2', value='d2', score=1, collected_by='thin_air', technique_id='T1234',
+                          links=[link.id], origin_type=OriginType.LEARNED)
+        type3_fact = Fact(trait='t3', value='d3', score=1, collected_by='tiny_lightning_bolts_running_through_sand',
+                          technique_id='T1234', origin_type=OriginType.SEEDED, source="Europa")
+        loop.run_until_complete(knowledge_svc.add_fact(type1_fact))
+        loop.run_until_complete(knowledge_svc.add_fact(type2_fact))
+        loop.run_until_complete(knowledge_svc.add_fact(type3_fact))
+        origin_1 = loop.run_until_complete(knowledge_svc.get_fact_origin(type1_fact))
+        origin_2 = loop.run_until_complete(knowledge_svc.get_fact_origin(type2_fact.trait))
+        origin_3 = loop.run_until_complete(knowledge_svc.get_fact_origin(type3_fact.trait))
+        assert origin_1 == link.id
+        assert origin_2 == link.id
+        assert origin_3 == 'Europa'
