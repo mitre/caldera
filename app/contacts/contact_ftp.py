@@ -163,14 +163,14 @@ class FtpHandler(aioftp.Server):
         return agent.paw, response
 
     def write_file(self, paw, file_name, contents):
-        file_path = os.path.join(self.ftp_server_dir, paw)
+        agent_dir_path = os.path.join(self.ftp_server_dir, paw)
         try:
-            if not os.path.exists(file_path):
-                os.makedirs(file_path)
-            filename = os.path.join(file_path, file_name)
-            with open(filename, 'w+') as f:
+            if not os.path.exists(agent_dir_path):
+                os.makedirs(agent_dir_path)
+            file_path = os.path.join(agent_dir_path, file_name)
+            with open(file_path, 'w+') as f:
                 f.write(contents)
-            self.logger.debug('File written to: %s' % os.path.join(self.ftp_server_dir, paw))
+            self.logger.debug('File written to: %s' % agent_dir_path)
         except IOError:
             self.logger.error('Failed to write file %s for paw %s', file_name, paw)
 
