@@ -258,7 +258,7 @@ def agent_profile():
 
 
 @pytest.fixture
-def api_client(loop, aiohttp_client):
+def api_v2_client(loop, aiohttp_client):
     def make_app(svcs):
         app = web.Application(
             middlewares=[
@@ -312,9 +312,9 @@ def api_client(loop, aiohttp_client):
 
 
 @pytest.fixture
-def api_cookies(loop, api_client):
+def api_cookies(loop, api_v2_client):
     async def get_cookie():
-        r = await api_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
+        r = await api_v2_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
         return r.cookies
     return loop.run_until_complete(get_cookie())
 
