@@ -86,10 +86,7 @@ class Contact(BaseWorld):
         )
 
     async def ftp_server_python_old(self):
-        try:
-            await self.server.start(host=self.host, port=self.port)
-        except KeyboardInterrupt:
-            self.server.close()
+        await self.server.start(host=self.host, port=self.port)
 
     async def ftp_server_python_new(self):
         await self.server.run(host=self.host, port=self.port)
