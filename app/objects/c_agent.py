@@ -146,6 +146,11 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
+        existing.update('group', self.group)
+        existing.update('trusted', self.trusted)
+        existing.update('sleep_min', self.sleep_min)
+        existing.update('sleep_max', self.sleep_max)
+        existing.update('watchdog', self.watchdog)
         return existing
 
     async def calculate_sleep(self):
