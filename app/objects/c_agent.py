@@ -151,6 +151,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         existing.update('sleep_min', self.sleep_min)
         existing.update('sleep_max', self.sleep_max)
         existing.update('watchdog', self.watchdog)
+        existing.update('pending_contact', self.pending_contact)
         return existing
 
     async def calculate_sleep(self):
