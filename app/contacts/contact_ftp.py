@@ -7,9 +7,26 @@ import sys
 
 from app.utility.base_world import BaseWorld
 
+MAX_CONNECTIONS = 256
+MAX_ANON_CONNECTIONS = 5
+SPEED_LIMIT = 1024 * 1024
+SPEED_LIMIT_PER_CONN = 100 * 1024
+ANON_HOME_PATH = '/anon'
+FTP_HOST_PROPERTY = 'app.contact.ftp.host'
+FTP_HOST_DEFAULT = '0.0.0.0'
+FTP_PORT_PROPERTY = 'app.contact.ftp.port'
+FTP_PORT_DEFAULT = 2222
+FTP_DIRECTORY_PROPERTY = 'app.contact.ftp.server.dir'
+FTP_DIRECTORY_DEFAULT = 'ftp_dir'
+FTP_USER_PROPERTY = 'app.contact.ftp.user'
+FTP_USER_DEFAULT = 'caldera_user'
+FTP_PASS_PROPERTY = 'app.contact.ftp.pword'
+FTP_PASS_DEFAULT = 'caldera'
+
 
 class Contact(BaseWorld):
     def __init__(self, services):
+        self.check_config()
         self.name = 'ftp'
         self.description = 'Accept agent beacons through ftp'
         self.contact_svc = services.get('contact_svc')
@@ -32,8 +49,14 @@ class Contact(BaseWorld):
         await t
 
     def set_up_server(self):
+        user = self.setup_ftp_users()
+        # Instantiate FTP server on local host and listen on port indicated in config
+        self.server = FtpHandler(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
+                                 self.pword, self.directory)
+
+    def setup_ftp_users(self):
         # Define a new user with full r/w permissions
-        user = (
+        return (
             aioftp.User(
                 str(self.user),
                 str(self.pword),
@@ -42,39 +65,51 @@ class Contact(BaseWorld):
                     aioftp.Permission('/', readable=False, writable=False),
                     aioftp.Permission(self.home, readable=True, writable=True),
                 ),
-                maximum_connections=256,
-                read_speed_limit=1024 * 1024,
-                write_speed_limit=1024 * 1024,
-                read_speed_limit_per_connection=100 * 1024,
-                write_speed_limit_per_connection=100 * 1024
+                maximum_connections=MAX_CONNECTIONS,
+                read_speed_limit=SPEED_LIMIT,
+                write_speed_limit=SPEED_LIMIT,
+                read_speed_limit_per_connection=SPEED_LIMIT_PER_CONN,
+                write_speed_limit_per_connection=SPEED_LIMIT_PER_CONN
             ),
             aioftp.User(
-                home_path='/anon',
+                home_path=ANON_HOME_PATH,
                 permissions=(
                     aioftp.Permission('/', readable=False, writable=False),
-                    aioftp.Permission('/anon', readable=True),
+                    aioftp.Permission(ANON_HOME_PATH, readable=True),
                 ),
-                maximum_connections=5,
-                read_speed_limit=1024 * 1024,
-                write_speed_limit=1024 * 1024,
-                read_speed_limit_per_connection=100 * 1024,
-                write_speed_limit_per_connection=100 * 1024
+                maximum_connections=MAX_ANON_CONNECTIONS,
+                read_speed_limit=SPEED_LIMIT,
+                write_speed_limit=SPEED_LIMIT,
+                read_speed_limit_per_connection=SPEED_LIMIT_PER_CONN,
+                write_speed_limit_per_connection=SPEED_LIMIT_PER_CONN
             ),
         )
-        # Instantiate FTP server on local host and listen on port indicated in config
-        self.server = FtpHandler(user, self.contact_svc, self.file_svc, self.logger, self.host, self.port, self.user,
-                                 self.pword, self.directory)
 
     async def ftp_server_python_old(self):
-        await self.server.start(host=self.host, port=self.port)
+        try:
+            await self.server.start(host=self.host, port=self.port)
+        except KeyboardInterrupt:
+            self.server.close()
 
     async def ftp_server_python_new(self):
         await self.server.run(host=self.host, port=self.port)
 
+    def check_config(self):
+        if not self.get_config(FTP_HOST_PROPERTY):
+            self.set_config('main', FTP_HOST_PROPERTY, FTP_HOST_DEFAULT)
+        if not self.get_config(FTP_PORT_PROPERTY):
+            self.set_config('main', FTP_PORT_PROPERTY, FTP_PORT_DEFAULT)
+        if not self.get_config(FTP_DIRECTORY_PROPERTY):
+            self.set_config('main', FTP_DIRECTORY_PROPERTY, FTP_DIRECTORY_DEFAULT)
+        if not self.get_config(FTP_USER_PROPERTY):
+            self.set_config('main', FTP_USER_PROPERTY, FTP_USER_DEFAULT)
+        if not self.get_config(FTP_PASS_PROPERTY):
+            self.set_config('main', FTP_PASS_PROPERTY, FTP_PASS_DEFAULT)
+
 
 class FtpHandler(aioftp.Server):
-    def __init__(self, user, contact_svc, file_svc, logger, host, port, username, password, user_dir, *,  max_con=256):
-        super().__init__(user, maximum_connections=max_con)
+    def __init__(self, user, contact_svc, file_svc, logger, host, port, username, password, user_dir):
+        super().__init__(user, maximum_connections=MAX_CONNECTIONS)
         self.contact_svc = contact_svc
         self.file_svc = file_svc
         self.logger = logger
@@ -135,23 +170,29 @@ class FtpHandler(aioftp.Server):
     async def handle_agent_file(self, split_file_path, file_bytes):
         if re.match(r'^Alive\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
-            paw, contents = await self.create_beacon_response(profile)
+            agent, instructions = await self.contact_caldera_server(profile)
+            paw, contents = await self.create_beacon_response(agent, instructions)
             self.write_file(paw, 'Response.txt', json.dumps(contents))
         elif re.match(r'^Payload\.txt$', split_file_path[-1]):
             profile = json.loads(file_bytes.decode())
             file_path, contents, display_name = await self.get_payload_file(profile)
             if file_path is not None:
                 self.write_file(profile.get('paw'), profile.get('file'), str(contents))
+        elif re.match(r'^Results\.txt$', split_file_path[-1]):
+            profile = json.loads(file_bytes.decode())
+            await self.contact_caldera_server(profile)
         else:
             paw = split_file_path[-2]
             filename = split_file_path[-1]
             await self.submit_uploaded_file(paw, filename, file_bytes)
 
-    async def create_beacon_response(self, profile):
+    async def contact_caldera_server(self, profile):
         paw = profile.get('paw')
         profile['paw'] = paw
         profile['contact'] = profile.get('contact', 'ftp')
-        agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
+        return await self.contact_svc.handle_heartbeat(**profile)
+
+    async def create_beacon_response(self, agent, instructions):
         response = dict(paw=agent.paw,
                         sleep=await agent.calculate_sleep(),
                         watchdog=agent.watchdog,
