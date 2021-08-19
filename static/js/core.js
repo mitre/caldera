@@ -1,7 +1,7 @@
 /* Alpine.js data & functions called from core navigation template */
 
 function toast(message, success) {
-    bulmaToast.toast({ 
+    bulmaToast.toast({
         message: message,
         type: success ? 'is-success' : 'is-danger',
         position: 'bottom-right',

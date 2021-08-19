@@ -5,40 +5,472 @@
     <div>
         <h2>Abilities</h2>
         <p>
-            
+            An ability is a specific ATT&CK tactic/technique implementation which can be executed on running agents. Abilities will include the command(s) to run, the platforms / executors the commands can run on (ex: Windows / PowerShell), payloads to include, and a reference to a module to parse the output on the CALDERA server.
         </p>
     </div>
     <hr>
 
-    <!--  -->
+    <!-- ABILITIES TABLE -->
 
     <div>
-        
+        <div class="buttons">
+            <button class="button is-primary is-small" @click="createAbility">+ Create an Ability</button>
+            <button class="button is-info is-small is-outlined" @click="clearFilters()" x-show="abilities.length !== filteredAbilities.length">Clear Filters</button>
+        </div>
+        <div id="abilities-table">
+            <table class="table is-striped is-fullwidth">
+                <col width="40%">
+                <col width="20%">
+                <col width="40%">
+                <thead>
+                    <tr>
+                        <th>Ability</th>
+                        <th>Tactic</th>
+                        <th>Technique</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="control has-icons-left" x-init="$watch('searchTerm', (value) => filterAbilities('name'))">
+                                <input class="input is-small" x-model="searchTerm" placeholder="Search for an ability" >
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="select is-small">
+                                <select x-model="selectedTactic" x-init="$watch('selectedTactic', (value) => filterAbilities('tactic'))">
+                                    <option default selected value="">All</option>
+                                    <template x-for="tactic of tactics" :key="tactic">
+                                        <option x-bind:value="tactic" x-text="tactic"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="select is-small">
+                                <select x-model="selectedTechnique" x-init="$watch('selectedTechnique', (value) => filterAbilities('technique'))">
+                                    <option default selected value="">All</option>
+                                    <template x-for="technique of techniques" :key="technique">
+                                        <option x-bind:value="technique" x-text="technique"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </td>
+                    </tr>
+                    <template x-for="ability of filteredAbilities" :key="ability.ability_id">
+                        <tr @click="selectAbility(ability)">
+                            <td>
+                                <p x-text="ability.name"></p>
+                                <p class="help" x-text="ability.description"></p>
+                            </td>
+                            <td x-text="ability.tactic"></td>
+                            <td x-text="`${ability.technique_id} | ${ability.technique_name}`"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+        <div class="content">
+            <p>
+                <br>
+                <span x-text="filteredAbilities.length"></span> / <span x-text="abilities.length"></span> abilities shown
+            </p>
+        </div>
+        <div class="has-text-centered content" x-show="!filteredAbilities.length">
+            <p>No abilities match the filter criteria.</p> 
+        </div>
     </div>
 
     <!-- MODALS -->
 
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }"> 
+        <div class="modal-background" @click="showAbilityModal = false"></div>
+        <div class="modal-card wide">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Edit an Ability</p>
+            </header>
+            <section class="modal-card-body">
+                <template x-if="selectedAbility">
+                    <div class="content">
+                        <form>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">ID</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <input class="input is-small" x-model="selectedAbility.ability_id" disabled>
+                                        </div>
+                                        <div class="control">
+                                            <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
+                                                <span class="icon is-small"><i class="fas fa-sync"></i></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Name</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-model="selectedAbility.name">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Description</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-model="selectedAbility.description">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Tactic</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-model="selectedAbility.tactic">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label is-small">Technique ID</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-model="selectedAbility.technique_id">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Technique Name</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-model="selectedAbility.technique_name">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <p class="has-text-centered">Executors</p>
+                        <div class="has-text-centered">
+                            <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
+                        </div>
+                        <br>
+                        <template x-for="(executor, index) of selectedAbility.executors">
+                            <div class="box">
+                                <div class="has-text-right">
+                                    <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
+                                </div>
+                                <form>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">platform</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <div class="select is-small">
+                                                        <select x-model="executor.platform">
+                                                            <template x-for="platform of Object.keys(platforms)">
+                                                                <option x-bind:value="platform" x-text="platform"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">executor</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <div class="select is-small">
+                                                        <select x-model="executor.name">
+                                                            <option default disabled>Select an executor...</option>
+                                                            <template x-for="executor of platforms[executor.platform]">
+                                                                <option x-bind:value="executor" x-text="executor"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">payloads</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field is-grouped is-grouped-multiline">
+                                                <p x-show="executor.payloads.length === 0" class="help">No payloads selected</p>
+                                                <template x-for="(payload, index) of executor.payloads">
+                                                    <div class="control">
+                                                        <div class="tags has-addons">
+                                                            <span class="tag is-small is-link" x-text="payload"></span>
+                                                            <a class="tag is-delete" x-on:click="executor.payloads.splice(index, 1)"></a>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label"></label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <div class="select is-small is-multiple is-fullwidth">
+                                                        <select class="select" multiple size="6">
+                                                            <template x-for="payload of payloads">
+                                                                <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
+                                                            </template>      
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">command</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <textarea class="textarea is-small code" x-model="executor.command"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">timeout</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <input class="input is-small" type="number" x-model="executor.timeout">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">cleanup</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <input class="input is-small code" x-model="executor.cleanup">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </template>
+                        <template x-if="selectedAbility.executors.length > 0">
+                            <div class="has-text-centered">
+                                <button class="button is-small is-primary" @click="addExecutorToAbility('after')">+ Add Executor</button>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility()">Save</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <p class="level-item">
+                            <button class="button is-small" @click="showAbilityModal = false">Close</button>
+                        </p>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    let abilities = {{ abilities | tojson }}
+    let platforms = {{ platforms | tojson }};
+    let payloads = {{ payloads | tojson }};
 
     function alpineAgents() {
         return {
             // Core variables
-            abilities: abilities,
+            abilities: [],
+            filteredAbilities: [],
+            selectedAbility: '',
+            tactics: [],
+            selectedTactic: '',
+            techniques: [],
+            selectedTechnique: '',
+            searchTerm: '',
+            platforms: platforms,
+            payloads: payloads,
+
+            // Modals
+            showAbilityModal: false,
 
             initPage() {
-                
+                apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.abilities = abilities;
+                    this.clearFilters();
+                }).catch((error) => {
+                    toast('There was an error initializing the page', false);
+                    console.error(error);
+                });
             },
 
-            
+            filterAbilities(type) {
+                let self = this;
+                function matchesName(ability) {
+                    return self.searchTerm ? ability.name.toLowerCase().indexOf(self.searchTerm.toLowerCase()) > -1 : true;
+                }
+                function matchesTactic(ability) {
+                    return self.selectedTactic ? ability.tactic === self.selectedTactic : true;
+                }
+                function matchesTechnique(ability) {
+                    return self.selectedTechnique ? `${ability.technique_id} | ${ability.technique_name}` === self.selectedTechnique : true;
+                }
+
+                if (type === 'name') {
+                    this.tactics = [...new Set(this.abilities.filter(matchesName).map((ability) => ability.tactic))].sort();
+                    if (!this.tactics.includes(this.selectedTactic)) {
+                        this.selectedTactic = '';
+                    }
+                    this.techniques = [...new Set(this.abilities.filter(matchesName).map((ability) => `${ability.technique_id} | ${ability.technique_name}`))].sort();
+                    if (!this.techniques.includes(this.selectedTechnique)) {
+                        this.selectedTechnique = '';
+                    }
+                } else if (type === 'tactic') {
+                    this.techniques = [...new Set(this.abilities.filter(matchesName).filter(matchesTactic).map((ability) => `${ability.technique_id} | ${ability.technique_name}`))].sort();
+                    console.log(this.techniques);
+                    if (!this.techniques.includes(this.selectedTechnique)) {
+                        this.selectedTechnique = '';
+                    }
+                }
+
+                this.filteredAbilities = this.abilities.filter((ability) => matchesName(ability) && matchesTactic(ability) && matchesTechnique(ability));
+            },
+
+            clearFilters() {
+                this.searchTerm = '';
+                this.selectedTactic = '';
+                this.selectedTechnique = '';
+
+                this.tactics = [...new Set(this.abilities.map((ability) => ability.tactic))].sort();
+                this.techniques = [...new Set(this.abilities.map((ability) => `${ability.technique_id} | ${ability.technique_name}`))].sort();
+
+                this.filteredAbilities = this.abilities;
+            },
+
+            selectAbility(ability) {
+                this.selectedAbility = ability;
+                this.showAbilityModal = true;
+            },
+
+            createAbility() {
+                this.selectedAbility = {
+                    ability_id: uuidv4(),
+                    executors: []
+                };
+
+                this.showAbilityModal = true;
+            },
+
+            saveAbility() {
+                apiV2('PATCH', `/api/v2/abilities/${this.selectedAbility.ability_id}`, this.selectedAbility).then((response) => {
+                    toast('Saved ability!', true);
+
+                    // Replace ability in list with updated info
+                    const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbility.ability_id);
+                    this.abilities[index] = response;
+                }).catch((error) => {
+                    toast('Error saving ability', false);
+                    console.error(error);
+                });
+            },
+
+            addExecutorToAbility(bOrA) {
+                const template = {
+                    payloads: [],
+                    platform: 'linux'
+                };
+
+                if (bOrA === 'after') {
+                    this.selectedAbility.executors.push(template);
+                } else if (bOrA === 'before') {
+                    this.selectedAbility.executors.unshift(template);
+                }
+            },
+
         };
     }
 
     // # sourceURL=agents.js
 </script>
 
-<style>
+<style scoped>
+
+    #abilities-table {
+        height: 50vh;
+        overflow: scroll;
+    }
+
+    .level {
+        width: 100%;
+    }
+
+    thead tr:nth-child(1) th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #161616 !important;
+    }
+
+    tbody tr:nth-child(1) td {
+        position: sticky;
+        top: 37;
+        z-index: 10;
+        background-color: #161616 !important;
+    }
+
+    tr:hover {
+        cursor: pointer;
+    }
 
 </style>

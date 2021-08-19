@@ -2,7 +2,7 @@
 
     <!-- PAGE HEADER -->
 
-    <div>
+    <div x-ref="header">
         <h2>Agents</h2>
         <p>
             You must deploy at least 1 agent in order to run an operation. Groups are collections of agents so hosts can be compromised simultaneously.
@@ -39,7 +39,7 @@
             </thead>
             <tbody>
                 <template x-for="(agent, index) of agents" :key="agent.paw">
-                    <tr @click="selectedAgent = agent; showDetailsModal = true;">
+                    <tr @click="selectedAgent = agent; showDetailsModal = true;" class="pointer">
                         <td x-text="agent.paw"></td>
                         <td x-text="agent.host"></td>
                         <td>
@@ -76,7 +76,7 @@
                             <div class="select is-small">
                                 <select x-model="selectedAbilityId" x-on:change="selectAbility()">
                                     <option disabled selected value="">Choose an agent</option>
-                                    <template x-for="ability of abilities" :key="ability.ability_id">
+                                    <template x-for="ability of deploymentAbilities" :key="ability.ability_id">
                                         <option x-bind:value="ability.ability_id" x-text="`${ability.name} | ${ability.description}`"></option>
                                     </template>
                                 </select>
@@ -226,7 +226,34 @@
                                 <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Bootstrap Abilities</span>
                             </th>
                             <td>
-                                <input class="input is-small" type="text" placeholder="43b3754c-def4-4699-a673-1d85648fda6a" x-model="agentConfig.bootstrap_abilities">
+                                <div class="field is-grouped is-grouped-multiline">
+                                    <template x-for="(abilityId, index) of agentConfig.bootstrap_abilities">
+                                        <div class="control">
+                                            <div class="tags has-addons">
+                                                <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
+                                                <a class="tag is-delete" @click="agentConfig.bootstrap_abilities.splice(index, 1)"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="control">
+                                        <div class="tags has-addons">
+                                            <a class="tag is-primary" @click="isAddingBoostrapAbility = true" x-show="!isAddingBoostrapAbility">+</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field has-addons" x-show="isAddingBoostrapAbility">
+                                    <div class="control is-expanded">
+                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()">
+                                        <div class="search-results">
+                                            <template x-for="result of abilitySearchResults" :key="result.ability_id">
+                                                <p @click="addBootstrapAbility(result.ability_id)" x-text="result.name"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="control">
+                                        <a class="button is-small" @click="isAddingBoostrapAbility = false">Cancel</a>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -248,7 +275,7 @@
             </header>
             <section class="modal-card-body">
                 <p class="has-text-weight-bold">Settings</p>
-                <!-- <table>
+                <table>
                     <col width="30%">
                     <col width="70%">
                     <tbody>
@@ -256,7 +283,7 @@
                             <th class="has-text-right">Contact</th>
                             <td>
                                 <div class="select is-small">
-                                    <select x-model="selectedAgent.contact">
+                                    <select x-model="selectedAgent.pending_contact">
                                         <template x-for="contact of selectedAgent.available_contacts" :key="contact">
                                             <option x-bind:value="contact" x-text="contact"></option>
                                         </template>
@@ -284,8 +311,8 @@
                             </td>
                         </tr>
                     </tbody>
-                </table> -->
-                <button class="button is-small is-fullwidth is-primary">Save Settings</button>
+                </table>
+                <button class="button is-small is-fullwidth is-primary" @click="saveAgent()">Save Settings</button>
                 <hr>
                 <p class="has-text-weight-bold">Agent Details</p>
                 <table>
@@ -379,25 +406,28 @@
 </div>
 
 <script>
-    let abilitiesOld = {{ abilities | tojson }}
-
-     function alpineAgents() {
+    function alpineAgents() {
         return {
             // Core variables
             agents: [],
             abilities: [],
+            deploymentAbilities: [],
             selectedAbilityId: '',
             selectedAbility: {},
             platforms: [],
             selectedPlatform: '',
-            selectedAgent: { contact: '' },
+            selectedAgent: { available_contacts: [] },
 
-            agentConfig: {},
+            agentConfig: { bootstrap_abilities: [] },
             agentFields: [],
             agentFieldConfig: {},
             deployCommands: [],
             filteredCommands: [],
-            refreshAgentInterval: undefined,
+            pageOpen: true,
+
+            isAddingBoostrapAbility: false,
+            abilitySearchQuery: [],
+            abilitySearchResults: [],
 
             // Modals
             showDeployModal: false,
@@ -410,32 +440,31 @@
                     return apiV2('GET', '/api/v2/config/agents');
                 }).then((agentConfig) => {
                     this.agentConfig = agentConfig;
-                    this.abilities = [];
-                    Object.keys(abilitiesOld).forEach((abilityId) => {
-                        this.abilities.push(abilitiesOld[abilityId][0])
+                    return apiV2('GET', '/api/v2/abilities');
+                }).then(async (allAbilities) => {
+                    this.abilities = allAbilities;
+                    this.agentConfig.deployments.forEach((abilityId) => {
+                        let match = allAbilities.find((ability) => ability.ability_id === abilityId);
+                        if (match) this.deploymentAbilities.push(match);
                     });
-                    this.refreshAgentInterval = setInterval(this.refreshAgents, 3000);
+
+                    // While the agents tab is open, keep checking for new/killed agents
+                    function sleep(ms) {
+                        return new Promise((resolve) => setTimeout(resolve, ms));
+                    }
+                    while (this.$refs.header) {
+                        await sleep(3000);
+                        this.refreshAgents();
+                    }
                 }).catch((error) => {
                     toast('Error initializing page', false);
                     console.error(`Error initializing page: ${error}`);
                 });
-
-                // Listen for when all elements on the page are destroyed, which means the tab was closed
-                // If the tab is closed, we don't want to keep refreshing the agents list
-                let observer = new MutationObserver((mutationsList) => {
-                    if (mutationsList.every(mutation => mutation.addedNodes.length === 0 && mutation.removedNodes.length > 0)) {
-                        console.log('page exit')
-                        clearInterval(this.refreshAgentInterval);
-                    }
-                });
-
-                observer.observe(document.getElementById('main-content'), { childList: true, subtree: true });
             },
 
             refreshAgents() {
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
-                    console.log(this.agents)
                 }).catch((error) => {
                     toast('Error refreshing agents', false);
                     console.error(error);
@@ -443,7 +472,7 @@
             },
 
             selectAbility() {
-                this.selectedAbility = this.abilities.find((ability) => ability.ability_id === this.selectedAbilityId);
+                this.selectedAbility = this.deploymentAbilities.find((ability) => ability.ability_id === this.selectedAbilityId);
                 this.platforms = [...new Set(this.selectedAbility.executors.map((executor) => executor.platform))];
                 if (!this.platforms.includes(this.selectedPlatform)) this.selectedPlatform = '';
 
@@ -481,8 +510,8 @@
             },
 
             getCommandField(command) {
-                this.agentFields.forEach((field) => { 
-                    command = command.replaceAll(`#{${field.name}}`, field.value)
+                this.agentFields.forEach((field) => {
+                    command = command.replaceAll(`#{${field.name}}`, field.value);
                 });
                 return command;
             },
@@ -490,6 +519,43 @@
             copyCommandToClipboard(command) {
                 navigator.clipboard.writeText(command.replaceAll('\n', ''));
                 toast('Copied command to clipboard!', true);
+            },
+
+            getAbilityName(id) {
+                return (!id || !this.abilities.length) ? '' : this.abilities.find((ability) => ability.ability_id === id).name;
+            },
+
+            getAbilityDescription(id) {
+                return (!id || !this.abilities.length) ? '' : this.abilities.find((ability) => ability.ability_id === id).description;
+            },
+
+            searchForAbility() {
+                this.abilitySearchResults = [];
+                if (!this.abilitySearchQuery) return;
+                this.abilities.forEach((ability) => {
+                    if (ability.name.toLowerCase().indexOf(this.abilitySearchQuery.toLowerCase()) > -1) {
+                        this.abilitySearchResults.push({
+                            ability_id: ability.ability_id,
+                            name: ability.name
+                        });
+                    }
+                });
+            },
+
+            addBootstrapAbility(id) {
+                this.agentConfig.bootstrap_abilities.push(id);
+                this.abilitySearchQuery = '';
+                this.abilitySearchResults = [];
+                this.isAddingBoostrapAbility = false;
+            },
+
+            saveAgent() {
+                apiV2('PATCH', `/api/v2/agents/${this.selectedAgent.paw}`, this.selectedAgent).then((response) => {
+                    toast('Agent saved', true);
+                }).catch((error) => {
+                    toast('Error killing the agent', false);
+                    console.error(error);
+                });
             },
 
             saveAgentConfig() {
@@ -507,27 +573,28 @@
             removeAgent(paw, index) {
                 apiV2('DELETE', `/api/v2/agents/${paw}`).then(() => {
                     this.agents.splice(index, 1);
-                    toast('Agent has been removed, but may reappear if it beacons again.', true)
+                    toast('Agent has been removed, but may reappear if it beacons again.', true);
                 }).catch((error) => {
                     toast('Error removing the agent', false);
                     console.error(error);
-                })
+                });
             },
 
             killAgent(agent) {
                 if (confirm(`Are you sure you want to kill agent "${agent.paw}"?`)) {
-                    let reqBody = agent;
-                    reqBody.watchdog = 1;
-                    reqBody.sleep_min = 3;
-                    reqBody.sleep_max = 3;
-           
+                    let reqBody = {
+                        watchdog: 1,
+                        sleep_min: 3,
+                        sleep_max: 3
+                    };
+
                     apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
                         this.agents.splice(this.agents.findIndex((a) => a.paw === agent.paw), 1);
-                        toast('Agent will be kill after its next beacon.', true)
+                        toast('Agent will be killed after its next beacon.', true);
                     }).catch((error) => {
                         toast('Error killing the agent', false);
                         console.error(error);
-                    })
+                    });
                     this.showDetailsModal = false;
                 }
             }
@@ -591,11 +658,30 @@
         border: 1px solid white;
     }
 
+    .pointer {
+        cursor: pointer;
+    }
+
+    .search-results {
+        overflow-y: scroll;
+        max-height: 200px;
+        background-color: #010101;
+        border-radius: 0 4px;
+    }
+    .search-results p {
+        margin-bottom: 0 !important;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .search-results p:hover {
+        background-color: #484848;
+    }
+
     .tag.blue {
-        background-color: #191970;
+        background-color: #191970 !important;
     }
     .tag.red {
-        background-color: #8B0000;
+        background-color: #8B0000 !important;
     }
 
 </style>

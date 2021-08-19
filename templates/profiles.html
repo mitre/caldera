@@ -586,8 +586,8 @@
 
 <script>
     // Jinja variables
-    const platforms = {{ platforms | tojson }};
-    const payloads = {{ payloads | tojson }};
+    let platformsProfiles = {{ platforms | tojson }};
+    let payloadsProfiles = {{ payloads | tojson }};
 
     function alpineAdversaries() {
         return {
@@ -595,7 +595,8 @@
             adversaries: [],
             abilities: [],
             objectives: [],
-            platforms: platforms,
+            platforms: platformsProfiles,
+            payloads: payloadsProfiles,
 
             selectedProfileId: '',
             selectedProfileName: undefined,

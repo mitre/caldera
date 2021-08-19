@@ -36,9 +36,19 @@ class CampaignPack(BaseWorld):
     @check_authorization
     @template('abilities.html')
     async def _section_abilities(self, request):
-        ability_ids = tuple(self.get_config(name='agents', prop='deployments'))
-        abilities = await self.data_svc.locate('abilities', match=dict(ability_id=ability_ids))
-        return dict(abilities=self._rollup_abilities(abilities))
+        access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
+        abilities = await self.data_svc.locate('abilities', match=access)
+        payloads = list(await self.rest_svc.list_payloads())
+        platforms = dict()
+        for a in abilities:
+            for executor in a.executors:
+                if executor.platform in platforms:
+                    platforms[executor.platform].add(executor.name)
+                else:
+                    platforms[executor.platform] = set([executor.name])
+        for p in platforms:
+            platforms[p] = list(platforms[p])
+        return dict(platforms=platforms, payloads=payloads)
 
     @check_authorization
     @template('profiles.html')
