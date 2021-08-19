@@ -325,8 +325,8 @@
 </div>
 
 <script>
-    let platforms = {{ platforms | tojson }};
-    let payloads = {{ payloads | tojson }};
+    let platformsAbilities = {{ platforms | tojson }};
+    let payloadsAbilities = {{ payloads | tojson }};
 
     function alpineAgents() {
         return {
@@ -339,8 +339,8 @@
             techniques: [],
             selectedTechnique: '',
             searchTerm: '',
-            platforms: platforms,
-            payloads: payloads,
+            platforms: platformsAbilities,
+            payloads: payloadsAbilities,
 
             // Modals
             showAbilityModal: false,

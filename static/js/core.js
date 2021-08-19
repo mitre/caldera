@@ -12,7 +12,6 @@ function toast(message, success) {
 
 function alpineNavigation() {
     return {
-        isNavMinimized: false,
         openTabs: [],
         activeTabIndex: 0,
 

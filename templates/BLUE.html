@@ -14,7 +14,7 @@
     </head>
     <body>
         <main id="home" class="main" x-data="alpineNavigation()">
-            <div class="navigation" x-bind:class="isNavMinimized ? 'collapsed' : 'expanded'">
+            <div class="navigation">
                 <div class="nav-logo"></div>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
@@ -47,21 +47,9 @@
                         <li><a href="/logout">Log out</a></li>
                     </ul>
                 </aside>
-                <div id="nav-footer" class="has-text-centered">
-                    <a x-on:click="isNavMinimized = !isNavMinimized">
-                        <span class="icon">
-                            <template x-if="isNavMinimized">
-                                <i class="fas fa-chevron-right"></i>
-                            </template>
-                            <template x-if="!isNavMinimized">
-                                <i class="fas fa-chevron-left"></i>
-                            </template>
-                        </span>
-                    </a>
-                </div>
             </div>
 
-            <div class="main-content" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
+            <div class="main-content">
                 <div class="tabs is-boxed">
                     <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
