@@ -188,14 +188,14 @@
                 <template x-if="selectedOperation">
                     <div x-show="selectedOperationID">
                         <div class="navbar-divider mb-5 width-100"></div>
-                        <div class="log-container">
+                        <div class="timeline-table">
                             <table class="table">
                                 <thead>
                                 <tr class="table-header">
-                                    <th class="decideColumn">Decide / Status</th>
-                                    <th title="Link Status Indicator"></th>
+                                    <th class="decideColumn">Decide & Status</th>
+                                    <th title="Link Status Indicator" class="csv-exclude"></th>
                                     <th class="infoColumn">Link/Ability Name</th>
-                                    <th>Agent</th>
+                                    <th>Agent #paw</th>
                                     <th>Link Command</th>
                                     <th>Link Output & Facts</th>
                                 </tr>
@@ -203,7 +203,7 @@
 
                                 <template x-if="selectedOperation.chain.length === 0">
                                     <tbody>
-                                    <tr>
+                                    <tr class="csv-exclude">
                                         <td colspan="6"><em>No links––click the buttons on the right to add
                                             commands/links.</em>
                                         </td>
@@ -220,7 +220,7 @@
                                             <span x-bind:class="'status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"
                                                   x-text="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"></span>
                                         </td>
-                                        <td class="linkStatusColumn">
+                                        <td class="linkStatusColumn csv-exclude">
                                                     <span x-bind:title="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"
                                                           x-bind:class="'linkStatus status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"></span>
                                         </td>
@@ -228,21 +228,22 @@
                                             x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
 
                                         <!--AGENT COLUMN-->
-                                        <td x-bind:class="selectedLink === link ? '' : 'linkInfoColumn'">
-                                            <p x-show="link.paw">Agent #<em x-text="link.paw"></em></p>
+                                        <td class="agentDetails"
+                                            x-bind:class="selectedLink === link ? '' : 'linkInfoColumn'">
+                                            <p x-show="link.paw">Agent Paw: #<em x-text="link.paw"></em></p>
                                             <p x-show="selectedLink === link && link.host">Host: <em
                                                     x-text="link.host"></em></p>
-                                            <p x-show="selectedLink === link && link.pid">pid: <em
+                                            <p x-show="selectedLink === link && link.pid">Pid: <em
                                                     x-text="link.pid"></em></p>
                                         </td>
 
                                         <!--COMMAND COLUMN-->
-                                        <td class="outputEditCommand">
+                                        <td class="commandDetails">
                                             <template x-if="index === 0 && !selectedLink">
                                                 <em>Click on a link to show more details.</em>
                                             </template>
                                             <template
-                                                    x-if="selectedLink === link && isLinkEditable">
+                                                    x-if="selectedLink === link && !isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="view-command">View command</label>
                                                     <textarea id="view-command"
@@ -252,8 +253,7 @@
                                                               spellcheck="false"></textarea>
                                                 </div>
                                             </template>
-                                            <template
-                                                    x-if="selectedLink === link && !isLinkEditable">
+                                            <template x-if="selectedLink === link && isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="edit-command">Edit command</label>
                                                     <textarea id="edit-command"
@@ -272,7 +272,7 @@
 
                                         <!--OUTPUT/FACTS COLUMN-->
                                         <!--                                        TODO if output is T, should show facts; individual links should have their own facts, TBD-->
-                                        <td>
+                                        <td class="outputDetails">
                                             <template x-if="selectedLink === link && selectedLinkOutput">
                                                 <div class="mb-5">
                                                     <p class="is-size-7">Output: </p>
@@ -304,7 +304,7 @@
                                 <!--                                NEW ROW TO ADD MANUAL COMMAND-->
                                 <tbody>
                                 <template x-if="addNewRow">
-                                    <tr>
+                                    <tr class="csv-exclude">
                                         <td></td>
                                         <td></td>
                                         <td>New Manual Command</td>
@@ -365,7 +365,7 @@
                                 <!--                                ADD COMMAND/LINK BUTTONS-->
                                 <template x-if="isOperationRunning">
                                     <tfoot>
-                                    <tr>
+                                    <tr class="csv-exclude">
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -1029,7 +1029,6 @@
             getOperations() {
                 apiV2('GET', endpoint).then((res) => {
                     this.operations = res;
-                    console.log('SELECTED LINK AFTER GET OP', this.selectedLink)
                     this.filterOperations(this.searchInput);
                 }).catch((error) => {
                     toast('Error getting operations');
@@ -1189,18 +1188,29 @@
 
             downloadCSV() {
                 const csv = [];
-                const rows = document.querySelector('#operationsPage').querySelectorAll("table tr");
+                const rows = document.querySelector('#operationsPage').querySelectorAll("table tr:not(.csv-exclude)");
 
-                rows.forEach((row) => {
-                    const cols = row.querySelectorAll("td, th");
+                rows.forEach((row, i) => {
+                    const cols = row.querySelectorAll("td:not(.csv-exclude), th:not(.csv-exclude)");
                     const rowItems = [];
                     cols.forEach((col => {
-                        rowItems.push(`"${col.innerText}"`);
+                        const link = this.selectedOperation.chain[i - 1];
+                        if (col.className.includes('agentDetails')) {
+                            let agentDetails = `Agent Paw: #${link.paw}`;
+                            if (link.host) agentDetails += `\nHost: ${link.host}`;
+                            if (link.pid) agentDetails += `\nPid: ${link.pid}`;
+                            rowItems.push(`"${agentDetails}"`);
+                        } else if (col.className.includes('commandDetails')) {
+                            rowItems.push(`"${b64DecodeUnicode(link.command)}"`);
+                        } else if (col.className.includes('outputDetails')) {
+                            rowItems.push(`"${link.facts}"`);
+                        } else {
+                            rowItems.push(`"${col.innerText}"`);
+                        }
                     }))
                     csv.push(rowItems.join(","));
                 });
                 this.createDownloadReport(new Blob([csv.join("\n")], {type: "text/csv"}), this.selectedOperation.name, true);
-                const downloadLink = document.createElement("a");
             },
 
             //
@@ -1589,21 +1599,7 @@
 
     /*END TOGGLE*/
 
-
-    .log-container {
-        /*background-color: black;*/
-        border-radius: 5px;
-        margin-top: 1rem;
-        padding: 2rem 1.3rem 4rem;
-        border-collapse: collapse;
-    }
-
-    .log-container table {
-        /*background-color: black;*/
-        background-color: inherit;
-    }
-
-    .log-container table tr th {
+    .timeline-table table tr th {
         font-weight: 400;
         font-size: 0.75rem;
         border-bottom: none;
@@ -1611,11 +1607,11 @@
     }
 
     /*TODO hover over entire row should highlight, even if cell is empty*/
-    .log-container table tbody tr:hover, .log-container table tbody tr.selected {
+    .timeline-table table tbody tr:hover, .timeline-table table tbody tr.selected {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
-    .log-container table tbody tr:active {
+    .timeline-table table tbody tr:active {
         background-color: rgba(255, 255, 255, 0.2);
     }
 
@@ -1702,17 +1698,17 @@
         padding: 0;
     }
 
-    .log-container table tbody td {
+    .timeline-table table tbody td {
         vertical-align: middle;
         border: none;
         height: 8em;
     }
 
-    .log-container table th.header {
+    .timeline-table table th.header {
         border-bottom: none;
     }
 
-    .log-container .decideColumn {
+    .timeline-table .decideColumn {
         color: gray;
         width: 120px;
         word-break: break-word;
@@ -1720,14 +1716,14 @@
         text-align: center !important;
     }
 
-    .log-container td.decideColumn {
+    .timeline-table td.decideColumn {
         padding: 0 2em;
         display: flex;
         flex-flow: column wrap;
         justify-content: center;
     }
 
-    .log-container .infoColumn {
+    .timeline-table .infoColumn {
         width: 200px;
     }
 
@@ -1748,7 +1744,7 @@
         padding-bottom: 0;
     }
 
-    table tbody td.outputEditCommand textarea {
+    table tbody td.commandDetails textarea {
         color: #ff8181;
         background-color: #262626;
     }
@@ -1759,7 +1755,7 @@
         margin-top: 1em;
     }
 
-    table tbody td.outputEditCommand button {
+    table tbody td.commandDetails button {
         width: max-content;
         margin: 1em 0;
     }
