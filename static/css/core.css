@@ -105,3 +105,8 @@ main.main {
   padding-bottom: 10px;
   min-height: 52px;
 }
+
+.toast {
+  padding: 10px 10px !important;
+  border-radius: 4px !important;
+}

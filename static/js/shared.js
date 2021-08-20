@@ -18,16 +18,6 @@ function restRequest(requestType, data, callback = () => {
         .then(data => callback(data));
 }
 
-function apiRequest(requestType, data, endpoint  = '/api/rest') {
-    const requestBody = requestType === 'GET' ?
-        { method: requestType, headers: { 'Content-Type': 'application/json' } } :
-        { method: requestType, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }
-
-    return new Promise((resolve, reject) => {
-        fetch(endpoint, requestBody).then(response => response.ok ? resolve(response.text()) : reject(response.statusText));
-    });
-}
-
 function apiV2(requestType, endpoint, body = null) {
     let requestBody = { method: requestType, headers: { 'Content-Type': 'application/json' } };
     if (requestType !== 'GET') requestBody.body = JSON.stringify(body);
@@ -48,6 +38,17 @@ function apiV2(requestType, endpoint, body = null) {
                 }
             });
     });
+}
+
+function validateInputs(obj, requiredFields) {
+    let fieldErrors = [];
+    requiredFields.forEach((field) => {
+        if (obj[field].length === 0) {
+            fieldErrors.push(field);
+        }
+    });
+
+    return fieldErrors;
 }
 
 function downloadReport(endpoint, filename, data = {}) {

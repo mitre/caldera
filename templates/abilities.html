@@ -11,55 +11,60 @@
     <hr>
 
     <!-- ABILITIES TABLE -->
-
-    <div>
+    
+    <div x-show="isLoaded">
         <div class="buttons">
             <button class="button is-primary is-small" @click="createAbility">+ Create an Ability</button>
             <button class="button is-info is-small is-outlined" @click="clearFilters()" x-show="abilities.length !== filteredAbilities.length">Clear Filters</button>
         </div>
+        <table class="table is-fullwidth">
+            <col width="50%">
+            <col width="20%">
+            <col width="30%">
+            <tbody>
+                <tr>
+                    <th>Ability</th>
+                    <th>Tactic</th>
+                    <th>Technique</th>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="control has-icons-left" x-init="$watch('searchTerm', (value) => filterAbilities('name'))">
+                            <input class="input is-small" x-model="searchTerm" placeholder="Search for an ability" >
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="select is-small">
+                            <select x-model="selectedTactic" x-init="$watch('selectedTactic', (value) => filterAbilities('tactic'))">
+                                <option default selected value="">All</option>
+                                <template x-for="tactic of tactics" :key="tactic">
+                                    <option x-bind:value="tactic" x-text="tactic"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="select is-small">
+                            <select x-model="selectedTechnique" x-init="$watch('selectedTechnique', (value) => filterAbilities('technique'))">
+                                <option default selected value="">All</option>
+                                <template x-for="technique of techniques" :key="technique">
+                                    <option x-bind:value="technique" x-text="technique"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
         <div id="abilities-table">
             <table class="table is-striped is-fullwidth">
-                <col width="40%">
+                <col width="50%">
                 <col width="20%">
-                <col width="40%">
-                <thead>
-                    <tr>
-                        <th>Ability</th>
-                        <th>Tactic</th>
-                        <th>Technique</th>
-                    </tr>
-                </thead>
+                <col width="30%">
                 <tbody>
-                    <tr>
-                        <td>
-                            <div class="control has-icons-left" x-init="$watch('searchTerm', (value) => filterAbilities('name'))">
-                                <input class="input is-small" x-model="searchTerm" placeholder="Search for an ability" >
-                                <span class="icon is-small is-left">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="select is-small">
-                                <select x-model="selectedTactic" x-init="$watch('selectedTactic', (value) => filterAbilities('tactic'))">
-                                    <option default selected value="">All</option>
-                                    <template x-for="tactic of tactics" :key="tactic">
-                                        <option x-bind:value="tactic" x-text="tactic"></option>
-                                    </template>
-                                </select>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="select is-small">
-                                <select x-model="selectedTechnique" x-init="$watch('selectedTechnique', (value) => filterAbilities('technique'))">
-                                    <option default selected value="">All</option>
-                                    <template x-for="technique of techniques" :key="technique">
-                                        <option x-bind:value="technique" x-text="technique"></option>
-                                    </template>
-                                </select>
-                            </div>
-                        </td>
-                    </tr>
                     <template x-for="ability of filteredAbilities" :key="ability.ability_id">
                         <tr @click="selectAbility(ability)">
                             <td>
@@ -84,13 +89,17 @@
         </div>
     </div>
 
+    <div x-show="!isLoaded">
+        <p>Please wait, loading...</p>
+    </div>
+
     <!-- MODALS -->
 
     <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }"> 
         <div class="modal-background" @click="showAbilityModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
-                <p class="modal-card-title">Edit an Ability</p>
+                <p class="modal-card-title"><span x-text="isCreatingAbility ? 'Create' : 'Edit'"></span> an Ability</p>
             </header>
             <section class="modal-card-body">
                 <template x-if="selectedAbility">
@@ -120,7 +129,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.name">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('name') }" x-model="selectedAbility.name">
+                                            <p x-show="fieldErrors.includes('name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -132,7 +142,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.description">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('description') }" x-model="selectedAbility.description">
+                                            <p x-show="fieldErrors.includes('description')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -144,7 +155,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.tactic">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('tactic') }" x-model="selectedAbility.tactic">
+                                            <p x-show="fieldErrors.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -156,7 +168,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.technique_id">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                            <p x-show="fieldErrors.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -168,13 +181,15 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.technique_name">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                            <p x-show="fieldErrors.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
                         <p class="has-text-centered">Executors</p>
+                        <p x-show="fieldErrors.includes('executors')" class="help is-danger">At least one executor is required.</p>
                         <div class="has-text-centered">
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
@@ -308,8 +323,17 @@
             <footer class="modal-card-foot">
                 <nav class="level">
                     <div class="level-left">
-                        <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-primary is-small" @click="saveAbility()">Save</button>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="saveAbility()">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="deleteAbility()">
+                                <span class="icon"><i class="fas fa-trash"></i></span>
+                                <span>Delete Ability</span>
+                            </button>
                         </div>
                     </div>
                     <div class="level-right">
@@ -341,14 +365,21 @@
             searchTerm: '',
             platforms: platformsAbilities,
             payloads: payloadsAbilities,
+            isLoaded: false,
+            isCreatingAbility: false,
 
             // Modals
             showAbilityModal: false,
+
+            // Input validation
+            requiredFields: ['name', 'description', 'tactic', 'technique_id', 'technique_name', 'executors'],
+            fieldErrors: [],
 
             initPage() {
                 apiV2('GET', '/api/v2/abilities').then((abilities) => {
                     this.abilities = abilities;
                     this.clearFilters();
+                    this.isLoaded = true;
                 }).catch((error) => {
                     toast('There was an error initializing the page', false);
                     console.error(error);
@@ -378,7 +409,6 @@
                     }
                 } else if (type === 'tactic') {
                     this.techniques = [...new Set(this.abilities.filter(matchesName).filter(matchesTactic).map((ability) => `${ability.technique_id} | ${ability.technique_name}`))].sort();
-                    console.log(this.techniques);
                     if (!this.techniques.includes(this.selectedTechnique)) {
                         this.selectedTechnique = '';
                     }
@@ -399,36 +429,76 @@
             },
 
             selectAbility(ability) {
+                this.isCreatingAbility = false;
+                this.fieldErrors = [];
                 this.selectedAbility = ability;
                 this.showAbilityModal = true;
             },
 
             createAbility() {
+                this.isCreatingAbility = true;
                 this.selectedAbility = {
                     ability_id: uuidv4(),
-                    executors: []
+                    name: '',
+                    description: '',
+                    tactic: '',
+                    technique_id: '',
+                    technique_name: '',
+                    executors: [],
+                    repeatable: true,
+                    additional_info: {},
+                    privilege: '',
+                    singleton: true,
+                    buckets: [],
+                    requirements: [],
+                    access: {}
                 };
 
+                this.addExecutorToAbility('before')
                 this.showAbilityModal = true;
             },
 
             saveAbility() {
-                apiV2('PATCH', `/api/v2/abilities/${this.selectedAbility.ability_id}`, this.selectedAbility).then((response) => {
+                this.fieldErrors = validateInputs(this.selectedAbility, this.requiredFields);
+                if (this.fieldErrors.length) return;
+
+                apiV2('PUT', `/api/v2/abilities/${this.selectedAbility.ability_id}`, this.selectedAbility).then((response) => {
                     toast('Saved ability!', true);
 
-                    // Replace ability in list with updated info
-                    const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbility.ability_id);
-                    this.abilities[index] = response;
+                    if (this.isCreatingAbility) {
+                        this.abilities.push(response);
+                        this.abilities.sort((a, b) => a.name.localeCompare(b.name));
+                    } else {
+                        // Replace ability in list with updated info
+                        const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbility.ability_id);
+                        this.abilities[index] = response;
+                    }
+                    this.filterAbilities();
                 }).catch((error) => {
                     toast('Error saving ability', false);
                     console.error(error);
                 });
             },
 
+            deleteAbility() {
+                if (confirm('Are you sure you want to delete this ability?')) {
+                    apiV2('DELETE', `/api/v2/abilities/${this.selectedAbility.ability_id}`).then((response) => {
+                        toast('Removed ability', true);
+                        this.showAbilityModal = false;
+                        this.abilities.splice(this.abilities.findIndex((ability) => this.selectedAbility.ability_id === ability.ability_id), 1);
+                        this.filterAbilities();
+                    }).catch((error) => {
+                        toast('Could not delete ability', false);
+                        console.error(error);
+                    });
+                }
+            },
+
             addExecutorToAbility(bOrA) {
                 const template = {
                     payloads: [],
-                    platform: 'linux'
+                    platform: 'linux',
+                    name: 'sh'
                 };
 
                 if (bOrA === 'after') {
@@ -447,7 +517,7 @@
 <style scoped>
 
     #abilities-table {
-        height: 50vh;
+        height: calc(100vh - 480px);
         overflow: scroll;
     }
 
@@ -455,18 +525,10 @@
         width: 100%;
     }
 
-    thead tr:nth-child(1) th {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        background-color: #161616 !important;
-    }
-
-    tbody tr:nth-child(1) td {
-        position: sticky;
-        top: 37;
-        z-index: 10;
-        background-color: #161616 !important;
+    #main-content {
+        display: flex;
+        flex-flow: column;
+        height: 100%;
     }
 
     tr:hover {

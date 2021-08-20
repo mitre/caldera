@@ -2,8 +2,8 @@
 
 function toast(message, success) {
     bulmaToast.toast({
-        message: message,
-        type: success ? 'is-success' : 'is-danger',
+        message: `<span class="icon"><i class="fas fa-${success ? 'check' : 'exclamation'}"></i></span> ${message}`,
+        type: `toast ${success ? 'is-success' : 'is-danger'}`,
         position: 'bottom-right',
         duration: '3000',
         pauseOnHover: true
