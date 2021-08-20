@@ -94,20 +94,20 @@
                                         </div>
                                     </div>
                                     <div class="controls-container is-flex is-justify-content-center is-align-items-center">
-                                        <button class="button no-style is-large"
+                                        <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
                                                 x-on:click="updateOperation('state', 'cleanup')"><i
                                                 alt="stop" class="fas fa-stop"></i></button>
                                         <template x-if="selectedOperation.state ==='running'">
-                                            <button class="button no-style is-larger"
+                                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-larger"
                                                     x-on:click="updateOperation('state', 'paused')"><i
                                                     alt="pause" class="fas fa-pause-circle"></i></button>
                                         </template>
                                         <template x-if="selectedOperation.state !== 'running'">
-                                            <button class="button no-style is-larger"
+                                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-larger"
                                                     x-on:click="updateOperation('state', 'running')">
                                                 <i alt="run" class="fas fa-play-circle"></i></button>
                                         </template>
-                                        <button class="button no-style is-medium"
+                                        <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
                                                 x-on:click="updateOperation('state', 'run_one_link')">
                                             <i alt="run one step" class="fas fa-play"><sub>1</sub></i></button>
                                     </div>
@@ -163,6 +163,12 @@
                                                 <label for="toggleAutonomous">Autonomous</label>
                                             </div>
                                         </div>
+
+                                        <template x-if="!isOperationRunning">
+                                            <div class="is-flex is-justify-content-center mt-5">
+                                                <em>Operation has finished running.</em>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
