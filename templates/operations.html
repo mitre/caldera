@@ -272,7 +272,6 @@
                                                               spellcheck="false"></textarea>
                                                 </div>
                                             </template>
-                                            <!-- TODO check if this approve/discard condition is right-->
                                             <template x-if="selectedLink === link && isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="edit-command">Edit command</label>
@@ -300,7 +299,7 @@
                                         </td>
 
                                         <!--OUTPUT/FACTS COLUMN-->
-                                        <!--                                        TODO if output is T, should show facts; individual links should have their own facts, TBD-->
+                                        <!--TODO if output is T, should show facts; individual links should have their own facts, TBD-->
                                         <td class="outputDetails">
                                             <template x-if="selectedLink === link && selectedLinkOutput">
                                                 <div class="mb-5">
@@ -338,29 +337,33 @@
                                         <td>New Manual Command</td>
                                         <td>
                                             <label x-show="false" for="manual-agent">Choose an agent:</label>
-                                            <select id="manual-agent" x-model="selectedAgentIndex" required>
-                                                <option disabled>Choose agent</option>
-                                                <template x-for="(agent, index) in selectedOperation.host_group"
-                                                          :key="agent.paw">
-                                                    <option x-bind:selected="index === 0"
-                                                            :value="index"
-                                                            x-text="agent.display_name + '-' + agent.paw"></option>
-                                                </template>
-                                            </select>
+                                            <div class="select is-small my-2 ml-3">
+                                                <select id="manual-agent" x-model="selectedAgentIndex" required>
+                                                    <option disabled>Choose agent</option>
+                                                    <template x-for="(agent, index) in selectedOperation.host_group"
+                                                              :key="agent.paw">
+                                                        <option x-bind:selected="index === 0"
+                                                                :value="index"
+                                                                x-text="agent.display_name + '-' + agent.paw"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
                                         </td>
                                         <td>
-                                            <select x-model="manualCommand.executor.name"
-                                                    id="manual-executor"
-                                                    class="column executor-selector">
-                                                <option disabled>Choose executor</option>
-                                                <template
-                                                        x-for="(executor, index) in selectedAgentExecutors"
-                                                        :key="executor.name">
-                                                    <option x-text="executor"
-                                                            :value="selectedAgent.executors[index]"
-                                                            x-bind:selected="index === 0"></option>
-                                                </template>
-                                            </select>
+                                            <div class="select is-small my-2 ml-3">
+                                                <select x-model="manualCommand.executor.name"
+                                                        id="manual-executor"
+                                                        class="column executor-selector">
+                                                    <option disabled>Choose executor</option>
+                                                    <template
+                                                            x-for="(executor, index) in selectedAgentExecutors"
+                                                            :key="executor.name">
+                                                        <option x-text="executor"
+                                                                :value="selectedAgent.executors[index]"
+                                                                x-bind:selected="index === 0"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
                                         </td>
                                         <td>
                                             <label x-show="false" for="input-command">Type manual command:</label>
@@ -453,26 +456,30 @@
                                         <div>
                                             <label for="basic-adversary">Adversary:</label>
                                             <div class="modal-form-fields" id="basic-adversary">
-                                                <select x-model="startOperation.adversary.adversary_id">
-                                                    <option value="" selected>No adversary (manual)</option>
-                                                    {% for adv in adversaries %}
-                                                    <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
-                                                            value="{{ adv.adversary_id|e }}">
-                                                        {{ adv.name|e }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select x-model="startOperation.adversary.adversary_id">
+                                                        <option value="" selected>No adversary (manual)</option>
+                                                        {% for adv in adversaries %}
+                                                        <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
+                                                                value="{{ adv.adversary_id|e }}">
+                                                            {{ adv.name|e }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div>
                                             <label for="autonomous-source">Fact source:</label>
                                             <div class="modal-form-fields" id="autonomous-source">
-                                                <select x-model="startOperation.source.id">
-                                                    {% for s in sources %}
-                                                    <option>{{ s.name|e }}</option>
-                                                    {% endfor %}
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select x-model="startOperation.source.id">
+                                                        {% for s in sources %}
+                                                        <option>{{ s.name|e }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -509,19 +516,21 @@
                                         <div>
                                             <label for="autonomous-planner">Planner:</label>
                                             <div class="modal-form-fields">
-                                                <select id="autonomous-planner" x-model="startOperation.planner.id">
-                                                    {% for p in planners %}
-                                                    {% if p.allow_repeatable_abilities %}
-                                                    <option data-allow-repeatable-abilities>
-                                                        {{ p.name|e }}
-                                                    </option>
-                                                    {% else %}
-                                                    <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
-                                                        {{ p.name|e }}
-                                                    </option>
-                                                    {% endif %}
-                                                    {% endfor %}
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="autonomous-planner" x-model="startOperation.planner.id">
+                                                        {% for p in planners %}
+                                                        {% if p.allow_repeatable_abilities %}
+                                                        <option data-allow-repeatable-abilities>
+                                                            {{ p.name|e }}
+                                                        </option>
+                                                        {% else %}
+                                                        <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
+                                                            {{ p.name|e }}
+                                                        </option>
+                                                        {% endif %}
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                         <div>
@@ -659,44 +668,51 @@
                                         <div>
                                             <label for="link-agent">Agent:</label>
                                             <div class="modal-form-fields">
-                                                <select id="link-agent"
-                                                        x-model="selectedAgentIndex"
-                                                        x-on:change="getAgentLinks()">
-                                                    <option disabled>Choose an agent...</option>
-                                                    <template x-for="(agent, index) in selectedOperation.host_group"
-                                                              :key="agent.paw">
-                                                        <option :value="index"
-                                                                x-bind:selected="index === 0"
-                                                                x-text="agent.display_name + '-' + agent.paw"></option>
-                                                    </template>
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="link-agent"
+                                                            x-model="selectedAgentIndex"
+                                                            x-on:change="getAgentLinks()">
+                                                        <option disabled>Choose an agent...</option>
+                                                        <template x-for="(agent, index) in selectedOperation.host_group"
+                                                                  :key="agent.paw">
+                                                            <option :value="index"
+                                                                    x-bind:selected="index === 0"
+                                                                    x-text="agent.display_name + '-' + agent.paw"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                         <div>
                                             <label for="link-tactic">Tactic:</label>
                                             <div class="modal-form-fields">
-                                                <select id="link-tactic"
-                                                        x-model="potentialLink.tactic"
-                                                        x-on:change="filterAbilities()">
-                                                    <option default value="">Choose a tactic...</option>
-                                                    <template x-for="tactic in tacticFiltersList" :key="link.id+tactic">
-                                                        <option x-text="tactic"></option>
-                                                    </template>
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="link-tactic"
+                                                            x-model="potentialLink.tactic"
+                                                            x-on:change="filterAbilities()">
+                                                        <option default value="">Choose a tactic...</option>
+                                                        <template x-for="tactic in tacticFiltersList"
+                                                                  :key="link.id+tactic">
+                                                            <option x-text="tactic"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                         <div>
                                             <label for="link-technique">Technique:</label>
                                             <div class="modal-form-fields">
-                                                <select id="link-technique"
-                                                        x-model="potentialLink.technique"
-                                                        x-on:change="filterAbilities()">
-                                                    <option default>Choose a technique...</option>
-                                                    <template x-for="technique in techniqueFiltersList"
-                                                              :key="link.id+technique">
-                                                        <option x-text="technique"></option>
-                                                    </template>
-                                                </select>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="link-technique"
+                                                            x-model="potentialLink.technique"
+                                                            x-on:change="filterAbilities()">
+                                                        <option default>Choose a technique...</option>
+                                                        <template x-for="technique in techniqueFiltersList"
+                                                                  :key="link.id+technique">
+                                                            <option x-text="technique"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1023,6 +1039,7 @@
             get isLinkEditable() {
                 if (!this.selectedLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
+                <!-- TODO check if this approve/discard condition is right-->
                 return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses)) &&
                     !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'))
             },
@@ -1479,9 +1496,13 @@
         width: 75px;
     }
 
-    .modal-form-fields input, .modal-form-fields select {
-        margin: 0.75rem;
+    .modal-form-fields input {
+        margin: 0.75em;
     }
+
+    /*.modal-form-fields select {*/
+    /*    margin-left: 0.75em;*/
+    /*}*/
 
     .modal-form-fields-columns {
         display: flex;
