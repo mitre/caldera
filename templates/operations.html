@@ -263,7 +263,7 @@
                                             </template>
                                             <template
                                                     x-if="selectedLink === link && !isLinkEditable">
-                                                <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
+                                                <div class="is-flex is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="view-command">View command</label>
                                                     <textarea id="view-command"
                                                               class="code"
@@ -272,6 +272,7 @@
                                                               spellcheck="false"></textarea>
                                                 </div>
                                             </template>
+                                            <!-- TODO check if this approve/discard condition is right-->
                                             <template x-if="selectedLink === link && isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="edit-command">Edit command</label>
@@ -280,11 +281,20 @@
                                                               contenteditable
                                                               x-model="editableCommand"
                                                               spellcheck="false"></textarea>
-                                                    <button type="button"
-                                                            class="button is-primary is-small"
-                                                            x-on:click="updateLink(-3, editableCommand); showLinkEditCommandID = null;">
-                                                        Update
-                                                    </button>
+
+                                                    <!-- BUTTONS TO MANUALLY EXECUTE (APPROVE/DISCARD) COMMAND-->
+                                                    <div class="is-flex is-justify-content-space-between">
+                                                        <button type="button"
+                                                                class="button is-small mr-3"
+                                                                x-on:click="updateLink(-2)">
+                                                            Discard
+                                                        </button>
+                                                        <button type="button"
+                                                                class="button is-primary is-small"
+                                                                x-on:click="updateLink(-3, editableCommand)">
+                                                            Approve
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </template>
                                         </td>
@@ -308,7 +318,6 @@
                                                               :key="link.id+'-'+index">
                                                         <code x-bind:id="index" class="highlight"
                                                               x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
-                                                        <!--                                                        TODO fix selectedLinkFacts length error-->
                                                     </template>
                                                 </div>
                                             </template>
@@ -734,16 +743,17 @@
                                                 <label for="agent-output">include agent output</label>
                                             </div>
                                         </div>
-
-<!--                                        TODO radio groups-->
                                         <div>
                                             <label for="report-type">Report type:</label>
                                             <div class="modal-form-fields download-buttons-container" id="report-type">
-                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="full-report" id="full-report">
+                                                <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                       value="full-report" id="full-report">
                                                 <label for="full-report">Full Report</label>
-                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="event-logs" id="event-logs">
+                                                <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                       value="event-logs" id="event-logs">
                                                 <label for="event-logs">Event Logs</label>
-                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="csv" id="csv">
+                                                <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                       value="csv" id="csv">
                                                 <label for="csv">CSV</label>
                                             </div>
                                         </div>
@@ -762,21 +772,6 @@
                                         <div>
                                             <p>Are you sure you want to delete the operation <em
                                                     x-text="selectedOperation.name"></em>?</p>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        </template>
-                        <template x-if="openModal === 'deleteLinkModal'">
-                            <div>
-                                <header class="modal-card-head">
-                                    <p class="modal-card-title">Delete link?</p>
-                                </header>
-                                <section class="modal-card-body">
-                                    <div class="modal-form">
-                                        <div>
-                                            <p>Are you sure you want to delete the link <em
-                                                    x-text="selectedLink.ability.name"></em>?</p>
                                         </div>
                                     </div>
                                 </section>
@@ -827,7 +822,6 @@
                                     Yes
                                 </button>
                             </template>
-                            <!--                            TODO bug with pressing Enter in create new operation form (it should start operation instead)-->
                             <template x-if="openModal === 'addOperation'">
                                 <button type="button" class="button is-primary" x-on:click="addOperation(false)"
                                         x-text="schedule ? 'Schedule' : 'Start'"></button>
@@ -1002,7 +996,6 @@
             techniqueFiltersList: [],
             filteredLinksList: [],
             schedule: "",
-            showLinkEditCommandID: null,
             editableCommand: null,
             isOperationsControlsExpanded: true,
             showOperationsMenuCaret: true,
@@ -1022,7 +1015,6 @@
                 else return [];
             },
 
-            // TODO disable operation state/config controls when state is not running
             get isOperationRunning() {
                 if (!this.selectedOperation) return false;
                 return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time')
@@ -1032,7 +1024,7 @@
                 if (!this.selectedLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
                 return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses)) &&
-                    !(this.selectedLink.finish || this.selectedLink.output))
+                    !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'))
             },
 
             getOperationsMenuCaretDisplay() {
@@ -1171,6 +1163,7 @@
                         if (res.facts) {
                             this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score)
                         }
+                        // TODO make sure this is correct based on response from api
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
                         this.editableCommand = b64DecodeUnicode(res.command);
                     })
@@ -1182,7 +1175,6 @@
                     });
             },
 
-            // TODO
             updateLink(status, command = null) {
                 const updateLink = this.selectedLink;
                 if (command) {
@@ -1655,7 +1647,6 @@
         color: gray;
     }
 
-    /*TODO hover over entire row should highlight, even if cell is empty*/
     .timeline-table table tbody tr:hover, .timeline-table table tbody tr.selected {
         background-color: rgba(255, 255, 255, 0.1);
     }
@@ -1882,11 +1873,11 @@
     }
 
     /*failure*/
-    span.status-failure {
+    span.status-failed {
         color: #c31;
     }
 
-    span.status-failure::after {
+    span.status-failed::after {
         box-shadow: 0 0 0 0.2em #c31;
     }
 
@@ -1900,11 +1891,11 @@
     }
 
     /*removed*/
-    span.status-remove {
+    span.status-discarded {
         color: #a05195;
     }
 
-    span.status-remove::after {
+    span.status-discarded::after {
         box-shadow: 0 0 0 0.2em #a05195;
     }
 
