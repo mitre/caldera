@@ -1,4 +1,4 @@
-<div x-data="alpineOperations()" x-init="getOperations()" xmlns="http://www.w3.org/1999/html"
+<div id="operationsPage" x-data="alpineOperations()" x-init="getOperations()" xmlns="http://www.w3.org/1999/html"
      @resize.window="getOperationsMenuCaretDisplay()">
     <div>
         <div>
@@ -46,11 +46,10 @@
                     </div>
                     <div class="is-flex is-flex-direction-row is-align-items-center">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
-                            <template x-for="op in filteredOperations">
+                            <template x-for="op in filteredOperations" :key="op.id">
                                 <button class="no-style operation-menu-links"
                                         x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'"
-                                        :key="op.id"
-                                        x-on:click="selectedOperationID = op.id; getOperation()">
+                                        x-on:click="selectedOperation = op; getOperations(); getOperation()">
                                     <i x-show="selectedOperationID !== op.id" class="far fa-folder">
                                         <span class="decisionsIcon" x-text="op.chain.length"></span></i>
                                     <i x-show="selectedOperationID === op.id" class="far fa-folder-open"></i>
@@ -211,8 +210,8 @@
                                     </tr>
                                     </tbody>
                                 </template>
-                                <template x-for="(link, index) in selectedOperation.chain">
-                                    <tbody :key="index">
+                                <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
+                                    <tbody>
                                     <tr x-bind:id="link.id"
                                         x-bind:class="selectedLink === link ? 'selected' : ''"
                                         x-on:click="selectedLink = link; getLink(link.id);">
@@ -243,7 +242,7 @@
                                                 <em>Click on a link to show more details.</em>
                                             </template>
                                             <template
-                                                    x-if="selectedLink === link && !(selectedLink?.status === -1 || selectedLink.finish || selectedLink.output)">
+                                                    x-if="selectedLink === link && isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="view-command">View command</label>
                                                     <textarea id="view-command"
@@ -254,7 +253,7 @@
                                                 </div>
                                             </template>
                                             <template
-                                                    x-if="selectedLink === link && (selectedLink?.status === -1 || selectedLink.finish || selectedLink.output)">
+                                                    x-if="selectedLink === link && !isLinkEditable">
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                     <label x-show="false" for="edit-command">Edit command</label>
                                                     <textarea id="edit-command"
@@ -264,7 +263,7 @@
                                                               spellcheck="false"></textarea>
                                                     <button type="button"
                                                             class="button is-primary is-small"
-                                                            x-on:click="updateLinkState(-3, editableCommand); showLinkEditCommandID = null;">
+                                                            x-on:click="updateLink(-3, editableCommand); showLinkEditCommandID = null;">
                                                         Update
                                                     </button>
                                                 </div>
@@ -272,6 +271,7 @@
                                         </td>
 
                                         <!--OUTPUT/FACTS COLUMN-->
+                                        <!--                                        TODO if output is T, should show facts; individual links should have their own facts, TBD-->
                                         <td>
                                             <template x-if="selectedLink === link && selectedLinkOutput">
                                                 <div class="mb-5">
@@ -285,7 +285,8 @@
                                             <template x-if="selectedLink === link && selectedLinkFacts?.length > 0">
                                                 <div class="mb-5">
                                                     <p class="is-size-7">Facts: </p>
-                                                    <template x-for="(fact, index) in selectedLinkFacts">
+                                                    <template x-for="(fact, index) in selectedLinkFacts"
+                                                              :key="link.id+'-'+index">
                                                         <code x-bind:id="index" class="highlight"
                                                               x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
                                                         <!--                                                        TODO fix selectedLinkFacts length error-->
@@ -310,28 +311,30 @@
                                         <td>
                                             <label x-show="false" for="manual-agent">Choose an agent:</label>
                                             <select id="manual-agent" x-model="selectedAgentIndex" required>
-                                                <option selected>Choose agent</option>
-                                                <template
-                                                        x-for="(agent, index) in selectedOperation.host_group">
-                                                    <option :value="index"
+                                                <option disabled>Choose agent</option>
+                                                <template x-for="(agent, index) in selectedOperation.host_group"
+                                                          :key="agent.paw">
+                                                    <option x-bind:selected="index === 0"
+                                                            :value="index"
                                                             x-text="agent.display_name + '-' + agent.paw"></option>
                                                 </template>
                                             </select>
                                         </td>
-                                        <td x-show="selectedAgentIndex">
+                                        <td>
                                             <select x-model="manualCommand.executor.name"
                                                     id="manual-executor"
                                                     class="column executor-selector">
-                                                <option>Choose executor</option>
+                                                <option disabled>Choose executor</option>
                                                 <template
-                                                        x-for="(executor, index) in selectedAgentExecutors">
+                                                        x-for="(executor, index) in selectedAgentExecutors"
+                                                        :key="executor.name">
                                                     <option x-text="executor"
                                                             :value="selectedAgent.executors[index]"
                                                             x-bind:selected="index === 0"></option>
                                                 </template>
                                             </select>
                                         </td>
-                                        <td x-show="selectedAgentIndex">
+                                        <td>
                                             <label x-show="false" for="input-command">Type manual command:</label>
                                             <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                 <textarea x-model="manualCommand.executor.command"
@@ -360,26 +363,36 @@
                                 </tbody>
 
                                 <!--                                ADD COMMAND/LINK BUTTONS-->
-                                <tfoot>
-                                <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td class="is-flex is-justify-content-flex-end mt-5">
-                                        <button title="add manual command" class="button is-primary is-small ml-2"
-                                                x-on:click="addNewRow = true">
-                                            <i class="pr-1 fas fa-plus"></i>Manual
-                                            Command
-                                        </button>
-                                        <button title="add potential link" class="button is-primary is-small ml-2"
-                                                x-on:click="openModal = 'addLink'"><i class="pr-1 fas fa-plus"></i>Potential
-                                            Link
-                                        </button>
-                                    </td>
-                                </tr>
-                                </tfoot>
+                                <template x-if="isOperationRunning">
+                                    <tfoot>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="is-flex is-justify-content-flex-end mt-5">
+                                            <template x-if="selectedLink">
+                                                <button type="button" title="delete link"
+                                                        class="button is-primary is-small ml-2"
+                                                        x-on:click="openModal = 'deleteLinkModal'"><i
+                                                        class="pr-1 fas fa-trash"></i>Discard Link
+                                                </button>
+                                            </template>
+                                            <button title="add manual command" class="button is-primary is-small ml-2"
+                                                    x-on:click="addNewRow = true; getAgents()">
+                                                <i class="pr-1 fas fa-plus"></i>Manual
+                                                Command
+                                            </button>
+                                            <button title="add potential link" class="button is-primary is-small ml-2"
+                                                    x-on:click="openModal = 'addLink'; getAgents()"><i
+                                                    class="pr-1 fas fa-plus"></i>Potential
+                                                Link
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tfoot>
+                                </template>
                             </table>
                         </div>
                     </div>
@@ -454,9 +467,8 @@
                                                         x-on:click="startOperation.group = ''">
                                                     all groups
                                                 </button>
-                                                <template x-for="(group, index) in agentGroups">
+                                                <template x-for="(group, index) in agentGroups" :key="group">
                                                     <button type="button"
-                                                            :key="index"
                                                             class="no-style chip-select"
                                                             x-bind:class="(startOperation.group === group) ? 'selected' : ''"
                                                             x-on:click="startOperation.group = group"
@@ -621,9 +633,11 @@
                                                 <select id="link-agent"
                                                         x-model="selectedAgentIndex"
                                                         x-on:change="getAgentLinks()">
-                                                    <option default value="">Choose an agent...</option>
-                                                    <template x-for="(agent, index) in selectedOperation.host_group">
+                                                    <option disabled>Choose an agent...</option>
+                                                    <template x-for="(agent, index) in selectedOperation.host_group"
+                                                              :key="agent.paw">
                                                         <option :value="index"
+                                                                x-bind:selected="index === 0"
                                                                 x-text="agent.display_name + '-' + agent.paw"></option>
                                                     </template>
                                                 </select>
@@ -636,7 +650,7 @@
                                                         x-model="potentialLink.tactic"
                                                         x-on:change="filterAbilities()">
                                                     <option default value="">Choose a tactic...</option>
-                                                    <template x-for="tactic in tacticFiltersList">
+                                                    <template x-for="tactic in tacticFiltersList" :key="link.id+tactic">
                                                         <option x-text="tactic"></option>
                                                     </template>
                                                 </select>
@@ -649,7 +663,8 @@
                                                         x-model="potentialLink.technique"
                                                         x-on:change="filterAbilities()">
                                                     <option default>Choose a technique...</option>
-                                                    <template x-for="technique in techniqueFiltersList">
+                                                    <template x-for="technique in techniqueFiltersList"
+                                                              :key="link.id+technique">
                                                         <option x-text="technique"></option>
                                                     </template>
                                                 </select>
@@ -662,7 +677,7 @@
                                            x-text="filteredLinksList.length + ' potential link' + ((filteredLinksList.length === 1) ? '' : 's')"></p>
                                         <template x-if="filteredLinksList">
                                             <ul>
-                                                <template x-for="link in filteredLinksList">
+                                                <template x-for="link in filteredLinksList" :key="link.ability.name">
                                                     <li>
                                                         <p x-text="link.ability.name"></p>
                                                         <button type="button"
@@ -712,6 +727,12 @@
                                                         class="pr-1 fas fa-arrow-down"></i>
                                                     Event logs
                                                 </button>
+                                                <button type="button" title="download table as CSV"
+                                                        class="button type=button is-primary is-small ml-2"
+                                                        x-on:click="downloadCSV()"><i
+                                                        class="pr-1 fas fa-arrow-down"></i>
+                                                    CSV
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -734,6 +755,21 @@
                                 </section>
                             </div>
                         </template>
+                        <template x-if="openModal === 'deleteLinkModal'">
+                            <div>
+                                <header class="modal-card-head">
+                                    <p class="modal-card-title">Delete link?</p>
+                                </header>
+                                <section class="modal-card-body">
+                                    <div class="modal-form">
+                                        <div>
+                                            <p>Are you sure you want to delete the link <em
+                                                    x-text="selectedLink.ability.name"></em>?</p>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </template>
 
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
@@ -749,6 +785,12 @@
                             <template x-if="openModal === 'deleteOperationModal'">
                                 <button class="button is-primary"
                                         x-on:click="deleteOperation(); openModal = null;">
+                                    Yes
+                                </button>
+                            </template>
+                            <template x-if="openModal === 'deleteLinkModal'">
+                                <button class="button is-primary"
+                                        x-on:click="updateLink(-2); openModal = null;">
                                     Yes
                                 </button>
                             </template>
@@ -778,8 +820,8 @@
     const linkStatuses = {
         '0': 'success',
         '-1': 'paused',
-        '1': 'failure',
-        '-2': 'remove',
+        '1': 'failed',
+        '-2': 'discarded',
         '-3': 'collect',
         '-4': 'untrusted',
         '-5': 'visible',
@@ -800,7 +842,7 @@
         // timeout: "30",
         obfuscator: "plain-text",
         jitter: "4/8",
-        visibility: "50",
+        visibility: "51",
     };
     const emptyManualCommandObject = {
         paw: "",
@@ -844,7 +886,7 @@
         } else if (delta < day) {
             fuzzy = Math.floor(delta / hour) + ' hrs ago';
         } else if (delta < day * 2) {
-            fuzzy = 'yesterday';
+            fuzzy = 'yesterday ' + (hTime.join(':'));
         } else {
             switch (hMonth) {
                 case 0:
@@ -899,7 +941,6 @@
     function alpineOperations() {
         return {
             agentGroups: `{{ groups | tojson }}`.toString().replace(/["\[\]]/g, '').split(','),
-            selectedOperationID: null,
             selectedOperation: null,
             selectedAgentIndex: null,
             isSelectedAdversaryRepeatable: false,
@@ -934,13 +975,31 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
 
+            get selectedOperationID() {
+                return this.selectedOperation ? this.selectedOperation.id : null;
+            },
+
             get selectedAgent() {
-                return this.selectedOperation?.host_group[this.selectedAgentIndex];
+                if (!this.selectedOperation || this.selectedAgentIndex > this.selectedOperation.host_group.length) return null;
+                return this.selectedOperation.host_group[this.selectedAgentIndex];
             },
 
             get selectedAgentExecutors() {
                 if (this.selectedAgent) return this.selectedAgent.executors.map(e => executorShells[e]);
                 else return [];
+            },
+
+            // TODO disable operation state/config controls when state is not running
+            get isOperationRunning() {
+                if (!this.selectedOperation) return false;
+                return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time')
+            },
+
+            get isLinkEditable() {
+                if (!this.selectedLink) return false;
+                // Link can only be editable if operation is running, and if link is paused, queued, or completed
+                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses)) &&
+                    !(this.selectedLink.finish || this.selectedLink.output))
             },
 
             getOperationsMenuCaretDisplay() {
@@ -950,8 +1009,8 @@
                 }, 1); // timeout is to wait for UI changes to get accurate width calcs
             },
 
-            getAgentLinks() {
-                this.potentialLink.agent = this.selectedAgent;
+            getAgentLinks(agent = this.selectedAgent) {
+                this.potentialLink.agent = agent;
                 this.tacticFiltersList = [];
                 this.techniqueFiltersList = [];
                 this.potentialLink.agent.links.forEach((link) => {
@@ -970,6 +1029,7 @@
             getOperations() {
                 apiV2('GET', endpoint).then((res) => {
                     this.operations = res;
+                    console.log('SELECTED LINK AFTER GET OP', this.selectedLink)
                     this.filterOperations(this.searchInput);
                 }).catch((error) => {
                     toast('Error getting operations');
@@ -979,6 +1039,7 @@
             getOperation() {
                 if (this.selectedOperationID) {
                     apiV2('GET', endpoint + '/' + this.selectedOperationID).then((res) => {
+                        this.selectedLink = null;
                         this.selectedOperation = res;
                         // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
                     }).catch((error) => {
@@ -1004,8 +1065,7 @@
                             toast('Started operation ' + this.startOperation.name + "!", true);
                             this.resetOperation();
                             this.getOperations();
-                            this.selectedOperationID = res.id;
-                            this.getOperation();
+                            this.selectedOperation = res;
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
@@ -1017,9 +1077,8 @@
             deleteOperation() {
                 apiV2('DELETE', endpoint + '/' + this.selectedOperationID)
                     .then(() => {
-                        this.getOperations();
                         this.selectedOperation = null;
-                        this.selectedOperationID = null;
+                        this.getOperations();
                         toast('Deleted operation.', true);
                     })
                     .catch((error) => {
@@ -1031,6 +1090,8 @@
                 apiV2('GET', 'api/v2/agents')
                     .then((res) => {
                         this.updateAgentGroups(res);
+                        this.getAgentLinks(res[0]);
+                        this.selectedAgentIndex = 0;
                     })
                     .catch((error) => {
                         toast('Error getting agents.');
@@ -1049,8 +1110,10 @@
                 apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, this.manualCommand)
                     .then((res) => {
                         toast('Added manual command.', true);
-                        this.addNewRow = false;
                         this.getOperation();
+
+                        // Reset
+                        this.addNewRow = false;
                         this.manualCommand = emptyManualCommandObject;
                         this.selectedAgentIndex = null;
                     })
@@ -1061,8 +1124,7 @@
                 apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, link)
                     .then((res) => {
                         toast('Added potential link.', true);
-                        this.getOperations();
-                        this.getAgents();
+                        this.getOperation();
                         this.openModal = null;
                     })
                     .catch((error) => {
@@ -1089,7 +1151,7 @@
             },
 
             // TODO
-            updateLinkState(status, command = null) {
+            updateLink(status, command = null) {
                 const updateLink = this.selectedLink;
                 if (command) {
                     updateLink.command = command;
@@ -1107,9 +1169,9 @@
             updateOperation(field, updateValue) {
                 this.selectedOperation[field] = updateValue;
                 apiV2('PATCH', endpoint + '/' + this.selectedOperationID, this.selectedOperation)
-                    .then((rest) => {
-                        toast(`Updated operation ${field} to: ${updateValue}`, true);
-                        this.getOperation();
+                    .then((res) => {
+                        toast(`Updated operation ${field}`, true);
+                        this.selectedOperation = res;
                     })
                     .catch((error) => {
                         // TODO have clearer error messaging here
@@ -1125,16 +1187,40 @@
                     .catch((error) => toast('Error generating operation report.'));
             },
 
+            downloadCSV() {
+                const csv = [];
+                const rows = document.querySelector('#operationsPage').querySelectorAll("table tr");
+
+                rows.forEach((row) => {
+                    const cols = row.querySelectorAll("td, th");
+                    const rowItems = [];
+                    cols.forEach((col => {
+                        rowItems.push(`"${col.innerText}"`);
+                    }))
+                    csv.push(rowItems.join(","));
+                });
+                this.createDownloadReport(new Blob([csv.join("\n")], {type: "text/csv"}), this.selectedOperation.name, true);
+                const downloadLink = document.createElement("a");
+            },
+
             //
             // OBJECT MANIPULATION
             //
 
-            createDownloadReport(data, fileName) {
-                const dataURL = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                toast('Downloading report: ' + fileName, true);
+            createDownloadReport(data, fileName, isCSV = false) {
+                let dataURL;
+
+                if (!isCSV) {
+                    dataURL = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                    toast('Downloading report: ' + fileName, true);
+                    fileName += '.json';
+                } else {
+                    dataURL = window.URL.createObjectURL(data);
+                }
+
                 const elem = document.createElement('a')
                 elem.setAttribute('href', dataURL);
-                elem.setAttribute('download', fileName + '.json');
+                elem.setAttribute('download', fileName);
                 elem.click();
             },
 
