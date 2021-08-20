@@ -89,7 +89,7 @@
                                             <h2 class="is-size-7 has-text-weight-normal mb-5 mt-0">Current state</h2>
                                         </div>
                                         <div class="mr-6">
-                                            <h3 class="my-1 is-size-5" x-text="selectedOperation.chain.length"></h3>
+                                            <h3 class="decisionsDisplay my-1 is-size-5" x-text="selectedOperation.chain.length"></h3>
                                             <h2 class="is-size-7 has-text-weight-normal mb-5 mt-0">Decisions</h2>
                                         </div>
                                     </div>
@@ -763,6 +763,21 @@
                                 </section>
                             </div>
                         </template>
+                        <template x-if="openModal === 'deleteLinkModal'">
+                            <div>
+                                <header class="modal-card-head">
+                                    <p class="modal-card-title">Delete link?</p>
+                                </header>
+                                <section class="modal-card-body">
+                                    <div class="modal-form">
+                                        <div>
+                                            <p>Are you sure you want to delete the link <em
+                                                    x-text="selectedLink.ability.name"></em>?</p>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </template>
 
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
@@ -1305,6 +1320,7 @@
         --primary-color: #8B0000;
         --dark-gray: gray;
         --light-gray: #e6e6e6;
+        --decisions-color: #4fdcfc;
     }
 
     .ellipsis-divider {
@@ -1349,6 +1365,11 @@
         margin-left: -22px !important;
         position: relative;
         top: -8px;
+        color: var(--decisions-color);
+    }
+
+    .decisionsDisplay {
+        color: var(--decisions-color) !important;
     }
 
     .operation-menu-container {
