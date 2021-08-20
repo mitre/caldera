@@ -130,6 +130,7 @@ class TestAgent:
     def test_store_new_agent(self, data_svc):
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
         stored_agent = agent.store(data_svc.ram)
+        assert len(data_svc.ram['agents']) == 1
         assert agent in data_svc.ram['agents']
         assert stored_agent == agent
 
