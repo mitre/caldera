@@ -230,7 +230,7 @@
                                         <!--AGENT COLUMN-->
                                         <td class="agentDetails"
                                             x-bind:class="selectedLink === link ? '' : 'linkInfoColumn'">
-                                            <p x-show="link.paw">Agent Paw: #<em x-text="link.paw"></em></p>
+                                            <p x-show="link.paw">Agent #<em x-text="link.paw"></em></p>
                                             <p x-show="selectedLink === link && link.host">Host: <em
                                                     x-text="link.host"></em></p>
                                             <p x-show="selectedLink === link && link.pid">Pid: <em
@@ -370,8 +370,7 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td class="is-flex is-justify-content-flex-end mt-5">
+                                        <td class="pt-6">
                                             <template x-if="selectedLink">
                                                 <button type="button" title="delete link"
                                                         class="button is-primary is-small ml-2"
@@ -379,6 +378,8 @@
                                                         class="pr-1 fas fa-trash"></i>Discard Link
                                                 </button>
                                             </template>
+                                        </td>
+                                        <td class="is-flex is-justify-content-flex-end pt-6">
                                             <button title="add manual command" class="button is-primary is-small ml-2"
                                                     x-on:click="addNewRow = true; getAgents()">
                                                 <i class="pr-1 fas fa-plus"></i>Manual
@@ -706,33 +707,25 @@
                                         <div>
                                             <label for="agent-output-field">Agent output:</label>
                                             <div class="modal-form-fields" id="agent-output-field">
-                                                <input id="agent-output" type="checkbox"
+                                                <input id="agent-output"
+                                                       x-bind:disabled="selectedReportType === 'csv'"
+                                                       type="checkbox"
                                                        class="mr-1"
                                                        x-model="isAgentOutputSelected">
                                                 <label for="agent-output">include agent output</label>
                                             </div>
                                         </div>
+
+<!--                                        TODO radio groups-->
                                         <div>
                                             <label for="report-type">Report type:</label>
                                             <div class="modal-form-fields download-buttons-container" id="report-type">
-                                                <button type="button" title="download full report"
-                                                        class="button type=button is-primary is-small ml-2"
-                                                        x-on:click="downloadInfo('full-report')"><i
-                                                        class="pr-1 fas fa-arrow-down"></i>
-                                                    Full report
-                                                </button tye=button>
-                                                <button type="button" title="download event logs"
-                                                        class="button type=button is-primary is-small ml-2"
-                                                        x-on:click="downloadInfo('event-logs')"><i
-                                                        class="pr-1 fas fa-arrow-down"></i>
-                                                    Event logs
-                                                </button>
-                                                <button type="button" title="download table as CSV"
-                                                        class="button type=button is-primary is-small ml-2"
-                                                        x-on:click="downloadCSV()"><i
-                                                        class="pr-1 fas fa-arrow-down"></i>
-                                                    CSV
-                                                </button>
+                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="full-report" id="full-report">
+                                                <label for="full-report">Full Report</label>
+                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="event-logs" id="event-logs">
+                                                <label for="event-logs">Event Logs</label>
+                                                <input class="mr-1" type="radio" x-model="selectedReportType" value="csv" id="csv">
+                                                <label for="csv">CSV</label>
                                             </div>
                                         </div>
                                     </div>
@@ -773,23 +766,29 @@
 
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
-                                <button class="button ml-2 is-primary width-100" x-on:click="openModal = null">
+                                <button type="button" class="button ml-2" x-on:click="openModal = null">
                                     Close
                                 </button>
                             </template>
                             <template x-if="!(openModal === 'addLink' || openModal === 'showDownloadMenu')">
-                                <button class="button ml-2" x-on:click="openModal = null">
+                                <button type="button" class="button ml-2" x-on:click="openModal = null">
                                     Cancel
                                 </button>
                             </template>
                             <template x-if="openModal === 'deleteOperationModal'">
-                                <button class="button is-primary"
+                                <button type="button" class="button is-primary"
                                         x-on:click="deleteOperation(); openModal = null;">
                                     Yes
                                 </button>
                             </template>
+                            <template x-if="openModal === 'showDownloadMenu'">
+                                <button type="button" class="button is-primary"
+                                        x-on:click="handleDownload()">
+                                    Download
+                                </button>
+                            </template>
                             <template x-if="openModal === 'deleteLinkModal'">
-                                <button class="button is-primary"
+                                <button type="button" class="button is-primary"
                                         x-on:click="updateLink(-2); openModal = null;">
                                     Yes
                                 </button>
@@ -948,6 +947,7 @@
             selectedLinkOutput: null,
             selectedLinkFacts: null,
             selectedLinkCommand: null,
+            selectedReportType: "",
             isAgentOutputSelected: false,
             openModal: null,
             openModalForm: {
@@ -1196,7 +1196,7 @@
                     cols.forEach((col => {
                         const link = this.selectedOperation.chain[i - 1];
                         if (col.className.includes('agentDetails')) {
-                            let agentDetails = `Agent Paw: #${link.paw}`;
+                            let agentDetails = `Agent #${link.paw}`;
                             if (link.host) agentDetails += `\nHost: ${link.host}`;
                             if (link.pid) agentDetails += `\nPid: ${link.pid}`;
                             rowItems.push(`"${agentDetails}"`);
@@ -1211,6 +1211,12 @@
                     csv.push(rowItems.join(","));
                 });
                 this.createDownloadReport(new Blob([csv.join("\n")], {type: "text/csv"}), this.selectedOperation.name, true);
+            },
+
+            handleDownload() {
+                if (this.selectedReportType === 'full-report') this.downloadInfo('full-report');
+                else if (this.selectedReportType === 'event-logs') this.downloadInfo('event-logs');
+                else if (this.selectedReportType === 'csv') this.downloadCSV();
             },
 
             //
