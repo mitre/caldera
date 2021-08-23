@@ -1,4 +1,4 @@
-<div id="operationsPage" x-data="alpineOperations()" x-init="getOperations()" xmlns="http://www.w3.org/1999/html"
+<div id="operationsPage" x-data="alpineOperations()" x-init="getOperations(); getUsage()" xmlns="http://www.w3.org/1999/html"
      @resize.window="getOperationsMenuCaretDisplay()">
     <div>
         <div>
@@ -435,7 +435,6 @@
                     </div>
                 </template>
             </div>
-
         </div>
 
         <!--    MODALS      -->
@@ -459,7 +458,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="basic-adversary">Adversary:</label>
+                                            <label for="basic-adversary"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Adversary']">Adversary:</span></label>
                                             <div class="modal-form-fields" id="basic-adversary">
                                                 <div class="select is-small my-2 ml-3">
                                                     <select x-model="startOperation.adversary.adversary_id">
@@ -476,7 +476,8 @@
                                         </div>
 
                                         <div>
-                                            <label for="autonomous-source">Fact source:</label>
+                                            <label for="autonomous-source"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Fact source']">Fact source:</span></label>
                                             <div class="modal-form-fields" id="autonomous-source">
                                                 <div class="select is-small my-2 ml-3">
                                                     <select x-model="startOperation.source.id">
@@ -499,7 +500,8 @@
                                     </div>
                                     <div class="modal-form" x-show="openModalForm.advanced">
                                         <div>
-                                            <label for="basic-groups">Group:</label>
+                                            <label for="basic-groups"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Group']">Group:</span></label>
                                             <div class="modal-form-fields"
                                                  id="basic-groups">
                                                 <button type="button"
@@ -519,7 +521,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="autonomous-planner">Planner:</label>
+                                            <label for="autonomous-planner"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Planner']">Planner:</span></label>
                                             <div class="modal-form-fields">
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="autonomous-planner" x-model="startOperation.planner.id">
@@ -539,7 +542,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="stealth-obfuscator">Obfuscators:</label>
+                                            <label for="stealth-obfuscator"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Obfuscators']">Obfuscators:</span></label>
                                             <div class="modal-form-fields" id="stealth-obfuscator">
                                                 {% for o in obfuscators %}
                                                 <button class="no-style chip-select"
@@ -552,7 +556,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="autonomous-autonomous">Autonomous:</label>
+                                            <label for="autonomous-autonomous"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Autonomous']">Autonomous:</span></label>
                                             <div class="modal-form-fields" id="autonomous-autonomous">
                                                 <input type="radio" id="run-autonomously"
                                                        x-model="startOperation.autonomous" value="1" checked>
@@ -564,7 +569,8 @@
                                         </div>
 
                                         <div>
-                                            <label for="autonomous-use_learning_parsers">Parser:</label>
+                                            <label for="autonomous-use_learning_parsers"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Parser']">Parser:</span></label>
                                             <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                                 <input type="radio" id="parsers-default"
                                                        x-model="startOperation.use_learning_parsers" value="1" checked>
@@ -576,7 +582,8 @@
                                         </div>
 
                                         <div>
-                                            <label for="basic-keep">Keep:</label>
+                                            <label for="basic-keep"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Auto-close']">Auto-close:</span></label>
                                             <div class="modal-form-fields" id="basic-keep">
                                                 <input type="radio" id="keep-open"
                                                        x-model="startOperation.auto_close"
@@ -589,7 +596,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="basic-run">Run State:</label>
+                                            <label for="basic-run"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Run immediately']">Run state:</span></label>
 
                                             <div class="modal-form-fields" id="basic-run">
                                                 <input type="radio" x-model="startOperation.state"
@@ -605,7 +613,8 @@
 
 
                                         <div>
-                                            <label for="autonomous-cleanup_timeout">Cleanup Timeout (sec):</label>
+                                            <label for="autonomous-cleanup_timeout"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec):</span></label>
                                             <div class="modal-form-fields">
                                                 <input id="autonomous-cleanup_timeout" class="input"
                                                        x-model="startOperation.timeout" type="number"
@@ -620,7 +629,8 @@
                                         </div>
 
                                         <div>
-                                            <label for="stealth-jitter">Jitter (sec/sec):</label>
+                                            <label for="stealth-jitter"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec):</span></label>
                                             <div class="modal-form-fields" id="stealth-jitter">
                                                 <input class="input"
                                                        x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
@@ -649,7 +659,8 @@
                                             </div>
                                         </div>
                                         <div>
-                                            <label for="stealth-queue">Visibility:</label>
+                                            <label for="stealth-queue"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                                         x-bind:data-tooltip="usage['Visibility']">Visibility:</span></label>
                                             <div class="modal-form-fields">
                                                 <input x-model="startOperation.visibility"
                                                        id="stealth-queue"
@@ -987,6 +998,8 @@
 
     function alpineOperations() {
         return {
+            docs: `{{ usage | tojson }}`.toString().replace(/["\[\]]/g, '').split('}'),
+            usage: {},
             agentGroups: `{{ groups | tojson }}`.toString().replace(/["\[\]]/g, '').split(','),
             selectedOperation: null,
             selectedAgentIndex: null,
@@ -1021,6 +1034,17 @@
             isOperationsControlsExpanded: true,
             showOperationsMenuCaret: true,
             addNewRow: false,
+
+            getUsage() {
+                if (this.docs) {
+                    this.docs.forEach(obj => {
+                        if (obj) {
+                            let items = obj.split('{')[1].split(': ');
+                            this.usage[items[0]] = items[1];
+                        }
+                    });
+                }
+            },
 
             get selectedOperationID() {
                 return this.selectedOperation ? this.selectedOperation.id : null;
