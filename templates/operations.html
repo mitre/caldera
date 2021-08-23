@@ -217,6 +217,7 @@
                                     <th>Agent #paw</th>
                                     <th>Link Command</th>
                                     <th>Link Output & Facts</th>
+                                    <th title="Link Actions" class="csv-exclude"></th>
                                 </tr>
                                 </thead>
 
@@ -324,6 +325,16 @@
                                                 <p class="is-size-7">No facts available.</p>
                                             </template>
                                         </td>
+
+                                        <td class="csv-exclude">
+                                            <template x-if="selectedLink === link && isOperationRunning">
+                                                <button type="button" title="delete link"
+                                                        class="button is-primary is-small ml-2"
+                                                        x-on:click="openModal = 'deleteLinkModal'"><i
+                                                        class="pr-1 fas fa-trash"></i>Discard Link
+                                                </button>
+                                            </template>
+                                        </td>
                                     </tr>
                                     </tbody>
                                 </template>
@@ -401,22 +412,16 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
+                                        <td></td>
                                         <td class="pt-6">
-                                            <template x-if="selectedLink">
-                                                <button type="button" title="delete link"
-                                                        class="button is-primary is-small ml-2"
-                                                        x-on:click="openModal = 'deleteLinkModal'"><i
-                                                        class="pr-1 fas fa-trash"></i>Discard Link
-                                                </button>
-                                            </template>
-                                        </td>
-                                        <td class="is-flex is-justify-content-flex-end pt-6">
-                                            <button title="add manual command" class="button is-primary is-small ml-2"
+                                            <button title="add manual command" class="button is-primary is-small"
                                                     x-on:click="addNewRow = true; getAgents()">
                                                 <i class="pr-1 fas fa-plus"></i>Manual
                                                 Command
                                             </button>
-                                            <button title="add potential link" class="button is-primary is-small ml-2"
+                                        </td>
+                                        <td class="pt-6">
+                                            <button title="add potential link" class="button is-primary is-small"
                                                     x-on:click="openModal = 'addLink'; getAgents()"><i
                                                     class="pr-1 fas fa-plus"></i>Potential
                                                 Link
