@@ -40,6 +40,16 @@ function apiV2(requestType, endpoint, body = null) {
     });
 }
 
+function toast(message, success) {
+    bulmaToast.toast({
+        message: `<span class="icon"><i class="fas fa-${success ? 'check' : 'exclamation'}"></i></span> ${message}`,
+        type: `toast ${success ? 'is-success' : 'is-danger'}`,
+        position: 'bottom-right',
+        duration: '3000',
+        pauseOnHover: true
+    });
+}
+
 function validateInputs(obj, requiredFields) {
     let fieldErrors = [];
     requiredFields.forEach((field) => {

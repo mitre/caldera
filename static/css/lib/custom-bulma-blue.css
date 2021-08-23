@@ -5869,7 +5869,7 @@ label.panel-block:hover {
   position: relative;
 }
 .tabs.is-toggle a:hover {
-  background-color: #262626;
+  background-color: #0f0f4c;
   border-color: #b5b5b5;
   z-index: 2;
 }

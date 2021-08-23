@@ -86,22 +86,22 @@ main.main {
   align-items: center;
 }
 
-.tabs {
+.nav.tabs {
   display: block !important;
   margin-bottom: 0 !important;
   padding: 10px;
 }
 
-.tabs a {
+.nav.tabs a {
   padding: 5px 10px !important;
 }
 
-.tabs.is-boxed a {
+.nav.tabs.is-boxed a {
   border-radius: 4px !important;
   margin-right: 4px;
 }
 
-.tabs ul {
+.nav.tabs ul {
   padding-bottom: 10px;
   min-height: 52px;
 }

@@ -5869,7 +5869,7 @@ label.panel-block:hover {
   position: relative;
 }
 .tabs.is-toggle a:hover {
-  background-color: #262626;
+  background-color: #690000;
   border-color: #b5b5b5;
   z-index: 2;
 }
@@ -5885,8 +5885,8 @@ label.panel-block:hover {
   border-bottom-right-radius: 4px;
 }
 .tabs.is-toggle li.is-active a {
-  background-color: #3273dc;
-  border-color: #3273dc;
+  background-color: #8B0000;
+  border-color: #8B0000;
   color: #fff;
   z-index: 1;
 }
