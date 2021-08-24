@@ -327,7 +327,7 @@
                                         </td>
 
                                         <td class="csv-exclude">
-                                            <template x-if="selectedLink === link && isOperationRunning">
+                                            <template x-if="selectedLink === link && isOperationRunning && link.status !== -2">
                                                 <button type="button" title="delete link"
                                                         class="button is-primary is-small ml-2"
                                                         x-on:click="openModal = 'deleteLinkModal'"><i
@@ -363,7 +363,7 @@
                                         <td>
                                             <div class="select is-small my-2 ml-3">
                                                 <select x-model="manualCommand.executor.name"
-                                                        id="manual-executor"
+                                                        id="manual-executors"
                                                         class="column executor-selector">
                                                     <option disabled>Choose executor</option>
                                                     <template
@@ -413,7 +413,7 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td class="pt-6">
+                                        <td class="pt-6 text-align-right">
                                             <button title="add manual command" class="button is-primary is-small"
                                                     x-on:click="addNewRow = true; getAgents()">
                                                 <i class="pr-1 fas fa-plus"></i>Manual
@@ -1174,7 +1174,7 @@
                     return;
                 }
                 this.manualCommand.paw = this.selectedAgent.paw;
-                this.manualCommand.executor.name = document.getElementById('manual-executor').selectedOptions[0].value;
+                this.manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
                 this.manualCommand.executor.platform = this.selectedAgent.platform;
 
                 apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, this.manualCommand)
@@ -1381,6 +1381,10 @@
         --decisions-color: #4fdcfc;
     }
 
+    .text-align-right {
+        text-align: right !important;
+    }
+
     .ellipsis-divider {
         text-align: center;
         font-size: 0.3em;
@@ -1545,8 +1549,9 @@
     }
 
     .modal-form-fields-columns .executor-selector {
-        width: 10% !important;
         flex: none !important;
+        width: 50px !important;
+        padding-left: 10px;
     }
 
     .modal-form-fields-columns .executor-command {
