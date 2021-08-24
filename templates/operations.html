@@ -1224,7 +1224,7 @@
             },
 
             updateLink(status, command = null) {
-                const updateLink = this.selectedLink;
+                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
                 if (command) {
                     updateLink.command = command;
                 }
