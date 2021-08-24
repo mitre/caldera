@@ -15,11 +15,15 @@ class ObjectServiceInterface(abc.ABC):
     @abc.abstractmethod
     def save_state(self):
         """
-        Accept all components of an agent profile and save a new agent or register an updated heartbeat.
-        :return: the agent object, instructions to execute
+        Save stored data to disk
+        :return:
         """
         pass
 
     @abc.abstractmethod
     def restore_state(self):
+        """
+        Load data from disk
+        :return:
+        """
         pass
