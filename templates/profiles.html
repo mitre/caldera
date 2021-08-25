@@ -227,8 +227,18 @@
                 </form>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-primary is-small" x-bind:disabled="!abilitiesAddAdversary.find(a => a.selected)" @click="addAbilitiesFromAdversary()">Add Selected Abilities</button>
-                <button class="button is-small" @click="showAddAdversaryModal = false; selectedAddAdversary = ''; abilitiesAddAdversary = [];">Cancel</button>
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showAddAdversaryModal = false; selectedAddAdversary = ''; abilitiesAddAdversary = [];">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" x-bind:disabled="!abilitiesAddAdversary.find(a => a.selected)" @click="addAbilitiesFromAdversary()">Add Selected Abilities</button>
+                        </div>
+                    </div>
+                </nav>
             </footer>
         </div>
     </div>
@@ -258,8 +268,18 @@
                 </form>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-primary is-small" @click="toast('Objective changed', true); showObjectiveModal = false;">Link Objective</button>
-                <button class="button is-small" @click="showObjectiveModal = false">Cancel</button>
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showObjectiveModal = false">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="toast('Objective changed', true); showObjectiveModal = false;">Link Objective</button>
+                        </div>
+                    </div>
+                </nav>
             </footer>
         </div>
     </div>
@@ -574,16 +594,22 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-primary is-small" @click="saveAbility(true)">Add to Adversary</button>
-                        </div>
-                        <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-small" @click="saveAbility(false)">Save</button>
+                            <button class="button is-small" @click="saveAbility(false)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
                         </div>
                     </div>
                     <div class="level-right">
-                        <p class="level-item">
+                        <div class="level-item">
                             <button class="button is-small" @click="showAbilityModal = false">Close</button>
-                        </p>
+                        </divp>
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility(true)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                <span>Save & Add</span>
+                            </button>
+                        </div>
                     </div>
                 </nav>
             </footer>

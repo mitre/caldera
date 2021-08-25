@@ -172,7 +172,15 @@
                 </div>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-small" @click="showDeployModal = false">Done</button>
+                <nav class="level">
+                    <div class="level-left"></div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showDeployModal = false">Close</button>
+                        <div>
+                    </div>
+                </nav>
+                
             </footer>
         </div>
     </div>
@@ -194,8 +202,14 @@
                             </th>
                             <td>
                                 <div class="is-align-items-center is-flex is-align-items-center">
-                                    Min:&nbsp;<input class="input is-small is-small-number" type="number" placeholder="30" x-model="agentConfig.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_min') }">&nbsp;&nbsp;&nbsp;
-                                    Max:&nbsp;<input class="input is-small is-small-number" type="number" placeholder="60" x-model="agentConfig.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_max') }">
+                                    <span class="top-right-anchor">
+                                        <label>min</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="30" x-model="agentConfig.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_min') }">
+                                    </span>
+                                    <span class="top-right-anchor">
+                                        <label>max</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="60" x-model="agentConfig.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_max') }">                                   
+                                    </span>
                                 </div>
                                 <p x-show="fieldErrorsConfig.includes('sleep_min') || fieldErrorsConfig.includes('sleep_max')" class="help is-danger">This field is required.</p> 
                             </td>
@@ -243,7 +257,9 @@
                                     </template>
                                     <div class="control">
                                         <div class="tags has-addons">
-                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true" x-show="!isAddingBootstrapAbility">+</a>
+                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true" x-show="!isAddingBootstrapAbility">
+                                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -267,8 +283,20 @@
                 <p class="help">* A global setting that will effect any new or existing agents.</p>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-primary is-small" @click="saveAgentConfig()">Save</button>
-                <button class="button is-small" @click="showConfigModal = false">Cancel</button>
+                <nav class="level">
+                    <div class="level-left"></div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showConfigModal = false">Close</button>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="saveAgentConfig()">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
+                        <div>
+                    </div>
+                </nav>
             </footer>
         </div>
     </div>
@@ -308,8 +336,14 @@
                             <th class="has-text-right">Sleep Timer</th>
                             <td>
                                 <div class="is-align-items-center is-flex is-align-items-center">
-                                    Min:&nbsp;<input class="input is-small is-small-number" type="number" placeholder="30" x-model="selectedAgent.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_min') }">&nbsp;&nbsp;&nbsp;
-                                    Max:&nbsp;<input class="input is-small is-small-number" type="number" placeholder="60" x-model="selectedAgent.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_max') }">
+                                    <span class="top-right-anchor">
+                                        <label>min</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="30" x-model="selectedAgent.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_min') }">
+                                    </span>
+                                    <span class="top-right-anchor">
+                                        <label>max</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="60" x-model="selectedAgent.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_max') }">                                     
+                                    </span>
                                 </div>
                                 <p x-show="fieldErrorsAgent.includes('sleep_min') || fieldErrorsAgent.includes('sleep_max')" class="help is-danger">This field is required.</p>
                             </td>
@@ -397,7 +431,7 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <button class="button is-danger is-small" @click="killAgent(selectedAgent)">
+                            <button class="button is-danger is-outlined is-small" @click="killAgent(selectedAgent)">
                                 <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
                                 <span>Kill Agent</span>
                             </button>
@@ -705,6 +739,19 @@
     }
     .tag.red {
         background-color: #8B0000 !important;
+    }
+
+    .top-right-anchor > label {
+        position: relative;
+        top: -12px;
+        left: 30%;
+        color: #a0a0a0;
+        z-index: 999;
+        font-size: .8em;
+    }
+    .top-right-anchor {
+        margin-left: -26px;
+        padding-right: 5px;
     }
 
 </style>

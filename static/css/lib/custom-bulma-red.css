@@ -473,7 +473,7 @@ a.box:active {
 }
 .button:hover, .button.is-hovered {
   border-color: #b5b5b5;
-  color: #363636;
+  color: #fff;
 }
 .button:focus, .button.is-focused {
   border-color: #3273dc;
@@ -1445,7 +1445,7 @@ a.box:active {
   font-size: 1.5rem;
 }
 .button[disabled], fieldset[disabled] .button {
-  background-color: white;
+  background-color: none;
   border-color: #363636;
   box-shadow: none;
   opacity: 0.5;

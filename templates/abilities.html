@@ -324,12 +324,6 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <button class="button is-primary is-small" @click="saveAbility()">
-                                <span class="icon"><i class="fas fa-save"></i></span>
-                                <span>Save</span>
-                            </button>
-                        </div>
-                        <div class="level-item">
                             <button class="button is-primary is-small" @click="deleteAbility()">
                                 <span class="icon"><i class="fas fa-trash"></i></span>
                                 <span>Delete Ability</span>
@@ -337,9 +331,15 @@
                         </div>
                     </div>
                     <div class="level-right">
-                        <p class="level-item">
+                        <div class="level-item">
                             <button class="button is-small" @click="showAbilityModal = false">Close</button>
-                        </p>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="saveAbility()">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
+                        </div>
                     </div>
                 </nav>
             </footer>
