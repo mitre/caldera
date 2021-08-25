@@ -14,16 +14,6 @@ function restRequest(requestType, data, callback = (r) => {
         .catch((error) => console.error(error));
 }
 
-function apiRequest(requestType, data, endpoint  = '/api/rest') {
-    const requestBody = requestType === 'GET' ?
-        { method: requestType, headers: { 'Content-Type': 'application/json' } } :
-        { method: requestType, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }
-
-    return new Promise((resolve, reject) => {
-        fetch(endpoint, requestBody).then(response => response.ok ? resolve(response.text()) : reject(response.statusText));
-    });
-}
-
 function apiV2(requestType, endpoint, body = null) {
     let requestBody = { method: requestType, headers: { 'Content-Type': 'application/json' } };
     if (requestType !== 'GET') requestBody.body = JSON.stringify(body);
@@ -53,6 +43,27 @@ function sortAlphabetically(list) {
         else if (x > y) return 1;
         else return 0;
     })
+}
+
+function toast(message, success) {
+    bulmaToast.toast({
+        message: `<span class="icon"><i class="fas fa-${success ? 'check' : 'exclamation'}"></i></span> ${message}`,
+        type: `toast ${success ? 'is-success' : 'is-danger'}`,
+        position: 'bottom-right',
+        duration: '3000',
+        pauseOnHover: true
+    });
+}
+
+function validateInputs(obj, requiredFields) {
+    let fieldErrors = [];
+    requiredFields.forEach((field) => {
+        if (obj[field].length === 0) {
+            fieldErrors.push(field);
+        }
+    });
+
+    return fieldErrors;
 }
 
 function downloadReport(endpoint, filename, data = {}) {

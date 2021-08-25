@@ -43,12 +43,14 @@
             <form x-show="isEdittingProfile">
                 <div class="field">
                     <div class="control">
-                        <input class="input" x-model="selectedProfileName" x-on:change="unsavedChanges = true" placeholder="Adversary Name">
+                        <input class="input" x-model="selectedProfileName" x-on:change="unsavedChanges = true" placeholder="Adversary Name" x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('name') }">
+                        <p x-show="fieldErrorsProfile.includes('name')" class="help is-danger">This field is required.</p>
                     </div>
                 </div>
                 <div class="field">
                     <div class="control">
-                        <input class="input is-small" x-model="selectedProfileDescription" placeholder="Adversary Description" x-on:change="unsavedChanges = true">
+                        <input class="input is-small" x-model="selectedProfileDescription" placeholder="Adversary Description" x-on:change="unsavedChanges = true" x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('description') }">
+                        <p x-show="fieldErrorsProfile.includes('description')" class="help is-danger">This field is required.</p>
                     </div>
                 </div>
                 <div class="field">
@@ -150,16 +152,16 @@
                 <div class="field">
                     <label class="label is-small">Profile Name</label>
                     <div class="control">
-                        <input x-model="createProfileName" class="input is-small" type="text" placeholder="Enter a name...">
+                        <input x-model="createProfileName" class="input is-small" type="text" placeholder="Enter a name..." x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('name') }">
                     </div>
-                    <p class="help is-danger has-text-weight-bold" x-show="createProfileNameError" x-text="createProfileNameError"></p>
+                    <p x-show="fieldErrorsProfile.includes('name')" class="help is-danger">This field is required.</p>
                 </div>
                 <div class="field">
                     <label class="label is-small">Profile Description</label>
                     <div class="control">
-                        <input x-model="createProfileDescription" class="input is-small" type="text" placeholder="Enter a description...">
+                        <input x-model="createProfileDescription" class="input is-small" type="text" placeholder="Enter a description..." x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('description') }">
                     </div>
-                    <p class="help is-danger has-text-weight-bold" x-show="createProfileDescriptionError" x-text="createProfileDescriptionError"></p>
+                    <p x-show="fieldErrorsProfile.includes('description')" class="help is-danger">This field is required.</p>
                 </div>
                 <div class="field is-grouped">
                     <div class="control">
@@ -377,7 +379,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.name">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('name') }" x-model="selectedAbility.name">
+                                            <p x-show="fieldErrorsAbility.includes('name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -389,7 +392,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.description">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('description') }" x-model="selectedAbility.description">
+                                            <p x-show="fieldErrorsAbility.includes('description')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -401,7 +405,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.tactic">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic">
+                                            <p x-show="fieldErrorsAbility.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -413,7 +418,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.technique_id">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                            <p x-show="fieldErrorsAbility.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -425,13 +431,15 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-model="selectedAbility.technique_name">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                            <p x-show="fieldErrorsAbility.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
                         <p class="has-text-centered">Executors</p>
+                        <p x-show="fieldErrorsAbility.includes('executors')" class="help is-danger">At least one executor is required.</p>
                         <div class="has-text-centered">
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
@@ -566,7 +574,7 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-primary is-small" @click="saveAbility(true); showAbilityModal = false;">Add to Adversary</button>
+                            <button class="button is-primary is-small" @click="saveAbility(true)">Add to Adversary</button>
                         </div>
                         <div class="level-item" x-show="selectedAbility">
                             <button class="button is-small" @click="saveAbility(false)">Save</button>
@@ -586,8 +594,8 @@
 
 <script>
     // Jinja variables
-    const platforms = {{ platforms | tojson }};
-    const payloads = {{ payloads | tojson }};
+    let platformsProfiles = {{ platforms | tojson }};
+    let payloadsProfiles = {{ payloads | tojson }};
 
     function alpineAdversaries() {
         return {
@@ -595,7 +603,8 @@
             adversaries: [],
             abilities: [],
             objectives: [],
-            platforms: platforms,
+            platforms: platformsProfiles,
+            payloads: payloadsProfiles,
 
             selectedProfileId: '',
             selectedProfileName: undefined,
@@ -612,8 +621,6 @@
             // Create a profile
             isEdittingProfile: false,
             isCreatingProfile: false,
-            createProfileNameError: false,
-            createProfileDescriptionError: false,
             createProfileName: '',
             createProfileDescription: '',
 
@@ -642,6 +649,12 @@
             selectedPlatform: '',
             selectedExecutor: '',
 
+            // Input validation
+            requiredFieldsProfile: ['name', 'description'],
+            fieldErrorsProfile: [],
+            requiredFieldsAbility: ['name', 'description', 'tactic', 'technique_id', 'technique_name', 'executors'],
+            fieldErrorsAbility: [],
+
             initPage() {
                 apiV2('GET', '/api/v2/adversaries').then((adversaries) => {
                     this.adversaries = adversaries;
@@ -662,6 +675,7 @@
 
                 this.selectedProfileAbilities = [];
                 this.isCreatingProfile = false;
+                this.fieldErrorsProfile = [];
 
                 const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === this.selectedProfileId);
                 this.selectedProfileName = selectedAdversary.name;
@@ -673,6 +687,12 @@
             },
 
             saveProfile() {
+                this.fieldErrorsProfile = validateInputs({ name: this.selectedProfileName, description: this.selectedProfileDescription }, this.requiredFieldsProfile);
+                if (this.fieldErrorsProfile.length) {
+                    this.isEdittingProfile = true;   
+                    return;
+                }
+
                 const requestBody = {
                     name: this.selectedProfileName,
                     description: this.selectedProfileDescription,
@@ -683,6 +703,7 @@
 
                 apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, requestBody).then((data) => {
                     this.unsavedChanges = false;
+                    this.isEdittingProfile = false;
                     toast('Saved profile!', true);
                 }).catch((error) => {
                     toast('Error saving profile', false);
@@ -704,21 +725,8 @@
             },
 
             createProfile() {
-                // Verify user input
-                this.createProfileNameError = '';
-                this.createProfileDescriptionError = '';
-                if (this.createProfileName.length === 0) {
-                    this.createProfileNameError = 'You must enter a profile name';
-                    return;
-                }
-                if (this.adversaries.map((a) => a.name).indexOf(this.createProfileName) > -1) {
-                    this.createProfileNameError = 'Profile name already exists';
-                    return;
-                }
-                if (this.createProfileDescription.length === 0) {
-                    this.createProfileDescriptionError = 'You must enter a profile description';
-                    return;
-                }
+                this.fieldErrorsProfile = validateInputs({ name: this.createProfileName, description: this.createProfileDescription }, this.requiredFieldsProfile);
+                if (this.fieldErrorsProfile.length) return;
 
                 const newId = uuidv4();
                 const requestBody = {
@@ -944,6 +952,9 @@
             },
 
             saveAbility(addToAdversary) {
+                this.fieldErrorsAbility = validateInputs(this.selectedAbility, this.requiredFieldsAbility);
+                if (this.fieldErrorsAbility.length) return;
+
                 apiV2('PATCH', `/api/v2/abilities/${this.selectedAbilityId}`, this.selectedAbility).then((response) => {
                     toast('Saved ability!', true);
 
@@ -955,6 +966,7 @@
                         this.selectedProfileAbilities.push(response);
                         this.unsavedChanges = true;
                         this.selectedAbilityId = '';
+                        this.showAbilityModal = false;
                     }
                 }).catch((error) => {
                     toast('Error saving ability', false);

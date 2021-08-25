@@ -1,20 +1,11 @@
 /* Alpine.js data & functions called from core navigation template */
 
-function toast(message, success) {
-    bulmaToast.toast({ 
-        message: message,
-        type: success ? 'is-success' : 'is-danger',
-        position: 'bottom-right',
-        duration: '3000',
-        pauseOnHover: true
-    });
-}
-
-function alpineNavigation() {
+function alpineCore() {
     return {
-        isNavMinimized: false,
         openTabs: [],
         activeTabIndex: 0,
+        errors: startupErrors,
+        showErrors: false,
 
         setTabContent(tab, html) {
             const newTabDiv = document.createElement('div');
@@ -44,5 +35,6 @@ function alpineNavigation() {
             this.activeTabIndex -= 1;
             this.openTabs.splice(index, 1);
         },
+        
     };
 }

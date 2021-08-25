@@ -7,34 +7,46 @@
 	</head>
 	<body>
 		<div class="container content is-flex is-flex-direction-column is-align-items-center is-justify-content-center">
-			<p class="is-size-4">Welcome to CALDERA™</p>
-			<form action="/enter" method="POST">
-				<div class="field">
-					<label class="label">Username</label>
-					<div class="control has-icons-left">
-						<input class="input" type="text" placeholder="username" name="username">
-						<span class="icon is-small is-left">
-							<i class="fas fa-user"></i>
-						</span>
+			<img src="/gui/img/back-red.png">
+			<div class="wrapper">
+				<form action="/enter" method="POST">
+					<div class="field">
+						<label class="label">Username</label>
+						<div class="control has-icons-left">
+							<input class="input" type="text" placeholder="username" name="username">
+							<span class="icon is-small is-left">
+								<i class="fas fa-user"></i>
+							</span>
+						</div>
 					</div>
-				</div>
-				<div class="field">
-					<label class="label">Password</label>
-					<div class="control has-icons-left">
-						<input class="input" type="password" placeholder="password" name="password">
-						<span class="icon is-small is-left">
-							<i class="fas fa-lock"></i>
-						</span>
-					</div>
-				</div>  
-				<button type="submit" class="button is-primary is-fullwidth">Log in</button>
-			</form>
+					<div class="field">
+						<label class="label">Password</label>
+						<div class="control has-icons-left">
+							<input class="input" type="password" placeholder="password" name="password">
+							<span class="icon is-small is-left">
+								<i class="fas fa-lock"></i>
+							</span>
+						</div>
+					</div>  
+					<button type="submit" class="button is-primary is-fullwidth">Log in</button>
+				</form>
+			</div>
 		</div>
 	</body>
 	
 	<style>
 		html,body,.container {
 			height: 100%;
+			background: #161616;
+			background: linear-gradient(0deg, #161616 50%, black 50%, black 100%); 
+		}
+
+		img {
+			width: 350px;
+		}
+
+		.wrapper {
+			padding: 20px;
 		}
 	</style>
 

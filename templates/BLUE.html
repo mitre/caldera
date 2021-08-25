@@ -13,8 +13,8 @@
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
     </head>
     <body>
-        <main id="home" class="main" x-data="alpineNavigation()">
-            <div class="navigation" x-bind:class="isNavMinimized ? 'collapsed' : 'expanded'">
+        <main id="home" class="main" x-data="alpineCore()">
+            <div class="navigation">
                 <div class="nav-logo"></div>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
@@ -43,26 +43,14 @@
                     </ul>
                     <p class="menu-label">Administrative</p>
                     <ul class="menu-list">
-                        <li><a onclick="display_errors({{ errors }})">Startup errors</a></li>
+                        <li><a x-text="`Startup errors (${errors.length})`" @click="showErrors = true"></a></li>
                         <li><a href="/logout">Log out</a></li>
                     </ul>
                 </aside>
-                <div id="nav-footer" class="has-text-centered">
-                    <a x-on:click="isNavMinimized = !isNavMinimized">
-                        <span class="icon">
-                            <template x-if="isNavMinimized">
-                                <i class="fas fa-chevron-right"></i>
-                            </template>
-                            <template x-if="!isNavMinimized">
-                                <i class="fas fa-chevron-left"></i>
-                            </template>
-                        </span>
-                    </a>
-                </div>
             </div>
 
-            <div class="main-content" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
-                <div class="tabs is-boxed">
+            <div class="main-content">
+                <div class="tabs nav is-boxed">
                     <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
@@ -87,7 +75,33 @@
                     </p>
                 </div>
             </div>
+
+            <div x-bind:class="{ 'is-active': showErrors }" class="modal">
+                <div class="modal-background" @click="showErrors = false"></div>
+                <div class="modal-content content">
+                    <h2>Startup Errors</h2>
+                    <hr>
+                    <template x-for="error of errors" :key="error.msg">
+                        <article class="media">
+                            <div class="media-content">
+                                <div class="content">
+                                    <p>
+                                        <strong x-text="error.name"></strong>
+                                        <br>
+                                        <span x-text="error.msg"></span>
+                                    </p>
+                                </div>
+                          </article>
+                    </template>
+                    <br>
+                    <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
+                </div>
+            </div>
         </main>
+
+        <script>
+            let startupErrors = {{ errors | tojson }};
+        </script>
 
         <!-- TODO: Remove JQuery as dependency (when possible) -->
         <script src="/gui/jquery/jquery.js"></script>

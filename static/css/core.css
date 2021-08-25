@@ -25,12 +25,12 @@ main.main {
   flex-direction: row;
 }
 
-.main-content.collapsed {
-  width: calc(100% - 320px);
+.main-content {
+  width: calc(100% - 270px);
 }
 
-.main-content.expanded {
-  width: calc(100% - 220px);
+.menu {
+  padding-bottom: 20px;
 }
 
 .menu-label {
@@ -65,18 +65,7 @@ main.main {
 
 .navigation {
   background-color: black;
-}
-
-.navigation.expanded {
-  width: 300px;
-}
-
-.navigation.collapsed {
-  width: 200px;
-}
-
-#nav-footer {
-  padding: 20px;
+  width: 250px;
 }
 
 .nav-logo {
@@ -97,18 +86,27 @@ main.main {
   align-items: center;
 }
 
-.tabs {
+.nav.tabs {
   display: block !important;
   margin-bottom: 0 !important;
   padding: 10px;
 }
 
-.tabs.is-boxed a {
+.nav.tabs a {
+  padding: 5px 10px !important;
+}
+
+.nav.tabs.is-boxed a {
   border-radius: 4px !important;
   margin-right: 4px;
 }
 
-.tabs ul {
+.nav.tabs ul {
   padding-bottom: 10px;
   min-height: 52px;
+}
+
+.toast {
+  padding: 10px 10px !important;
+  border-radius: 4px !important;
 }

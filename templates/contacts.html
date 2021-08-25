@@ -1,34 +1,57 @@
-<div id="contacts" class="section-profile">
-  <div class="advanced row">
-    <div class="topleft duk-icon"><img onclick="removeSection('contacts')" src="/gui/img/x.png"></div>
-    <div class="column planner-header" style="flex:100%;text-align: left">
-        <h4>Contacts are touch-points for agents</h4>
-        <p style="width:33%">
-            A contact is a connection point on the server for agents to communicate through. Agents can be
+<div x-data="alpineContacts()" x-init="initPage()">
+    <div>
+        <h2>Contacts</h2>
+        <p>
+            <b>Contacts are touch points for agents.</b> A contact is a connection point on the server for agents to communicate through. Agents can be
             custom written against one (or multiple) contacts. Each contact logs all agent connections - and
             all commands it hands out. Download a report for any contact below.
         </p>
-        <hr><br>
-        <table class="obfuscation-table" border=1 frame=void rules=rows>
-            {% for c in contacts %}
-                <tr>
-                    <td><img src="/gui/img/contact.png"/></td>
-                    <td><h4>{{ c.name }}</h4></td>
-                    <td>{{ c.description }}</td>
-                    <td><button class="button-row" onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
-                </tr>
-            {% endfor %}
+    </div>
+    <hr>
+    <div>
+        <table class="table is-striped">
+            <tbody>
+                <template x-for="contact of contacts" :key="contact.name">
+                    <tr>
+                        <th x-text="contact.name"></th>
+                        <td x-text="contact.description"></td>
+                        <td>
+                            <button class="button is-small is-primary" @click="downloadContactReport(contact.name)">
+                                <span class="icon"><i class="fas fa-file-download"></i></span>
+                                <span>Download Report</span>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
         </table>
     </div>
-  </div>
 </div>
 
 <script>
-    /* eslint-disable */
-    
-    function downloadContactReport(contact) {
-        downloadReport('/api/rest', contact + '_report', {"index":"contact", "contact":contact});
+    const contactsV1 = {{ contacts | tojson }};
+
+    function alpineContacts() {
+        return {
+            contacts: contactsV1,
+
+            initPage() {
+                // TODO: Uncomment below when contacts API V2 is done
+
+                // apiV2('GET', '/api/v2/contacts').then((contacts) => {
+                //     this.contacts = contacts;
+                // }).catch((error) => {
+                //     toast('Error loading page', false);
+                //     console.error(error);
+                // });
+            },
+
+            downloadContactReport(contactName) {
+                // TODO: Update to V2
+                downloadReport('/api/rest', `${contactName}_report`, { index: "contact", contact: contactName });
+            }
+        };
     }
 
-    //# sourceURL=contacts.js
+    // # sourceURL=contacts.js
 </script>
