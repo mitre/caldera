@@ -1,6 +1,7 @@
 import pytest
 
 from http import HTTPStatus
+from base64 import b64encode
 
 from app.objects.c_ability import AbilitySchema
 from app.objects.c_operation import OperationSchema
@@ -80,7 +81,7 @@ def test_agent(loop):
 @pytest.fixture
 def test_executor(test_agent):
     return ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='linux',
-                                      command='d2hvYW1p'))
+                                      command='ls'))
 
 
 @pytest.fixture
@@ -99,7 +100,7 @@ def test_ability(test_executor, loop):
 @pytest.fixture
 def active_link(test_executor, test_agent, test_ability):
     return {
-        'command': test_executor.command,
+        'command': str(b64encode(test_executor.command.encode()), 'utf-8'),
         'paw': test_agent.paw,
         'ability': test_ability,
         'executor': test_executor,
@@ -315,12 +316,12 @@ class TestOperationsApi:
 
     async def test_update_operation_link(self, api_v2_client, api_cookies, active_link):
         original_command = active_link['command']
-        payload = dict(command='bHM=')
+        payload = dict(command='whoami')
         resp = await api_v2_client.patch('/api/v2/operations/123/links/456', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.OK
         op = (await BaseService.get_service('data_svc').locate('operations', {'id': '123'}))[0]
         assert op.chain[0].command != original_command
-        assert op.chain[0].command == payload['command']
+        assert op.chain[0].command == str(b64encode(payload['command'].encode()), 'utf-8')
         assert op.chain[0].id == active_link['id']
         assert op.chain[0].paw == active_link['paw']
 
