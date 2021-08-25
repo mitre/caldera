@@ -55,6 +55,15 @@ class OperationApiManager(BaseApiManager):
         link = self.search_operation_for_link(operation, link_id)
         return link.display
 
+    async def get_operation_link_result(self, operation_id: str, link_id: str, access: dict):
+        operation = await self.get_operation_object(operation_id, access)
+        link = self.search_operation_for_link(operation, link_id)
+        try:
+            content = self.services['file_svc'].read_result_file('%s' % link_id)
+            return dict(link=link.display, result=content)
+        except FileNotFoundError:
+            return dict(link=link.display, result='')
+
     async def update_operation_link(self, operation_id: str, link_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation_object(operation_id, access)
         link = self.search_operation_for_link(operation, link_id)
