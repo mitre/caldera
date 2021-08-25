@@ -57,16 +57,18 @@
 </div>
 
 <script>
+    /* eslint-disable */
+    
     $(document).ready(function () {
         stream('If you change a app.* property, it will auto update in all ability commands. Go ahead and check the Sandcat plugin delivery commands for confirmation.');
     });
     function updateConfig(prop) {
         stream('You updated property "'+prop+'". Good work!');
-        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value});
     }
     function enablePlugin(name) {
         stream(name + ' plugin will be enabled on the next server restart.');
-        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
+        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name});
     }
     //# sourceURL=configurations.js
 </script>

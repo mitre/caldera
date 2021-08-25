@@ -1,0 +1,44 @@
+<div x-data="alpineAgents()" x-init="initPage()">
+
+    <!-- PAGE HEADER -->
+
+    <div>
+        <h2>Abilities</h2>
+        <p>
+            
+        </p>
+    </div>
+    <hr>
+
+    <!--  -->
+
+    <div>
+        
+    </div>
+
+    <!-- MODALS -->
+
+</div>
+
+<script>
+    let abilities = {{ abilities | tojson }}
+
+    function alpineAgents() {
+        return {
+            // Core variables
+            abilities: abilities,
+
+            initPage() {
+                
+            },
+
+            
+        };
+    }
+
+    // # sourceURL=agents.js
+</script>
+
+<style>
+
+</style>

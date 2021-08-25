@@ -1,108 +1,100 @@
 <html>
-<head>
-    <title>Blue | Dashboard</title>
-    <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-    <link rel="stylesheet" href="/gui/css/blue.css">
-    <link rel="stylesheet" href="/gui/css/shared.css">
-    <link rel="stylesheet" href="/gui/css/navigate.css">
-    <link rel="stylesheet" href="/gui/css/modal.css">
-    <link rel="stylesheet" href="/gui/css/basic.css">
-    <link rel="stylesheet" href="/gui/css/timeline.css">
-    <link rel="stylesheet" href="/gui/css/multi-select.css">
-</head>
-<body>
-    <div class="navbar-buffer">
-        <div class="navbar">
-            <span style="font-size:30px;cursor:pointer;" onclick="openNav()">&#9776; navigate</span>
-        </div>
-    </div>
-    <div id="mySidenav" class="sidenav">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <br>
-        <center>
-            <img src="/gui/img/back-red.png"/>
-        </center>
-        <br>
-        <div class="nav-header">
-            <p>Protection</p>
-        </div>
-        <a onclick="viewSection('agents', '/campaign/agents')">agents</a>
-        <a onclick="viewSection('profiles', '/campaign/profiles')">defenders</a>
-        <a onclick="viewSection('operations', '/campaign/operations')">operations</a>
-        <div class="nav-header">
-            <p>Plugins</p>
-        </div>
-        {% for plugin in plugins  | sort(attribute='name') %}
-            {% if plugin.address %}
-                <a onclick="viewSection('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a>
-            {% else %}
-                <a onclick="warn('Plugin loaded successfully, but there is no GUI component to this plugin')">{{ plugin.name }}</a>
-            {% endif %}
-        {% endfor %}
-        <div class="nav-header">
-            <p>Advanced</p>
-        </div>
-        <a onclick="viewSection('sources', '/advanced/sources')">fact sources</a>
-        <div class="nav-header">
-            <p>Administrative</p>
-        </div>
-        <a onclick="display_errors({{ errors }})">Startup errors</a>
-        <a href="/logout">Log out</a>
-        <br>
-    </div>
-
-
-    <div id="main">
-
-        <div id="notice" class="notice" style="display:none">Chrome is the only supported browser. Please change to that or some website components may not work.</div>
-
-        <div id="alert-modal" class="modal">
-            <form class="modal-content">
-                <div class="container modal-box">
-                    <div class="row duk-modal">
-                        <span onclick="document.getElementById('alert-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                        <div class="column" style="flex:92%">
-                            <p id="alert-text" style="color: white"></p>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <div id="list-modal" class="modal">
-            <form class="modal-content">
-                <div class="container modal-box">
-                    <div class="transparent-row">
-                        <span onclick="document.getElementById('list-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                        <ul id="info-list"></ul>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <li id="infolist-template" style="display: none">
-            <div class="infolist-item">
-                <div class="infolist-icon">
-                    <img src="/gui/img/errors.png">
-                </div>
-                <div class="infolist-contents">
-                    <p></p>
+    <head>
+        <title>Blue | Dashboard</title>
+        <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+        <link rel="stylesheet" href="/gui/css/shared.css">
+        <link rel="stylesheet" href="/gui/css/core.css">
+        <link rel="stylesheet" href="/gui/css/modal.css">
+        <link rel="stylesheet" href="/gui/css/basic.css">
+        <link rel="stylesheet" href="/gui/css/timeline.css">
+        <link rel="stylesheet" href="/gui/css/multi-select.css">
+        <link rel="stylesheet" href="/gui/css/lib/custom-bulma-blue.css">
+        <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
+        <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <main id="home" class="main" x-data="alpineNavigation()">
+            <div class="navigation" x-bind:class="isNavMinimized ? 'collapsed' : 'expanded'">
+                <div class="nav-logo"></div>
+                <aside class="menu">
+                    <p class="menu-label">Campaigns</p>
+                    <ul class="menu-list">
+                        <li><a href="#home" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
+                        <li><a href="#home" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
+                        <li><a href="#home" x-on:click="addTab('adversaries', '/campaign/profiles')">defenders</a></li>
+                        <li><a href="#home" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
+                    </ul>
+                    <p class="menu-label">Plugins</p>
+                    <ul class="menu-list">
+                        {% for plugin in plugins | sort(attribute='name') %}
+                            <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    <p class="menu-label">Configuration</p>
+                    <ul class="menu-list">
+                        <li><a href="#home" x-on:click="addTab('example', 0)">example</a></li>
+                        <li><a href="#home" x-on:click="addTab('sources', '/advanced/sources')">fact sources</a></li>
+                        <li><a href="#home" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
+                        <li><a href="#home" x-on:click="addTab('planners', '/advanced/planners')">planners</a></li>
+                        <li><a href="#home" x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
+                        <li><a href="#home" x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
+                        <li><a href="#home" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
+                        <li><a href="#home" x-on:click="addTab('exfilled', '/advanced/exfills')">exfilled files</a></li>
+                    </ul>
+                    <p class="menu-label">Administrative</p>
+                    <ul class="menu-list">
+                        <li><a onclick="display_errors({{ errors }})">Startup errors</a></li>
+                        <li><a href="/logout">Log out</a></li>
+                    </ul>
+                </aside>
+                <div id="nav-footer" class="has-text-centered">
+                    <a x-on:click="isNavMinimized = !isNavMinimized">
+                        <span class="icon">
+                            <template x-if="isNavMinimized">
+                                <i class="fas fa-chevron-right"></i>
+                            </template>
+                            <template x-if="!isNavMinimized">
+                                <i class="fas fa-chevron-left"></i>
+                            </template>
+                        </span>
+                    </a>
                 </div>
             </div>
-        </li>
 
-        <center>
-            <div id="section-container"></div>
-        </center>
+            <div class="main-content" x-bind:class="isNavMinimized ? 'expanded' : 'collapsed'">
+                <div class="tabs is-boxed">
+                    <!-- TODO: Make tabs re-arrangeable (may require external library) -->
+                    <ul>
+                        <template x-for="(tab, index) in openTabs" :key="index">
+                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
+                                <a x-on:click="activeTabIndex = index">
+                                    <span x-text="tab.name"></span>
+                                    <button class="delete" x-on:click="deleteTab(index, tab.contentID)"></button>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
 
-    </div>
+                <div id="active-tab-display" class="container content"></div>
 
-    <div class="footer">
-        <p id="streamer"></p>
-    </div>
+                <div id="no-open-tabs" x-show="openTabs.length === 0">
+                    <p>
+                        Select a tab on the left to get started
+                    </p>
+                    <p>
+                        <a href="http://localhost:8888/docs/Getting-started.html" target="blank">Getting Started Guide</a>
+                    </p>
+                </div>
+            </div>
+        </main>
 
-    <script src="/gui/jquery/jquery.js"></script>
-    <script src="/gui/jquery/jquery.multi-select.js"></script>
-    <script src="/gui/js/shared.js"></script>
-</body>
+        <!-- TODO: Remove JQuery as dependency (when possible) -->
+        <script src="/gui/jquery/jquery.js"></script>
+        <script src="/gui/jquery/jquery.multi-select.js"></script>
+        <script src="/gui/js/shared.js"></script>
+        <script src="/gui/js/core.js"></script>
+        <script defer src="/gui/js/lib/alpine.min.js"></script>
+        <script src="/gui/js/lib/bulma-toast.min.js"></script>
+    </body>
 </html>
