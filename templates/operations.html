@@ -240,6 +240,7 @@
                                             <span x-text="getHumanFriendlyTime(link.decide)"></span>
                                             <span x-bind:class="'status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"
                                                   x-text="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"></span>
+                                            <span class="pending-warning" x-show="link.status === -1 && operation.autonomous === '0'">pending approval</span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
                                                     <span x-bind:title="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"
@@ -1313,6 +1314,12 @@
         --dark-gray: gray;
         --light-gray: #e6e6e6;
         --decisions-color: #4fdcfc;
+    }
+
+    .pending-warning {
+        font-variant: all-petite-caps;
+        padding-top: 5px;
+        color: var(--decisions-color);
     }
 
     .text-align-right {
