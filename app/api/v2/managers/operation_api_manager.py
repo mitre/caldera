@@ -62,15 +62,16 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
         if link.is_finished() or link.can_ignore():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
+        if link_data.get('command'):
+            command_str = link_data.get('command')
+            link.executor.command = command_str
+            link.ability = self.build_ability({}, link.executor)
+            link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
             if not link.is_valid_status(link_status):
                 raise JsonHttpBadRequest(f'Cannot update link {link_id} due to invalid link status.')
             link.status = link_status
-        if link_data.get('command'):
-            link.command = link_data.get('command')
-            command_str = self._decode_string(link_data.get('command'))
-            link.executor.command = command_str
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
