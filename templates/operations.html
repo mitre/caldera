@@ -442,7 +442,7 @@
         <!--    MODALS      -->
         <template x-if="openModal">
             <div class="modal is-active">
-                <div class="modal-background"></div>
+                <div class="modal-background" @click="openModal = null"></div>
                 <form class="m-1">
                     <div class="modal-card">
                         <template x-if="openModal === 'addOperation'">
