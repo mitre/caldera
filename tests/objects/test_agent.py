@@ -126,3 +126,25 @@ class TestAgent:
         agent.set_pending_executor_removal('test')
         loop.run_until_complete(agent.heartbeat_modification(executors=original_executors))
         assert agent.executors == ['cmd']
+
+    def test_store_new_agent(self, data_svc):
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
+        stored_agent = agent.store(data_svc.ram)
+        assert len(data_svc.ram['agents']) == 1
+        assert agent in data_svc.ram['agents']
+        assert stored_agent == agent
+
+    def test_store_existing_agent(self, data_svc):
+        agent = Agent(paw='123', sleep_min=2, group='red', sleep_max=8, watchdog=0, executors=['cmd', 'test'],
+                      platform='windows', trusted=True, pending_contact='HTML')
+        agent.store(data_svc.ram)
+        assert len(data_svc.ram['agents']) == 1
+        agent.group = "blue"
+        agent.trusted = False
+        agent.sleep_min = 1
+        agent.sleep_max = 5
+        agent.watchdog = 1
+        agent.pending_contact = "HTTP"
+        stored_agent = agent.store(data_svc.ram)
+        assert len(data_svc.ram['agents']) == 1
+        assert stored_agent.schema.dump(stored_agent) == agent.schema.dump(agent)
