@@ -133,14 +133,6 @@ def finished_link(test_executor, test_agent, test_ability):
 
 
 @pytest.fixture
-def setup_finished_operation(loop, test_operation):
-    finished_operation = OperationSchema().load(test_operation)
-    finished_operation.id = '000'
-    finished_operation.state = 'finished'
-    loop.run_until_complete(BaseService.get_service('data_svc').store(finished_operation))
-
-
-@pytest.fixture
 def setup_operations_api_test(loop, api_v2_client, test_operation, test_agent, test_ability,
                               active_link, finished_link):
     test_operation = OperationSchema().load(test_operation)
