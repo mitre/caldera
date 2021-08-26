@@ -150,7 +150,7 @@ def setup_operations_api_test(loop, api_v2_client, test_operation, test_agent, t
 
 
 @pytest.mark.usefixtures(
-    "setup_operations_api_test"
+    'setup_operations_api_test'
 )
 class TestOperationsApi:
     async def test_get_operation_link_result(self, api_v2_client, api_cookies, finished_link, mocker):
@@ -173,7 +173,7 @@ class TestOperationsApi:
         resp = await api_v2_client.get('/api/v2/operations/123/links/456/result', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         output = await resp.json()
-        assert output['result'] == ""
+        assert output['result'] == ''
         assert output['link']['paw'] == active_link['paw']
         assert output['link']['id'] == active_link['id']
         assert output['link']['command'] == active_link['command']
