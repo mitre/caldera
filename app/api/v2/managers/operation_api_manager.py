@@ -59,8 +59,8 @@ class OperationApiManager(BaseApiManager):
         operation = await self.get_operation_object(operation_id, access)
         link = self.search_operation_for_link(operation, link_id)
         try:
-            content = self.services['file_svc'].read_result_file('%s' % link_id)
-            return dict(link=link.display, result=content)
+            result = self.services['file_svc'].read_result_file('%s' % link_id)
+            return dict(link=link.display, result=result)
         except FileNotFoundError:
             return dict(link=link.display, result='')
 
