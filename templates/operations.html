@@ -731,7 +731,7 @@
                                                             x-on:change="filterAbilities()">
                                                         <option default value="">Choose a tactic...</option>
                                                         <template x-for="tactic in tacticFiltersList"
-                                                                  :key="link.id+tactic">
+                                                                  :key="tactic">
                                                             <option x-text="tactic"></option>
                                                         </template>
                                                     </select>
@@ -747,7 +747,7 @@
                                                             x-on:change="filterAbilities()">
                                                         <option default>Choose a technique...</option>
                                                         <template x-for="technique in techniqueFiltersList"
-                                                                  :key="link.id+technique">
+                                                                  :key="technique">
                                                             <option x-text="technique"></option>
                                                         </template>
                                                     </select>
