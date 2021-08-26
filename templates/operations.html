@@ -766,6 +766,8 @@
                                                         <p x-text="link.ability.name"></p>
                                                         <button type="button"
                                                                 class="button is-primary is-small"
+                                                                x-bind:disabled="!isLinkAvailable(link)"
+                                                                x-bind:title="!isLinkAvailable(link) ? 'Repeated links are not available for this operation, and link has been already added.' : ''"
                                                                 x-on:click="addPotentialLink(link)">
                                                             Add Link
                                                         </button>
@@ -976,6 +978,7 @@
             isOperationsControlsExpanded: true,
             showOperationsMenuCaret: true,
             addNewRow: false,
+            addedTechniquesIDs: new Set(),
 
             getUsage() {
                 if (this.docs) {
@@ -1022,6 +1025,19 @@
                 }, 1); // timeout is to wait for UI changes to get accurate width calcs
             },
 
+            // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
+            isLinkAvailable(link) {
+                if (this.selectedOperation.adversary.has_repeatable_abilities) return true;
+                else return !this.addedTechniquesIDs.has(link.technique_id);
+            },
+
+            generateAddedLinksList() {
+                this.addedTechniquesIDs = new Set();
+                this.selectedOperation.chain.forEach((link) => {
+                    if (!this.addedTechniquesIDs.has(link.technique_id)) this.addedTechniquesIDs.add(link.technique_id)
+                });
+            },
+
             getAgentLinks(agent = this.selectedAgent) {
                 this.potentialLink.agent = agent;
                 this.tacticFiltersList = [];
@@ -1053,6 +1069,8 @@
                     apiV2('GET', endpoint + '/' + this.selectedOperationID).then((res) => {
                         this.selectedLink = null;
                         this.selectedOperation = res;
+                        this.generateAddedLinksList();
+
                         // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
                     }).catch((error) => {
                         toast('Error getting operation');
@@ -1137,6 +1155,7 @@
                     .then((res) => {
                         toast('Added potential link.', true);
                         this.getOperation();
+                        this.addedTechniquesIDs.add(link.technique_id);
                         this.openModal = null;
                     })
                     .catch((error) => {
