@@ -46,7 +46,7 @@ class AgentFieldsSchema(ma.Schema):
     created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     last_seen = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
-    pending_contact = ma.fields.String(dump_only=True)
+    pending_contact = ma.fields.String()
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -58,7 +58,6 @@ class AgentFieldsSchema(ma.Schema):
         data.pop('created', None)
         data.pop('last_seen', None)
         data.pop('links', None)
-        data.pop('pending_contact', None)
         return data
 
 
@@ -100,7 +99,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None, host_ip_addrs=None, upstream_dest=None):
+                 available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -131,7 +130,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.origin_link_id = origin_link_id
         self.deadman_enabled = deadman_enabled
         self.available_contacts = available_contacts if available_contacts else [self.contact]
-        self.pending_contact = contact
+        self.pending_contact = pending_contact if pending_contact else contact
         self.host_ip_addrs = host_ip_addrs if host_ip_addrs else []
         if upstream_dest:
             upstream_url = urlparse(upstream_dest)
@@ -146,6 +145,12 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
+        existing.update('group', self.group)
+        existing.update('trusted', self.trusted)
+        existing.update('sleep_min', self.sleep_min)
+        existing.update('sleep_max', self.sleep_max)
+        existing.update('watchdog', self.watchdog)
+        existing.update('pending_contact', self.pending_contact)
         return existing
 
     async def calculate_sleep(self):
