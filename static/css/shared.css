@@ -1,3 +1,65 @@
+/*MODAL FORM STYLE*/
+    .modal-card .modal-form > div {
+        width: 100%;
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: center;
+    }
+    .modal-card .modal-form > div > label {
+        width: 30%;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        font-size: 0.75rem;
+    }
+    .modal-card .modal-form-group-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-card .modal-form-group-header button {
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+        text-align: left;
+    }
+    .modal-card .modal-form-group-header b  .modal-card .expanded span:first-child::after {
+        margin-left: 0.2rem;
+        content: "▼";
+    }
+    .modal-card .modal-form-group-header b  .modal-card .collapsed span:first-child::after {
+        margin-left: 0.2rem;
+        content: "►";
+    }
+    .modal-card .modal-form-group-header button:hover, button[disabled]:hover {
+        transform: none !important;
+    }
+    .modal-card .modal-form-fields {
+        width: 70%;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        flex-flow: row wrap;
+    }
+    .modal-card .modal-form-fields input[type=number] {
+        width: 75px;
+    }
+    .modal-card .modal-form-fields input {
+        margin: 0.75em;
+    }
+    .modal-card .modal-form-fields label {
+        margin-right: 1rem;
+        font-size: 0.75rem;
+    }
+    .modal-card .input-hover-label {
+        position: relative;
+        margin-top: -40px;
+        margin-left: -40px;
+        color: #a9a9a9;
+        z-index: 1;
+        font-weight: 600;
+    }
+/*END MODAL FORM STYLE*/
 
 .input button:hover {
   opacity: 0.6;

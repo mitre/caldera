@@ -655,7 +655,7 @@
                                                        required
                                                        pattern="[0-9]*"
                                                        placeholder="4"/>
-                                                <label for="stealth-jitterMin" for="stealth-jitterMax">min</label>
+                                                <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                                 <span>/</span>
                                                 <input class="input"
                                                        x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
@@ -665,7 +665,7 @@
                                                        required
                                                        pattern="[0-9]*"
                                                        placeholder="8"/>
-                                                <label for="stealth-jitterMax">max</label>
+                                                <label class="input-hover-label" for="stealth-jitterMax">max</label>
                                                 <button type="button" class="button is-primary no-style reset"
                                                         title="reset to default"
                                                         x-on:click="jitterMin = 4; jitterMax = 8;">
@@ -1418,92 +1418,6 @@
     }
 
     /*MODAL FORM STYLE*/
-    .modal-form > div {
-        width: 100%;
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: center;
-    }
-
-    .modal-form > div > label {
-        width: 30%;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        font-size: 0.75rem;
-    }
-
-    .modal-form-group-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-form-group-header button {
-        width: 100%;
-        padding-left: 0;
-        padding-right: 0;
-        text-align: left;
-    }
-
-    .modal-form-group-header button.expanded span:first-child::after {
-        margin-left: 0.2rem;
-        content: "▼";
-    }
-
-    .modal-form-group-header button.collapsed span:first-child::after {
-        margin-left: 0.2rem;
-        content: "►";
-    }
-
-    .modal-form-group-header button:hover, button[disabled]:hover {
-        transform: none !important;
-    }
-
-    .modal-form-fields {
-        width: 70%;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        flex-flow: row wrap;
-    }
-
-    .modal-form-fields input[type=number] {
-        width: 75px;
-    }
-
-    .modal-form-fields input {
-        margin: 0.75em;
-    }
-
-    /*.modal-form-fields select {*/
-    /*    margin-left: 0.75em;*/
-    /*}*/
-
-    .modal-form-fields-columns {
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: space-between;
-        align-items: center;
-        margin-left: 0.75rem;
-        width: 100%;
-    }
-
-    .modal-form-fields-columns .executor-selector {
-        flex: none !important;
-        width: 50px !important;
-        padding-left: 10px;
-    }
-
-    .modal-form-fields-columns .executor-command {
-        width: 90%;
-    }
-
-    .modal-form-fields label {
-        margin-right: 1rem;
-        font-size: 0.75rem;
-    }
-
     .modal-form-fields.download-buttons-container button {
         width: fit-content;
     }
@@ -1689,14 +1603,6 @@
 
     .scroll-more-caret {
         color: gray;
-    }
-
-    label[for="stealth-jitterMin"], label[for="stealth-jitterMax"] {
-        position: relative;
-        margin-top: -40px;
-        margin-left: -40px;
-        color: #a0a0a0;
-        z-index: 999;
     }
 
     .modal-form-fields button.chip-select {
