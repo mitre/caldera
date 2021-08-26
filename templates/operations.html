@@ -14,7 +14,6 @@
 
         <div>
             <div x-bind:class="isOperationsControlsExpanded ? '' : 'columns'">
-
                 <div class="is-flex-direction-column"
                      x-bind:class="isOperationsControlsExpanded ? '' : 'column is-half pb-0'">
                     <div class="columns">
@@ -22,7 +21,8 @@
                              class="column is-flex is-justify-content-space-between is-flex-direction-column">
                             <div class="is-flex is-align-items-center search-box">
                                 <i class="fas fa-search"></i>
-                                <input id="op-search"
+                                <input class="input is-small"
+                                       id="op-search"
                                        placeholder="Operation name"
                                        x-ref="search"
                                        x-on:keyup="filterOperations($el.value)">
@@ -37,16 +37,19 @@
                             <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
                                     title="quick add operation" class="button is-primary is-small"
                                     x-on:click="addOperation(true)"><i class="pr-1 fas fa-plus"></i>
-                                Quick add
+                                Quick Add
                             </button>
                             <button type="button" title="add operation" class="ml-2 button is-primary is-small"
                                     x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
-                                Create operation
+                                Create Operation
                             </button>
                         </div>
                     </div>
                     <div class="is-flex is-flex-direction-row is-align-items-center">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
+                            <template x-if="filteredOperations.length < 1">
+                                <em class="is-flex is-justify-content-center">No operations available; click on the 'Create Operation' button to get started.</em>
+                            </template>
                             <template x-for="op in filteredOperations" :key="op.id">
                                 <button class="no-style operation-menu-links"
                                         x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'"
@@ -72,7 +75,7 @@
                     <template x-if="selectedOperation">
                         <div x-show="selectedOperationID">
                             <template x-if="isOperationsControlsExpanded">
-                                <div class="ellipsis-divider mt-2 mb-5">
+                                <div class="ellipsis-divider mt-2 mb-3">
                                     <i class="fas fa-circle"></i>
                                     <i class="fas fa-circle"></i>
                                     <i class="fas fa-circle"></i>
@@ -140,7 +143,7 @@
                                             </label>
                                             <template x-if="!isOperationRunning">
                                                 <div class="is-flex is-justify-content-center">
-                                                    <button class="no-style chip-select selected"
+                                                    <button class="is-small button is-rounded chip m-1"
                                                             x-text="selectedOperation.obfuscator + ' obfuscation'"></button>
                                                 </div>
                                             </template>
@@ -148,8 +151,8 @@
                                                 <div class="is-flex is-flex-direction-row is-flex-wrap-wrap is-justify-content-center pb-2"
                                                      id="operation-obfuscator">
                                                     {% for o in obfuscators %}
-                                                    <button x-bind:class="selectedOperation.obfuscator === `{{ o.name|e }}` ? 'selected' : ''"
-                                                            class="no-style chip-select"
+                                                    <button x-bind:class="selectedOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
+                                                            class="is-small button is-rounded is-primary chip m-1"
                                                             x-on:click="updateOperation('obfuscator', `{{ o.name|e }}`)">
                                                         {{ o.name|e }}
                                                     </button>
@@ -191,6 +194,10 @@
                     </template>
                 </div>
             </div>
+
+            <template x-if="filteredOperations.length > 0 && !selectedOperation">
+                <em class="is-flex is-justify-content-center">Click on an operation above to get started.</em>
+            </template>
 
             <template x-if="selectedOperation">
                 <div class="width-100 is-flex is-justify-content-center">
@@ -456,7 +463,7 @@
                                         <div>
                                             <label for="op-name">Operation name</label>
                                             <div class="modal-form-fields">
-                                                <input class="input" id="op-name" type="text"
+                                                <input class="input is-small" id="op-name" type="text"
                                                        x-model="startOperation.name" required>
                                             </div>
                                         </div>
@@ -511,15 +518,15 @@
                                             <div class="modal-form-fields"
                                                  id="basic-groups">
                                                 <button type="button"
-                                                        class="no-style chip-select"
-                                                        x-bind:class="(startOperation.group === '') ? 'selected' : ''"
+                                                        class="is-small button is-rounded is-primary chip m-1"
+                                                        x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
                                                         x-on:click="startOperation.group = ''">
                                                     all groups
                                                 </button>
                                                 <template x-for="(group, index) in agentGroups" :key="group">
                                                         <button type="button"
-                                                                class="no-style chip-select"
-                                                                x-bind:class="(startOperation.group === group) ? 'selected' : ''"
+                                                                class="is-small button is-rounded is-primary chip m-1"
+                                                                x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
                                                                 x-on:click="startOperation.group = group"
                                                                 x-show="group !== ''"
                                                                 x-text="group">
@@ -555,9 +562,9 @@
                                                     x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
                                             <div class="modal-form-fields" id="stealth-obfuscator">
                                                 {% for o in obfuscators %}
-                                                <button class="no-style chip-select"
+                                                <button class="is-small button is-rounded is-primary chip m-1"
                                                         type="button"
-                                                        x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? 'selected' : ''"
+                                                        x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
                                                         x-on:click="startOperation.obfuscator = `{{ o.name|e }}`">
                                                     {{ o.name|e }}
                                                 </button>
@@ -1337,7 +1344,7 @@
     }
 
     .search-box i {
-        background-color: #e6e6e6;
+        background-color: #262626;
         color: gray;
         height: 30px;
         padding: 5px;
@@ -1359,6 +1366,7 @@
         padding: 5px;
         border: none;
         width: 100%;
+        border-radius: 0;
     }
 
     span.decisionsIcon {
@@ -1393,7 +1401,7 @@
     }
 
     .operation-menu-links .readable-time {
-        width: 3.9em;
+        width: 4em;
         text-align: center;
         color: gray;
     }
@@ -1596,36 +1604,13 @@
     }
 
     .caret-button {
-        font-size: 1.4em;
-        padding-top: 1em;
+        font-size: 1em;
         padding-bottom: 0;
+        margin-top: -30px;
     }
 
     .scroll-more-caret {
         color: gray;
-    }
-
-    .modal-form-fields button.chip-select {
-        width: fit-content;
-        margin: 0.75em 0 0 0.75em;
-    }
-
-    button.chip-select {
-        border: 2px solid var(--primary-color);
-        border-radius: 24px;
-        color: white;
-        padding: 5px 12px;
-        cursor: pointer;
-        margin: 0.75em 0.75em 0 0;
-    }
-
-    button.chip-select:hover {
-        background-color: var(--primary-color);
-        transform: none !important;
-    }
-
-    button.chip-select.selected {
-        background-color: var(--primary-color);
     }
 
     button.no-style:hover {
