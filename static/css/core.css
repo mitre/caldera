@@ -69,13 +69,10 @@ main.main {
 }
 
 .nav-logo {
-  background-image: url('/gui/img/caldera-logo.png');
-  background-size: contain;
-  width: 65%;
-  margin: 1em 2em;
-  height: 15%;
-  background-position: center;
-  background-repeat: no-repeat;
+  width: 100%;
+  display: flex;
+  padding: 2em 3em;
+  justify-content: center;
 }
 
 #no-open-tabs {
