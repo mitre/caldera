@@ -311,28 +311,30 @@
                                         <!--OUTPUT/FACTS COLUMN-->
                                         <!--TODO if output is T, should show facts; individual links should have their own facts, TBD-->
                                         <td class="outputDetails">
-                                            <template x-if="selectedLink === link && selectedLinkOutput">
-                                                <div class="mb-5">
-                                                    <p class="is-size-7">Output: </p>
-                                                    <code x-text="selectedLinkOutput"></code>
-                                                </div>
-                                            </template>
-                                            <template x-if="selectedLink === link && !selectedLinkOutput">
+                                            <template x-if="selectedLink === link && !selectedLinkResults">
                                                 <p class="is-size-7">No output available.</p>
                                             </template>
-                                            <template x-if="selectedLink === link && selectedLinkFacts?.length > 0">
+                                            <template x-if="selectedLink === link && selectedLinkResults">
                                                 <div class="mb-5">
-                                                    <p class="is-size-7">Facts: </p>
-                                                    <template x-for="(fact, index) in selectedLinkFacts"
-                                                              :key="link.id+'-'+index">
-                                                        <code x-bind:id="index" class="highlight"
-                                                              x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>
-                                                    </template>
+                                                    <p class="is-size-7">Output: </p>
+                                                    <code class="is-size-7" x-text="selectedLinkResults"></code>
                                                 </div>
                                             </template>
-                                            <template x-if="selectedLink === link && selectedLinkFacts?.length < 1">
-                                                <p class="is-size-7">No facts available.</p>
-                                            </template>
+
+                                            <!--                                            TODO how should facts be shown?-->
+                                            <!--                                            <template x-if="selectedLink === link && selectedLinkFacts?.length > 0">-->
+                                            <!--                                                <div class="mb-5">-->
+                                            <!--                                                    <p class="is-size-7">Facts: </p>-->
+                                            <!--                                                    <template x-for="(fact, index) in selectedLinkFacts"-->
+                                            <!--                                                              :key="link.id+'-'+index">-->
+                                            <!--                                                        <code x-bind:id="index" class="highlight"-->
+                                            <!--                                                              x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>-->
+                                            <!--                                                    </template>-->
+                                            <!--                                                </div>-->
+                                            <!--                                            </template>-->
+                                            <!--                                            <template x-if="selectedLink === link && selectedLinkFacts?.length < 1">-->
+                                            <!--                                                <p class="is-size-7">No facts available.</p>-->
+                                            <!--                                            </template>-->
                                         </td>
 
                                         <td class="csv-exclude">
@@ -380,7 +382,7 @@
                                                             x-for="(executor, index) in selectedAgentExecutors"
                                                             :key="executor.name">
                                                         <option x-text="executor"
-                                                                :value="selectedAgent.executors[index]"
+                                                                :value="selectedAgent?.executors[index]"
                                                                 x-bind:selected="index === 0"></option>
                                                     </template>
                                                 </select>
@@ -949,7 +951,7 @@
             selectedAgentIndex: null,
             isSelectedAdversaryRepeatable: false,
             selectedLink: null,
-            selectedLinkOutput: null,
+            selectedLinkResults: null,
             selectedLinkFacts: null,
             selectedLinkCommand: null,
             selectedReportType: "",
@@ -1168,20 +1170,28 @@
                 this.selectedLink = link;
                 apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${link.id}`)
                     .then((res) => {
-                        this.selectedLinkOutput = res.output;
+                        this.getLinkResults(res.output, link);
                         if (res.facts) {
                             this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score)
                         }
-                        // TODO make sure this is correct based on response from api
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
                         this.editableCommand = b64DecodeUnicode(res.command);
                     })
                     .catch((error) => {
-                        this.selectedLinkOutput = null;
+                        this.selectedLinkResults = null;
                         this.selectedLinkFacts = null;
                         this.selectedLinkCommand = null;
-                        toast('Error getting link results.');
+                        toast('Error getting link results.', error);
                     });
+            },
+
+            getLinkResults(output, link) {
+                if (output !== "True") this.selectedLinkResults = null;
+                else apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${link.id}/result`)
+                    .then((res) => {
+                        this.selectedLinkResults = b64DecodeUnicode(res.result);
+                    })
+                    .catch((error) => console.error('Error getting link results.', error));
             },
 
             updateLink(status, command = null) {
