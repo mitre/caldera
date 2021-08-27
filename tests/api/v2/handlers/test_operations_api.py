@@ -67,7 +67,6 @@ def test_operation(test_adversary, test_planner, test_source):
                           'auto_close': False,
                           'obfuscator': 'plain-text',
                           'use_learning_parsers': False}
-
     return expected_operation
 
 
@@ -434,4 +433,32 @@ class TestOperationsApi:
             "status": -1
         }
         resp = await api_v2_client.post('/api/v2/operations/999/potential-links', json=payload, cookies=api_cookies)
+
+    async def test_get_operation_link_result(self, api_v2_client, api_cookies, finished_link, mocker):
+        with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_read_result:
+            encoded_result = str(b64encode('user'.encode()), 'utf-8')
+            mock_read_result.return_value = encoded_result
+            resp = await api_v2_client.get('/api/v2/operations/123/links/789/result', cookies=api_cookies)
+            assert resp.status == HTTPStatus.OK
+            output = await resp.json()
+            assert output['link']['id'] == finished_link['id']
+            assert output['link']['paw'] == finished_link['paw']
+            assert output['link']['command'] == finished_link['command']
+            assert output['result'] == encoded_result
+
+    async def test_unauthorized_get_operation_link_result(self, api_v2_client, finished_link):
+        resp = await api_v2_client.get('/api/v2/operations/123/links/789/result')
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_get_operation_link_no_result(self, api_v2_client, api_cookies, active_link):
+        resp = await api_v2_client.get('/api/v2/operations/123/links/456/result', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        output = await resp.json()
+        assert output['result'] == ''
+        assert output['link']['paw'] == active_link['paw']
+        assert output['link']['id'] == active_link['id']
+        assert output['link']['command'] == active_link['command']
+
+    async def test_nonexistent_get_operation_link_result(self, api_v2_client, api_cookies):
+        resp = await api_v2_client.get('/api/v2/operations/123/links/999/result', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
