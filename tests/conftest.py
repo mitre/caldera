@@ -7,7 +7,11 @@ import random
 import string
 import uuid
 import yaml
+import aiohttp_apispec
 from unittest import mock
+from aiohttp_apispec import validation_middleware
+from aiohttp import web
+from pathlib import Path
 
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
@@ -22,6 +26,7 @@ from app.objects.c_obfuscator import Obfuscator
 from app.service.auth_svc import AuthService
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
+from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.contact_svc import ContactService
 from app.service.event_svc import EventService
@@ -40,6 +45,12 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
+from app.api.v2.responses import json_request_validation_middleware
+from app.api.v2.security import authentication_required_middleware_factory
+from app.api.v2.responses import apispec_request_validation_middleware
+from app.api.v2.handlers.operation_api import OperationApi
+from app.api.rest_api import RestApi
+from app import version
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -267,6 +278,7 @@ def api_v2_client(loop, aiohttp_client):
             ]
         )
         AbilityApi(svcs).add_routes(app)
+        OperationApi(svcs).add_routes(app)
         return app
 
     async def initialize():
