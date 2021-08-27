@@ -1,29 +1,19 @@
 import asyncio
 import os.path
-
-import aiohttp_apispec
 import pytest
 import random
 import string
 import uuid
 import yaml
 import aiohttp_apispec
+
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
 from pathlib import Path
 
-from aiohttp_apispec import validation_middleware
-from aiohttp import web
-from pathlib import Path
-
-from app import version
-from app.api.rest_api import RestApi
 from app.api.v2.handlers.ability_api import AbilityApi
-from app.api.v2.responses import apispec_request_validation_middleware, json_request_validation_middleware
-from app.api.v2.security import authentication_required_middleware_factory
 from app.objects.c_obfuscator import Obfuscator
-from app.service.auth_svc import AuthService
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
