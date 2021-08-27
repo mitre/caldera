@@ -433,6 +433,7 @@ class TestOperationsApi:
             "status": -1
         }
         resp = await api_v2_client.post('/api/v2/operations/999/potential-links', json=payload, cookies=api_cookies)
+        assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_get_operation_link_result(self, api_v2_client, api_cookies, finished_link, mocker):
         with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_read_result:
