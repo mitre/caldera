@@ -53,10 +53,11 @@ main.main {
   border: 1px solid #262626;
   border-radius: 4px;
 }
+
 @media screen and (min-width: 1000px) {
   .modal-card.wide {
     width: 1000px;
-  } 
+  }
 }
 
 .modal-card-foot {
