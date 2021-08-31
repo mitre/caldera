@@ -26,6 +26,7 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations/{id}/report', self.get_operation_report)
         router.add_get('/operations/{id}/links', self.get_operation_links)
         router.add_get('/operations/{id}/links/{link_id}', self.get_operation_link)
+        router.add_get('/operations/{id}/links/{link_id}/result', self.get_operation_link_result)
         router.add_patch('/operations/{id}/links/{link_id}', self.update_operation_link)
         router.add_post('/operations/{id}/potential-links', self.create_potential_link)
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
@@ -91,6 +92,16 @@ class OperationApi(BaseObjectApi):
         access = await self.get_request_permissions(request)
         link = await self._api_manager.get_operation_link(operation_id, link_id, access)
         return web.json_response(link)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
+    async def get_operation_link_result(self, request: web.Request):
+        operation_id = request.match_info.get('id')
+        link_id = request.match_info.get('link_id')
+        access = await self.get_request_permissions(request)
+        result = await self._api_manager.get_operation_link_result(operation_id, link_id, access)
+        return web.json_response(result)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.request_schema(LinkSchema(partial=True))
