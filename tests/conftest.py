@@ -259,7 +259,27 @@ def agent_profile():
 
 
 @pytest.fixture
-def api_v2_client(loop, aiohttp_client):
+def contact_report_data():
+    return {
+        'HTTP': [
+            {
+                "paw": "test_1",
+                "instructions": [],
+                "date": "2021-08-29 15:00:00"
+            }
+        ],
+        'html': [
+            {
+                "paw": "test_2",
+                "instructions": [],
+                "date": "2021-08-31 15:00:00"
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def api_v2_client(loop, aiohttp_client, contact_report_data):
     def make_app(svcs):
         app = web.Application(
             middlewares=[
@@ -283,7 +303,8 @@ def api_v2_client(loop, aiohttp_client):
         _ = PlanningService()
         _ = LearningService()
         auth_svc = AuthService()
-        _ = ContactService()
+        contact_svc = ContactService()
+        contact_svc.report = contact_report_data
         _ = FileSvc()
         _ = EventService()
         services = app_svc.get_services()

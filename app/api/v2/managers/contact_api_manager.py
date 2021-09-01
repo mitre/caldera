@@ -1,4 +1,5 @@
 from app.api.v2.managers.base_api_manager import BaseApiManager
+from app.api.v2.responses import JsonHttpNotFound
 
 
 class ContactApiManager(BaseApiManager):
@@ -9,5 +10,6 @@ class ContactApiManager(BaseApiManager):
     def get_contact_report(self, contact: str = None):
         if contact == 'http':
             contact = contact.upper()
-        report = self.contact_svc.report.get(contact, dict())
-        return report
+        if contact in self.contact_svc.report:
+            return self.contact_svc.report.get(contact)
+        raise JsonHttpNotFound(f'Contact not found: {contact}')
