@@ -17,6 +17,10 @@ function alpineCore() {
         },
 
         addTab(tabName, address) {
+            if (tabName === 'fieldmanual') {
+                restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
+                return;
+            }
             const existingTabIndex = this.openTabs.findIndex((tab) => tab.name === tabName);
             if (existingTabIndex === -1) {
                 const tab = { name: tabName, contentID: `tab-${tabName}`, address: address };
@@ -35,6 +39,6 @@ function alpineCore() {
             this.activeTabIndex -= 1;
             this.openTabs.splice(index, 1);
         },
-        
+
     };
 }

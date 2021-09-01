@@ -29,7 +29,10 @@
                     <p class="menu-label">Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
-                            <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
+                        <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
+                            <template x-if="`{{plugin.name | e}}`=== 'fieldmanual'">
+                                <sup><i class="fas fa-external-link-alt pl-1"></i></sup>
+                            </template></a></li>
                         {% endfor %}
                     </ul>
                     <p class="menu-label">Configuration</p>
