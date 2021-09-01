@@ -70,7 +70,7 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
-    async def save_multipart_file_upload(self, request, target_dir):
+    async def save_multipart_file_upload(self, request, target_dir, encrypt=True):
         try:
             reader = await request.multipart()
             headers = CIMultiDict(request.headers)
@@ -80,7 +80,7 @@ class FileSvc(FileServiceInterface, BaseService):
                     break
                 _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
-                                     encoding=headers.get('x-file-encoding'))
+                                     encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
         except Exception as e:
