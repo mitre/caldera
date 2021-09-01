@@ -15,7 +15,7 @@
                         button to get started.</em>
                 </template>
                 <template x-for="source of sources" :key="source.name">
-                    <button class="no-style source-menu-links"
+                    <button class="no-style source-menu-links" x-bind:class="selectedSource === source ? 'active' : ''"
                             x-on:click="selectedSource = source">
                         <i class="fas fa-faucet"></i>
                         <span x-text="source.name"></span>
@@ -45,6 +45,13 @@
 </div>
 
 <style>
+    :scope {
+        --primary-color: #8B0000;
+        --dark-gray: gray;
+        --light-gray: #e6e6e6;
+        --decisions-color: #4fdcfc;
+    }
+
     button.no-style {
         background-color: transparent;
         border: none;
@@ -58,14 +65,27 @@
 
     .source-menu-links {
         color: white;
-        margin-right: 2em;
-        text-align: left;
         cursor: pointer;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: center;
         width: 5em;
         flex-flow: column wrap;
+        padding-bottom: 5px;
+    }
+
+    .source-menu-links:hover {
+        background-color: var(--primary-color);
+        border-radius: 5px;
+    }
+
+    .source-menu-links.active i {
+        font-size: 2.5em;
+    }
+
+    .source-menu-links i {
+        font-size: 2em;
+        padding-bottom: 5px;
     }
 </style>
 
