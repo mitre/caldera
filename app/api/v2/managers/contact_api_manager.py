@@ -7,5 +7,7 @@ class ContactApiManager(BaseApiManager):
         self.contact_svc = contact_svc
 
     def get_contact_report(self, contact: str = None):
-        report = self.contact_svc.report  # .get(contact, dict())
+        if contact == 'http':
+            contact = contact.upper()
+        report = self.contact_svc.report.get(contact, dict())
         return report

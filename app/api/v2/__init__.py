@@ -48,4 +48,7 @@ def make_app(services):
     from .handlers.fact_api import FactApi
     FactApi(services).add_routes(app)
 
+    from .handlers.contact_api import ContactApi
+    ContactApi(services).add_routes(app)
+
     return app
