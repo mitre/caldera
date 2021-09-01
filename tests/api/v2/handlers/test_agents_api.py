@@ -2,20 +2,24 @@ from http import HTTPStatus
 
 import pytest
 
+from app.objects.c_ability import AbilitySchema
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_executor import ExecutorSchema
 from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def updated_agent_payload():
-    return {
+def updated_agent_payload(test_agent):
+    payload = test_agent.schema.dump(test_agent)
+    payload.update({
         'group': 'blue',
         'trusted': False,
         'sleep_min': 1,
         'sleep_max': 5,
         'watchdog': 0,
         'pending_contact': 'HTML'
-    }
+    })
+    return payload
 
 
 @pytest.fixture
@@ -54,6 +58,66 @@ def test_agent(loop):
     test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux')
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
     return test_agent
+
+
+@pytest.fixture
+def test_executor(test_agent):
+    return ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='linux',
+                                      command='ls'))
+
+
+@pytest.fixture
+def deploy_ability(test_executor, loop):
+    ability = AbilitySchema().load(dict(ability_id='123',
+                                        tactic='persistence',
+                                        technique_id='auto-generated',
+                                        technique_name='auto-generated',
+                                        name='test deploy command',
+                                        description='test ability',
+                                        executors=[ExecutorSchema().dump(test_executor)]))
+    loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
+    return ability
+
+
+@pytest.fixture
+def raw_ability(deploy_ability, test_executor):
+    raw_ability = {
+        'name': deploy_ability.name,
+        'platform': test_executor.platform,
+        'executor': test_executor.name,
+        'description': deploy_ability.description,
+        'command': test_executor.command,
+        'variations': [{'description': v.description, 'command': v.raw_command} for v in test_executor.variations]
+    }
+    return raw_ability
+
+
+@pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.ftp.host': '0.0.0.0',
+        'app.contact.http': 'http://0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010'
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'deadman_abilities': [],
+        'implant_name': 'test',
+        'sleep_max': 6,
+        'sleep_min': 3,
+        'watchdog': 0
+    }
+
+
+@pytest.fixture
+def combined_config(agent_config, app_config):
+    app_config.update({f'agents.{k}': v for k, v in agent_config.items()})
+    return app_config
 
 
 class TestAgentsApi:
@@ -100,11 +164,7 @@ class TestAgentsApi:
         resp = await api_v2_client.patch('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
-        assert agent_dict['sleep_min'] == updated_agent_payload['sleep_min']
-        assert agent_dict['sleep_max'] == updated_agent_payload['sleep_max']
-        assert agent_dict['group'] == updated_agent_payload['group']
-        assert agent_dict['trusted'] == updated_agent_payload['trusted']
-        assert agent_dict['pending_contact'] == updated_agent_payload['pending_contact']
+        assert agent_dict == updated_agent_payload
 
     async def test_unauthorized_update_agent(self, api_v2_client, test_agent, updated_agent_payload):
         resp = await api_v2_client.patch('/api/v2/agents/123', json=updated_agent_payload)
@@ -114,21 +174,17 @@ class TestAgentsApi:
         resp = await api_v2_client.patch('/api/v2/agents/999', cookies=api_cookies, json=updated_agent_payload)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_or_update_agent(self, api_v2_client, api_cookies, test_agent, updated_agent_payload):
+    async def test_create_or_update_existing_agent(self, api_v2_client, api_cookies, test_agent, updated_agent_payload):
         resp = await api_v2_client.put('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
-        assert agent_dict['sleep_min'] == updated_agent_payload['sleep_min']
-        assert agent_dict['sleep_max'] == updated_agent_payload['sleep_max']
-        assert agent_dict['group'] == updated_agent_payload['group']
-        assert agent_dict['trusted'] == updated_agent_payload['trusted']
-        assert agent_dict['pending_contact'] == updated_agent_payload['pending_contact']
+        assert agent_dict == updated_agent_payload
 
     async def test_unauthorized_create_or_update_agent(self, api_v2_client, test_agent, updated_agent_payload):
         resp = await api_v2_client.put('/api/v2/agents/123', json=updated_agent_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_nonexistent_create_or_update_agent(self, api_v2_client, api_cookies, new_agent_payload):
+    async def test_create_or_update_nonexistent_agent(self, api_v2_client, api_cookies, new_agent_payload):
         resp = await api_v2_client.put('/api/v2/agents/456', cookies=api_cookies, json=new_agent_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
@@ -136,14 +192,31 @@ class TestAgentsApi:
         assert agent_dict['sleep_max'] == new_agent_payload['sleep_max']
         assert agent_dict['paw'] == new_agent_payload['paw']
         assert agent_dict['executors'] == new_agent_payload['executors']
-    '''
-    async def test_delete_agent(self, api_v2_client, api_cookies, test_agent):
-        pass
 
-    async def test_get_deploy_commands(self, api_v2_client, api_cookies, test_agent):
-        pass
+    async def test_get_deploy_commands(self, api_v2_client, api_cookies, deploy_ability, mocker, raw_ability,
+                                       agent_config, app_config, combined_config):
+        with mocker.patch('app.api.v2.managers.agent_api_manager.AgentApiManager.get_config') as mock_config:
+            mock_config.side_effect = [[deploy_ability.ability_id], app_config, agent_config]
+            resp = await api_v2_client.get('/api/v2/deploy_commands', cookies=api_cookies)
+            assert resp.status == HTTPStatus.OK
+            result = await resp.json()
+            assert result['app_config'] == combined_config
+            assert result['abilities'] == [raw_ability]
 
-    async def test_unauthorized_get_deploy_commands(self, api_v2_client, test_agent):
-        resp = await api_v2_client.patch('/api/v2/deploy_commands/}', json=)
-        assert resp.status == HTTPStatus.FORBIDDEN
-    '''
+    async def test_unauthorized_get_deploy_commands(self, api_v2_client, deploy_ability):
+        resp = await api_v2_client.get('/api/v2/deploy_commands')
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_get_deploy_commands_for_ability(self, api_v2_client, api_cookies, deploy_ability, mocker,
+                                                   raw_ability, agent_config, app_config, combined_config):
+        with mocker.patch('app.api.v2.managers.agent_api_manager.AgentApiManager.get_config') as mock_config:
+            mock_config.side_effect = [app_config, agent_config]
+            resp = await api_v2_client.get(f'/api/v2/deploy_commands/{deploy_ability.ability_id}', cookies=api_cookies)
+            assert resp.status == HTTPStatus.OK
+            result = await resp.json()
+            assert result['app_config'] == combined_config
+            assert result['abilities'] == [raw_ability]
+
+    async def test_unauthorized_get_deploy_commands_for_ability(self, api_v2_client, deploy_ability):
+        resp = await api_v2_client.get(f'/api/v2/deploy_commands/{deploy_ability.ability_id}')
+        assert resp.status == HTTPStatus.UNAUTHORIZED
