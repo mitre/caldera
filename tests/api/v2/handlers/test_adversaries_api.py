@@ -11,7 +11,7 @@ def updated_adversary_payload():
     return {
         'name': 'test updated adversary',
         'description': 'an updated adversary',
-        'objective': '',
+        'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
         'tags': ['test tag']
     }
 
@@ -71,6 +71,8 @@ class TestAdversariesApi:
         resp = await api_v2_client.post('/api/v2/adversaries', cookies=api_cookies, json=new_adversary_payload)
         assert resp.status == HTTPStatus.OK
         output = await resp.json()
+        assert await BaseService.get_service('data_svc').locate('adversaries',
+                                                                match={'adversary_id': output['adversary_id']})
         assert output['name'] == new_adversary_payload['name']
         assert output['description'] == new_adversary_payload['description']
         assert output['tags'] == new_adversary_payload['tags']
@@ -87,8 +89,8 @@ class TestAdversariesApi:
 
     async def test_update_adversary(self, api_v2_client, api_cookies, test_adversary, updated_adversary_payload,
                                     mocker):
-        with mocker.patch('app.api.v2.managers.adversary_api_manager.AdversaryApiManager') as mock_base_world:
-            mock_base_world.strip_yml.return_value = test_adversary.schema.dump(test_adversary)
+        with mocker.patch('app.api.v2.managers.adversary_api_manager.AdversaryApiManager.strip_yml') as mock_strp_yml:
+            mock_strp_yml.return_value = [test_adversary.schema.dump(test_adversary)]
             resp = await api_v2_client.patch('/api/v2/adversaries/123', cookies=api_cookies, json=updated_adversary_payload)
             assert resp.status == HTTPStatus.OK
             output = await resp.json()
@@ -104,23 +106,41 @@ class TestAdversariesApi:
         resp = await api_v2_client.patch('/api/v2/adversaries/999', json=updated_adversary_payload)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_or_update_adversary(self, api_v2_client, api_cookies, test_adversary):
-        pass
+    async def test_create_or_update_existing_adversary(self, api_v2_client, api_cookies, test_adversary,
+                                                       updated_adversary_payload):
+        resp = await api_v2_client.put('/api/v2/adversaries/123', cookies=api_cookies, json=updated_adversary_payload)
+        assert resp.status == HTTPStatus.OK
+        output = await resp.json()
+        expected_payload = test_adversary.schema.dump(test_adversary)
+        expected_payload.update(updated_adversary_payload)
+        assert output == expected_payload
 
-    async def test_unauthorized_create_or_update_adversary(self, api_v2_client, api_cookies, test_adversary,
-                                                           new_adversary_payload):
+    async def test_unauthorized_create_or_update_adversary(self, api_v2_client, test_adversary, new_adversary_payload):
         resp = await api_v2_client.put('/api/v2/adversaries/123', json=new_adversary_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_create_or_update_nonexistent_adversary(self, api_v2_client, api_cookies, test_adversary):
-        pass
+    async def test_create_or_update_nonexistent_adversary(self, api_v2_client, api_cookies, test_adversary,
+                                                          new_adversary_payload):
+        resp = await api_v2_client.put('/api/v2/adversaries/456', cookies=api_cookies, json=new_adversary_payload)
+        assert resp.status == HTTPStatus.OK
+        output = await resp.json()
+        assert await BaseService.get_service('data_svc').locate('adversaries',
+                                                                match={'adversary_id': output['adversary_id']})
+        assert output['name'] == new_adversary_payload['name']
+        assert output['description'] == new_adversary_payload['description']
+        assert output['objective'] == new_adversary_payload['objective']
+        assert output['tags'] == new_adversary_payload['tags']
 
     async def test_delete_adversary(self, api_v2_client, api_cookies, test_adversary):
-        pass
+        assert await BaseService.get_service('data_svc').locate('adversaries', match={'adversary_id': '123'})
+        resp = await api_v2_client.delete('/api/v2/adversaries/123')
+        assert resp.status == HTTPStatus.NO_CONTENT
+        assert not await BaseService.get_service('data_svc').locate({'adversary_id': '123'})
 
-    async def test_unauthorized_delete_adversary(self, api_v2_client, api_cookies, test_adversary):
+    async def test_unauthorized_delete_adversary(self, api_v2_client, test_adversary):
         resp = await api_v2_client.delete('/api/v2/adversaries/123')
         assert resp.status == HTTPStatus.UNAUTHORIZED
+        assert await BaseService.get_service('data_svc').locate('adversaries', match={'adversary_id': '123'})
 
     async def test_delete_nonexistent_adversary(self, api_v2_client, api_cookies, test_adversary):
         resp = await api_v2_client.delete('/api/v2/adversaries/999', cookies=api_cookies)
