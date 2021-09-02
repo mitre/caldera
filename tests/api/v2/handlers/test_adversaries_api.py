@@ -130,18 +130,3 @@ class TestAdversariesApi:
         assert output['description'] == new_adversary_payload['description']
         assert output['objective'] == new_adversary_payload['objective']
         assert output['tags'] == new_adversary_payload['tags']
-
-    async def test_delete_adversary(self, api_v2_client, api_cookies, test_adversary):
-        assert await BaseService.get_service('data_svc').locate('adversaries', match={'adversary_id': '123'})
-        resp = await api_v2_client.delete('/api/v2/adversaries/123')
-        assert resp.status == HTTPStatus.NO_CONTENT
-        assert not await BaseService.get_service('data_svc').locate({'adversary_id': '123'})
-
-    async def test_unauthorized_delete_adversary(self, api_v2_client, test_adversary):
-        resp = await api_v2_client.delete('/api/v2/adversaries/123')
-        assert resp.status == HTTPStatus.UNAUTHORIZED
-        assert await BaseService.get_service('data_svc').locate('adversaries', match={'adversary_id': '123'})
-
-    async def test_delete_nonexistent_adversary(self, api_v2_client, api_cookies, test_adversary):
-        resp = await api_v2_client.delete('/api/v2/adversaries/999', cookies=api_cookies)
-        assert resp.status == HTTPStatus.NOT_FOUND
