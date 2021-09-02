@@ -117,7 +117,7 @@
                 let requestBody = {
                     value: pluginName,
                     prop: 'plugin'
-                }
+                };
 
                 apiV2('PATCH', '/api/v2/config/main', requestBody).then((response) => {
                     toast('Plugin enabled! Restart the server for the changes to take effect.', true);
@@ -127,7 +127,7 @@
                     console.error(error);
                 });
             },
-            
+
         };
     }
 

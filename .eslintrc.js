@@ -39,8 +39,10 @@ module.exports = {
         "no-undef": "off",
         "no-unused-vars": "off",
         "no-use-before-define": "off",
+        "no-useless-escape": "off",
         "no-var": "off",
         "object-shorthand": "off",
-        "prefer-const": "off"
+        "prefer-const": "off",
+        "prefer-destructuring": "off"
     }
 };

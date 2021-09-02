@@ -194,84 +194,83 @@
 </div>
 
 <script>
- 
-    function alpineObjectives() {
-        return {
-            objectives: [],
-            adversaries: [],
-            selectedObjectiveId: '',
-            selectedObjective: {},
-            isEditing: false,
+function alpineObjectives() {
+    return {
+        objectives: [],
+        adversaries: [],
+        selectedObjectiveId: '',
+        selectedObjective: {},
+        isEditing: false,
 
-            OPERATOR_TYPES: ['<', '>', '<=', '>=', 'in', '*', '=='],
+        OPERATOR_TYPES: ['<', '>', '<=', '>=', 'in', '*', '=='],
 
-            showAssignmentsModal: false,
+        showAssignmentsModal: false,
 
-            // Input validation
-            requiredFields: ['name', 'description', 'goals'],
-            fieldErrors: [],
+        // Input validation
+        requiredFields: ['name', 'description', 'goals'],
+        fieldErrors: [],
 
-            initPage() {
-                apiV2('GET', '/api/v2/objectives').then((objectives) => {
-                    this.objectives = objectives;
-                    return apiV2('GET', '/api/v2/adversaries');
-                }).then((adversaries) => {
-                    this.adversaries = adversaries;
-                }).catch((error) => {
-                    toast('Error loading page', false);
-                    console.error(error);
-                });
-            },
+        initPage() {
+            apiV2('GET', '/api/v2/objectives').then((objectives) => {
+                this.objectives = objectives;
+                return apiV2('GET', '/api/v2/adversaries');
+            }).then((adversaries) => {
+                this.adversaries = adversaries;
+            }).catch((error) => {
+                toast('Error loading page', false);
+                console.error(error);
+            });
+        },
 
-            createObjective() {
-                this.objectives.push({
-                    id: uuidv4(),
-                    name: '',
-                    description: '',
-                    goals: []
-                });
-                this.selectedObjective = this.objectives[this.objectives.length - 1];
-                this.addGoal();
-                this.isEditing = true;
-            },
+        createObjective() {
+            this.objectives.push({
+                id: uuidv4(),
+                name: '',
+                description: '',
+                goals: []
+            });
+            this.selectedObjective = this.objectives[this.objectives.length - 1];
+            this.addGoal();
+            this.isEditing = true;
+        },
 
-            addGoal() {
-                this.selectedObjective.goals.push({
-                    achieved: false,
-                    count: 0,
-                    operator: this.OPERATOR_TYPES[0],
-                    target: "",
-                    value: ""
-                });
-            },
+        addGoal() {
+            this.selectedObjective.goals.push({
+                achieved: false,
+                count: 0,
+                operator: this.OPERATOR_TYPES[0],
+                target: '',
+                value: ''
+            });
+        },
 
-            saveObjective() {
-                this.fieldErrors = validateInputs(this.selectedObjective, this.requiredFields);
-                if (this.fieldErrors.length) return;
+        saveObjective() {
+            this.fieldErrors = validateInputs(this.selectedObjective, this.requiredFields);
+            if (this.fieldErrors.length) return;
 
-                apiV2('PUT', `/api/v2/objectives/${this.selectedObjective.id}`, this.selectedObjective).then((response) => {
-                    this.isEditing = false;
-                    toast('Saved objective', true);
-                }).catch((error) => {
-                    toast('Error saving objective', false);
-                    console.error(error);
-                });
-            },
-
-            cancelEditing() {
+            apiV2('PUT', `/api/v2/objectives/${this.selectedObjective.id}`, this.selectedObjective).then((response) => {
                 this.isEditing = false;
-                apiV2('GET', `/api/v2/objectives/${this.selectedObjective.id}`).then((objective) => {
-                    this.selectedObjective = objective;
-                }).catch((error) => {
-                    toast('Error canceling changes, please close and reopen this page', false);
-                    console.error(error);
-                });
-            }
+                toast('Saved objective', true);
+            }).catch((error) => {
+                toast('Error saving objective', false);
+                console.error(error);
+            });
+        },
 
-        };
-    }
+        cancelEditing() {
+            this.isEditing = false;
+            apiV2('GET', `/api/v2/objectives/${this.selectedObjective.id}`).then((objective) => {
+                this.selectedObjective = objective;
+            }).catch((error) => {
+                toast('Error canceling changes, please close and reopen this page', false);
+                console.error(error);
+            });
+        }
 
-    // # sourceURL=objectives.js
+    };
+}
+
+// # sourceURL=objectives.js
 </script>
 
 <style>

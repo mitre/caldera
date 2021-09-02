@@ -715,7 +715,7 @@
             saveProfile() {
                 this.fieldErrorsProfile = validateInputs({ name: this.selectedProfileName, description: this.selectedProfileDescription }, this.requiredFieldsProfile);
                 if (this.fieldErrorsProfile.length) {
-                    this.isEditingProfile = true;   
+                    this.isEditingProfile = true;
                     return;
                 }
 
@@ -783,13 +783,12 @@
 
             linkObjective() {
                 apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, { objective: this.selectedObjectiveId }).then((data) => {
-                    toast('New objective linked', true); 
+                    toast('New objective linked', true);
                     this.showObjectiveModal = false;
                 }).catch((error) => {
                     toast('Error saving profile', false);
                     console.error(error);
                 });
-                
             },
 
             getExecutorDetail(detail, ability) {

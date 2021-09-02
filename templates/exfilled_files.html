@@ -4,16 +4,16 @@
         <p>
             Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at <span x-text="exfilDir"></span>.
             <br>
-            You can view and download the files here.
+            If an operation has exfilled files, you can view and download the files here.
         </p>
     </div>
     <hr>
     <div>
         <form>
-            <div class="field">
-                <label class="label">Select an operation</label>
-                <div class="control">
-                    <div class="select is-small">
+            <div id="select-operation" class="field has-addons">
+                <label class="label">Select an operation &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
                         <select x-on:change="loadFiles()" x-model="selectedOperationId">
                             <option value="" selected>(all)</option>
                             <template x-for="operation of operations" :key="operation.id">
@@ -24,7 +24,7 @@
                 </div>
             </div>
         </form>
-        <div class="buttons">
+        <div class="buttons" x-show="numFiles !== 0">
             <button class="button is-primary is-small" @click="toggleAllFiles(selectedFiles.length < numFiles)">
                 <span x-text="selectedFiles.length < numFiles ? 'Select' : 'Unselect'"></span>&nbsp;All Files
             </button>
@@ -33,7 +33,10 @@
                 <span>Download</span>
             </button>
         </div>
-        <ul class="tree" x-show="files">
+        <p x-show="numFiles === 0">
+            The selected operation has exfilled files to show.
+        </p>
+        <ul class="tree" x-show="numFiles !== 0">
             <li class="root">
                 <span class="icon is-small"><i class="far fa-folder-open"></i></span>
                 <span x-text="exfilDir"></span>
@@ -52,6 +55,9 @@
                                 </label>
                             </li>
                         </template>
+                        <li x-show="!Object.keys(files[agentName]).length">
+                            (none)
+                        </li>
                     </ul>
                 </li>
             </template>
@@ -83,7 +89,7 @@
             },
 
             loadFiles() {
-                restRequest('POST', { 'index': 'exfil_files', 'operation_id': this.selectedOperationId }, (files) => {
+                restRequest('POST', { index: 'exfil_files', operation_id: this.selectedOperationId }, (files) => {
                     this.files = JSON.parse(files);
                     this.numFiles = 0;
                     if (this.selectedOperationId) {
@@ -109,7 +115,11 @@
 
             toggleFile(filePath) {
                 let index = this.selectedFiles.indexOf(filePath);
-                index >= 0 ? this.selectedFiles.splice(index, 1) : this.selectedFiles.push(filePath);
+                if (index >= 0) {
+                    this.selectedFiles.splice(index, 1);
+                } else {
+                    this.selectedFiles.push(filePath);
+                }
             },
 
             isFileSelected(filePath) {
@@ -118,7 +128,8 @@
 
             toggleAllFiles(selectAll) {
                 if (!selectAll) {
-                    return this.selectedFiles = [];
+                    this.selectedFiles = [];
+                    return;
                 }
 
                 Object.keys(this.files).forEach((agent) => {
@@ -131,11 +142,11 @@
             downloadFiles() {
                 this.selectedFiles.forEach((filePath) => {
                     let filename = filePath.split(/[\/\\]/);
-                    filename = filename[filename.length -1];
-                    let uri = "/file/download_exfil?file=" + btoa(filePath);
+                    filename = filename[filename.length - 1];
+                    let uri = `/file/download_exfil?file=${btoa(filePath)}`;
                     let downloadAnchorNode = document.createElement('a');
-                    downloadAnchorNode.setAttribute("href", uri);
-                    downloadAnchorNode.setAttribute("download", filename);
+                    downloadAnchorNode.setAttribute('href', uri);
+                    downloadAnchorNode.setAttribute('download', filename);
                     document.body.appendChild(downloadAnchorNode);
                     downloadAnchorNode.click();
                     downloadAnchorNode.remove();
@@ -148,6 +159,11 @@
 </script>
 
 <style scoped>
+    #select-operation {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
     ul.tree {
 	 margin: 0px 0px 0px 20px;
 	 list-style: none !important;

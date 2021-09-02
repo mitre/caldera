@@ -904,37 +904,37 @@
         sh: '$'
     };
     const linkStatuses = {
-        '0': 'success',
+        0: 'success',
         '-1': 'paused',
-        '1': 'failed',
+        1: 'failed',
         '-2': 'discarded',
         '-3': 'collect',
         '-4': 'untrusted',
         '-5': 'visible',
-        '124': 'timeout'
+        124: 'timeout'
     };
     const emptyOperationsObject = {
         // objective: {"id": ""},
-        name: "",
-        group: "",
-        adversary: {"adversary_id": ""},
+        name: '',
+        group: '',
+        adversary: { adversary_id: '' },
         auto_close: 0,
-        state: "running",
+        state: 'running',
         autonomous: 1,
-        planner: {"id": "atomic"},
-        source: {"id": "basic"},
+        planner: { id: 'atomic' },
+        source: { id: 'basic' },
         use_learning_parsers: 1,
         // timeout: "30",
-        obfuscator: "plain-text",
-        jitter: "4/8",
-        visibility: "51",
+        obfuscator: 'plain-text',
+        jitter: '4/8',
+        visibility: '51',
     };
     const emptyManualCommandObject = {
-        paw: "",
+        paw: '',
         executor: {
-            name: "",
-            platform: "",
-            command: "",
+            name: '',
+            platform: '',
+            command: '',
         }
     };
 
@@ -944,9 +944,9 @@
 
     function alpineOperations() {
         return {
-            docs: `{{ usage | tojson }}`.toString().replace(/["\[\]]/g, '').split('}'),
+            docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
-            agentGroups: `{{ groups | tojson }}`.toString().replace(/["\[\]]/g, '').split(','),
+            agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
             selectedOperation: null,
             selectedAgentIndex: null,
             isSelectedAdversaryRepeatable: false,
@@ -954,11 +954,11 @@
             selectedLinkResults: null,
             selectedLinkFacts: null,
             selectedLinkCommand: null,
-            selectedReportType: "",
+            selectedReportType: '',
             isAgentOutputSelected: false,
             openModal: null,
             openModalForm: {
-                'advanced': false
+                advanced: false
             },
             operations: [],
             filteredOperations: [],
@@ -968,14 +968,14 @@
             jitterMax: 8,
             manualCommand: emptyManualCommandObject,
             potentialLink: {
-                agent: "",
-                tactic: "",
-                technique: "",
+                agent: '',
+                tactic: '',
+                technique: '',
             },
             tacticFiltersList: [],
             techniqueFiltersList: [],
             filteredLinksList: [],
-            schedule: "",
+            schedule: '',
             editableCommand: null,
             isOperationsControlsExpanded: true,
             showOperationsMenuCaret: true,
@@ -984,7 +984,7 @@
 
             getUsage() {
                 if (this.docs) {
-                    this.docs.forEach(obj => {
+                    this.docs.forEach((obj) => {
                         if (obj) {
                             let items = obj.split('{')[1].split(': ');
                             this.usage[items[0]] = items[1];
@@ -1003,40 +1003,38 @@
             },
 
             get selectedAgentExecutors() {
-                if (this.selectedAgent) return this.selectedAgent.executors.map(e => executorShells[e]);
-                else return [];
+                return this.selectedAgent ? this.selectedAgent.executors.map((e) => executorShells[e]) : [];
             },
 
             get isOperationRunning() {
                 if (!this.selectedOperation) return false;
-                return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time')
+                return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time');
             },
 
             get isLinkEditable() {
                 if (!this.selectedLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
-                <!-- TODO check if this approve/discard condition is right-->
-                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses)) &&
-                    !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'))
+                // TODO check if this approve/discard condition is right
+                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses))
+                    && !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'));
             },
 
             getOperationsMenuCaretDisplay() {
                 const el = document.querySelector('.operation-menu-container');
                 setTimeout(() => {
-                    this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth
+                    this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
                 }, 1); // timeout is to wait for UI changes to get accurate width calcs
             },
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
             isLinkAvailable(link) {
-                if (this.selectedOperation.adversary.has_repeatable_abilities) return true;
-                else return !this.addedTechniquesIDs.has(link.technique_id);
+                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(link.technique_id);
             },
 
             generateAddedLinksList() {
                 this.addedTechniquesIDs = new Set();
                 this.selectedOperation.chain.forEach((link) => {
-                    if (!this.addedTechniquesIDs.has(link.technique_id)) this.addedTechniquesIDs.add(link.technique_id)
+                    if (!this.addedTechniquesIDs.has(link.technique_id)) this.addedTechniquesIDs.add(link.technique_id);
                 });
             },
 
@@ -1068,7 +1066,7 @@
 
             getOperation() {
                 if (this.selectedOperationID) {
-                    apiV2('GET', endpoint + '/' + this.selectedOperationID).then((res) => {
+                    apiV2('GET', `${endpoint}/${this.selectedOperationID}`).then((res) => {
                         this.selectedLink = null;
                         this.selectedOperation = res;
                         this.generateAddedLinksList();
@@ -1089,25 +1087,25 @@
                     toast('Error: Operation name field is empty.');
                 } else {
                     this.startOperation.autonomous = Number(this.startOperation.autonomous);
-                    this.startOperation.use_learning_parsers = parseInt(this.startOperation.use_learning_parsers) === 1;
-                    this.startOperation.auto_close = parseInt(this.startOperation.auto_close) === 1;
+                    this.startOperation.use_learning_parsers = parseInt(this.startOperation.use_learning_parsers, 10) === 1;
+                    this.startOperation.auto_close = parseInt(this.startOperation.auto_close, 10) === 1;
 
                     apiV2('POST', endpoint, this.startOperation)
                         .then((res) => {
-                            toast('Started operation ' + this.startOperation.name + "!", true);
+                            toast(`Started operation ${this.startOperation.name}!`, true);
                             this.resetOperation();
                             this.getOperations();
                             this.selectedOperation = res;
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
-                        toast('Error adding operation');
-                    });
+                            toast('Error adding operation');
+                        });
                 }
             },
 
             deleteOperation() {
-                apiV2('DELETE', endpoint + '/' + this.selectedOperationID)
+                apiV2('DELETE', `${endpoint}/${this.selectedOperationID}`)
                     .then(() => {
                         this.selectedOperation = null;
                         this.getOperations();
@@ -1115,7 +1113,7 @@
                     })
                     .catch((error) => {
                         toast('Error deleting operation.');
-                    })
+                    });
             },
 
             getAgents() {
@@ -1139,7 +1137,7 @@
                 this.manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
                 this.manualCommand.executor.platform = this.selectedAgent.platform;
 
-                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, this.manualCommand)
+                apiV2('POST', `${endpoint}/${this.selectedOperationID}/potential-links`, this.manualCommand)
                     .then((res) => {
                         toast('Added manual command.', true);
                         this.getOperation();
@@ -1153,7 +1151,7 @@
             },
 
             addPotentialLink(link) {
-                apiV2('POST', endpoint + `/${this.selectedOperationID}/potential-links`, link)
+                apiV2('POST', `${endpoint}/${this.selectedOperationID}/potential-links`, link)
                     .then((res) => {
                         toast('Added potential link.', true);
                         this.getOperation();
@@ -1162,17 +1160,17 @@
                     })
                     .catch((error) => {
                         toast('Error adding potential link.');
-                    })
+                    });
             },
 
             getLink(link) {
                 if (this.selectedLink === link) return;
                 this.selectedLink = link;
-                apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${link.id}`)
+                apiV2('GET', `${endpoint}/${this.selectedOperationID}/links/${link.id}`)
                     .then((res) => {
                         this.getLinkResults(res.output, link);
                         if (res.facts) {
-                            this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score)
+                            this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score);
                         }
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
                         this.editableCommand = b64DecodeUnicode(res.command);
@@ -1186,24 +1184,25 @@
             },
 
             getLinkResults(output, link) {
-                if (output !== "True") this.selectedLinkResults = null;
-                else apiV2('GET', endpoint + `/${this.selectedOperationID}/links/${link.id}/result`)
-                    .then((res) => {
+                if (output !== 'True') {
+                    this.selectedLinkResults = null;
+                } else {
+                    apiV2('GET', `${endpoint}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
                         this.selectedLinkResults = b64DecodeUnicode(res.result);
-                    })
-                    .catch((error) => console.error('Error getting link results.', error));
+                    }).catch((error) => console.error('Error getting link results.', error));
+                }
             },
 
             updateLink(status, command = null) {
-                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
+                const updateLink = { ...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command) };
                 if (command) {
                     updateLink.command = command;
                 }
                 updateLink.status = status;
-                apiV2('PATCH', endpoint + `/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
+                apiV2('PATCH', `${endpoint}/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
                     .then((res) => {
                         this.getOperation();
-                        toast('Updating link status to: ' + linkStatuses[status], true);
+                        toast(`Updating link status to: ${linkStatuses[status]}`, true);
                     })
                     // TODO have clearer error messaging here
                     .catch((error) => toast('Error updating link state.'));
@@ -1211,7 +1210,7 @@
 
             updateOperation(field, updateValue) {
                 this.selectedOperation[field] = updateValue;
-                apiV2('PATCH', endpoint + '/' + this.selectedOperationID, this.selectedOperation)
+                apiV2('PATCH', `${endpoint}/${this.selectedOperationID}`, this.selectedOperation)
                     .then((res) => {
                         toast(`Updated operation ${field}`, true);
                         this.selectedOperation = res;
@@ -1223,21 +1222,21 @@
             },
 
             downloadInfo(formatType) {
-                apiV2('GET', endpoint + `/${this.selectedOperationID}/report`)
+                apiV2('GET', `${endpoint}/${this.selectedOperationID}/report`)
                     .then((res) => {
-                        this.createDownloadReport(res, this.selectedOperation.name + '_' + formatType);
+                        this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
                     .catch((error) => toast('Error generating operation report.'));
             },
 
             downloadCSV() {
                 const csv = [];
-                const rows = document.querySelector('#operationsPage').querySelectorAll("table tr:not(.csv-exclude)");
+                const rows = document.querySelector('#operationsPage').querySelectorAll('table tr:not(.csv-exclude)');
 
                 rows.forEach((row, i) => {
-                    const cols = row.querySelectorAll("td:not(.csv-exclude), th:not(.csv-exclude)");
+                    const cols = row.querySelectorAll('td:not(.csv-exclude), th:not(.csv-exclude)');
                     const rowItems = [];
-                    cols.forEach((col => {
+                    cols.forEach(() => {
                         const link = this.selectedOperation.chain[i - 1];
                         if (col.className.includes('agentDetails')) {
                             let agentDetails = `Agent #${link.paw}`;
@@ -1251,10 +1250,10 @@
                         } else {
                             rowItems.push(`"${col.innerText}"`);
                         }
-                    }))
-                    csv.push(rowItems.join(","));
+                    });
+                    csv.push(rowItems.join(','));
                 });
-                this.createDownloadReport(new Blob([csv.join("\n")], {type: "text/csv"}), this.selectedOperation.name, true);
+                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
             },
 
             handleDownload() {
@@ -1271,14 +1270,14 @@
                 let dataURL;
 
                 if (!isCSV) {
-                    dataURL = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-                    toast('Downloading report: ' + fileName, true);
+                    dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+                    toast(`Downloading report: ${filename}`, true);
                     fileName += '.json';
                 } else {
                     dataURL = window.URL.createObjectURL(data);
                 }
 
-                const elem = document.createElement('a')
+                const elem = document.createElement('a');
                 elem.setAttribute('href', dataURL);
                 elem.setAttribute('download', fileName);
                 elem.click();
@@ -1290,7 +1289,7 @@
 
             resetObject(obj = {}) {
                 for (const field in obj) {
-                    if (field !== 'index') this.startOperation[field] = "";
+                    if (field !== 'index') this.startOperation[field] = '';
                 }
             },
 
@@ -1298,18 +1297,18 @@
                 if (agents) {
                     agents.forEach((agent) => {
                         if (!this.agentGroups.includes(agent.group)) this.agentGroups.push(agent.group);
-                    })
+                    });
                 }
             },
 
-            validateJitter(newValue = "") {
+            validateJitter(newValue = '') {
                 if (!newValue.includes('/')) return false;
-                let [jitterMin, jitterMax] = newValue.split("/");
-                jitterMin = parseInt(jitterMin);
-                jitterMax = parseInt(jitterMax);
+                let [jitterMin, jitterMax] = newValue.split('/');
+                jitterMin = parseInt(jitterMin, 10);
+                jitterMax = parseInt(jitterMax, 10);
 
                 if (jitterMin < 0 || jitterMax < 0) {
-                    toast('Error: Jitter ' + (!jitterMin ? 'MIN' : 'MAX') + ' must be valid.');
+                    toast(`Error: Jitter ${!jitterMin ? 'MIN' : 'MAX'} must be valid.`);
                     return false;
                 }
                 if (jitterMin >= jitterMax) {
@@ -1338,9 +1337,9 @@
                     if (this.potentialLink.tactic) match = this.potentialLink.tactic === link.ability.tactic;
                     if (this.potentialLink.technique) match = this.potentialLink.technique === link.ability.technique_name;
                     return match;
-                })
+                });
             },
-        }
+        };
     }
 </script>
 
