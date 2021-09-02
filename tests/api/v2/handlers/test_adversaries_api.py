@@ -89,8 +89,8 @@ class TestAdversariesApi:
 
     async def test_update_adversary(self, api_v2_client, api_cookies, test_adversary, updated_adversary_payload,
                                     mocker):
-        with mocker.patch('app.api.v2.managers.adversary_api_manager.AdversaryApiManager.strip_yml') as mock_strp_yml:
-            mock_strp_yml.return_value = [test_adversary.schema.dump(test_adversary)]
+        with mocker.patch('app.api.v2.managers.adversary_api_manager.AdversaryApiManager.strip_yml') as mock_strip_yml:
+            mock_strip_yml.return_value = [test_adversary.schema.dump(test_adversary)]
             with mocker.patch('app.objects.c_adversary.Adversary.verify') as mock_verify:
                 mock_verify.return_value = None
                 resp = await api_v2_client.patch('/api/v2/adversaries/123', cookies=api_cookies,
