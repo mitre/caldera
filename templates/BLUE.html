@@ -29,7 +29,10 @@
                     <p class="menu-label">Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
-                            <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}</a></li>
+                        <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
+                            <template x-if="`{{plugin.name | e}}`=== 'fieldmanual'">
+                                <sup><i class="fas fa-external-link-alt pl-1"></i></sup>
+                            </template></a></li>
                         {% endfor %}
                     </ul>
                     <p class="menu-label">Configuration</p>
@@ -80,23 +83,37 @@
 
             <div x-bind:class="{ 'is-active': showErrors }" class="modal">
                 <div class="modal-background" @click="showErrors = false"></div>
-                <div class="modal-content content">
-                    <h2>Startup Errors</h2>
-                    <hr>
-                    <template x-for="error of errors" :key="error.msg">
-                        <article class="media">
-                            <div class="media-content">
-                                <div class="content">
-                                    <p>
-                                        <strong x-text="error.name"></strong>
-                                        <br>
-                                        <span x-text="error.msg"></span>
-                                    </p>
-                                </div>
-                          </article>
-                    </template>
-                    <br>
-                    <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
+                <div class="modal-card">
+                    <div>
+                        <header class="modal-card-head">
+                            <h2>Startup Errors</h2>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <template x-if="!errors || errors.length < 1">
+                                    <div class="is-flex is-justify-content-center">
+                                        <em>No startup errors.</em>
+                                    </div>
+                                </template>
+                                <template x-for="error of errors" :key="error.msg">
+                                    <article class="media">
+                                        <div class="media-content">
+                                            <div class="content">
+                                                <p>
+                                                    <strong x-text="error.name"></strong>
+                                                    <br>
+                                                    <span x-text="error.msg"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </template>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="modal-card-foot">
+                        <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
+                    </footer>
                 </div>
             </div>
         </main>
