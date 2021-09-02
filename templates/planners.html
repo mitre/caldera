@@ -10,10 +10,10 @@
     <hr>
     <div>
         <form>
-            <div class="field">
-                <label class="label">Choose a planner:</label>
-                <div class="control">
-                    <div class="select">
+            <div id="select-planner" class="field has-addons">
+                <label class="label">Select a planner &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
                         <select id="planner-select" x-on:change="loadPlanner()" x-model="selectedPlannerId">
                             <option value="" disabled selected>Select a planner</option>
                             <template x-for="planner of planners" :key="planner.id">
@@ -58,3 +58,10 @@
 
     // # sourceURL=planners.js
 </script>
+
+<style>
+    #select-planner {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+</style>

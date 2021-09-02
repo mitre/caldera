@@ -36,11 +36,11 @@
 
     <template x-if="selectedProfileId && !isCreatingProfile">
         <div class="section" x-init="$watch('selectedProfileAbilities', val => findAbilityDependencies())">
-            <div x-show="!isEdittingProfile">
-                <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEdittingProfile = true"></h3>
-                <p x-text="selectedProfileDescription" class="pointer" @click="isEdittingProfile = true"></p> <br>
+            <div x-show="!isEditingProfile">
+                <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEditingProfile = true"></h3>
+                <p x-text="selectedProfileDescription" class="pointer" @click="isEditingProfile = true"></p> <br>
             </div>
-            <form x-show="isEdittingProfile">
+            <form x-show="isEditingProfile">
                 <div class="field">
                     <div class="control">
                         <input class="input" x-model="selectedProfileName" x-on:change="unsavedChanges = true" placeholder="Adversary Name" x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('name') }">
@@ -55,7 +55,7 @@
                 </div>
                 <div class="field">
                     <div class="control">
-                        <a class="button is-small is-primary" @click="isEdittingProfile = false">Done</a>
+                        <a class="button is-small is-primary" @click="isEditingProfile = false">Done</a>
                     </div>
                 </div>
             </form>
@@ -69,7 +69,7 @@
                     <span>Add Adversary</span>
                 </button>
                 <div class="vr"></div>
-                <span>Objective: <b x-text="selectedObjective.name"></b>&nbsp;&nbsp;&nbsp;</span>
+                <span>Objective: <b x-text="objectives.find((o) => o.id === selectedObjectiveId).name"></b>&nbsp;&nbsp;&nbsp;</span>
                 <button class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
                 <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
@@ -256,7 +256,7 @@
                         <label class="label">Select an objective</label>
                         <div class="control is-expanded">
                             <div class="select is-small">
-                                <select x-model="selectedObjective.id">
+                                <select x-model="selectedObjectiveId">
                                     <option value="" default disabled selected>Chose one...</option>
                                     <template x-for="objective of objectives" :key="objective.id">
                                         <option x-bind:value="objective.id" x-text="objective.name" x-bind:title="objective.description"></option>
@@ -276,7 +276,7 @@
                     </div>
                     <div class="level-right">
                         <div class="level-item">
-                            <button class="button is-primary is-small" @click="toast('Objective changed', true); showObjectiveModal = false;">Link Objective</button>
+                            <button class="button is-primary is-small" @click="linkObjective()">Link Objective</button>
                         </div>
                     </div>
                 </nav>
@@ -645,7 +645,7 @@
             onHoverLocks: [],
 
             // Create a profile
-            isEdittingProfile: false,
+            isEditingProfile: false,
             isCreatingProfile: false,
             createProfileName: '',
             createProfileDescription: '',
@@ -662,7 +662,7 @@
 
             // Objective modal
             showObjectiveModal: false,
-            selectedObjective: {},
+            selectedObjectiveId: '',
 
             // Ability modal
             showAbilityModal: false,
@@ -706,7 +706,7 @@
                 const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === this.selectedProfileId);
                 this.selectedProfileName = selectedAdversary.name;
                 this.selectedProfileDescription = selectedAdversary.description;
-                this.selectedObjective = this.objectives.find((objective) => objective.id === selectedAdversary.objective);
+                this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
                 this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
 
                 this.findAbilityDependencies();
@@ -715,21 +715,20 @@
             saveProfile() {
                 this.fieldErrorsProfile = validateInputs({ name: this.selectedProfileName, description: this.selectedProfileDescription }, this.requiredFieldsProfile);
                 if (this.fieldErrorsProfile.length) {
-                    this.isEdittingProfile = true;   
+                    this.isEditingProfile = true;   
                     return;
                 }
 
                 const requestBody = {
                     name: this.selectedProfileName,
                     description: this.selectedProfileDescription,
-                    objective: this.selectedObjective.id,
-                    tags: [],
+                    objective: this.selectedObjectiveId,
                     atomic_ordering: this.selectedProfileAbilities.map((ability) => ability.ability_id),
                 };
 
                 apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, requestBody).then((data) => {
                     this.unsavedChanges = false;
-                    this.isEdittingProfile = false;
+                    this.isEditingProfile = false;
                     toast('Saved profile!', true);
                 }).catch((error) => {
                     toast('Error saving profile', false);
@@ -780,6 +779,17 @@
                 this.createProfileName = '';
                 this.createProfileDescription = '';
                 this.isCreatingProfile = false;
+            },
+
+            linkObjective() {
+                apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, { objective: this.selectedObjectiveId }).then((data) => {
+                    toast('New objective linked', true); 
+                    this.showObjectiveModal = false;
+                }).catch((error) => {
+                    toast('Error saving profile', false);
+                    console.error(error);
+                });
+                
             },
 
             getExecutorDetail(detail, ability) {

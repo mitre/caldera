@@ -1,4 +1,203 @@
-<link rel="stylesheet" href="/gui/css/file-explorer.css">
+<div x-data="alpineExfilled()" x-init="initPage()">
+    <div>
+        <h2>Exfilled Files</h2>
+        <p>
+            Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at <span x-text="exfilDir"></span>.
+            <br>
+            You can view and download the files here.
+        </p>
+    </div>
+    <hr>
+    <div>
+        <form>
+            <div class="field">
+                <label class="label">Select an operation</label>
+                <div class="control">
+                    <div class="select is-small">
+                        <select x-on:change="loadFiles()" x-model="selectedOperationId">
+                            <option value="" selected>(all)</option>
+                            <template x-for="operation of operations" :key="operation.id">
+                                <option x-bind:value="operation.id" x-text="operation.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="buttons">
+            <button class="button is-primary is-small" @click="toggleAllFiles(selectedFiles.length < numFiles)">
+                <span x-text="selectedFiles.length < numFiles ? 'Select' : 'Unselect'"></span>&nbsp;All Files
+            </button>
+            <button class="button is-primary is-small" x-bind:disabled="!selectedFiles.length" @click="downloadFiles">
+                <span class="icon"><i class="fas fa-save"></i></span>
+                <span>Download</span>
+            </button>
+        </div>
+        <ul class="tree" x-show="files">
+            <li class="root">
+                <span class="icon is-small"><i class="far fa-folder-open"></i></span>
+                <span x-text="exfilDir"></span>
+            </li>
+            <template x-for="agentName of Object.keys(files)" :key="agentName">
+                <li>
+                    <span class="icon is-small"><i class="far fa-folder-open"></i></span>
+                    <span x-text="agentName"></span>
+                    <ul class="tree">
+                        <template x-for="filename of Object.keys(files[agentName])" :key="filename">
+                            <li>
+                                <label class="checkbox">
+                                    <input type="checkbox" @click="toggleFile(files[agentName][filename])" x-bind:checked="isFileSelected(files[agentName][filename])">
+                                    <span class="icon is-small"><i class="far fa-file-alt"></i></span>
+                                    <span x-text="filename"></span>
+                                </label>
+                            </li>
+                        </template>
+                    </ul>
+                </li>
+            </template>
+        </ul>  
+    </div>
+</div>
+
+<script>
+    function alpineExfilled() {
+        return {
+            exfilDir: '',
+            operations: [],
+            selectedOperationId: '',
+            files: {},
+            numFiles: 0,
+            selectedFiles: [],
+
+            initPage() {
+                apiV2('GET', '/api/v2/config/main').then((config) => {
+                    this.exfilDir = config.exfil_dir;
+                    return apiV2('GET', '/api/v2/operations');
+                }).then((operations) => {
+                    this.operations = operations;
+                    this.loadFiles();
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            loadFiles() {
+                restRequest('POST', { 'index': 'exfil_files', 'operation_id': this.selectedOperationId }, (files) => {
+                    this.files = JSON.parse(files);
+                    this.numFiles = 0;
+                    if (this.selectedOperationId) {
+                        let validHosts = [];
+                        this.operations.filter((operation) => operation.id === this.selectedOperationId).forEach((operation) => {
+                            operation.host_group.forEach((host) => {
+                                validHosts.push(`${host.host}-${host.paw}`);
+                            });
+                        });
+
+                        Object.keys(this.files).forEach((host) => {
+                            if (!validHosts.includes(host)) {
+                                this.files[host] = {};
+                            }
+                        });
+                    }
+
+                    Object.keys(this.files).forEach((agent) => {
+                        Object.keys(this.files[agent]).forEach((filename) => this.numFiles++);
+                    });
+                });
+            },
+
+            toggleFile(filePath) {
+                let index = this.selectedFiles.indexOf(filePath);
+                index >= 0 ? this.selectedFiles.splice(index, 1) : this.selectedFiles.push(filePath);
+            },
+
+            isFileSelected(filePath) {
+                return this.selectedFiles.includes(filePath);
+            },
+
+            toggleAllFiles(selectAll) {
+                if (!selectAll) {
+                    return this.selectedFiles = [];
+                }
+
+                Object.keys(this.files).forEach((agent) => {
+                    Object.keys(this.files[agent]).forEach((filename) => {
+                        this.selectedFiles.push(this.files[agent][filename]);
+                    });
+                });
+            },
+
+            downloadFiles() {
+                this.selectedFiles.forEach((filePath) => {
+                    let filename = filePath.split(/[\/\\]/);
+                    filename = filename[filename.length -1];
+                    let uri = "/file/download_exfil?file=" + btoa(filePath);
+                    let downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", uri);
+                    downloadAnchorNode.setAttribute("download", filename);
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                });
+            }
+        };
+    }
+
+    // # sourceURL=exfilled_files.js
+</script>
+
+<style scoped>
+    ul.tree {
+	 margin: 0px 0px 0px 20px;
+	 list-style: none !important;
+	 line-height: 2em;
+	 font-family: Arial;
+    }
+    ul.tree li {
+        font-size: 16px;
+        position: relative;
+    }
+    ul.tree li:before {
+        position: absolute;
+        left: -15px;
+        top: 0px;
+        content: '';
+        display: block;
+        border-left: 1px solid #ddd;
+        height: 1em;
+        border-bottom: 1px solid #ddd;
+        width: 10px;
+    }
+    ul.tree li:after {
+        position: absolute;
+        left: -15px;
+        bottom: -7px;
+        content: '';
+        display: block;
+        border-left: 1px solid #ddd;
+        height: 100%;
+    }
+    ul.tree li.root {
+        margin: 0px 0px 0px -20px;
+    }
+    ul.tree li.root:before {
+        display: none;
+    }
+    ul.tree li.root:after {
+        display: none;
+    }
+    ul.tree li:last-child:after {
+        display: none;
+    }
+
+</style>
+
+
+
+
+
+<!-- <link rel="stylesheet" href="/gui/css/file-explorer.css">
 <div id="exfills" class="section-profile exfills">
   <div class="advanced row">
     <div class="bottomright duk-icon"><img onclick="toggleSidebar('exfills-sidebar')" src="/gui/img/expand.png"></div>
@@ -84,20 +283,7 @@
         });
     }
 
-    function downloadFiles() {
-        $("#exfil-tld").find('input:checked').each(function() {
-            let filename = this.value.split(/[\/\\]/);
-            filename = filename[filename.length -1];
-            stream('Downloading file: '+ filename);
-            let uri = "/file/download_exfil?file=" + btoa(this.value);
-            let downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", uri);
-            downloadAnchorNode.setAttribute("download", filename);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        });
-    }
+    
 
     //# sourceURL=exfil.js
-</script>
+</script> -->
