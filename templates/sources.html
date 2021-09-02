@@ -24,22 +24,63 @@
             </div>
         </div>
         <template x-if="selectedSource">
-            <table class="table is-striped">
-                <tbody>
-                <template x-for="fact in selectedSource.facts">
+            <div>
+                <table class="table is-striped">
+                    <thead>
                     <tr>
-                        <td x-text="fact.name"></td>
+                        <th>Fact Type</th>
+                        <th>Value</th>
+                        <th></th>
                     </tr>
-                </template>
-                <template x-for="rule in selectedSource.rules">
+                    </thead>
+                    <tbody>
+                    <template x-for="fact in selectedSource.facts">
+                        <tr>
+                            <td>
+                                <label x-show="false" for="edit-fact-name">Fact Name</label>
+                                <textarea id="edit-fact-name"
+                                          class="code"
+                                          contenteditable
+                                          x-text="fact.name"
+                                          spellcheck="false"></textarea>
+                            </td>
+                            <td>
+                                <label x-show="false" for="edit-fact-value">Fact Value</label>
+                                <textarea id="edit-fact-value"
+                                          class="code"
+                                          contenteditable
+                                          x-text="fact.value"
+                                          spellcheck="false"></textarea>
+                            </td>
+                            <td> <button type="button"
+                                         class="button is-small"
+                                         x-on:click="updateFact(fact)">
+                                Save
+                            </button></td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+                <table class="table is-striped">
+                    <thead>
                     <tr>
-                        <td x-text="rule.match"></td>
-                        <td x-text="rule.trait"></td>
-                        <td x-text="rule.action"></td>
+                        <th>Rule</th>
+                        <th>Trait</th>
+                        <th>Match</th>
                     </tr>
-                </template>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <template x-for="rule in selectedSource.rules.reverse()">
+                        <tr>
+                            <td x-text="rule.match"></td>
+                            <td x-text="rule.trait"></td>
+                            <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
+                                x-text="rule.action"></td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
         </template>
     </div>
 </div>
@@ -87,6 +128,11 @@
         font-size: 2em;
         padding-bottom: 5px;
     }
+
+    table .code {
+        color: #ff8181;
+        background-color: #262626;
+    }
 </style>
 
 <script>
@@ -103,6 +149,17 @@
                     console.error(error);
                 });
             },
+
+            // TODO
+            updateFact(fact) {
+                console.log('Update fact', fact);
+                // apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, fact).then((res) => {
+                //     toast('Updated source', res);
+                // }).catch((error) => {
+                //     toast('Error loading page', false);
+                //     console.error(error);
+                // });
+            }
         };
     }
 
