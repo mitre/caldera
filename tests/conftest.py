@@ -1,17 +1,18 @@
 import asyncio
 import os.path
-
 import pytest
 import random
 import string
 import uuid
 import yaml
 import aiohttp_apispec
+
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
 from pathlib import Path
 
+from app.api.v2.handlers.ability_api import AbilityApi
 from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
@@ -267,6 +268,7 @@ def api_v2_client(loop, aiohttp_client):
                 json_request_validation_middleware
             ]
         )
+        AbilityApi(svcs).add_routes(app)
         OperationApi(svcs).add_routes(app)
         AdversaryApi(svcs).add_routes(app)
         return app
