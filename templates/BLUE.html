@@ -31,7 +31,7 @@
                         {% for plugin in plugins | sort(attribute='name') %}
                         <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
                             <template x-if="`{{plugin.name | e}}`=== 'fieldmanual'">
-                                <sup><i class="fas fa-external-link-alt pl-1"></i></sup>
+                                <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
                             </template></a></li>
                         {% endfor %}
                     </ul>
@@ -44,7 +44,7 @@
                         <li><a href="#home" x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
                         <li><a href="#home" x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
                         <li><a href="#home" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
-                        <li><a href="#home" x-on:click="addTab('exfilled', '/advanced/exfills')">exfilled files</a></li>
+                        <li><a href="#home" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
                     </ul>
                     <p class="menu-label">Administrative</p>
                     <ul class="menu-list">
