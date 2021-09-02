@@ -11,7 +11,7 @@ def updated_adversary_payload():
     return {
         'name': 'test updated adversary',
         'description': 'an updated adversary',
-        'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+        'objective': '00000000-0000-0000-0000-000000000000',
         'tags': ['test tag']
     }
 
@@ -91,12 +91,15 @@ class TestAdversariesApi:
                                     mocker):
         with mocker.patch('app.api.v2.managers.adversary_api_manager.AdversaryApiManager.strip_yml') as mock_strp_yml:
             mock_strp_yml.return_value = [test_adversary.schema.dump(test_adversary)]
-            resp = await api_v2_client.patch('/api/v2/adversaries/123', cookies=api_cookies, json=updated_adversary_payload)
-            assert resp.status == HTTPStatus.OK
-            output = await resp.json()
-            expected_payload = test_adversary.schema.dump(test_adversary)
-            expected_payload.update(updated_adversary_payload)
-            assert output == expected_payload
+            with mocker.patch('app.objects.c_adversary.Adversary.verify') as mock_verify:
+                mock_verify.return_value = None
+                resp = await api_v2_client.patch('/api/v2/adversaries/123', cookies=api_cookies,
+                                                 json=updated_adversary_payload)
+                assert resp.status == HTTPStatus.OK
+                output = await resp.json()
+                expected_payload = test_adversary.schema.dump(test_adversary)
+                expected_payload.update(updated_adversary_payload)
+                assert output == expected_payload
 
     async def test_unauthorized_update_adversary(self, api_v2_client, test_adversary, updated_adversary_payload):
         resp = await api_v2_client.patch('/api/v2/adversaries/123', json=updated_adversary_payload)
@@ -107,13 +110,16 @@ class TestAdversariesApi:
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_create_or_update_existing_adversary(self, api_v2_client, api_cookies, test_adversary,
-                                                       updated_adversary_payload):
-        resp = await api_v2_client.put('/api/v2/adversaries/123', cookies=api_cookies, json=updated_adversary_payload)
-        assert resp.status == HTTPStatus.OK
-        output = await resp.json()
-        expected_payload = test_adversary.schema.dump(test_adversary)
-        expected_payload.update(updated_adversary_payload)
-        assert output == expected_payload
+                                                       updated_adversary_payload, mocker):
+        with mocker.patch('app.objects.c_adversary.Adversary.verify') as mock_verify:
+            mock_verify.return_value = None
+            resp = await api_v2_client.put('/api/v2/adversaries/123', cookies=api_cookies,
+                                           json=updated_adversary_payload)
+            assert resp.status == HTTPStatus.OK
+            output = await resp.json()
+            expected_payload = test_adversary.schema.dump(test_adversary)
+            expected_payload.update(updated_adversary_payload)
+            assert output == expected_payload
 
     async def test_unauthorized_create_or_update_adversary(self, api_v2_client, test_adversary, new_adversary_payload):
         resp = await api_v2_client.put('/api/v2/adversaries/123', json=new_adversary_payload)
