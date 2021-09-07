@@ -71,9 +71,25 @@ class BaseKnowledgeService(BaseService):
         raise NotImplementedError
 
     async def _get_fact_origin(self, fact):
-        # Retrieve the specific origin of a fact. If it was learned in the current operation, parse through links to
-        # identify the host it was discovered on.
-        raise NotImplementedError
+        """
+        Identify the place where a fact originated, either the source that loaded it or its original link
+        :param fact: Fact to get origin for (can be either a trait string or a full blown fact)
+        :return: tuple - (String of either origin source id or origin link id, fact origin type)
+        """
+        workspace = copy.deepcopy(fact)
+        if not getattr(workspace, 'links', False):
+            fact_search = await self._get_facts(dict(trait=workspace))
+            if fact_search:
+                workspace = fact_search[0]
+            else:
+                return None, None
+
+        if workspace.links:
+            return str(workspace.links[0]), workspace.origin_type  # Return the id of the first link associated
+        elif workspace.source:
+            return str(workspace.source), workspace.origin_type  # Return the source of the fact if not found
+
+        return None, None  # Default return value
 
     # -- Relationships API --
 
