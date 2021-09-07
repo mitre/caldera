@@ -14,6 +14,11 @@ app.contact.tunnel.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
 app.contact.tunnel.ssh.socket: 0.0.0.0:8022
 app.contact.tunnel.ssh.user_name: sandcat
 app.contact.tunnel.ssh.user_password: s4ndc4t!
+app.contact.ftp.host: 0.0.0.0
+app.contact.ftp.port: 2222
+app.contact.ftp.pword: caldera
+app.contact.ftp.server.dir: ftp_dir
+app.contact.ftp.user: caldera_user
 app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
