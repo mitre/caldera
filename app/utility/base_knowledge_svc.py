@@ -82,7 +82,7 @@ class BaseKnowledgeService(BaseService):
             if fact_search:
                 workspace = fact_search[0]
             else:
-                return None
+                return None, None
 
         if workspace.links:
             return str(workspace.links[0]), workspace.origin_type  # Return the id of the first link associated
