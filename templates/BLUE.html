@@ -18,6 +18,14 @@
                 <div class="nav-logo">
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo"/>
                 </div>
+                <template x-if="errors.length > 0">
+                    <div class="is-flex is-justify-content-center">
+                        <button class="button no-style is-warning is-small is-inverted startup-errors-warning">
+                            <i class="fas fa-exclamation-triangle pr-1"></i>
+                            <span title="Click for to view startup errors" x-text="`${errors.length} startup errors`" @click="showErrors = true"></span>
+                        </button>
+                    </div>
+                </template>
                 <aside class="menu">
                     <p class="menu-label">Campaigns</p>
                     <ul class="menu-list">
@@ -48,7 +56,6 @@
                     </ul>
                     <p class="menu-label">Administrative</p>
                     <ul class="menu-list">
-                        <li><a x-text="`Startup errors (${errors.length})`" @click="showErrors = true"></a></li>
                         <li><a href="/logout">Log out</a></li>
                     </ul>
                 </aside>

@@ -1,5 +1,13 @@
 
 /* MODAL FORM STYLE */
+.startup-errors-warning span {
+  color: inherit;
+}
+
+.startup-errors-warning span:hover {
+  text-decoration: underline;
+}
+
 .modal-form-fields button.chip {
   width: fit-content;
   margin: 0.75em 0 0 0.75em !important;
