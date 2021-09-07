@@ -11,19 +11,27 @@
         <div class="is-flex is-flex-direction-row is-align-items-center">
             <div class="is-flex is-flex-direction-row is-justify-content-flex-start sources-menu-container">
                 <template x-if="sources.length < 1">
-                    <em class="is-flex is-justify-content-center">No sources available; click on the 'Create Source'
+                    <em class="is-flex is-justify-content-center">No sources available; click on the 'Add Source'
                         button to get started.</em>
                 </template>
                 <template x-for="source of sources" :key="source.name">
-                    <button class="no-style source-menu-links" x-bind:class="selectedSource === source ? 'active' : ''"
+                    <button class="pt-2 no-style source-menu-links"
+                            x-bind:class="selectedSource === source ? 'active' : ''"
                             x-on:click="selectedSource = source">
-<!--                        <i class="fas fa-faucet"></i>-->
+                        <!--                        <i class="fas fa-faucet"></i>-->
                         <i class="fas fa-hand-holding-water"></i>
                         <span x-text="source.name"></span>
                     </button>
                 </template>
+                <button class="pt-2 no-style source-menu-links" x-on:click="openModal = 'addFactSource'">
+                    <i class="pr-1 fas fa-plus"></i>
+                    <span>Add Source</span>
+                </button>
             </div>
         </div>
+        <template x-if="!selectedSource">
+            <em class="is-flex is-justify-content-center">Click on a fact source to get started.</em>
+        </template>
         <template x-if="selectedSource && selectedSource.facts.length > 0">
             <table class="table is-striped">
                 <thead>
@@ -128,6 +136,64 @@
             </table>
         </template>
     </div>
+
+    <template x-if="openModal">
+        <div class="modal is-active">
+            <div class="modal-background" @click="openModal = 'addFactSource'"></div>
+            <form class="m-1">
+                <div class="modal-card" x-data="{newSource: {name: '', facts: '', rules: '', relationships: ''}}">
+                    <template x-if="openModal === 'addFactSource'">
+                        <div>
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">Add Fact Source</p>
+                            </header>
+                            <section class="modal-card-body">
+                                <div class="modal-form">
+                                    <div>
+                                        <label for="source-name">Fact Source Name</label>
+                                        <div class="modal-form-fields">
+                                            <input class="input is-small" id="source-name" type="text"
+                                                   x-model="newSource.name" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="source-facts">Facts</label>
+                                        <div class="modal-form-fields">
+                                            <input class="input is-small" id="source-facts" type="text"
+                                                   x-model="newSource.facts" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="source-rules">Rules</label>
+                                        <div class="modal-form-fields">
+                                            <input class="input is-small" id="source-rules" type="text"
+                                                   x-model="newSource.rules" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="source-relationships">Relationships</label>
+                                        <div class="modal-form-fields">
+                                            <input class="input is-small" id="source-relationships" type="text"
+                                                   x-model="newSource.relationships" required>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </section>
+                        </div>
+                    </template>
+                    <footer class="modal-card-foot is-flex is-justify-content-space-between">
+                        <button type="button" class="button ml-2" x-on:click="openModal = null">
+                            Close
+                        </button>
+                        <button type="button" class="is-primary button ml-2" x-on:click="addSource(newSource)">
+                            Save
+                        </button>
+                    </footer>
+                </div>
+            </form>
+        </div>
+    </template>
 </div>
 
 <style>
@@ -189,10 +255,21 @@
             selectedSource: null,
             sources: [],
             showAddFactRow: false,
+            openModal: null,
 
             initPage() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
                     this.sources = sources;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            addSource(newSource) {
+                apiV2('POST', '/api/v2/sources', newSource).then((res) => {
+                    toast('Added new fact source', res);
+                    this.openModal = null;
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
