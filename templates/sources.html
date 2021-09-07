@@ -17,70 +17,115 @@
                 <template x-for="source of sources" :key="source.name">
                     <button class="no-style source-menu-links" x-bind:class="selectedSource === source ? 'active' : ''"
                             x-on:click="selectedSource = source">
-                        <i class="fas fa-faucet"></i>
+<!--                        <i class="fas fa-faucet"></i>-->
+                        <i class="fas fa-hand-holding-water"></i>
                         <span x-text="source.name"></span>
                     </button>
                 </template>
             </div>
         </div>
-        <template x-if="selectedSource">
-            <div>
-                <table class="table is-striped">
-                    <thead>
+        <template x-if="selectedSource && selectedSource.facts">
+            <table class="table is-striped">
+                <thead>
+                <tr>
+                    <th>Fact Type</th>
+                    <th>Value</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="fact in selectedSource.facts">
                     <tr>
-                        <th>Fact Type</th>
-                        <th>Value</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="fact in selectedSource.facts">
-                        <tr>
-                            <td>
-                                <label x-show="false" for="edit-fact-name">Fact Name</label>
-                                <textarea id="edit-fact-name"
-                                          class="code"
-                                          contenteditable
-                                          x-text="fact.name"
-                                          spellcheck="false"></textarea>
-                            </td>
-                            <td>
-                                <label x-show="false" for="edit-fact-value">Fact Value</label>
-                                <textarea id="edit-fact-value"
-                                          class="code"
-                                          contenteditable
-                                          x-text="fact.value"
-                                          spellcheck="false"></textarea>
-                            </td>
-                            <td> <button type="button"
-                                         class="button is-small"
-                                         x-on:click="updateFact(fact)">
+                        <td>
+                            <label x-show="false" for="edit-fact-name">Fact Name</label>
+                            <textarea id="edit-fact-name"
+                                      class="code"
+                                      contenteditable
+                                      x-model="fact.name"
+                                      spellcheck="false"></textarea>
+                        </td>
+                        <td>
+                            <label x-show="false" for="edit-fact-value">Fact Value</label>
+                            <textarea id="edit-fact-value"
+                                      class="code"
+                                      contenteditable
+                                      x-model="fact.value"
+                                      spellcheck="false"></textarea>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="button is-small"
+                                    x-on:click="updateFact()">
                                 Save
-                            </button></td>
-                        </tr>
-                    </template>
-                    </tbody>
-                </table>
-                <table class="table is-striped">
-                    <thead>
-                    <tr>
-                        <th>Rule</th>
-                        <th>Trait</th>
-                        <th>Match</th>
+                            </button>
+                        </td>
                     </tr>
-                    </thead>
-                    <tbody>
-                    <template x-for="rule in selectedSource.rules.reverse()">
-                        <tr>
-                            <td x-text="rule.match"></td>
-                            <td x-text="rule.trait"></td>
-                            <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
-                                x-text="rule.action"></td>
-                        </tr>
-                    </template>
-                    </tbody>
-                </table>
-            </div>
+                </template>
+
+                <template x-if="showAddFactRow">
+                    <tr x-data="{newFact: {name: '', value: ''}}">
+                        <td>
+                            <label x-show="false" for="new-fact-name">Fact Name</label>
+                            <textarea id="new-fact-name"
+                                      class="code"
+                                      contenteditable
+                                      x-model="newFact.name"
+                                      spellcheck="false"></textarea>
+                        </td>
+                        <td>
+                            <label x-show="false" for="new-fact-value">Fact Value</label>
+                            <textarea id="new-fact-value"
+                                      class="code"
+                                      contenteditable
+                                      x-model="newFact.value"
+                                      spellcheck="false"></textarea>
+                        </td>
+                        <td>
+                            <button type="button"
+                                    class="button is-small is-primary"
+                                    x-on:click="addFact(newFact)">
+                                Add
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <button type="button"
+                                class="button is-small is-primary"
+                                x-on:click="showAddFactRow = true">
+                            <span class="icon"><i class="fas fa-plus"></i></span>
+                            <span>Add Fact</span>
+                        </button>
+                    </td>
+                </tr>
+
+                </tbody>
+            </table>
+        </template>
+        <template x-if="selectedSource && selectedSource.rules">
+            <table class="table is-striped">
+                <thead>
+                <tr>
+                    <th>Rule</th>
+                    <th>Trait</th>
+                    <th>Match</th>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="rule in selectedSource.rules.reverse()">
+                    <tr>
+                        <td x-text="rule.match"></td>
+                        <td x-text="rule.trait"></td>
+                        <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
+                            x-text="rule.action"></td>
+                    </tr>
+                </template>
+                </tbody>
+            </table>
         </template>
     </div>
 </div>
@@ -120,8 +165,11 @@
         border-radius: 5px;
     }
 
-    .source-menu-links.active i {
-        font-size: 2.5em;
+    .source-menu-links.active i, .source-menu-links.active span {
+        /*font-size: 2.5em;*/
+        /*color: rgb(248, 193, 69);*/
+        color: var(--decisions-color);
+        font-weight: 600;
     }
 
     .source-menu-links i {
@@ -140,6 +188,7 @@
         return {
             selectedSource: null,
             sources: [],
+            showAddFactRow: false,
 
             initPage() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -150,15 +199,26 @@
                 });
             },
 
-            // TODO
-            updateFact(fact) {
-                console.log('Update fact', fact);
-                // apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, fact).then((res) => {
-                //     toast('Updated source', res);
-                // }).catch((error) => {
-                //     toast('Error loading page', false);
-                //     console.error(error);
-                // });
+            addFact(newFact) {
+                const updatedSource = {...this.selectedSource};
+                updatedSource.facts.push({...newFact, trait: newFact.name});
+                apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, updatedSource).then((res) => {
+                    toast('Updated source', res);
+                    this.showAddFactRow = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            updateFact() {
+                console.log('Update fact', this.selectedSource);
+                apiV2('PATCH', '/api/v2/sources/' + this.selectedSource.id, this.selectedSource).then((res) => {
+                    toast('Updated source', res);
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
             }
         };
     }
