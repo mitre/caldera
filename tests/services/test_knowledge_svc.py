@@ -128,9 +128,12 @@ class TestKnowledgeService:
         loop.run_until_complete(knowledge_svc.add_fact(type1_fact))
         loop.run_until_complete(knowledge_svc.add_fact(type2_fact))
         loop.run_until_complete(knowledge_svc.add_fact(type3_fact))
-        origin_1 = loop.run_until_complete(knowledge_svc.get_fact_origin(type1_fact))
-        origin_2 = loop.run_until_complete(knowledge_svc.get_fact_origin(type2_fact.trait))
-        origin_3 = loop.run_until_complete(knowledge_svc.get_fact_origin(type3_fact.trait))
+        origin_1, type_1 = loop.run_until_complete(knowledge_svc.get_fact_origin(type1_fact))
+        origin_2, type_2 = loop.run_until_complete(knowledge_svc.get_fact_origin(type2_fact.trait))
+        origin_3, type_3 = loop.run_until_complete(knowledge_svc.get_fact_origin(type3_fact.trait))
         assert origin_1 == link.id
         assert origin_2 == link.id
         assert origin_3 == 'Europa'
+        assert type_1 == OriginType.LEARNED
+        assert type_2 == OriginType.LEARNED
+        assert type_3 == OriginType.SEEDED
