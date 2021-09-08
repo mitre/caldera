@@ -36,7 +36,7 @@
             <table class="table is-striped">
                 <thead>
                 <tr>
-                    <th>Fact Type</th>
+                    <th>Fact Trait</th>
                     <th>Value</th>
                     <th>Score</th>
                     <th></th>
@@ -46,7 +46,7 @@
                 <template x-for="fact in selectedSource.facts">
                     <tr x-on:click="selectedFact = fact">
                         <td>
-                            <label x-show="false" for="edit-fact-trait">Fact Name</label>
+                            <label x-show="false" for="edit-fact-trait">Fact Trait</label>
                             <textarea id="edit-fact-trait"
                                       class="code"
                                       contenteditable
@@ -77,13 +77,13 @@
                 </template>
 
                 <template x-if="showAddFactRow">
-                    <tr x-data="{newFact: {trait: '', value: '', score: 0}}">
+                    <tr x-data="{newFact: {trait: '', value: '', score: 1}}">
                         <td>
-                            <label x-show="false" for="new-fact-trait">Fact Name</label>
+                            <label x-show="false" for="new-fact-trait">Fact Trait</label>
                             <textarea id="new-fact-trait"
                                       class="code"
                                       contenteditable
-                                      x-model="newFact.name"
+                                      x-model="newFact.trait"
                                       spellcheck="false"></textarea>
                         </td>
                         <td>
