@@ -634,22 +634,22 @@
                                         </div>
 
 
-                                        <div>
-                                            <label for="autonomous-cleanup_timeout"><span
-                                                    class="has-tooltip-multiline has-tooltip-bottom"
-                                                    x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec)</span></label>
-                                            <div class="modal-form-fields">
-                                                <input id="autonomous-cleanup_timeout" class="input"
-                                                       x-model="startOperation.timeout" type="number"
-                                                       placeholder="30" value="30" min="0" max="300"
-                                                       x-on:change.once="toast('The number of seconds Caldera will wait per cleanup action to complete before continuing.', true)">
-                                                <button type="button" class="button is-primary no-style reset"
-                                                        title="reset to default"
-                                                        x-on:click="startOperation.timeout = 30;">
-                                                    Reset
-                                                </button>
-                                            </div>
-                                        </div>
+<!--                                        <div>-->
+<!--                                            <label for="autonomous-cleanup_timeout"><span-->
+<!--                                                    class="has-tooltip-multiline has-tooltip-bottom"-->
+<!--                                                    x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec)</span></label>-->
+<!--                                            <div class="modal-form-fields">-->
+<!--                                                <input id="autonomous-cleanup_timeout" class="input"-->
+<!--                                                       x-model="startOperation.timeout" type="number"-->
+<!--                                                       placeholder="30" value="30" min="0" max="300"-->
+<!--                                                       x-on:change.once="toast('The number of seconds Caldera will wait per cleanup action to complete before continuing.', true)">-->
+<!--                                                <button type="button" class="button is-primary no-style reset"-->
+<!--                                                        title="reset to default"-->
+<!--                                                        x-on:click="startOperation.timeout = 30">-->
+<!--                                                    Reset-->
+<!--                                                </button>-->
+<!--                                            </div>-->
+<!--                                        </div>-->
 
                                         <div>
                                             <label for="stealth-jitter"><span
