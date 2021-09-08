@@ -1,4 +1,4 @@
-<div x-data="alpineSources()" x-init="initPage()">
+<div x-data="alpineSources()" x-init="initPage()" class="sources-page">
     <div>
         <h2>Fact Sources</h2>
         <p>
@@ -38,18 +38,19 @@
                 <tr>
                     <th>Fact Type</th>
                     <th>Value</th>
+                    <th>Score</th>
                     <th></th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody x-data="{selectedFact: null}">
                 <template x-for="fact in selectedSource.facts">
-                    <tr>
+                    <tr x-on:click="selectedFact = fact">
                         <td>
-                            <label x-show="false" for="edit-fact-name">Fact Name</label>
-                            <textarea id="edit-fact-name"
+                            <label x-show="false" for="edit-fact-trait">Fact Name</label>
+                            <textarea id="edit-fact-trait"
                                       class="code"
                                       contenteditable
-                                      x-model="fact.name"
+                                      x-model="fact.trait"
                                       spellcheck="false"></textarea>
                         </td>
                         <td>
@@ -61,7 +62,12 @@
                                       spellcheck="false"></textarea>
                         </td>
                         <td>
-                            <button type="button"
+                            <label x-show="false" for="edit-fact-score">Fact Score</label>
+                            <input class="input fact-score" id="edit-fact-score" type="number" x-model="fact.score" min="0"/>
+                        </td>
+                        <td>
+                            <button x-show="selectedFact === fact"
+                                    type="button"
                                     class="button is-small"
                                     x-on:click="updateFact()">
                                 Save
@@ -71,10 +77,10 @@
                 </template>
 
                 <template x-if="showAddFactRow">
-                    <tr x-data="{newFact: {name: '', value: ''}}">
+                    <tr x-data="{newFact: {trait: '', value: '', score: 0}}">
                         <td>
-                            <label x-show="false" for="new-fact-name">Fact Name</label>
-                            <textarea id="new-fact-name"
+                            <label x-show="false" for="new-fact-trait">Fact Name</label>
+                            <textarea id="new-fact-trait"
                                       class="code"
                                       contenteditable
                                       x-model="newFact.name"
@@ -89,6 +95,10 @@
                                       spellcheck="false"></textarea>
                         </td>
                         <td>
+                            <label x-show="false" for="new-fact-score">Fact Score</label>
+                            <input class="input fact-score" id="new-fact-score" type="number" x-model="newFact.score" min="0"/>
+                        </td>
+                        <td>
                             <button type="button"
                                     class="button is-small is-primary"
                                     x-on:click="addFact(newFact)">
@@ -99,6 +109,7 @@
                 </template>
 
                 <tr>
+                    <td></td>
                     <td></td>
                     <td></td>
                     <td>
@@ -118,14 +129,16 @@
             <table class="table is-striped">
                 <thead>
                 <tr>
+                    <th></th>
                     <th>Rule</th>
                     <th>Trait</th>
                     <th>Match</th>
                 </tr>
                 </thead>
                 <tbody>
-                <template x-for="rule in selectedSource.rules.reverse()">
+                <template x-for="(rule, index) in selectedSource.rules">
                     <tr>
+                        <td class="rule-index" x-text="index"></td>
                         <td x-text="rule.match"></td>
                         <td x-text="rule.trait"></td>
                         <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
@@ -243,9 +256,17 @@
         padding-bottom: 5px;
     }
 
-    table .code {
+    .sources-page table .code {
         color: #ff8181;
         background-color: #262626;
+    }
+
+    .sources-page table input.fact-score {
+        width: 5em;
+    }
+
+    .sources-page table td.rule-index {
+        color: var(--dark-gray);
     }
 </style>
 
