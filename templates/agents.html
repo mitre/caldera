@@ -49,7 +49,7 @@
                         <td x-text="agent.contact"></td>
                         <td x-text="agent.pid"></td>
                         <td x-text="agent.privilege"></td>
-                        <td x-text="new Date(agent.last_seen).toLocaleString()"></td>
+                        <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="new Date(agent.last_seen).toLocaleString()"></td>
                         <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
                     </tr>
                 </template>
@@ -662,17 +662,12 @@
 </script>
 
 <style>
-
-    td {
-        height: 48px;
-    }
-
-    pre {
-        margin-bottom: 10px;
-    }
+    
     pre.box {
         margin-bottom: 0;
         margin-top: 10px;
+        scrollbar-color: #3f3f3f #0000;
+        scrollbar-width: thin;
     }
 
     .command-container {
@@ -693,10 +688,6 @@
         position: absolute;
         top: 10px;
         right: 10px;
-    }
-
-    .level {
-        width: 100%;
     }
 
     .platform {

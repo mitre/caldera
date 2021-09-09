@@ -14,36 +14,39 @@
 
         <div>
             <div x-bind:class="isOperationsControlsExpanded ? '' : 'columns'">
-                <div class="is-flex-direction-column"
-                     x-bind:class="isOperationsControlsExpanded ? '' : 'column is-half pb-0'">
-                    <div class="columns">
-                        <div x-bind:class="isOperationsControlsExpanded ? 'is-one-fifth' : ''"
-                             class="column is-flex is-justify-content-space-between is-flex-direction-column">
-                            <div class="is-flex is-align-items-center search-box">
-                                <i class="fas fa-search"></i>
-                                <input class="input is-small"
-                                       id="op-search"
-                                       placeholder="Operation name"
-                                       x-ref="search"
-                                       x-on:keyup="filterOperations($el.value)">
-                                <i class="fas fa-times"
-                                   x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''"></i>
+                <div class="is-flex-direction-column" x-bind:class="isOperationsControlsExpanded ? '' : 'column is-half pb-0'">
+                    <div class="pl-0 is-flex is-align-content-flex-start">
+                        <div x-bind:class="isOperationsControlsExpanded ? 'is-one-fifth' : ''">
+                            <div class="field has-addons">
+                                <div class="control has-icons-left">
+                                    <input class="input is-small"
+                                        id="op-search"
+                                        placeholder="Find an operation..."
+                                        x-ref="search"
+                                        x-on:keyup="filterOperations($el.value)">
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-search"></i>
+                                    </span>                               
+                                </div>
+                                <div class="control">
+                                    <a class="button is-small" x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-times"></i>
+                                        </span>
+                                    </a>
+                                </div>
                             </div>
-                            <label class="is-size-7" for="op-search">
-                                <em x-text="searchInput ? ('searching: ' + searchInput) : 'search operations'"></em>
-                            </label>
                         </div>
-                        <div class="column pl-0 is-flex is-align-content-flex-start">
-                            <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
-                                    title="creates a new operation based on the last created operation settings " class="button is-primary is-small"
-                                    x-on:click="addOperation(true)"><i class="pr-1 fas fa-plus"></i>
-                                Quick Add
-                            </button>
-                            <button type="button" title="add operation" class="ml-2 button is-primary is-small"
-                                    x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
-                                Create Operation
-                            </button>
-                        </div>
+                        <div>&nbsp;&nbsp;</div>
+                        <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
+                                title="creates a new operation based on the last created operation settings " class="button is-primary is-small"
+                                x-on:click="addOperation(true)"><i class="pr-1 fas fa-plus"></i>
+                            Quick Add
+                        </button>
+                        <button type="button" title="add operation" class="ml-2 button is-primary is-small"
+                                x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
+                            Create Operation
+                        </button>
                     </div>
                     <div class="is-flex is-flex-direction-row is-align-items-center">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
@@ -245,13 +248,13 @@
                                         x-on:click="getLink(link)">
                                         <td class="decideColumn">
                                             <span x-text="getHumanFriendlyTime(link.decide)"></span>
-                                            <span x-bind:class="'status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"
-                                                  x-text="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"></span>
+                                            <span x-bind:class="'status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                                  x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
                                             <span class="pending-warning" x-show="link.status === -1 && operation.autonomous === '0'">pending approval</span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
-                                                    <span x-bind:title="(link.status in linkStatuses) ? linkStatuses[link.status] : 'queued'"
-                                                          x-bind:class="'linkStatus status-'+((link.status in linkStatuses) ? linkStatuses[link.status] : 'queued')"></span>
+                                                    <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
+                                                          x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"></span>
                                         </td>
                                         <td class="linkInfoColumn"
                                             x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
@@ -894,53 +897,6 @@
 </div>
 
 <script>
-    //
-    // HELPERS
-    //
-    const endpoint = '/api/v2/operations';
-    const executorShells = {
-        psh: 'PS >',
-        cmd: '>',
-        sh: '$'
-    };
-    const linkStatuses = {
-        0: 'success',
-        '-1': 'paused',
-        1: 'failed',
-        '-2': 'discarded',
-        '-3': 'collect',
-        '-4': 'untrusted',
-        '-5': 'visible',
-        124: 'timeout'
-    };
-    const emptyOperationsObject = {
-        // objective: {"id": ""},
-        name: '',
-        group: '',
-        adversary: { adversary_id: '' },
-        auto_close: 0,
-        state: 'running',
-        autonomous: 1,
-        planner: { id: 'atomic' },
-        source: { id: 'basic' },
-        use_learning_parsers: 1,
-        // timeout: "30",
-        obfuscator: 'plain-text',
-        jitter: '4/8',
-        visibility: '51',
-    };
-    const emptyManualCommandObject = {
-        paw: '',
-        executor: {
-            name: '',
-            platform: '',
-            command: '',
-        }
-    };
-
-    //
-    // OPERATIONS
-    //
 
     function alpineOperations() {
         return {
@@ -963,10 +919,10 @@
             operations: [],
             filteredOperations: [],
             searchInput: '',
-            startOperation: emptyOperationsObject,
+            startOperation: this.EMPTY_OPERATIONS_OBJECT,
             jitterMin: 4,
             jitterMax: 8,
-            manualCommand: emptyManualCommandObject,
+            manualCommand: this.EMPTY_MANUAL_COMMAND_OBJECT,
             potentialLink: {
                 agent: '',
                 tactic: '',
@@ -981,6 +937,46 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
+
+            // CONSTANTS
+            ENDPOINT: '/api/v2/operations',
+            EXECUTOR_SHELLS: {
+                psh: 'PS >',
+                cmd: '>',
+                sh: '$'
+            },
+            LINK_STATUSES: {
+                0: 'success',
+                '-1': 'paused',
+                1: 'failed',
+                '-2': 'discarded',
+                '-3': 'collect',
+                '-4': 'untrusted',
+                '-5': 'visible',
+                124: 'timeout'
+            },
+            EMPTY_OPERATIONS_OBJECT: {
+                name: '',
+                group: '',
+                adversary: { adversary_id: '' },
+                auto_close: 0,
+                state: 'running',
+                autonomous: 1,
+                planner: { id: 'atomic' },
+                source: { id: 'basic' },
+                use_learning_parsers: 1,
+                obfuscator: 'plain-text',
+                jitter: '4/8',
+                visibility: '51',
+            },
+            EMPTY_MANUAL_COMMAND_OBJECT: {
+                paw: '',
+                executor: {
+                    name: '',
+                    platform: '',
+                    command: '',
+                }
+            },
 
             getUsage() {
                 if (this.docs) {
@@ -1003,7 +999,7 @@
             },
 
             get selectedAgentExecutors() {
-                return this.selectedAgent ? this.selectedAgent.executors.map((e) => executorShells[e]) : [];
+                return this.selectedAgent ? this.selectedAgent.executors.map((e) => this.EXECUTOR_SHELLS[e]) : [];
             },
 
             get isOperationRunning() {
@@ -1015,7 +1011,7 @@
                 if (!this.selectedLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
                 // TODO check if this approve/discard condition is right
-                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in linkStatuses))
+                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in this.LINK_STATUSES))
                     && !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'));
             },
 
@@ -1056,7 +1052,7 @@
             //
 
             getOperations() {
-                apiV2('GET', endpoint).then((res) => {
+                apiV2('GET', this.ENDPOINT).then((res) => {
                     this.operations = res;
                     this.filterOperations(this.searchInput);
                 }).catch((error) => {
@@ -1066,7 +1062,7 @@
 
             getOperation() {
                 if (this.selectedOperationID) {
-                    apiV2('GET', `${endpoint}/${this.selectedOperationID}`).then((res) => {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                         this.selectedLink = null;
                         this.selectedOperation = res;
                         this.generateAddedLinksList();
@@ -1090,7 +1086,7 @@
                     this.startOperation.use_learning_parsers = parseInt(this.startOperation.use_learning_parsers, 10) === 1;
                     this.startOperation.auto_close = parseInt(this.startOperation.auto_close, 10) === 1;
 
-                    apiV2('POST', endpoint, this.startOperation)
+                    apiV2('POST', this.ENDPOINT, this.startOperation)
                         .then((res) => {
                             toast(`Started operation ${this.startOperation.name}!`, true);
                             this.resetOperation();
@@ -1105,7 +1101,7 @@
             },
 
             deleteOperation() {
-                apiV2('DELETE', `${endpoint}/${this.selectedOperationID}`)
+                apiV2('DELETE', `${this.ENDPOINT}/${this.selectedOperationID}`)
                     .then(() => {
                         this.selectedOperation = null;
                         this.getOperations();
@@ -1137,21 +1133,21 @@
                 this.manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
                 this.manualCommand.executor.platform = this.selectedAgent.platform;
 
-                apiV2('POST', `${endpoint}/${this.selectedOperationID}/potential-links`, this.manualCommand)
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, this.manualCommand)
                     .then((res) => {
                         toast('Added manual command.', true);
                         this.getOperation();
 
                         // Reset
                         this.addNewRow = false;
-                        this.manualCommand = emptyManualCommandObject;
+                        this.manualCommand = this.EMPTY_MANUAL_COMMAND_OBJECT;
                         this.selectedAgentIndex = null;
                     })
                     .catch((error) => toast('Error adding manual command.'));
             },
 
             addPotentialLink(link) {
-                apiV2('POST', `${endpoint}/${this.selectedOperationID}/potential-links`, link)
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link)
                     .then((res) => {
                         toast('Added potential link.', true);
                         this.getOperation();
@@ -1166,7 +1162,7 @@
             getLink(link) {
                 if (this.selectedLink === link) return;
                 this.selectedLink = link;
-                apiV2('GET', `${endpoint}/${this.selectedOperationID}/links/${link.id}`)
+                apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}`)
                     .then((res) => {
                         this.getLinkResults(res.output, link);
                         if (res.facts) {
@@ -1187,7 +1183,7 @@
                 if (output !== 'True') {
                     this.selectedLinkResults = null;
                 } else {
-                    apiV2('GET', `${endpoint}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
                         this.selectedLinkResults = b64DecodeUnicode(res.result);
                     }).catch((error) => console.error('Error getting link results.', error));
                 }
@@ -1199,10 +1195,10 @@
                     updateLink.command = command;
                 }
                 updateLink.status = status;
-                apiV2('PATCH', `${endpoint}/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
+                apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
                     .then((res) => {
                         this.getOperation();
-                        toast(`Updating link status to: ${linkStatuses[status]}`, true);
+                        toast(`Updating link status to: ${this.LINK_STATUSES[status]}`, true);
                     })
                     // TODO have clearer error messaging here
                     .catch((error) => toast('Error updating link state.'));
@@ -1210,7 +1206,7 @@
 
             updateOperation(field, updateValue) {
                 this.selectedOperation[field] = updateValue;
-                apiV2('PATCH', `${endpoint}/${this.selectedOperationID}`, this.selectedOperation)
+                apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
                     .then((res) => {
                         toast(`Updated operation ${field}`, true);
                         this.selectedOperation = res;
@@ -1222,7 +1218,7 @@
             },
 
             downloadInfo(formatType) {
-                apiV2('GET', `${endpoint}/${this.selectedOperationID}/report`)
+                apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/report`)
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
@@ -1284,7 +1280,7 @@
             },
 
             resetOperation() {
-                this.startOperation = emptyOperationsObject;
+                this.startOperation = this.EMPTY_OPERATIONS_OBJECT;
             },
 
             resetObject(obj = {}) {
@@ -1371,32 +1367,6 @@
         padding: 0 7em;
     }
 
-    .search-box i {
-        background-color: #262626;
-        color: gray;
-        height: 30px;
-        padding: 5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .search-box i:first-child {
-        border-radius: 2px 0 0 2px;
-    }
-
-    .search-box i:last-child {
-        border-radius: 0 2px 2px 0;
-    }
-
-    .search-box input {
-        height: 30px;
-        padding: 5px;
-        border: none;
-        width: 100%;
-        border-radius: 0;
-    }
-
     span.decisionsIcon {
         font-size: x-small;
         font-weight: 500;
@@ -1413,6 +1383,7 @@
 
     .operation-menu-container {
         overflow-x: scroll;
+        scrollbar-color: #3f3f3f #0000;
         padding-bottom: 20px;
     }
 
@@ -1426,6 +1397,7 @@
         align-items: center;
         width: 5em;
         flex-flow: column wrap;
+        padding: 10px;
     }
 
     .operation-menu-links .readable-time {
