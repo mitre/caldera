@@ -1,4 +1,4 @@
-<div x-data="alpineAgents()" x-init="initPage()">
+<div x-data="alpineAbilities()" x-init="initPage()">
 
     <!-- PAGE HEADER -->
 
@@ -324,7 +324,7 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <button class="button is-primary is-small" @click="deleteAbility()">
+                            <button class="button is-primary is-small" @click="deleteAbility()" x-show="!isCreatingAbility">
                                 <span class="icon"><i class="fas fa-trash"></i></span>
                                 <span>Delete Ability</span>
                             </button>
@@ -349,10 +349,8 @@
 </div>
 
 <script>
-    let platformsAbilities = {{ platforms | tojson }};
-    let payloadsAbilities = {{ payloads | tojson }};
 
-    function alpineAgents() {
+    function alpineAbilities() {
         return {
             // Core variables
             abilities: [],
@@ -363,8 +361,8 @@
             techniques: [],
             selectedTechnique: '',
             searchTerm: '',
-            platforms: platformsAbilities,
-            payloads: payloadsAbilities,
+            platforms: JSON.parse('{{ platforms | tojson }}'),
+            payloads: JSON.parse('{{ payloads | tojson }}'),
             isLoaded: false,
             isCreatingAbility: false,
 
@@ -519,10 +517,6 @@
     #abilities-table {
         height: calc(100vh - 480px);
         overflow: scroll;
-    }
-
-    .level {
-        width: 100%;
     }
 
     #main-content {

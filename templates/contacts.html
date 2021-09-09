@@ -29,11 +29,9 @@
 </div>
 
 <script>
-    const contactsV1 = {{ contacts | tojson }};
-
     function alpineContacts() {
         return {
-            contacts: contactsV1,
+            contacts: JSON.parse('{{ contacts | tojson }}'),
 
             initPage() {
                 // TODO: Uncomment below when contacts API V2 is done

@@ -56,7 +56,7 @@
                     <span class="icon"><i class="fas fa-pencil-alt"></i></span>
                     <span>Edit</span>
                 </button>
-                <button class="button is-small" @click="showAssignmentsModal = true" x-show="!isEditing">
+                <button class="button is-small" @click="showAssignmentsModal = true" x-show="!isEditing" x-bind:disabled="!adversaries.filter((a) => a.objective === selectedObjective.id).length">
                     <span class="icon"><i class="fas fa-tasks"></i></span>
                     <span>
                         Show Assignments
@@ -201,6 +201,7 @@ function alpineObjectives() {
         selectedObjectiveId: '',
         selectedObjective: {},
         isEditing: false,
+        isCreating: false,
 
         OPERATOR_TYPES: ['<', '>', '<=', '>=', 'in', '*', '=='],
 
@@ -231,6 +232,7 @@ function alpineObjectives() {
             });
             this.selectedObjective = this.objectives[this.objectives.length - 1];
             this.addGoal();
+            this.isCreating = true;
             this.isEditing = true;
         },
 
@@ -250,6 +252,7 @@ function alpineObjectives() {
 
             apiV2('PUT', `/api/v2/objectives/${this.selectedObjective.id}`, this.selectedObjective).then((response) => {
                 this.isEditing = false;
+                this.isCreating = false;
                 toast('Saved objective', true);
             }).catch((error) => {
                 toast('Error saving objective', false);
@@ -259,6 +262,14 @@ function alpineObjectives() {
 
         cancelEditing() {
             this.isEditing = false;
+
+            if (this.isCreating) {
+                this.selectedObjectiveId = '';
+                this.selectedObjective = {};
+                this.objectives.splice(this.objectives.length - 1, 1);
+                return;
+            }
+
             apiV2('GET', `/api/v2/objectives/${this.selectedObjective.id}`).then((objective) => {
                 this.selectedObjective = objective;
             }).catch((error) => {
