@@ -556,9 +556,9 @@
             },
 
             addFact(newFact) {
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.facts.push(newFact);
-                apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, updatedSource).then((res) => {
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
                     this.showAddFactRow = false;
                 }).catch((error) => {
@@ -595,7 +595,7 @@
 
             updateFactSource() {
                 console.log('Update fact', this.selectedSource);
-                apiV2('PATCH', '/api/v2/sources/' + this.selectedSource.id, this.selectedSource).then((res) => {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
                     toast('Updated source', res);
                     this.getSources();
                 }).catch((error) => {
