@@ -1,4 +1,5 @@
 <div id="operationsPage" x-data="alpineOperations()" x-init="getOperations(); getUsage()"
+     class="operations-page"
      xmlns="http://www.w3.org/1999/html"
      @resize.window="getOperationsMenuCaretDisplay()">
     <div>
@@ -26,7 +27,7 @@
                                         x-on:keyup="filterOperations($el.value)">
                                     <span class="icon is-small is-left">
                                         <i class="fas fa-search"></i>
-                                    </span>                               
+                                    </span>
                                 </div>
                                 <div class="control">
                                     <a class="button is-small" x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
@@ -1420,7 +1421,7 @@
         width: 100% !important;
     }
 
-    .column {
+    .operations-page .column {
         margin: 0;
     }
 
@@ -1475,85 +1476,6 @@
     .timeline-table table .highlight {
         width: fit-content !important;
     }
-
-    /*TOGGLE STYLE*/
-    /* toggle buttons */
-    .toggleContainer {
-        display: flex;
-        align-items: center;
-    }
-
-    .toggleContainer label {
-        font-size: 0.75em;
-    }
-
-    .toggleSwitch {
-        position: relative;
-        display: inline-block;
-        width: 65px;
-        height: 34px;
-    }
-
-    .toggleSwitch input {
-        display: none;
-    }
-
-    .toggleSlider {
-        border: 2px solid white;
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-radius: 34px;
-    }
-
-    .toggleSlider::before {
-        position: absolute;
-        content: "";
-        height: 24px;
-        width: 24px;
-        bottom: 4px;
-        transition: all 0.3s ease;
-        left: 3px;
-        top: 3px;
-    }
-
-    .toggle-off {
-        background-color: initial;
-    }
-
-    .toggle-on {
-        background-color: #339c3f;
-    }
-
-    .toggle-slider-on,
-    .toggle-slider-off {
-        color: white;
-        position: absolute;
-        transform: translate(-50%, -50%);
-        top: 50%;
-        left: 50%;
-        font-size: 10px;
-        font-family: Verdana, sans-serif;
-    }
-
-    .toggle-on.toggleSlider.toggleSlider::before {
-        background-color: white;
-        transform: translatex(30px);
-    }
-
-    .toggle-off.toggleSlider.toggleSlider::before {
-        background-color: white;
-        transform: translatex(0px);
-    }
-
-    .toggleSlider.toggleSliderRound::before {
-        border-radius: 50%;
-    }
-
-    /*END TOGGLE*/
 
     .timeline-table {
         padding-bottom: 5em;

@@ -1,4 +1,4 @@
-<div x-data="alpineSources()" x-init="initPage()" class="sources-page">
+<div x-data="alpineSources()" x-init="getSources()" class="sources-page">
     <div>
         <h2>Fact Sources</h2>
         <p>
@@ -8,205 +8,338 @@
     </div>
     <hr>
     <div>
-        <div class="is-flex is-flex-direction-row is-align-items-center">
+        <!-- TOP PANEL -->
+        <div>
+            <div class="is-flex is-flex-direction-row" x-data="{filterKeyword: ''}">
+                <!-- SEARCH BAR -->
+                <div class="mb-4 is-flex is-justify-content-space-between is-flex-direction-column">
+                    <div class="is-flex is-align-items-center filter-search-box">
+                        <i class="fas fa-search"></i>
+                        <input class="input is-small"
+                               id="source-search"
+                               placeholder="Fact source name"
+                               x-model="filterKeyword"
+                               x-on:keyup="filterSources($el.value)">
+                        <i class="fas fa-times"
+                           x-on:click="filterSources(''); filterKeyword=''"></i>
+                    </div>
+                    <label class="is-size-7" for="source-search">
+                        <em x-text="filterKeyword !== '' ? ('searching: ' + filterKeyword) : 'type fact source name'"></em>
+                    </label>
+                </div>
+                <div class="pl-0 is-flex is-align-content-flex-start">
+                    <button
+                            type="button"
+                            class="ml-2 button is-primary is-small"
+                            x-on:click="addSource(filterKeyword)"
+                            title="Create a new source">
+                        <i class="pr-1 fas fa-plus"></i>
+                        <span>Add Source</span>
+                    </button>
+                    <!--                    TODO-->
+                    <button type="button"
+                            x-bind:disabled="true"
+                            class="ml-2 button is-primary is-small"
+                            x-on:click="console.log('delete ', selectedSource)"
+                            title="Delete selected source">
+                        <i class="pr-1 fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SOURCES MENU -->
+            <!--            TODO: add click feature to change source name-->
             <div class="is-flex is-flex-direction-row is-justify-content-flex-start sources-menu-container">
-                <template x-if="sources.length < 1">
+                <template x-if="filteredSources.length < 1">
                     <em class="is-flex is-justify-content-center">No sources available; click on the 'Add Source'
                         button to get started.</em>
                 </template>
-                <template x-for="source of sources" :key="source.name">
+                <template x-for="source of filteredSources" :key="source.id">
                     <button class="pt-2 no-style source-menu-links"
                             x-bind:class="selectedSource === source ? 'active' : ''"
-                            x-on:click="selectedSource = source">
+                            x-on:click="handleSelectSource(source)">
                         <!--                        <i class="fas fa-faucet"></i>-->
                         <i class="fas fa-hand-holding-water"></i>
                         <span x-text="source.name"></span>
                     </button>
                 </template>
-                <button class="pt-2 no-style source-menu-links" x-on:click="openModal = 'addFactSource'">
-                    <i class="pr-1 fas fa-plus"></i>
-                    <span>Add Source</span>
-                </button>
             </div>
         </div>
+
+        <!-- CONTENT -->
         <template x-if="!selectedSource">
             <em class="is-flex is-justify-content-center">Click on a fact source to get started.</em>
         </template>
-        <template x-if="selectedSource && selectedSource.facts.length > 0">
-            <table class="table is-striped">
-                <thead>
-                <tr>
-                    <th>Fact Type</th>
-                    <th>Value</th>
-                    <th>Score</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody x-data="{selectedFact: null}">
-                <template x-for="fact in selectedSource.facts">
-                    <tr x-on:click="selectedFact = fact">
-                        <td>
-                            <label x-show="false" for="edit-fact-trait">Fact Name</label>
-                            <textarea id="edit-fact-trait"
-                                      class="code"
-                                      contenteditable
-                                      x-model="fact.trait"
-                                      spellcheck="false"></textarea>
-                        </td>
-                        <td>
-                            <label x-show="false" for="edit-fact-value">Fact Value</label>
-                            <textarea id="edit-fact-value"
-                                      class="code"
-                                      contenteditable
-                                      x-model="fact.value"
-                                      spellcheck="false"></textarea>
-                        </td>
-                        <td>
-                            <label x-show="false" for="edit-fact-score">Fact Score</label>
-                            <input class="input fact-score" id="edit-fact-score" type="number" x-model="fact.score" min="0"/>
-                        </td>
-                        <td>
-                            <button x-show="selectedFact === fact"
-                                    type="button"
-                                    class="button is-small"
-                                    x-on:click="updateFact()">
-                                Save
-                            </button>
-                        </td>
-                    </tr>
-                </template>
 
-                <template x-if="showAddFactRow">
-                    <tr x-data="{newFact: {trait: '', value: '', score: 0}}">
-                        <td>
-                            <label x-show="false" for="new-fact-trait">Fact Name</label>
-                            <textarea id="new-fact-trait"
-                                      class="code"
-                                      contenteditable
-                                      x-model="newFact.name"
-                                      spellcheck="false"></textarea>
-                        </td>
-                        <td>
-                            <label x-show="false" for="new-fact-value">Fact Value</label>
-                            <textarea id="new-fact-value"
-                                      class="code"
-                                      contenteditable
-                                      x-model="newFact.value"
-                                      spellcheck="false"></textarea>
-                        </td>
-                        <td>
-                            <label x-show="false" for="new-fact-score">Fact Score</label>
-                            <input class="input fact-score" id="new-fact-score" type="number" x-model="newFact.score" min="0"/>
-                        </td>
-                        <td>
-                            <button type="button"
-                                    class="button is-small is-primary"
-                                    x-on:click="addFact(newFact)">
-                                Add
-                            </button>
-                        </td>
-                    </tr>
-                </template>
-
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <button type="button"
-                                class="button is-small is-primary"
-                                x-on:click="showAddFactRow = true">
-                            <span class="icon"><i class="fas fa-plus"></i></span>
-                            <span>Add Fact</span>
+        <template x-if="selectedSource">
+            <div>
+                <!-- FACTS CONTENT -->
+                <div class="my-5" x-data="{collapseFacts: false}">
+                    <div class="collapsible-header">
+                        <button class="button px-0 no-style is-size-4" x-on:click="collapseFacts = !collapseFacts"
+                                x-bind:class="collapseFacts ? 'collapsed' : 'expanded'">
+                            Facts
                         </button>
-                    </td>
-                </tr>
+                    </div>
+                    <span class="navbar-divider"></span>
+                    <div x-show="!collapseFacts" x-data="{selectedFact: null}">
+                        <!-- FACTS SEARCH BAR -->
+                        <div class="is-flex is-flex-direction-row" x-data="{factsFilterKeyword: ''}">
+                            <div class="mb-4 is-flex is-justify-content-space-between is-flex-direction-column">
+                                <div class="is-flex is-align-items-center filter-search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input class="input is-small"
+                                           id="fact-search"
+                                           placeholder="Fact trait"
+                                           x-model="factsFilterKeyword"
+                                           x-on:keyup="filterFacts($el.value)">
+                                    <i class="fas fa-times"
+                                       x-on:click="filterFacts(''); factsFilterKeyword=''"></i>
+                                </div>
+                                <label class="is-size-7" for="fact-search">
+                                    <em x-text="factsFilterKeyword !== '' ? ('searching: ' + factsFilterKeyword) : 'type fact trait or value'"></em>
+                                </label>
+                            </div>
+                            <div class="pl-0 is-flex is-align-content-flex-start">
+                                <button type="button"
+                                        class="ml-2 button is-primary is-small"
+                                        x-on:click="showAddFactRow = true">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                    <span>Add Fact</span>
+                                </button>
+                                <button type="button"
+                                        x-bind:disabled="!selectedFact"
+                                        class="ml-2 button is-primary is-small"
+                                        x-on:click="deleteFact(selectedFact)"
+                                        title="Delete selected fact">
+                                    <i class="pr-1 fas fa-trash"></i>
+                                </button>
 
-                </tbody>
-            </table>
-        </template>
-        <template x-if="selectedSource && selectedSource.rules">
-            <table class="table is-striped">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Rule</th>
-                    <th>Trait</th>
-                    <th>Match</th>
-                </tr>
-                </thead>
-                <tbody>
-                <template x-for="(rule, index) in selectedSource.rules">
-                    <tr>
-                        <td class="rule-index" x-text="index"></td>
-                        <td x-text="rule.match"></td>
-                        <td x-text="rule.trait"></td>
-                        <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
-                            x-text="rule.action"></td>
-                    </tr>
-                </template>
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+
+                        <!-- FACTS TABLE -->
+                        <table class="table is-striped">
+                            <thead>
+                            <tr class="table-header">
+                                <th>Fact Trait</th>
+                                <th>Value</th>
+                                <th>Score</th>
+                                <th class="px-3"></th>
+                            </tr>
+                            </thead>
+                            <template x-if="filteredFacts.length < 1 && !showAddFactRow">
+                                <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-align-center py-2">
+                                        <em>No facts; click 'Add Fact' to get started.</em>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </template>
+                            <tbody>
+                            <template x-if="showAddFactRow">
+                                <tr x-data="{newFact: {trait: '', value: '', score: 1}}">
+                                    <td>
+                                        <label x-show="false" for="new-fact-trait">Fact Trait</label>
+                                        <textarea id="new-fact-trait"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="newFact.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-fact-value">Fact Value</label>
+                                        <textarea id="new-fact-value"
+                                                  class="code is-italic"
+                                                  contenteditable
+                                                  x-model="newFact.value"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-fact-score">Fact Score</label>
+                                        <input class="input fact-score" id="new-fact-score" type="number"
+                                               x-model="newFact.score"
+                                               min="0"/>
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="button is-small is-primary"
+                                                x-on:click="addFact(newFact);">
+                                            Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-for="fact in filteredFacts">
+                                <tr x-on:click="selectedFact = fact"
+                                    x-bind:class="selectedFact === fact ? 'selected' : ''">
+                                    <td>
+                                        <label x-show="false" for="edit-fact-trait">Fact Trait</label>
+                                        <textarea id="edit-fact-trait"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="fact.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="edit-fact-value">Fact Value</label>
+                                        <textarea id="edit-fact-value"
+                                                  class="code is-italic"
+                                                  contenteditable
+                                                  x-model="fact.value"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="edit-fact-score">Fact Score</label>
+                                        <input class="input fact-score" id="edit-fact-score" type="number"
+                                               x-model="fact.score"
+                                               min="0"/>
+                                    </td>
+                                    <td>
+                                        <button x-show="selectedFact === fact"
+                                                type="button"
+                                                class="button is-small"
+                                                x-on:click="updateFact()">
+                                            Save
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- RULES CONTENT -->
+                <div class="my-5" x-data="{collapseRules: false}">
+                    <div class="collapsible-header">
+                        <button class="button px-0 no-style is-size-4" x-on:click="collapseRules = !collapseRules"
+                                x-bind:class="collapseRules ? 'collapsed' : 'expanded'">
+                            Rules
+                        </button>
+                    </div>
+                    <span class="navbar-divider"></span>
+                    <div x-show="!collapseRules" x-data="{selectedRule: null}">
+                        <!-- RULES SEARCH BAR -->
+                        <div class="is-flex is-flex-direction-row" x-data="{rulesFilterKeyword: ''}">
+                            <div class="mb-4 is-flex is-justify-content-space-between is-flex-direction-column">
+                                <div class="is-flex is-align-items-center filter-search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input class="input is-small"
+                                           id="rule-search"
+                                           placeholder="rule trait"
+                                           x-model="rulesFilterKeyword"
+                                           x-on:keyup="filterRules($el.value)">
+                                    <i class="fas fa-times"
+                                       x-on:click="filterRules(''); rulesFilterKeyword=''"></i>
+                                </div>
+                                <label class="is-size-7" for="rule-search">
+                                    <em x-text="rulesFilterKeyword !== '' ? ('searching: ' + rulesFilterKeyword) : 'type match rule or fact trait'"></em>
+                                </label>
+                            </div>
+                            <div class="pl-0 is-flex is-align-content-flex-start">
+                                <button type="button"
+                                        class="ml-2 button is-primary is-small"
+                                        x-on:click="showAddRuleRow = true">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                    <span>Add Rule</span>
+                                </button>
+                                <button type="button"
+                                        x-bind:disabled="!selectedRule"
+                                        class="ml-2 button is-primary is-small"
+                                        x-on:click="deleteRule(selectedRule)"
+                                        title="Delete selected rule">
+                                    <i class="pr-1 fas fa-trash"></i>
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <!-- RULES TABLE -->
+                        <table class="table is-striped">
+                            <thead>
+                            <tr>
+                                <th class="rule-order-column">Order</th>
+                                <th>Match</th>
+                                <th>Fact Trait</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <template x-if="filteredRules.length < 1 && !showAddRuleRow">
+                                <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-align-center py-2">
+                                        <em>No rules; click 'Add Rule' to get started.</em>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </template>
+                            <tbody>
+                            <template x-if="showAddRuleRow">
+                                <tr x-data="{newRule: {action: 'ALLOW', match: '', trait: ''}}">
+                                    <td></td>
+                                    <td>
+                                        <label x-show="false" for="new-rule-match">Rule Match</label>
+                                        <textarea id="new-rule-match"
+                                                  class="code is-italic"
+                                                  contenteditable
+                                                  x-model="newRule.match"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-rule-trait">Rule Trait</label>
+                                        <textarea id="new-rule-trait"
+                                                  class="code is-italic"
+                                                  contenteditable
+                                                  x-model="newRule.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-rule-action">Rule Action</label>
+                                        <div class="toggleContainer" id="new-rule-action">
+                                            <label class="has-text-danger" for="toggleAction">DENY</label>
+                                            <div class="toggleSwitch mx-2">
+                                                <input type="checkbox"
+                                                       id="toggleAction"
+                                                       x-model="newRule.action"
+                                                       x-bind:checked="newRule.action === 'ALLOW' ? 'checked' : null"/>
+                                                <span class="toggleSlider toggleSliderRound"
+                                                      x-on:click="newRule.action = (newRule.action === 'ALLOW' ? 'DENY' : 'ALLOW')"
+                                                      x-bind:class="newRule.action === 'ALLOW' ? 'toggle-on' : 'toggle-off'">
+                                                    <span x-bind:class="newRule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                                </span>
+                                            </div>
+                                            <label class="has-text-success" for="toggleAction">ALLOW</label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="button is-small is-primary"
+                                                x-on:click="addRule(newRule)">
+                                            Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            <!-- TODO ? rethink index here, as it does not accurately represent actual runtime order of rules-->
+                            <template x-for="(rule, index) in filteredRules">
+                                <tr x-on:click="selectedRule = rule"
+                                    x-bind:class="selectedRule === rule ? 'selected' : ''">
+                                    <td class="rule-order-column" x-text="index"></td>
+                                    <td x-text="rule.match"></td>
+                                    <td x-text="rule.trait"></td>
+                                    <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
+                                        x-text="rule.action"></td>
+                                    <td></td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </template>
     </div>
-
-    <template x-if="openModal">
-        <div class="modal is-active">
-            <div class="modal-background" @click="openModal = 'addFactSource'"></div>
-            <form class="m-1">
-                <div class="modal-card" x-data="{newSource: {name: '', facts: '', rules: '', relationships: ''}}">
-                    <template x-if="openModal === 'addFactSource'">
-                        <div>
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Add Fact Source</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <label for="source-name">Fact Source Name</label>
-                                        <div class="modal-form-fields">
-                                            <input class="input is-small" id="source-name" type="text"
-                                                   x-model="newSource.name" required>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="source-facts">Facts</label>
-                                        <div class="modal-form-fields">
-                                            <input class="input is-small" id="source-facts" type="text"
-                                                   x-model="newSource.facts" required>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="source-rules">Rules</label>
-                                        <div class="modal-form-fields">
-                                            <input class="input is-small" id="source-rules" type="text"
-                                                   x-model="newSource.rules" required>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="source-relationships">Relationships</label>
-                                        <div class="modal-form-fields">
-                                            <input class="input is-small" id="source-relationships" type="text"
-                                                   x-model="newSource.relationships" required>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </section>
-                        </div>
-                    </template>
-                    <footer class="modal-card-foot is-flex is-justify-content-space-between">
-                        <button type="button" class="button ml-2" x-on:click="openModal = null">
-                            Close
-                        </button>
-                        <button type="button" class="is-primary button ml-2" x-on:click="addSource(newSource)">
-                            Save
-                        </button>
-                    </footer>
-                </div>
-            </form>
-        </div>
-    </template>
 </div>
 
 <style>
@@ -215,6 +348,10 @@
         --dark-gray: gray;
         --light-gray: #e6e6e6;
         --decisions-color: #4fdcfc;
+    }
+
+    .text-align-center {
+        text-align: center !important;
     }
 
     button.no-style {
@@ -256,16 +393,39 @@
         padding-bottom: 5px;
     }
 
+    .collapsible-header button {
+        height: 1em;
+    }
+
+    .collapsible-header button:hover {
+        transform: none;
+    }
+
+    .collapsible-header button::after {
+        margin-left: 0.5em !important;
+        font-size: 0.75em;
+    }
+
     .sources-page table .code {
         color: #ff8181;
         background-color: #262626;
+    }
+
+    .sources-page table tr th {
+        font-weight: 400;
+        font-size: 0.75rem;
+        color: gray;
+    }
+
+    .sources-page table tbody tr:hover, .sources-page table tbody tr.selected {
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
     .sources-page table input.fact-score {
         width: 5em;
     }
 
-    .sources-page table td.rule-index {
+    .sources-page table .rule-order-column {
         color: var(--dark-gray);
     }
 </style>
@@ -273,24 +433,57 @@
 <script>
     function alpineSources() {
         return {
-            selectedSource: null,
             sources: [],
+            filteredSources: [],
+            filteredFacts: [],
+            filteredRules: [],
+            selectedSource: null,
             showAddFactRow: false,
-            openModal: null,
+            showAddRuleRow: false,
 
-            initPage() {
+            getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
                     this.sources = sources;
+                    this.filteredSources = sources;
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
                 });
             },
 
-            addSource(newSource) {
+            handleSelectSource(source) {
+                this.selectedSource = source;
+                this.filteredFacts = source.facts;
+                this.filteredRules = source.rules;
+            },
+
+            filterSources(input = '') {
+                input = input.toLowerCase();
+                this.filteredSources = this.sources.filter((s) => s.name.toLowerCase().includes(input));
+            },
+
+            filterFacts(input = '') {
+                input = input.toLowerCase();
+                console.log('FILTER FACTS CALLED', input);
+                this.filteredFacts = this.selectedSource.facts.filter((f) => (f.trait.toLowerCase().includes(input) || f.value.toLowerCase().includes(input)));
+            },
+
+            filterRules(input = '') {
+                input = input.toLowerCase();
+                console.log('FILTER RULES CALLED', input);
+                this.filteredRules = this.selectedSource.rules.filter((r) => (r.match.toLowerCase().includes(input) || r.trait.toLowerCase().includes(input)));
+            },
+
+            addSource(newSourceName) {
+                const newSource = {
+                    name: newSourceName === '' ? 'new source' : newSourceName,
+                    facts: [],
+                    rules: [],
+                    relationships: []
+                }
                 apiV2('POST', '/api/v2/sources', newSource).then((res) => {
                     toast('Added new fact source', res);
-                    this.openModal = null;
+                    this.getSources();
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
@@ -299,7 +492,7 @@
 
             addFact(newFact) {
                 const updatedSource = { ...this.selectedSource };
-                updatedSource.facts.push({ ...newFact, trait: newFact.name });
+                updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
                     this.showAddFactRow = false;
@@ -307,6 +500,32 @@
                     toast('Error loading page', false);
                     console.error(error);
                 });
+            },
+
+            addRule(newRule) {
+                const updatedSource = {...this.selectedSource};
+                updatedSource.rules.push(newRule);
+                apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, updatedSource).then((res) => {
+                    toast('Updated source', res);
+                    this.showAddRuleRow = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            deleteFact(fact) {
+                console.log('DEL FACT', fact, 'FROM', this.selectedSource);
+                this.selectedSource.facts.splice(this.selectedSource.facts.findIndex(f => f.unique === fact.unique), 1);
+                console.log('REMOVED', this.selectedSource);
+                this.updateFact();
+            },
+
+            deleteRule(rule) {
+                console.log('DEL FACT', rule, 'FROM', this.selectedSource);
+                this.selectedSource.rules.splice(this.selectedSource.rules.findIndex(r => r === rule), 1);
+                console.log('REMOVED', this.selectedSource);
+                this.updateFact();
             },
 
             updateFact() {
@@ -317,7 +536,7 @@
                     toast('Error loading page', false);
                     console.error(error);
                 });
-            }
+            },
         };
     }
 
