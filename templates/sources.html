@@ -36,7 +36,15 @@
                         <i class="pr-1 fas fa-plus"></i>
                         <span>Add Source</span>
                     </button>
-                    <!--                    TODO-->
+                    <button type="button"
+                            x-bind:disabled="!selectedSource"
+                            class="ml-2 button is-primary is-small"
+                            x-on:click="duplicateSource(selectedSource)"
+                            title="Duplicate selected source">
+                        <i class="pr-1 fas fa-plus"></i>
+                        <span>Duplicate</span>
+                    </button>
+                    <!--                    TODO: delete source endpoint-->
                     <button type="button"
                             x-bind:disabled="true"
                             class="ml-2 button is-primary is-small"
@@ -48,19 +56,27 @@
             </div>
 
             <!-- SOURCES MENU -->
-            <!--            TODO: add click feature to change source name-->
             <div class="is-flex is-flex-direction-row is-justify-content-flex-start sources-menu-container">
                 <template x-if="filteredSources.length < 1">
                     <em class="is-flex is-justify-content-center">No sources available; click on the 'Add Source'
                         button to get started.</em>
                 </template>
-                <template x-for="source of filteredSources" :key="source.id">
+                <template x-for="source of filteredSources" :key="source.id" x-data="{editSourceName: false}">
                     <button class="pt-2 no-style source-menu-links"
                             x-bind:class="selectedSource === source ? 'active' : ''"
                             x-on:click="handleSelectSource(source)">
                         <!--                        <i class="fas fa-faucet"></i>-->
                         <i class="fas fa-hand-holding-water"></i>
-                        <span x-text="source.name"></span>
+                        <span x-on:click="editSourceName = (selectedSource === source)"
+                              x-show="!editSourceName || selectedSource !== source" x-text="source.name"></span>
+                        <label for="edit-source-name" x-show="false">Edit source name</label>
+                        <textarea id="edit-source-name"
+                                  @click.outside="handleEditSource(editSourceName)"
+                                  class="is-small edit-field"
+                                  x-model="source.name"
+                                  x-show="editSourceName && selectedSource === source"
+                                  contenteditable
+                                  spellcheck="false"></textarea>
                     </button>
                 </template>
             </div>
@@ -297,7 +313,8 @@
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-rule-action">Rule Action</label>
-                                        <div class="toggleContainer is-flex is-justify-content-center" id="new-rule-action">
+                                        <div class="toggleContainer is-flex is-justify-content-center"
+                                             id="new-rule-action">
                                             <label class="has-text-danger" for="toggleAction">DENY</label>
                                             <div class="toggleSwitch mx-2">
                                                 <input type="checkbox"
@@ -362,7 +379,8 @@
                                             <label class="has-text-success" for="toggleAction">ALLOW</label>
                                         </div>
                                     </td>
-                                    <td x-show="selectedRule !== rule" class="text-align-center" x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
+                                    <td x-show="selectedRule !== rule" class="text-align-center"
+                                        x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
                                         x-text="rule.action"></td>
                                     <td>
                                         <button x-show="selectedRule === rule" type="button"
@@ -390,6 +408,13 @@
         --decisions-color: #4fdcfc;
     }
 
+    .edit-field {
+        border-radius: 5px;
+        width: 55px;
+        height: 50px;
+        padding: 5px;
+    }
+
     .text-align-center {
         text-align: center !important;
     }
@@ -411,9 +436,10 @@
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        width: 5em;
+        width: 7em;
+        padding: 15px;
+        height: fit-content;
         flex-flow: column wrap;
-        padding-bottom: 5px;
     }
 
     .source-menu-links:hover {
@@ -468,6 +494,7 @@
     .sources-page table .index-column {
         color: var(--dark-gray);
     }
+
     .sources-page .toggle-on.toggleSlider.toggleSlider::before {
         transform: translatex(24px);
     }
@@ -476,9 +503,11 @@
         width: 55px;
         height: 28px;
     }
+
     .sources-page .toggle-off {
         background-color: var(--primary-color);
     }
+
     .sources-page .toggleSlider::before {
         position: absolute;
         content: "";
@@ -522,6 +551,12 @@
                 this.filteredRules = source.rules;
             },
 
+            handleEditSource(editSourceName) {
+                console.log('handle edit source name');
+                editSourceName = false;
+                this.updateFactSource();
+            },
+
             filterSources(input = '') {
                 input = input.toLowerCase();
                 this.filteredSources = this.sources.filter((s) => s.name.toLowerCase().includes(input));
@@ -555,8 +590,19 @@
                 });
             },
 
+            duplicateSource(source) {
+                const newSource = {...source, name: source.name + ' (copy)', id: ''};
+                apiV2('POST', '/api/v2/sources', newSource).then((res) => {
+                    toast('Added new fact source', res);
+                    this.getSources();
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
             addFact(newFact) {
-                const updatedSource = { ...this.selectedSource };
+                const updatedSource = {...this.selectedSource};
                 updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
