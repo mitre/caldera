@@ -61,7 +61,7 @@
                     <em class="is-flex is-justify-content-center">No sources available; click on the 'Add Source'
                         button to get started.</em>
                 </template>
-                <template x-for="source of filteredSources" :key="source.id" x-data="{editSourceName: false}">
+                <template x-for="source of filteredSources" :key="source.id" x-data="{ editSourceName: false}">
                     <button class="pt-2 no-style source-menu-links"
                             x-bind:class="selectedSource === source ? 'active' : ''"
                             x-on:click="handleSelectSource(source)">
@@ -524,8 +524,8 @@
     function alpineSources() {
         return {
             // CONSTANTS
-            EMPTY_FACT_OBJECT: {trait: '', value: '', score: 1},
-            EMPTY_RULE_OBJECT: {action: 'ALLOW', match: '', trait: ''},
+            EMPTY_FACT_OBJECT: { trait: '', value: '', score: 1 },
+            EMPTY_RULE_OBJECT: { action: 'ALLOW', match: '', trait: '' },
 
             sources: [],
             filteredSources: [],
@@ -577,7 +577,7 @@
                     facts: [],
                     rules: [],
                     relationships: []
-                }
+                };
                 apiV2('POST', '/api/v2/sources', newSource).then((res) => {
                     toast('Added new fact source', res);
                     this.getSources();
@@ -588,7 +588,7 @@
             },
 
             duplicateSource(source) {
-                const newSource = {...source, name: source.name + ' (copy)', id: ''};
+                const newSource = { ...source, name: `${source.name} (copy)`, id: '' };
                 apiV2('POST', '/api/v2/sources', newSource).then((res) => {
                     toast('Added new fact source', res);
                     this.getSources();
@@ -599,7 +599,7 @@
             },
 
             addFact(newFact) {
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
@@ -620,9 +620,9 @@
                     toast('Error: Rule already exists');
                     return;
                 }
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.rules.push(newRule);
-                apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, updatedSource).then((res) => {
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
                     this.showAddRuleRow = false;
                 }).catch((error) => {
@@ -632,12 +632,12 @@
             },
 
             deleteFact(fact) {
-                this.selectedSource.facts.splice(this.selectedSource.facts.findIndex(f => f.unique === fact.unique), 1);
+                this.selectedSource.facts.splice(this.selectedSource.facts.findIndex((f) => f.unique === fact.unique), 1);
                 this.updateFactSource();
             },
 
             deleteRule(rule) {
-                this.selectedSource.rules.splice(this.selectedSource.rules.findIndex(r => r === rule), 1);
+                this.selectedSource.rules.splice(this.selectedSource.rules.findIndex((r) => r === rule), 1);
                 this.updateFactSource();
             },
 

@@ -1,109 +1,110 @@
 
 /* FILTER SEARCH BOX STYLE */
 .filter-search-box i {
-    background-color: #262626;
-    color: gray;
-    height: 30px;
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background-color: #262626;
+  color: gray;
+  height: 30px;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .filter-search-box i:first-child {
-    border-radius: 2px 0 0 2px;
+  border-radius: 2px 0 0 2px;
 }
 
 .filter-search-box i:last-child {
-    border-radius: 0 2px 2px 0;
+  border-radius: 0 2px 2px 0;
 }
 
 .filter-search-box input {
-    height: 30px;
-    padding: 5px;
-    border: none;
-    width: 100%;
-    border-radius: 0;
+  height: 30px;
+  padding: 5px;
+  border: none;
+  width: 100%;
+  border-radius: 0;
 }
 
-/*TOGGLE STYLE*/
+/* TOGGLE STYLE */
+
 /* toggle buttons */
 .toggleContainer {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 .toggleContainer label {
-    font-size: 0.75em;
+  font-size: 0.75em;
 }
 
 .toggleSwitch {
-    position: relative;
-    display: inline-block;
-    width: 65px;
-    height: 34px;
+  position: relative;
+  display: inline-block;
+  width: 65px;
+  height: 34px;
 }
 
 .toggleSwitch input {
-    display: none;
+  display: none;
 }
 
 .toggleSlider {
-    border: 2px solid white;
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 34px;
+  border: 2px solid white;
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 34px;
 }
 
 .toggleSlider::before {
-    position: absolute;
-    content: "";
-    height: 24px;
-    width: 24px;
-    bottom: 4px;
-    transition: all 0.3s ease;
-    left: 3px;
-    top: 3px;
+  position: absolute;
+  content: "";
+  height: 24px;
+  width: 24px;
+  bottom: 4px;
+  transition: all 0.3s ease;
+  left: 3px;
+  top: 3px;
 }
 
 .toggle-off {
-    background-color: initial;
+  background-color: initial;
 }
 
 .toggle-on {
-    background-color: #339c3f;
+  background-color: #339c3f;
 }
 
 .toggle-slider-on,
 .toggle-slider-off {
-    color: white;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
-    font-size: 10px;
-    font-family: Verdana, sans-serif;
+  color: white;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  left: 50%;
+  font-size: 10px;
+  font-family: Verdana, sans-serif;
 }
 
 .toggle-on.toggleSlider.toggleSlider::before {
-    background-color: white;
-    transform: translatex(30px);
+  background-color: white;
+  transform: translateX(30px);
 }
 
 .toggle-off.toggleSlider.toggleSlider::before {
-    background-color: white;
-    transform: translatex(0px);
+  background-color: white;
+  transform: translateX(0);
 }
 
 .toggleSlider.toggleSliderRound::before {
-    border-radius: 50%;
+  border-radius: 50%;
 }
 
-/*END TOGGLE*/
+/* END TOGGLE */
 
 /* MODAL FORM STYLE */
 .startup-errors-warning span {
@@ -151,12 +152,14 @@
   text-align: left;
 }
 
-.collapsible-header .expanded::after, .modal-card .modal-form-group-header b .modal-card .expanded span:first-child::after {
+.collapsible-header .expanded::after,
+.modal-card .modal-form-group-header b .modal-card .expanded span:first-child::after {
   margin-left: 0.2rem;
   content: "▼";
 }
 
-.collapsible-header .collapsed::after, .modal-card .modal-form-group-header b .modal-card .collapsed span:first-child::after {
+.collapsible-header .collapsed::after,
+.modal-card .modal-form-group-header b .modal-card .collapsed span:first-child::after {
   margin-left: 0.2rem;
   content: "►";
 }
