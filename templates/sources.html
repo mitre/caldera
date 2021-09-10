@@ -87,6 +87,7 @@
             <em class="is-flex is-justify-content-center">Click on a fact source to get started.</em>
         </template>
 
+        <!-- TODO add adversary profile information as HTML <datalist> suggestions when adding to fact source -->
         <template x-if="selectedSource">
             <div>
                 <!-- FACTS CONTENT -->
@@ -395,6 +396,133 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- TODO: will user want to edit/remove relationships? -->
+                <!-- RELATIONSHIPS CONTENT -->
+                <div class="my-5" x-data="{collapseRelationships: false}">
+                    <div class="collapsible-header">
+                        <button class="button px-0 no-style is-size-4"
+                                x-on:click="collapseRelationships = !collapseRelationships"
+                                x-bind:class="collapseRelationships ? 'collapsed' : 'expanded'">
+                            Relationships
+                        </button>
+                    </div>
+                    <span class="navbar-divider"></span>
+                    <div x-show="!collapseRelationships" x-data="{selectedRelationship: null}">
+                        <!-- RELATIONSHIPS CONTROLS BAR -->
+                        <div class="is-flex is-flex-direction-row">
+                            <div class="pl-0 is-flex is-align-content-flex-start">
+                                <button type="button"
+                                        class="ml-2 button is-primary is-small"
+                                        x-on:click="showAddRelationshipRow = true; selectedRelationship = null">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                    <span>Add Relationship</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- RELATIONSHIPS TABLE -->
+                        <table class="table is-striped">
+                            <thead>
+                            <tr>
+                                <th class="index-column"></th>
+                                <th>Source</th>
+                                <th>Edge</th>
+                                <th>Target</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <template x-if="selectedSource.relationships.length < 1 && !showAddRelationshipRow">
+                                <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-align-center py-2">
+                                        <em>No rules; click 'Add Relationship' to get started.</em>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </template>
+                            <tbody>
+                            <template x-if="showAddRelationshipRow">
+                                <tr x-data="{newRelationship: EMPTY_RELATIONSHIP_OBJECT}">
+                                    <td></td>
+                                    <td>
+                                        <label x-show="false" for="new-relationship-source">Relationship Source</label>
+                                        <textarea id="new-relationship-source"
+                                                  class="code is-italic"
+                                                  contenteditable
+                                                  x-model="newRelationship.source.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-relationship-edge">Relationship Edge</label>
+                                        <textarea id="new-relationship-edge"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="newRelationship.edge"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <label x-show="false" for="new-relationship-target">Relationship Target</label>
+                                        <textarea id="new-relationship-target"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="newRelationship.target.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="button is-small is-primary"
+                                                x-on:click="addRelationship(newRelationship); newRelationship = EMPTY_RULE_OBJECT">
+                                            Add
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <template x-for="(rel, index) in selectedSource.relationships">
+                                <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;"
+                                    x-bind:class="selectedRelationship === rel ? 'selected' : ''">
+                                    <td class="index-column" x-text="index"></td>
+                                    <td x-show="selectedRelationship === rel">
+                                        <label x-show="false" for="edit-rel-source">Relationship Source</label>
+                                        <textarea id="edit-rel-source"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="rel.source.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td x-show="selectedRelationship !== rel" x-text="rel.source?.trait"></td>
+                                    <td x-show="selectedRelationship === rel">
+                                        <label x-show="false" for="edit-rel-edge">Relationship Edge</label>
+                                        <textarea id="edit-rel-edge"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="rel.edge"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td x-show="selectedRelationship !== rel" x-text="rel.edge"></td>
+                                    <td x-show="selectedRelationship === rel">
+                                        <label x-show="false" for="edit-rel-target">Relationship Target</label>
+                                        <textarea id="edit-rel-target"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="rel.target.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td x-show="selectedRelationship !== rel" x-text="rel.target?.trait"></td>
+                                    <td>
+                                        <button x-show="selectedRelationship === rel" type="button"
+                                                class="button is-small is-primary"
+                                                x-on:click="updateFactSource()">
+                                            Save
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </template>
     </div>
@@ -524,8 +652,9 @@
     function alpineSources() {
         return {
             // CONSTANTS
-            EMPTY_FACT_OBJECT: { trait: '', value: '', score: 1 },
-            EMPTY_RULE_OBJECT: { action: 'ALLOW', match: '', trait: '' },
+            EMPTY_FACT_OBJECT: {trait: '', value: '', score: 1},
+            EMPTY_RULE_OBJECT: {action: 'ALLOW', match: '', trait: ''},
+            EMPTY_RELATIONSHIP_OBJECT: {source: {trait: ''}, edge: '', target: {trait: ''}},
 
             sources: [],
             filteredSources: [],
@@ -534,6 +663,7 @@
             selectedSource: null,
             showAddFactRow: false,
             showAddRuleRow: false,
+            showAddRelationshipRow: false,
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -588,7 +718,7 @@
             },
 
             duplicateSource(source) {
-                const newSource = { ...source, name: `${source.name} (copy)`, id: '' };
+                const newSource = {...source, name: `${source.name} (copy)`, id: ''};
                 apiV2('POST', '/api/v2/sources', newSource).then((res) => {
                     toast('Added new fact source', res);
                     this.getSources();
@@ -599,7 +729,7 @@
             },
 
             addFact(newFact) {
-                const updatedSource = { ...this.selectedSource };
+                const updatedSource = {...this.selectedSource};
                 updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
@@ -620,11 +750,23 @@
                     toast('Error: Rule already exists');
                     return;
                 }
-                const updatedSource = { ...this.selectedSource };
+                const updatedSource = {...this.selectedSource};
                 updatedSource.rules.push(newRule);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
                     this.showAddRuleRow = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            addRelationship(newRelationship) {
+                const updatedSource = {...this.selectedSource};
+                updatedSource.relationships.push(newRelationship);
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
+                    toast('Updated source', res);
+                    this.showAddRelationshipRow = false;
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
