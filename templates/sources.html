@@ -483,33 +483,9 @@
                                 <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;"
                                     x-bind:class="selectedRelationship === rel ? 'selected' : ''">
                                     <td class="index-column" x-text="index"></td>
-                                    <td x-show="selectedRelationship === rel">
-                                        <label x-show="false" for="edit-rel-source">Relationship Source</label>
-                                        <textarea id="edit-rel-source"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="rel.source.trait"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td x-show="selectedRelationship !== rel" x-text="rel.source?.trait"></td>
-                                    <td x-show="selectedRelationship === rel">
-                                        <label x-show="false" for="edit-rel-edge">Relationship Edge</label>
-                                        <textarea id="edit-rel-edge"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="rel.edge"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td x-show="selectedRelationship !== rel" x-text="rel.edge"></td>
-                                    <td x-show="selectedRelationship === rel">
-                                        <label x-show="false" for="edit-rel-target">Relationship Target</label>
-                                        <textarea id="edit-rel-target"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="rel.target.trait"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td x-show="selectedRelationship !== rel" x-text="rel.target?.trait"></td>
+                                    <td x-text="rel.source?.trait"></td>
+                                    <td x-text="rel.edge"></td>
+                                    <td x-text="rel.target?.trait"></td>
                                     <td>
                                         <button x-show="selectedRelationship === rel" type="button"
                                                 class="button is-small is-primary"
