@@ -148,7 +148,7 @@
                             <template x-if="filteredFacts.length < 1 && !showAddFactRow">
                                 <tbody>
                                 <tr>
-                                    <td colspan="4" class="text-align-center py-2">
+                                    <td colspan="5" class="text-align-center py-2">
                                         <em>No facts; click 'Add Fact' to get started.</em>
                                     </td>
                                 </tr>
@@ -190,7 +190,7 @@
                                 </tr>
                             </template>
                             <template x-for="(fact, index) in filteredFacts" :key="fact.unique">
-                                <tr x-on:click="selectedFact = fact"
+                                <tr x-on:click="selectedFact = fact; showAddFactRow = false;"
                                     x-bind:class="selectedFact === fact ? 'selected' : ''">
                                     <td class="index-column" x-text="index"></td>
                                     <td x-show="selectedFact !== fact" x-text="fact.trait"></td>
@@ -341,7 +341,7 @@
                             </template>
                             <!-- TODO ? rethink index here, as it does not accurately represent actual runtime order of rules-->
                             <template x-for="(rule, index) in filteredRules">
-                                <tr x-on:click="selectedRule = rule"
+                                <tr x-on:click="selectedRule = rule; showAddRuleRow = false;"
                                     x-bind:class="selectedRule === rule ? 'selected' : ''">
                                     <td class="index-column" x-text="index"></td>
                                     <td x-show="selectedRule === rule">
@@ -552,7 +552,6 @@
             },
 
             handleEditSource(editSourceName) {
-                console.log('handle edit source name');
                 editSourceName = false;
                 this.updateFactSource();
             },
@@ -564,13 +563,11 @@
 
             filterFacts(input = '') {
                 input = input.toLowerCase();
-                console.log('FILTER FACTS CALLED', input);
                 this.filteredFacts = this.selectedSource.facts.filter((f) => (f.trait.toLowerCase().includes(input) || f.value.toLowerCase().includes(input)));
             },
 
             filterRules(input = '') {
                 input = input.toLowerCase();
-                console.log('FILTER RULES CALLED', input);
                 this.filteredRules = this.selectedSource.rules.filter((r) => (r.match.toLowerCase().includes(input) || r.trait.toLowerCase().includes(input)));
             },
 
@@ -612,8 +609,17 @@
                     console.error(error);
                 });
             },
-            // TODO maybe validate if rule/fact does not already exist before adding?
+
+            // Validate rule does not already exist TODO this might be handled by server?
+            validateRule(newRule) {
+                return !this.selectedSource.rules.find((r) => (r.match === newRule.match && r.trait === newRule.trait));
+            },
+
             addRule(newRule) {
+                if (!this.validateRule(newRule)) {
+                    toast('Error: Rule already exists');
+                    return;
+                }
                 const updatedSource = {...this.selectedSource};
                 updatedSource.rules.push(newRule);
                 apiV2('PUT', '/api/v2/sources/' + this.selectedSource.id, updatedSource).then((res) => {
@@ -626,21 +632,16 @@
             },
 
             deleteFact(fact) {
-                console.log('DEL FACT', fact, 'FROM', this.selectedSource);
                 this.selectedSource.facts.splice(this.selectedSource.facts.findIndex(f => f.unique === fact.unique), 1);
-                console.log('REMOVED', this.selectedSource);
                 this.updateFactSource();
             },
 
             deleteRule(rule) {
-                console.log('DEL FACT', rule, 'FROM', this.selectedSource);
                 this.selectedSource.rules.splice(this.selectedSource.rules.findIndex(r => r === rule), 1);
-                console.log('REMOVED', this.selectedSource);
                 this.updateFactSource();
             },
 
             updateFactSource() {
-                console.log('Update fact', this.selectedSource);
                 apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
                     toast('Updated source', res);
                     this.getSources();
