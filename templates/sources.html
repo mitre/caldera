@@ -17,7 +17,7 @@
                         <i class="fas fa-search"></i>
                         <input class="input is-small"
                                id="source-search"
-                               placeholder="Fact source name"
+                               placeholder="Fact source"
                                x-model="filterKeyword"
                                x-on:keyup="filterSources($el.value)">
                         <i class="fas fa-times"
@@ -90,7 +90,7 @@
                                     <i class="fas fa-search"></i>
                                     <input class="input is-small"
                                            id="fact-search"
-                                           placeholder="Fact trait"
+                                           placeholder="Fact keyword"
                                            x-model="factsFilterKeyword"
                                            x-on:keyup="filterFacts($el.value)">
                                     <i class="fas fa-times"
@@ -103,7 +103,7 @@
                             <div class="pl-0 is-flex is-align-content-flex-start">
                                 <button type="button"
                                         class="ml-2 button is-primary is-small"
-                                        x-on:click="showAddFactRow = true">
+                                        x-on:click="showAddFactRow = true; selectedFact = null">
                                     <span class="icon"><i class="fas fa-plus"></i></span>
                                     <span>Add Fact</span>
                                 </button>
@@ -122,10 +122,11 @@
                         <table class="table is-striped">
                             <thead>
                             <tr class="table-header">
+                                <th></th>
                                 <th>Fact Trait</th>
                                 <th>Value</th>
                                 <th>Score</th>
-                                <th class="px-3"></th>
+                                <th></th>
                             </tr>
                             </thead>
                             <template x-if="filteredFacts.length < 1 && !showAddFactRow">
@@ -139,7 +140,8 @@
                             </template>
                             <tbody>
                             <template x-if="showAddFactRow">
-                                <tr x-data="{newFact: {trait: '', value: '', score: 1}}">
+                                <tr x-data="{newFact: EMPTY_FACT_OBJECT}">
+                                    <td></td>
                                     <td>
                                         <label x-show="false" for="new-fact-trait">Fact Trait</label>
                                         <textarea id="new-fact-trait"
@@ -158,23 +160,25 @@
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-fact-score">Fact Score</label>
-                                        <input class="input fact-score" id="new-fact-score" type="number"
+                                        <input class="is-small input fact-score" id="new-fact-score" type="number"
                                                x-model="newFact.score"
                                                min="0"/>
                                     </td>
                                     <td>
                                         <button type="button"
                                                 class="button is-small is-primary"
-                                                x-on:click="addFact(newFact);">
+                                                x-on:click="addFact(newFact); newFact = EMPTY_FACT_OBJECT">
                                             Add
                                         </button>
                                     </td>
                                 </tr>
                             </template>
-                            <template x-for="fact in filteredFacts">
+                            <template x-for="(fact, index) in filteredFacts" :key="fact.unique">
                                 <tr x-on:click="selectedFact = fact"
                                     x-bind:class="selectedFact === fact ? 'selected' : ''">
-                                    <td>
+                                    <td class="index-column" x-text="index"></td>
+                                    <td x-show="selectedFact !== fact" x-text="fact.trait"></td>
+                                    <td x-show="selectedFact === fact">
                                         <label x-show="false" for="edit-fact-trait">Fact Trait</label>
                                         <textarea id="edit-fact-trait"
                                                   class="code"
@@ -182,7 +186,8 @@
                                                   x-model="fact.trait"
                                                   spellcheck="false"></textarea>
                                     </td>
-                                    <td>
+                                    <td x-show="selectedFact !== fact" x-text="fact.value"></td>
+                                    <td x-show="selectedFact === fact">
                                         <label x-show="false" for="edit-fact-value">Fact Value</label>
                                         <textarea id="edit-fact-value"
                                                   class="code is-italic"
@@ -190,17 +195,12 @@
                                                   x-model="fact.value"
                                                   spellcheck="false"></textarea>
                                     </td>
-                                    <td>
-                                        <label x-show="false" for="edit-fact-score">Fact Score</label>
-                                        <input class="input fact-score" id="edit-fact-score" type="number"
-                                               x-model="fact.score"
-                                               min="0"/>
-                                    </td>
+                                    <td xx-text="fact.score"></td>
                                     <td>
                                         <button x-show="selectedFact === fact"
                                                 type="button"
-                                                class="button is-small"
-                                                x-on:click="updateFact()">
+                                                class="button is-small is-primary"
+                                                x-on:click="updateFactSource()">
                                             Save
                                         </button>
                                     </td>
@@ -227,7 +227,7 @@
                                     <i class="fas fa-search"></i>
                                     <input class="input is-small"
                                            id="rule-search"
-                                           placeholder="rule trait"
+                                           placeholder="Rule keyword"
                                            x-model="rulesFilterKeyword"
                                            x-on:keyup="filterRules($el.value)">
                                     <i class="fas fa-times"
@@ -240,7 +240,7 @@
                             <div class="pl-0 is-flex is-align-content-flex-start">
                                 <button type="button"
                                         class="ml-2 button is-primary is-small"
-                                        x-on:click="showAddRuleRow = true">
+                                        x-on:click="showAddRuleRow = true; selectedRule = null">
                                     <span class="icon"><i class="fas fa-plus"></i></span>
                                     <span>Add Rule</span>
                                 </button>
@@ -259,16 +259,17 @@
                         <table class="table is-striped">
                             <thead>
                             <tr>
-                                <th class="rule-order-column">Order</th>
+                                <th class="index-column">Order</th>
                                 <th>Match</th>
                                 <th>Fact Trait</th>
-                                <th>Action</th>
+                                <th class="text-align-center">Action</th>
+                                <th></th>
                             </tr>
                             </thead>
                             <template x-if="filteredRules.length < 1 && !showAddRuleRow">
                                 <tbody>
                                 <tr>
-                                    <td colspan="4" class="text-align-center py-2">
+                                    <td colspan="5" class="text-align-center py-2">
                                         <em>No rules; click 'Add Rule' to get started.</em>
                                     </td>
                                 </tr>
@@ -276,7 +277,7 @@
                             </template>
                             <tbody>
                             <template x-if="showAddRuleRow">
-                                <tr x-data="{newRule: {action: 'ALLOW', match: '', trait: ''}}">
+                                <tr x-data="{newRule: EMPTY_RULE_OBJECT}">
                                     <td></td>
                                     <td>
                                         <label x-show="false" for="new-rule-match">Rule Match</label>
@@ -289,14 +290,14 @@
                                     <td>
                                         <label x-show="false" for="new-rule-trait">Rule Trait</label>
                                         <textarea id="new-rule-trait"
-                                                  class="code is-italic"
+                                                  class="code"
                                                   contenteditable
                                                   x-model="newRule.trait"
                                                   spellcheck="false"></textarea>
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-rule-action">Rule Action</label>
-                                        <div class="toggleContainer" id="new-rule-action">
+                                        <div class="toggleContainer is-flex is-justify-content-center" id="new-rule-action">
                                             <label class="has-text-danger" for="toggleAction">DENY</label>
                                             <div class="toggleSwitch mx-2">
                                                 <input type="checkbox"
@@ -315,7 +316,7 @@
                                     <td>
                                         <button type="button"
                                                 class="button is-small is-primary"
-                                                x-on:click="addRule(newRule)">
+                                                x-on:click="addRule(newRule); newRule = EMPTY_RULE_OBJECT">
                                             Add
                                         </button>
                                     </td>
@@ -325,12 +326,51 @@
                             <template x-for="(rule, index) in filteredRules">
                                 <tr x-on:click="selectedRule = rule"
                                     x-bind:class="selectedRule === rule ? 'selected' : ''">
-                                    <td class="rule-order-column" x-text="index"></td>
-                                    <td x-text="rule.match"></td>
-                                    <td x-text="rule.trait"></td>
-                                    <td x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
+                                    <td class="index-column" x-text="index"></td>
+                                    <td x-show="selectedRule === rule">
+                                        <label x-show="false" for="edit-rule-match">Rule Match</label>
+                                        <textarea id="edit-rule-match"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="rule.match"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td x-show="selectedRule !== rule" x-text="rule.match"></td>
+                                    <td x-show="selectedRule === rule">
+                                        <label x-show="false" for="edit-rule-trait">Rule Trait</label>
+                                        <textarea id="edit-rule-trait"
+                                                  class="code"
+                                                  contenteditable
+                                                  x-model="rule.trait"
+                                                  spellcheck="false"></textarea>
+                                    </td>
+                                    <td x-show="selectedRule !== rule" x-text="rule.trait"></td>
+                                    <td x-show="selectedRule === rule">
+                                        <div class="toggleContainer is-flex is-justify-content-center">
+                                            <label class="has-text-danger" for="toggleRuleAction">DENY</label>
+                                            <div class="toggleSwitch mx-2">
+                                                <input type="checkbox"
+                                                       id="toggleRuleAction"
+                                                       x-model="rule.action"
+                                                       x-bind:checked="rule.action === 'ALLOW' ? 'checked' : null"/>
+                                                <span class="toggleSlider toggleSliderRound"
+                                                      x-on:click="rule.action = (rule.action === 'ALLOW' ? 'DENY' : 'ALLOW')"
+                                                      x-bind:class="rule.action === 'ALLOW' ? 'toggle-on' : 'toggle-off'">
+                                                    <span x-bind:class="rule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                                </span>
+                                            </div>
+                                            <label class="has-text-success" for="toggleAction">ALLOW</label>
+                                        </div>
+                                    </td>
+                                    <td x-show="selectedRule !== rule" class="text-align-center" x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
                                         x-text="rule.action"></td>
-                                    <td></td>
+                                    <td>
+                                        <button x-show="selectedRule === rule" type="button"
+                                                class="button is-small is-primary"
+                                                x-on:click="updateFactSource()">
+                                            Save
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
                             </tbody>
@@ -418,21 +458,46 @@
     }
 
     .sources-page table tbody tr:hover, .sources-page table tbody tr.selected {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.1) !important;
     }
 
     .sources-page table input.fact-score {
         width: 5em;
     }
 
-    .sources-page table .rule-order-column {
+    .sources-page table .index-column {
         color: var(--dark-gray);
+    }
+    .sources-page .toggle-on.toggleSlider.toggleSlider::before {
+        transform: translatex(24px);
+    }
+
+    .sources-page .toggleSwitch {
+        width: 55px;
+        height: 28px;
+    }
+    .sources-page .toggle-off {
+        background-color: var(--primary-color);
+    }
+    .sources-page .toggleSlider::before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        bottom: 4px;
+        transition: all 0.3s ease;
+        left: 3px;
+        top: 2px;
     }
 </style>
 
 <script>
     function alpineSources() {
         return {
+            // CONSTANTS
+            EMPTY_FACT_OBJECT: {trait: '', value: '', score: 1},
+            EMPTY_RULE_OBJECT: {action: 'ALLOW', match: '', trait: ''},
+
             sources: [],
             filteredSources: [],
             filteredFacts: [],
@@ -501,7 +566,7 @@
                     console.error(error);
                 });
             },
-
+            // TODO maybe validate if rule/fact does not already exist before adding?
             addRule(newRule) {
                 const updatedSource = {...this.selectedSource};
                 updatedSource.rules.push(newRule);
@@ -518,20 +583,21 @@
                 console.log('DEL FACT', fact, 'FROM', this.selectedSource);
                 this.selectedSource.facts.splice(this.selectedSource.facts.findIndex(f => f.unique === fact.unique), 1);
                 console.log('REMOVED', this.selectedSource);
-                this.updateFact();
+                this.updateFactSource();
             },
 
             deleteRule(rule) {
                 console.log('DEL FACT', rule, 'FROM', this.selectedSource);
                 this.selectedSource.rules.splice(this.selectedSource.rules.findIndex(r => r === rule), 1);
                 console.log('REMOVED', this.selectedSource);
-                this.updateFact();
+                this.updateFactSource();
             },
 
-            updateFact() {
+            updateFactSource() {
                 console.log('Update fact', this.selectedSource);
                 apiV2('PATCH', '/api/v2/sources/' + this.selectedSource.id, this.selectedSource).then((res) => {
                     toast('Updated source', res);
+                    this.getSources();
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
