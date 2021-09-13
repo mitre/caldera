@@ -898,8 +898,49 @@
 </div>
 
 <script>
+    const EMPTY_OPERATIONS_OBJECT = {
+        name: '',
+        group: '',
+        adversary: {adversary_id: ''},
+        auto_close: 0,
+        state: 'running',
+        autonomous: 1,
+        planner: {id: 'atomic'},
+        source: {id: 'basic'},
+        use_learning_parsers: 1,
+        obfuscator: 'plain-text',
+        jitter: '4/8',
+        visibility: '51',
+    };
+    const EMPTY_MANUAL_COMMAND_OBJECT = {
+        paw: '',
+        executor: {
+            name: '',
+            platform: '',
+            command: '',
+        }
+    };
+
     function alpineOperations() {
         return {
+            // CONSTANTS
+            ENDPOINT: '/api/v2/operations',
+            EXECUTOR_SHELLS: {
+                psh: 'PS >',
+                cmd: '>',
+                sh: '$'
+            },
+            LINK_STATUSES: {
+                0: 'success',
+                '-1': 'paused',
+                1: 'failed',
+                '-2': 'discarded',
+                '-3': 'collect',
+                '-4': 'untrusted',
+                '-5': 'visible',
+                124: 'timeout'
+            },
+
             docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
             agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
@@ -919,10 +960,10 @@
             operations: [],
             filteredOperations: [],
             searchInput: '',
-            startOperation: this.EMPTY_OPERATIONS_OBJECT,
+            startOperation: EMPTY_OPERATIONS_OBJECT,
             jitterMin: 4,
             jitterMax: 8,
-            manualCommand: this.EMPTY_MANUAL_COMMAND_OBJECT,
+            manualCommand: EMPTY_MANUAL_COMMAND_OBJECT,
             potentialLink: {
                 agent: '',
                 tactic: '',
@@ -937,46 +978,6 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
-
-            // CONSTANTS
-            ENDPOINT: '/api/v2/operations',
-            EXECUTOR_SHELLS: {
-                psh: 'PS >',
-                cmd: '>',
-                sh: '$'
-            },
-            LINK_STATUSES: {
-                0: 'success',
-                '-1': 'paused',
-                1: 'failed',
-                '-2': 'discarded',
-                '-3': 'collect',
-                '-4': 'untrusted',
-                '-5': 'visible',
-                124: 'timeout'
-            },
-            EMPTY_OPERATIONS_OBJECT: {
-                name: '',
-                group: '',
-                adversary: { adversary_id: '' },
-                auto_close: 0,
-                state: 'running',
-                autonomous: 1,
-                planner: { id: 'atomic' },
-                source: { id: 'basic' },
-                use_learning_parsers: 1,
-                obfuscator: 'plain-text',
-                jitter: '4/8',
-                visibility: '51',
-            },
-            EMPTY_MANUAL_COMMAND_OBJECT: {
-                paw: '',
-                executor: {
-                    name: '',
-                    platform: '',
-                    command: '',
-                }
-            },
 
             getUsage() {
                 if (this.docs) {
@@ -1095,8 +1096,8 @@
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
-                            toast('Error adding operation');
-                        });
+                        toast('Error adding operation');
+                    });
                 }
             },
 
@@ -1190,7 +1191,7 @@
             },
 
             updateLink(status, command = null) {
-                const updateLink = { ...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command) };
+                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
                 if (command) {
                     updateLink.command = command;
                 }
@@ -1249,7 +1250,7 @@
                     });
                     csv.push(rowItems.join(','));
                 });
-                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
+                this.createDownloadReport(new Blob([csv.join('\n')], {type: 'text/csv'}), this.selectedOperation.name, true);
             },
 
             handleDownload() {
