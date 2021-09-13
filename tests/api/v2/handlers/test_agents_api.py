@@ -27,7 +27,7 @@ def updated_agent_fields_payload():
 
 
 @pytest.fixture
-def expected_updated_agent_payload(test_agent, updated_agent_fields_payload):
+def expected_updated_agent_dump(test_agent, updated_agent_fields_payload):
     expected_payload = test_agent.schema.dump(test_agent)
     expected_payload.update(updated_agent_fields_payload)
     return expected_payload
@@ -65,11 +65,12 @@ def new_agent_payload():
 
 
 @pytest.fixture
-def new_agent_object(new_agent_payload, mocker, mock_time):
+def expected_new_agent_dump(new_agent_payload, mocker, mock_time):
     with mocker.patch('datetime.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
-        return Agent().load(new_agent_payload)
+        agent = Agent().load(new_agent_payload)
+        return agent.schema.dump(agent)
 
 
 @pytest.fixture
@@ -169,25 +170,26 @@ class TestAgentsApi:
         resp = await api_v2_client.get('/api/v2/agents/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_agent(self, api_v2_client, api_cookies, new_agent_payload, mocker, new_agent_object, mock_time):
+    async def test_create_agent(self, api_v2_client, api_cookies, new_agent_payload, mocker, expected_new_agent_dump,
+                                mock_time):
         with mocker.patch('datetime.datetime') as mock_datetime:
             mock_datetime.return_value = mock_datetime
             mock_datetime.now.return_value = mock_time
             resp = await api_v2_client.post('/api/v2/agents', cookies=api_cookies, json=new_agent_payload)
             assert resp.status == HTTPStatus.OK
             agent_dict = await resp.json()
-            assert agent_dict == new_agent_object.schema.dump(new_agent_object)
+            assert agent_dict == expected_new_agent_dump
 
     async def test_unauthorized_create_agent(self, api_v2_client, new_agent_payload):
         resp = await api_v2_client.post('/api/v2/agents', json=new_agent_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_update_agent(self, api_v2_client, api_cookies, test_agent, updated_agent_fields_payload,
-                                expected_updated_agent_payload):
+                                expected_updated_agent_dump):
         resp = await api_v2_client.patch('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_fields_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
-        assert agent_dict == expected_updated_agent_payload
+        assert agent_dict == expected_updated_agent_dump
 
     async def test_unauthorized_update_agent(self, api_v2_client, test_agent, updated_agent_fields_payload):
         resp = await api_v2_client.patch('/api/v2/agents/123', json=updated_agent_fields_payload)
@@ -198,22 +200,22 @@ class TestAgentsApi:
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_create_or_update_existing_agent(self, api_v2_client, api_cookies, test_agent, mocker,
-                                                   updated_agent_fields_payload, expected_updated_agent_payload):
+                                                   updated_agent_fields_payload, expected_updated_agent_dump):
         resp = await api_v2_client.put('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_fields_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
-        assert agent_dict == expected_updated_agent_payload
+        assert agent_dict == expected_updated_agent_dump
 
     async def test_unauthorized_create_or_update_agent(self, api_v2_client, test_agent, updated_agent_fields_payload):
         resp = await api_v2_client.put('/api/v2/agents/123', json=updated_agent_fields_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_create_or_update_nonexistent_agent(self, api_v2_client, api_cookies, new_agent_payload,
-                                                      new_agent_object):
+                                                      expected_new_agent_dump):
         resp = await api_v2_client.put('/api/v2/agents/456', cookies=api_cookies, json=new_agent_payload)
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
-        assert agent_dict == new_agent_object.schema.dump(new_agent_object)
+        assert agent_dict == expected_new_agent_dump
 
     async def test_get_deploy_commands(self, api_v2_client, api_cookies, deploy_ability, mocker, raw_ability,
                                        agent_config, app_config, combined_config):
