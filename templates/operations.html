@@ -15,8 +15,10 @@
 
         <div>
             <div x-bind:class="isOperationsControlsExpanded ? '' : 'columns'">
-                <div class="is-flex-direction-column" x-bind:class="isOperationsControlsExpanded ? '' : 'column is-half pb-0'">
-                    <div class="pl-0 is-flex is-align-content-flex-start">
+                <div class="is-flex-direction-column"
+                     x-bind:class="isOperationsControlsExpanded ? '' : 'column is-half pb-0'">
+                    <div class="pl-0 is-flex is-align-content-flex-start"
+                         x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
                         <div x-bind:class="isOperationsControlsExpanded ? 'is-one-fifth' : ''">
                             <div class="field has-addons">
                                 <div class="control has-icons-left">
@@ -41,8 +43,9 @@
                         </div>
                         <div>&nbsp;&nbsp;</div>
                         <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
-                                title="creates a new operation based on the last created operation settings " class="button is-primary is-small"
-                                x-on:click="addOperation(true)"><i class="pr-1 fas fa-plus"></i>
+                                title="creates a new operation based on the last created operation settings "
+                                class="button is-primary is-small"
+                                x-on:click="addOperation(true, startOperation)"><i class="pr-1 fas fa-plus"></i>
                             Quick Add
                         </button>
                         <button type="button" title="add operation" class="ml-2 button is-primary is-small"
@@ -461,7 +464,7 @@
             <div class="modal is-active">
                 <div class="modal-background" @click="openModal = null"></div>
                 <form class="m-1">
-                    <div class="modal-card">
+                    <div class="modal-card" x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
                         <template x-if="openModal === 'addOperation'">
                             <div>
                                 <header class="modal-card-head">
@@ -664,7 +667,7 @@
                                                     x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                             <div class="modal-form-fields" id="stealth-jitter">
                                                 <input class="input"
-                                                       x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
+                                                       x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
                                                        x-model="jitterMin"
                                                        id="stealth-jitterMin"
                                                        type="number"
@@ -674,7 +677,7 @@
                                                 <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                                 <span>/</span>
                                                 <input class="input"
-                                                       x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
+                                                       x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
                                                        x-model="jitterMax"
                                                        id="stealth-jitterMax"
                                                        type="number"
@@ -902,29 +905,6 @@
 </div>
 
 <script>
-    const EMPTY_OPERATIONS_OBJECT = {
-        name: '',
-        group: '',
-        adversary: {adversary_id: ''},
-        auto_close: 0,
-        state: 'running',
-        autonomous: 1,
-        planner: {id: 'atomic'},
-        source: {id: 'basic'},
-        use_learning_parsers: 1,
-        obfuscator: 'plain-text',
-        jitter: '4/8',
-        visibility: '51',
-    };
-    const EMPTY_MANUAL_COMMAND_OBJECT = {
-        paw: '',
-        executor: {
-            name: '',
-            platform: '',
-            command: '',
-        }
-    };
-
     function alpineOperations() {
         return {
             // CONSTANTS
@@ -964,10 +944,8 @@
             operations: [],
             filteredOperations: [],
             searchInput: '',
-            startOperation: EMPTY_OPERATIONS_OBJECT,
             jitterMin: 4,
             jitterMax: 8,
-            manualCommand: EMPTY_MANUAL_COMMAND_OBJECT,
             potentialLink: {
                 agent: '',
                 tactic: '',
@@ -982,6 +960,34 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
+
+            get EMPTY_OPERATIONS_OBJECT() {
+                return {
+                    name: '',
+                    group: '',
+                    adversary: {adversary_id: ''},
+                    auto_close: 0,
+                    state: 'running',
+                    autonomous: 1,
+                    planner: {id: 'atomic'},
+                    source: {id: 'basic'},
+                    use_learning_parsers: 1,
+                    obfuscator: 'plain-text',
+                    jitter: '4/8',
+                    visibility: '51',
+                }
+            },
+
+            get EMPTY_MANUAL_COMMAND_OBJECT() {
+                return {
+                    paw: '',
+                    executor: {
+                        name: '',
+                        platform: '',
+                        command: '',
+                    }
+                }
+            },
 
             getUsage() {
                 if (this.docs) {
@@ -1060,7 +1066,6 @@
                 apiV2('GET', this.ENDPOINT).then((res) => {
                     this.operations = res;
                     this.filterOperations(this.searchInput);
-                    this.addNewRow = false;
                 }).catch((error) => {
                     toast('Error getting operations');
                 });
@@ -1072,7 +1077,7 @@
                         this.selectedLink = null;
                         this.selectedOperation = res;
                         this.generateAddedLinksList();
-
+                        this.addNewRow = false;
                         // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
                     }).catch((error) => {
                         toast('Error getting operation');
@@ -1082,20 +1087,18 @@
                 }
             },
 
-            addOperation(isQuickAdd = false) {
-                if (isQuickAdd) this.startOperation.name = this.searchInput;
-                if (!this.validateJitter(this.startOperation.jitter)) return;
-                if (!this.startOperation.name) {
+            addOperation(isQuickAdd = false, startOperation) {
+                if (isQuickAdd) startOperation.name = this.searchInput;
+                if (!startOperation.name) {
                     toast('Error: Operation name field is empty.');
                 } else {
-                    this.startOperation.autonomous = Number(this.startOperation.autonomous);
-                    this.startOperation.use_learning_parsers = parseInt(this.startOperation.use_learning_parsers, 10) === 1;
-                    this.startOperation.auto_close = parseInt(this.startOperation.auto_close, 10) === 1;
+                    startOperation.autonomous = Number(startOperation.autonomous);
+                    startOperation.use_learning_parsers = parseInt(startOperation.use_learning_parsers, 10) === 1;
+                    startOperation.auto_close = parseInt(startOperation.auto_close, 10) === 1;
 
-                    apiV2('POST', this.ENDPOINT, this.startOperation)
+                    apiV2('POST', this.ENDPOINT, startOperation)
                         .then((res) => {
-                            toast(`Started operation ${this.startOperation.name}!`, true);
-                            this.resetOperation();
+                            toast(`Started operation ${startOperation.name}!`, true);
                             this.getOperations();
                             this.selectedOperation = res;
                             this.openModal = null;
@@ -1284,16 +1287,6 @@
                 elem.click();
             },
 
-            resetOperation() {
-                this.startOperation = this.EMPTY_OPERATIONS_OBJECT;
-            },
-
-            resetObject(obj = {}) {
-                for (const field in obj) {
-                    if (field !== 'index') this.startOperation[field] = '';
-                }
-            },
-
             updateAgentGroups(agents) {
                 if (agents) {
                     agents.forEach((agent) => {
@@ -1302,7 +1295,7 @@
                 }
             },
 
-            validateJitter(newValue = '') {
+            validateJitter(startOperation, newValue = '') {
                 if (!newValue.includes('/')) return false;
                 let [jitterMin, jitterMax] = newValue.split('/');
                 jitterMin = parseInt(jitterMin, 10);
@@ -1317,7 +1310,7 @@
                     return false;
                 }
 
-                this.startOperation.jitter = newValue;
+                startOperation.jitter = newValue;
                 return true;
             },
 
