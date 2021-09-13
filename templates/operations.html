@@ -21,16 +21,17 @@
                             <div class="field has-addons">
                                 <div class="control has-icons-left">
                                     <input class="input is-small"
-                                        id="op-search"
-                                        placeholder="Find an operation..."
-                                        x-ref="search"
-                                        x-on:keyup="filterOperations($el.value)">
+                                           id="op-search"
+                                           placeholder="Find an operation..."
+                                           x-ref="search"
+                                           x-on:keyup="filterOperations($el.value)">
                                     <span class="icon is-small is-left">
                                         <i class="fas fa-search"></i>
                                     </span>
                                 </div>
                                 <div class="control">
-                                    <a class="button is-small" x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
+                                    <a class="button is-small"
+                                       x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
                                         <span class="icon is-small is-right">
                                             <i class="fas fa-times"></i>
                                         </span>
@@ -52,7 +53,8 @@
                     <div class="is-flex is-flex-direction-row is-align-items-center">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
                             <template x-if="filteredOperations.length < 1">
-                                <em class="is-flex is-justify-content-center">No operations available; click on the 'Create Operation' button to get started.</em>
+                                <em class="is-flex is-justify-content-center">No operations available; click on the
+                                    'Create Operation' button to get started.</em>
                             </template>
                             <template x-for="op in filteredOperations" :key="op.id">
                                 <button class="no-style operation-menu-links"
@@ -251,7 +253,8 @@
                                             <span x-text="getHumanFriendlyTime(link.decide)"></span>
                                             <span x-bind:class="'status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
                                                   x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
-                                            <span class="pending-warning" x-show="link.status === -1 && operation.autonomous === '0'">pending approval</span>
+                                            <span class="pending-warning"
+                                                  x-show="link.status === -1 && operation.autonomous === '0'">pending approval</span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
                                                     <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
@@ -358,7 +361,7 @@
                                 <!--                                NEW ROW TO ADD MANUAL COMMAND-->
                                 <tbody>
                                 <template x-if="addNewRow">
-                                    <tr class="csv-exclude">
+                                    <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
                                         <td></td>
                                         <td></td>
                                         <td>New Manual Command</td>
@@ -402,19 +405,19 @@
                                                           spellcheck="false"
                                                           contenteditable
                                                           required></textarea>
-                                                <div class="is-flex is-flex-direction-row is-align-items-flex-end">
-                                                    <button type="button"
-                                                            class="button is-small mr-2"
-                                                            x-on:click="addNewRow = false">
-                                                        Cancel
-                                                    </button>
-                                                    <button type="button"
-                                                            class="button is-primary is-small mt-2"
-                                                            x-on:click="addManualCommand()">
-                                                        Add Command
-                                                    </button>
-                                                </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="button is-primary is-small my-2"
+                                                    x-on:click="addManualCommand(manualCommand)">
+                                                Add Command
+                                            </button>
+                                            <button type="button"
+                                                    class="button is-small mr-2"
+                                                    x-on:click="addNewRow = false">
+                                                Cancel
+                                            </button>
                                         </td>
                                     </tr>
                                 </template>
@@ -530,13 +533,13 @@
                                                     all groups
                                                 </button>
                                                 <template x-for="(group, index) in agentGroups" :key="group">
-                                                        <button type="button"
-                                                                class="is-small button is-rounded is-primary chip m-1"
-                                                                x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
-                                                                x-on:click="startOperation.group = group"
-                                                                x-show="group !== ''"
-                                                                x-text="group">
-                                                        </button>
+                                                    <button type="button"
+                                                            class="is-small button is-rounded is-primary chip m-1"
+                                                            x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
+                                                            x-on:click="startOperation.group = group"
+                                                            x-show="group !== ''"
+                                                            x-text="group">
+                                                    </button>
                                                 </template>
                                             </div>
                                         </div>
@@ -638,22 +641,22 @@
                                         </div>
 
 
-<!--                                        <div>-->
-<!--                                            <label for="autonomous-cleanup_timeout"><span-->
-<!--                                                    class="has-tooltip-multiline has-tooltip-bottom"-->
-<!--                                                    x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec)</span></label>-->
-<!--                                            <div class="modal-form-fields">-->
-<!--                                                <input id="autonomous-cleanup_timeout" class="input"-->
-<!--                                                       x-model="startOperation.timeout" type="number"-->
-<!--                                                       placeholder="30" value="30" min="0" max="300"-->
-<!--                                                       x-on:change.once="toast('The number of seconds Caldera will wait per cleanup action to complete before continuing.', true)">-->
-<!--                                                <button type="button" class="button is-primary no-style reset"-->
-<!--                                                        title="reset to default"-->
-<!--                                                        x-on:click="startOperation.timeout = 30">-->
-<!--                                                    Reset-->
-<!--                                                </button>-->
-<!--                                            </div>-->
-<!--                                        </div>-->
+                                        <!--                                        <div>-->
+                                        <!--                                            <label for="autonomous-cleanup_timeout"><span-->
+                                        <!--                                                    class="has-tooltip-multiline has-tooltip-bottom"-->
+                                        <!--                                                    x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec)</span></label>-->
+                                        <!--                                            <div class="modal-form-fields">-->
+                                        <!--                                                <input id="autonomous-cleanup_timeout" class="input"-->
+                                        <!--                                                       x-model="startOperation.timeout" type="number"-->
+                                        <!--                                                       placeholder="30" value="30" min="0" max="300"-->
+                                        <!--                                                       x-on:change.once="toast('The number of seconds Caldera will wait per cleanup action to complete before continuing.', true)">-->
+                                        <!--                                                <button type="button" class="button is-primary no-style reset"-->
+                                        <!--                                                        title="reset to default"-->
+                                        <!--                                                        x-on:click="startOperation.timeout = 30">-->
+                                        <!--                                                    Reset-->
+                                        <!--                                                </button>-->
+                                        <!--                                            </div>-->
+                                        <!--                                        </div>-->
 
                                         <div>
                                             <label for="stealth-jitter"><span
@@ -886,7 +889,8 @@
                                 </button>
                             </template>
                             <template x-if="openModal === 'addOperation'">
-                                <button type="button" class="button is-primary" x-on:click="addOperation(false)"
+                                <button type="button" class="button is-primary"
+                                        x-on:click="addOperation(false, startOperation)"
                                         x-text="schedule ? 'Schedule' : 'Start'"></button>
                             </template>
                         </footer>
@@ -1056,6 +1060,7 @@
                 apiV2('GET', this.ENDPOINT).then((res) => {
                     this.operations = res;
                     this.filterOperations(this.searchInput);
+                    this.addNewRow = false;
                 }).catch((error) => {
                     toast('Error getting operations');
                 });
@@ -1125,23 +1130,22 @@
                     });
             },
 
-            addManualCommand() {
-                if (!this.manualCommand.executor.command) {
+            addManualCommand(manualCommand) {
+                if (!manualCommand.executor.command) {
                     toast('Enter manual command.');
                     return;
                 }
-                this.manualCommand.paw = this.selectedAgent.paw;
-                this.manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
-                this.manualCommand.executor.platform = this.selectedAgent.platform;
+                manualCommand.paw = this.selectedAgent.paw;
+                manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
+                manualCommand.executor.platform = this.selectedAgent.platform;
 
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, this.manualCommand)
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, manualCommand)
                     .then((res) => {
                         toast('Added manual command.', true);
                         this.getOperation();
 
                         // Reset
                         this.addNewRow = false;
-                        this.manualCommand = this.EMPTY_MANUAL_COMMAND_OBJECT;
                         this.selectedAgentIndex = null;
                     })
                     .catch((error) => toast('Error adding manual command.'));
