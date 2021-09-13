@@ -199,12 +199,10 @@ class TestAgentsApi:
 
     async def test_create_or_update_existing_agent(self, api_v2_client, api_cookies, test_agent, mocker,
                                                    updated_agent_fields_payload, expected_updated_agent_payload):
-        with mocker.patch('app.objects.c_agent.Agent.retrieve') as mock_retrieve:
-            mock_retrieve.return_value = test_agent
-            resp = await api_v2_client.put('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_fields_payload)
-            assert resp.status == HTTPStatus.OK
-            agent_dict = await resp.json()
-            assert agent_dict == expected_updated_agent_payload
+        resp = await api_v2_client.put('/api/v2/agents/123', cookies=api_cookies, json=updated_agent_fields_payload)
+        assert resp.status == HTTPStatus.OK
+        agent_dict = await resp.json()
+        assert agent_dict == expected_updated_agent_payload
 
     async def test_unauthorized_create_or_update_agent(self, api_v2_client, test_agent, updated_agent_fields_payload):
         resp = await api_v2_client.put('/api/v2/agents/123', json=updated_agent_fields_payload)
