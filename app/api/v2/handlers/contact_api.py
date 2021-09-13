@@ -17,6 +17,6 @@ class ContactApi(BaseApi):
 
     @aiohttp_apispec.docs(tags=['contacts'])
     async def get_contact_report(self, request: web.Request):
-        contact_name = request.match_info['name'].upper()
+        contact_name = request.match_info['name']
         report = self._api_manager.get_contact_report(contact_name)
         return web.json_response(report)

@@ -8,6 +8,7 @@ class ContactApiManager(BaseApiManager):
         self.contact_svc = contact_svc
 
     def get_contact_report(self, contact: str = None):
+        contact = contact.upper()
         if contact in self.contact_svc.report:
             return self.contact_svc.report.get(contact)
         raise JsonHttpNotFound(f'Contact not found: {contact}')
