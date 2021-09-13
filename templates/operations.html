@@ -241,7 +241,7 @@
                                 <template x-if="selectedOperation.chain.length === 0">
                                     <tbody>
                                     <tr class="csv-exclude">
-                                        <td colspan="6"><em>No links––click the buttons on the right to add
+                                        <td colspan="7"><em>No links––click the buttons on the right to add
                                             commands/links.</em>
                                         </td>
                                     </tr>
@@ -410,14 +410,14 @@
                                                           required></textarea>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td class="is-flex is-justify-content-center is-flex-direction-column">
                                             <button type="button"
                                                     class="button is-primary is-small my-2"
                                                     x-on:click="addManualCommand(manualCommand)">
                                                 Add Command
                                             </button>
                                             <button type="button"
-                                                    class="button is-small mr-2"
+                                                    class="button is-small"
                                                     x-on:click="addNewRow = false">
                                                 Cancel
                                             </button>
