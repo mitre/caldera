@@ -17,7 +17,7 @@ def report(func):
         agent, instructions = await func(*args, **kwargs)
         log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
                    date=BaseWorld.get_current_timestamp())
-        args[0].report[agent.contact].append(log)
+        args[0].report[agent.contact.upper()].append(log)
         return agent, instructions
 
     return wrapper
