@@ -45,7 +45,7 @@ main.main {
 }
 
 .menu-list a {
-  padding: 0 1.5em 0.5em;
+  padding: 0 1.5em 0.5em !important;
 }
 
 .menu-list a:hover {
