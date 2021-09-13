@@ -41,11 +41,11 @@ main.main {
   color: white !important;
   padding: 8px;
   border-radius: 4px;
-  margin: 10px;
+  margin: 0 10px;
 }
 
 .menu-list a {
-  margin: 0 10px;
+  padding: 0 1.5em 0.5em;
 }
 
 .menu-list a:hover {
@@ -73,8 +73,13 @@ main.main {
 }
 
 .navigation {
-  background-color: black;
+  background-color: #060606cc;
   width: 250px;
+}
+
+.navigation, .main-content {
+  height: 100vh;
+  overflow: scroll;
 }
 
 .nav-logo {
