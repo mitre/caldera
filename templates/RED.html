@@ -20,21 +20,21 @@
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
-                        <button class="button no-style is-warning is-small is-inverted startup-errors-warning">
+                        <a id="startup-errors-warning" class="has-text-warning">
                             <i class="fas fa-exclamation-triangle pr-1"></i>
-                            <span title="Click for to view startup errors" x-text="`${errors.length} startup errors`" @click="showErrors = true"></span>
-                        </button>
+                            <span title="Click for to view startup errors" class="has-text-warning" x-text="`${errors.length} startup errors`" @click="showErrors = true"></span>
+                        </a>
                     </div>
                 </template>
-                <aside class="menu">
-                    <p class="menu-label">Campaigns</p>
+                <aside id="nav-menu" class="menu">
+                    <p class="menu-label"><i class="fas fa-flag pr-2"></i>Campaigns</p>
                     <ul class="menu-list">
                         <li><a href="#home" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
                         <li><a href="#home" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
                         <li><a href="#home" x-on:click="addTab('adversaries', '/campaign/profiles')">adversaries</a></li>
                         <li><a href="#home" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
                     </ul>
-                    <p class="menu-label">Plugins</p>
+                    <p class="menu-label"><i class="fas fa-puzzle-piece pr-2"></i>Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
                             <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
@@ -43,7 +43,7 @@
                                 </template></a></li>
                         {% endfor %}
                     </ul>
-                    <p class="menu-label">Configuration</p>
+                    <p class="menu-label"><i class="fas fa-cog pr-2"></i></i>Configuration</p>
                     <ul class="menu-list">
                         <li><a href="#home" x-on:click="addTab('fact sources', '/advanced/sources')">fact sources</a></li>
                         <li><a href="#home" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>

@@ -23,7 +23,7 @@ body {
 }
 
 main.main {
-  min-height: 100%;
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -41,11 +41,11 @@ main.main {
   color: white !important;
   padding: 8px;
   border-radius: 4px;
-  margin: 10px;
+  margin: 0 10px;
 }
 
 .menu-list a {
-  margin: 0 10px;
+  padding: 0.25em 1.5em !important;
 }
 
 .menu-list a:hover {
@@ -73,7 +73,7 @@ main.main {
 }
 
 .navigation {
-  background-color: black;
+  background-color: #060606cc;
   width: 250px;
 }
 
@@ -82,6 +82,10 @@ main.main {
   display: flex;
   padding: 2em 3em;
   justify-content: center;
+}
+
+#nav-menu {
+  background-color: #060606cc;
 }
 
 #no-open-tabs {
@@ -111,6 +115,11 @@ main.main {
 .nav.tabs ul {
   padding-bottom: 10px;
   min-height: 52px;
+}
+
+#startup-errors-warning {
+  font-size: .8em;
+  padding: 10px;
 }
 
 .toast {

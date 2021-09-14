@@ -864,35 +864,35 @@
 
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
-                                <button type="button" class="button ml-2" x-on:click="openModal = null">
+                                <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
                                     Close
                                 </button>
                             </template>
                             <template x-if="!(openModal === 'addLink' || openModal === 'showDownloadMenu')">
-                                <button type="button" class="button ml-2" x-on:click="openModal = null">
+                                <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
                                     Cancel
                                 </button>
                             </template>
                             <template x-if="openModal === 'deleteOperationModal'">
-                                <button type="button" class="button is-primary"
+                                <button type="button" class="button is-primary is-small"
                                         x-on:click="deleteOperation(); openModal = null;">
                                     Yes
                                 </button>
                             </template>
                             <template x-if="openModal === 'showDownloadMenu'">
-                                <button type="button" class="button is-primary"
+                                <button type="button" class="button is-primary is-small"
                                         x-on:click="handleDownload()">
                                     Download
                                 </button>
                             </template>
                             <template x-if="openModal === 'deleteLinkModal'">
-                                <button type="button" class="button is-primary"
+                                <button type="button" class="button is-primary is-small"
                                         x-on:click="updateLink(-2); openModal = null;">
                                     Yes
                                 </button>
                             </template>
                             <template x-if="openModal === 'addOperation'">
-                                <button type="button" class="button is-primary"
+                                <button type="button" class="button is-primary is-small"
                                         x-on:click="addOperation(false, startOperation)"
                                         x-text="schedule ? 'Schedule' : 'Start'"></button>
                             </template>
@@ -1369,9 +1369,9 @@
         font-size: x-small;
         font-weight: 500;
         font-family: sans-serif;
-        margin-left: -22px !important;
         position: relative;
-        top: -8px;
+        top: -20px;
+        left: 35%;
         color: var(--decisions-color);
     }
 
@@ -1412,7 +1412,6 @@
 
     .modal-card {
         max-height: 90vh;
-        overflow-y: scroll;
     }
 
     .width-100 {
