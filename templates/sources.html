@@ -1,4 +1,4 @@
-<div x-data="alpineSources()" x-init="getSources()" class="sources-page">
+<div x-data="alpineSources()" x-init="getSources()" id="sourcePage">
     <div>
         <h2>Fact Sources</h2>
         <p>
@@ -514,36 +514,36 @@
 </div>
 
 <style>
-    :scope {
+    #sourcePage :scope {
         --primary-color: #8B0000;
         --dark-gray: gray;
         --light-gray: #e6e6e6;
         --decisions-color: #4fdcfc;
     }
 
-    .edit-field {
+    #sourcePage .edit-field {
         border-radius: 5px;
         width: 55px;
         height: 50px;
         padding: 5px;
     }
 
-    .text-align-center {
+    #sourcePage .text-align-center {
         text-align: center !important;
     }
 
-    button.no-style {
+    #sourcePage button.no-style {
         background-color: transparent;
         border: none;
         box-shadow: none;
     }
 
-    .sources-menu-container {
+    #sourcePage .sources-menu-container {
         overflow-x: scroll;
         padding-bottom: 20px;
     }
 
-    .source-menu-links {
+    #sourcePage .source-menu-links {
         color: white;
         cursor: pointer;
         display: flex;
@@ -555,76 +555,76 @@
         flex-flow: column wrap;
     }
 
-    .source-menu-links:hover {
+    #sourcePage .source-menu-links:hover {
         background-color: var(--primary-color);
         border-radius: 5px;
     }
 
-    .source-menu-links.active i, .source-menu-links.active span {
+    #sourcePage .source-menu-links.active i, .source-menu-links.active span {
         /*font-size: 2.5em;*/
         /*color: rgb(248, 193, 69);*/
         color: var(--decisions-color);
         font-weight: 600;
     }
 
-    .source-menu-links i {
+    #sourcePage .source-menu-links i {
         font-size: 2em;
         padding-bottom: 5px;
     }
 
-    .collapsible-header button {
+    #sourcePage .collapsible-header button {
         height: 1em;
     }
-    .collapsible-header button:focus, .collapsible-header button:active {
+    #sourcePage .collapsible-header button:focus, .collapsible-header button:active {
         color: inherit !important;
     }
 
-    .collapsible-header button:hover {
+    #sourcePage .collapsible-header button:hover {
         transform: none;
     }
 
-    .collapsible-header button::after {
+    #sourcePage .collapsible-header button::after {
         margin-left: 0.5em !important;
         font-size: 0.75em;
     }
 
-    .sources-page table .code {
+    #sourcePage table .code {
         color: #ff8181;
         background-color: #262626;
     }
 
-    .sources-page table tr th {
+    #sourcePage table tr th {
         font-weight: 400;
         font-size: 0.75rem;
         color: gray;
     }
 
-    .sources-page table tbody tr:hover, .sources-page table tbody tr.selected {
+    #sourcePage table tbody tr:hover, table tbody tr.selected {
         background-color: rgba(255, 255, 255, 0.1) !important;
     }
 
-    .sources-page table input.fact-score {
+    #sourcePage table input.fact-score {
         width: 5em;
     }
 
-    .sources-page table .index-column {
+    #sourcePage table .index-column {
         color: var(--dark-gray);
     }
 
-    .sources-page .toggle-on.toggleSlider.toggleSlider::before {
+    #sourcePage .toggle-on.toggleSlider.toggleSlider::before {
         transform: translatex(24px);
     }
 
-    .sources-page .toggleSwitch {
+    #sourcePage .toggleSwitch {
         width: 55px;
         height: 28px;
     }
 
-    .sources-page .toggle-off {
+    #sourcePage .toggle-off {
         background-color: var(--primary-color);
     }
 
-    .sources-page .toggleSlider::before {
+    #sourcePage .toggleSlider::before {
         position: absolute;
         content: "";
         height: 20px;
@@ -636,27 +636,27 @@
     }
 
     /*IMPORTED*/
-    td.origin-IMPORTED {
+    #sourcePage td.origin-IMPORTED {
         color: #848484;
     }
 
     /*SEEDED*/
-    td.origin-SEEDED {
+    #sourcePage td.origin-SEEDED {
         color: #4a9;
     }
 
     /*LEARNED*/
-    td.origin-LEARNED {
+    #sourcePage td.origin-LEARNED {
         color: #ffc500;
     }
 
     /*USER*/
-    td.origin-USER {
+    #sourcePage td.origin-USER {
         color: #a05195;
     }
 
     /*DOMAIN*/
-    td.origin-DOMAIN {
+    #sourcePage td.origin-DOMAIN {
         color: cornflowerblue;
     }
 
