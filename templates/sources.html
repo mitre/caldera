@@ -45,13 +45,13 @@
                         <span>Duplicate</span>
                     </button>
                     <!--                    TODO: delete source endpoint-->
-<!--                    <button type="button"-->
-<!--                            x-bind:disabled="true"-->
-<!--                            class="ml-2 button is-primary is-small"-->
-<!--                            x-on:click="console.log('delete ', selectedSource)"-->
-<!--                            title="Delete selected source">-->
-<!--                        <i class="pr-1 fas fa-trash"></i>-->
-<!--                    </button>-->
+                    <!--                    <button type="button"-->
+                    <!--                            x-bind:disabled="true"-->
+                    <!--                            class="ml-2 button is-primary is-small"-->
+                    <!--                            x-on:click="console.log('delete ', selectedSource)"-->
+                    <!--                            title="Delete selected source">-->
+                    <!--                        <i class="pr-1 fas fa-trash"></i>-->
+                    <!--                    </button>-->
                 </div>
             </div>
 
@@ -126,7 +126,7 @@
                                 <button type="button"
                                         x-bind:disabled="!selectedFact"
                                         class="ml-2 button is-primary is-small"
-                                        x-on:click="deleteFact(selectedFact)"
+                                        x-on:click="openModalData.name = 'deleteFact'; openModalData.item = selectedFact"
                                         title="Delete selected fact">
                                     <i class="pr-1 fas fa-trash"></i>
                                 </button>
@@ -195,7 +195,8 @@
                                 <tr x-on:click="selectedFact = fact; showAddFactRow = false;"
                                     x-bind:class="selectedFact === fact ? 'selected' : ''">
                                     <td class="index-column" x-text="index"></td>
-                                    <td x-bind:class="(fact.origin_type) ? 'is-size-6 origin-' + fact.origin_type : ''" x-text="fact.origin_type"></td>
+                                    <td x-bind:class="(fact.origin_type) ? 'is-size-6 origin-' + fact.origin_type : ''"
+                                        x-text="fact.origin_type"></td>
                                     <td x-show="selectedFact !== fact" x-text="fact.trait"></td>
                                     <td x-show="selectedFact === fact">
                                         <label x-show="false" for="edit-fact-trait">Fact Trait</label>
@@ -266,7 +267,7 @@
                                 <button type="button"
                                         x-bind:disabled="!selectedRule"
                                         class="ml-2 button is-primary is-small"
-                                        x-on:click="deleteRule(selectedRule)"
+                                        x-on:click="openModalData.name = 'deleteRule'; openModalData.item = selectedRule"
                                         title="Delete selected rule">
                                     <i class="pr-1 fas fa-trash"></i>
                                 </button>
@@ -423,7 +424,7 @@
                                 <button type="button"
                                         x-bind:disabled="!selectedRelationship"
                                         class="ml-2 button is-primary is-small"
-                                        x-on:click="deleteRelationship(selectedRelationship)"
+                                        x-on:click="openModalData.name = 'deleteRelationship'; openModalData.item = selectedRelationship"
                                         title="Delete selected relationship">
                                     <i class="pr-1 fas fa-trash"></i>
                                 </button>
@@ -496,11 +497,11 @@
                                     <td x-text="rel.edge"></td>
                                     <td x-text="rel.target?.trait"></td>
                                     <td>
-<!--                                        <button x-show="selectedRelationship === rel" type="button"-->
-<!--                                                class="button is-small is-primary"-->
-<!--                                                x-on:click="updateFactSource()">-->
-<!--                                            Save-->
-<!--                                        </button>-->
+                                        <!--                                        <button x-show="selectedRelationship === rel" type="button"-->
+                                        <!--                                                class="button is-small is-primary"-->
+                                        <!--                                                x-on:click="updateFactSource()">-->
+                                        <!--                                            Save-->
+                                        <!--                                        </button>-->
                                     </td>
                                 </tr>
                             </template>
@@ -511,156 +512,58 @@
             </div>
         </template>
     </div>
+
+    <!-- MODAL -->
+    <template x-if="openModalData.item">
+        <div class="modal is-active">
+            <div class="modal-background"></div>
+            <form class="m-1">
+                <div class="modal-card">
+                    <template x-if="openModalData.name.includes('delete')">
+                        <div>
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">Confirm Delete</p>
+                            </header>
+                            <section class="modal-card-body">
+                                <div>
+                                    <p>Are you sure you want to delete
+                                        <em x-show="openModalData.name === 'deleteFact'"
+                                            x-text="openModalData.item.name"></em>
+                                        <em x-show="openModalData.name === 'deleteRule'"
+                                            x-text="openModalData.item.trait"></em>
+                                        <em x-show="openModalData.name === 'deleteRelationship'"
+                                            x-text="openModalData.item.trait"></em>
+                                        ?</p>
+                                </div>
+                            </section>
+                        </div>
+                    </template>
+                    <footer class="modal-card-foot is-flex is-justify-content-space-between">
+                        <button type="button" class="button ml-2 is-small"
+                                x-on:click="resetModal()">
+                            Cancel
+                        </button>
+                        <button x-show="openModalData.name === 'deleteFact'" type="button"
+                                class="button is-primary is-small"
+                                x-on:click="deleteFact(openModalData.item); resetModal();">
+                            Yes
+                        </button>
+                        <button x-show="openModalData.name === 'deleteRule'" type="button"
+                                class="button is-primary is-small"
+                                x-on:click="deleteRule(openModalData.item); resetModal();">
+                            Yes
+                        </button>
+                        <button x-show="openModalData.name === 'deleteRelationship'" type="button"
+                                class="button is-primary is-small"
+                                x-on:click="deleteRelationship(openModalData.item); resetModal();">
+                            Yes
+                        </button>
+                    </footer>
+                </div>
+            </form>
+        </div>
+    </template>
 </div>
-
-<style>
-    #sourcePage :scope {
-        --primary-color: #8B0000;
-        --dark-gray: gray;
-        --light-gray: #e6e6e6;
-        --decisions-color: #4fdcfc;
-    }
-
-    #sourcePage .edit-field {
-        border-radius: 5px;
-        width: 55px;
-        height: 50px;
-        padding: 5px;
-    }
-
-    #sourcePage .text-align-center {
-        text-align: center !important;
-    }
-
-    #sourcePage button.no-style {
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
-    }
-
-    #sourcePage .sources-menu-container {
-        overflow-x: scroll;
-        padding-bottom: 20px;
-    }
-
-    #sourcePage .source-menu-links {
-        color: white;
-        cursor: pointer;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        width: 7em;
-        padding: 15px;
-        height: fit-content;
-        flex-flow: column wrap;
-    }
-
-    #sourcePage .source-menu-links:hover {
-        background-color: var(--primary-color);
-        border-radius: 5px;
-    }
-
-    #sourcePage .source-menu-links.active i, .source-menu-links.active span {
-        /*font-size: 2.5em;*/
-        /*color: rgb(248, 193, 69);*/
-        color: var(--decisions-color);
-        font-weight: 600;
-    }
-
-    #sourcePage .source-menu-links i {
-        font-size: 2em;
-        padding-bottom: 5px;
-    }
-
-    #sourcePage .collapsible-header button {
-        height: 1em;
-    }
-    #sourcePage .collapsible-header button:focus, .collapsible-header button:active {
-        color: inherit !important;
-    }
-
-    #sourcePage .collapsible-header button:hover {
-        transform: none;
-    }
-
-    #sourcePage .collapsible-header button::after {
-        margin-left: 0.5em !important;
-        font-size: 0.75em;
-    }
-
-    #sourcePage table .code {
-        color: #ff8181;
-        background-color: #262626;
-    }
-
-    #sourcePage table tr th {
-        font-weight: 400;
-        font-size: 0.75rem;
-        color: gray;
-    }
-
-    #sourcePage table tbody tr:hover, table tbody tr.selected {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-    }
-
-    #sourcePage table input.fact-score {
-        width: 5em;
-    }
-
-    #sourcePage table .index-column {
-        color: var(--dark-gray);
-    }
-
-    #sourcePage .toggle-on.toggleSlider.toggleSlider::before {
-        transform: translatex(24px);
-    }
-
-    #sourcePage .toggleSwitch {
-        width: 55px;
-        height: 28px;
-    }
-
-    #sourcePage .toggle-off {
-        background-color: var(--primary-color);
-    }
-
-    #sourcePage .toggleSlider::before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        bottom: 4px;
-        transition: all 0.3s ease;
-        left: 3px;
-        top: 2px;
-    }
-
-    /*IMPORTED*/
-    #sourcePage td.origin-IMPORTED {
-        color: #848484;
-    }
-
-    /*SEEDED*/
-    #sourcePage td.origin-SEEDED {
-        color: #4a9;
-    }
-
-    /*LEARNED*/
-    #sourcePage td.origin-LEARNED {
-        color: #ffc500;
-    }
-
-    /*USER*/
-    #sourcePage td.origin-USER {
-        color: #a05195;
-    }
-
-    /*DOMAIN*/
-    #sourcePage td.origin-DOMAIN {
-        color: cornflowerblue;
-    }
-
-</style>
 
 <script>
     function alpineSources() {
@@ -678,6 +581,7 @@
             showAddFactRow: false,
             showAddRuleRow: false,
             showAddRelationshipRow: false,
+            openModalData: {name: '', item: null},
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -802,6 +706,10 @@
                 this.updateFactSource();
             },
 
+            resetModal() {
+                this.openModalData = {name: '', item: null};
+            },
+
             updateFactSource() {
                 apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
                     toast('Updated source', res);
@@ -816,3 +724,153 @@
 
     // # sourceURL=sources.js
 </script>
+
+<style>
+    #sourcePage :scope {
+        --primary-color: #8B0000;
+        --dark-gray: gray;
+        --light-gray: #e6e6e6;
+        --decisions-color: #4fdcfc;
+    }
+
+    #sourcePage .edit-field {
+        border-radius: 5px;
+        width: 55px;
+        height: 50px;
+        padding: 5px;
+    }
+
+    #sourcePage .text-align-center {
+        text-align: center !important;
+    }
+
+    #sourcePage button.no-style {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    #sourcePage .sources-menu-container {
+        overflow-x: scroll;
+        padding-bottom: 20px;
+    }
+
+    #sourcePage .source-menu-links {
+        color: white;
+        cursor: pointer;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        width: 7em;
+        padding: 15px;
+        height: fit-content;
+        flex-flow: column wrap;
+    }
+
+    #sourcePage .source-menu-links:hover {
+        background-color: var(--primary-color);
+        border-radius: 5px;
+    }
+
+    #sourcePage .source-menu-links.active i, .source-menu-links.active span {
+        /*font-size: 2.5em;*/
+        /*color: rgb(248, 193, 69);*/
+        color: var(--decisions-color);
+        font-weight: 600;
+    }
+
+    #sourcePage .source-menu-links i {
+        font-size: 2em;
+        padding-bottom: 5px;
+    }
+
+    #sourcePage .collapsible-header button {
+        height: 1em;
+    }
+
+    #sourcePage .collapsible-header button:focus, .collapsible-header button:active {
+        color: inherit !important;
+    }
+
+    #sourcePage .collapsible-header button:hover {
+        transform: none;
+    }
+
+    #sourcePage .collapsible-header button::after {
+        margin-left: 0.5em !important;
+        font-size: 0.75em;
+    }
+
+    #sourcePage table .code {
+        color: #ff8181;
+        background-color: #262626;
+    }
+
+    #sourcePage table tr th {
+        font-weight: 400;
+        font-size: 0.75rem;
+        color: gray;
+    }
+
+    #sourcePage table tbody tr:hover, table tbody tr.selected {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    #sourcePage table input.fact-score {
+        width: 5em;
+    }
+
+    #sourcePage table .index-column {
+        color: var(--dark-gray);
+    }
+
+    #sourcePage .toggle-on.toggleSlider.toggleSlider::before {
+        transform: translatex(24px);
+    }
+
+    #sourcePage .toggleSwitch {
+        width: 55px;
+        height: 28px;
+    }
+
+    #sourcePage .toggle-off {
+        background-color: var(--primary-color);
+    }
+
+    #sourcePage .toggleSlider::before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        bottom: 4px;
+        transition: all 0.3s ease;
+        left: 3px;
+        top: 2px;
+    }
+
+    /*IMPORTED*/
+    #sourcePage td.origin-IMPORTED {
+        color: #848484;
+    }
+
+    /*SEEDED*/
+    #sourcePage td.origin-SEEDED {
+        color: #4a9;
+    }
+
+    /*LEARNED*/
+    #sourcePage td.origin-LEARNED {
+        color: #ffc500;
+    }
+
+    /*USER*/
+    #sourcePage td.origin-USER {
+        color: #a05195;
+    }
+
+    /*DOMAIN*/
+    #sourcePage td.origin-DOMAIN {
+        color: cornflowerblue;
+    }
+
+</style>
