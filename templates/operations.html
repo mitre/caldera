@@ -180,7 +180,7 @@
                                                                x-model="selectedOperation.autonomous"
                                                                x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
                                                         <span class="toggleSlider toggleSliderRound"
-                                                              x-on:click="selectedOperation.autonomous = !selectedOperation.autonomous; updateOperation('autonomous', Number(selectedOperation.autonomous))"
+                                                              x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
                                                               x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
                                                         <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
                                                     </span>
@@ -257,7 +257,7 @@
                                             <span x-bind:class="'status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
                                                   x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
                                             <span class="pending-warning"
-                                                  x-show="link.status === -1 && operation.autonomous === '0'">pending approval</span>
+                                                  x-show="selectedOperation.autonomous === 0">pending approval</span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
                                                     <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
