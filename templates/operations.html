@@ -386,7 +386,7 @@
                                             <div class="select is-small my-2 ml-3">
                                                 <select x-model="manualCommand.executor.name"
                                                         id="manual-executors"
-                                                        class="column executor-selector">
+                                                        class="executor-selector">
                                                     <option disabled>Choose executor</option>
                                                     <template
                                                             x-for="(executor, index) in selectedAgentExecutors"
@@ -1338,34 +1338,34 @@
 </script>
 
 <style>
-    :scope {
+    #operationsPage :scope {
         --primary-color: #8B0000;
         --dark-gray: gray;
         --light-gray: #e6e6e6;
         --decisions-color: #4fdcfc;
     }
 
-    .pending-warning {
+    #operationsPage .pending-warning {
         font-variant: all-petite-caps;
         padding-top: 5px;
         color: var(--decisions-color);
     }
 
-    .text-align-right {
+    #operationsPage .text-align-right {
         text-align: right !important;
     }
 
-    .ellipsis-divider {
+    #operationsPage .ellipsis-divider {
         text-align: center;
         font-size: 0.3em;
     }
 
-    .ellipsis-divider i {
+    #operationsPage .ellipsis-divider i {
         color: #484747;
         padding: 0 7em;
     }
 
-    span.decisionsIcon {
+    #operationsPage span.decisionsIcon {
         font-size: x-small;
         font-weight: 500;
         font-family: sans-serif;
@@ -1375,17 +1375,17 @@
         color: var(--decisions-color);
     }
 
-    .decisionsDisplay {
+    #operationsPage .decisionsDisplay {
         color: var(--decisions-color) !important;
     }
 
-    .operation-menu-container {
+    #operationsPage .operation-menu-container {
         overflow-x: scroll;
         scrollbar-color: #3f3f3f #0000;
         padding-bottom: 20px;
     }
 
-    .operation-menu-links {
+    #operationsPage .operation-menu-links {
         color: white;
         margin-right: 2em;
         text-align: left;
@@ -1398,40 +1398,40 @@
         padding: 10px;
     }
 
-    .operation-menu-links .readable-time {
+    #operationsPage .operation-menu-links .readable-time {
         width: 4em;
         text-align: center;
         color: gray;
     }
 
-    .operation-menu-links i {
+    #operationsPage .operation-menu-links i {
         font-size: 3em;
         padding-bottom: 5px;
         min-width: 35px;
     }
 
-    .modal-card {
+    #operationsPage .modal-card {
         max-height: 90vh;
     }
 
-    .width-100 {
+    #operationsPage .width-100 {
         width: 100% !important;
     }
 
-    .operations-page .column {
+    #operationsPage .operations-page .column {
         margin: 0;
     }
 
     /*MODAL FORM STYLE*/
-    .modal-form-fields.download-buttons-container button {
+    #operationsPage .modal-form-fields.download-buttons-container button {
         width: fit-content;
     }
 
-    .modal-results ul {
+    #operationsPage .modal-results ul {
         margin-left: 0;
     }
 
-    .modal-results li {
+    #operationsPage .modal-results li {
         display: flex;
         justify-content: space-around;
         align-items: center;
@@ -1439,18 +1439,18 @@
         list-style: none;
     }
 
-    .modal-results li p {
+    #operationsPage .modal-results li p {
         width: 85%;
         text-align: left;
         padding-left: 0.75rem;
     }
 
-    .modal-results li button {
+    #operationsPage .modal-results li button {
         width: 15%;
         display: flex;
     }
 
-    .modal-results li:not(:last-child)::after {
+    #operationsPage .modal-results li:not(:last-child)::after {
         background-color: #262626;
         border: none;
         display: block;
@@ -1459,104 +1459,104 @@
         content: "";
     }
 
-    .modal-card-foot button {
+    #operationsPage .modal-card-foot button {
         font-size: 0.9em;
     }
 
     /*END MODAL FORM STYLE*/
 
-    .timeline-table .modal-card code, table code {
+    #operationsPage .timeline-table .modal-card code, table code {
         color: #ff8181;
         background-color: #262626;
     }
 
-    .timeline-table table .highlight {
+    #operationsPage .timeline-table table .highlight {
         width: fit-content !important;
     }
 
-    .timeline-table {
+    #operationsPage .timeline-table {
         padding-bottom: 5em;
     }
 
-    .timeline-table table tr th {
+    #operationsPage .timeline-table table tr th {
         font-weight: 400;
         font-size: 0.75rem;
         border-bottom: none;
         color: gray;
     }
 
-    .timeline-table table tbody tr:hover, .timeline-table table tbody tr.selected {
+    #operationsPage .timeline-table table tbody tr:hover, .timeline-table table tbody tr.selected {
         background-color: rgba(255, 255, 255, 0.1);
     }
 
-    .timeline-table table tbody tr:active {
+    #operationsPage .timeline-table table tbody tr:active {
         background-color: rgba(255, 255, 255, 0.2);
     }
 
-    .button:active, .button.is-active, .button:focus, .button.is-focused {
+    #operationsPage .button:active, .button.is-active, .button:focus, .button.is-focused {
         color: inherit;
     }
 
-    button.is-larger {
+    #operationsPage button.is-larger {
         font-size: 2.1rem;
     }
 
-    .linkActionsColumn button[disabled] {
+    #operationsPage .linkActionsColumn button[disabled] {
         background-color: transparent;
     }
 
-    button.no-style {
+    #operationsPage button.no-style {
         background-color: transparent;
         border: none;
         box-shadow: none;
     }
 
-    button.no-style.reset {
+    #operationsPage button.no-style.reset {
         padding: 0.5em;
         width: fit-content;
         font-size: .75em;
     }
 
-    button.no-style[disabled] {
+    #operationsPage button.no-style[disabled] {
         background-color: initial !important;
     }
 
-    .caret-button {
+    #operationsPage .caret-button {
         font-size: 1em;
         padding-bottom: 0;
         margin-top: -30px;
     }
 
-    .scroll-more-caret {
+    #operationsPage .scroll-more-caret {
         color: gray;
     }
 
-    button.no-style:hover {
+    #operationsPage button.no-style:hover {
         border: none;
         color: white;
         transform: scale(1.2);
     }
 
-    i sub {
+    #operationsPage i sub {
         font-family: sans-serif;
     }
 
-    .controls-container button {
+    #operationsPage .controls-container button {
         margin: 0 2rem;
         padding: 0;
     }
 
-    .timeline-table table tbody td {
+    #operationsPage .timeline-table table tbody td {
         vertical-align: middle;
         border: none;
         height: 8em;
     }
 
-    .timeline-table table th.header {
+    #operationsPage .timeline-table table th.header {
         border-bottom: none;
     }
 
-    .timeline-table .decideColumn {
+    #operationsPage .timeline-table .decideColumn {
         color: gray;
         width: 120px;
         word-break: break-word;
@@ -1564,51 +1564,51 @@
         text-align: center !important;
     }
 
-    .timeline-table td.decideColumn {
+    #operationsPage .timeline-table td.decideColumn {
         padding: 0 2em;
         display: flex;
         flex-flow: column wrap;
         justify-content: center;
     }
 
-    .timeline-table .infoColumn {
+    #operationsPage .timeline-table .infoColumn {
         width: 200px;
     }
 
-    .timeline-table table tbody td.linkStatusColumn {
+    #operationsPage .timeline-table table tbody td.linkStatusColumn {
         padding: 0;
         vertical-align: top;
     }
 
-    .timeline-table table tbody td.linkInfoColumn {
+    #operationsPage .timeline-table table tbody td.linkInfoColumn {
         padding-top: 3.5em;
         vertical-align: initial;
     }
 
-    .timeline-table table tbody td.linkActionsColumn {
+    #operationsPage .timeline-table table tbody td.linkActionsColumn {
         display: flex;
         align-items: center;
         flex-flow: row-reverse;
         padding-bottom: 0;
     }
 
-    .timeline-table table tbody td.commandDetails textarea {
+    #operationsPage .timeline-table table tbody td.commandDetails textarea {
         color: #ff8181;
         background-color: #262626;
     }
 
-    .timeline-table table tbody td textarea[contenteditable] {
+    #operationsPage .timeline-table table tbody td textarea[contenteditable] {
         width: 100%;
         height: 5em;
         margin-top: 1em;
     }
 
-    .timeline-table table tbody td.commandDetails button {
+    #operationsPage .timeline-table table tbody td.commandDetails button {
         width: max-content;
         margin: 1em 0;
     }
 
-    .timeline-table table tbody tr.linkEditCommandRow td:last-child {
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow td:last-child {
         display: flex;
         justify-content: space-around;
         padding: 0;
@@ -1618,26 +1618,26 @@
         border-radius: 2px;
     }
 
-    .timeline-table table tbody tr.linkEditCommandRow textarea {
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow textarea {
         border-radius: 2px;
         line-height: 0.75rem;
         width: 10rem;
     }
 
-    .timeline-table table tbody tr.linkEditCommandRow .linkEditControls {
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow .linkEditControls {
         display: flex;
         flex-flow: row wrap;
         justify-content: flex-end;
         align-items: center;
     }
 
-    .timeline-table table tfoot td {
+    #operationsPage .timeline-table table tfoot td {
         padding-top: 1em;
         border: none !important;
     }
 
     /*gray timeline*/
-    span.linkStatus::before {
+    #operationsPage span.linkStatus::before {
         width: 2px;
         height: 180px;
         background-color: white;
@@ -1650,7 +1650,7 @@
     }
 
     /*circle for event*/
-    span.linkStatus::after {
+    #operationsPage span.linkStatus::after {
         position: relative;
         left: -5px;
         top: 50px;
@@ -1663,83 +1663,83 @@
     }
 
     /*queued*/
-    span.status-queued {
+    #operationsPage span.status-queued {
         color: #555;
     }
 
-    span.status-queued::after {
+    #operationsPage span.status-queued::after {
         box-shadow: 0 0 0 0.2em #555;
     }
 
     /*success*/
-    span.status-success {
+    #operationsPage span.status-success {
         color: #4a9;
     }
 
-    span.status-success::after {
+    #operationsPage span.status-success::after {
         box-shadow: 0 0 0 0.2em #4a9;
     }
 
     /*failure*/
-    span.status-failed {
+    #operationsPage span.status-failed {
         color: #c31;
     }
 
-    span.status-failed::after {
+    #operationsPage span.status-failed::after {
         box-shadow: 0 0 0 0.2em #c31;
     }
 
     /*paused*/
-    span.status-paused {
+    #operationsPage span.status-paused {
         color: #ffc500;
     }
 
-    span.status-paused::after {
+    #operationsPage span.status-paused::after {
         box-shadow: 0 0 0 0.2em #ffc500;
     }
 
     /*removed*/
-    span.status-discarded {
+    #operationsPage span.status-discarded {
         color: #a05195;
     }
 
-    span.status-discarded::after {
+    #operationsPage span.status-discarded::after {
         box-shadow: 0 0 0 0.2em #a05195;
     }
 
     /*collected*/
-    span.status-collect {
+    #operationsPage span.status-collect {
         color: #ffb000;
     }
 
-    span.status-collect::after {
+    #operationsPage span.status-collect::after {
         box-shadow: 0 0 0 0.2em #ffb000;
     }
 
     /*untrusted*/
-    span.status-untrusted {
+    #operationsPage span.status-untrusted {
         color: white;
     }
 
-    span.status-untrusted::after {
+    #operationsPage span.status-untrusted::after {
         box-shadow: 0 0 0 0.2em white;
     }
 
     /*visible*/
-    span.status-visible {
+    #operationsPage span.status-visible {
         color: #f012be;
     }
 
-    span.status-visible::after {
+    #operationsPage span.status-visible::after {
         box-shadow: 0 0 0 0.2em #f012be;
     }
 
     /*timeout*/
-    span.status-timeout {
+    #operationsPage span.status-timeout {
         color: cornflowerblue;
     }
 
-    span.status-timeout::after {
+    #operationsPage span.status-timeout::after {
         box-shadow: 0 0 0 0.2em cornflowerblue;
     }
 </style>
