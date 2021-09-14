@@ -67,13 +67,12 @@
 
             <div class="main-content">
                 <div class="tabs nav is-boxed">
-                    <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
-                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
+                            <li x-bind:class="{ 'is-active' : activeTabIndex === index }">
                                 <a x-on:click="activeTabIndex = index">
-                                    <span x-text="tab.name"></span>&nbsp;&nbsp;
-                                    <button class="delete" x-on:click="deleteTab(index, tab.contentID)"></button>
+                                    <span x-text="tab.name"></span>
+                                    <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><i class="fas fa-sm fa-times"></i></span>
                                 </a>
                             </li>
                         </template>
@@ -130,7 +129,7 @@
         </main>
 
         <script>
-            let startupErrors = {{ errors | tojson }};
+            let startupErrors = JSON.parse('{{ errors | tojson }}');
         </script>
 
         <!-- TODO: Remove JQuery as dependency (when possible) -->

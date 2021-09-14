@@ -45,7 +45,6 @@
                     </ul>
                     <p class="menu-label"><i class="fas fa-cog pr-2"></i></i>Configuration</p>
                     <ul class="menu-list">
-                        <li><a href="#home" x-on:click="addTab('example', 0)">example</a></li>
                         <li><a href="#home" x-on:click="addTab('fact sources', '/advanced/sources')">fact sources</a></li>
                         <li><a href="#home" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
                         <li><a href="#home" x-on:click="addTab('planners', '/advanced/planners')">planners</a></li>
@@ -68,13 +67,12 @@
 
             <div class="main-content">
                 <div class="tabs nav is-boxed">
-                    <!-- TODO: Make tabs re-arrangeable (may require external library) -->
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
-                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''" draggable="true">
+                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''">
                                 <a x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
-                                    <button class="delete" x-on:click="deleteTab(index, tab.contentID)"></button>
+                                    <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><i class="fas fa-sm fa-times"></i></span>
                                 </a>
                             </li>
                         </template>
@@ -88,7 +86,7 @@
                         Select a tab on the left to get started
                     </p>
                     <p>
-                        <a href="http://localhost:8888/docs/Getting-started.html" target="blank">Getting Started Guide</a>
+                        <a href="docs/Getting-started.html" target="blank">Getting Started Guide</a>
                     </p>
                 </div>
             </div>
@@ -131,7 +129,7 @@
         </main>
 
         <script>
-            let startupErrors = {{ errors | tojson }};
+            let startupErrors = JSON.parse('{{ errors | tojson }}');
         </script>
 
         <!-- TODO: Remove JQuery as dependency (when possible) -->

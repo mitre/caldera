@@ -19,7 +19,7 @@
             <div class="control is-expanded">
                 <div class="select is-small is-fullwidth">
                     <select x-on:change="loadProfile()" x-model="selectedProfileId">
-                        <option value="" default disabled selected>Chose one...</option>
+                        <option value="" default disabled selected>Select one...</option>
                         <template x-for="adversary of adversaries" :key="adversary.adversary_id">
                             <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
                         </template>
@@ -191,7 +191,7 @@
                         <div class="control is-expanded">
                             <div class="select is-small">
                                 <select x-on:change="loadProfileAdversary()" x-model="selectedAddAdversary">
-                                    <option value="" default disabled selected>Chose one...</option>
+                                    <option value="" default disabled selected>Select one...</option>
                                     <template x-for="adversary of adversaries" :key="adversary.adversary_id">
                                         <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
                                     </template>
@@ -257,7 +257,7 @@
                         <div class="control is-expanded">
                             <div class="select is-small">
                                 <select x-model="selectedObjectiveId">
-                                    <option value="" default disabled selected>Chose one...</option>
+                                    <option value="" default disabled selected>Select one...</option>
                                     <template x-for="objective of objectives" :key="objective.id">
                                         <option x-bind:value="objective.id" x-text="objective.name" x-bind:title="objective.description"></option>
                                     </template>
