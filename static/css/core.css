@@ -23,7 +23,7 @@ body {
 }
 
 main.main {
-  min-height: 100%;
+  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -45,7 +45,7 @@ main.main {
 }
 
 .menu-list a {
-  padding: 0 1.5em 0.5em !important;
+  padding: 0.25em 1.5em !important;
 }
 
 .menu-list a:hover {
@@ -84,6 +84,10 @@ main.main {
   justify-content: center;
 }
 
+#nav-menu {
+  background-color: #060606cc;
+}
+
 #no-open-tabs {
   width: 100%;
   height: 50%;
@@ -111,6 +115,11 @@ main.main {
 .nav.tabs ul {
   padding-bottom: 10px;
   min-height: 52px;
+}
+
+#startup-errors-warning {
+  font-size: .8em;
+  padding: 10px;
 }
 
 .toast {

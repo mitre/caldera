@@ -20,13 +20,13 @@
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
-                        <button class="button no-style is-warning is-small is-inverted startup-errors-warning">
+                        <a id="startup-errors-warning" class="has-text-warning">
                             <i class="fas fa-exclamation-triangle pr-1"></i>
-                            <span title="Click for to view startup errors" x-text="`${errors.length} startup errors`" @click="showErrors = true"></span>
-                        </button>
+                            <span title="Click for to view startup errors" class="has-text-warning" x-text="`${errors.length} startup errors`" @click="showErrors = true"></span>
+                        </a>
                     </div>
                 </template>
-                <aside class="menu">
+                <aside id="nav-menu" class="menu">
                     <p class="menu-label"><i class="fas fa-flag pr-2"></i>Campaigns</p>
                     <ul class="menu-list">
                         <li><a href="#home" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
