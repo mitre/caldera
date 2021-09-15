@@ -16,7 +16,7 @@
         <div>
             <div x-bind:class="isOperationsControlsExpanded ? '' : 'is-flex is-justify-content-space-between'">
                 <div class="is-flex-direction-column"
-                     x-bind:class="isOperationsControlsExpanded ? '' : 'is-half pb-0 m-2'">
+                     x-bind:class="isOperationsControlsExpanded ? '' : 'pb-0 my-2'">
                     <div class="pl-0 is-flex is-align-content-flex-start mb-2"
                          x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
                         <div x-bind:class="isOperationsControlsExpanded ? 'is-one-fifth' : ''">
@@ -1028,9 +1028,7 @@
 
             getOperationsMenuCaretDisplay() {
                 const el = document.querySelector('.operation-menu-container');
-                setTimeout(() => {
-                    this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
-                }, 1); // timeout is to wait for UI changes to get accurate width calcs
+                this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
             },
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
@@ -1073,6 +1071,7 @@
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
+                    this.getOperationsMenuCaretDisplay();  // wait for UI changes to get accurate width calcs
                 }
             },
 
