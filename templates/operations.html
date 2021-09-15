@@ -228,12 +228,14 @@
                             <table class="table">
                                 <thead>
                                 <tr class="table-header">
-                                    <th class="decideColumn">Decide & Status</th>
-                                    <th title="Link Status Indicator" class="csv-exclude"></th>
+                                    <th class="decideColumn">Decide</th>
+                                    <th title="Link Status Indicator" class="csv-exclude">Status</th>
                                     <th class="infoColumn">Link/Ability Name</th>
                                     <th>Agent #paw</th>
+                                    <th>Host</th>
+                                    <th>pid</th>
                                     <th>Link Command</th>
-                                    <th>Link Output & Facts</th>
+                                    <th>Link Output</th>
                                     <th title="Link Actions" class="csv-exclude"></th>
                                 </tr>
                                 </thead>
@@ -254,24 +256,27 @@
                                         x-on:click="getLink(link)">
                                         <td class="decideColumn">
                                             <span class="has-text-grey-light" x-text="link.decide"></span>
-                                            <span x-bind:class="'status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
-                                                  x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
-                                            <span class="pending-warning"
-                                                  x-show="link.status === -1 && selectedOperation.autonomous === 0">pending approval</span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
-                                                    <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
-                                                          x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"></span>
+                                            <span x-bind:class="'status status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                                  x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
+                                            <!--                                            <span class="pending-warning"-->
+                                            <!--                                                  x-show="selectedOperation.autonomous === 0">pending approval</span>-->
+                                            <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
+                                                  x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"></span>
                                         </td>
                                         <td class="linkInfoColumn"
                                             x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
 
                                         <!--AGENT COLUMN-->
-                                        <td class="agentDetails"
-                                            x-bind:class="selectedLink === link ? '' : 'linkInfoColumn'">
+                                        <td class="agentDetails">
                                             <p x-show="link.paw">Agent #<em x-text="link.paw"></em></p>
+                                        </td>
+                                        <td class="agentDetails">
                                             <p x-show="selectedLink === link && link.host">Host: <em
                                                     x-text="link.host"></em></p>
+                                        </td>
+                                        <td class="agentDetails">
                                             <p x-show="selectedLink === link && link.pid">Pid: <em
                                                     x-text="link.pid"></em></p>
                                         </td>
@@ -367,8 +372,8 @@
                                     <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
                                         <td></td>
                                         <td></td>
-                                        <td>New Manual Command</td>
-                                        <td>
+                                        <td colspan="2">New Manual Command</td>
+                                        <td colspan="2">
                                             <label x-show="false" for="manual-agent">Choose an agent:</label>
                                             <div class="select is-small my-2 ml-3">
                                                 <select id="manual-agent" x-model="selectedAgentIndex" required>
@@ -430,11 +435,7 @@
                                 <template x-if="isOperationRunning">
                                     <tfoot>
                                     <tr class="csv-exclude">
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td colspan="6"></td>
                                         <td class="pt-6 text-align-right">
                                             <button title="add manual command" class="button is-primary is-small"
                                                     x-on:click="addNewRow = true; getAgents()">
@@ -1657,7 +1658,7 @@
         content: "";
         display: inline-block;
         position: absolute;
-        margin-left: 10px;
+        margin-left: -23px;
         margin-top: 3em;
     }
 
@@ -1669,9 +1670,19 @@
         display: block;
         background: #161616;
         border-radius: 50%;
-        height: 2em;
-        width: 2em;
+        height: 3em;
+        width: 3em;
         content: "";
+    }
+
+    span.status {
+        position: relative;
+        top: 77px;
+        z-index: 10;
+        font-size: .75em;
+        color: white;
+        left: -2px;
+        font-family: monospace;
     }
 
     /*queued*/
