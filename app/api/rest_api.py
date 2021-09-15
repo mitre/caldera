@@ -171,6 +171,4 @@ class RestApi(BaseWorld):
     @staticmethod
     def _request_errors(request):
         errors = []
-        if 'Chrome' not in request.headers.get('User-Agent'):
-            errors.append(dict(Error('browser', 'chrome not being used')._asdict()))
         return errors
