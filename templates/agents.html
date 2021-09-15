@@ -61,7 +61,7 @@
     <!-- MODALS -->
 
     <div class="modal" x-bind:class="{ 'is-active': showDeployModal }">
-        <div class="modal-background" @click="showDeployModal = false"></div>
+        <div class="modal-background" @click="closeDeployModal()"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
                 <p class="modal-card-title">Deploy an agent</p>
@@ -81,10 +81,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="field">
+                    <div class="field" x-show="selectedAbilityId">
                         <label class="label">Platform</label>
                         <div class="control is-flex is-flex-direction-row is-justify-content-center">
-                            <div class="has-text-centered platform" x-bind:class="{ 'selected': !selectedPlatform }" @click="changePlatform('')">
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'all' }" @click="changePlatform('all')" x-show="selectedPlatform">
                                 <span class="icon is-large"><i class="far fa-2x fa-circle"></i></span>
                                 <br> all 
                             </div>
@@ -174,7 +174,7 @@
                     <div class="level-left"></div>
                     <div class="level-right">
                         <div class="level-item">
-                            <button class="button is-small" @click="showDeployModal = false">Close</button>
+                            <button class="button is-small" @click="closeDeployModal()">Close</button>
                         <div>
                     </div>
                 </nav>
@@ -541,7 +541,7 @@
             },
 
             filterAbilityPlatforms() {
-                if (!this.selectedPlatform) {
+                if (this.selectedPlatform === 'all') {
                     this.filteredCommands = this.deployCommands;
                 } else {
                     this.filteredCommands = this.deployCommands.filter((ability) => ability.platform === this.selectedPlatform);
@@ -556,6 +556,14 @@
                 fields.forEach((field) => {
                     this.agentFields.push({ name: field, value: this.agentFieldConfig[field] });
                 });
+            },
+
+            closeDeployModal() {
+                this.showDeployModal = false;
+                this.selectedAbilityId = '';
+                this.selectedPlatform = '';
+                this.filteredCommands = [];
+                this.agentFields = [];
             },
 
             getCommandField(command) {
@@ -734,8 +742,8 @@
 
     .top-right-anchor > label {
         position: relative;
-        top: -12px;
-        left: 30%;
+        top: -14px;
+        left: 75%;
         color: #a0a0a0;
         z-index: 999;
         font-size: .8em;

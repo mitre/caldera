@@ -9,8 +9,19 @@ function restRequest(requestType, data, callback = (r) => {
         {method: requestType, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)}
 
     fetch(endpoint, requestData)
-        .then(response => response.text())
-        .then(data => callback(data))
+        .then((response) => {
+            if (!response.ok) {
+                throw (response.statusText);
+            }
+            return response.text();
+        })
+        .then((text) => {
+            try {
+                callback(JSON.parse(text));
+            } catch {
+                callback(text);
+            }
+        })
         .catch((error) => console.error(error));
 }
 

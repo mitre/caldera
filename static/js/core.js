@@ -17,25 +17,33 @@ function alpineCore() {
         },
 
         addTab(tabName, address) {
+            // Field manual does not create a tab
             if (tabName === 'fieldmanual') {
                 restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
                 return;
             }
+
+            // If tab is already open, jump to it
             const existingTabIndex = this.openTabs.findIndex((tab) => tab.name === tabName);
-            if (existingTabIndex === -1) {
-                const tab = { name: tabName, contentID: `tab-${tabName}`, address: address };
-
-                restRequest('GET', null, (data) => { this.setTabContent(tab, data); }, tab.address);
-
-                this.openTabs.push(tab);
-                this.activeTabIndex = this.openTabs.length - 1;
-            } else {
+            if (existingTabIndex !== -1) {
                 this.activeTabIndex = existingTabIndex;
+                return;
             }
+
+            // Tab does not exist, create it
+            const tab = { name: tabName, contentID: `tab-${tabName}`, address: address };
+
+            restRequest('GET', null, (data) => { this.setTabContent(tab, data); }, tab.address);
+
+            this.openTabs.push(tab);
+            this.activeTabIndex = this.openTabs.length - 1;
         },
 
         deleteTab(index, contentID) {
-            document.getElementById(contentID).remove();
+            try {
+                document.getElementById(contentID).remove();
+            } catch (error) {}
+            
             this.activeTabIndex -= 1;
             this.openTabs.splice(index, 1);
         },
