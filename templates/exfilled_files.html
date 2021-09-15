@@ -131,10 +131,14 @@
                 let inputs = Array.from(document.querySelectorAll('.file-checkbox'));
 
                 if (inputs.every((input) => input.checked)) {
-                    inputs.forEach((input) => input.checked = false);
+                    inputs.forEach((input) => {
+                        input.checked = false;
+                    });
                     this.selectedFiles = [];
                 } else {
-                    inputs.forEach((input) => input.checked = true);
+                    inputs.forEach((input) => {
+                        input.checked = true;
+                    });
                     this.selectedFiles = inputs.map((input) => input.value);
                 }
             },

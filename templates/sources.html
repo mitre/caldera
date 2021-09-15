@@ -569,9 +569,9 @@
     function alpineSources() {
         return {
             // CONSTANTS
-            EMPTY_FACT_OBJECT: {trait: '', value: '', score: 1},
-            EMPTY_RULE_OBJECT: {action: 'ALLOW', match: '', trait: ''},
-            EMPTY_RELATIONSHIP_OBJECT: {source: {trait: ''}, edge: '', target: {trait: ''}},
+            EMPTY_FACT_OBJECT: { trait: '', value: '', score: 1 },
+            EMPTY_RULE_OBJECT: { action: 'ALLOW', match: '', trait: '' },
+            EMPTY_RELATIONSHIP_OBJECT: { source: { trait: '' }, edge: '', target: { trait: '' } },
 
             sources: [],
             filteredSources: [],
@@ -581,7 +581,7 @@
             showAddFactRow: false,
             showAddRuleRow: false,
             showAddRelationshipRow: false,
-            openModalData: {name: '', item: null},
+            openModalData: { name: '', item: null },
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -636,7 +636,7 @@
             },
 
             duplicateSource(source) {
-                const newSource = {...source, name: `${source.name} (copy)`, id: ''};
+                const newSource = { ...source, name: `${source.name} (copy)`, id: '' };
                 apiV2('POST', '/api/v2/sources', newSource).then((res) => {
                     toast('Added new fact source', res);
                     this.getSources();
@@ -647,7 +647,7 @@
             },
 
             addFact(newFact) {
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
@@ -668,7 +668,7 @@
                     toast('Error: Rule already exists');
                     return;
                 }
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.rules.push(newRule);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
@@ -680,7 +680,7 @@
             },
 
             addRelationship(newRelationship) {
-                const updatedSource = {...this.selectedSource};
+                const updatedSource = { ...this.selectedSource };
                 updatedSource.relationships.push(newRelationship);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
@@ -707,7 +707,7 @@
             },
 
             resetModal() {
-                this.openModalData = {name: '', item: null};
+                this.openModalData = { name: '', item: null };
             },
 
             updateFactSource() {

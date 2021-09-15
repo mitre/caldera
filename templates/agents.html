@@ -579,13 +579,13 @@
             },
 
             getAbilityName(id) {
-                let ability = this.abilities.find((ability) => ability.ability_id === id);
-                return (!id || !this.abilities.length || !ability) ? '[unknown]' : ability.name;
+                let abil = this.abilities.find((ability) => ability.ability_id === id);
+                return (!id || !this.abilities.length || !abil) ? '[unknown]' : abil.name;
             },
 
             getAbilityDescription(id) {
-                let ability = this.abilities.find((ability) => ability.ability_id === id);
-                return (!id || !this.abilities.length || !ability) ? 'The current user does not have permissions to view this ability.' : ability.description;
+                let abil = this.abilities.find((ability) => ability.ability_id === id);
+                return (!id || !this.abilities.length || !abil) ? 'The current user does not have permissions to view this ability.' : abil.description;
             },
 
             searchForAbility() {

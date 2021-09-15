@@ -42,8 +42,10 @@ function alpineCore() {
         deleteTab(index, contentID) {
             try {
                 document.getElementById(contentID).remove();
-            } catch (error) {}
-            
+            } catch (error) {
+                // Do nothing
+            }
+
             this.activeTabIndex -= 1;
             this.openTabs.splice(index, 1);
         },

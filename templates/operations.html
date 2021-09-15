@@ -966,17 +966,17 @@
                 return {
                     name: '',
                     group: '',
-                    adversary: {adversary_id: ''},
+                    adversary: { adversary_id: '' },
                     auto_close: 0,
                     state: 'running',
                     autonomous: 1,
-                    planner: {id: 'atomic'},
-                    source: {id: 'basic'},
+                    planner: { id: 'atomic' },
+                    source: { id: 'basic' },
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
                     jitter: '4/8',
                     visibility: '51',
-                }
+                };
             },
 
             get EMPTY_MANUAL_COMMAND_OBJECT() {
@@ -987,7 +987,7 @@
                         platform: '',
                         command: '',
                     }
-                }
+                };
             },
 
             getUsage() {
@@ -1072,7 +1072,7 @@
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
-                    this.getOperationsMenuCaretDisplay();  // wait for UI changes to get accurate width calcs
+                    this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
                 }
             },
 
@@ -1118,8 +1118,8 @@
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
-                        toast('Error adding operation');
-                    });
+                            toast('Error adding operation');
+                        });
                 }
             },
 
@@ -1212,7 +1212,7 @@
             },
 
             updateLink(status, command = null) {
-                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
+                const updateLink = { ...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command) };
                 if (command) {
                     updateLink.command = command;
                 }
@@ -1271,7 +1271,7 @@
                     });
                     csv.push(rowItems.join(','));
                 });
-                this.createDownloadReport(new Blob([csv.join('\n')], {type: 'text/csv'}), this.selectedOperation.name, true);
+                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
             },
 
             handleDownload() {

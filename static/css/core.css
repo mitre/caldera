@@ -23,7 +23,6 @@ body {
 }
 
 main.main {
-  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -31,6 +30,7 @@ main.main {
 
 .main-content {
   width: calc(100% - 250px);
+  background-color: #161616;
 }
 
 .menu {
@@ -101,7 +101,7 @@ main.main {
   display: block !important;
   margin-bottom: 0 !important;
   padding: 10px 10px 0 10px;
-  background-color: #111111;
+  background-color: #111;
 }
 
 .nav.tabs a {
@@ -120,7 +120,7 @@ main.main {
 }
 
 #startup-errors-warning {
-  font-size: .8em;
+  font-size: 0.8em;
   padding: 10px;
 }
 

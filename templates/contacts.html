@@ -49,7 +49,7 @@
                 if (contactName === 'http') {
                     contactName = 'HTTP';
                 }
-                
+
                 downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName }, true);
             }
         };
