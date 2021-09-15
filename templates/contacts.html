@@ -46,7 +46,7 @@
 
             downloadContactReport(contactName) {
                 // TODO: Update to V2
-                downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName });
+                downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName }, false);
             }
         };
     }

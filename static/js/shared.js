@@ -164,10 +164,11 @@ function validateInputs(obj, requiredFields) {
     return fieldErrors;
 }
 
-function downloadReport(endpoint, filename, data = {}) {
+function downloadReport(endpoint, filename, data = {}, jsonifyData = false) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
-        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        const parsedData = jsonifyData ? JSON.stringify(data, null, 2) : data;
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(parsedData);
         let downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
         downloadAnchorNode.setAttribute("download", filename + ".json");
