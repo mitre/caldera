@@ -46,7 +46,11 @@
 
             downloadContactReport(contactName) {
                 // TODO: Update to V2
-                downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName }, false);
+                if (contactName === 'http') {
+                    contactName = 'HTTP';
+                }
+                
+                downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName }, true);
             }
         };
     }
