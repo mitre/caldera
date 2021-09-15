@@ -1254,7 +1254,7 @@
                 rows.forEach((row, i) => {
                     const cols = row.querySelectorAll('td:not(.csv-exclude), th:not(.csv-exclude)');
                     const rowItems = [];
-                    cols.forEach(() => {
+                    cols.forEach((col) => {
                         const link = this.selectedOperation.chain[i - 1];
                         if (col.className.includes('agentDetails')) {
                             let agentDetails = `Agent #${link.paw}`;
@@ -1289,7 +1289,7 @@
 
                 if (!isCSV) {
                     dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
-                    toast(`Downloading report: ${filename}`, true);
+                    toast(`Downloading report: ${fileName}`, true);
                     fileName += '.json';
                 } else {
                     dataURL = window.URL.createObjectURL(data);
