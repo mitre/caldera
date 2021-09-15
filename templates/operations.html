@@ -1,10 +1,10 @@
-<div id="operationsPage" x-data="alpineOperations()" x-init="getOperations(); getUsage()"
+<div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()"
      class="operations-page"
      xmlns="http://www.w3.org/1999/html"
      @resize.window="getOperationsMenuCaretDisplay()">
     <div>
         <div>
-            <div>
+            <div x-ref="operationsHeader">
                 <h2>Operations</h2>
                 <p>
                     Start a new operation or review previous ones here.
@@ -1061,6 +1061,20 @@
             //
             // API CALLS
             //
+
+            async initOperations() {
+                this.getOperations();
+                this.getUsage();
+
+                function sleep(ms) {
+                    return new Promise((resolve) => setTimeout(resolve, ms));
+                }
+
+                while (this.$refs.operationsHeader) {
+                    await sleep(3000);
+                    this.getOperations();
+                }
+            },
 
             getOperations() {
                 apiV2('GET', this.ENDPOINT).then((res) => {
