@@ -1028,7 +1028,7 @@
 
             getOperationsMenuCaretDisplay() {
                 const el = document.querySelector('.operation-menu-container');
-                this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
+                if (el) this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
             },
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
