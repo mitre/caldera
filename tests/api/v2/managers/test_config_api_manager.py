@@ -16,51 +16,10 @@ class StubDataService:
 
 
 @pytest.fixture
-def base_world():
-    main_conf = {
-        'app.contact.dns.domain': 'mycaldera.caldera',
-        'app.contact.dns.socket': '0.0.0.0:8853',
-        'app.contact.html': '/weather',
-        'app.contact.http': 'http://0.0.0.0:8888',
-        'app.contact.tcp': '0.0.0.0:7010',
-        'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
-        'app.contact.udp': '0.0.0.0:7013',
-        'app.contact.websocket': '0.0.0.0:7012',
-        'exfil_dir': '/tmp/caldera',
-        'plugins': [
-            'stockpile',
-            'atomic'
-        ],
-        'reports_dir': '/tmp',
-        'host': '0.0.0.0',
-        'auth.login.handler.module': 'default',
-        'users': {
-            'red': {
-                'red': 'password-foo'
-            },
-            'blue': {
-                'blue': 'password-bar'
-            }
-        }
-    }
-
-    agents_conf = {
-        'sleep_min': '30',
-        'sleep_max': '60',
-        'untrusted_timer': '90',
-        'watchdog': '0',
-        'implant_name': 'splunkd',
-        'deadman_abilities': [
-            'this-is-a-fake-ability'
-        ],
-        'bootstrap_abilities': [
-            'this-is-another-fake-ability'
-        ]
-    }
-
+def base_world(app_config, agent_config):
     BaseWorld.clear_config()
-    BaseWorld.apply_config('main', main_conf)
-    BaseWorld.apply_config('agents', agents_conf)
+    BaseWorld.apply_config('main', app_config)
+    BaseWorld.apply_config('agents', agent_config)
 
     yield BaseWorld
 

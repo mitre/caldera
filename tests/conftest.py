@@ -261,6 +261,53 @@ def agent_profile():
 
 
 @pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.html': '/weather',
+        'app.contact.http': '0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010',
+        'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
+        'app.contact.udp': '0.0.0.0:7013',
+        'app.contact.websocket': '0.0.0.0:7012',
+        'exfil_dir': '/tmp/caldera',
+        'plugins': [
+            'stockpile',
+            'atomic'
+        ],
+        'reports_dir': '/tmp',
+        'host': '0.0.0.0',
+        'auth.login.handler.module': 'default',
+        'users': {
+            'red': {
+                'red': 'password-foo'
+            },
+            'blue': {
+                'blue': 'password-bar'
+            }
+        }
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'sleep_min': '30',
+        'sleep_max': '60',
+        'untrusted_timer': '90',
+        'watchdog': '0',
+        'implant_name': 'splunkd',
+        'deadman_abilities': [
+            'this-is-a-fake-ability'
+        ],
+        'bootstrap_abilities': [
+            'this-is-another-fake-ability'
+        ]
+    }
+
+
+@pytest.fixture
 def api_v2_client(loop, aiohttp_client, contact_svc):
     def make_app(svcs):
         app = web.Application(
