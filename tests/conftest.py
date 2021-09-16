@@ -40,6 +40,7 @@ from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.handlers.operation_api import OperationApi
+from app.api.v2.handlers.contact_api import ContactApi
 from app.api.rest_api import RestApi
 from app import version
 
@@ -260,7 +261,7 @@ def agent_profile():
 
 
 @pytest.fixture
-def api_v2_client(loop, aiohttp_client):
+def api_v2_client(loop, aiohttp_client, contact_svc):
     def make_app(svcs):
         app = web.Application(
             middlewares=[
@@ -271,6 +272,7 @@ def api_v2_client(loop, aiohttp_client):
         AgentApi(svcs).add_routes(app)
         AbilityApi(svcs).add_routes(app)
         OperationApi(svcs).add_routes(app)
+        ContactApi(svcs).add_routes(app)
         return app
 
     async def initialize():
@@ -285,7 +287,6 @@ def api_v2_client(loop, aiohttp_client):
         _ = PlanningService()
         _ = LearningService()
         auth_svc = AuthService()
-        _ = ContactService()
         _ = FileSvc()
         _ = EventService()
         services = app_svc.get_services()
