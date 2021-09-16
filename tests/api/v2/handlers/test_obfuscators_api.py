@@ -18,22 +18,22 @@ class TestObfuscatorsApi:
         resp = await api_v2_client.get('/api/v2/obfuscators', cookies=api_cookies)
         obfuscators_list = await resp.json()
         assert len(obfuscators_list) == 1
-        ability_dict = obfuscators_list[0]
-        assert ability_dict == test_obfuscator.display_schema.dump(test_obfuscator)
+        obfuscator_dict = obfuscators_list[0]
+        assert obfuscator_dict == test_obfuscator.display_schema.dump(test_obfuscator)
 
     async def test_unauthorized_get_obfuscators(self, api_v2_client, test_obfuscator):
         resp = await api_v2_client.get('/api/v2/obfuscators')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_get_ability_by_id(self, api_v2_client, api_cookies, test_obfuscator):
+    async def test_get_obfuscator_by_id(self, api_v2_client, api_cookies, test_obfuscator):
         resp = await api_v2_client.get(f'/api/v2/obfuscators/{test_obfuscator.name}', cookies=api_cookies)
-        ability_dict = await resp.json()
-        assert ability_dict == test_obfuscator.display_schema.dump(test_obfuscator)
+        obfuscator_dict = await resp.json()
+        assert obfuscator_dict == test_obfuscator.display_schema.dump(test_obfuscator)
 
-    async def test_unauthorized_get_ability_by_id(self, api_v2_client, test_obfuscator):
+    async def test_unauthorized_get_obfuscator_by_id(self, api_v2_client, test_obfuscator):
         resp = await api_v2_client.get(f'/api/v2/obfuscators/{test_obfuscator.name}')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_get_nonexistent_ability_by_id(self, api_v2_client, api_cookies):
+    async def test_get_nonexistent_obfuscator_by_id(self, api_v2_client, api_cookies):
         resp = await api_v2_client.get('/api/v2/obfuscators/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
