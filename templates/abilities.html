@@ -194,7 +194,7 @@
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
                         <br>
-                        <template x-for="(executor, index) of selectedAbility.executors">
+                        <template x-for="(executor, index) of selectedAbility.executors" :key="`${executor.platform}-${executor.name}`">
                             <div class="box">
                                 <div class="has-text-right">
                                     <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
@@ -209,8 +209,8 @@
                                                 <div class="control">
                                                     <div class="select is-small">
                                                         <select x-model="executor.platform">
-                                                            <template x-for="platform of Object.keys(platforms)">
-                                                                <option x-bind:value="platform" x-text="platform"></option>
+                                                            <template x-for="plat of getPlatforms(executor.platform)" :key="plat">
+                                                                <option x-bind:value="plat" x-text="plat"></option>
                                                             </template>
                                                         </select>
                                                     </div>
@@ -228,8 +228,8 @@
                                                     <div class="select is-small">
                                                         <select x-model="executor.name">
                                                             <option default disabled>Select an executor...</option>
-                                                            <template x-for="executor of platforms[executor.platform]">
-                                                                <option x-bind:value="executor" x-text="executor"></option>
+                                                            <template x-for="exec of getExecutors(executor.platform, executor.name)" :key="exec">
+                                                                <option x-bind:value="exec" x-text="exec""></option>
                                                             </template>
                                                         </select>
                                                     </div>
@@ -423,6 +423,26 @@
                 this.techniques = [...new Set(this.abilities.map((ability) => `${ability.technique_id} | ${ability.technique_name}`))].sort();
 
                 this.filteredAbilities = this.abilities;
+            },
+
+            getPlatforms(platform) {
+                let plats = Object.keys(this.platforms);
+                let index = plats.indexOf(platform);
+                if (index !== 0) {
+                    plats[index] = plats[0];
+                    plats[0] = platform;
+                }
+                return plats;
+            },
+
+            getExecutors(platform, executor) {
+                let execs = this.platforms[platform];
+                let index = execs.indexOf(executor);
+                if (index !== 0) {
+                    execs[index] = execs[0];
+                    execs[0] = executor;
+                }
+                return execs;
             },
 
             selectAbility(ability) {
