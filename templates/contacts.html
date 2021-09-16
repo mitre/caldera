@@ -54,7 +54,7 @@
 
             downloadContactReport(contactName) {
                 apiV2('GET', `/api/v2/contacts/${contactName}`).then((contact) => {
-                    downloadJson(`${contactName}_contact_report.json`, contact);
+                    downloadJson(`${contactName}_contact_report`, contact);
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);

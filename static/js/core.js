@@ -16,7 +16,7 @@ function alpineCore() {
             document.getElementById('active-tab-display').appendChild(newTabDiv);
         },
 
-        addTab(tabName, address) {
+        async addTab(tabName, address) {
             // Field manual does not create a tab
             if (tabName === 'fieldmanual') {
                 restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
@@ -33,10 +33,14 @@ function alpineCore() {
             // Tab does not exist, create it
             const tab = { name: tabName, contentID: `tab-${tabName}`, address: address };
 
-            restRequest('GET', null, (data) => { this.setTabContent(tab, data); }, tab.address);
-
             this.openTabs.push(tab);
             this.activeTabIndex = this.openTabs.length - 1;
+            try {
+                this.setTabContent(tab, await apiV2('GET', tab.address));
+            } catch (error) {
+                toast('Unable to load page', false);
+                console.error(error);
+            }
         },
 
         deleteTab(index, contentID) {
@@ -46,7 +50,10 @@ function alpineCore() {
                 // Do nothing
             }
 
-            this.activeTabIndex -= 1;
+            if (this.activeTabIndex >= index) {
+                this.activeTabIndex -= 1;
+            }
+            
             this.openTabs.splice(index, 1);
         },
 
