@@ -233,10 +233,7 @@ code {
 }
 
 .row {
-  margin-top: 50px;
   text-align: center;
-  background-image: url('/gui/img/back-grey.jpg');
-  background-size: cover;
   padding: 25px;
   border-radius: 25px;
   width: 95%;
@@ -438,7 +435,6 @@ p[onclick] {
 }
 
 .section-profile h3 {
-  text-transform: uppercase;
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -466,12 +462,6 @@ p[onclick] {
   vertical-align: middle;
   position: relative;
   bottom: 1px;
-}
-
-.section-profile select {
-  height: 30px;
-  width: 75%;
-  margin: 5px;
 }
 
 .section-profile button {
