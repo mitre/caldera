@@ -116,6 +116,28 @@ def raw_ability(deploy_ability, test_executor):
 
 
 @pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.ftp.host': '0.0.0.0',
+        'app.contact.http': 'http://0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010'
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'deadman_abilities': [],
+        'implant_name': 'test',
+        'sleep_max': 6,
+        'sleep_min': 3,
+        'watchdog': 0
+    }
+
+
+@pytest.fixture
 def combined_config(agent_config, app_config):
     app_config.update({f'agents.{k}': v for k, v in agent_config.items()})
     return app_config
