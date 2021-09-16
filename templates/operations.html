@@ -693,7 +693,7 @@
                                                        type="number"
                                                        required
                                                        pattern="[0-9]*"
-                                                       placeholder="4"/>
+                                                       placeholder="2"/>
                                                 <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                                 <span>/</span>
                                                 <input class="input"
@@ -707,7 +707,7 @@
                                                 <label class="input-hover-label" for="stealth-jitterMax">max</label>
                                                 <button type="button" class="button is-primary no-style reset"
                                                         title="reset to default"
-                                                        x-on:click="jitterMin = 4; jitterMax = 8;">
+                                                        x-on:click="jitterMin = 2; jitterMax = 8;">
                                                     Reset
                                                 </button>
                                             </div>
@@ -967,7 +967,7 @@
             operations: [],
             filteredOperations: [],
             searchInput: '',
-            jitterMin: 4,
+            jitterMin: 2,
             jitterMax: 8,
             potentialLink: {
                 agent: '',
@@ -996,7 +996,7 @@
                     source: {id: 'basic'},
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
-                    jitter: '4/8',
+                    jitter: '2/8',
                     visibility: '51',
                 };
             },
