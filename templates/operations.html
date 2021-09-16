@@ -799,7 +799,7 @@
                                                         <button type="button"
                                                                 class="button is-primary is-small"
                                                                 x-bind:disabled="!isLinkAvailable(link)"
-                                                                x-bind:title="!isLinkAvailable(link) ? 'Repeated links are not available for this operation, and link has been already added.' : ''"
+                                                                x-bind:title="!isLinkAvailable(link) ? 'Link has been already added.' : ''"
                                                                 x-on:click="addPotentialLink(link)">
                                                             Add Link
                                                         </button>
@@ -807,6 +807,9 @@
                                                 </template>
                                             </ul>
                                         </template>
+                                        <em x-show="showNotRepeatableText"
+                                            class="has-text-grey-light is-pulled-right is-size-7">Note:
+                                            Repeated links are not available for this operation</em>
                                         <template x-if="!filteredLinksList"><p>Building potential links...</p>
                                         </template>
                                     </div>
@@ -1020,6 +1023,10 @@
                 }
             },
 
+            get showNotRepeatableText() {
+                return !this.selectedOperation?.adversary?.has_repeatable_abilities;
+            },
+
             get selectedOperationID() {
                 return this.selectedOperation ? this.selectedOperation.id : null;
             },
@@ -1175,6 +1182,10 @@
                 manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
                 manualCommand.executor.platform = this.selectedAgent.platform;
 
+                if (this.selectedOperation.state === 'paused') {
+                    toast('Operation is currently paused, and new links might not be added.', true);
+                    this.openModal = null;
+                }
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, manualCommand)
                     .then((res) => {
                         toast('Added manual command.', true);
@@ -1188,6 +1199,10 @@
             },
 
             addPotentialLink(link) {
+                if (this.selectedOperation.state === 'paused') {
+                    toast('Operation is currently paused, and new links might not be added.', true);
+                    this.openModal = null;
+                }
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link)
                     .then((res) => {
                         toast('Added potential link.', true);
