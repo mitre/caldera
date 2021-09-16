@@ -271,12 +271,10 @@ def app_config():
         'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
         'app.contact.udp': '0.0.0.0:7013',
         'app.contact.websocket': '0.0.0.0:7012',
-        'exfil_dir': '/tmp/caldera',
         'plugins': [
             'stockpile',
             'atomic'
         ],
-        'reports_dir': '/tmp',
         'host': '0.0.0.0',
         'auth.login.handler.module': 'default',
         'users': {
