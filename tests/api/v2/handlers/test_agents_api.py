@@ -116,28 +116,6 @@ def raw_ability(deploy_ability, test_executor):
 
 
 @pytest.fixture
-def app_config():
-    return {
-        'app.contact.dns.domain': 'mycaldera.caldera',
-        'app.contact.dns.socket': '0.0.0.0:8853',
-        'app.contact.ftp.host': '0.0.0.0',
-        'app.contact.http': 'http://0.0.0.0:8888',
-        'app.contact.tcp': '0.0.0.0:7010'
-    }
-
-
-@pytest.fixture
-def agent_config():
-    return {
-        'deadman_abilities': [],
-        'implant_name': 'test',
-        'sleep_max': 6,
-        'sleep_min': 3,
-        'watchdog': 0
-    }
-
-
-@pytest.fixture
 def combined_config(agent_config, app_config):
     app_config.update({f'agents.{k}': v for k, v in agent_config.items()})
     return app_config
@@ -179,6 +157,8 @@ class TestAgentsApi:
             assert resp.status == HTTPStatus.OK
             agent_dict = await resp.json()
             assert agent_dict == expected_new_agent_dump
+            stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
+            assert stored_agent.schema.dump(stored_agent) == expected_new_agent_dump
 
     async def test_unauthorized_create_agent(self, api_v2_client, new_agent_payload):
         resp = await api_v2_client.post('/api/v2/agents', json=new_agent_payload)
@@ -190,6 +170,8 @@ class TestAgentsApi:
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
         assert agent_dict == expected_updated_agent_dump
+        stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
+        assert stored_agent.schema.dump(stored_agent) == expected_updated_agent_dump
 
     async def test_unauthorized_update_agent(self, api_v2_client, test_agent, updated_agent_fields_payload):
         resp = await api_v2_client.patch('/api/v2/agents/123', json=updated_agent_fields_payload)
@@ -205,6 +187,8 @@ class TestAgentsApi:
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
         assert agent_dict == expected_updated_agent_dump
+        stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
+        assert stored_agent.schema.dump(stored_agent) == expected_updated_agent_dump
 
     async def test_unauthorized_create_or_update_agent(self, api_v2_client, test_agent, updated_agent_fields_payload):
         resp = await api_v2_client.put('/api/v2/agents/123', json=updated_agent_fields_payload)
@@ -216,6 +200,8 @@ class TestAgentsApi:
         assert resp.status == HTTPStatus.OK
         agent_dict = await resp.json()
         assert agent_dict == expected_new_agent_dump
+        stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
+        assert stored_agent.schema.dump(stored_agent) == expected_new_agent_dump
 
     async def test_get_deploy_commands(self, api_v2_client, api_cookies, deploy_ability, mocker, raw_ability,
                                        agent_config, app_config, combined_config):
