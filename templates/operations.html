@@ -16,7 +16,7 @@
         <div>
             <div x-bind:class="isOperationsControlsExpanded ? '' : 'is-flex is-justify-content-space-between width-100'">
                 <div class="is-flex-direction-column"
-                     x-bind:class="isOperationsControlsExpanded || !selectedOperation ? 'width-100' : 'width-50 pb-0 my-2'">
+                     x-bind:class="isOperationsControlsExpanded || !selectedOperation ? 'width-100' : 'width-60 pb-0 my-2'">
                     <div class="pl-0 is-flex is-align-content-flex-start mb-2"
                          x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
                         <div>
@@ -207,7 +207,7 @@
             </template>
 
             <template x-if="selectedOperation">
-                <div class="width-100 is-flex is-justify-content-center">
+                <div class="width-100 is-flex is-justify-content-center mt-3">
                     <button class="button no-style caret-button"
                             type="button"
                             x-on:click="isOperationsControlsExpanded = !isOperationsControlsExpanded; getOperationsMenuCaretDisplay()">
@@ -1430,6 +1430,7 @@
 
     #operationsPage .operation-menu-container {
         overflow-x: scroll;
+        overflow-y: hidden;
         scrollbar-color: #3f3f3f #0000;
     }
 
@@ -1466,8 +1467,8 @@
         width: 100% !important;
     }
 
-    #operationsPage .width-50 {
-        width: 50% !important;
+    #operationsPage .width-60 {
+        width: 60% !important;
     }
 
     #operationsPage .operations-page .column {
@@ -1731,19 +1732,14 @@
         content: "";
     }
 
-    #operationsPage span.status.selected {
-        left: 1px;
-    }
-
     #operationsPage span.status {
         position: relative;
         top: 77px;
         z-index: 10;
         font-size: .5em;
         color: white;
-        left: 4px;
+        left: 16px;
         display: flex;
-        justify-content: center
     }
 
     /*queued*/
