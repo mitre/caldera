@@ -14,12 +14,12 @@
         </div>
 
         <div>
-            <div x-bind:class="isOperationsControlsExpanded ? '' : 'is-flex is-justify-content-space-between'">
+            <div x-bind:class="isOperationsControlsExpanded ? '' : 'is-flex is-justify-content-space-between width-100'">
                 <div class="is-flex-direction-column"
-                     x-bind:class="isOperationsControlsExpanded ? '' : 'pb-0 my-2'">
+                     x-bind:class="isOperationsControlsExpanded || !selectedOperation ? 'width-100' : 'width-50 pb-0 my-2'">
                     <div class="pl-0 is-flex is-align-content-flex-start mb-2"
                          x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
-                        <div x-bind:class="isOperationsControlsExpanded ? 'is-one-fifth' : ''">
+                        <div>
                             <div class="field has-addons">
                                 <div class="control has-icons-left">
                                     <input class="input is-small"
@@ -78,9 +78,7 @@
                         </template>
                     </div>
                 </div>
-
-
-                <div x-bind:class="isOperationsControlsExpanded ? '' : 'is-half pb-0 m-2'">
+                <div x-bind:class="isOperationsControlsExpanded ? '' : 'width-50 pb-0 m-2'">
                     <template x-if="selectedOperation">
                         <div x-show="selectedOperationID">
                             <template x-if="isOperationsControlsExpanded">
@@ -243,7 +241,7 @@
                                 <template x-if="selectedOperation.chain.length === 0">
                                     <tbody>
                                     <tr class="csv-exclude">
-                                        <td colspan="7"><em>No links––click the buttons on the right to add
+                                        <td colspan="9"><em>No links––click the buttons on the right to add
                                             commands/links.</em>
                                         </td>
                                     </tr>
@@ -258,7 +256,7 @@
                                             <span class="has-text-grey-light" x-text="link.decide"></span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
-                                            <span x-bind:class="'status status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                            <span x-bind:class="'status status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued') + (selectedLink ? ' selected' : '')"
                                                   x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
                                             <!--                                            <span class="pending-warning"-->
                                             <!--                                                  x-show="selectedOperation.autonomous === 0">pending approval</span>-->
@@ -270,14 +268,17 @@
 
                                         <!--AGENT COLUMN-->
                                         <td class="agentDetails">
-                                            <p x-show="link.paw">Agent #<em x-text="link.paw"></em></p>
+                                            <p x-show="!link.paw"><em>n/a</em></p>
+                                            <p x-show="link.paw"><em x-text="link.paw"></em></p>
                                         </td>
                                         <td class="agentDetails">
-                                            <p x-show="selectedLink === link && link.host">Host: <em
+                                            <p x-show="!link.host"><em>n/a</em></p>
+                                            <p x-show="link.host"><em
                                                     x-text="link.host"></em></p>
                                         </td>
                                         <td class="agentDetails">
-                                            <p x-show="selectedLink === link && link.pid">Pid: <em
+                                            <p x-show="!link.pid"><em>n/a</em></p>
+                                            <p x-show="link.pid"><em
                                                     x-text="link.pid"></em></p>
                                         </td>
 
@@ -332,7 +333,12 @@
                                             <template x-if="selectedLink === link && selectedLinkResults">
                                                 <div class="mb-5">
                                                     <p class="is-size-7">Output: </p>
-                                                    <code class="is-size-7" x-text="selectedLinkResults"></code>
+                                                    <span x-bind:class="selectedLinkResults?.length > 12 && 'output-container'">
+                                                        <code class="is-size-7" x-text="selectedLinkResults"></code>
+                                                    </span>
+                                                    <code class="cursor-pointer" x-on:click="openModal='showOutput'"
+                                                          title="view more"
+                                                          x-show="selectedLinkResults?.length > 12">...</code>
                                                 </div>
                                             </template>
 
@@ -353,14 +359,12 @@
                                         </td>
 
                                         <td class="csv-exclude">
-                                            <template
-                                                    x-if="selectedLink === link && isOperationRunning && link.status !== -2">
-                                                <button type="button" title="delete link"
-                                                        class="button is-primary is-small ml-2"
-                                                        x-on:click="openModal = 'deleteLinkModal'"><i
-                                                        class="pr-1 fas fa-trash"></i>Discard Link
-                                                </button>
-                                            </template>
+                                            <button x-show="selectedLink === link && isOperationRunning && link.status !== -2"
+                                                    type="button" title="delete link"
+                                                    class="button is-primary is-small ml-2"
+                                                    x-on:click="openModal = 'deleteLinkModal'"><i
+                                                    class="pr-1 fas fa-trash"></i>Discard Link
+                                            </button>
                                         </td>
                                     </tr>
                                     </tbody>
@@ -466,6 +470,21 @@
                 <div class="modal-background" @click="openModal = null"></div>
                 <form class="m-1">
                     <div class="modal-card" x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
+                        <template x-if="openModal === 'showOutput'">
+                            <div>
+                                <header class="modal-card-head">
+                                    <p class="modal-card-title">Output</p>
+                                </header>
+                                <section class="modal-card-body">
+                                    <div class="modal-form">
+                                        <div>
+                                            <code x-text="selectedLinkResults"></code>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                        </template>
+
                         <template x-if="openModal === 'addOperation'">
                             <div>
                                 <header class="modal-card-head">
@@ -966,12 +985,12 @@
                 return {
                     name: '',
                     group: '',
-                    adversary: { adversary_id: '' },
+                    adversary: {adversary_id: ''},
                     auto_close: 0,
                     state: 'running',
                     autonomous: 1,
-                    planner: { id: 'atomic' },
-                    source: { id: 'basic' },
+                    planner: {id: 'atomic'},
+                    source: {id: 'basic'},
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
                     jitter: '4/8',
@@ -1118,8 +1137,8 @@
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
                         }).catch((error) => {
-                            toast('Error adding operation');
-                        });
+                        toast('Error adding operation');
+                    });
                 }
             },
 
@@ -1212,7 +1231,7 @@
             },
 
             updateLink(status, command = null) {
-                const updateLink = { ...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command) };
+                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
                 if (command) {
                     updateLink.command = command;
                 }
@@ -1232,6 +1251,7 @@
                     .then((res) => {
                         toast(`Updated operation ${field}`, true);
                         this.selectedOperation = res;
+                        this.selectedLink = null
                     })
                     .catch((error) => {
                         // TODO have clearer error messaging here
@@ -1271,7 +1291,7 @@
                     });
                     csv.push(rowItems.join(','));
                 });
-                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
+                this.createDownloadReport(new Blob([csv.join('\n')], {type: 'text/csv'}), this.selectedOperation.name, true);
             },
 
             handleDownload() {
@@ -1431,6 +1451,10 @@
         width: 100% !important;
     }
 
+    #operationsPage .width-50 {
+        width: 50% !important;
+    }
+
     #operationsPage .operations-page .column {
         margin: 0;
     }
@@ -1478,9 +1502,22 @@
 
     /*END MODAL FORM STYLE*/
 
-    #operationsPage .timeline-table .modal-card code, table code {
+    #operationsPage span.output-container {
+        height: 5em;
+        display: block;
+        overflow: hidden;
+        white-space: pre-line;
+        max-width: 25ch;
+    }
+
+    #operationsPage .cursor-pointer:hover {
+        cursor: pointer;
+    }
+
+    #operationsPage .timeline-table .modal-card code, table code, .modal-form code {
         color: #ff8181;
-        background-color: #262626;
+        background-color: initial;
+        white-space: pre-line;
     }
 
     #operationsPage .timeline-table table .highlight {
@@ -1608,6 +1645,11 @@
     #operationsPage .timeline-table table tbody td.commandDetails textarea {
         color: #ff8181;
         background-color: #262626;
+        height: 150px;
+        max-width: 22ch;
+        word-break: break-word;
+        padding: 5px;
+        border-radius: 5px;
     }
 
     #operationsPage .timeline-table table tbody td textarea[contenteditable] {
@@ -1654,19 +1696,18 @@
         width: 2px;
         height: 180px;
         background-color: white;
-        /*background-color: var(--primary-color);*/
         content: "";
         display: inline-block;
         position: absolute;
-        margin-left: -23px;
+        margin-left: 30px;
         margin-top: 3em;
     }
 
     /*circle for event*/
     #operationsPage span.linkStatus::after {
         position: relative;
-        left: -5px;
-        top: 50px;
+        right: -8px;
+        top: 48px;
         display: block;
         background: #161616;
         border-radius: 50%;
@@ -1675,14 +1716,19 @@
         content: "";
     }
 
-    span.status {
+    #operationsPage span.status.selected {
+        left: 1px;
+    }
+
+    #operationsPage span.status {
         position: relative;
         top: 77px;
         z-index: 10;
-        font-size: .75em;
+        font-size: .5em;
         color: white;
-        left: -2px;
-        font-family: monospace;
+        left: 4px;
+        display: flex;
+        justify-content: center
     }
 
     /*queued*/
