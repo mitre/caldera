@@ -121,7 +121,7 @@ def app_config():
         'app.contact.dns.domain': 'mycaldera.caldera',
         'app.contact.dns.socket': '0.0.0.0:8853',
         'app.contact.ftp.host': '0.0.0.0',
-        'app.contact.http': 'http://0.0.0.0:8888',
+        'app.contact.http': '0.0.0.0:8888',
         'app.contact.tcp': '0.0.0.0:7010'
     }
 
