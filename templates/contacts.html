@@ -9,6 +9,12 @@
     </div>
     <hr>
     <div>
+        <div class="buttons">
+            <button class="button is-primary is-small" @click="initPage()">
+                <span class="icon"><i class="fas fa-sync"></i></span>
+                <span>Refresh</span>
+            </button>
+        </div>
         <table class="table is-striped">
             <tbody>
                 <template x-for="contact of contacts" :key="contact.name">
@@ -16,7 +22,8 @@
                         <th x-text="contact.name"></th>
                         <td x-text="contact.description"></td>
                         <td>
-                            <button class="button is-small is-primary" @click="downloadContactReport(contact.name)">
+                            <span x-show="hasNoReport.includes(contact.name)" class="is-size-7">No contacts to show</span>
+                            <button class="button is-small is-primary" @click="downloadContactReport(contact.name)" x-show="!hasNoReport.includes(contact.name)">
                                 <span class="icon"><i class="fas fa-file-download"></i></span>
                                 <span>Download Report</span>
                             </button>
@@ -32,25 +39,26 @@
     function alpineContacts() {
         return {
             contacts: JSON.parse('{{ contacts | tojson }}'),
+            hasNoReport: [],
 
             initPage() {
-                // TODO: Uncomment below when contacts API V2 is done
-
-                // apiV2('GET', '/api/v2/contacts').then((contacts) => {
-                //     this.contacts = contacts;
-                // }).catch((error) => {
-                //     toast('Error loading page', false);
-                //     console.error(error);
-                // });
+                this.hasNoReport = [];
+                this.contacts.forEach(async (contact) => {
+                    try {
+                        await apiV2('GET', `/api/v2/contacts/${contact.name}`);
+                    } catch (error) {
+                        this.hasNoReport.push(contact.name);
+                    }
+                });
             },
 
             downloadContactReport(contactName) {
-                // TODO: Update to V2
-                if (contactName === 'http') {
-                    contactName = 'HTTP';
-                }
-
-                downloadReport('/api/rest', `${contactName}_report`, { index: 'contact', contact: contactName }, true);
+                apiV2('GET', `/api/v2/contacts/${contactName}`).then((contact) => {
+                    downloadJson(`${contactName}_contact_report.json`, contact);
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
             }
         };
     }

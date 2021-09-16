@@ -164,6 +164,16 @@ function validateInputs(obj, requiredFields) {
     return fieldErrors;
 }
 
+function downloadJson(filename, data) {
+    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    let downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", filename + ".json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
 function downloadReport(endpoint, filename, data = {}, jsonifyData = false) {
     function downloadObjectAsJson(data) {
         stream('Downloading report: ' + filename);
@@ -245,29 +255,6 @@ function removeSection(identifier) {
     $('#' + identifier).remove();
 }
 
-
-//
-// function viewSection(name, address) {
-//     function display(data) {
-//         let plugin = $($.parseHTML(data, keepScripts = true));
-//         $('#section-container').append('<div id="section-' + name + '"></div>');
-//         let newSection = $('#section-' + name);
-//         newSection.html(plugin);
-//         $('html, body').animate({scrollTop: newSection.offset().top}, 1000);
-//     }
-//
-//     restRequest('GET', null, display, address);
-// }
-
-function toggleSidebar(identifier) {
-    let sidebar = $('#' + identifier);
-    if (sidebar.is(":visible")) {
-        sidebar.hide();
-    } else {
-        sidebar.show();
-    }
-}
-
 /* AUTOMATIC functions for all pages */
 
 $(document).ready(function () {
@@ -282,20 +269,6 @@ $(document).ready(function () {
             observer.observe(this, {childList: true});
         }
     });
-    $(document).keyup(function (e) {
-        if (e.key == "Escape") {
-            $('.modal').hide();
-            $('#mySidenav').width('0');
-        }
-    });
-    $('body').click(function (event) {
-        if (!$(event.target).closest('.modal-content').length && $(event.target).is('.modal')) {
-            $('.modal').hide();
-        }
-        if (!$(event.target).closest('#mySidenav').length && !$(event.target).is('.navbar span')) {
-            $('#mySidenav').width('0');
-        }
-    });
 });
 
 function alphabetize_dropdown(obj) {
@@ -307,64 +280,6 @@ function alphabetize_dropdown(obj) {
     });
     $(obj).empty().append(opts_list).prepend(disabled);
     obj.val(selected_val);
-}
-
-(function ($) {
-    $.event.special.destroyed = {
-        remove: function (o) {
-            if (o.handler) {
-                o.handler()
-            }
-        }
-    }
-})(jQuery);
-
-$(document).ready(function () {
-    stream('Welcome home. Go into the Agents tab to review your deployed agents.');
-});
-
-window.onerror = function (error, url, line) {
-    let msg = 'Check your JavaScript console. ' + error;
-    if (msg.includes('TypeError')) {
-        stream('Refresh your GUI');
-    } else {
-        stream(msg);
-    }
-};
-
-function warn(msg) {
-    document.getElementById("alert-modal").style.display = "block";
-    $("#alert-text").html(msg);
-}
-
-function display_errors(errors) {
-    function add_element(txt, level) {
-        let newitem = $("#infolist-template").clone();
-        newitem.show();
-        newitem.find(".infolist-contents p").html(txt)
-        if (!level) {
-            newitem.find(".infolist-icon img").attr('src', '/gui/img/success.png')
-        }
-        $("#info-list").append(newitem);
-    }
-
-    document.getElementById("list-modal").style.display = "block";
-    $("#info-list").empty();
-    if (errors.length === 0) {
-        add_element("no errors to view", 0);
-    }
-    for (let id in errors) {
-        add_element(errors[id].name + ": " + errors[id].msg, 1);
-    }
-}
-
-function b64EncodeUnicode(str) { //https://stackoverflow.com/a/30106551
-    if (str != null) {
-        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-            function toSolidBytes(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
-    } else return null;
 }
 
 function b64DecodeUnicode(str) { //https://stackoverflow.com/a/30106551
