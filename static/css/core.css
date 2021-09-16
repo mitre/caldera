@@ -85,6 +85,10 @@ main.main {
   justify-content: center;
 }
 
+.nav-logo img{
+  max-height: 150px;
+}
+
 #nav-menu {
   background-color: #060606;
 }
