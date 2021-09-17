@@ -33,14 +33,15 @@ class FactApi(BaseObjectApi):
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
+        resp = []
         if fact_data:
             try:
                 store = await knowledge_svc_handle.get_facts(criteria=fact_data)
                 resp = await self._api_manager.verify_fact_integrity(store)
-                return web.json_response(dict(found=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue retrieving fact {fact_data} - {e}')
-        return web.json_response(dict(found=[]))
+                raise JsonHttpBadRequest(f'Unable to retrieve fact: {fact_data}')
+        return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -48,14 +49,15 @@ class FactApi(BaseObjectApi):
     async def get_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
+        resp = []
         if relationship_data:
             try:
                 store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
                 resp = await self._api_manager.verify_relationship_integrity(store)
-                return web.json_response(dict(found=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue retrieving relationship {relationship_data} - {e}')
-        return web.json_response(dict(found=[]))
+                raise JsonHttpBadRequest(f'Unable to retrieve relationship: {relationship_data}')
+        return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.request_schema(FactSchema)
