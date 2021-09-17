@@ -52,7 +52,6 @@ These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
 * Python 3.6.1+ (with Pip3)
-* Google Chrome is our only supported browser
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
 ## Installation
