@@ -4135,7 +4135,7 @@ button.dropdown-item.is-active {
 
 .menu-label {
   color: white;
-  background-color: #191970;
+  border-bottom: 2px solid #191970;
   font-size: 0.75em;
   letter-spacing: 0.1em;
   text-transform: uppercase;
