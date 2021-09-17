@@ -527,12 +527,13 @@
                             <section class="modal-card-body">
                                 <div>
                                     <p>Are you sure you want to delete
+                                        <em x-show="openModalData.name === 'deleteSource'" x-text="openModalData.item?.name"></em>
                                         <em x-show="openModalData.name === 'deleteFact'"
-                                            x-text="openModalData.item.name"></em>
+                                            x-text="openModalData.item?.name"></em>
                                         <em x-show="openModalData.name === 'deleteRule'"
-                                            x-text="openModalData.item.trait"></em>
+                                            x-text="openModalData.item?.trait"></em>
                                         <em x-show="openModalData.name === 'deleteRelationship'"
-                                            x-text="openModalData.item.trait"></em>
+                                            x-text="openModalData.item?.trait"></em>
                                         ?</p>
                                 </div>
                             </section>
@@ -543,19 +544,24 @@
                                 x-on:click="resetModal()">
                             Cancel
                         </button>
+                        <button x-show="openModalData.name === 'deleteSource'" type="button"
+                                class="button is-primary is-small"
+                                x-on:click="deleteSource(openModalData.item)">
+                            Yes
+                        </button>
                         <button x-show="openModalData.name === 'deleteFact'" type="button"
                                 class="button is-primary is-small"
-                                x-on:click="deleteFact(openModalData.item); resetModal();">
+                                x-on:click="deleteFact(openModalData.item)">
                             Yes
                         </button>
                         <button x-show="openModalData.name === 'deleteRule'" type="button"
                                 class="button is-primary is-small"
-                                x-on:click="deleteRule(openModalData.item); resetModal();">
+                                x-on:click="deleteRule(openModalData.item)">
                             Yes
                         </button>
                         <button x-show="openModalData.name === 'deleteRelationship'" type="button"
                                 class="button is-primary is-small"
-                                x-on:click="deleteRelationship(openModalData.item); resetModal();">
+                                x-on:click="deleteRelationship(openModalData.item)">
                             Yes
                         </button>
                     </footer>
@@ -671,7 +677,7 @@
                 const updatedSource = { ...this.selectedSource };
                 updatedSource.rules.push(newRule);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
-                    toast('Updated source', res);
+                    toast('Updated source', true);
                     this.showAddRuleRow = false;
                 }).catch((error) => {
                     toast('Error loading page', false);
@@ -683,8 +689,19 @@
                 const updatedSource = { ...this.selectedSource };
                 updatedSource.relationships.push(newRelationship);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
-                    toast('Updated source', res);
+                    toast('Updated source', true);
                     this.showAddRelationshipRow = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            deleteSource(source) {
+                apiV2('DELETE', `/api/v2/sources/${source.id}`).then((res) => {
+                    toast('Deleted fact source', true);
+                    this.getSources();
+                    this.resetModal();
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
@@ -694,16 +711,19 @@
             deleteFact(fact) {
                 this.selectedSource.facts.splice(this.selectedSource.facts.findIndex((f) => f.unique === fact.unique), 1);
                 this.updateFactSource();
+                this.resetModal();
             },
 
             deleteRule(rule) {
                 this.selectedSource.rules.splice(this.selectedSource.rules.findIndex((r) => r === rule), 1);
                 this.updateFactSource();
+                this.resetModal();
             },
 
             deleteRelationship(rel) {
                 this.selectedSource.relationships.splice(this.selectedSource.relationships.find((r) => r === rel), 1);
                 this.updateFactSource();
+                this.resetModal();
             },
 
             resetModal() {
@@ -712,7 +732,7 @@
 
             updateFactSource() {
                 apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
-                    toast('Updated source', res);
+                    toast('Updated source', true);
                     this.getSources();
                 }).catch((error) => {
                     toast('Error loading page', false);
