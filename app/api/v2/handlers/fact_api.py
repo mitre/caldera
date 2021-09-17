@@ -3,6 +3,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.fact_api_manager import FactApiManager
+from app.api.v2.responses import JsonHttpBadRequest
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema
 from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType, WILDCARD_STRING
 from app.objects.secondclass.c_relationship import Relationship, RelationshipSchema
@@ -39,6 +40,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(found=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue retrieving fact {fact_data} - {e}')
+        return web.json_response(dict(found=[]))
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -53,6 +55,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(found=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue retrieving relationship {relationship_data} - {e}')
+        return web.json_response(dict(found=[]))
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.request_schema(FactSchema)
@@ -75,6 +78,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(added=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue saving fact {fact_data} - {e}')
+        raise JsonHttpBadRequest('Invalid fact data was provided.')
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.request_schema(RelationshipSchema)
@@ -111,6 +115,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(added=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue saving relationship {relationship_data} - {e}')
+        raise JsonHttpBadRequest('Invalid relationship data was provided.')
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.response_schema(FactSchema)
@@ -125,6 +130,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(removed=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue removing fact {fact_data} - {e}')
+        raise JsonHttpBadRequest('Invalid fact data was provided.')
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.response_schema(RelationshipSchema)
@@ -139,6 +145,7 @@ class FactApi(BaseObjectApi):
                 return web.json_response(dict(removed=resp))
             except Exception as e:
                 self.log.warning(f'Encountered issue removing relationship {relationship_data} - {e}')
+        raise JsonHttpBadRequest('Invalid relationship data was provided.')
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
@@ -161,6 +168,7 @@ class FactApi(BaseObjectApi):
                     return web.json_response(dict(error="Need a 'criteria' to match on and 'updates' to apply."))
             except Exception as e:
                 self.log.warning(f'Encountered issue updating fact {fact_data} - {e}')
+        raise JsonHttpBadRequest('Invalid fact data was provided.')
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
@@ -192,3 +200,4 @@ class FactApi(BaseObjectApi):
                     return web.json_response(dict(error="Need a 'criteria' to match on and 'updates' to apply."))
             except Exception as e:
                 self.log.warning(f'Encountered issue updating relationship {relationship_data} - {e}')
+        raise JsonHttpBadRequest('Invalid relationship data was provided.')
