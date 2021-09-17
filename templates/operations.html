@@ -1,5 +1,4 @@
 <div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()"
-     class="operations-page"
      xmlns="http://www.w3.org/1999/html"
      @resize.window="getOperationsMenuCaretDisplay()">
     <div>
@@ -222,6 +221,24 @@
                 <template x-if="selectedOperation">
                     <div x-show="selectedOperationID">
                         <div class="navbar-divider mb-5 width-100"></div>
+                        <template x-if="isOperationRunning && selectedOperation.chain.length > 3">
+                            <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
+                                <div class="mb-6 mr-4 text-align-right">
+                                    <button title="add manual command" class="button is-primary is-small"
+                                            x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
+                                        <i class="pr-1 fas fa-plus"></i>Manual
+                                        Command
+                                    </button>
+                                </div>
+                                <div class="mb-6 mr-4">
+                                    <button title="add potential link" class="button is-primary is-small"
+                                            x-on:click="openModal = 'addLink'; getAgents()"><i
+                                            class="pr-1 fas fa-plus"></i>Potential
+                                        Link
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                         <div class="timeline-table">
                             <table class="table">
                                 <thead>
@@ -434,31 +451,28 @@
                                     </tr>
                                 </template>
                                 </tbody>
-
-                                <!--                                ADD COMMAND/LINK BUTTONS-->
-                                <template x-if="isOperationRunning">
-                                    <tfoot>
-                                    <tr class="csv-exclude">
-                                        <td colspan="6"></td>
-                                        <td class="pt-6 text-align-right">
-                                            <button title="add manual command" class="button is-primary is-small"
-                                                    x-on:click="addNewRow = true; getAgents()">
-                                                <i class="pr-1 fas fa-plus"></i>Manual
-                                                Command
-                                            </button>
-                                        </td>
-                                        <td class="pt-6">
-                                            <button title="add potential link" class="button is-primary is-small"
-                                                    x-on:click="openModal = 'addLink'; getAgents()"><i
-                                                    class="pr-1 fas fa-plus"></i>Potential
-                                                Link
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    </tfoot>
-                                </template>
                             </table>
                         </div>
+
+                        <!--                                ADD COMMAND/LINK BUTTONS-->
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
+                                <div class="mb-6 mr-4 text-align-right">
+                                    <button title="add manual command" class="button is-primary is-small"
+                                            x-on:click="addNewRow = true; getAgents()">
+                                        <i class="pr-1 fas fa-plus"></i>Manual
+                                        Command
+                                    </button>
+                                </div>
+                                <div class="mb-6 mr-4">
+                                    <button title="add potential link" class="button is-primary is-small"
+                                            x-on:click="openModal = 'addLink'; getAgents()"><i
+                                            class="pr-1 fas fa-plus"></i>Potential
+                                        Link
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -1060,13 +1074,13 @@
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
             isLinkAvailable(link) {
-                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(link.technique_id);
+                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(link.ability.technique_id);
             },
 
             generateAddedLinksList() {
                 this.addedTechniquesIDs = new Set();
                 this.selectedOperation.chain.forEach((link) => {
-                    if (!this.addedTechniquesIDs.has(link.technique_id)) this.addedTechniquesIDs.add(link.technique_id);
+                    if (!this.addedTechniquesIDs.has(link.ability.technique_id)) this.addedTechniquesIDs.add(link.ability.technique_id);
                 });
             },
 
@@ -1207,7 +1221,7 @@
                     .then((res) => {
                         toast('Added potential link.', true);
                         this.getOperation();
-                        this.addedTechniquesIDs.add(link.technique_id);
+                        this.addedTechniquesIDs.add(link.ability.technique_id);
                         this.openModal = null;
                     })
                     .catch((error) => {
@@ -1471,7 +1485,7 @@
         width: 60% !important;
     }
 
-    #operationsPage .operations-page .column {
+    #operationsPage .column {
         margin: 0;
     }
 
@@ -1544,6 +1558,10 @@
         padding-bottom: 5em;
     }
 
+    #operationsPage .timeline-table td.agentDetails {
+        padding-top: 3.5em !important;
+    }
+
     #operationsPage .timeline-table table tr th {
         font-weight: 400;
         font-size: 0.75rem;
@@ -1612,7 +1630,7 @@
         padding: 0;
     }
 
-    #operationsPage .timeline-table table tbody td {
+    #operationsPage .timeline-table table tbody td:not(.agentDetails) {
         vertical-align: middle;
         border: none;
         height: 8em;
