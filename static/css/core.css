@@ -93,6 +93,14 @@ main.main {
   background-color: #060606;
 }
 
+.nav-item.disabled {
+  color: #a0a0a0;
+}
+.nav-item:hover.disabled {
+  background-color: transparent;
+  color: #a0a0a0;
+}
+
 #no-open-tabs {
   width: 100%;
   height: 50%;
