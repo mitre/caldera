@@ -1096,6 +1096,9 @@
                     await sleep(3000);
                     this.getOperations();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
+                    if (this.selectedOperationID) {
+                        this.getOperation();
+                    }
                 }
             },
 
