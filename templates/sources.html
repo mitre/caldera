@@ -85,7 +85,6 @@
             <em class="is-flex is-justify-content-center">Click on a fact source to get started.</em>
         </template>
 
-        <!-- TODO add adversary profile information as HTML <datalist> suggestions when adding to fact source -->
         <template x-if="selectedSource">
             <div>
                 <!-- FACTS CONTENT -->
@@ -342,7 +341,6 @@
                                     </td>
                                 </tr>
                             </template>
-                            <!-- TODO ? rethink index here, as it does not accurately represent actual runtime order of rules-->
                             <template x-for="(rule, index) in filteredRules">
                                 <tr x-on:click="selectedRule = rule; showAddRuleRow = false;"
                                     x-bind:class="selectedRule === rule ? 'selected' : ''">
@@ -398,8 +396,6 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- TODO: will user want to edit/remove relationships? -->
                 <!-- RELATIONSHIPS CONTENT -->
                 <div class="my-5" x-data="{collapseRelationships: false}">
                     <div class="collapsible-header">
@@ -495,13 +491,7 @@
                                     <td x-text="rel.source?.trait"></td>
                                     <td x-text="rel.edge"></td>
                                     <td x-text="rel.target?.trait"></td>
-                                    <td>
-                                        <!--                                        <button x-show="selectedRelationship === rel" type="button"-->
-                                        <!--                                                class="button is-small is-primary"-->
-                                        <!--                                                x-on:click="updateFactSource()">-->
-                                        <!--                                            Save-->
-                                        <!--                                        </button>-->
-                                    </td>
+                                    <td></td>
                                 </tr>
                             </template>
                             </tbody>
@@ -663,7 +653,6 @@
                 });
             },
 
-            // Validate rule does not already exist TODO this might be handled by server?
             validateRule(newRule) {
                 return !this.selectedSource.rules.find((r) => (r.match === newRule.match && r.trait === newRule.trait));
             },

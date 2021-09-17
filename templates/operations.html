@@ -342,7 +342,6 @@
                                         </td>
 
                                         <!--OUTPUT/FACTS COLUMN-->
-                                        <!--TODO if output is T, should show facts; individual links should have their own facts, TBD-->
                                         <td class="outputDetails">
                                             <template x-if="selectedLink === link && !selectedLinkResults">
                                                 <p class="is-size-7">No output available.</p>
@@ -358,21 +357,6 @@
                                                           x-show="selectedLinkResults?.length > 12">...</code>
                                                 </div>
                                             </template>
-
-                                            <!--                                            TODO how should facts be shown?-->
-                                            <!--                                            <template x-if="selectedLink === link && selectedLinkFacts?.length > 0">-->
-                                            <!--                                                <div class="mb-5">-->
-                                            <!--                                                    <p class="is-size-7">Facts: </p>-->
-                                            <!--                                                    <template x-for="(fact, index) in selectedLinkFacts"-->
-                                            <!--                                                              :key="link.id+'-'+index">-->
-                                            <!--                                                        <code x-bind:id="index" class="highlight"-->
-                                            <!--                                                              x-text="fact.score + (index < selectedLinkFacts.length - 1 ? ', ' : ' ')"></code>-->
-                                            <!--                                                    </template>-->
-                                            <!--                                                </div>-->
-                                            <!--                                            </template>-->
-                                            <!--                                            <template x-if="selectedLink === link && selectedLinkFacts?.length < 1">-->
-                                            <!--                                                <p class="is-size-7">No facts available.</p>-->
-                                            <!--                                            </template>-->
                                         </td>
 
                                         <td class="csv-exclude">
@@ -1062,7 +1046,6 @@
             get isLinkEditable() {
                 if (!this.selectedLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
-                // TODO check if this approve/discard condition is right
                 return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in this.LINK_STATUSES))
                     && !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'));
             },
@@ -1270,7 +1253,6 @@
                         this.getOperation();
                         toast(`Updating link status to: ${this.LINK_STATUSES[status]}`, true);
                     })
-                    // TODO have clearer error messaging here
                     .catch((error) => toast('Error updating link state.'));
             },
 
@@ -1283,7 +1265,6 @@
                         this.selectedLink = null
                     })
                     .catch((error) => {
-                        // TODO have clearer error messaging here
                         toast(`Error updating operation ${field}. Operation may have already finished running.`);
                     });
             },
@@ -1387,7 +1368,6 @@
                 this.getOperationsMenuCaretDisplay();
             },
 
-            // TODO potential link filter by agent, technique OR tactic (API call) rather than filtering on the client-side
             filterAbilities() {
                 this.filteredLinksList = this.potentialLink.agent.links.filter((link) => {
                     let match = true;
