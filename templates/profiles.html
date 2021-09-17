@@ -69,7 +69,7 @@
                     <span>Add Adversary</span>
                 </button>
                 <div class="vr"></div>
-                <span>Objective: <b x-text="objectives.find((o) => o.id === selectedObjectiveId).name"></b>&nbsp;&nbsp;&nbsp;</span>
+                <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
                 <button class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
                 <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
@@ -464,7 +464,7 @@
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
                         <br>
-                        <template x-for="(executor, index) of selectedAbility.executors" :key="`${executor.platform}-${executor.name}`">
+                        <template x-for="(executor, index) of getAbilityExecutors()" :key="`${executor.platform}-${executor.name}`">
                             <div class="box">
                                 <div class="has-text-right">
                                     <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
@@ -582,7 +582,7 @@
                                 </form>
                             </div>
                         </template>
-                        <template x-if="selectedAbility.executors.length > 0">
+                        <template x-if="selectedAbility.executors && selectedAbility.executors.length > 0">
                             <div class="has-text-centered">
                                 <button class="button is-small is-primary" @click="addExecutorToAbility('after')">+ Add Executor</button>
                             </div>
@@ -919,6 +919,15 @@
             clearAbilityHover() {
                 this.onHoverLocks = [];
                 this.onHoverUnlocks = [];
+            },
+
+            getObjectiveName() {
+                let obj = this.objectives.find((o) => o.id === this.selectedObjectiveId);
+                return obj ? obj.name : '';
+            },
+
+            getAbilityExecutors() {
+                return this.selectedAbility.executors || [];
             },
 
             loadProfileAdversary() {
