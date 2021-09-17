@@ -508,11 +508,8 @@ p[onclick] {
 }
 
 .duk-icon img {
-  height: 22px;
-  background-color: white;
-  border-radius: 50%;
-  border: black 1px solid;
-  cursor: pointer;
+  display: none;
+
 }
 
 .duk-modal {
