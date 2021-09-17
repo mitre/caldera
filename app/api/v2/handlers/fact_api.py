@@ -72,8 +72,8 @@ class FactApi(BaseObjectApi):
                     new_fact.source = WILDCARD_STRING
                 new_fact.source_type = OriginType.USER.name
                 await knowledge_svc_handle.add_fact(new_fact)
-                store = await knowledge_svc_handle.get_facts(criteria=dict(trait=fact_data['trait'],
-                                                                           value=fact_data['value'],
+                store = await knowledge_svc_handle.get_facts(criteria=dict(trait=new_fact.trait,
+                                                                           value=new_fact.value,
                                                                            source=WILDCARD_STRING,
                                                                            source_type=OriginType.USER.name))
                 resp = await self._api_manager.verify_fact_integrity(store)
