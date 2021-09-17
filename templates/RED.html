@@ -40,10 +40,13 @@
                     <p class="menu-label"><i class="fas fa-puzzle-piece pr-2"></i>Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
-                            <li><a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
-                                <template x-if="`{{plugin.name | e}}`=== 'fieldmanual'">
-                                    <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
-                                </template></a></li>
+                            <li x-show="'{{ plugin.name }}' !== 'atomic' && '{{ plugin.name }}' !== 'stockpile'">
+                                <a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')">{{ plugin.name }}
+                                    <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
+                                        <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
+                                    </template>
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                     <p class="menu-label"><i class="fas fa-cog pr-2"></i></i>Configuration</p>
