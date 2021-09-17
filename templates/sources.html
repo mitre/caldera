@@ -44,14 +44,13 @@
                         <i class="pr-1 fas fa-plus"></i>
                         <span>Duplicate</span>
                     </button>
-                    <!--                    TODO: delete source endpoint-->
-                    <!--                    <button type="button"-->
-                    <!--                            x-bind:disabled="true"-->
-                    <!--                            class="ml-2 button is-primary is-small"-->
-                    <!--                            x-on:click="console.log('delete ', selectedSource)"-->
-                    <!--                            title="Delete selected source">-->
-                    <!--                        <i class="pr-1 fas fa-trash"></i>-->
-                    <!--                    </button>-->
+                    <button type="button"
+                            x-bind:disabled="!selectedSource"
+                            class="ml-2 button is-primary is-small"
+                            x-on:click="openModalData.name = 'deleteSource'; openModalData.item = selectedSource"
+                            title="Delete selected source">
+                        <i class="pr-1 fas fa-trash"></i>
+                    </button>
                 </div>
             </div>
 
