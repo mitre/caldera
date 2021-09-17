@@ -349,6 +349,10 @@
                                             <template x-if="selectedLink === link && selectedLinkResults">
                                                 <div class="mb-5">
                                                     <p class="is-size-7">Output: </p>
+                                                    <<<<<<< HEAD
+                                                    <button class="button is-primary is-small" x-on:click="openModal='showOutput'"
+                                                            title="view more output">View Output</button>
+                                                    =======
                                                     <span x-show="selectedLinkResults?.length <= 12"
                                                           x-bind:class="selectedLinkResults?.length > 12 && 'output-container'">
                                                         <code class="is-size-7" x-text="selectedLinkResults"></code>
@@ -356,6 +360,7 @@
                                                     <code class="cursor-pointer" x-on:click="openModal='showOutput'"
                                                           title="view more"
                                                           x-show="selectedLinkResults?.length > 12">View Output</code>
+                                                    >>>>>>> 2ed5611fc1709a15156bf497ced7f67237f21f4c
                                                 </div>
                                             </template>
                                         </td>
@@ -1097,9 +1102,7 @@
                     await sleep(3000);
                     this.getOperations();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
-                    if (this.selectedOperationID) {
-                        this.getOperation();
-                    }
+                    this.updateOperationState();
                 }
             },
 
@@ -1271,6 +1274,17 @@
                     .catch((error) => {
                         toast(`Error updating operation ${field}. Operation may have already finished running.`);
                     });
+            },
+
+            updateOperationState() {
+                if (this.selectedOperationID) {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
+                        this.selectedOperation.state = res.state;
+                        // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
+                    }).catch((error) => {
+                        toast('Error getting operation state');
+                    });
+                }
             },
 
             downloadInfo(formatType) {
