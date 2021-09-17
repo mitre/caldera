@@ -12,7 +12,6 @@ from aiohttp_jinja2 import template, render_template
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
-from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 

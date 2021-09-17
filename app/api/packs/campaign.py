@@ -1,5 +1,4 @@
 import operator
-import os
 from collections import defaultdict
 
 from aiohttp_jinja2 import template
@@ -79,11 +78,11 @@ class CampaignPack(BaseWorld):
     @template('operations.html')
     async def _section_operations(self, request):
         def load_usage_markdown(header):
-             f = open('plugins/fieldmanual/sphinx-docs/Basic-Usage.md','r')
-             markdown = []
-             seen_header = False
-             for x in f:
-                if (not seen_header and "## Operations" in  x):
+            f = open('plugins/fieldmanual/sphinx-docs/Basic-Usage.md', 'r')
+            markdown = []
+            seen_header = False
+            for x in f:
+                if (not seen_header and "## Operations" in x):
                     markdown = []
                     seen_header = True
                 elif (seen_header and "## " in x):
@@ -95,8 +94,8 @@ class CampaignPack(BaseWorld):
                             key = key.split("*")[3]
                             val = val.strip("\n")
                         markdown.append({key: val})
-             f.close()
-             return markdown
+            f.close()
+            return markdown
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         hosts = [h.display for h in await self.data_svc.locate('agents', match=access)]
         groups = sorted(list(set(([h['group'] for h in hosts]))))
