@@ -39,8 +39,9 @@ class FactApi(BaseObjectApi):
                 store = await knowledge_svc_handle.get_facts(criteria=fact_data)
                 resp = await self._api_manager.verify_fact_integrity(store)
             except Exception as e:
-                self.log.warning(f'Encountered issue retrieving fact {fact_data} - {e}')
-                raise JsonHttpBadRequest(f'Unable to retrieve fact: {fact_data}')
+                error_msg = f'Encountered issue retrieving fact {fact_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['relationships'])
@@ -55,8 +56,9 @@ class FactApi(BaseObjectApi):
                 store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
                 resp = await self._api_manager.verify_relationship_integrity(store)
             except Exception as e:
-                self.log.warning(f'Encountered issue retrieving relationship {relationship_data} - {e}')
-                raise JsonHttpBadRequest(f'Unable to retrieve relationship: {relationship_data}')
+                error_msg = f'Encountered issue retrieving relationship {relationship_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['facts'])
