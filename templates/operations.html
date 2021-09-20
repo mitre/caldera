@@ -348,19 +348,14 @@
                                             </template>
                                             <template x-if="selectedLink === link && selectedLinkResults">
                                                 <div class="mb-5">
-                                                    <p class="is-size-7">Output: </p>
-                                                    <span x-bind:class="selectedLinkResults?.length > 12 && 'output-container'">
-                                                        <code class="is-size-7" x-text="selectedLinkResults"></code>
-                                                    </span>
-                                                    <code class="cursor-pointer" x-on:click="openModal='showOutput'"
-                                                          title="view more"
-                                                          x-show="selectedLinkResults?.length > 12">...</code>
+                                                    <button class="button is-primary is-small" x-on:click="openModal='showOutput'"
+                                                          title="view output">View Output</button>
                                                 </div>
                                             </template>
                                         </td>
 
                                         <td class="csv-exclude">
-                                            <button x-show="selectedLink === link && isOperationRunning && link.status !== -2"
+                                            <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
                                                     type="button" title="delete link"
                                                     class="button is-primary is-small ml-2"
                                                     x-on:click="openModal = 'deleteLinkModal'"><i
@@ -474,10 +469,8 @@
                                     <p class="modal-card-title">Output</p>
                                 </header>
                                 <section class="modal-card-body">
-                                    <div class="modal-form">
-                                        <div>
-                                            <code x-text="selectedLinkResults"></code>
-                                        </div>
+                                    <div class="has-text-left">
+                                        <pre x-text="selectedLinkResults"></pre>
                                     </div>
                                 </section>
                             </div>
@@ -660,24 +653,6 @@
                                                 <label for="pause-on-start">Pause on start</label>
                                             </div>
                                         </div>
-
-
-                                        <!--                                        <div>-->
-                                        <!--                                            <label for="autonomous-cleanup_timeout"><span-->
-                                        <!--                                                    class="has-tooltip-multiline has-tooltip-bottom"-->
-                                        <!--                                                    x-bind:data-tooltip="usage['Cleanup timeout']">Cleanup timeout (sec)</span></label>-->
-                                        <!--                                            <div class="modal-form-fields">-->
-                                        <!--                                                <input id="autonomous-cleanup_timeout" class="input"-->
-                                        <!--                                                       x-model="startOperation.timeout" type="number"-->
-                                        <!--                                                       placeholder="30" value="30" min="0" max="300"-->
-                                        <!--                                                       x-on:change.once="toast('The number of seconds Caldera will wait per cleanup action to complete before continuing.', true)">-->
-                                        <!--                                                <button type="button" class="button is-primary no-style reset"-->
-                                        <!--                                                        title="reset to default"-->
-                                        <!--                                                        x-on:click="startOperation.timeout = 30">-->
-                                        <!--                                                    Reset-->
-                                        <!--                                                </button>-->
-                                        <!--                                            </div>-->
-                                        <!--                                        </div>-->
 
                                         <div>
                                             <label for="stealth-jitter"><span
@@ -1096,6 +1071,9 @@
                     await sleep(3000);
                     this.getOperations();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
+                    if (this.selectedOperationID) {
+                        this.getOperation();
+                    }
                 }
             },
 
