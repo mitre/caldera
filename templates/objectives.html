@@ -1,278 +1,303 @@
-<div id="objectives" class="section-profile">
-    <div class="advanced row">
-        <div class="topleft duk-icon"><img onclick="removeSection('objectives')" src="/gui/img/x.png"></div>
-        <div class="bottomright duk-icon"><img onclick="toggleSidebar('objectives-sidebar')" src="/gui/img/expand.png"></div>
-        <div id="objectives-sidebar"  class="column section-border" style="flex:25%">
-        <img src="/gui/img/facts.png">
-        <h4>Objectives</h4>
-        <br>
-        <div class="toggle">
-            <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleObjectiveView()">
-            <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
-            </label>
-            </div>
-        <br>
-        <p class="section-description">
-          Objectives are groups of goals that an adversary will accomplish.
+<div x-data="alpineObjectives()" x-init="initPage()">
+    <div>
+        <h2>Objectives</h2>
+        <p>
+            Objectives are groups of goals (a.k.a. fact targets) that an adversary will accomplish.
         </p>
-        <br>
-        <div id="viewObjective">
-            <select id="objective-list" style="margin-top:-15px" onchange="loadObjective();">
-                <option value="" disabled selected>Select an existing objective</option>
-                {% for o in objectives %}
-                    <option value="{{ o.id|e }}">{{ o.name|e }}</option>
-                {% endfor %}}
-            </select>
-        </div>
-        <div id="addObjective"></div>
-        <button id="objectiveBtn" type="button" class="button-success atomic-button"
-              onclick="viewAssignments()">View Adversary Assignments
-        </button>
-        <button id="saveObjectiveBtn" type="button" class="button-success atomic-button"
-              onclick="saveObjective()">Save
-        </button>
-        </div>
-        <div class="column pane-header-editable" style="flex:75%;text-align:left">
-            <input id="objective-name" type="text" name="objective-name" placeholder="enter an objective name" />
-            <input id="objective-description" type="text" name="objective-description" placeholder="enter a objective description" />
-            <hr/>
-            <table id="goalTbl" class="obfuscation-table fillable-table" border=1 frame=void rules=rows>
-                <thead>
-                    <tr>
-                        <td><b>target</b></td>
-                        <td><b>operator</b></td>
-                        <td><b>value</b></td>
-                        <td><b>count</b></td>
-                        <td></td>
-                    </tr>
-                </thead>
-            </table>
-            <p style="color:white;text-align:right;font-size:16px;" onclick="addGoalRow()">
-                &#10010;&nbsp;add row
-            </p>
-        </div>
     </div>
-</div>
+    <hr>
+    <div>
 
-<div id="assignments-modal" class="modal">
-    <form class="modal-content" style="width:50%;">
-        <div class="container modal-box">
-            <div class="row ability-viewer">
-                <span onclick="document.getElementById('assignments-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                <div class="column" style="flex:100%">
-                    <center>
-                        <span>Adversary-Objective Assignments</span>
-                        <h3 id="assignment-name" style="margin-top:2px;text-align:center"></h3>
-                        <ul id="objective-assignments"></ul>
-                    </center>
+        <!-- OBJECTIVE SELECTION -->
+
+        <form>
+            <div id="select-objective" class="field has-addons">
+                <label class="label">Select an objective &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
+                        <select id="planner-select" x-on:change="selectedObjective = objectives.find((o) => o.id === selectedObjectiveId)" x-model="selectedObjectiveId">
+                            <option value="" disabled selected>Select one...</option>
+                            <template x-for="objective of objectives" :key="objective.id">
+                                <option x-bind:value="objective.id" x-text="objective.name" x-bind:title="objective.description"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button type="button" class="button is-primary is-small" @click="createObjective()">+ New</button>
                 </div>
             </div>
+        </form>
+
+        <!-- OBJECTIVE CONTROLS -->
+
+        <div class="content" x-show="selectedObjective.id">
+            <div x-show="!isEditing">
+                <h3 x-text="selectedObjective.name"></h3>
+                <p x-text="selectedObjective.description"></p>
+            </div>
+            <br>
+            <form x-show="isEditing">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" x-model="selectedObjective.name" placeholder="Objective Name" x-bind:class="{ 'is-danger': fieldErrors.includes('name') }">
+                        <p x-show="fieldErrors.includes('name')" class="help is-danger">This field is required.</p>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <input class="input is-small" x-model="selectedObjective.description" placeholder="Objective Description" x-bind:class="{ 'is-danger': fieldErrors.includes('description') }">
+                        <p x-show="fieldErrors.includes('description')" class="help is-danger">This field is required.</p>
+                    </div>
+                </div>
+            </form>
+            <div class="control-buttons is-flex is-flex-direction-row">
+                <button class="button is-small" @click="isEditing = true" x-show="!isEditing">
+                    <span class="icon"><i class="fas fa-pencil-alt"></i></span>
+                    <span>Edit</span>
+                </button>
+                <button class="button is-small" @click="showAssignmentsModal = true" x-show="!isEditing" x-bind:disabled="!adversaries.filter((a) => a.objective === selectedObjective.id).length">
+                    <span class="icon"><i class="fas fa-tasks"></i></span>
+                    <span>
+                        Show Assignments
+                        (<span x-text="adversaries.filter((a) => a.objective === selectedObjective.id).length"></span>)
+                    </span>
+                </button>
+                <button class="button is-small" @click="cancelEditing()" x-show="isEditing">
+                    <span class="icon"><i class="fas fa-times-circle"></i></span>
+                    <span>Cancel Changes</span>
+                </button>
+                <button class="button is-success is-small" @click="saveObjective()" x-show="isEditing">
+                    <span class="icon"><i class="fas fa-save"></i></span>
+                    <span>Save</span>
+                </button>
+            </div>
+            <br>
+            <h4>Goals</h4>
         </div>
-    </form>
+
+        <!-- GOALS TABLE -->
+        
+        <div x-show="selectedObjective.id">
+            <table class="table is-striped">
+                <thead>
+                    <tr>
+                        <th> 
+                            <span class="has-tooltip-multiline" data-tooltip="The fact associated with this goal, i.e. host.user.name">target</span>
+                        </th>
+                        <th>
+                            <span class="has-tooltip-multiline" data-tooltip="The relationship to validate between the target and value.">operator</span>
+                        </th>
+                        <th>
+                            <span class="has-tooltip-multiline" data-tooltip="The value this fact should have">value</span>
+                        </th>
+                        <th>
+                            <span class="has-tooltip-multiline" data-tooltip="The number of times this goal should be met in the fact database to be satisfied, defaults to infinity (2^20)">count</span>
+                        </th>
+                        <th>
+                            <span class="has-tooltip-multiline" data-tooltip="The relationship to validate between the target and value.">achieved</span>
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(goal, index) of selectedObjective.goals || []" :key="index">
+                        <tr x-show="!isEditing">
+                            <td x-text="goal.target"></td>
+                            <td x-text="goal.operator"></td>
+                            <td x-text="goal.value"></td>
+                            <td x-text="goal.count"></td>
+                            <td>
+                                <span class="icon has-text-success" x-show="goal.achieved">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span class="icon has-text-danger" x-show="!goal.achieved">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </template>
+                    <template x-for="(goal, index) of selectedObjective.goals || []" :key="index">
+                        <tr x-show="isEditing">
+                            <td>
+                                <input class="input is-small" x-model="goal.target">
+                            </td>
+                            <td>
+                                <div class="select is-small">
+                                    <select x-model="goal.operator">
+                                        <template x-for="op of OPERATOR_TYPES" :key="op">
+                                            <option x-bind:value="op" x-text="op" x-bind:selected="goal.operator === op"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>
+                                <input class="input is-small" x-model="goal.value">
+                            </td>
+                            <td>
+                                <input class="input is-small" type="number" x-model="goal.count">
+                            </td>
+                            <td>
+                                <span class="icon has-text-success" x-show="goal.achieved">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span class="icon has-text-danger" x-show="!goal.achieved">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                            </td>
+                            <td class="has-text-centered">
+                                <button class="delete is-danger" @click.stop="selectedObjective.goals.splice(index, 1)"></button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <button class="button is-primary is-small" @click="addGoal()" x-show="isEditing">
+                <span class="icon"><i class="fas fa-plus"></i></span>
+                <span>Add Goal</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- MODALS -->
+
+    <div class="modal" x-bind:class="{ 'is-active': showAssignmentsModal }">
+        <div class="modal-background" @click="showAssignmentsModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Objective Assignments</p>
+            </header>
+            <section class="modal-card-body">
+                <p>
+                    Below are the adversary profiles that have the <b x-text="selectedObjective.name"></b> objective linked:
+                </p>
+                <ul>
+                    <template x-for="adversary of adversaries.filter((a) => a.objective === selectedObjective.id)" :key="adversary.adversary_id">
+                        <li x-text="adversary.name"></li>
+                    </template>
+                </ul>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showAssignmentsModal = false">Close</button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
 </div>
 
-<li class="row-simple assignment-template" style="display: none;">
-    <div class="column">
-        <table frame=void rules=rows style="border-spacing:20px;width:100%">
-            <tr>
-                <td style="width:20%"><b>adversary:</b></td>
-                <td class="assignmentAdversary"></td>
-            </tr>
-            <tr>
-                <td style="width:20%"><b>objective:</b></td>
-                <td class="assignmentObjective"></td>
-            </tr>
-        </table>
-    </div>
-</li>
-
 <script>
-    $(document).ready(function () {
-        stream('New objectives will be created to automate adversary actions to achieve goals.')
-    });
-    let refresher = setInterval(refresh, 15000);
-    let adversariesinfo = setInterval(refresh, 15000);
-    $('.section-profile').bind('destroyed', function() {
-        console.log('objectives refresh off');
-        clearInterval(refresher);
-    });
+function alpineObjectives() {
+    return {
+        objectives: [],
+        adversaries: [],
+        selectedObjectiveId: '',
+        selectedObjective: {},
+        isEditing: false,
+        isCreating: false,
 
-    function refresh(){
-        function objectiveCallback(data){
-            data.forEach(function(o) {
-                let found = false;
-                $("#objective-list > option").each(function() {
-                    if($(this).val() === o.id) {
-                        found = true;
-                    }
-                });
-                if(!found){
-                    $('#objective-list').append('<option value="'+o.id+'">'+o.name+'</option>');
-                }
+        OPERATOR_TYPES: ['<', '>', '<=', '>=', 'in', '*', '=='],
+
+        showAssignmentsModal: false,
+
+        // Input validation
+        requiredFields: ['name', 'description', 'goals'],
+        fieldErrors: [],
+
+        initPage() {
+            apiV2('GET', '/api/v2/objectives').then((objectives) => {
+                this.objectives = objectives;
+                return apiV2('GET', '/api/v2/adversaries');
+            }).then((adversaries) => {
+                this.adversaries = adversaries;
+            }).catch((error) => {
+                toast('Error loading page', false);
+                console.error(error);
             });
-        }
-        restRequest('POST', {'index':'objectives'}, objectiveCallback, '/api/rest');
-    }
+        },
 
-    function toggleObjectiveView() {
-        $('#viewObjective').toggle();
-        $('#addObjective').toggle();
-        $('#objectiveBtn').toggle();
-        $('#objective-list').val('');
-        clearGoalCanvas();
-    }
-
-    function clearGoalCanvas(){
-        $('#goalTbl').find("tr:gt(0)").remove();
-        $('#objective-goals').empty();
-        $('#objective-name').data('id', null);
-        $('#objective-name').val('');
-        $('#objective-description').val('');
-    }
-
-    function loadObjective() {
-        function loadObjectiveCallback(data) {
-            clearGoalCanvas();
-            let objective = $('#objective-name');
-            data[0].goals.forEach(g => {
-                addGoalRow(g.target, g.operator, g.value, g.count);
+        createObjective() {
+            this.objectives.push({
+                id: uuidv4(),
+                name: '',
+                description: '',
+                goals: []
             });
-            objective.data('id', data[0].id);
-            objective.val(data[0].name);
-            $('#objective-description').val(data[0].description);
-        }
-        stream('Targets within goals can be used inside objectives as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'objectives', 'id': $('#objective-list').val()}, loadObjectiveCallback);
-    }
+            this.selectedObjective = this.objectives[this.objectives.length - 1];
+            this.addGoal();
+            this.isCreating = true;
+            this.isEditing = true;
+        },
 
-    function addGoalRow(target, operator, value, count) {
-        let resTarget = ($('<input>')
-            .attr('type', 'text')
-            .attr('placeholder', 'Enter target')
-            .attr('name', 'target')
-            .prop('required', true)
-            );
-            if (target) {
-                resTarget.val(target)
-            }
-        let resOperator = ($('<input>')
-            .attr('type', 'text')
-            .attr('placeholder', 'Enter operator')
-            .prop('required', true)
-            );
-            if (operator) {
-                resOperator.val(operator)
-            }
-        let resValue = ($('<input>')
-            .attr('type', 'text')
-            .attr('placeholder', 'Enter value')
-            .prop('required', true)
-            );
-            if (value) {resValue.val(value)
-            }
-        let resCount = ($('<input>')
-            .attr('type', 'number')
-            .attr('placeholder', 'Enter count')
-            .prop('required', true)
-            );
-            if (operator) {
-                resCount.val(count)
+        addGoal() {
+            this.selectedObjective.goals.push({
+                achieved: false,
+                count: 0,
+                operator: this.OPERATOR_TYPES[0],
+                target: '',
+                value: ''
+            });
+        },
+
+        saveObjective() {
+            this.fieldErrors = validateInputs(this.selectedObjective, this.requiredFields);
+            if (this.fieldErrors.length) return;
+
+            apiV2('PUT', `/api/v2/objectives/${this.selectedObjective.id}`, this.selectedObjective).then((response) => {
+                this.isEditing = false;
+                this.isCreating = false;
+                toast('Saved objective', true);
+            }).catch((error) => {
+                toast('Error saving objective', false);
+                console.error(error);
+            });
+        },
+
+        cancelEditing() {
+            this.isEditing = false;
+
+            if (this.isCreating) {
+                this.selectedObjectiveId = '';
+                this.selectedObjective = {};
+                this.objectives.splice(this.objectives.length - 1, 1);
+                return;
             }
 
-        $('#goalTbl tr:last').after($('<tr></tr>')
-            .append($('<td></td>')
-                .append(resTarget)
-            )
-            .append($('<td></td>')
-                .append(resOperator)
-            )
-            .append($('<td></td>')
-                .append(resValue)
-            )
-            .append($('<td></td>')
-                .append(resCount)
-            )
-            .append($('<td></td>')
-                .append($('<p></p>')
-                    .html('&#x274C;')
-                    .attr('contenteditable', 'true')
-                    .click(event => {
-                        $(event.currentTarget).parent().parent().remove()
-                    })
-                    .css('cursor', 'pointer')
-                )
-            )
-        )
-    }
-
-    function saveObjective(){
-        function saveObjectiveCallback(data) {
-            stream('New objective saved!');
-        }
-        let objective = $('#objective-name');
-        let name = objective.val();
-        let id = objective.data('id');
-        let description = $('#objective-description');
-        if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
-            id = uuidv4();
-            objective.data('id', id);
-        }
-        let data = {};
-        data['index'] = 'objectives';
-        data['id'] = id;
-        data['name'] = name;
-        data['description'] = description.val();
-        data['goals'] = [];
-
-        $("#goalTbl tr").not(":first").each(function (index, value) {
-            let rowdata = {
-                'target': this.cells[0].children[0].value,
-                'operator': this.cells[1].children[0].value,
-                'value': this.cells[2].children[0].value,
-                'count': this.cells[3].children[0].value
-            }
-            $.each(rowdata, function(key, val) {
-                console.log(`${key} = ${val}`)
-                if(!val) { warn(`Goal ${index+1} is missing ${key}`); return; }
-            })
-            data['goals'].push(rowdata);
-        });
-        if(data['goals'].length === 0) { warn('Please enter some goals!'); return; }
-
-        restRequest('PUT', data, saveObjectiveCallback);
-    }
-
-    function viewAssignments(){
-        populateAssignments();
-        document.getElementById("assignments-modal").style.display = "block";
-        let objectiveName = $('#objective-name').val();
-        $('#assignment-name').text(objectiveName);
-    }
-
-    function populateAssignments() {
-        $("#objective-assignments").empty();
-        function populateAssignmentsCallback(data) {
-            if(data.length == 0) {
-                $('#objective-assignments').append("<li>No assignments</li>");
-            }
-            data.forEach(adversary => {
-                let template = $(".assignment-template").clone();
-                template.removeClass("assignment-template");
-                template.data("adversary_id", adversary.adversary_id);
-                template.find(".assignmentAdversary").text(adversary.name);
-                template.find(".assignmentObjective").text(adversary.objective.id + " - " + adversary.objective.name);
-                template.show();
-                $('#objective-assignments').append(template);
+            apiV2('GET', `/api/v2/objectives/${this.selectedObjective.id}`).then((objective) => {
+                this.selectedObjective = objective;
+            }).catch((error) => {
+                toast('Error canceling changes, please close and reopen this page', false);
+                console.error(error);
             });
         }
 
-        let activeId = $("#objective-list").val()
-        if(activeId)
-            restRequest('POST', {'index':'adversaries', 'objective': activeId}, populateAssignmentsCallback);
-        else
-            restRequest('POST', {'index':'adversaries'}, populateAssignmentsCallback);
-    }
+    };
+}
 
-    //# objectiveURL=objectives.js
+// # sourceURL=objectives.js
 </script>
+
+<style>
+    #select-objective {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .control-buttons>.button {
+        margin: 0 10px 10px 0;
+    }
+
+    .vr {
+        width: 1px;
+        height: 30px;
+        margin: 0 20px 0 10px;
+        background-color: grey;
+    }
+</style>
