@@ -380,8 +380,8 @@
                                         <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
                                             <td></td>
                                             <td></td>
-                                            <td colspan="2">New Manual Command</td>
-                                            <td colspan="2">
+                                            <td>New Manual Command</td>
+                                            <td>
                                                 <label x-show="false" for="manual-agent">Choose an agent:</label>
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="manual-agent" x-model="selectedAgentIndex" required>
@@ -411,7 +411,7 @@
                                                     </select>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td colspan="2">
                                                 <label x-show="false" for="input-command">Type manual command:</label>
                                                 <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
                                                 <textarea x-model="manualCommand.executor.command"
@@ -1542,7 +1542,7 @@
     /*END MODAL FORM STYLE*/
 
     #operationsPage span.output-container {
-        height: 5em;
+        height: 8em;
         display: block;
         overflow: hidden;
         white-space: pre-line;
