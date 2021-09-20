@@ -734,8 +734,7 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-agent"
                                                             x-model="selectedAgentIndex"
-                                                            x-on:change="getAgentExecutors()">
-                                                        <option disabled>Choose an agent...</option>
+                                                            x-on:change="potentialLink.agent = selectedAgent">
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option :value="index"
@@ -755,7 +754,8 @@
                                                             x-on:change="filterAbilities(abilities)">
                                                         <template x-for="(exec, index) in selectedAgentExecutors"
                                                                   :key="exec">
-                                                            <option x-text="exec" x-bind:selected="index === 0"></option>
+                                                            <option x-text="exec"
+                                                                    x-bind:selected="index === 0"></option>
                                                         </template>
                                                     </select>
                                                 </div>
@@ -1088,12 +1088,6 @@
                 });
             },
 
-            getAgentExecutors(agent = this.selectedAgent) {
-                this.potentialLink.agent = agent;
-                this.potentialLink.executor = agent.executor[0];
-                this.filterAbilities(this.abilities);
-            },
-
             //
             // API CALLS
             //
@@ -1202,6 +1196,10 @@
             getAbilities() {
                 apiV2('GET', '/api/v2/abilities').then((abilities) => {
                     this.abilities = abilities;
+                    if (this.selectedOperation.host_group && this.selectedOperation.host_group.length > 0) {
+                        this.potentialLink.agent = this.selectedOperation.host_group[0];
+                        this.potentialLink.executor = this.potentialLink.agent.executors[0];
+                    }
                     this.filterAbilities(abilities);
                     this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
                     this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
@@ -1238,14 +1236,16 @@
             addPotentialLink(link) {
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
-                    this.openModal = null;
                 }
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {...link, executor: this.selectedAgent.executors[0]})
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
+                    ...link,
+                    paw: this.potentialLink.agent.paw,
+                    executor: link.executors.find((e) => e.platform === this.potentialLink.agent.platform && this.potentialLink.executor === e.name)
+                })
                     .then(() => {
                         toast('Added potential link.', true);
                         this.getOperation();
                         this.addedTechniquesIDs.add(link.technique_id);
-                        this.openModal = null;
                     })
                     .catch(() => {
                         toast('Error adding potential link.');
@@ -1423,7 +1423,7 @@
             filterAbilities(abilities) {
                 this.filteredAbilitiesList = abilities.filter((ability) => {
                     let matchAgent = true, matchTactic = true, matchTechnique = true;
-                    if (this.potentialLink.agent.executors) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.agent.executors.includes(ex.name));
+                    if (this.potentialLink.executor) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
                     if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
                     if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === ability.technique_name;
                     return matchAgent && matchTactic && matchTechnique;
