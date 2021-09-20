@@ -7,7 +7,7 @@ from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_operation import Operation, OperationSchema, OutputSchema
+from app.objects.c_operation import Operation, OperationSchema, OperationOutputSchema
 from app.objects.secondclass.c_link import LinkSchema
 
 
@@ -70,7 +70,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.request_schema(OutputSchema)
+    @aiohttp_apispec.request_schema(OperationOutputSchema)
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -80,7 +80,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.request_schema(OutputSchema)
+    @aiohttp_apispec.request_schema(OperationOutputSchema)
     async def get_operation_event_logs(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -162,7 +162,7 @@ class OperationApi(BaseObjectApi):
         raw_body = await request.read()
         output = False
         if raw_body:
-            output = json.loads(raw_body).get('output', False)
+            output = json.loads(raw_body).get('enable_agent_output', False)
         return output
 
     '''Overridden Methods'''
