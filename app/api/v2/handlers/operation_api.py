@@ -24,6 +24,7 @@ class OperationApi(BaseObjectApi):
         router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
         router.add_get('/operations/{id}/report', self.get_operation_report)
+        router.add_get('/operations/{id}/event-logs', self.get_operation_event_logs)
         router.add_get('/operations/{id}/links', self.get_operation_links)
         router.add_get('/operations/{id}/links/{link_id}', self.get_operation_link)
         router.add_get('/operations/{id}/links/{link_id}/result', self.get_operation_link_result)
@@ -72,6 +73,14 @@ class OperationApi(BaseObjectApi):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
         report = await self._api_manager.get_operation_report(operation_id, access)
+        return web.json_response(report)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    async def get_operation_event_logs(self, request: web.Request):
+        operation_id = request.match_info.get('id')
+        access = await self.get_request_permissions(request)
+        report = await self._api_manager.get_operation_event_logs(operation_id, access)
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'])

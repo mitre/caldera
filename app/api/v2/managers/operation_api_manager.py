@@ -27,6 +27,11 @@ class OperationApiManager(BaseApiManager):
         report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
         return report
 
+    async def get_operation_event_logs(self, operation_id: str, access: dict):
+        operation = await self.get_operation_object(operation_id, access)
+        event_logs = await operation.event_logs(file_svc=self._file_svc, data_svc=self._data_svc, output=False)
+        return event_logs
+
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
         if data.get('state'):
