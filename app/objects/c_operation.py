@@ -25,8 +25,8 @@ from app.utility.base_service import BaseService
 NO_PREVIOUS_STATE = object()
 
 
-class OutputSchema(ma.Schema):
-    output = ma.fields.Boolean(default=False)
+class OperationOutputSchema(ma.Schema):
+    enable_agent_output = ma.fields.Boolean(default=False)
 
 
 class OperationSchema(ma.Schema):
