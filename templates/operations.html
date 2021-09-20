@@ -65,7 +65,7 @@
                                     <i x-show="selectedOperationID !== op.id" class="far fa-folder">
                                         <span class="decisionsIcon" x-text="op.chain.length"></span></i>
                                     <i x-show="selectedOperationID === op.id" class="far fa-folder-open"></i>
-                                    <span x-text="op.name"></span>
+                                    <span class="operation-name" x-text="op.name"></span>
                                     <span class="readable-time" x-text="getHumanFriendlyTime(op.start)"></span>
                                 </button>
                             </template>
@@ -1473,6 +1473,13 @@
         width: 5em;
         text-align: center;
         color: gray;
+    }
+
+    #operationsPage .operation-menu-links .operation-name {
+        max-width: 100%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 
     #operationsPage .operation-menu-links i {
