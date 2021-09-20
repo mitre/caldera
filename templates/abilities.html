@@ -69,7 +69,7 @@
                         <tr @click="selectAbility(ability)">
                             <td>
                                 <p x-text="ability.name"></p>
-                                <p class="help" x-text="ability.description"></p>
+                                <p class="help ability-description" x-text="ability.description"></p>
                             </td>
                             <td x-text="ability.tactic"></td>
                             <td x-text="`${ability.technique_id} | ${ability.technique_name}`"></td>
@@ -263,7 +263,7 @@
                                             <div class="field">
                                                 <div class="control">
                                                     <div class="select is-small is-multiple is-fullwidth">
-                                                        <select class="select" multiple size="6">
+                                                        <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
                                                             </template>      
@@ -535,13 +535,17 @@
 
     #abilities-table {
         height: calc(100vh - 480px);
-        overflow: scroll;
+        overflow-y: scroll;
     }
 
     #main-content {
         display: flex;
         flex-flow: column;
         height: 100%;
+    }
+
+    .ability-description {
+        word-break: break-word;
     }
 
     tr:hover {
