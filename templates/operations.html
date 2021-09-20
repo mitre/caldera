@@ -381,7 +381,7 @@
                                                 <label x-show="false" for="manual-agent">Choose an agent:</label>
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="manual-agent" x-model="selectedAgentIndex" required>
-                                                        <option disabled>Choose agent</option>
+                                                        <option value="" disabled>Choose agent</option>
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option x-bind:selected="index === 0"
@@ -396,7 +396,7 @@
                                                     <select x-model="manualCommand.executor.name"
                                                             id="manual-executors"
                                                             class="executor-selector">
-                                                        <option disabled>Choose executor</option>
+                                                        <option value="" disabled>Choose executor</option>
                                                         <template
                                                                 x-for="(executor, index) in selectedAgentExecutors"
                                                                 :key="executor.name">
@@ -734,7 +734,7 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-agent"
                                                             x-model="selectedAgentIndex"
-                                                            x-on:change="getAgentLinks()">
+                                                            x-on:change="getAgentExecutors()">
                                                         <option disabled>Choose an agent...</option>
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
@@ -747,13 +747,28 @@
                                             </div>
                                         </div>
                                         <div>
+                                            <label for="link-exec">Executor</label>
+                                            <div class="modal-form-fields">
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="link-exec"
+                                                            x-model="potentialLink.executor"
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <template x-for="(exec, index) in selectedAgentExecutors"
+                                                                  :key="exec">
+                                                            <option x-text="exec" x-bind:selected="index === 0"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
                                             <label for="link-tactic">Tactic</label>
                                             <div class="modal-form-fields">
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-tactic"
                                                             x-model="potentialLink.tactic"
-                                                            x-on:change="filterAbilities()">
-                                                        <option default value="">Choose a tactic...</option>
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <option value="" default value="">Choose a tactic...</option>
                                                         <template x-for="tactic in tacticFiltersList"
                                                                   :key="tactic">
                                                             <option x-text="tactic"></option>
@@ -768,8 +783,8 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-technique"
                                                             x-model="potentialLink.technique"
-                                                            x-on:change="filterAbilities()">
-                                                        <option default>Choose a technique...</option>
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <option value="" default>Choose a technique...</option>
                                                         <template x-for="technique in techniqueFiltersList"
                                                                   :key="technique">
                                                             <option x-text="technique"></option>
@@ -782,29 +797,39 @@
                                     <div class="modal-results">
                                         <div class="navbar-divider"></div>
                                         <p class="is-flex is-justify-content-flex-end is-size-7"
-                                           x-text="filteredLinksList.length + ' potential link' + ((filteredLinksList.length === 1) ? '' : 's')"></p>
-                                        <template x-if="filteredLinksList">
-                                            <ul>
-                                                <template x-for="link in filteredLinksList" :key="link.ability.name">
-                                                    <li>
-                                                        <p x-text="link.ability.name"></p>
-                                                        <button type="button"
-                                                                class="button is-primary is-small"
-                                                                x-bind:disabled="!isLinkAvailable(link)"
-                                                                x-bind:title="!isLinkAvailable(link) ? 'Link has been already added.' : ''"
-                                                                x-on:click="addPotentialLink(link)">
-                                                            Add Link
-                                                        </button>
+                                           x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
+                                        <template x-if="filteredAbilitiesList">
+                                            <ul class="ml-0">
+                                                <template x-for="ability in filteredAbilitiesList"
+                                                          :key="ability.ability_id">
+                                                    <li class="mb-4 abilities-list-item">
+                                                        <span class="is-flex is-justify-content-space-between">
+                                                            <span>
+                                                                <p class="mb-0" x-text="ability.name"></p>
+                                                            </span>
+                                                            <span>
+                                                                <button type="button"
+                                                                        class="button is-primary is-small"
+                                                                        x-bind:disabled="!isLinkAvailable(ability)"
+                                                                        x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
+                                                                        x-on:click="addPotentialLink(ability)">
+                                                                    Add Link
+                                                                </button>
+                                                            </span>
+                                                        </span>
+                                                        <span class="ml-3">
+                                                            <sub x-text="ability.description"></sub>
+                                                        </span>
                                                     </li>
                                                 </template>
                                             </ul>
                                         </template>
-                                        <em x-show="showNotRepeatableText"
-                                            class="has-text-grey-light is-pulled-right is-size-7">Note:
-                                            Repeated links are not available for this operation</em>
-                                        <template x-if="!filteredLinksList"><p>Building potential links...</p>
+                                        <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
                                         </template>
                                     </div>
+                                    <em x-show="showNotRepeatableText"
+                                        class="has-text-grey-light is-pulled-right is-size-7">Note:
+                                        Repeated links are not available for this operation</em>
                                 </section>
                             </div>
                         </template>
@@ -963,12 +988,14 @@
             jitterMax: 8,
             potentialLink: {
                 agent: '',
+                executor: '',
                 tactic: '',
                 technique: '',
             },
             tacticFiltersList: [],
             techniqueFiltersList: [],
-            filteredLinksList: [],
+            abilities: [],
+            filteredAbilitiesList: [],
             schedule: '',
             editableCommand: null,
             isOperationsControlsExpanded: false,
@@ -1050,8 +1077,8 @@
             },
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
-            isLinkAvailable(link) {
-                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(link.ability.technique_id);
+            isLinkAvailable(ability) {
+                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(ability.technique_id);
             },
 
             generateAddedLinksList() {
@@ -1061,17 +1088,10 @@
                 });
             },
 
-            getAgentLinks(agent = this.selectedAgent) {
+            getAgentExecutors(agent = this.selectedAgent) {
                 this.potentialLink.agent = agent;
-                this.tacticFiltersList = [];
-                this.techniqueFiltersList = [];
-                this.potentialLink.agent.links.forEach((link) => {
-                    this.tacticFiltersList.push(link.ability.tactic);
-                    this.techniqueFiltersList.push(link.ability.technique_name);
-                });
-                this.tacticFiltersList = sortAlphabetically(this.tacticFiltersList);
-                this.techniqueFiltersList = sortAlphabetically(this.techniqueFiltersList);
-                this.filteredLinksList = this.potentialLink.agent.links;
+                this.potentialLink.executor = agent.executor[0];
+                this.filterAbilities(this.abilities);
             },
 
             //
@@ -1172,7 +1192,6 @@
                 apiV2('GET', 'api/v2/agents')
                     .then((res) => {
                         this.updateAgentGroups(res);
-                        if (res.length > 0) this.getAgentLinks(res[0]);
                         this.selectedAgentIndex = 0;
                     })
                     .catch(() => {
@@ -1182,7 +1201,10 @@
 
             getAbilities() {
                 apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.abilities = abilities;
                     this.filterAbilities(abilities);
+                    this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
+                    this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
                 }).catch(() => {
                     toast('Error getting abilities', false);
                 });
@@ -1199,7 +1221,7 @@
 
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
-                    this.openModal = null;
+                    this.addNewRow = false;
                 }
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, manualCommand)
                     .then((res) => {
@@ -1218,11 +1240,11 @@
                     toast('Operation is currently paused, and new links might not be added.', true);
                     this.openModal = null;
                 }
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link)
-                    .then((res) => {
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {...link, executor: this.selectedAgent.executors[0]})
+                    .then(() => {
                         toast('Added potential link.', true);
                         this.getOperation();
-                        this.addedTechniquesIDs.add(link.ability.technique_id);
+                        this.addedTechniquesIDs.add(link.technique_id);
                         this.openModal = null;
                     })
                     .catch(() => {
@@ -1398,12 +1420,13 @@
                 this.getOperationsMenuCaretDisplay();
             },
 
-            filterAbilities() {
-                this.filteredLinksList = this.potentialLink.agent.links.filter((link) => {
-                    let match = true;
-                    if (this.potentialLink.tactic) match = this.potentialLink.tactic === link.ability.tactic;
-                    if (this.potentialLink.technique) match = this.potentialLink.technique === link.ability.technique_name;
-                    return match;
+            filterAbilities(abilities) {
+                this.filteredAbilitiesList = abilities.filter((ability) => {
+                    let matchAgent = true, matchTactic = true, matchTechnique = true;
+                    if (this.potentialLink.agent.executors) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.agent.executors.includes(ex.name));
+                    if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
+                    if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === ability.technique_name;
+                    return matchAgent && matchTactic && matchTechnique;
                 });
             },
         };
@@ -1520,6 +1543,7 @@
     }
 
     #operationsPage .modal-results {
+        overflow-x: hidden;
         overflow-y: scroll;
         height: 50vh;
     }
