@@ -1112,7 +1112,6 @@
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                         this.selectedOperation = res;
                         this.generateAddedLinksList();
-                        // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
                     }).catch((error) => {
                         toast('Error getting operation');
                     });
