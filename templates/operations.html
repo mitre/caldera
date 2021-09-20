@@ -479,7 +479,8 @@
                                 </header>
                                 <section class="modal-card-body">
                                     <div>
-                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                                        <pre class="has-text-left white-space-pre-line"
+                                             x-text="selectedLinkResults"></pre>
                                     </div>
                                 </section>
                             </div>
@@ -491,7 +492,8 @@
                                 </header>
                                 <section class="modal-card-body">
                                     <div>
-                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                        <pre class="has-text-left white-space-pre-line"
+                                             x-text="selectedLinkCommand"></pre>
                                     </div>
                                 </section>
                             </div>
@@ -1092,7 +1094,7 @@
                     await sleep(3000);
                     this.getOperations();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
-                    this.getOperation();
+                    this.getAndCompareOperation();
                 }
             },
 
@@ -1116,6 +1118,22 @@
                     });
                 } else {
                     toast('Select a valid operation to view.');
+                }
+            },
+
+            getAndCompareOperation() {
+                if (this.selectedOperationID) {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
+                        if (this.selectedLink) {
+                            this.selectedOperation = {...res,
+                                chain: res.chain.map(link => link.id === this.selectedLink.id ? this.selectedLink : link)};
+                        } else {
+                            this.selectedOperation = res;
+                        }
+                        this.generateAddedLinksList();
+                    }).catch((error) => {
+                        console.error('Error getting operation');
+                    });
                 }
             },
 
