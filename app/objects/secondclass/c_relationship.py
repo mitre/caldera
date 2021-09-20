@@ -56,7 +56,7 @@ class Relationship(BaseObject):
                 stub += f" : {self.target.name}({self.target.value})"
         return stub
 
-    def __init__(self, source, edge=None, target=None, score=1, origin=None):
+    def __init__(self, source=None, edge=None, target=None, score=1, origin=None):
         super().__init__()
         self.source = source
         self.edge = edge

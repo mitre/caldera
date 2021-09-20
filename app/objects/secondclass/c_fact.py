@@ -99,7 +99,7 @@ class Fact(BaseObject):
             return self.unique == other.unique and self.source == other.source
         return False
 
-    def __init__(self, trait, value=None, score=1, source=None, origin_type=None, links=None,
+    def __init__(self, trait='', value=None, score=1, source=None, origin_type=None, links=None,
                  relationships=None, limit_count=-1, collected_by=None, technique_id=None):
         super().__init__()
         self.trait = trait

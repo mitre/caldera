@@ -30,6 +30,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
+    @aiohttp_apispec.request_schema(FactSchema(partial=True))
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -47,6 +48,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
+    @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def get_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
