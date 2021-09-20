@@ -1,3 +1,4 @@
+import json
 import aiohttp_apispec
 
 from aiohttp import web
@@ -6,7 +7,7 @@ from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_operation import Operation, OperationSchema
+from app.objects.c_operation import Operation, OperationSchema, OutputSchema
 from app.objects.secondclass.c_link import LinkSchema
 
 
@@ -69,18 +70,22 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.request_schema(OutputSchema)
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
-        report = await self._api_manager.get_operation_report(operation_id, access)
+        output = await self.read_output_parameter(request)
+        report = await self._api_manager.get_operation_report(operation_id, access, output)
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.request_schema(OutputSchema)
     async def get_operation_event_logs(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
-        report = await self._api_manager.get_operation_event_logs(operation_id, access)
+        output = await self.read_output_parameter(request)
+        report = await self._api_manager.get_operation_event_logs(operation_id, access, output)
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'])
@@ -151,6 +156,14 @@ class OperationApi(BaseObjectApi):
         access = await self.get_request_permissions(request)
         potential_links = await self._api_manager.get_potential_links(operation_id, access, paw)
         return web.json_response(potential_links)
+
+    '''Helper Methods'''
+    async def read_output_parameter(self, request: web.Request):
+        raw_body = await request.read()
+        output = False
+        if raw_body:
+            output = json.loads(raw_body).get('output', False)
+        return output
 
     '''Overridden Methods'''
     async def create_object(self, request: web.Request):
