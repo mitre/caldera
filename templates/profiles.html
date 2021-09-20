@@ -533,7 +533,7 @@
                                             <div class="field">
                                                 <div class="control">
                                                     <div class="select is-small is-multiple is-fullwidth">
-                                                        <select class="select" multiple size="6">
+                                                        <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
                                                             </template>      
