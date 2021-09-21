@@ -273,12 +273,8 @@
                                             <span class="has-text-grey-light" x-text="link.decide"></span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude">
-                                            <span x-bind:class="'status status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued') + (selectedLink ? ' selected' : '')"
-                                                  x-text="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"></span>
-                                            <!--                                            <span class="pending-warning"-->
-                                            <!--                                                  x-show="selectedOperation.autonomous === 0">pending approval</span>-->
-                                            <span x-bind:title="(link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued'"
-                                                  x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"></span>
+                                            <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                                  x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
                                         </td>
                                         <td class="linkInfoColumn"
                                             x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
@@ -385,7 +381,7 @@
                                                 <label x-show="false" for="manual-agent">Choose an agent:</label>
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="manual-agent" x-model="selectedAgentIndex" required>
-                                                        <option disabled>Choose agent</option>
+                                                        <option value="" disabled>Choose agent</option>
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option x-bind:selected="index === 0"
@@ -400,7 +396,7 @@
                                                     <select x-model="manualCommand.executor.name"
                                                             id="manual-executors"
                                                             class="executor-selector">
-                                                        <option disabled>Choose executor</option>
+                                                        <option value="" disabled>Choose executor</option>
                                                         <template
                                                                 x-for="(executor, index) in selectedAgentExecutors"
                                                                 :key="executor.name">
@@ -726,7 +722,7 @@
                         </template>
 
                         <template x-if="openModal === 'addLink'">
-                            <div>
+                            <div x-init="getAbilities()">
                                 <header class="modal-card-head">
                                     <p class="modal-card-title">Add New Potential Link</p>
                                 </header>
@@ -738,8 +734,7 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-agent"
                                                             x-model="selectedAgentIndex"
-                                                            x-on:change="getAgentLinks()">
-                                                        <option disabled>Choose an agent...</option>
+                                                            x-on:change="potentialLink.agent = selectedAgent">
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option :value="index"
@@ -751,13 +746,29 @@
                                             </div>
                                         </div>
                                         <div>
+                                            <label for="link-exec">Executor</label>
+                                            <div class="modal-form-fields">
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="link-exec"
+                                                            x-model="potentialLink.executor"
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <template x-for="(exec, index) in selectedAgentExecutors"
+                                                                  :key="exec">
+                                                            <option x-text="exec"
+                                                                    x-bind:selected="index === 0"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
                                             <label for="link-tactic">Tactic</label>
                                             <div class="modal-form-fields">
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-tactic"
                                                             x-model="potentialLink.tactic"
-                                                            x-on:change="filterAbilities()">
-                                                        <option default value="">Choose a tactic...</option>
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <option value="" default value="">Choose a tactic...</option>
                                                         <template x-for="tactic in tacticFiltersList"
                                                                   :key="tactic">
                                                             <option x-text="tactic"></option>
@@ -772,8 +783,8 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-technique"
                                                             x-model="potentialLink.technique"
-                                                            x-on:change="filterAbilities()">
-                                                        <option default>Choose a technique...</option>
+                                                            x-on:change="filterAbilities(abilities)">
+                                                        <option value="" default>Choose a technique...</option>
                                                         <template x-for="technique in techniqueFiltersList"
                                                                   :key="technique">
                                                             <option x-text="technique"></option>
@@ -786,29 +797,39 @@
                                     <div class="modal-results">
                                         <div class="navbar-divider"></div>
                                         <p class="is-flex is-justify-content-flex-end is-size-7"
-                                           x-text="filteredLinksList.length + ' potential link' + ((filteredLinksList.length === 1) ? '' : 's')"></p>
-                                        <template x-if="filteredLinksList">
-                                            <ul>
-                                                <template x-for="link in filteredLinksList" :key="link.ability.name">
-                                                    <li>
-                                                        <p x-text="link.ability.name"></p>
-                                                        <button type="button"
-                                                                class="button is-primary is-small"
-                                                                x-bind:disabled="!isLinkAvailable(link)"
-                                                                x-bind:title="!isLinkAvailable(link) ? 'Link has been already added.' : ''"
-                                                                x-on:click="addPotentialLink(link)">
-                                                            Add Link
-                                                        </button>
+                                           x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
+                                        <template x-if="filteredAbilitiesList">
+                                            <ul class="ml-0">
+                                                <template x-for="ability in filteredAbilitiesList"
+                                                          :key="ability.ability_id">
+                                                    <li class="mb-4 abilities-list-item">
+                                                        <span class="is-flex is-justify-content-space-between">
+                                                            <span>
+                                                                <p class="mb-0" x-text="ability.name"></p>
+                                                            </span>
+                                                            <span>
+                                                                <button type="button"
+                                                                        class="button is-primary is-small"
+                                                                        x-bind:disabled="!isLinkAvailable(ability)"
+                                                                        x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
+                                                                        x-on:click="addPotentialLink(ability)">
+                                                                    Add Link
+                                                                </button>
+                                                            </span>
+                                                        </span>
+                                                        <span class="ml-3">
+                                                            <sub x-text="ability.description"></sub>
+                                                        </span>
                                                     </li>
                                                 </template>
                                             </ul>
                                         </template>
-                                        <em x-show="showNotRepeatableText"
-                                            class="has-text-grey-light is-pulled-right is-size-7">Note:
-                                            Repeated links are not available for this operation</em>
-                                        <template x-if="!filteredLinksList"><p>Building potential links...</p>
+                                        <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
                                         </template>
                                     </div>
+                                    <em x-show="showNotRepeatableText"
+                                        class="has-text-grey-light is-pulled-right is-size-7">Note:
+                                        Repeated links are not available for this operation</em>
                                 </section>
                             </div>
                         </template>
@@ -967,12 +988,14 @@
             jitterMax: 8,
             potentialLink: {
                 agent: '',
+                executor: '',
                 tactic: '',
                 technique: '',
             },
             tacticFiltersList: [],
             techniqueFiltersList: [],
-            filteredLinksList: [],
+            abilities: [],
+            filteredAbilitiesList: [],
             schedule: '',
             editableCommand: null,
             isOperationsControlsExpanded: false,
@@ -1054,8 +1077,8 @@
             },
 
             // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
-            isLinkAvailable(link) {
-                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(link.ability.technique_id);
+            isLinkAvailable(ability) {
+                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(ability.technique_id);
             },
 
             generateAddedLinksList() {
@@ -1063,19 +1086,6 @@
                 this.selectedOperation.chain.forEach((link) => {
                     if (!this.addedTechniquesIDs.has(link.ability.technique_id)) this.addedTechniquesIDs.add(link.ability.technique_id);
                 });
-            },
-
-            getAgentLinks(agent = this.selectedAgent) {
-                this.potentialLink.agent = agent;
-                this.tacticFiltersList = [];
-                this.techniqueFiltersList = [];
-                this.potentialLink.agent.links.forEach((link) => {
-                    this.tacticFiltersList.push(link.ability.tactic);
-                    this.techniqueFiltersList.push(link.ability.technique_name);
-                });
-                this.tacticFiltersList = sortAlphabetically(this.tacticFiltersList);
-                this.techniqueFiltersList = sortAlphabetically(this.techniqueFiltersList);
-                this.filteredLinksList = this.potentialLink.agent.links;
             },
 
             //
@@ -1102,7 +1112,7 @@
                 apiV2('GET', this.ENDPOINT).then((res) => {
                     this.operations = res;
                     this.filterOperations(this.searchInput);
-                }).catch((error) => {
+                }).catch(() => {
                     toast('Error getting operations');
                 });
             },
@@ -1112,7 +1122,7 @@
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                         this.selectedOperation = res;
                         this.generateAddedLinksList();
-                    }).catch((error) => {
+                    }).catch(() => {
                         toast('Error getting operation');
                     });
                 } else {
@@ -1124,13 +1134,15 @@
                 if (this.selectedOperationID) {
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                         if (this.selectedLink) {
-                            this.selectedOperation = {...res,
-                                chain: res.chain.map(link => link.id === this.selectedLink.id ? this.selectedLink : link)};
+                            this.selectedOperation = {
+                                ...res,
+                                chain: res.chain.map(link => link.id === this.selectedLink.id ? this.selectedLink : link)
+                            };
                         } else {
                             this.selectedOperation = res;
                         }
                         this.generateAddedLinksList();
-                    }).catch((error) => {
+                    }).catch(() => {
                         console.error('Error getting operation');
                     });
                 }
@@ -1152,7 +1164,7 @@
                             this.selectedOperation = res;
                             this.openModal = null;
                             toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
-                        }).catch((error) => {
+                        }).catch(() => {
                         toast('Error adding operation');
                     });
                 }
@@ -1165,7 +1177,7 @@
                         this.getOperations();
                         toast('Deleted operation.', true);
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         toast('Error deleting operation.');
                     });
             },
@@ -1174,12 +1186,26 @@
                 apiV2('GET', 'api/v2/agents')
                     .then((res) => {
                         this.updateAgentGroups(res);
-                        if (res.length > 0) this.getAgentLinks(res[0]);
                         this.selectedAgentIndex = 0;
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         toast('Error getting agents.');
                     });
+            },
+
+            getAbilities() {
+                apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.abilities = abilities;
+                    if (this.selectedOperation.host_group && this.selectedOperation.host_group.length > 0) {
+                        this.potentialLink.agent = this.selectedOperation.host_group[0];
+                        this.potentialLink.executor = this.potentialLink.agent.executors[0];
+                    }
+                    this.filterAbilities(abilities);
+                    this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
+                    this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
+                }).catch(() => {
+                    toast('Error getting abilities', false);
+                });
             },
 
             addManualCommand(manualCommand) {
@@ -1193,7 +1219,7 @@
 
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
-                    this.openModal = null;
+                    this.addNewRow = false;
                 }
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, manualCommand)
                     .then((res) => {
@@ -1204,22 +1230,24 @@
                         this.addNewRow = false;
                         this.selectedAgentIndex = null;
                     })
-                    .catch((error) => toast('Error adding manual command.'));
+                    .catch(() => toast('Error adding manual command.'));
             },
 
             addPotentialLink(link) {
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
-                    this.openModal = null;
                 }
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link)
-                    .then((res) => {
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
+                    ...link,
+                    paw: this.potentialLink.agent.paw,
+                    executor: link.executors.find((e) => e.platform === this.potentialLink.agent.platform && this.potentialLink.executor === e.name)
+                })
+                    .then(() => {
                         toast('Added potential link.', true);
                         this.getOperation();
-                        this.addedTechniquesIDs.add(link.ability.technique_id);
-                        this.openModal = null;
+                        this.addedTechniquesIDs.add(link.technique_id);
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         toast('Error adding potential link.');
                     });
             },
@@ -1236,11 +1264,11 @@
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
                         this.editableCommand = b64DecodeUnicode(res.command);
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         this.selectedLinkResults = null;
                         this.selectedLinkFacts = null;
                         this.selectedLinkCommand = null;
-                        toast('Error getting link results.', error);
+                        toast('Error getting link results.');
                     });
             },
 
@@ -1250,7 +1278,7 @@
                 } else {
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
                         this.selectedLinkResults = b64DecodeUnicode(res.result);
-                    }).catch((error) => console.error('Error getting link results.', error));
+                    }).catch(() => console.error('Error getting link results.'));
                 }
             },
 
@@ -1265,7 +1293,7 @@
                         this.getOperation();
                         toast(`Updating link status to: ${this.LINK_STATUSES[status]}`, true);
                     })
-                    .catch((error) => toast('Error updating link state.'));
+                    .catch(() => toast('Error updating link state.'));
             },
 
             updateOperation(field, updateValue) {
@@ -1276,7 +1304,7 @@
                         this.selectedOperation = res;
                         this.selectedLink = null
                     })
-                    .catch((error) => {
+                    .catch(() => {
                         toast(`Error updating operation ${field}. Operation may have already finished running.`);
                     });
             },
@@ -1286,7 +1314,7 @@
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                         this.selectedOperation.state = res.state;
                         // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
-                    }).catch((error) => {
+                    }).catch(() => {
                         toast('Error getting operation state');
                     });
                 }
@@ -1298,7 +1326,7 @@
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
-                    .catch((error) => toast('Error generating operation report.'));
+                    .catch(() => toast('Error generating operation report.'));
             },
 
             downloadCSV() {
@@ -1392,12 +1420,13 @@
                 this.getOperationsMenuCaretDisplay();
             },
 
-            filterAbilities() {
-                this.filteredLinksList = this.potentialLink.agent.links.filter((link) => {
-                    let match = true;
-                    if (this.potentialLink.tactic) match = this.potentialLink.tactic === link.ability.tactic;
-                    if (this.potentialLink.technique) match = this.potentialLink.technique === link.ability.technique_name;
-                    return match;
+            filterAbilities(abilities) {
+                this.filteredAbilitiesList = abilities.filter((ability) => {
+                    let matchAgent = true, matchTactic = true, matchTechnique = true;
+                    if (this.potentialLink.executor) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
+                    if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
+                    if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === ability.technique_name;
+                    return matchAgent && matchTactic && matchTechnique;
                 });
             },
         };
@@ -1406,31 +1435,14 @@
 
 <style>
     :scope {
-        --primary-color: #8B0000;
         --dark-gray: gray;
         --light-gray: #e6e6e6;
         --decisions-color: #4fdcfc;
     }
 
-    #operationsPage ::-webkit-scrollbar {
-        width: 8px;
-        background-color: #0000;
-    }
-
-    #operationsPage ::-webkit-scrollbar-thumb {
-        background: #3f3f3f;
-        border-radius: 10px;
-        height: 50px;
-    }
-
-    #operationsPage .pending-warning {
-        font-variant: all-petite-caps;
-        padding-top: 5px;
-        color: var(--decisions-color);
-    }
-
     #operationsPage .white-space-pre-line {
         white-space: pre-line;
+        word-wrap: break-word;
     }
 
     #operationsPage .text-align-right {
@@ -1464,7 +1476,6 @@
     #operationsPage .operation-menu-container {
         overflow-x: scroll;
         overflow-y: hidden;
-        scrollbar-color: #3f3f3f #0000;
     }
 
     #operationsPage .operation-menu-links {
@@ -1520,40 +1531,20 @@
         width: fit-content;
     }
 
-    #operationsPage .modal-results ul {
-        margin-left: 0;
+    #operationsPage .modal-results {
+        overflow-x: hidden;
+        overflow-y: scroll;
+        height: 50vh;
     }
 
-    #operationsPage .modal-results li {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        flex-flow: row wrap;
+    #operationsPage .modal-results li.abilities-list-item {
+        box-sizing: border-box;
+        padding: .5em;
         list-style: none;
     }
 
-    #operationsPage .modal-results li p {
-        width: 85%;
-        text-align: left;
-        padding-left: 0.75rem;
-    }
-
-    #operationsPage .modal-results li button {
-        width: 15%;
-        display: flex;
-    }
-
-    #operationsPage .modal-results li:not(:last-child)::after {
-        background-color: #262626;
-        border: none;
-        display: block;
-        height: 2px;
-        margin: 0.5rem 0;
-        content: "";
-    }
-
-    #operationsPage .modal-card-foot button {
-        font-size: 0.9em;
+    #operationsPage .modal-results li.abilities-list-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
     /*END MODAL FORM STYLE*/
@@ -1752,6 +1743,11 @@
     }
 
     /*gray timeline*/
+    #operationsPage span.linkStatus {
+        justify-content: flex-start;
+        display: flex;
+    }
+
     #operationsPage span.linkStatus::before {
         width: 2px;
         height: 180px;
@@ -1759,30 +1755,32 @@
         content: "";
         display: inline-block;
         position: absolute;
-        margin-left: 30px;
-        margin-top: 3em;
+        margin-left: 25px;
+        margin-top: 40px;
     }
 
     /*circle for event*/
     #operationsPage span.linkStatus::after {
         position: relative;
-        right: -8px;
-        top: 48px;
+        top: 40px;
         display: block;
         background: #161616;
         border-radius: 50%;
-        height: 3em;
-        width: 3em;
-        content: "";
+        height: 50px;
+        width: 50px;
+        content: attr(data-content);
+        padding-top: 18px;
+        text-align: center;
+        font-size: 0.5em;
     }
 
     #operationsPage span.status {
         position: relative;
-        top: 77px;
+        top: 55px;
         z-index: 10;
         font-size: .5em;
         color: white;
-        left: 16px;
+        left: 15px;
         display: flex;
     }
 
