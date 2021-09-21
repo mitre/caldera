@@ -190,8 +190,13 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
-                await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
-                await self._create_relationships(relationships, operation)
+                if relationships == 418:
+                    logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) during '
+                                                    f'execution, which was caught during parsing.')
+                    self.status = self.states['ERROR']
+                else:
+                    await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
+                    await self._create_relationships(relationships, operation)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
                                                 % (parser.module, self.ability.ability_id, e))
