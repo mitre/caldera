@@ -192,7 +192,7 @@ class Link(BaseObject):
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
 
-                if relationships[0] == PARSER_SIGNALS_FAILURE:
+                if len(relationships) > 0 and relationships[0] == PARSER_SIGNALS_FAILURE:
                     logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) encountered '
                                                     f'an error during execution, which was caught during parsing.')
                     self.status = self.states['ERROR']
