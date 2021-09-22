@@ -102,6 +102,7 @@ main.main {
 
 .nav-logo img{
   max-height: 150px;
+  cursor: pointer;
 }
 
 #nav-menu {
