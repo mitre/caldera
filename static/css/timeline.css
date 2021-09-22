@@ -2,14 +2,14 @@ a,
 span,
 h1,
 h2,
-h3,
-span {
+h3 {
   text-decoration: none;
 }
 
 a:hover {
   color: #777;
 }
+
 .member-title {
   font-family: 'Raleway', sans-serif;
   letter-spacing: 1.5px;
@@ -20,10 +20,37 @@ a:hover {
   border-bottom: 1px solid #777;
   padding-bottom: 0.2em;
 }
+
+.member-infos {
+  padding: 10px;
+  text-align: left;
+  position: relative;
+}
+
+.member-infos > h1 {
+  font-weight: bold;
+  font-size: 1.4em;
+}
+
+.member-location a::before {
+  margin-right: 5px;
+}
+
+.member-location {
+  text-indent: 2px;
+}
+
+.member-result {
+  color: var(--font-color);
+  font-size: 13px;
+  word-break: break-word;
+}
+
 #content {
   margin-top: 50px;
   text-align: center;
 }
+
 .timeline {
   border-left: 0.25em solid var(--theme-color);
   background: rgba(255, 255, 255, 0.1);
@@ -38,6 +65,7 @@ a:hover {
   border-radius: 0.5em;
   min-width: 22em;
 }
+
 .event {
   min-width: 20em;
   width: 90%;
@@ -45,13 +73,15 @@ a:hover {
   box-sizing: border-box;
   position: relative;
 }
-.timeline .event:before,
-.timeline .event:after {
+
+.timeline .event::before,
+.timeline .event::after {
   position: absolute;
   display: block;
   top: 1em;
 }
-.timeline .event:before {
+
+.timeline .event::before {
   left: -15em;
   color: var(--font-color);
   content: attr(data-date);
@@ -60,7 +90,8 @@ a:hover {
   font-size: 0.9em;
   min-width: 9em;
 }
-.timeline .event:after {
+
+.timeline .event::after {
   left: -3.5em;
   background: var(--primary-background);
   border-radius: 50%;
@@ -68,82 +99,76 @@ a:hover {
   width: 0.75em;
   content: "";
 }
-.timeline .queued:after {
-  box-shadow: 0 0 0 0.2em #555555; // darkgrey
+
+.timeline .queued::after {
+  box-shadow: 0 0 0 0.2em #555;
 }
-.timeline .failure:after {
-  box-shadow: 0 0 0 0.2em #CC3311; // red
+
+.timeline .failure::after {
+  box-shadow: 0 0 0 0.2em #c31;
 }
-.timeline .success:after {
-  box-shadow: 0 0 0 0.2em #44AA99;
+
+.timeline .success::after {
+  box-shadow: 0 0 0 0.2em #4a9;
 }
-.timeline .timeout:after {
+
+.timeline .timeout::after {
   box-shadow: 0 0 0 0.2em cornflowerblue;
 }
-.timeline .collected:after {
-  box-shadow: 0 0 0 0.2em #FFB000; //orange
+
+.timeline .collected::after {
+  box-shadow: 0 0 0 0.2em #ffb000;
 }
-.timeline .untrusted:after {
+
+.timeline .untrusted::after {
   box-shadow: 0 0 0 0.2em white;
 }
-.timeline .visibility:after {
-  box-shadow: 0 0 0 0.2em #F012BE;
+
+.timeline .visibility::after {
+  box-shadow: 0 0 0 0.2em #f012be;
 }
-.timeline .discarded:after {}
 
 .timeline .event .member-location,
 .timeline .event .member-parameters {
   display: none;
 }
+
 .timeline .event:last-of-type .member-location,
 .timeline .event:last-of-type .member-parameters {
   display: block;
 }
+
 .tactic-find-result {
-    font-size: 14px;
-    float: right;
-    display: none;
-    cursor: pointer;
+  font-size: 14px;
+  float: right;
+  display: none;
+  cursor: pointer;
 }
+
 .tactic-find-result.tactic-no-facts {
   display: block;
   font-size: 17px;
-  margin-right: .14em;
+  margin-right: 0.14em;
 }
-.tactic-no-facts:before {
+
+.tactic-no-facts::before {
   content: "\2605";
 }
+
 .tactic-find-result.tactic-has-facts {
   display: block;
 }
-.tactic-has-facts:before {
+
+.tactic-has-facts::before {
   content: "\2b50";
 }
-.member-infos {
-  padding: 10px;
-  text-align: left;
-  position: relative;
-}
-.member-infos > h1 {
-  font-weight: bold;
-  font-size: 1.4em;
-}
-.member-location a:before {
-  margin-right: 5px;
-}
-.member-location {
-  text-indent: 2px;
-}
-.member-result {
-    color: var(--font-color);
-    font-size: 13px;
-    word-break: break-word;
-}
+
 .tooltip {
   position: relative;
   display: inline-block;
   font-size: 13px;
 }
+
 .tooltiptext {
   width: 120px;
   background-color: black;
@@ -157,10 +182,11 @@ a:hover {
   font-size: 13px;
 }
 
-.cleanup ul{
+.cleanup ul {
   padding-left: 0;
 }
-.cleanup .event:after {
+
+.cleanup .event::after {
   display: none;
 }
 
@@ -170,22 +196,22 @@ a:hover {
   font-weight: 300;
 }
 
-.cleanup .event:before {
+.cleanup .event::before {
   content: attr(data-host-name);
 }
 
 .loop-section {
-    border-bottom:3px solid #777;
-    margin:0 9;
-    margin-bottom:5px;
+  border-bottom: 3px solid #777;
+  margin: 0 9;
+  margin-bottom: 5px;
 }
 
 .hil-command {
-    width: 97%;
-    background-color: black;
-    border-radius: 10px;
-    padding: 5px;
-    padding-left: 10px;
-    margin: 5px;
-    margin-bottom: 15px;
+  width: 97%;
+  background-color: black;
+  border-radius: 10px;
+  padding: 5px;
+  padding-left: 10px;
+  margin: 5px;
+  margin-bottom: 15px;
 }

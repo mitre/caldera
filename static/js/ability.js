@@ -1,4 +1,4 @@
-
+/* eslint-disable */
 function populateTechniques(parentId, abilities) {
     let parent = $('#'+parentId);
     $(parent).find('#ability-technique-filter').empty().append("<option disabled='disabled' selected>Choose a technique</option>");

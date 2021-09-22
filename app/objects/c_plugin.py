@@ -24,7 +24,7 @@ class PluginSchema(ma.Schema):
 class Plugin(FirstClassObjectInterface, BaseObject):
 
     schema = PluginSchema()
-    display_schema = PluginSchema(only=['name', 'enabled', 'address'])
+    display_schema = PluginSchema(only=['name', 'description', 'enabled', 'address'])
 
     @property
     def unique(self):
