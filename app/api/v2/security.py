@@ -8,7 +8,10 @@ from aiohttp import web
 def is_handler_authentication_exempt(handler):
     """Return True if the endpoint handler is authentication exempt."""
     try:
-        is_unauthenticated = handler.keywords.get('handler').__caldera_unauthenticated__
+        if hasattr(handler, '__caldera_unauthenticated__'):
+            is_unauthenticated = handler.__caldera_unauthenticated__
+        else:
+            is_unauthenticated = handler.keywords.get('handler').__caldera_unauthenticated__
     except AttributeError:
         is_unauthenticated = False
     return is_unauthenticated
