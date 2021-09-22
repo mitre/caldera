@@ -1,631 +1,756 @@
-<div id="agents" class="section-profile">
-  <div class="row">
-    <div class="topleft duk-icon"><img onclick="removeSection('agents')" src="/gui/img/x.png"></div>
-    <div class="bottomright duk-icon"><img onclick="toggleSidebar('agents-sidebar')" src="/gui/img/expand.png"></div>
-    <div id="agents-sidebar" class="column section-border" style="flex:25%;">
-      <img src="/gui/img/group.png">
-      <h4 style="margin-bottom:-5px">Agents</h4>
-      <p class="section-description">
-          You must deploy at least 1 agent in order to run an operation.Groups are collections of agents so hosts can
-          be compromised simultaneously.
-      </p>
-      <button type="button" class="button-orange atomic-button" onclick="$('#delivery-modal').show();">Click here to deploy an agent</button>
-      <div id="agent-beacon" class="sidebar-header">
-          <h5>Beacon Timers</h5>
-      </div>
-      <div id="agent-beacon-options" class="sidebar-cutout" style="display: none">
-          <input id="globalSleepMin" type="text" placeholder="Beacon min (seconds)" value="{{ agent_config.sleep_min }}" />
-          <input id="globalSleepMax" type="text" placeholder="Beacon max (seconds)" value="{{ agent_config.sleep_max }}" />
-      </div>
-      <div id="agent-watchdog" class="sidebar-header">
-          <h5>Watchdog Timer</h5>
-      </div>
-      <div id="agent-watchdog-options" class="sidebar-cutout" style="display: none">
-          <input id="globalWatchdog" type="text" placeholder="Watchdog (seconds)" value="{{ agent_config.watchdog }}" />
-      </div>
-      <div id="agent-untrusted" class="sidebar-header">
-          <h5>Untrusted Timer</h5>
-      </div>
-      <div id="agent-untrusted-options" class="sidebar-cutout" style="display: none">
-          <input id="globalUntrusted" type="text" placeholder="Untrusted (seconds)" value="{{ agent_config.untrusted_timer }}" />
-      </div>
-      <div id="agent-implant" class="sidebar-header">
-          <h5>Implant Name</h5>
-      </div>
-      <div id="agent-implant-options" class="sidebar-cutout" style="display: none">
-          <input id="globalImplantName" type="text" placeholder="Agent filename" value="{{ agent_config.implant_name }}" />
-      </div>
-      <div id="agent-bootstrap" class="sidebar-header">
-          <h5>Bootstrap Abilities</h5>
-      </div>
-      <div id="agent-bootstrap-options" class="sidebar-cutout" style="display: none">
-          <input id="globalBootstrap" type="text" placeholder="Bootstrap ability IDs" value="{{ agent_config.bootstrap_abilities | join(', ') }}"/>
-      </div>
-      <div id="agent-deadman" class="sidebar-header">
-          <h5>Deadman Abilities</h5>
-      </div>
-      <div id="agent-deadman-options" class="sidebar-cutout" style="display: none">
-          <input id="globalDeadman" type="text" placeholder="Deadman ability IDs" value="{{ agent_config.deadman_abilities | join(', ') }}"/>
-      </div>
-      <button id="saveAgentBtn" type="button" class="button-success atomic-button separated-button" onclick="saveGlobalAgent()">Save changes</button>
+<div x-data="alpineAgents()" x-init="initPage()" id="main-content">
+
+    <!-- PAGE HEADER -->
+
+    <div x-ref="header">
+        <h2>Agents</h2>
+        <p>
+            You must deploy at least 1 agent in order to run an operation. Groups are collections of agents so hosts can be compromised simultaneously.
+        </p>
     </div>
-    <div class="column" style="flex:75%">
-        <span style="text-align:left">You have <span id="agent-cnt">{{ agents|length}}</span></span> agents</h4>
-        <hr>
-        <table id="agent-table" class="obfuscation-table" border=1 frame=void rules=rows style="border-spacing:15px;">
+    <hr>
+
+    <!-- AGENTS TABLE AND CONFIGURATION -->
+
+    <div>
+        <div class="buttons">
+            <button class="button is-primary is-small" @click="showDeployModal = true">
+                <span class="icon"><i class="fas fa-plus"></i></span>
+                <span>Deploy an agent</span>
+            </button>
+            <button class="button is-primary is-small" @click="showConfigModal = true">
+                <span class="icon"><i class="fas fa-cog"></i></span>
+                <span>Configuration</span>
+            </button>
+        </div>
+        <table class="table is-striped is-fullwidth" x-show="agents.length">
             <thead>
                 <tr>
                     <td><b>id (paw)</b></td>
                     <td><b>host</b></td>
+                    <td><b>group</b></td>
+                    <td><b>platform</b></td>
                     <td><b>contact</b></td>
                     <td><b>pid</b></td>
                     <td><b>privilege</b></td>
+                    <td><b>last seen</b></td>
                     <td></td>
                 </tr>
             </thead>
-            {% for a in agents %}
-                <tr id="{{ a.paw }}">
-                    <td><p>{{ a.paw }}</p></td>
-                    <td><p>{{ a.host }}</p></td>
-                    <td><p>{{ a.contact }}</p></td>
-                    {% if a.trusted %}
-                        {% if a.watchdog > 0 and a.watchdog < a.sleep_min %}
-                            {% set agentStatus = "yellow" %}
-                        {% else %}
-                            {% set agentStatus = "" %}
-                        {% endif %}
-                    {% else %}
-                        {% set agentStatus = "maroon" %}
-                    {% endif %}
-                    <td><button id="{{a.paw|e}}-pid" class="button-row {{ agentStatus }}" onclick="showAgentInfo('{{ a.paw|e }}')">{{ a.pid }}</button></td>
-                    <td><p>{{ a.privilege }}</p></td>
-                    <td><p onclick="deleteAgent('{{ a.paw }}')">&#x274C;</p></td>
-                </tr>
-            {% endfor %}
+            <tbody>
+                <template x-for="(agent, index) of agents" :key="agent.paw">
+                    <tr @click="selectedAgent = agent; showDetailsModal = true;" class="pointer">
+                        <td x-text="agent.paw"></td>
+                        <td x-text="agent.host"></td>
+                        <td x-text="agent.group"></td>
+                        <td x-text="agent.platform"></td>
+                        <td x-text="agent.contact"></td>
+                        <td x-text="agent.pid"></td>
+                        <td x-text="agent.privilege"></td>
+                        <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="new Date(agent.last_seen).toLocaleString()"></td>
+                        <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
+                    </tr>
+                </template>
+            </tbody>
         </table>
+        <div class="has-text-centered content" x-show="!agents.length">
+           <p>No deployed agents</p> 
+        </div>
     </div>
 
-  </div>
-</div>
+    <!-- MODALS -->
 
-<div id="agent-modal" class="modal">
-    <form class="modal-content">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column" style="flex:100%;">
-                <h3 id="modal-paw"></h3>
-                <p style="font-size: 11px">* Property can be updated</p>
-                <hr>
-                <table class="obfuscation-table" border=1 frame=void rules=rows>
-                    <tr>
-                        <td>Contact *</td>
-                        <td>
-                             <select id="modal-contact" value=""/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Host</td>
-                        <td><p id="modal-host"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Username</td>
-                        <td><p id="modal-username"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Privilege</td>
-                        <td><p id="modal-privilege"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Last seen</td>
-                        <td><p id="modal-last_seen"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Created</td>
-                        <td><p id="modal-created"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Group *</td>
-                        <td><input id="modal-group" style="text-align: left"/></td>
-                    </tr>
-                    <tr>
-                        <td>Sleep *</td>
-                        <td><input id="modal-sleep" style="text-align: left"/></td>
-                    </tr>
-                    <tr>
-                        <td>Watchdog *</td>
-                        <td><input id="modal-watchdog" style="text-align: left"/></td>
-                    </tr>
-                    <tr>
-                        <td>Architecture</td>
-                        <td><p id="modal-architecture"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Platform</td>
-                        <td><p id="modal-platform"></p></td>
-                    </tr>
-                    <tr>
-                        <td>PID</td>
-                        <td><p id="modal-pid"></p></td>
-                    </tr>
-                    <tr>
-                        <td>PPID</td>
-                        <td><p id="modal-ppid"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Executable name</td>
-                        <td><p id="modal-exe_name"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Location</td>
-                        <td><p id="modal-location"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Executors</td>
-                        <td><p id="modal-executors"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Host IP Addresses</td>
-                        <td><p id="modal-host_ip_addrs"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Peer-to-Peer Proxy Receivers</td>
-                        <td><p id="modal-peer_receivers"></p></td>
-                    </tr>
-                    <tr>
-                        <td>Peer-to-Peer Proxy Chain</td>
-                        <td><p id="modal-peer_chain"></p></td>
-                    </tr>
-                </table>
-                <br>
-                <button type="button" class="button-warn" onclick="killAgent()">Kill Agent</button>
-                <button type="button" class="button-row" onclick="updateAgent()">Save</button>
-            </div>
-        <div class="imgcontainer">
-            <span onclick="document.getElementById('agent-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-        </div>
-        </div>
-    </form>
-</div>
-
-<div id="delivery-modal" class="modal">
-    <form class="modal-content" style="width:90%;">
-        <div class="container modal-box">
-            <div class="row">
-                <span onclick="document.getElementById('delivery-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                <div class="column" style="flex:92%">
-                    <select id="chosen-agent" onchange="displayCommand()" style="width:33%;">
-                        <option disabled selected>Choose an agent</option>
-                        {% for i,a in abilities.items() %}
-                        <option value="{{ i }}">{{ a[0].name }}:&nbsp;&nbsp;{{ a[0].description }}</option>
-                        {% endfor %}}
-                    </select>
-                    <br>
-                    <select id="chosen-platform" onchange="filterCommands()" style="width:33%;">
-                        <option selected value="">All platforms</option>
-                    </select>
-                    <p style="font-size:12px;color:white">** Variations of the deployment command will be shown for each supported operating system</p>
-                    <table id="conf-arguments" style="margin:auto; padding-top: 25px; display: none"></table>
-                    <ul id="variations"></ul>
+    <div class="modal" x-bind:class="{ 'is-active': showDeployModal }">
+        <div class="modal-background" @click="closeDeployModal()"></div>
+        <div class="modal-card wide">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Deploy an agent</p>
+            </header>
+            <section class="modal-card-body">
+                <form class="has-text-centered">
+                    <div class="field">
+                        <label class="label">Agent</label>
+                        <div class="control">
+                            <div class="select is-small">
+                                <select x-model="selectedAbilityId" x-on:change="selectAbility()">
+                                    <option disabled selected value="">Choose an agent</option>
+                                    <template x-for="ability of deploymentAbilities" :key="ability.ability_id">
+                                        <option x-bind:value="ability.ability_id" x-text="`${ability.name} | ${ability.description}`"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+                    <div class="field" x-show="selectedAbilityId">
+                        <label class="label">Platform</label>
+                        <div class="control is-flex is-flex-direction-row is-justify-content-center">
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'all' }" @click="changePlatform('all')" x-show="selectedPlatform">
+                                <span class="icon is-large"><i class="far fa-2x fa-circle"></i></span>
+                                <br> all 
+                            </div>
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'linux' }" x-show="platforms.includes('linux')" @click="changePlatform('linux')">
+                                <span class="icon is-large"><i class="fab fa-2x fa-linux"></i></span>
+                                <br> linux 
+                            </div>
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'windows' }" x-show="platforms.includes('windows')" @click="changePlatform('windows')">
+                                <span class="icon is-large"><i class="fab fa-2x fa-windows"></i></span>
+                                <br> windows 
+                            </div>
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'darwin' }" x-show="platforms.includes('darwin')" @click="changePlatform('darwin')">
+                                <span class="icon is-large"><i class="fab fa-2x fa-apple"></i></span>
+                                <br> darwin 
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <form class="command-fields">
+                    <template x-for="field of agentFields" :key="field.name">
+                        <div class="field is-horizontal">
+                            <div class="field-label is-normal">
+                                <label class="label" x-text="field.name"></label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field has-addons">
+                                    <div class="control is-expanded">
+                                        <input class="input is-small" type="text" x-model="field.value">
+                                    </div>
+                                    <div class="control">
+                                        <a class="button is-small has-tooltip-arrow" data-tooltip="Reset to default" @click="field.value = agentFieldConfig[field.name]">
+                                            <span class="icon"><i class="fas fa-undo"></i></span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </form>
+                <hr x-show="filteredCommands.length">
+                <div>
+                    <template x-for="command of filteredCommands" :key="command.command">
+                        <div class="command-container container">
+                            <div class="tags are-medium has-addons">
+                                <span class="tag is-black">
+                                    <span class="icon">
+                                        <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin' }"></i>
+                                    </span>
+                                </span>
+                                <span class="tag is-dark" x-text="command.executor"></span>
+                                <span class="tag" x-text="command.description"></span>
+                            </div>
+                            <div class="box container">
+                                <pre class="box" x-text="getCommandField(command.command)"></pre>
+                                <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(command.command))">
+                                    <span class="icon"><i class="far fa-lg fa-copy"></i></span>
+                                    <span>Copy</span>
+                                </a>
+                            </div>
+                            <p class="has-text-centered" x-show="command.variations.length"><b>Variations</b></p>
+                            <template x-for="variation of command.variations" :key="variation.command">
+                                <div class="content">
+                                    <div class="tags are-medium has-addons">
+                                        <span class="tag is-black">
+                                            <span class="icon">
+                                                <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin' }"></i>
+                                            </span>
+                                        </span>
+                                        <span class="tag is-dark" x-text="command.executor"></span>
+                                        <span class="tag" x-text="variation.description"></span>
+                                    </div>
+                                    <div class="box container">
+                                        <pre class="box" x-text="getCommandField(variation.command).replaceAll(';', ';\n')"></pre>
+                                        <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(variation.command))">
+                                            <span class="icon"><i class="far fa-lg fa-copy"></i></span>
+                                            <span>Copy</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
                 </div>
-            </div>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left"></div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="closeDeployModal()">Close</button>
+                        <div>
+                    </div>
+                </nav>
+                
+            </footer>
         </div>
-    </form>
-</div>
-
-<div id="variation-template" class="variation-template" style="display:none;">
-    <div>
-        <table style="border-spacing:15px;color:white;">
-            <tr>
-                <td><img id="platform-icon" class="golden"/></td>
-                <td><h4 id="description" style="padding-top:15px;"></h4></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><p id="command" contenteditable="true"></p></td>
-            </tr>
-        </table>
     </div>
+
+    <div class="modal" x-bind:class="{ 'is-active': showConfigModal }">
+        <div class="modal-background" @click="showConfigModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Agent Configuration</p>
+            </header>
+            <section class="modal-card-body">
+                <table>
+                    <col width="35%">
+                    <col width="65%">
+                    <tbody>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline has-tooltip-bottom" data-tooltip="Set the minimum and maximum seconds the agent will take to beacon home.">Beacon Timers (s)</span>
+                            </th>
+                            <td>
+                                <div class="is-align-items-center is-flex is-align-items-center">
+                                    <span class="top-right-anchor">
+                                        <label>min</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="30" x-model="agentConfig.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_min') }">
+                                    </span>
+                                    <span class="top-right-anchor">
+                                        <label>max</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="60" x-model="agentConfig.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('sleep_max') }">                                   
+                                    </span>
+                                </div>
+                                <p x-show="fieldErrorsConfig.includes('sleep_min') || fieldErrorsConfig.includes('sleep_max')" class="help is-danger">This field is required.</p> 
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline" data-tooltip="Set the number of seconds to wait, once the server is unreachable, before killing an agent.">Watchdog Timer (s)</span>
+                            </th>
+                            <td>
+                                <input class="input is-small is-small-number" type="number" placeholder="0" x-model="agentConfig.watchdog" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('watchdog') }">
+                                <p x-show="fieldErrorsConfig.includes('watchdog')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline" data-tooltip="Set the number of seconds to wait before marking a missing agent as untrusted. Operations will not generate new links for untrusted agents.">Untrusted Timer (s)</span> *
+                            </th>
+                            <td>
+                                <input class="input is-small is-small-number" type="number" placeholder="90" x-model="agentConfig.untrusted_timer" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('untrusted_timer') }">
+                                <p x-show="fieldErrorsConfig.includes('untrusted_timer')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline" data-tooltip="The base name of newly-spawned agents. If necessary, an extension will be added when an agent is created.">Implant Name</span>
+                            </th>
+                            <td>
+                                <input class="input is-small" type="text" placeholder="splunkd" x-model="agentConfig.implant_name" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('implant_name') }">
+                                <p x-show="fieldErrorsConfig.includes('implant_name')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Bootstrap Abilities</span>
+                            </th>
+                            <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                    <template x-for="(abilityId, index) of agentConfig.bootstrap_abilities">
+                                        <div class="control">
+                                            <div class="tags has-addons">
+                                                <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
+                                                <a class="tag is-delete" @click="agentConfig.bootstrap_abilities.splice(index, 1)"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="control">
+                                        <div class="tags has-addons">
+                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true" x-show="!isAddingBootstrapAbility">
+                                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field has-addons" x-show="isAddingBootstrapAbility">
+                                    <div class="control is-expanded">
+                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()">
+                                        <div class="search-results">
+                                            <template x-for="result of abilitySearchResults" :key="result.ability_id">
+                                                <p @click="addBootstrapAbility(result.ability_id)" x-text="result.name"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="control">
+                                        <a class="button is-small" @click="isAddingBootstrapAbility = false">Cancel</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="help">* A global setting that will effect any new or existing agents.</p>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left"></div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showConfigModal = false">Close</button>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="saveAgentConfig()">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
+                        <div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" x-bind:class="{ 'is-active': showDetailsModal }">
+        <div class="modal-background" @click="showDetailsModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Agent Details</p>
+            </header>
+            <section class="modal-card-body">
+                <p class="has-text-weight-bold">Settings</p>
+                <table>
+                    <col width="30%">
+                    <col width="70%">
+                    <tbody>
+                        <tr>
+                            <th class="has-text-right">Contact</th>
+                            <td>
+                                <div class="select is-small">
+                                    <select x-model="selectedAgent.pending_contact">
+                                        <template x-for="contact of selectedAgent.available_contacts" :key="contact">
+                                            <option x-bind:value="contact" x-text="contact"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Group</th>
+                            <td>
+                                <input class="input is-small" type="text" x-model="selectedAgent.group" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('group') }">
+                                <p x-show="fieldErrorsAgent.includes('group')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Sleep Timer</th>
+                            <td>
+                                <div class="is-align-items-center is-flex is-align-items-center">
+                                    <span class="top-right-anchor">
+                                        <label>min</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="30" x-model="selectedAgent.sleep_min" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_min') }">
+                                    </span>
+                                    <span class="top-right-anchor">
+                                        <label>max</label>
+                                        <input class="input is-small is-small-number" type="number" placeholder="60" x-model="selectedAgent.sleep_max" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('sleep_max') }">                                     
+                                    </span>
+                                </div>
+                                <p x-show="fieldErrorsAgent.includes('sleep_min') || fieldErrorsAgent.includes('sleep_max')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Watchdog Timer</th>
+                            <td>
+                                <input class="input is-small is-small-number" type="number" x-model="selectedAgent.watchdog" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('watchdog') }">
+                                <p x-show="fieldErrorsAgent.includes('watchdog')" class="help is-danger">This field is required.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="button is-small is-fullwidth is-primary" @click="saveAgent()">Save Settings</button>
+                <hr>
+                <p class="has-text-weight-bold">Agent Details</p>
+                <table>
+                    <col width="30%">
+                    <col width="70%">
+                    <tbody>
+                        <tr>
+                            <th class="has-text-right">Host</th>
+                            <td x-text="`${selectedAgent.host} (${selectedAgent.host_ip_addrs})`"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Username</th>
+                            <td x-text="selectedAgent.username"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Privilege</th>
+                            <td x-text="selectedAgent.privilege"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Last Seen</th>
+                            <td x-text="selectedAgent.last_seen"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Created</th>
+                            <td x-text="selectedAgent.created"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Architecture</th>
+                            <td x-text="selectedAgent.architecture"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Platform</th>
+                            <td x-text="selectedAgent.platform"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">PID</th>
+                            <td x-text="selectedAgent.pid"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">PPID</th>
+                            <td x-text="selectedAgent.ppid"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Executable Name</th>
+                            <td x-text="selectedAgent.exe_name"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Location</th>
+                            <td x-text="selectedAgent.location"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Executors</th>
+                            <td x-text="selectedAgent.executors"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Host IP Addresses</th>
+                            <td x-text="selectedAgent.host_ip_addrs"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Peer-to-Peer Proxy Receivers</th>
+                            <td x-text="(selectedAgent.proxy_receivers && Object.keys(selectedAgent.proxy_receivers).length) ? Object.keys(selectedAgent.proxy_receivers) : 'No local P2P proxy receivers active.'"></td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Peer-to-Peer Proxy Chain</th>
+                            <td x-text="(selectedAgent.proxy_chain && selectedAgent.proxy_chain.length) ? selectedAgent.proxy_chain.join(', ') : 'Not using P2P agents to reach C2.'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-danger is-outlined is-small" @click="killAgent(selectedAgent)">
+                                <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
+                                <span>Kill Agent</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showDetailsModal = false">Close</button>
+                        <div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+
 </div>
 
 <script>
-    var agentAbilityData, appConfig;
+    function alpineAgents() {
+        return {
+            // Core variables
+            agents: [],
+            abilities: [],
+            deploymentAbilities: [],
+            selectedAbilityId: '',
+            selectedAbility: {},
+            platforms: [],
+            selectedPlatform: '',
+            selectedAgent: { available_contacts: [] },
 
-    let refresher = setInterval(refresh, 10000);
-    $('.section-profile').bind('destroyed', function() {
-        clearInterval(refresher);
-    });
-    $(document).ready(function () {
-        let agentCnt = ($('#agent-table tr').length-1);
-        if(agentCnt < 1){
-            stream('Looks like you have no agents. You should deploy one now.');
-        } else {
-            stream('Great, looks like you have '+agentCnt+' agents. You can now go to the Operations tab.')
-        }
-        $("#agent-beacon").click(function(){
-            stream('Set the minimum and maximum seconds the agent will take to beacon home. Beacon timer changes will only affect new agents.');
-            $("#agent-beacon-options").slideToggle();
-        });
-        $("#agent-watchdog").click(function(){
-            stream('Set the number of seconds to wait before killing the agent, once the server is unreachable. Set 0 for infinite. Watchdog timer changes will only affect new agents.');
-            $("#agent-watchdog-options").slideToggle();
-        });
-        $("#agent-untrusted").click(function(){
-            stream('Set the number of seconds the server will wait before marking a missing agent as untrusted. Untrusted timer changes will affect all agents.');
-            $("#agent-untrusted-options").slideToggle();
-        });
-        $("#agent-implant").click(function(){
-            stream('Choose a filename for new agents, without an extension.');
-            $("#agent-implant-options").slideToggle();
-        });
-        $("#agent-bootstrap").click(function(){
-            stream('Comma-separated list of ability IDs to be run on a new agent beacon. UUIDs will be validated against current ability list.');
-            $("#agent-bootstrap-options").slideToggle();
-        });
-        $("#agent-deadman").click(function(){
-            stream('Comma-separated list of ability IDs to be run when an agent terminates. UUIDs will be validated against current ability list.');
-            $("#agent-deadman-options").slideToggle();
-        });
-    });
+            agentConfig: { bootstrap_abilities: [] },
+            agentFields: [],
+            agentFieldConfig: {},
+            deployCommands: [],
+            filteredCommands: [],
+            pageOpen: true,
 
-    function refresh(){
-        function updateTbl(data){
-            $('#agent-cnt').text(data.length);
-            data.forEach(function(a) {
-                let found = false;
-                $("#agent-table tr").each(function () {
-                    let paw = $(this).attr('id');
-                    if(a.paw === paw) {
-                        //update existing row
-                        if(!a.trusted) {
-                            let element = document.getElementById(paw + '-pid');
-                            if (element !== null) {
-                                element.classList.remove('yellow');
-                                element.classList.add('maroon');
-                            }
-                        }
-                        $('#'+paw+'-contact').text(a.contact);
-                        found = true;
+            isAddingBootstrapAbility: false,
+            abilitySearchQuery: [],
+            abilitySearchResults: [],
+
+            // Modals
+            showDeployModal: false,
+            showConfigModal: false,
+            showDetailsModal: false,
+
+            // Input validation
+            requiredFieldsConfig: ['sleep_min', 'sleep_max', 'watchdog', 'untrusted_timer', 'implant_name'],
+            fieldErrorsConfig: [],
+            requiredFieldsAgent: ['group', 'sleep_min', 'sleep_max', 'watchdog'],
+            fieldErrorsAgent: [],
+
+            initPage() {
+                apiV2('GET', '/api/v2/agents').then((agents) => {
+                    this.agents = agents;
+                    return apiV2('GET', '/api/v2/config/agents');
+                }).then((agentConfig) => {
+                    this.agentConfig = agentConfig;
+                    return apiV2('GET', '/api/v2/abilities');
+                }).then(async (allAbilities) => {
+                    this.abilities = allAbilities;
+                    this.agentConfig.deployments.forEach((abilityId) => {
+                        let match = allAbilities.find((ability) => ability.ability_id === abilityId);
+                        if (match) this.deploymentAbilities.push(match);
+                    });
+
+                    // While the agents tab is open, keep checking for new/killed agents
+                    function sleep(ms) {
+                        return new Promise((resolve) => setTimeout(resolve, ms));
+                    }
+                    while (this.$refs.header) {
+                        await sleep(3000);
+                        this.refreshAgents();
+                    }
+                }).catch((error) => {
+                    toast('Error initializing page', false);
+                    console.error(`Error initializing page: ${error}`);
+                });
+            },
+
+            refreshAgents() {
+                apiV2('GET', '/api/v2/agents').then((agents) => {
+                    this.agents = agents;
+                }).catch((error) => {
+                    toast('Error refreshing agents', false);
+                    console.error(error);
+                });
+            },
+
+            selectAbility() {
+                this.selectedAbility = this.deploymentAbilities.find((ability) => ability.ability_id === this.selectedAbilityId);
+                this.platforms = [...new Set(this.selectedAbility.executors.map((executor) => executor.platform))];
+                if (!this.platforms.includes(this.selectedPlatform)) this.selectedPlatform = '';
+
+                apiV2('GET', `/api/v2/deploy_commands/${this.selectedAbilityId}`).then((data) => {
+                    this.deployCommands = data.abilities;
+                    this.agentFieldConfig = data.app_config;
+                    this.filterAbilityPlatforms();
+                }).catch((error) => {
+                    toast('Error loading the agent.', false);
+                    console.error(`Error loading the agent: ${error}`);
+                });
+            },
+
+            changePlatform(platform) {
+                this.selectedPlatform = platform;
+                this.filterAbilityPlatforms();
+            },
+
+            filterAbilityPlatforms() {
+                if (this.selectedPlatform === 'all') {
+                    this.filteredCommands = this.deployCommands;
+                } else {
+                    this.filteredCommands = this.deployCommands.filter((ability) => ability.platform === this.selectedPlatform);
+                }
+
+                let fields = [];
+                this.agentFields = [];
+                this.filteredCommands.forEach((command) => {
+                    fields = fields.concat([...command.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]));
+                });
+                fields = [...new Set(fields)];
+                fields.forEach((field) => {
+                    this.agentFields.push({ name: field, value: this.agentFieldConfig[field] });
+                });
+            },
+
+            closeDeployModal() {
+                this.showDeployModal = false;
+                this.selectedAbilityId = '';
+                this.selectedPlatform = '';
+                this.filteredCommands = [];
+                this.agentFields = [];
+            },
+
+            getCommandField(command) {
+                this.agentFields.forEach((field) => {
+                    command = command.replaceAll(`#{${field.name}}`, field.value);
+                });
+                return command;
+            },
+
+            copyCommandToClipboard(command) {
+                navigator.clipboard.writeText(command.replaceAll('\n', ''));
+                toast('Copied command to clipboard!', true);
+            },
+
+            getAbilityName(id) {
+                let abil = this.abilities.find((ability) => ability.ability_id === id);
+                return (!id || !this.abilities.length || !abil) ? '[unknown]' : abil.name;
+            },
+
+            getAbilityDescription(id) {
+                let abil = this.abilities.find((ability) => ability.ability_id === id);
+                return (!id || !this.abilities.length || !abil) ? 'The current user does not have permissions to view this ability.' : abil.description;
+            },
+
+            searchForAbility() {
+                this.abilitySearchResults = [];
+                if (!this.abilitySearchQuery) return;
+                this.abilities.forEach((ability) => {
+                    if (ability.name.toLowerCase().indexOf(this.abilitySearchQuery.toLowerCase()) > -1) {
+                        this.abilitySearchResults.push({
+                            ability_id: ability.ability_id,
+                            name: ability.name
+                        });
                     }
                 });
-                if(!found) {
-                    stream('new agent beacon: '+a.paw);
+            },
 
-                    let pidButton = $('<button></button>')
-                        .prop('id', a.paw + '-pid')
-                        .addClass('button-row')
-                        .click(function() {
-                            showAgentInfo(a.paw)
-                        })
-                        .text(a.pid);
+            addBootstrapAbility(id) {
+                this.agentConfig.bootstrap_abilities.push(id);
+                this.abilitySearchQuery = '';
+                this.abilitySearchResults = [];
+                this.isAddingBootstrapAbility = false;
+            },
 
-                    let deleteButton = $('<p></p>')
-                        .click( function() {
-                            deleteAgent(a.paw)
-                        })
-                        .html('&#x274C;');
+            saveAgent() {
+                this.fieldErrorsAgent = validateInputs(this.selectedAgent, this.requiredFieldsAgent);
+                if (this.fieldErrorsAgent.length) return;
 
-                    let newAgentRow = $('<tr></tr>').prop('id', a.paw)
-                        .append($('<td></td>').append($('<p></p>').text(a.paw)))
-                        .append($('<td></td>').append($('<p></p>').text(a.host)))
-                        .append($('<td></td>').append($('<p></p>').text(a.contact)))
-                        .append($('<td></td>').append(pidButton))
-                        .append($('<td></td>').append($('<p></p>').text(a.privilege)))
-                        .append($('<td></td>').append(deleteButton));
+                apiV2('PATCH', `/api/v2/agents/${this.selectedAgent.paw}`, this.selectedAgent).then((response) => {
+                    toast('Agent saved', true);
+                }).catch((error) => {
+                    toast('Error killing the agent', false);
+                    console.error(error);
+                });
+            },
 
-                    $('#agent-table tr:last').after(newAgentRow);
-                }
-            });
-        }
-        restRequest('POST', {'index':'agents'}, updateTbl)
-    }
+            saveAgentConfig() {
+                this.fieldErrorsConfig = validateInputs(this.agentConfig, this.requiredFieldsConfig);
+                if (this.fieldErrorsConfig.length) return;
 
-    function deleteAgent(paw){
-        function deleteAgentCallback(data){
-            let element = document.getElementById(paw);
-            if (element !== null) {
-                element.remove();
-            }
-            $('#agent-cnt').text(parseInt($('#agent-cnt').text()) - 1);
-        }
-        stream('Deleting '+paw+'. If this agent is still active, it may pop back up here.');
-        restRequest('DELETE', {"index": "agents", "paw": paw}, deleteAgentCallback);
-    }
+                let reqBody = { ...this.agentConfig };
+                delete reqBody.deployments;
+                apiV2('PATCH', '/api/v2/config/agents', reqBody).then((response) => {
+                    this.showConfigModal = false;
+                    toast('Configuration saved.', true);
+                }).catch((error) => {
+                    toast('Error saving the configuration.', false);
+                    console.error(error);
+                });
+            },
 
-    function updateAgent(){
-        function closeAgentModal(){
-            document.getElementById('agent-modal').style.display='none';
-        }
-        let sleepArr = parseSleep($('#modal-sleep').val().replace(/\s/g, ""));
-        let data = {
-            'index': 'agents',
-            'paw': $('#modal-paw').text(),
-            'group': $('#modal-group').val(),
-            'watchdog': parseInt($('#modal-watchdog').val()),
-            'pending_contact': $('#modal-contact').val()
-        };
-        if (sleepArr.length !== 0) {
-            data["sleep_min"] = parseInt(sleepArr[0]);
-            data["sleep_max"] = parseInt(sleepArr[1]);
-        }
-        restRequest('PUT', data, closeAgentModal);
-    }
+            removeAgent(paw, index) {
+                apiV2('DELETE', `/api/v2/agents/${paw}`).then(() => {
+                    this.agents.splice(index, 1);
+                    toast('Agent has been removed, but may reappear if it beacons again.', true);
+                }).catch((error) => {
+                    toast('Error removing the agent', false);
+                    console.error(error);
+                });
+            },
 
-    function saveGlobalAgent() {
-        let globalBootstrap = $('#globalBootstrap').val();
-        let globalDeadman = $('#globalDeadman').val();
-        let globalImplantName = $('#globalImplantName').val();
-        let globalMinsleep = $('#globalSleepMin').val();
-        let globalMaxsleep = $('#globalSleepMax').val();
-        let globalWatchdog = $('#globalWatchdog').val();
-        let globalUntrusted = $('#globalUntrusted').val();
-        let data = {"index": "agents","sleep_min":parseInt(globalMinsleep),"sleep_max":parseInt(globalMaxsleep),
-            "watchdog":parseInt(globalWatchdog),"untrusted":parseInt(globalUntrusted),"implant_name":globalImplantName,
-            "bootstrap_abilities":globalBootstrap,"deadman_abilities":globalDeadman};
-        stream('Agent configuration has been updated!');
-        restRequest('PUT', data, saveGlobalAgentCallback);
-    }
-    
-    function saveGlobalAgentCallback(data) {
-        let invalid_bootstrap_abilities = [];
-        let invalid_deadman_abilities = [];
-        let bootstrap_abilities = $('#globalBootstrap').val().split(",");
-        let deadman_abilities = $('#globalDeadman').val().split(",");
-        $.each(bootstrap_abilities, function(index, bootstrap_ability) {
-            let ability = bootstrap_ability.trim();
-            if ($.inArray(ability, data.bootstrap_abilities) === -1 && ability.length > 0) {
-                invalid_bootstrap_abilities.push(ability);
-            }
-        });
-        if (invalid_bootstrap_abilities.length > 0) {
-            stream('Ignoring invalid bootstrap abilities: ' + invalid_bootstrap_abilities.join(', '));
-        }
-        $.each(deadman_abilities, function(index, deadman_ability) {
-            let ability = deadman_ability.trim();
-            if ($.inArray(ability, data.deadman_abilities) === -1 && ability.length > 0) {
-                invalid_deadman_abilities.push(ability);
-            }
-        });
-        if (invalid_deadman_abilities.length > 0) {
-            stream('Ignoring invalid deadman abilities: ' + invalid_deadman_abilities.join(', '));
-        }
-    }
-
-
-    function killAgent(){
-        /**
-        Sets the currently displayed agent to terminate by setting its sleep seconds greater than its watchdog.
-        **/
-        let data = {
-            'index': 'agents',
-            'paw': $('#modal-paw').text(),
-            'watchdog': 1,
-            'sleep_min': 3,
-            'sleep_max': 3
-        };
-        if (confirm(`Are you sure you want to terminate agent ${data.paw}?`)){
-            restRequest('PUT', data, (data) => {
-                document.getElementById('agent-modal').style.display='none';
-                stream(`Agent ${data.paw} will self terminate after its next beacon.`);
-                let element = document.getElementById(data.paw + '-pid');
-                if (element !== null) {
-                    element.classList.remove('maroon');
-                    element.classList.add('yellow');
-                }
-            });
-        }
-    }
-
-    function parseSleep(sleep){
-        let patt = new RegExp("\\d+\\/\\d+");
-        if (patt.test(sleep)){
-            let result = sleep.split("/");
-            if (parseInt(result[0]) <= parseInt(result[1])){
-                return result;
-            }
-            return result.reverse();
-        }
-        return [];
-    }
-
-    function showAgentInfo(paw){
-        function agentInfoCallback(data){
-            let parent = $('#agent-modal');
-            let agent = data[0];
-            let peer_receivers = "";
-            let peer_chain = "";
-            let current_contact = agent['contact'];
-            parent.find('#modal-paw').text(agent['paw']);
-            parent.find('#modal-host').text(agent['host']);
-            parent.find('#modal-username').text(agent['username']);
-            parent.find('#modal-privilege').text(agent['privilege']);
-            parent.find('#modal-last_seen').text(agent['last_seen']);
-            parent.find('#modal-exe_name').text(agent['exe_name']);
-            parent.find('#modal-created').html(agent['created']);
-            parent.find('#modal-group').val(agent['group']);
-            parent.find('#modal-sleep').val(agent['sleep_min']+'/'+agent['sleep_max']);
-            parent.find('#modal-watchdog').val(agent['watchdog']);
-            parent.find('#modal-architecture').text(agent['architecture']);
-            parent.find('#modal-platform').text(agent['platform']);
-            parent.find('#modal-location').text(agent['location']);
-            parent.find('#modal-pid').text(agent['pid']);
-            parent.find('#modal-ppid').text(agent['ppid']);
-            parent.find('#modal-executors').text(JSON.stringify(agent['executors']));
-            parent.find('#modal-watchdog').text(agent['watchdog']);
-            parent.find('#modal-host_ip_addrs').text(JSON.stringify(agent['host_ip_addrs']));
-
-            // Set up contact selection
-            let num_contacts = agent['available_contacts'].length;
-            let contact_elem = parent.find('#modal-contact');
-            contact_elem.empty();
-            contact_elem.prepend(
-                $('<option></option>')
-                    .addClass('contact-option')
-                    .val(current_contact)
-                    .text(current_contact)
-            );
-            for (i = 0; i < num_contacts; i++) {
-                let curr = agent['available_contacts'][i];
-                if (curr != current_contact) {
-                    contact_elem.append(
-                        $('<option></option>')
-                            .addClass('contact-option')
-                            .val(curr)
-                            .text(curr)
-                    );
-                }
-            }
-            contact_elem.val(current_contact);
-
-            // Set up peer-to-peer proxy receiver information display.
-            parent.find('#modal-peer_receivers').empty();
-            if (Object.keys(agent['proxy_receivers']).length == 0) {
-                parent.find('#modal-peer_receivers').text('No local peer-to-peer proxy receivers active.');
-            } else {
-                let peerReceiversTable = $('<table/>');
-                for (var key in agent['proxy_receivers']) {
-                    $('<tr/>')
-                        .append($('<td/>').append($('<i/>').text(key)))
-                        .append($('<td/>').append($('<p/>')))
-                        .appendTo(peerReceiversTable);
-
-                    for (i = 0; i < agent['proxy_receivers'][key].length; i++) {
-                        $('<tr/>')
-                            .append($('<td/>').append($('<p/>')))
-                            .append($('<td/>').append($('<p/>').text(agent['proxy_receivers'][key][i])))
-                            .appendTo(peerReceiversTable);
+            killAgent(agent) {
+                if (confirm(`Are you sure you want to kill agent "${agent.paw}"?`)) {
+                    let reqBody = {
+                        watchdog: 1,
+                        sleep_min: 3,
+                        sleep_max: 3
                     };
-                };
-                parent.find('#modal-peer_receivers').append(peerReceiversTable);
-            };
 
-            // Set up peer-to-peer proxy chain information display.
-            parent.find('#modal-peer_chain').empty();
-            let proxy_chain_length = agent['proxy_chain'].length;
-            if (proxy_chain_length == 0) {
-                parent.find('#modal-peer_chain').text('Not using peer agents to reach C2.');
-            } else {
-                let headerRow = $('<tr></tr>').html(
-                    '<th style="color:white"><i>Hop Index</i></th>'
-                    + '<th style="color:white"><i>Peer Paw</i></th>'
-                    + '<th style="color:white"><i>Peer Receiver Address</i></th>'
-                    + '<th style="color:white"><i>Peer Receiver Protocol</i></th>'
-                );
-                let peerChainTable = $('<table></table>').prop('cellspacing', 15).append(headerRow);
-
-                // Proxy chain rows
-                for (i = 0; i < proxy_chain_length; i++) {
-                    let peerRow = $('<tr></tr>').append(
-                        $('<td></td>')
-                            .prop('style', 'text-align:center')
-                            .append($('<i></i>').text(i))
-                    );
-                    for (j = 0; j < agent['proxy_chain'][i].length; j++) {
-                        $('<td></td>')
-                            .append($('<p></p>').text(agent['proxy_chain'][i][j]))
-                            .appendTo(peerRow);
-                    }
-                    peerChainTable.append(peerRow);
-                };
-                parent.find('#modal-peer_chain').append(peerChainTable);
-            };
-            parent.show();
-        }
-        restRequest('POST', {'index':'agents','paw':paw}, agentInfoCallback)
-    }
-
-    function displayCommand(){
-        function displayMe(data){
-            agentAbilityData = data["abilities"];
-            appConfig = data["app_config"];
-            data["abilities"].forEach(function(ability, agentIdx) {
-                addConfigArguments(ability.command);
-                variations.append(buildAbilityTemplate(ability.platform, ability.executor, ability.description,
-                                                       ability.command, agentIdx, null));
-                ability.variations.forEach(function(v, variationIdx) {
-                    addConfigArguments(v.command);
-                    variations.append(buildAbilityTemplate(ability.platform, ability.executor, v.description,
-                                                           v.command, agentIdx, variationIdx));
-                });
-            });
-            replaceProps();
-            $("#conf-arguments").show();
-            populatePlatforms(data["abilities"]);
-
-
-        }
-        function populatePlatforms(abilities){
-            $("#chosen-platform").empty();
-            $("#chosen-platform").append("<option selected value=''>All platforms</option>");
-            abilities.forEach(function(ability) {
-                if ($("#chosen-platform option[value='" + ability.platform + "']").length == 0) {
-                    $("#chosen-platform").append('<option value="' + ability.platform + '">' + ability.platform + '</option>')
+                    apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
+                        this.agents.splice(this.agents.findIndex((a) => a.paw === agent.paw), 1);
+                        toast('Agent will be killed after its next beacon.', true);
+                    }).catch((error) => {
+                        toast('Error killing the agent', false);
+                        console.error(error);
+                    });
+                    this.showDetailsModal = false;
                 }
-            });
-        }
-        let variations = $('#variations');
-        variations.empty();
-        $("#conf-arguments").empty();
-        restRequest('POST', {'index':'agent_configuration','ability_id':$('#chosen-agent option:selected').val()}, displayMe);
-    }
-
-    function filterCommands(){
-        let platform = $("#chosen-platform").val();
-        $("#variations").children().each(function() {
-            if ($(this).data('platform') == platform || platform == '') {
-                $(this).show();
-            } else {
-                $(this).hide();
             }
-        });
+        };
     }
 
-    function buildAbilityTemplate(platform, executor, description, command, agentIdx, variationIdx){
-        let template = $('#variation-template').clone();
-        template.attr('id', 'command-variation');
-        template.find('#description').text(description + ' ('+executor+')');
-        template.find('#command').text(command);
-        template.find('#command').addClass('command');
-        template.find('#command').data('agent-index', agentIdx);
-        template.find('#command').data('variation-index', variationIdx);
-        template.find('#platform-icon').attr('src', '/gui/img/'+platform+'.png');
-        template.data('platform', platform);
-        template.show();
-        return template;
-    }
-
-    function addConfigArguments(command) {
-        let args = Array.from(command.matchAll(/#{(.+?)}/g));
-        args.forEach(function(arg) {
-            let capturedGroup = arg[1];
-            if ($(".config-arg[data-contact='" + capturedGroup + "']").length == 0) {
-                let argHTML = "<tr class='config-arg' data-contact='" + capturedGroup +"'><td><label>" + capturedGroup + "</label></td><td>" +
-                    "<input placeholder='" + appConfig[capturedGroup] + "' oninput='replaceProps()'></td></tr>";
-                $("#conf-arguments").append(argHTML);
-            }
-        });
-    }
-
-    function replaceProps() {
-        $(".command").each(function(i, elem) {
-            let command = "";
-            let agentIdx = $(elem).data("agent-index");
-            let variationIdx = $(elem).data("variation-index");
-            if ($(elem).data("variation-index") != null) {
-                command = agentAbilityData[agentIdx].variations[variationIdx].command;
-            }
-            else {
-                command = agentAbilityData[agentIdx].command;
-            }
-            let args = Array.from(command.matchAll(/#{(.+?)}/g));
-            args.forEach(function(arg) {
-                let capturedGroup = arg[1];
-                let input = $("#conf-arguments label:contains('" + capturedGroup + "')").closest("tr").find("input");
-                let inputValue = input.val() ? input.val() : input.attr("placeholder");
-                command = command.replace(arg[0], inputValue);
-            })
-            $(elem).text(command);
-        })
-    }
-
-    //# sourceURL=agents.js
+    // # sourceURL=agents.js
 </script>
+
+<style>
+    
+    pre.box {
+        margin-bottom: 0;
+        margin-top: 10px;
+        scrollbar-color: #3f3f3f #0000;
+        scrollbar-width: thin;
+    }
+
+    .command-container {
+        background-color: #262626;
+        border-radius: 4px;
+        margin: 30px;
+    }
+
+    .command-fields {
+        padding: 0 250px;
+    }
+
+    .is-small-number {
+        width: 80px;
+    }
+
+    .cmd-copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .platform {
+        width: 80px;
+        border-radius: 4px;
+        padding: 5px;
+        margin: 5px;
+        font-family: monospace;
+        border: 1px solid transparent;
+    }
+    .platform:hover {
+        background-color: #484848;
+        cursor: pointer; 
+    }
+    .platform.selected {
+        border: 1px solid white;
+    }
+
+    .pointer {
+        cursor: pointer;
+    }
+
+    .search-results {
+        overflow-y: scroll;
+        max-height: 200px;
+        background-color: #010101;
+        border-radius: 0 4px;
+    }
+    .search-results p {
+        margin-bottom: 0 !important;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .search-results p:hover {
+        background-color: #484848;
+    }
+
+    .tag.blue {
+        background-color: #191970 !important;
+    }
+    .tag.red {
+        background-color: #8B0000 !important;
+    }
+
+    .top-right-anchor > label {
+        position: relative;
+        top: -14px;
+        left: 75%;
+        color: #a0a0a0;
+        z-index: 999;
+        font-size: .8em;
+    }
+    .top-right-anchor {
+        margin-left: -26px;
+        padding-right: 5px;
+    }
+
+</style>

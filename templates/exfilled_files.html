@@ -1,101 +1,220 @@
-<link rel="stylesheet" href="/gui/css/file-explorer.css">
-<div id="exfills" class="section-profile exfills">
-  <div class="advanced row">
-    <div class="bottomright duk-icon"><img onclick="toggleSidebar('exfills-sidebar')" src="/gui/img/expand.png"></div>
-    <div class="topleft duk-icon"><img onclick="removeSection('exfills')" src="/gui/img/x.png"></div>
-    <div id="planners-sidebar" class="column section-border" style="flex:25%">
-      <img src="/gui/img/facts.png">
-      <h4>Exfilled Files</h4>
-      <p class="section-description">
-          Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at {{ exfil_dir }}.<br>
-          You can view and download the files here
-      </p>
-      <br>
-      <div id="viewFiles">
-          <select id="op-file-select" style="margin-top:-15px" onchange="loadFiles()">
-            <option value="" disabled selected>Select an existing operation</option>
-            <option value="">all</option>
-            {% for op in operations %}
-                {%  if op.start|length%}
-                    <option value="{{ op.id }}">{{ op.name }} - {{ op.start }}</option>
-                {% endif %}
-            {% endfor %}
-          </select>
-      </div>
-      <button id="selectAllBtn" type="button" class="button-success atomic-button"
-              onclick="selectAllFiles()">Select All Files
-      </button>
-      <button id="downloadBtn" type="button" class="button-success atomic-button"
-              onclick="downloadFiles()">Download Selected Files
-      </button>
+<div x-data="alpineExfilled()" x-init="initPage()">
+    <div>
+        <h2>Exfilled Files</h2>
+        <p>
+            Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at <span x-text="exfilDir"></span>.
+            <br>
+            If an operation has exfilled files, you can view and download the files here.
+        </p>
     </div>
-
-    <div id="directory-info" class="column exfil-header" style="flex:75%;text-align: left">
-        <ul id="exfil-tld" class="file-explorer">
-        </ul>
+    <hr>
+    <div>
+        <!-- <form>
+            <div id="select-operation" class="field has-addons">
+                <label class="label">Select an operation &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
+                        <select x-on:change="loadFiles()" x-model="selectedOperationId">
+                            <option value="" selected>(all)</option>
+                            <template x-for="operation of operations" :key="operation.id">
+                                <option x-bind:value="operation.id" x-text="operation.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button type="button" class="button is-primary is-small" @click="initPage()">
+                        <span class="icon"><i class="fas fa-sync"></i></span>
+                    </button>
+                </div>
+            </div>
+        </form> -->
+        <div class="buttons" x-show="numFiles !== 0">
+            <button class="button is-primary is-small" @click="toggleAllFiles(selectedFiles.length < numFiles)">
+                <span x-text="selectedFiles.length < numFiles ? 'Select' : 'Unselect'"></span>&nbsp;All Files
+            </button>
+            <button class="button is-primary is-small" x-bind:disabled="!selectedFiles.length" @click="downloadFiles">
+                <span class="icon"><i class="fas fa-save"></i></span>
+                <span>Download</span>
+            </button>
+        </div>
+        <p x-show="numFiles === 0">
+            The exfill directory (<span x-text="exfilDir"></span>) is empty.
+        </p>
+        <ul class="tree" x-show="numFiles !== 0">
+            <li class="root">
+                <span class="icon is-small"><i class="far fa-folder-open"></i></span>
+                <span x-text="exfilDir"></span>
+            </li>
+            <template x-for="agentName of Object.keys(files)" :key="agentName">
+                <li class="root-child">
+                    <span class="icon is-small"><i class="far fa-folder-open"></i></span>
+                    <span x-text="agentName"></span>
+                    <ul class="tree">
+                        <template x-for="filename of Object.keys(files[agentName])" :key="filename">
+                            <li class="agent-child">
+                                <label class="checkbox">
+                                    <input type="checkbox" class="file-checkbox" x-bind:value="files[agentName][filename]" @click="toggleFile($el, files[agentName][filename])">
+                                    <span class="icon is-small"><i class="far fa-file-alt"></i></span>
+                                    <span x-text="filename"></span>
+                                </label>
+                            </li>
+                        </template>
+                        <li class="agent-child" x-show="!Object.keys(files[agentName]).length">
+                            (none)
+                        </li>
+                    </ul>
+                </li>
+            </template>
+        </ul>  
     </div>
-  </div>
 </div>
 
 <script>
-    const exfil_dir = {{exfil_dir | tojson}}
+    function alpineExfilled() {
+        return {
+            exfilDir: '',
+            operations: [],
+            selectedOperationId: '',
+            files: {},
+            numFiles: 0,
+            selectedFiles: [],
 
-    function loadFiles() {
-        function loadFilesCallback(data) {
-            function addFile(parent, file, path) {
-                $("#"+parent).append('<li><input type="checkbox" value="'+path+'"><img src="/gui/img/file.png"><span>'+file+'</span></li>');
-            }
+            initPage() {
+                apiV2('GET', '/api/v2/config/main').then((config) => {
+                    this.exfilDir = config.exfil_dir;
+                    return apiV2('GET', '/api/v2/operations');
+                }).then((operations) => {
+                    this.operations = operations;
+                    this.loadFiles();
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
 
-            function addFolder(parent, folder, contents) {
-                let fid = parent + '-' + folder;
-                $("#"+parent).append('<li><img class="folder" src="/gui/img/folder.png"><span>' + folder + '</span><ul class="child" id="'+ fid +'"></ul></li>');
-                Object.keys(contents).forEach(function(key){
-                    if(contents[key].constructor == Object){
-                        addFolder(fid, key, contents[key]);
+            loadFiles() {
+                restRequest('POST', { index: 'exfil_files', operation_id: this.selectedOperationId }, (files) => {
+                    this.files = JSON.parse(files);
+                    this.numFiles = 0;
+                    if (this.selectedOperationId) {
+                        let validHosts = [];
+                        this.operations.filter((operation) => operation.id === this.selectedOperationId).forEach((operation) => {
+                            operation.host_group.forEach((host) => {
+                                validHosts.push(`${host.host}-${host.paw}`);
+                            });
+                        });
+
+                        Object.keys(this.files).forEach((host) => {
+                            if (!validHosts.includes(host)) {
+                                this.files[host] = {};
+                            }
+                        });
                     }
-                    else {
-                        addFile(fid, key, contents[key]);
-                    }
+
+                    Object.keys(this.files).forEach((agent) => {
+                        Object.keys(this.files[agent]).forEach((filename) => this.numFiles++);
+                    });
+                });
+            },
+
+            toggleFile(el, filePath) {
+                if (el.checked) {
+                    this.selectedFiles.push(filePath);
+                } else {
+                    let index = this.selectedFiles.indexOf(filePath);
+                    this.selectedFiles.splice(index, 1);
+                }
+            },
+
+            toggleAllFiles(selectAll) {
+                let inputs = Array.from(document.querySelectorAll('.file-checkbox'));
+
+                if (inputs.every((input) => input.checked)) {
+                    inputs.forEach((input) => {
+                        input.checked = false;
+                    });
+                    this.selectedFiles = [];
+                } else {
+                    inputs.forEach((input) => {
+                        input.checked = true;
+                    });
+                    this.selectedFiles = inputs.map((input) => input.value);
+                }
+            },
+
+            downloadFiles() {
+                this.selectedFiles.forEach((filePath) => {
+                    let filename = filePath.split(/[\/\\]/);
+                    filename = filename[filename.length - 1];
+                    let uri = `/file/download_exfil?file=${btoa(filePath)}`;
+                    let downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute('href', uri);
+                    downloadAnchorNode.setAttribute('download', filename);
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
                 });
             }
-
-            // Handle API callback
-            $("#exfil-tld").empty();
-            let startdir = exfil_dir.split(/[\/\\]/);
-            startdir = startdir[startdir.length -1];
-            addFolder("exfil-tld", startdir, data);
-            collapseTree();
-        }
-
-        restRequest('POST', {'index':'exfil_files', 'operation_id': $('#op-file-select').val()}, loadFilesCallback);
+        };
     }
 
-    function collapseTree() {
-        $('.folder').click(function() {
-           $(this).siblings('ul').slideToggle();
-        });
-    }
-
-    function selectAllFiles() {
-        $("#exfil-tld").find('input').each(function() {
-            $(this).prop('checked', true);
-        });
-    }
-
-    function downloadFiles() {
-        $("#exfil-tld").find('input:checked').each(function() {
-            let filename = this.value.split(/[\/\\]/);
-            filename = filename[filename.length -1];
-            stream('Downloading file: '+ filename);
-            let uri = "/file/download_exfil?file=" + btoa(this.value);
-            let downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", uri);
-            downloadAnchorNode.setAttribute("download", filename);
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        });
-    }
-
-    //# sourceURL=exfil.js
+    // # sourceURL=exfilled_files.js
 </script>
+
+<style scoped>
+    #select-operation {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    ul.tree {
+	 margin: 0px 0px 0px 20px;
+	 list-style: none !important;
+	 line-height: 2em;
+	 font-family: Arial;
+    }
+    ul.tree li {
+        font-size: 16px;
+        position: relative;
+    }
+    ul.tree li:before {
+        position: absolute;
+        left: -15px;
+        top: -10px;
+        content: '';
+        display: block;
+        border-left: 1px solid #ddd;
+        height: 1.7em;
+        border-bottom: 1px solid #ddd;
+        width: 10px;
+    }
+    ul.tree li:after {
+        position: absolute;
+        left: -15px;
+        bottom: -7px;
+        content: '';
+        display: block;
+        border-left: 1px solid #ddd;
+        height: 100%;
+    }
+    ul.tree li.root {
+        margin: 0px 0px 0px -20px;
+    }
+    ul.tree li.root:before {
+        display: none;
+    }
+    ul.tree li.root:after {
+        display: none;
+    }
+    ul.tree li.root-child:last-child:after {
+        display: none;
+    }
+    ul.tree li.agent-child:nth-last-child(2):after {
+        display: none;
+    }
+    ul.tree li:last-child:after {
+        display: none;
+    }
+
+</style>

@@ -1,1054 +1,1141 @@
-<div id="adversaries" class="section-profile">
-  <div class="row">
-    <div class="bottomright duk-icon"><img onclick="toggleSidebar('adversaries-sidebar')" src="/gui/img/expand.png"></div>
-    <div class="topleft duk-icon"><img onclick="removeSection('adversaries')" src="/gui/img/x.png"></div>
-    <div id="adversaries-sidebar" class="column section-border" style="flex:25%;">
-      <img src="/gui/img/hacker.png">
-      <h4>Adversary Profiles</h4>
-      <br>
-      <div class="toggle">
-        <label class="switch"><input type="checkbox" id="togBtnAdv" onchange="toggleAdversaryView()">
-          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
-        </label>
-      </div>
-      <p class="section-description">
-          Adversary Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network.
-          Profiles
-          can be used for offensive or defensive use cases.
-      </p>
-      <div id="adversary-view" class="adversary-sidebar-option">
-        <select id="profile-existing-name" onchange="loadAdversary();">
-          <option value="" disabled selected>Select an existing profile</option>
-          {% for adv in adversaries %}
-              <option id="adversary-{{ adv.adversary_id}}" value="{{ adv.adversary_id }}">{{ adv.name }}</option>
-          {% endfor %}}
-        </select>
-      </div>
-      <button id="adversary-save-button" type="button" class="button-notready atomic-button" onclick="saveAdversary()">Save</button>
-      <hr>
-      <button id="adversary-delete-button" type="button" class="button-notready atomic-button" onclick="deleteProfile()">Delete</button>
+<div x-data="alpineAdversaries()">
 
-      <div id="adversary-add" class="adversary-sidebar-option">
+    <!-- PAGE DETAILS -->
 
-      </div>
+    <div x-init="initPage()">
+        <h2>Adversary Profiles</h2>
+        <p>
+            Adversary Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network.
+            Profiles can be used for offensive or defensive use cases.
+        </p>
     </div>
-    <div id="adversary-content" class="column adversary-header">
-        <div id="row">
-            <input id="profile-goal" type="text" placeholder="enter a profile name (required)" oninput="checkAdversaryButtons()">
-            <img id='objective-img' style="display:none" src="/gui/img/compass.png" onclick="showObjectiveModal()">
+    <hr>
+
+    <!-- ADVERSARY SELECTION -->
+
+    <form>
+        <div id="select-adversary" class="field has-addons">
+            <label class="label">Select a profile &nbsp;&nbsp;&nbsp;</label>
+            <div class="control is-expanded">
+                <div class="select is-small is-fullwidth">
+                    <select x-on:change="loadProfile()" x-model="selectedProfileId">
+                        <option value="" default disabled selected>Select one...</option>
+                        <template x-for="adversary of adversaries" :key="adversary.adversary_id">
+                            <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+            <div class="control">
+                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New</button>
+            </div>
         </div>
-        <input id="objective-select" type="text" style="display:none" disabled>
-        <input id="profile-description" type="text" placeholder="enter a profile description (required)" oninput="checkAdversaryButtons()">
-        <br><br>
-        <div id="dummy"></div>
-    </div>
-  </div>
-</div>
+    </form>
 
-<div id="phase-modal" class="modal">
-    <form class="modal-content">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column">
-                <select id="ability-tactic-filter" onchange="populateTechniques('phase-modal', exploits);">
-                    <option disabled selected>Choose a tactic</option>
-                    {% for tactic in tactics %}
-                        <option value={{ tactic }} data-tactic={{ tactic }}>{{ tactic }}</option>
-                    {% endfor %}}
-                </select>
-                <select id="ability-technique-filter" onchange="populateAbilities('phase-modal', exploits);">
-                    <option disabled selected>Choose a technique</option>
-                </select>
-                <select id="ability-ability-filter" onchange="showAbility('phase-modal', exploits)">
-                    <option disabled selected>0 abilities</option>
-                </select>
-                <input id="ability-search-filter" type="text" placeholder="Search for abilities..." oninput="searchAbilities('phase-modal', exploits);">
-                <button id="reset-ability-modal-button" type="button" class="atomic-button" onclick="clearPhaseModal()">Reset Fields</button>
-                <br><br>
-                <div id="ability-manager" class="ability-attack row-simple">
-                    <div id="ability-manager-fields" class="column">
-                        <table frame=void rules=rows>
-                            <tr>
-                                <td>id:</td>
-                                <td><input type="text" id="ability-identifier" placeholder="Unique identifier (default UUID)" oninput="checkAbilityButtons()" /></td>
-                            </tr>
-                            <tr>
-                                <td>name:</td>
-                                <td><input type="text" id="ability-name" placeholder="Name (required)" oninput="checkAbilityButtons()" /></td>
-                            </tr>
-                            <tr>
-                                <td>description:</td>
-                                <td><input type="text" id="ability-description" placeholder="Description (required)" oninput="checkAbilityButtons()" /></td>
-                            </tr>
-                            <tr>
-                                <td>tactic:</td>
-                                <td><input type="text" id="ability-tactic-name" placeholder="ATT&CK tactic (required)" oninput="checkAbilityButtons()" /></td>
-                            <tr>
-                            <tr>
-                                <td>technique id:</td>
-                                <td><input type="text" id="ability-tech-id" placeholder="ATT&CK technique ID" /></td>
-                            </tr>
-                            <tr>
-                                <td>technique:</td>
-                                <td><input type="text" id="ability-tech-name" placeholder="ATT&CK technique name" /></td>
-                            </tr>
-                        </table>
+    <!-- ADVERSARY DETAILS -->
 
+    <template x-if="selectedProfileId && !isCreatingProfile">
+        <div class="section" x-init="$watch('selectedProfileAbilities', val => findAbilityDependencies())">
+            <div x-show="!isEditingProfile">
+                <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEditingProfile = true"></h3>
+                <p x-text="selectedProfileDescription" class="pointer" @click="isEditingProfile = true"></p> <br>
+            </div>
+            <form x-show="isEditingProfile">
+                <div class="field">
+                    <div class="control">
+                        <input class="input" x-model="selectedProfileName" x-on:change="unsavedChanges = true" placeholder="Adversary Name" x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('name') }">
+                        <p x-show="fieldErrorsProfile.includes('name')" class="help is-danger">This field is required.</p>
                     </div>
-                    <div id="ability-manager-additional" class="column">
-                        <div id="row-simple">
-                            <div class="column">
-                                <div>
-                                    <img onclick="freshId()" src="/gui/img/recycle.png">
-                                    <p onclick="freshId()">generate new id</p>
-                                </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <input class="input is-small" x-model="selectedProfileDescription" placeholder="Adversary Description" x-on:change="unsavedChanges = true" x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('description') }">
+                        <p x-show="fieldErrorsProfile.includes('description')" class="help is-danger">This field is required.</p>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <a class="button is-small is-primary" @click="isEditingProfile = false">Done</a>
+                    </div>
+                </div>
+            </form>
+            <div class="control-buttons is-flex is-flex-direction-row">
+                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityModal = true;">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add Ability</span>
+                </button>
+                <button class="button is-small" @click="showAddAdversaryModal = true">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add Adversary</span>
+                </button>
+                <div class="vr"></div>
+                <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
+                <button class="button is-small" @click="showObjectiveModal = true">Change</button>
+                <div class="vr"></div>
+                <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
+                <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
+            </div>
+            <table x-show="selectedProfileAbilities.length" class="table is-striped is-fullwidth">
+                <thead>
+                    <tr class="ability-row">
+                        <th></th>
+                        <th>Ordering</th>
+                        <th>Name</th>
+                        <th>Tactic</th>
+                        <th>Technique</th>
+                        <th>Executors</th>
+                        <th>Requires</th>
+                        <th>Unlocks</th>
+                        <th>Payload</th>
+                        <th>Cleanup</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(ability, index) in selectedProfileAbilities">
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1, 'row-hover': ability.ability_id === abilityTableDragHoverId }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
+                            <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
+                            <td x-text="index + 1"></td>
+                            <td x-text="ability.name"></td>
+                            <td x-text="ability.tactic"></td>
+                            <td x-text="ability.technique_name"></td>
+                            <td>
+                                <template x-for="platform of getExecutorDetail('platforms', ability)">
+                                    <a class="has-tooltip-arrow" x-bind:data-tooltip="platform">
+                                        <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                    </a>
+                                </template>
+                            </td>
+                            <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
+                                <a class=" has-tooltip-arrow" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
+                                    <span class="icon is-small"><i class="fas fa-lock"></i></span>
+                                </a>
+                            </td>
+                            <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
+                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
+                                    <span class="icon is-small"><i class="fas fa-key"></i></span>
+                                </a>
+                            </td>
+                            <td class="has-text-centered">
+                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
+                                    <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
+                                </a> 
+                            </td>
+                            <td class="has-text-centered">
+                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
+                                    <span class="icon is-small"><i class="fas fa-trash"></i></span>
+                                </a>
+                            </td>
+                            <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAbility(index)"></button></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div x-show="!selectedProfileAbilities.length" class="container has-text-centered">
+                <p>This profile has no abilities.</p>
+            </div>
+            <div class="icon-text" x-show="!hasMetAbilityDependencies()">
+                <span class="icon has-text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </span>
+                <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- CREATE PROFILE SECTION -->
+
+    <template x-if="isCreatingProfile">
+        <div class="section content">
+            <h3>Create a profile</h3>
+            <form>
+                <div class="field">
+                    <label class="label is-small">Profile Name</label>
+                    <div class="control">
+                        <input x-model="createProfileName" class="input is-small" type="text" placeholder="Enter a name..." x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('name') }">
+                    </div>
+                    <p x-show="fieldErrorsProfile.includes('name')" class="help is-danger">This field is required.</p>
+                </div>
+                <div class="field">
+                    <label class="label is-small">Profile Description</label>
+                    <div class="control">
+                        <input x-model="createProfileDescription" class="input is-small" type="text" placeholder="Enter a description..." x-bind:class="{ 'is-danger': fieldErrorsProfile.includes('description') }">
+                    </div>
+                    <p x-show="fieldErrorsProfile.includes('description')" class="help is-danger">This field is required.</p>
+                </div>
+                <div class="field is-grouped">
+                    <div class="control">
+                        <a class="button is-primary is-small" @click="createProfile()">Create</a>
+                    </div>
+                    <div class="control">
+                        <a class="button is-small" @click="cancelCreateProfile()">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </template>
+
+    <!-- MODALS -->
+
+    <div class="modal" x-bind:class="{ 'is-active': showAddAdversaryModal }">
+        <div class="modal-background" @click="showAddAdversaryModal = false; selectedAddAdversary = ''; abilitiesAddAdversary = [];"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Add Ablities from Adversary</p>
+            </header>
+            <section class="modal-card-body">
+                <p>Select an adversary, then select all of the abilities you'd like to append to <b x-text="selectedProfileName"></b>.</p>
+                <form>
+                    <div class="field">
+                        <label class="label">Select a profile</label>
+                        <div class="control is-expanded">
+                            <div class="select is-small">
+                                <select x-on:change="loadProfileAdversary()" x-model="selectedAddAdversary">
+                                    <option value="" default disabled selected>Select one...</option>
+                                    <template x-for="adversary of adversaries" :key="adversary.adversary_id">
+                                        <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
+                                    </template>
+                                </select>
                             </div>
-                            <div class="column">
-                                <div>
-                                    <img onclick="addExecutorBlock()" src="/gui/img/executor.png">
-                                    <p onclick="addExecutorBlock()">add executor</p>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="field" x-show="selectedAddAdversary">
+                        <div class="control">
+                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = true)">Select All</a> 
+                            / 
+                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = false)">Deselect All</a>
+                        </div>
+                    </div>
+                    <template x-for="ability of abilitiesAddAdversary">
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" x-model="ability.selected"> 
+                                <span>
+                                    <b x-text="ability.name"></b> | 
+                                    <span x-text="ability.tactic"></span> |
+                                    <template x-for="platform of getExecutorDetail('platforms', ability)">
+                                        <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                    </template> |
+                                    <span class="icon is-small" x-show="getExecutorDetail('requirements', ability)"><i class="fas fa-lock"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('cleanup', ability)"><i class="fas fa-trash"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('parser', ability)"><i class="fas fa-key"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('payload', ability)"><i class="fas fa-weight-hanging"></i></span>
+                                </span>
+                            </label>
+                        </div>
+                    </template>
+                </form>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showAddAdversaryModal = false; selectedAddAdversary = ''; abilitiesAddAdversary = [];">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" x-bind:disabled="!abilitiesAddAdversary.find(a => a.selected)" @click="addAbilitiesFromAdversary()">Add Selected Abilities</button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" x-bind:class="{ 'is-active': showObjectiveModal }">
+        <div class="modal-background" @click="showObjectiveModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Link Objective</p>
+            </header>
+            <section class="modal-card-body">
+                <p>Specify an Objective for <b x-text="selectedProfileName"></b>.</p>
+                <form>
+                    <div class="field">
+                        <label class="label">Select an objective</label>
+                        <div class="control is-expanded">
+                            <div class="select is-small">
+                                <select x-model="selectedObjectiveId">
+                                    <option value="" default disabled selected>Select one...</option>
+                                    <template x-for="objective of objectives" :key="objective.id">
+                                        <option x-bind:value="objective.id" x-text="objective.name" x-bind:title="objective.description"></option>
+                                    </template>
+                                </select>
                             </div>
-                            <div class="column">
-                                <div>
-                                    <label for="uploadPayloadFile"><img src="/gui/img/payload.png"></label>
-                                    <form id="uploadPayloadForm">
-                                       <label id="uploadFileLabel" for="uploadPayloadFile"><br><br>upload payload</label>
-                                       <input type="file" id="uploadPayloadFile" style="display: none">
-                                    </form>
-                                </div>
-                            </div>
-                            <div class="column">
-                                <div>
-                                    <img onclick="addAdditionalInfo(); checkAbilityButtons()" src="/gui/img/additional-fields.png">
-                                    <p onclick="addAdditionalInfo(); checkAbilityButtons()">add info</p>
+                        </div>
+                    </div>
+                </form>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showObjectiveModal = false">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="linkObjective()">Link Objective</button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }"> 
+        <div class="modal-background" @click="showAbilityModal = false"></div>
+        <div class="modal-card wide">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Add an Ability to Adversary</p>
+            </header>
+            <section class="modal-card-body">
+                <p class="has-text-centered">Select an Ability</p>
+                <form>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label"><span class="icon is-small"><i class="fas fa-search"></i></span></label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
+                                    <div class="search-results">
+                                        <template x-for="result of abilitySearchResults" :key="result.ability_id">
+                                            <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div id="ability-additional-info" style="display: none">
-                            <div>info:</div>
-                            <table id="additional-info-table" frame=void rules=rows>
-                                <tbody>
-                                </tbody>
-                            </table>
+                    </div>
+                </form>
+                <form>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label">Tactic</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedTactic" x-on:change="selectedAbilityId = ''">
+                                            <option default>Choose a tactic</option>
+                                            <template x-for="tactic of [...new Set(abilities.map((e) => e.tactic))]" :key="tactic">
+                                                <option x-bind:value="tactic" x-text="tactic"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <br><br>
-                </div>
-                <div id="ability-button-row" class="row-simple">
-                    <button id="ability-save" type="button" class="button-notready atomic-button" onclick="saveAbility()">Save</button>
-                    <button id="ability-add-to-adv" type="button" class="button-notready atomic-button" onclick="saveAbility(true)">Add to Adversary</button>
-                </div>
-                <div class="row-simple">
-                    <ul id="ttp-tests"></ul>
-                </div>
-            </div>
-            <div class="imgcontainer">
-                <span onclick="hidePhaseModal()" class="close" title="Close Modal">&times;</span>
-            </div>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label">Technique</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''">
+                                            <option default>Choose a technique</option>
+                                            <template :key="exploit.technique_id" x-for="exploit of [...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))">
+                                                <option x-bind:value="exploit.technique_id" x-text="`${exploit.technique_id} | ${exploit.technique_name}`"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal is-fullwidth">
+                        <div class="field-label is-small">
+                            <label class="label">Ability</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedAbilityId" x-bind:disabled="!selectedTechnique" x-on:change="selectAbility(selectedAbilityId)">
+                                            <option default>Choose an ability</option>
+                                            <template :key="ability.ability_id" x-for="ability of abilities.filter((e) => selectedTactic === e.tactic && selectedTechnique === e.technique_id)">
+                                                <option x-bind:value="ability.ability_id" x-text="ability.name"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <template x-if="selectedAbilityId">
+                    <div class="content">
+                        <hr>
+                        <p class="has-text-centered">Ability Details</p>
+                        <form>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">ID</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field has-addons">
+                                        <div class="control is-expanded">
+                                            <input class="input is-small" x-model="selectedAbility.ability_id" disabled>
+                                        </div>
+                                        <div class="control">
+                                            <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
+                                                <span class="icon is-small"><i class="fas fa-sync"></i></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Name</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('name') }" x-model="selectedAbility.name">
+                                            <p x-show="fieldErrorsAbility.includes('name')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Description</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('description') }" x-model="selectedAbility.description">
+                                            <p x-show="fieldErrorsAbility.includes('description')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Tactic</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic">
+                                            <p x-show="fieldErrorsAbility.includes('tactic')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label is-small">Technique ID</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                            <p x-show="fieldErrorsAbility.includes('technique_id')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Technique Name</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                            <p x-show="fieldErrorsAbility.includes('technique_name')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <p class="has-text-centered">Executors</p>
+                        <p x-show="fieldErrorsAbility.includes('executors')" class="help is-danger">At least one executor is required.</p>
+                        <div class="has-text-centered">
+                            <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
+                        </div>
+                        <br>
+                        <template x-for="(executor, index) of getAbilityExecutors()" :key="`${executor.platform}-${executor.name}`">
+                            <div class="box">
+                                <div class="has-text-right">
+                                    <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
+                                </div>
+                                <form>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">platform</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <div class="select is-small">
+                                                        <select x-model="executor.platform">
+                                                            <template x-for="plat of getPlatforms(executor.platform)" :key="plat">
+                                                                <option x-bind:value="plat" x-text="plat"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">executor</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <div class="select is-small">
+                                                        <select x-model="executor.name">
+                                                            <option default disabled>Select an executor...</option>
+                                                            <template x-for="exec of getExecutors(executor.platform, executor.name)" :key="exec">
+                                                                <option x-bind:value="exec" x-text="exec""></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">payloads</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field is-grouped is-grouped-multiline">
+                                                <p x-show="executor.payloads.length === 0" class="help">No payloads selected</p>
+                                                <template x-for="(payload, index) of executor.payloads">
+                                                    <div class="control">
+                                                        <div class="tags has-addons">
+                                                            <span class="tag is-small is-link" x-text="payload"></span>
+                                                            <a class="tag is-delete" x-on:click="executor.payloads.splice(index, 1)"></a>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label"></label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <div class="select is-small is-multiple is-fullwidth">
+                                                        <select class="select is-multiple" multiple size="6">
+                                                            <template x-for="payload of payloads">
+                                                                <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
+                                                            </template>      
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">command</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <textarea class="textarea is-small code" x-model="executor.command"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">timeout</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <input class="input is-small" type="number" x-model="executor.timeout">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label">cleanup</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <input class="input is-small code" x-model="executor.cleanup">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </template>
+                        <template x-if="selectedAbility.executors && selectedAbility.executors.length > 0">
+                            <div class="has-text-centered">
+                                <button class="button is-small is-primary" @click="addExecutorToAbility('after')">+ Add Executor</button>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-small" @click="saveAbility(false)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showAbilityModal = false">Close</button>
+                        </divp>
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility(true)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                <span>Save & Add</span>
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
         </div>
-    </form>
-</div>
-
-<div id="phase-template" style="display: none;">
-    <center>
-        <div class="grid" id="grid">
-        </div>
-    </center>
-</div>
-
-<div id="ability-template" class="ability-box" style="display: none">
-    <div class="ability-show">
-        <h4 id="name" style="margin:5px; margin-top:5px;"><span></span></h4>
-        <b><p id="ability-attack" style="text-transform: uppercase;font-size:11px;opacity:0.7;"></p></b>
     </div>
-    <center>
-        <div>
-            <div class="topright" id="ability-rm">
-                <div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>
-            </div>
-            <div class="topleftnum">
-                <div class="ability-order">*</div>
-            </div>
-            <div id="ability-metadata" class="bottomright">
-            </div>
-            <div id="icon-row" class="icon-row"></div>
-        </div>
-    </center>
+
 </div>
 
-<span id="ability-tooltip" class="tooltiptext"></span>
-
-<div id="adv-objective-modal" class="modal">
-    <form class="modal-content">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column" style="flex:100%;">
-                <p style="text-align: center;">Specify an objective for this adversary.</p>
-                 <select id="objective-existing">
-                    <option value="" disabled selected>Select an Objective</option>
-                        {% for obj in objectives %}
-                            <option id="objective-{{ obj.id }}" value="{{ obj.id }}">{{ obj.name }}</option>
-                        {% endfor %}}
-                 </select>
-                <br><br>
-                <hr> <br>
-                <input id="objective-description" type="text" placeholder="Select an Objective" disabled>
-                <div style="width:30%;margin:0 auto;">
-                    <button type="button" class="button-success atomic-button"
-                            onclick="linkObjective()">Link to adversary</button>
-                </div>
-            </div>
-            <div class="imgcontainer">
-                <span onclick="hideObjectiveModal()" class="close" title="Close Modal">&times;</span>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div id="adv-profile-modal" class="modal">
-    <form class="modal-content">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column" style="flex:100%;">
-                <p style="text-align: center;">Include the abilities of another profile in this one. These abilities can be appended to the existing adversary profile.
-                </p>
-                <select id="adv-profile-filter">
-                    <option disabled selected>Choose a profile</option>
-                    {% for adv in adversaries %}
-                        <option value={{ adv.adversary_id }}>{{ adv.name }}</option>
-                    {% endfor %}}
-                </select>
-                <br><br>
-                <div style="width:30%;margin:0 auto;">
-                    <button type="button" class="button-success atomic-button" onclick="addAdvToCurrentProfile()">Add to adversary</button>
-                </div>
-            </div>
-            <div class="imgcontainer">
-                <span onclick="hideProfileModal()" class="close" title="Close Modal">&times;</span>
-            </div>
-        </div>
-    </form>
-</div>
-
-
-<table id="additional-info-row-template-holder" style="display:none">
-    <tr id="additional-info-template">
-        <td><input type="text" class="additional-key" style="text-align: right; margin-left: -2px; padding-right: 22px;" placeholder="key" oninput="checkAbilityButtons()"></td>
-        <td><b>:</b></td>
-        <td><input type="text" class="additional-value" placeholder="value"></td>
-        <td><div class="ability-remove">
-            <div style="font-size:8px;">&#x274C;</div>
-        </div></td>
-    </tr>
-</table>
-
-<li id="ttp-template" class="ttp-template" style="display: none">
-    <div class="dotted">
-        <p onclick="$(this).closest('li').remove(); checkAbilityButtons()">&#x274C;</p>
-    </div>
-    <table frame=void rules=rows style="border-spacing:5px;width:100%">
-        <tr>
-            <td style="width:10%"><b>platform:</b></td>
-            <td>
-              <select id="ability-platform" onchange="filterExecutors(this); checkAbilityButtons()">
-                <option value="" disabled selected>Select a platform</option>
-                    {% for platform, executors in platforms.items() %}
-                        <option value="{{ platform }}">{{ platform }}</option>
-                    {% endfor %}
-              </select>
-            </td>
-        </tr>
-        <tr>
-            <td style="width:10%"><b>executor:</b></td>
-            <td>
-              <select id="ability-executor" onchange="checkAbilityButtons()">
-                <option value="" disabled selected>Select an executor</option>
-              </select>
-            </td>
-        </tr>
-        <tr>
-            <td style="width:10%"><b>payloads:</b></td>
-            <td>
-              <select id="ability-payload" multiple="multiple">
-                {% for p in payloads|sort %}
-                    <option value="{{ p }}">{{ p }}</option>
-                {% endfor %}}
-              </select>
-            </td>
-        </tr>
-        <tr>
-            <td style="width:10%"><b>command:</b></td>
-            <td><textarea id="ability-command" spellcheck="false" contenteditable="true" placeholder="Enter a command to execute" oninput="checkAbilityButtons()"></textarea></td>
-        </tr>
-        <tr>
-            <td style="width:10%"><b>timeout:</b></td>
-            <td><input id="ability-timeout" spellcheck="false" contenteditable="true" placeholder="Enter number of seconds to timeout this command (optional)"/></td>
-        </tr>
-        <tr>
-            <td style="width:10%"><b>cleanup:</b></td>
-            <td><textarea id="ability-cleanup" spellcheck="false" contenteditable="true" placeholder="Enter a clean up command (optional)"></textarea></td>
-        </tr>
-    </table>
-    <br>
-</li>
-
-<script src="/gui/js/ability.js"></script>
-<script src="/gui/js/muuri.min.js"></script>
 <script>
-    var exploits = {{exploits | tojson}};
-    var platforms = {{platforms | tojson}};
+    function alpineAdversaries() {
+        return {
+            // Global page variables
+            adversaries: [],
+            abilities: [],
+            objectives: [],
+            platforms: JSON.parse('{{ platforms | tojson }}'),
+            payloads: JSON.parse('{{ payloads | tojson }}'),
 
-    $(document).ready(function () {
-        stream('Profiles are optional. There are built-in profiles you can use right away, otherwise modify or build new ones here.');
-        addPhase(1);
-    });
+            selectedProfileId: '',
+            selectedProfileName: undefined,
+            selectedProfileDescription: undefined,
+            selectedProfileAbilities: [],
+            unsavedChanges: false,
 
-    $(document).on("mouseover", ".tooltip", function(event) {
-        $("#ability-tooltip").show();
-        $("#ability-tooltip").css({left: event.clientX + 10, top: event.pageY, 'z-index':100});
-        $("#ability-tooltip").html(this.dataset.text);
-    })
+            // Ability dependencies & parsers
+            abilityDependencies: {},
+            needsParser: [],
+            onHoverUnlocks: [],
+            onHoverLocks: [],
 
-    $(document).on("mouseout", ".tooltip", function(event) {
-        $("#ability-tooltip").hide();
-    })
+            // Create a profile
+            isEditingProfile: false,
+            isCreatingProfile: false,
+            createProfileName: '',
+            createProfileDescription: '',
 
-    $(document).on("mouseover", ".ability-box h4", function() {
-        if (isEllipsisActive(this)) {
-            $(this.firstElementChild).addClass("ability-long-name");
-            $(this).css("overflow", "visible");
-            let abilityBox = $(this).closest(".ability-box");
-            abilityBox.css("z-index", 100);
-            abilityBox.find(".topleftnum, .topright").css("z-index", -1);
-        }
-    })
+            // Table on drag and drop
+            abilityTableDragTarget: undefined,
+            abilityTableDragEndIndex: undefined,
+            abilityTableDragHoverId: undefined,
 
-    $(document).on("mouseout", ".ability-box h4", function() {
-        $(this.firstElementChild).removeClass("ability-long-name");
-        $(this).css("overflow", "hidden");
-        let abilityBox = $(this).closest(".ability-box");
-        abilityBox.css("z-index", 1);
-        abilityBox.find(".topleftnum, .topright").css("z-index", 0);
-    })
+            // Add adversary modal
+            showAddAdversaryModal: false,
+            selectedAddAdversary: '',
+            abilitiesAddAdversary: [],
 
-    function toggleAdversaryView() {
-        // Change Add/View sidebar
-        $('#adversary-view').toggle();
-        $('#adversary-add').toggle();
+            // Objective modal
+            showObjectiveModal: false,
+            selectedObjectiveId: '',
 
-        // Clear content if switching to "Add"
-        if ($('#adversary-add').is(':visible')) {
-            clearAdversaryContent();
-        }
+            // Ability modal
+            showAbilityModal: false,
+            selectedTactic: '',
+            selectedTechnique: '',
+            selectedAbilityId: '',
+            abilitySearchQuery: '',
+            abilitySearchResults: [],
+            selectedAbility: {},
+            selectedPlatform: '',
+            selectedExecutor: '',
 
-        // Set content visibility and sidebar buttons enable
-        checkAdversaryContent();
-        checkAdversaryButtons();
-    }
+            // Input validation
+            requiredFieldsProfile: ['name', 'description'],
+            fieldErrorsProfile: [],
+            requiredFieldsAbility: ['name', 'description', 'tactic', 'technique_id', 'technique_name', 'executors'],
+            fieldErrorsAbility: [],
 
-    function checkAdversaryContent() {
-        if ($('#adversary-add').is(':visible') || $('#profile-existing-name').val() !== null) {
-            $('#adversary-content').css('visibility', 'visible');
-        } else {
-            $('#adversary-content').css('visibility', 'hidden');
-        }
-    }
+            initPage() {
+                apiV2('GET', '/api/v2/adversaries').then((adversaries) => {
+                    this.adversaries = adversaries;
+                    return apiV2('GET', '/api/v2/abilities');
+                }).then((abilities) => {
+                    this.abilities = abilities;
+                    return apiV2('GET', '/api/v2/objectives');
+                }).then((objectives) => {
+                    this.objectives = objectives;
+                }).catch((error) => {
+                    toast('Error initializing page', false);
+                    console.error(`Error initializing page: ${error}`);
+                });
+            },
 
-    function checkAdversaryButtons() {
-        validateFormState(($('#profile-goal').val() !== '' && $('#profile-description').val() !== ''), '#adversary-save-button');
-        validateFormState(($('#profile-existing-name').val()), '#adversary-delete-button');
-    }
+            loadProfile() {
+                if (!this.selectedProfileId) return;
 
-    function clearAdversaryContent() {
-      $('#profile-existing-name option:eq(0)').prop('selected', true);
-      $('#profile-goal').val('');
-      $('#profile-description').val('');
-      $('.tempPhase').remove();
-      $('.phase-headers').remove();
-      loadAtomicOrder([]);
-      clearObjective();
-    }
+                this.selectedProfileAbilities = [];
+                this.isCreatingProfile = false;
+                this.fieldErrorsProfile = [];
 
-    function saveAdversary() {
-        let identifier = $('#profile-existing-name').val();
-        if(!identifier){
-            identifier = uuidv4();
-        }
-        let name = $('#profile-goal').val();
-        if(!name){ warn('Please enter a profile name!'); return; }
-        let description = $('#profile-description').val();
-        if(!description){ warn('Please enter a description!'); return; }
+                const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === this.selectedProfileId);
+                this.selectedProfileName = selectedAdversary.name;
+                this.selectedProfileDescription = selectedAdversary.description;
+                this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
+                this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
 
-        let objective = $('#objective-select').val();
-        let abilities = [];
-        let listing = g_grid.getItems();
-        listing.forEach(function(entry){
-            abilities.push({"id": entry._element.id})});
-        restRequest('PUT', {"name":name,"description":description,"atomic_ordering":abilities,"index":"adversaries",
-            'id': identifier,"objective":objective}, saveAdversaryCallback);
-    }
+                this.findAbilityDependencies();
+            },
 
-    function saveAdversaryCallback(data) {
-        stream('Adversary saved!');
-        appendToSelect('profile-existing-name', data[0].adversary_id, data[0].name, 'adversary-'+data[0].adversary_id);
-        $('#profile-existing-name').val(data[0].adversary_id);
-        appendToSelect('queueFlow', data[0].adversary_id, data[0].name, 'qflow-'+data[0].adversary_id);
+            saveProfile() {
+                this.fieldErrorsProfile = validateInputs({ name: this.selectedProfileName, description: this.selectedProfileDescription }, this.requiredFieldsProfile);
+                if (this.fieldErrorsProfile.length) {
+                    this.isEditingProfile = true;
+                    return;
+                }
 
-        if ($('#adversary-add').is(':visible')) {
-          $('#togBtnAdv').click();
-        }
-    }
+                const requestBody = {
+                    name: this.selectedProfileName,
+                    description: this.selectedProfileDescription,
+                    objective: this.selectedObjectiveId,
+                    atomic_ordering: this.selectedProfileAbilities.map((ability) => ability.ability_id),
+                };
 
-    function checkAbilityButtons() {
-        // Enable / Disable Save and Add to Adversary buttons
-        let valid = validateAbility();
-        let uniqueAbility = ($('#ability-identifier').val() === "" ||
-                             $('#tempPhase1').find('#' + $('#ability-identifier').val()).length === 0);
-        validateFormState(valid, '#ability-save');
-        validateFormState((valid && uniqueAbility), '#ability-add-to-adv');
-    }
+                apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, requestBody).then((data) => {
+                    this.unsavedChanges = false;
+                    this.isEditingProfile = false;
+                    toast('Saved profile!', true);
+                }).catch((error) => {
+                    toast('Error saving profile', false);
+                    console.error(error);
+                });
+            },
 
-    function validateAbility() {
-        // Enable Save and Add to Adversary buttons if the ability has:
-        // - No ID, or ID only contains valid characters
-        // - Name
-        // - Description
-        // - Tactic is not empty and only contains valid characters
-        // - Platform / executor / command
-        // - Unique, non-empty keys in additional info
-        let valid = true;
-        let validator = /^[0-9a-z-_]+$/i;
+            deleteProfile() {
+                if (confirm('Are you sure you want to remove this adversary? This cannot be undone.')) {
+                    apiV2('DELETE', `/api/v2/adversaries/${this.selectedProfileId}`).then((response) => {
+                        this.adversaries.splice(this.adversaries.findIndex((a) => a.adversary_id === this.selectedProfileId), 1);
+                        this.selectedProfileId = '';
+                        toast('Adversary profile deleted.', true);
+                    }).catch((error) => {
+                        toast('Error deleting profile', false);
+                        console.error(error);
+                    });
+                }
+            },
 
-        // Validate ID
-        let abilityId = $('#ability-identifier').val();
-        if (abilityId.length !== 0 && !(validator.test(abilityId))) {
-            valid = false;
-        }
+            createProfile() {
+                this.fieldErrorsProfile = validateInputs({ name: this.createProfileName, description: this.createProfileDescription }, this.requiredFieldsProfile);
+                if (this.fieldErrorsProfile.length) return;
 
-        // Ability details missing data
-        if (valid) {
-            if (
-                $('#ability-name').val().length === 0
-                || $('#ability-description').val().length === 0
-            ) {
-                valid = false;
-            }
-        }
+                const newId = uuidv4();
+                const requestBody = {
+                    adversary_id: newId,
+                    name: this.createProfileName,
+                    description: this.createProfileDescription,
+                    atomic_ordering: [],
+                    objective: this.objectives.find((o) => o.name === 'default').id,
+                    tags: [],
+                };
 
-        // Validate tactic
-        if (valid) {
-            let abilityTactic = $('#ability-tactic-name').val();
-            if (abilityTactic.length !== 0 && !(validator.test(abilityTactic))) {
-                valid = false;
-            }
-        }
+                apiV2('POST', '/api/v2/adversaries', requestBody).then((response) => {
+                    this.adversaries.push(requestBody);
+                    this.selectedProfileId = newId;
+                    this.loadProfile();
+                    this.isCreatingProfile = false;
+                    toast('Created profile!', true);
+                }).catch((error) => {
+                    toast('Error creating profile', false);
+                    console.error(error);
+                });
+            },
 
-        // Platform / executor / command missing data
-        if (valid) {
-            if ($('#ttp-tests > li').length) {
-                $('#ttp-tests > li').each(function() {
-                    let platform = $(this).find('#ability-platform').val();
-                    let executor = $(this).find('#ability-executor').val();
-                    let command = $(this).find('#ability-command').val();
-                    if (!command || !executor || !platform) {
-                        valid = false;
+            cancelCreateProfile() {
+                this.createProfileName = '';
+                this.createProfileDescription = '';
+                this.isCreatingProfile = false;
+            },
+
+            linkObjective() {
+                apiV2('PATCH', `/api/v2/adversaries/${this.selectedProfileId}`, { objective: this.selectedObjectiveId }).then((data) => {
+                    toast('New objective linked', true);
+                    this.showObjectiveModal = false;
+                }).catch((error) => {
+                    toast('Error saving profile', false);
+                    console.error(error);
+                });
+            },
+
+            getExecutorDetail(detail, ability) {
+                const executorNameMap = new Map([
+                    ['psh', 'powershell'],
+                    ['pwsh', 'powershell core'],
+                    ['sh', 'shell'],
+                    ['cmd', 'commandline'],
+                ]);
+                const plats = [];
+                let hasCleanup = false;
+                let hasPayload = false;
+                let hasParser = false;
+
+                ability.executors.forEach((executor) => {
+                    if (executor.cleanup.length > 0) hasCleanup = true;
+                    if (executor.parsers.length > 0) hasParser = true;
+                    if (executor.payloads.length > 0) hasPayload = true;
+                    plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
+                });
+
+                switch (detail) {
+                case 'cleanup':
+                    return hasCleanup;
+                case 'parser':
+                    return hasParser;
+                case 'payload':
+                    return hasPayload;
+                case 'requirements':
+                    return ability.requirements.length > 0;
+                case 'platforms':
+                    return plats;
+                default:
+                    return false;
+                }
+            },
+
+            findAbilityDependencies() {
+                const types = {};
+
+                this.selectedProfileAbilities.forEach((ability, index) => {
+                    let requireTypes = [];
+                    let enableTypes = [];
+
+                    // Get all parser types from executors
+                    ability.executors.forEach((executor) => {
+                        executor.parsers.forEach((parser) => {
+                            enableTypes = enableTypes.concat(parser.relationships.map((rel) => rel.source));
+                        });
+                    });
+
+                    // Get all requirement types
+                    ability.requirements.forEach((requirement) => {
+                        requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
+                    });
+
+                    types[ability.ability_id] = {
+                        enableTypes: [...new Set(enableTypes)],
+                        requireTypes: [...new Set(requireTypes)]
+                    };
+                });
+
+                this.selectedProfileAbilities.forEach((ability, index) => {
+                    const enablesAbilityIds = [];
+                    const requiresAbilityIds = [];
+                    const requireTypesMet = [];
+
+                    // For each parser, look at and forward for any ability it unlocks
+                    types[ability.ability_id].enableTypes.forEach((key) => {
+                        for (let i = index; i < this.selectedProfileAbilities.length; i++) {
+                            if (types[this.selectedProfileAbilities[i].ability_id].requireTypes.indexOf(key) > -1) {
+                                enablesAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                            }
+                        }
+                    });
+
+                    // For each requirement, look at and before for any ability to unlock it
+                    types[ability.ability_id].requireTypes.forEach((requirement) => {
+                        let requirementMet = false;
+                        for (let i = index; i >= 0; i--) {
+                            if (types[this.selectedProfileAbilities[i].ability_id].enableTypes.indexOf(requirement) > -1) {
+                                requiresAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                                requirementMet = true;
+                            }
+                        }
+                        requireTypesMet.push(requirementMet);
+                    });
+
+                    this.abilityDependencies[ability.ability_id] = {
+                        // The ability IDs that this ability will enable
+                        enablesAbilityIds: [...new Set(enablesAbilityIds)],
+                        // The ability IDs that this ability is dependent on
+                        requiresAbilityIds: [...new Set(requiresAbilityIds)],
+                        // The names of the parser requirements this ability enables
+                        enableTypes: types[ability.ability_id].enableTypes,
+                        // The names of the requirements this ability needs from a parser
+                        requireTypes: types[ability.ability_id].requireTypes,
+                        // Same dimension as requireTypes, but true/false if requirement has been met
+                        requireTypesMet: requireTypesMet,
+                    };
+                });
+
+                this.hasMetAbilityDependencies();
+            },
+
+            hasMetAbilityDependencies() {
+                const keys = [];
+                let isMet = true;
+                this.needsParser = [];
+
+                Object.keys(this.abilityDependencies).forEach((abilityId) => {
+                    if (!this.abilityDependencies[abilityId].requireTypesMet.every(((requirement) => requirement))) {
+                        isMet = false;
+                        try {
+                            this.needsParser.push(this.selectedProfileAbilities.find((ability) => ability.ability_id === abilityId).name);
+                        } catch {
+                            this.needsParser.push();
+                        }
                     }
                 });
-            } else {
-                valid = false;
-            }
-        }
 
-        // Additional info missing data
-        if (valid) {
-            let additionalInfo = {};
-            $('#ability-additional-info').find('#additional-info-table tr').each(function() {
-                let key = $(this).find('.additional-key').val();
-                if (key !== '' && !(key in additionalInfo)) {
-                    additionalInfo[key] = $(this).find('.additional-value').val();
-                } else {
-                    valid = false;
-                }
-            });
-        }
+                return isMet;
+            },
 
-        return valid;
-    }
+            setAbilityHover(abilityId) {
+                this.onHoverLocks = this.abilityDependencies[abilityId].requiresAbilityIds;
+                this.onHoverUnlocks = this.abilityDependencies[abilityId].enablesAbilityIds;
+                if (this.abilityDependencies[abilityId].requireTypes.length) this.onHoverUnlocks.push(abilityId);
+                if (this.abilityDependencies[abilityId].enableTypes.length) this.onHoverLocks.push(abilityId);
+            },
 
-    function saveAbility(addToAdversary=false) {
-        if (!validateAbility()) {
-            warn('Missing required data!');
-            stream('Missing required data!');
-            return;
-        }
+            clearAbilityHover() {
+                this.onHoverLocks = [];
+                this.onHoverUnlocks = [];
+            },
 
-        let data = {};
-        let platforms = {};
+            getObjectiveName() {
+                let obj = this.objectives.find((o) => o.id === this.selectedObjectiveId);
+                return obj ? obj.name : '';
+            },
 
-        let name = $('#ability-name').val();
-        let description = $('#ability-description').val();
+            getAbilityExecutors() {
+                return this.selectedAbility.executors || [];
+            },
 
-        $('#ttp-tests > li').each(function() {
-            let platform = $(this).find('#ability-platform').val();
+            loadProfileAdversary() {
+                if (!this.selectedAddAdversary) return;
 
-            if (platforms[platform] === undefined) {
-                platforms[platform] = {};
-            }
+                this.abilitiesAddAdversary = [];
 
-            let executor = $(this).find('#ability-executor').val();
-            let command = $(this).find('#ability-command').val();
-            let payloads = $(this).find('#ability-payload').val();
-            let cleanup = $(this).find('#ability-cleanup').val();
-            let timeout = $(this).find('#ability-timeout').val();
-
-            let ex = {'command': command};
-            if (payloads) {
-                ex['payloads'] = payloads;
-            }
-            if (cleanup) {
-                ex['cleanup'] = cleanup;
-            }
-            if (timeout) {
-                ex['timeout'] = parseInt(timeout);
-            }
-            platforms[platform][executor] = ex;
-        });
-        $('#ability-additional-info').find('#additional-info-table tr').each(function() {
-            let key = $(this).find('.additional-key').val();
-            if (key !== '' && !(key in data)) {
-                data[key] = $(this).find('.additional-value').val();
-            }
-        });
-        data['index'] = 'abilities';
-        data['id'] = $('#ability-identifier').val();
-        data['name'] = name;
-        data['description'] = description;
-        data['tactic'] = $('#ability-tactic-name').val();
-        data['technique'] = {'attack_id': $('#ability-tech-id').val(), 'name': $('#ability-tech-name').val()};
-        data['platforms'] = platforms;
-
-        $.ajax({
-           url: '/api/rest',
-           type: 'PUT',
-           contentType: 'application/json',
-           data: JSON.stringify(data),
-           success: function(data, status, options) {
-               saveAbilityCallback(data, addToAdversary);
-           },
-           error: function (xhr, ajaxOptions, thrownError) {
-               stream(thrownError);
-           }
-        });
-    }
-
-    function saveAbilityCallback(data, addToAdversary=false) {
-        if ($('#ability-identifier').val() === '') {
-            $('#ability-identifier').val(data[0].ability_id);
-        }
-        let abilitySelector = $('#phase-modal').find('#ability-ability-filter');
-        let selectedAbility = abilitySelector.find(':selected').data('ability');
-
-        let newAbility = data[0];
-
-        if (!selectedAbility || selectedAbility.ability_id != newAbility.ability_id) {
-            appendAbilityToList('phase-modal', newAbility);
-        } else {
-            abilitySelector.find(':selected')
-                .attr('value', newAbility.name)
-                .data('ability', newAbility)
-                .text(newAbility.name);
-        }
-        abilitySelector.val(newAbility.name);
-
-        var $to_replace = -1;
-        $.each(exploits, function(i, ab) {
-            if (ab.ability_id === newAbility.ability_id) {
-                $to_replace = i;
-                return false;
-            }
-        });
-        if ($to_replace != -1) {
-            exploits[$to_replace] = newAbility;
-        } else {
-            exploits.push(newAbility);
-        }
-        stream('Ability saved!');
-
-        let tactics = $.map($('#ability-tactic-filter option'), function(option) {
-            if (option.value) {
-                return option.value;
-            }
-        });
-        if ($.inArray(newAbility.tactic, tactics) === -1) {
-            var newTactic = $('<option></option>')
-                .attr('value', newAbility.tactic)
-                .attr('data-tactic', newAbility.tactic)
-                .text(newAbility.tactic);
-            $('#ability-tactic-filter').append(newTactic);
-        }
-
-        if (addToAdversary) {
-            addAbilityToAdversary();
-        } else {
-            replaceAbilityInAdversary();
-        }
-    }
-
-    function replaceAbilityInAdversary() {
-        let ability = $('#phase-modal').find('#ability-ability-filter').find(':selected').data('ability');
-        let abilityItem = $(g_grid.getElement()).children('#' + ability.ability_id);
-        if (abilityItem.length) {
-            let abilityIndex = parseInt($(abilityItem).find('.ability-order').text()) - 1;
-            g_grid.remove(g_grid.getItems(abilityIndex), { removeElements: true });
-            let abilityBox = buildAbility(ability);
-            g_grid.add(abilityBox[0], { index: abilityIndex });
-        }
-    }
-
-    function addAbilityToAdversary() {
-        let ability = $('#phase-modal').find('#ability-ability-filter').find(':selected').data('ability');
-        let abilityBox = buildAbility(ability);
-        g_grid.add(abilityBox[0]);
-        clearPhaseModal();
-        hidePhaseModal();
-    }
-
-    function appendToSelect(field, identifier, value, optionId) {
-        let exists = false;
-        $('#'+field+' option').each(function(){
-            if (this.value === identifier) {
-                exists = true;
-                return false;
-            }
-        });
-        if(!exists) {
-            $("#"+field).append($("<option></option>")
-                .attr("id", optionId)
-                .attr("value", identifier)
-                .text(value));
-        }
-    }
-
-    function loadAdversary() {
-        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#profile-existing-name').val()}, loadAdversaryCallback);
-    }
-
-    function loadAdversaryCallback(data) {
-        stream('Profiles contain abilities which will run in atomic order by default. It contains abilities, or TTPs.');
-
-        $('#adversary-content').css('visibility', 'visible');
-        $('#profile-goal').val(data[0].name);
-        $('#profile-description').val(data[0].description);
-
-        $('.tempPhase').remove();
-        $('.phase-headers').remove();
-        loadAtomicOrder(data[0].atomic_ordering);
-        $('#objective-existing')[0].value = data[0].objective.id;
-        handleObjectiveSelection(data[0].objective.id);
-        linkObjective();
-
-        checkAdversaryButtons();
-    }
-
-    function createMuuriGrid() {
-        let packer = new Muuri.Packer();
-        return new Muuri('.grid', {
-            dragEnabled: true,
-            layout: function (items, width, height) {
-            let fakeItems = items.map(item => {
-              return {
-                _width: Math.floor(item._width + item._marginLeft + item._marginRight),
-                _height: Math.floor(item._height + item._marginTop + item._marginBottom),
-                _marginLeft: 0,
-                _marginRight: 0,
-                _marginTop: 0,
-                _marginBottom: 0
-              }
-            });
-            let slots = [];
-            let options = {rounding: false};
-            return packer.getLayout(fakeItems, width, height, slots, options);}
-        });
-    }
-
-    function loadAtomicOrder(abilities) {
-        let template = $("#tempPhase");
-        if (!template.length) {
-            template = addPhase(1);
-        }
-        let grid = createMuuriGrid();
-        abilities.forEach(function(a) {
-            let abilityBox = buildAbility(a);
-            grid.add(abilityBox[0]);
-        });
-        g_grid = grid;
-        g_grid.on('move', updateIndices).on('add', updateIndices).on('remove',updateIndices);
-        updateIndices();
-    }
-
-    function updateIndices() {
-        g_grid.getItems().forEach(function (item, i) {
-          var newId = i + 1;
-          item.getElement().setAttribute('data-id', newId);
-          item.getElement().querySelector('.ability-order').innerHTML = newId;
-          if (item._dragPlaceholder.isActive()) {
-            item._dragPlaceholder._element.querySelector('.ability-order').innerHTML = newId;
-          }
-        });
-    }
-
-    function addPhase(number) {
-        stream('Add abilities by selecting +add abilities. You can even create new abilities');
-        let template = $("#phase-template").clone();
-        if(number == null) {
-            let existingPhases = $('.tempPhase').length;
-            number = existingPhases + 1;
-        }
-        template.attr("id", "tempPhase" + number);
-        template.addClass("tempPhase");
-        if(number == 1) {
-            template.insertBefore('#dummy');
-        } else {
-            template.insertAfter('#tempPhase' + (number-1));
-        }
-        template.show();
-        let phaseHeader = $('<h4 class="phase-headers"><span class="phase-title">Ordering</span>' +
-            '<span class="ability-add" onclick="showPhaseModal('+number+'); checkAbilityButtons()">&#10010; add ability</span>'
-            +'<span class="ability-add" onclick="showProfileModal('+number+')" ' +
-            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; add adversary</span>' +
-            '<span class="ability-add" onclick="showObjectiveModal()" ' +
-            'style="margin-right:5px;padding-right:5px;border-right:1px white solid;">&#10010; link objective</span>' +
-            '<hr></h4>');
-        $('#tempPhase' + number).prepend(phaseHeader);
-        phaseHeader.show();
-        return template;
-    }
-
-    function buildAbility(ability) {
-        let abilityRequirements = [];
-        let cleanupCommands = false;
-        let parsers = false;
-        let payloads = false;
-
-        let template = $('#ability-template').clone();
-        template.attr('id', ability.ability_id)
-            .data('abilityId', ability.ability_id)
-            .data('requirements', abilityRequirements);
-        template.find('#name span').html(ability.name);
-        template.find('#ability-attack').html(ability.tactic + ' | '+ ability.technique_name);
-
-        ability.executors.forEach((executor) => {
-            if (executor.command !== null) {
-                let executorRequirements = buildRequirements(executor.command);
-                abilityRequirements = abilityRequirements.concat(executorRequirements);
-            }
-
-            cleanupCommands = (cleanupCommands || executor.cleanup.length > 0);
-            parsers = (parsers || executor.parsers.length > 0);
-            payloads = (payloads || executor.payloads.length > 0);
-
-            let executorNames = new Map([
-              ['psh', 'powershell'],
-              ['pwsh', 'powershell core'],
-              ['sh', 'shell'],
-              ['cmd', 'commandline'],
-            ]);
-            let executorName = executorNames.get(executor.name) || executor.name;
-
-            $('<div></div>')
-                .addClass('tooltip')
-                .attr('data-text', 'Works on ' + executor.platform + ' (' + executorName + ')')
-                .append($('<img/>').attr('src', '/gui/img/' + executor.platform + '.png'))
-                .appendTo(template.find('#icon-row'));
-        });
-
-        if (abilityRequirements.length > 0) {
-            template.find('#ability-metadata').append('<div id="ability-padlock" style="padding: 0 2;"><div class="tooltip" data-text="This ability has requirements">&#128274;</div></div>');
-        }
-        if (cleanupCommands) {
-            template.find('#ability-metadata').append('<div id="ability-broom" style="padding: 0 2;"><div class="tooltip" data-text="This ability can clean itself up">&#128465;</div></div>');
-        }
-        if (parsers) {
-           template.find('#ability-metadata').append('<div id="ability-parser" style="padding: 0 2;"><div class="tooltip" data-text="This ability unlocks other abilities">&#128273;</div></div>');
-        }
-        if (payloads) {
-           template.find('#ability-metadata').append('<div id="ability-payload" style="padding: 0 2;"><div class="tooltip" data-text="This ability uses a payload">&#128176;</div></div>');
-        }
-
-        template.find('#ability-rm').html('<div class="ability-remove"><div style="font-size:8px;">&#x274C;</div></div>');
-        template.find('.ability-remove').click(function() {
-            removeAbility(ability);
-        });
-
-        template.find('.ability-show').click(function() {
-            let pModal = $('#phase-modal');
-            let tacList = pModal.find('#ability-tactic-filter');
-            let techList = pModal.find('#ability-technique-filter');
-            let abList = pModal.find('#ability-ability-filter');
-            tacList.val(ability['tactic']).change();
-            techList.val(ability['technique_id']).change();
-            abList.val(ability['name']).change();
-            showPhaseModal(1);
-        });
-        template.show();
-        return template;
-    }
-
-    function buildRequirements(command) {
-        let matchedRequirements = command.match(/#{([^}]+)}/g);
-        if (matchedRequirements) {
-            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{server}' });
-            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{group}' });
-            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{location}' });
-            matchedRequirements = matchedRequirements.filter(function(e) { return e !== '#{paw}' });
-            return matchedRequirements.map(function(val){
-               return val.replace(/[#{}]/g, "");
-            });
-        }
-        return [];
-    }
-
-    function removeAbility(ability){
-        let listing = g_grid.getItems();
-        listing.forEach(function(entry) {
-            if (entry._element.id === ability.ability_id) {
-                g_grid.remove(g_grid.getItems().indexOf(entry), {removeElements: true});
-            }
-        });
-    }
-
-    function showAbility(parentId, exploits) {
-        $('#ability-name').val('');
-        $('#ability-description').val('');
-        $('#ttp-tests').empty();
-        $('#ability-additional-info').find('#additional-info-table').empty();
-        $('#ability-additional-info').hide();
-
-        let ability = $('#'+parentId).find('#ability-ability-filter').find(':selected').data('ability');
-        $('#ability-identifier').val(ability.ability_id);
-        $('#ability-name').val(ability.name);
-        $('#ability-description').val(ability.description);
-        $('#ability-tactic-name').val(ability.tactic);
-        $('#ability-tech-id').val(ability.technique_id);
-        $('#ability-tech-name').val(ability.technique_name);
-
-        if (Object.keys(ability.additional_info).length > 0) {
-            ability.additional_info.forEach((value, key) => {
-                let $table_row = addAdditionalInfo();
-                $table_row.find('.additional-key').val(key);
-                $table_row.find('.additional-value').val(value);
-            });
-            $('#ability-additional-info').show();
-        }
-
-        ability.executors.forEach((executor) => {
-            let template = $('#ttp-template').clone();
-            let unique = ability.ability_id + executor.platform + executor.name;
-            template.attr('id', unique);
-            template.find('#ability-platform').val(executor.platform);
-            filterExecutors(template.find('#ability-platform'));
-            template.find('#ability-executor').val(executor.name);
-            template.find('#ability-command').val(executor.command);
-            template.find('#ability-timeout').val(ability.timeout);
-            if (executor.cleanup.length > 0) {
-                template.find('#ability-cleanup').val(executor.cleanup[0]);
-            }
-            template.show();
-
-            $('#ttp-tests').append(template);
-            let payloads = $('#'+unique).find('#ability-payload');
-            payloads.multiSelect({
-                selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
-                selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
-                keepOrder: true });
-            payloads.multiSelect('select', executor.payloads);
-        });
-
-        checkAbilityButtons();
-    }
-
-    function filterExecutors(elem) {
-        let ttpTable = $(elem).closest('table');
-        let platform = $(elem).val();
-        let executorSelect = $(ttpTable).find('#ability-executor');
-        $(executorSelect).empty();
-        $(executorSelect).append($('<option></option>')
-            .text('Select an executor')
-            .attr('disabled', 'disabled')
-            .attr('selected', 'selected'));
-
-        platforms[platform].forEach((executor) => {
-            $(executorSelect).append($('<option></option>')
-                .val(executor)
-                .text(executor));
-        });
-    }
-
-    function addExecutorBlock(){
-        let template = $("#ttp-template").clone();
-        template.show();
-        $('#ttp-tests').prepend(template);
-        $('#ttp-tests').find('#ability-payload').multiSelect({
-            selectableHeader: "<div class='payload-select-header'>Available Payloads</div>",
-            selectionHeader: "<div class='payload-select-header'>Selected Payloads</div>",
-            keepOrder: true });
-    }
-
-    function addAdditionalInfo(){
-        let $table_row = $('#additional-info-row-template-holder').find('#additional-info-template').clone();
-        $('#ability-additional-info').find('#additional-info-table').append($table_row);
-        $('#ability-additional-info').show();
-        $table_row.find('.ability-remove').click(function(){
-            if ($('#additional-info-table tr').length == 1){
-                $('#ability-additional-info').hide();
-            }
-            $(this).parent().parent().remove();
-            checkAbilityButtons();
-        });
-        return $table_row;
-    }
-
-    function showPhaseModal(phase) {
-        $('#phase-modal').data("phase", phase);
-        $('#ability-identifier').text(uuidv4());
-        $('body').keyup(function(e){
-            if(e.key == "Escape"){
-                hidePhaseModal();
-            }
-        });
-        document.getElementById("phase-modal").style.display="block";
-    }
-
-    function hidePhaseModal() {
-        $('#phase-modal').hide();
-        $('#ability-search-filter').val('');
-    }
-
-    function clearPhaseModal() {
-        $('#ability-tactic-filter option:first').prop('selected', true);
-        $('#ability-technique-filter').empty().append('<option disabled="disabled" selected>Choose a technique</option>');
-        $('#ability-ability-filter').empty().append('<option disabled="disabled" selected>0 abilities</option>');
-        $('#ability-identifier').val('');
-        $('#ability-name').val('');
-        $('#ability-description').val('');
-        $('#ability-tactic-name').val('');
-        $('#ability-tech-id').val('');
-        $('#ability-tech-name').val('');
-        $('#ttp-tests').empty();
-    }
-
-    function showProfileModal(phase) {
-        $('#adv-profile-modal').data("phase", phase);
-        $('body').keyup(function(e){
-            if(e.key == "Escape"){
-                hideProfileModal();
-            }
-        });
-        document.getElementById("adv-profile-modal").style.display="block";
-    }
-
-    function showObjectiveModal() {
-        $('body').keyup(function(e){
-            if(e.key == "Escape"){
-                hideObjectiveModal();
-            }
-        });
-        document.getElementById("adv-objective-modal").style.display="block";
-    }
-
-    function hideProfileModal() {
-        $("body").off("keyup");
-        document.getElementById("adv-profile-modal").style.display="none";
-    }
-
-    function hideObjectiveModal(){
-        $("body").off("keyup");
-        document.getElementById("adv-objective-modal").style.display="none";
-    }
-
-    function freshId(){
-        $('#ability-identifier').val(uuidv4());
-        checkAbilityButtons();
-    }
-
-    function uploadPayload() {
-        let file = document.getElementById('uploadPayloadFile').files[0];
-        let fd = new FormData();
-        fd.append('file', file);
-        $.ajax({
-             type: 'POST',
-             url: '/file/upload',
-             beforeSend: function(xhr){xhr.setRequestHeader('Directory', 'data/payloads/');},
-             data: fd,
-             processData: false,
-             contentType: false
-        }).done(function (){
-            let exists = $("#ability-payload option").filter(function (i, o) { return o.value === file.name; }).length > 0;
-            if(!exists) {
-                $('.ability-payload').each(function(i, obj) {
-                    $(this).append(new Option(file.name, file.name));
+                apiV2('GET', `/api/v2/adversaries/${this.selectedAddAdversary}`).then((adversary) => {
+                    this.abilitiesAddAdversary = adversary.atomic_ordering.map((ability_id) => ({
+                        ...this.abilities.find((ability) => ability.ability_id === ability_id),
+                        selected: true
+                    }));
+                }).catch((error) => {
+                    toast('Error loading adversary profile', false);
+                    console.error(error);
                 });
-            }
-        })
+            },
+
+            addAbilitiesFromAdversary() {
+                const selectedAbilities = this.abilitiesAddAdversary.filter((a) => a.selected);
+                this.selectedProfileAbilities = this.selectedProfileAbilities.concat(selectedAbilities);
+                this.showAddAdversaryModal = false;
+                this.selectedAddAdversary = '';
+                this.abilitiesAddAdversary = [];
+                this.unsavedChanges = true;
+            },
+
+            addExecutorToAbility(bOrA) {
+                const template = {
+                    payloads: [],
+                    platform: 'linux'
+                };
+
+                if (bOrA === 'after') {
+                    this.selectedAbility.executors.push(template);
+                } else if (bOrA === 'before') {
+                    this.selectedAbility.executors.unshift(template);
+                }
+            },
+
+            searchForAbility() {
+                this.abilitySearchResults = [];
+                if (!this.abilitySearchQuery) return;
+                this.abilities.forEach((ability) => {
+                    if (ability.name.toLowerCase().indexOf(this.abilitySearchQuery.toLowerCase()) > -1) {
+                        this.abilitySearchResults.push({
+                            ability_id: ability.ability_id,
+                            name: ability.name
+                        });
+                    }
+                });
+            },
+
+            selectAbility(id) {
+                this.abilitySearchQuery = [];
+                this.abilitySearchResults = [];
+                this.selectedAbility = this.abilities.find((ability) => ability.ability_id === id);
+                this.selectedTactic = this.selectedAbility.tactic;
+                this.selectedTechnique = this.selectedAbility.technique_id;
+                this.selectedAbilityId = id;
+                this.showAbilityModal = true;
+            },
+
+            getPlatforms(platform) {
+                let plats = Object.keys(this.platforms);
+                let index = plats.indexOf(platform);
+                if (index !== 0) {
+                    plats[index] = plats[0];
+                    plats[0] = platform;
+                }
+                return plats;
+            },
+
+            getExecutors(platform, executor) {
+                let execs = this.platforms[platform];
+                let index = execs.indexOf(executor);
+                if (index !== 0) {
+                    execs[index] = execs[0];
+                    execs[0] = executor;
+                }
+                return execs;
+            },
+
+            saveAbility(addToAdversary) {
+                this.fieldErrorsAbility = validateInputs(this.selectedAbility, this.requiredFieldsAbility);
+                if (this.fieldErrorsAbility.length) return;
+
+                apiV2('PATCH', `/api/v2/abilities/${this.selectedAbilityId}`, this.selectedAbility).then((response) => {
+                    toast('Saved ability!', true);
+
+                    // Replace ability in list with updated info
+                    const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbilityId);
+                    this.abilities[index] = response;
+
+                    if (addToAdversary) {
+                        this.selectedProfileAbilities.push(response);
+                        this.unsavedChanges = true;
+                        this.selectedAbilityId = '';
+                        this.showAbilityModal = false;
+                    }
+                }).catch((error) => {
+                    toast('Error saving ability', false);
+                    console.error(error);
+                });
+            },
+
+            removeAbility(index) {
+                this.selectedProfileAbilities.splice(index, 1);
+                this.unsavedChanges = true;
+            },
+
+            startAbilitySwap(event) {
+                this.abilityTableDragTarget = event.target.parentNode;
+            },
+
+            swapAbilitiesHover(event) {
+                const children = Array.from(event.target.parentNode.parentNode.children);
+
+                if (children.indexOf(event.target.parentNode) > children.indexOf(this.abilityTableDragTarget)) {
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                } else {
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                }
+            },
+
+            swapAbilities(event) {
+                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].innerHTML, 10) - 1;
+                const toIndex = this.abilityTableDragEndIndex - 1;
+                const temp = this.selectedProfileAbilities[fromIndex];
+                this.selectedProfileAbilities[fromIndex] = this.selectedProfileAbilities[toIndex];
+                this.selectedProfileAbilities[toIndex] = temp;
+
+                this.unsavedChanges = true;
+                this.abilityTableDragHoverId = undefined;
+                this.abilityTableDragEndIndex = undefined;
+            },
+
+        };
     }
-    $('#uploadPayloadFile').on('change', function (event){
-        if(event.currentTarget) {
-            let filename = event.currentTarget.files[0].name;
-            if(filename){
-                uploadPayload();
-            }
-        }
-    });
 
-    $('#objective-existing').on('change', function (){
-        handleObjectiveSelection($('#objective-existing').val());
-    });
-
-    function handleObjectiveSelection(id) {
-       restRequest('POST', {'index':'objectives', 'id': id}, requestObjectiveCallback);
-    }
-
-    function requestObjectiveCallback(data){
-        $('#objective-description')[0].value = data[0]['description'];
-    }
-
-    function linkObjective() {
-        $('#objective-select')[0].value = $('#objective-existing').val();
-        $('#objective-img')[0].style="";
-    }
-
-    function clearObjective() {
-        $('#objective-select')[0].value = '';
-        $('#objective-img')[0].style="display:none";
-    }
-
-    function deleteProfile(){
-        function deleteCallback(data){
-            $('#adversary-' + adversary_id).remove();
-            clearAdversaryContent();
-            checkAdversaryContent();
-            checkAdversaryButtons();
-            stream(data);
-        }
-        let adversary_id = $('#profile-existing-name').val();
-        if (confirm(`Are you sure you want to terminate this adversary?`)){
-            restRequest('DELETE', {"index": "adversaries", "adversary_id": adversary_id}, deleteCallback);
-        }
-    }
-
-    function addAdvToCurrentProfile() {
-        function loadAdvProfileCallback(data) {
-            data[0]['atomic_ordering'].forEach((ability) => {
-                let abilityBox = buildAbility(ability);
-                g_grid.add(abilityBox[0]);
-            });
-        }
-        restRequest('POST', {'index':'adversaries', 'adversary_id': $('#adv-profile-filter').val()}, loadAdvProfileCallback);
-        hideProfileModal();
-    }
-
-    //# sourceURL=profiles.js
-
-    function isEllipsisActive(e) {
-        return (e.offsetWidth < e.scrollWidth);
-    }
-
+    // # sourceURL=adversaries.js
 </script>
+
+<style scoped>
+    .ability-row > td {
+        cursor: pointer;
+    }
+
+    .ability-row > th {
+        border: 0 !important;
+    }
+
+    #select-adversary {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .code {
+        font-family: monospace;
+    }
+
+    .control-buttons>.button {
+        margin: 0 10px 10px 0;
+    }
+
+    .drag {
+        cursor: grab;
+    }
+
+    .lock {
+        background-color: blueviolet !important;
+    }
+
+    .pointer {
+        cursor: pointer;
+    }
+
+    .red-row {
+        border: 2px solid #8B0000;
+    }
+
+    .row-hover {
+        background-color: #484848 !important;
+    }
+
+    .search-results {
+        overflow-y: scroll;
+        max-height: 200px;
+        background-color: #010101;
+        border-radius: 0 4px;
+    }
+    .search-results p {
+        margin-bottom: 0 !important;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .search-results p:hover {
+        background-color: #484848;
+    }
+
+    .unlock {
+        background-color: coral !important;
+    }
+
+    .vr {
+        width: 1px;
+        height: 30px;
+        margin: 0 20px 0 10px;
+        background-color: grey;
+    }
+</style>

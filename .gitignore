@@ -32,6 +32,7 @@ data/objectives/*
 data/backup/*
 !data/backup/.gitkeep
 .tox/
+node_modules/
 
 # coverage reports
 htmlcov/
