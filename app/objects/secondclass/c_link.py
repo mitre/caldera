@@ -13,6 +13,7 @@ from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
+from app.utility.base_parser import PARSER_SIGNALS_FAILURE
 from app.utility.base_service import BaseService
 
 
@@ -190,13 +191,15 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
-                if relationships == 418:
-                    logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) during '
-                                                    f'execution, which was caught during parsing.')
+
+                if relationships[0] == PARSER_SIGNALS_FAILURE:
+                    logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) encountered '
+                                                    f'an error during execution, which was caught during parsing.')
                     self.status = self.states['ERROR']
+                    relationships = []  # we didn't actually get anything out of this, so let's reset
                 else:
-                    await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
                     await self._create_relationships(relationships, operation)
+                await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
                                                 % (parser.module, self.ability.ability_id, e))
