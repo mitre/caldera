@@ -74,7 +74,7 @@ class OperationApi(BaseObjectApi):
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
-        output = await self.read_output_parameter(request)
+        output = await self._read_output_parameter_(request)
         report = await self._api_manager.get_operation_report(operation_id, access, output)
         return web.json_response(report)
 
@@ -84,7 +84,7 @@ class OperationApi(BaseObjectApi):
     async def get_operation_event_logs(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
-        output = await self.read_output_parameter(request)
+        output = await self._read_output_parameter_(request)
         report = await self._api_manager.get_operation_event_logs(operation_id, access, output)
         return web.json_response(report)
 
@@ -157,15 +157,8 @@ class OperationApi(BaseObjectApi):
         potential_links = await self._api_manager.get_potential_links(operation_id, access, paw)
         return web.json_response(potential_links)
 
-    '''Helper Methods'''
-    async def read_output_parameter(self, request: web.Request):
-        raw_body = await request.read()
-        output = False
-        if raw_body:
-            output = json.loads(raw_body).get('enable_agent_output', False)
-        return output
-
     '''Overridden Methods'''
+
     async def create_object(self, request: web.Request):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
@@ -178,3 +171,12 @@ class OperationApi(BaseObjectApi):
         if not obj:
             raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
         return obj
+
+    ''' PRIVATE '''
+
+    async def _read_output_parameter_(self, request: web.Request):
+        raw_body = await request.read()
+        output = False
+        if raw_body:
+            output = json.loads(raw_body).get('enable_agent_output', False)
+        return output
