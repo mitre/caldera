@@ -13,6 +13,11 @@ class RelationshipSchema(ma.Schema):
     score = ma.fields.Integer()
     origin = ma.fields.String(allow_none=True)
 
+    @ma.pre_load
+    def remove_unique(self, data, **_):
+        data.pop('unique', None)
+        return data
+
     @ma.post_load
     def build_relationship(self, data, **_):
         return Relationship(**data)

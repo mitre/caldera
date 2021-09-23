@@ -13,6 +13,7 @@ from app.objects.c_source import Source, SourceSchema
 from app.objects.secondclass.c_executor import ExecutorSchema
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_link import Link
+from app.objects.secondclass.c_relationship import Relationship
 from app.utility.base_service import BaseService
 
 
@@ -48,6 +49,17 @@ def test_planner(loop):
 def test_source(loop):
     test_fact = Fact(trait='remote.host.fqdn', value='dc')
     test_source = Source(id='123', name='test', facts=[test_fact], adjustments=[])
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
+    return test_source
+
+
+@pytest.fixture
+def test_source_existing_relationships(loop):
+    test_fact_1 = Fact(trait='test_1', value='1')
+    test_fact_2 = Fact(trait='test_2', value='2')
+    test_relationship = Relationship(source=test_fact_1, edge='test_edge', target=test_fact_2)
+    test_source = Source(id='123', name='test', facts=[test_fact_1, test_fact_2], adjustments=[],
+                         relationships=[test_relationship])
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
     return test_source
 
@@ -226,6 +238,19 @@ class TestOperationsApi:
                        adversary={'adversary_id': '123'}, source={'id': '123'})
         resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
+
+    async def test_create_operation_existing_relationships(self, api_v2_client, api_cookies,
+                                                           test_source_existing_relationships):
+        payload = dict(name='op_existing_relationships', id='456', planner={'id': '123'},
+                       adversary={'adversary_id': '123'},
+                       source=SourceSchema().dump(test_source_existing_relationships))
+        resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
+        assert resp.status == HTTPStatus.OK
+        op_data = await resp.json()
+        assert op_data['name'] == payload['name']
+        assert op_data['start']
+        assert op_data['planner']['id'] == payload['planner']['id']
+        assert op_data['source']['id'] == payload['source']['id']
 
     async def test_create_finished_operation(self, api_v2_client, api_cookies, test_operation):
         payload = dict(name='post_test', id='111', planner={'id': '123'},
