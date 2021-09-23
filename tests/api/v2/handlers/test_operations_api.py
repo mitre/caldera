@@ -251,6 +251,7 @@ class TestOperationsApi:
         assert op_data['start']
         assert op_data['planner']['id'] == payload['planner']['id']
         assert op_data['source']['id'] == payload['source']['id']
+        assert len(op_data['source']['relationships']) == len(payload['source']['relationships'])
 
     async def test_create_finished_operation(self, api_v2_client, api_cookies, test_operation):
         payload = dict(name='post_test', id='111', planner={'id': '123'},
