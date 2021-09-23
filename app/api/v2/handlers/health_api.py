@@ -17,7 +17,6 @@ class HealthApi(BaseApi):
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/health', security.authentication_exempt(self.get_health_info))
-        router.add_get('/health-authenticated', self.get_health_info)
 
     @aiohttp_apispec.docs(tags=["health"])
     @aiohttp_apispec.response_schema(CalderaInfoSchema, 200)
