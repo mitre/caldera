@@ -47,6 +47,11 @@ function apiV2(requestType, endpoint, body = null) {
     });
 }
 
+const disabledPlugins = ['atomic', 'stockpile', 'emu'];
+function isPluginDisabled(pluginName) {
+    return disabledPlugins.includes(pluginName);
+}
+
 //
 // Parse timestamp into human-friendly date format
 // Modified from original code: https://stackoverflow.com/questions/7641791/javascript-library-for-human-friendly-relative-date-formatting

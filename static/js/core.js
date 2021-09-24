@@ -21,8 +21,6 @@ function alpineCore() {
             if (tabName === 'fieldmanual') {
                 restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
                 return;
-            } else if (tabName === 'stockpile' || tabName === 'atomic') {
-                return;
             }
 
             // If tab is already open, jump to it
@@ -55,7 +53,7 @@ function alpineCore() {
             if (this.activeTabIndex >= index) {
                 this.activeTabIndex -= 1;
             }
-            
+
             this.openTabs.splice(index, 1);
         },
 

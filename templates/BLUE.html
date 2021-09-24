@@ -41,13 +41,17 @@
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
                         <li>
-                            <a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item" x-bind:class="{ 'disabled': '{{ plugin.name }}' === 'atomic' || '{{ plugin.name }}' === 'stockpile' }">
+                            <a href="javascript:void(0)"
+                               x-on:click="() => {if (!isPluginDisabled('{{plugin.name}}')) addTab('{{ plugin.name }}', '{{ plugin.address }}')}"
+                               class="nav-item"
+                               x-bind:title="isPluginDisabled('{{plugin.name}}') ? 'This plugin is disabled.' : ''"
+                               x-bind:class="{ 'disabled': isPluginDisabled('{{plugin.name}}')}">
                                 {{ plugin.name }}
-                                    <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
-                                        <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
-                                    </template>
-                                </a>
-                            </li>
+                                <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
+                                    <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
+                                </template>
+                            </a>
+                        </li>
                         {% endfor %}
                     </ul>
                     <p class="menu-label"><i class="fas fa-cog pr-2"></i></i>Configuration</p>
