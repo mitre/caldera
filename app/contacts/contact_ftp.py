@@ -45,7 +45,8 @@ class Contact(BaseWorld):
         if sys.version_info >= (3, 7):
             t = asyncio.create_task(self.ftp_server_python_new())
         else:
-            t = asyncio.create_task(self.ftp_server_python_old())
+            loop = asyncio.get_event_loop()
+            t = loop.create_task(self.ftp_server_python_old())
         await t
 
     def set_up_server(self):
@@ -156,7 +157,8 @@ class FtpHandler(aioftp.Server):
 
         if await connection.path_io.is_dir(real_path.parent):
             coro = stor_worker(self, connection, rest)
-            task = asyncio.create_task(coro)
+            loop = asyncio.get_event_loop()
+            task = loop.create_task(coro)
             connection.extra_workers.add(task)
             code, info = '150', 'data transfer started'
         else:
