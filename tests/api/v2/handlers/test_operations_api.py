@@ -199,7 +199,7 @@ class TestOperationsApi:
                                                    test_operation):
         with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
             mock_all_facts.return_value = async_return([])
-            resp = await api_v2_client.get('/api/v2/operations/123/report', cookies=api_cookies)
+            resp = await api_v2_client.post('/api/v2/operations/123/report', cookies=api_cookies)
             report = await resp.json()
             assert report['name'] == test_operation['name']
             assert report['jitter'] == test_operation['jitter']
@@ -212,7 +212,7 @@ class TestOperationsApi:
         with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
             mock_all_facts.return_value = async_return([])
             payload = {'enable_agent_output': False}
-            resp = await api_v2_client.get('/api/v2/operations/123/report', cookies=api_cookies, json=payload)
+            resp = await api_v2_client.post('/api/v2/operations/123/report', cookies=api_cookies, json=payload)
             report = await resp.json()
             assert report['name'] == test_operation['name']
             assert report['jitter'] == test_operation['jitter']
@@ -229,7 +229,7 @@ class TestOperationsApi:
                 with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                     mock_readfile.return_value = ''
                     payload = {'enable_agent_output': True}
-                    resp = await api_v2_client.get('/api/v2/operations/123/report', cookies=api_cookies, json=payload)
+                    resp = await api_v2_client.post('/api/v2/operations/123/report', cookies=api_cookies, json=payload)
                     report = await resp.json()
                     assert report['name'] == test_operation['name']
                     assert report['jitter'] == test_operation['jitter']
@@ -238,16 +238,16 @@ class TestOperationsApi:
                     assert report['start']
 
     async def test_unauthorized_get_operation_report(self, api_v2_client):
-        resp = await api_v2_client.get('/api/v2/operations/123/report')
+        resp = await api_v2_client.post('/api/v2/operations/123/report')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_nonexistent_operation_get_operation_report(self, api_v2_client, api_cookies):
-        resp = await api_v2_client.get('/api/v2/operations/999/report', cookies=api_cookies)
+        resp = await api_v2_client.post('/api/v2/operations/999/report', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_get_operation_event_logs_no_payload(self, api_v2_client, api_cookies, mocker, async_return,
                                                        test_operation, finished_link, test_agent):
-        resp = await api_v2_client.get('/api/v2/operations/123/event-logs', cookies=api_cookies)
+        resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies)
         event_logs = await resp.json()
         assert event_logs[1]['command'] == finished_link['command']
         assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
@@ -258,7 +258,7 @@ class TestOperationsApi:
                                                                   async_return, test_operation, finished_link,
                                                                   test_agent):
         payload = {'enable_agent_output': False}
-        resp = await api_v2_client.get('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
+        resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
         event_logs = await resp.json()
         assert event_logs[1]['command'] == finished_link['command']
         assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
@@ -273,7 +273,7 @@ class TestOperationsApi:
             with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                 mock_readfile.return_value = ''
                 payload = {'enable_agent_output': True}
-                resp = await api_v2_client.get('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
+                resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
                 event_logs = await resp.json()
                 assert event_logs[1]['command'] == finished_link['command']
                 assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
@@ -282,11 +282,11 @@ class TestOperationsApi:
                 assert not event_logs[0].get('output')
 
     async def test_unauthorized_get_operation_event_logs(self, api_v2_client):
-        resp = await api_v2_client.get('/api/v2/operations/123/event-logs')
+        resp = await api_v2_client.post('/api/v2/operations/123/event-logs')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_nonexistent_operation_get_operation_event_logs(self, api_v2_client, api_cookies):
-        resp = await api_v2_client.get('/api/v2/operations/999/event-logs', cookies=api_cookies)
+        resp = await api_v2_client.post('/api/v2/operations/999/event-logs', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_create_operation(self, api_v2_client, api_cookies):
