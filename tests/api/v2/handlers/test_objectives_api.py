@@ -9,11 +9,11 @@ from app.utility.base_service import BaseService
 
 @pytest.fixture
 def new_objective_payload():
-    test_goal = Goal(target='new goal', value='inprogress')
+    test_goal = Goal(target='new goal', value='in_progress')
     return {
         'id': '456',
         'name': 'new test objective',
-        'description': 'test objective that is new',
+        'description': 'a new test objective',
         'goals': [test_goal.schema.dump(test_goal)]
     }
 
@@ -37,15 +37,16 @@ def updated_objective_payload(test_objective, test_goal):
 @pytest.fixture
 def replaced_objective_payload(test_objective):
     objective_data = test_objective.schema.dump(test_objective)
-    test_goal = Goal(target='replaced target', value='inprogress')
-    objective_data.update(dict(name='replaced test objective', description='a test objective that has been replaced',
+    test_goal = Goal(target='replaced target', value='in_progress')
+    objective_data.update(dict(name='replaced test objective',
+                               description='a test objective that has been replaced',
                                goals=[test_goal.schema.dump(test_goal)]))
     return objective_data
 
 
 @pytest.fixture
 def test_goal():
-    return Goal(target='test target', value='inprogress')
+    return Goal(target='test target', value='in_progress')
 
 
 @pytest.fixture
@@ -80,7 +81,7 @@ class TestObjectivesApi:
         resp = await api_v2_client.get('/api/v2/objectives/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_objective(self, api_v2_client, api_cookies, mocker, async_return, new_objective_payload,
+    async def test_create_objective(self, api_v2_client, api_cookies, new_objective_payload,
                                     expected_new_objective_dump):
         resp = await api_v2_client.post('/api/v2/objectives', cookies=api_cookies, json=new_objective_payload)
         assert resp.status == HTTPStatus.OK
@@ -93,7 +94,7 @@ class TestObjectivesApi:
         resp = await api_v2_client.post('/api/v2/objectives', json=new_objective_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_create_duplicate_objective(self, api_v2_client, api_cookies, mocker, async_return, test_objective):
+    async def test_create_duplicate_objective(self, api_v2_client, api_cookies, test_objective):
         payload = test_objective.schema.dump(test_objective)
         resp = await api_v2_client.post('/api/v2/objectives', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
