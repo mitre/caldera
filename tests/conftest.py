@@ -40,6 +40,7 @@ from app.api.v2.security import authentication_required_middleware_factory
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.handlers.operation_api import OperationApi
 from app.api.v2.handlers.contact_api import ContactApi
+from app.api.v2.handlers.objective_api import ObjectiveApi
 from app.api.rest_api import RestApi
 from app import version
 
@@ -271,6 +272,7 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         AbilityApi(svcs).add_routes(app)
         OperationApi(svcs).add_routes(app)
         ContactApi(svcs).add_routes(app)
+        ObjectiveApi(svcs).add_routes(app)
         return app
 
     async def initialize():
