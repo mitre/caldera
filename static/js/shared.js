@@ -47,7 +47,7 @@ function apiV2(requestType, endpoint, body = null) {
     });
 }
 
-const disabledPlugins = ['atomic', 'stockpile', 'emu'];
+const disabledPlugins = ['atomic', 'stockpile', 'emu', 'response'];
 function isPluginDisabled(pluginName) {
     return disabledPlugins.includes(pluginName);
 }
