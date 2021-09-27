@@ -22,10 +22,15 @@ class OperationApiManager(BaseApiManager):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
 
-    async def get_operation_report(self, operation_id: str, access: dict):
+    async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
-        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
+        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
         return report
+
+    async def get_operation_event_logs(self, operation_id: str, access: dict, output: bool):
+        operation = await self.get_operation_object(operation_id, access)
+        event_logs = await operation.event_logs(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
+        return event_logs
 
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
