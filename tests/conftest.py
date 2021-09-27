@@ -13,6 +13,10 @@ from aiohttp import web
 from pathlib import Path
 
 from app.api.v2.handlers.ability_api import AbilityApi
+from app.api.v2.handlers.adversary_api import AdversaryApi
+from app.api.v2.handlers.operation_api import OperationApi
+from app.api.v2.handlers.contact_api import ContactApi
+from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
 from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
@@ -38,9 +42,6 @@ from app.objects.secondclass.c_rule import Rule
 from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
 from app.api.v2.responses import apispec_request_validation_middleware
-from app.api.v2.handlers.adversary_api import AdversaryApi
-from app.api.v2.handlers.operation_api import OperationApi
-from app.api.v2.handlers.contact_api import ContactApi
 from app.api.rest_api import RestApi
 from app import version
 
@@ -273,6 +274,7 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         OperationApi(svcs).add_routes(app)
         AdversaryApi(svcs).add_routes(app)
         ContactApi(svcs).add_routes(app)
+        ObfuscatorApi(svcs).add_routes(app)
         return app
 
     async def initialize():
