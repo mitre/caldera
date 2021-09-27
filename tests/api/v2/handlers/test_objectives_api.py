@@ -87,8 +87,8 @@ class TestObjectivesApi:
         assert resp.status == HTTPStatus.OK
         objective_data = await resp.json()
         assert objective_data == expected_new_objective_dump
-        objective_exists = await BaseService.get_service('data_svc').locate('objectives', {'id': '456'})
-        assert objective_exists
+        stored_objective = (await BaseService.get_service('data_svc').locate('objectives', {'id': '456'}))[0]
+        assert stored_objective.schema.dump(stored_objective) == expected_new_objective_dump
 
     async def test_unauthorized_create_objective(self, api_v2_client, new_objective_payload):
         resp = await api_v2_client.post('/api/v2/objectives', json=new_objective_payload)
@@ -99,11 +99,17 @@ class TestObjectivesApi:
         resp = await api_v2_client.post('/api/v2/objectives', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
-    async def test_update_objective(self, api_v2_client, api_cookies, test_objective, updated_objective_payload):
-        resp = await api_v2_client.patch('/api/v2/objectives/123', cookies=api_cookies, json=updated_objective_payload)
-        assert resp.status == HTTPStatus.OK
-        objective = (await BaseService.get_service('data_svc').locate('objectives', {'id': '123'}))[0]
-        assert objective.schema.dump(objective) == updated_objective_payload
+    async def test_update_objective(self, api_v2_client, api_cookies, test_objective, updated_objective_payload,
+                                    mocker):
+        with mocker.patch('app.api.v2.managers.base_api_manager.BaseApiManager.strip_yml') as mock_strip_yml:
+            mock_strip_yml.return_value = [test_objective.schema.dump(test_objective)]
+            resp = await api_v2_client.patch('/api/v2/objectives/123', cookies=api_cookies,
+                                             json=updated_objective_payload)
+            assert resp.status == HTTPStatus.OK
+            objective = await resp.json()
+            assert objective == updated_objective_payload
+            stored_objective = (await BaseService.get_service('data_svc').locate('objectives', {'id': '123'}))[0]
+            assert stored_objective.schema.dump(stored_objective) == updated_objective_payload
 
     async def test_unauthorized_update_objective(self, api_v2_client, test_objective, updated_objective_payload):
         resp = await api_v2_client.patch('/api/v2/objectives/123', json=updated_objective_payload)
@@ -118,6 +124,8 @@ class TestObjectivesApi:
         assert resp.status == HTTPStatus.OK
         objective = await resp.json()
         assert objective == replaced_objective_payload
+        stored_objective = (await BaseService.get_service('data_svc').locate('objectives', {'id': '123'}))[0]
+        assert stored_objective.schema.dump(stored_objective) == replaced_objective_payload
 
     async def test_unauthorized_replace_objective(self, api_v2_client, test_objective, replaced_objective_payload):
         resp = await api_v2_client.put('/api/v2/objectives/123', json=replaced_objective_payload)
@@ -129,3 +137,5 @@ class TestObjectivesApi:
         assert resp.status == HTTPStatus.OK
         objective = await resp.json()
         assert objective == expected_new_objective_dump
+        stored_objective = (await BaseService.get_service('data_svc').locate('objectives', {'id': '456'}))[0]
+        assert stored_objective.schema.dump(stored_objective) == expected_new_objective_dump
