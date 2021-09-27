@@ -551,6 +551,9 @@
                 this.agentFields = [];
                 this.filteredCommands.forEach((command) => {
                     fields = fields.concat([...command.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]));
+                    command.variations.forEach((variation) => {
+                        fields = fields.concat([...variation.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]));
+                    })
                 });
                 fields = [...new Set(fields)];
                 fields.forEach((field) => {
