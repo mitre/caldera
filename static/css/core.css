@@ -100,7 +100,7 @@ main.main {
   justify-content: center;
 }
 
-.nav-logo img{
+.nav-logo img {
   max-height: 150px;
   cursor: pointer;
 }
@@ -109,12 +109,18 @@ main.main {
   background-color: #060606;
 }
 
+.nav-header {
+  cursor: default;
+}
+
 .nav-item.disabled {
   color: #a0a0a0;
 }
 .nav-item:hover.disabled {
   background-color: transparent;
   color: #a0a0a0;
+  cursor: default;
+  margin: 0;
 }
 
 #no-open-tabs {
@@ -161,4 +167,8 @@ main.main {
 .toast {
   padding: 10px 10px !important;
   border-radius: 4px !important;
+}
+
+.user-badge {
+  cursor: default !important;
 }
