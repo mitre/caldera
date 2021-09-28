@@ -357,12 +357,13 @@
                                             <td>
                                                 <label x-show="false" for="manual-agent">Choose an agent:</label>
                                                 <div class="select is-small my-2 ml-3">
-                                                    <select id="manual-agent" x-model="selectedAgentIndex" required>
+                                                    <select id="manual-agent" x-model="selectedAgentIndex" x-on:change="getAgent(selectedAgent.paw)" required>
                                                         <option value="" disabled>Choose agent</option>
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option x-bind:selected="index === 0"
                                                                     :value="index"
+                                                                    x-init="getAgent(agent.paw)"
                                                                     x-text="agent.display_name + '-' + agent.paw"></option>
                                                         </template>
                                                     </select>
