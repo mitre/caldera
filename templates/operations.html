@@ -1322,7 +1322,7 @@
 
 
             downloadInfo(formatType) {
-                apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/report`)
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, {enable_agent_output: this.isAgentOutputSelected})
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
