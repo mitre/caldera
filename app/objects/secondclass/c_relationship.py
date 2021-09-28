@@ -19,12 +19,12 @@ class RelationshipSchema(ma.Schema):
         return data
 
     @ma.post_load
-    def build_relationship(self, data, **_):
-        return Relationship(**data)
+    def build_relationship(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Relationship(**data)
 
 
 class RelationshipUpdateSchema(ma.Schema):
-    criteria = ma.fields.Nested(RelationshipSchema, required=True)
+    criteria = ma.fields.Nested(RelationshipSchema(partial=True), required=True)
     updates = ma.fields.Nested(RelationshipSchema(partial=True), required=True)
 
 

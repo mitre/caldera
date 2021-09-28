@@ -30,34 +30,38 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
-    @aiohttp_apispec.request_schema(FactSchema)
+    @aiohttp_apispec.request_schema(FactSchema(partial=True))
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
-        try:
-            store = await knowledge_svc_handle.get_facts(criteria=fact_data)
-            resp = await self._api_manager.verify_fact_integrity(store)
-            return web.json_response(dict(found=resp))
-        except Exception as e:
-            error_msg = f'Encountered issue retrieving fact {fact_data} - {e}'
-            self.log.warning(error_msg)
-            raise JsonHttpBadRequest(error_msg)
+        resp = []
+        if fact_data:
+            try:
+                store = await knowledge_svc_handle.get_facts(criteria=fact_data)
+                resp = await self._api_manager.verify_fact_integrity(store)
+            except Exception as e:
+                error_msg = f'Encountered issue retrieving fact {fact_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
-    @aiohttp_apispec.request_schema(RelationshipSchema)
+    @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def get_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
-        try:
-            store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
-            resp = await self._api_manager.verify_relationship_integrity(store)
-            return web.json_response(dict(found=resp))
-        except Exception as e:
-            error_msg = f'Encountered issue retrieving relationship {relationship_data} - {e}'
-            self.log.warning(error_msg)
-            raise JsonHttpBadRequest(error_msg)
+        resp = []
+        if relationship_data:
+            try:
+                store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
+                resp = await self._api_manager.verify_relationship_integrity(store)
+            except Exception as e:
+                error_msg = f'Encountered issue retrieving relationship {relationship_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.request_schema(FactSchema)
@@ -121,6 +125,7 @@ class FactApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['facts'])
     @aiohttp_apispec.response_schema(FactSchema)
+    @aiohttp_apispec.request_schema(FactSchema(partial=True))
     async def delete_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -136,6 +141,7 @@ class FactApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['relationships'])
     @aiohttp_apispec.response_schema(RelationshipSchema)
+    @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def delete_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
@@ -150,50 +156,54 @@ class FactApi(BaseObjectApi):
         raise JsonHttpBadRequest('Invalid relationship data was provided.')
 
     @aiohttp_apispec.docs(tags=['facts'])
-    @aiohttp_apispec.request_schema(FactUpdateRequestSchema)
+    @aiohttp_apispec.request_schema(FactUpdateRequestSchema(partial=True))
     @aiohttp_apispec.response_schema(FactSchema)
     async def update_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
-        try:
-            await knowledge_svc_handle.update_fact(criteria=fact_data['criteria'],
-                                                   updates=fact_data['updates'])
-            temp = await self._api_manager.copy_object(fact_data['criteria'])
-            for k in fact_data['updates']:
-                temp[k] = fact_data['updates'][k]
-            store = await knowledge_svc_handle.get_facts(criteria=temp)
-            resp = await self._api_manager.verify_fact_integrity(store)
-            return web.json_response(dict(updated=resp))
-        except Exception as e:
-            error_msg = f'Encountered issue updating fact {fact_data} - {e}'
-            self.log.warning(error_msg)
-            raise JsonHttpBadRequest(error_msg)
+        if 'criteria' in fact_data and 'updates' in fact_data:
+            try:
+                await knowledge_svc_handle.update_fact(criteria=fact_data['criteria'],
+                                                       updates=fact_data['updates'])
+                temp = await self._api_manager.copy_object(fact_data['criteria'])
+                for k in fact_data['updates']:
+                    temp[k] = fact_data['updates'][k]
+                store = await knowledge_svc_handle.get_facts(criteria=temp)
+                resp = await self._api_manager.verify_fact_integrity(store)
+                return web.json_response(dict(updated=resp))
+            except Exception as e:
+                error_msg = f'Encountered issue updating fact {fact_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        raise JsonHttpBadRequest("Need a 'criteria' to match on and 'updates' to apply.")
 
     @aiohttp_apispec.docs(tags=['relationships'])
-    @aiohttp_apispec.request_schema(RelationshipUpdateSchema)
+    @aiohttp_apispec.request_schema(RelationshipUpdateSchema(partial=True))
     @aiohttp_apispec.response_schema(RelationshipSchema)
     async def update_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
-        try:
-            await knowledge_svc_handle.update_relationship(criteria=relationship_data['criteria'],
-                                                           updates=relationship_data['updates'])
-            temp = await self._api_manager.copy_object(relationship_data['criteria'])
-            for k in relationship_data['updates']:
-                if isinstance(relationship_data['updates'][k], dict):
-                    handle = dict()
-                    if k in relationship_data['criteria'] and \
-                            isinstance(relationship_data['criteria'][k], dict):
-                        handle = relationship_data['criteria'][k]
-                    for j in relationship_data['updates'][k]:
-                        handle[j] = relationship_data['updates'][k][j]
-                    temp[k] = handle
-                else:
-                    temp[k] = relationship_data['updates'][k]
-            store = await knowledge_svc_handle.get_relationships(criteria=temp)
-            resp = await self._api_manager.verify_relationship_integrity(store)
-            return web.json_response(dict(updated=resp))
-        except Exception as e:
-            error_msg = f'Encountered issue updating relationship {relationship_data} - {e}'
-            self.log.warning(error_msg)
-            raise JsonHttpBadRequest(error_msg)
+        if 'criteria' in relationship_data and 'updates' in relationship_data:
+            try:
+                await knowledge_svc_handle.update_relationship(criteria=relationship_data['criteria'],
+                                                               updates=relationship_data['updates'])
+                temp = await self._api_manager.copy_object(relationship_data['criteria'])
+                for k in relationship_data['updates']:
+                    if isinstance(relationship_data['updates'][k], dict):
+                        handle = dict()
+                        if k in relationship_data['criteria'] and \
+                                isinstance(relationship_data['criteria'][k], dict):
+                            handle = relationship_data['criteria'][k]
+                        for j in relationship_data['updates'][k]:
+                            handle[j] = relationship_data['updates'][k][j]
+                        temp[k] = handle
+                    else:
+                        temp[k] = relationship_data['updates'][k]
+                store = await knowledge_svc_handle.get_relationships(criteria=temp)
+                resp = await self._api_manager.verify_relationship_integrity(store)
+                return web.json_response(dict(updated=resp))
+            except Exception as e:
+                error_msg = f'Encountered issue updating relationship {relationship_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        raise JsonHttpBadRequest("Need a 'criteria' to match on and 'updates' to apply.")
