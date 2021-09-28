@@ -18,8 +18,8 @@ class FactApi(BaseObjectApi):
 
     def add_routes(self, app: web.Application):
         router = app.router
-        router.add_get('/facts', self.get_facts)
-        router.add_get('/relationships', self.get_relationships)
+        router.add_post('/fetch-facts', self.get_facts)
+        router.add_post('/fetch-relationships', self.get_relationships)
         router.add_post('/facts', self.add_facts)
         router.add_post('/relationships', self.add_relationships)
         router.add_delete('/facts', self.delete_facts)
