@@ -23,6 +23,11 @@ class RelationshipSchema(ma.Schema):
         return Relationship(**data)
 
 
+class RelationshipUpdateSchema(ma.Schema):
+    criteria = ma.fields.Nested(RelationshipSchema, required=True)
+    updates = ma.fields.Nested(RelationshipSchema(partial=True), required=True)
+
+
 class Relationship(BaseObject):
 
     schema = RelationshipSchema()

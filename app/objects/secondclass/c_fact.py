@@ -59,6 +59,11 @@ class FactSchema(ma.Schema):
         return Fact(**data)
 
 
+class FactUpdateRequestSchema(ma.Schema):
+    criteria = ma.fields.Nested(FactSchema, required=True)
+    updates = ma.fields.Nested(FactSchema(partial=True), required=True)
+
+
 class Fact(BaseObject):
 
     schema = FactSchema()
