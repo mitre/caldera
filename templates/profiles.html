@@ -134,7 +134,7 @@
             <div x-show="!selectedProfileAbilities.length" class="container has-text-centered">
                 <p>This profile has no abilities.</p>
             </div>
-            <div class="icon-text" x-show="!hasMetAbilityDependencies()">
+            <div class="icon-text" x-show="needsParser.length">
                 <span class="icon has-text-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                 </span>
