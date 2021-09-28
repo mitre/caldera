@@ -51,7 +51,7 @@ These plugins are ready to use but are not included by default:
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.6.1+ (with Pip3)
+* Python 3.7+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 
 ## Installation

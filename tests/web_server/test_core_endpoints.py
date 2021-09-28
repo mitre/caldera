@@ -137,7 +137,7 @@ async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
                                                           python=dict(attr='version',
                                                                       module='sys',
                                                                       type='python_module',
-                                                                      version='3.6.1'))))
+                                                                      version='3.7.0'))))
 
     assert resp.status == HTTPStatus.OK
     config_dict = await resp.json()
