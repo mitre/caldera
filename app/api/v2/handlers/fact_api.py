@@ -20,8 +20,8 @@ class FactApi(BaseObjectApi):
         router = app.router
         router.add_post('/fetch-facts', self.get_facts)
         router.add_post('/fetch-relationships', self.get_relationships)
-        router.add_post('/create-facts', self.add_facts)
-        router.add_post('/create-relationships', self.add_relationships)
+        router.add_post('/facts', self.add_facts)
+        router.add_post('/relationships', self.add_relationships)
         router.add_delete('/facts', self.delete_facts)
         router.add_delete('/relationships', self.delete_relationships)
         router.add_patch('/facts', self.update_facts)

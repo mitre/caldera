@@ -62,7 +62,7 @@ async def test_display_facts(knowledge_webapp, aiohttp_client):
         'trait': 'demo',
         'value': 'test'
     }
-    await client.post('/create-facts', json=fact_data, headers=headers)
+    await client.post('/facts', json=fact_data, headers=headers)
     resp = await client.post('/fetch-facts', json=fact_data, headers=headers)
     data = await resp.json()
     response = data['found']
@@ -90,7 +90,7 @@ async def test_display_relationships(knowledge_webapp, aiohttp_client):
         'target': fact_data_b,
         'origin': op_id_test
     }
-    await client.post('/create-relationships', json=relationship_data, headers=headers)
+    await client.post('/relationships', json=relationship_data, headers=headers)
     resp = await client.post('/fetch-relationships', json=relationship_data, headers=headers)
     data = await resp.json()
     response = data['found']
@@ -109,7 +109,7 @@ async def test_remove_fact(knowledge_webapp, aiohttp_client):
         'trait': 'demo',
         'value': 'test'
     }
-    init = await client.post('/create-facts', json=fact_data, headers=headers)
+    init = await client.post('/facts', json=fact_data, headers=headers)
     pre = await init.json()
     subs = await client.delete('/facts', json=fact_data, headers=headers)
     post = await subs.json()
@@ -141,7 +141,7 @@ async def test_remove_relationship(knowledge_webapp, aiohttp_client):
         'target': fact_data_b,
         'origin': op_id_test
     }
-    init = await client.post('/create-relationships', json=relationship_data, headers=headers)
+    init = await client.post('/relationships', json=relationship_data, headers=headers)
     pre = await init.json()
     subs = await client.delete('/relationships', json=dict(edge='alpha'), headers=headers)
     post = await subs.json()
@@ -163,7 +163,7 @@ async def test_add_fact(knowledge_webapp, aiohttp_client):
         'trait': 'demo',
         'value': 'test'
     }
-    resp = await client.post('/create-facts', json=fact_data, headers=headers)
+    resp = await client.post('/facts', json=fact_data, headers=headers)
     data = await resp.json()
     response = data['added']
     assert len(response) == 1
@@ -193,7 +193,7 @@ async def test_add_relationship(knowledge_webapp, aiohttp_client):
     }
     expected_response = f"{fact_data_a['trait']}({fact_data_a['value']}) : " \
                         f"tango : {fact_data_b['trait']}({fact_data_b['value']})"
-    resp = await client.post('/create-relationships', json=relationship_data, headers=headers)
+    resp = await client.post('/relationships', json=relationship_data, headers=headers)
     data = await resp.json()
     response = data['added']
     assert len(response) == 1
@@ -223,7 +223,7 @@ async def test_patch_fact(knowledge_webapp, aiohttp_client):
             "value": "jacobson"
         }
     }
-    await client.post('/create-facts', json=fact_data, headers=headers)
+    await client.post('/facts', json=fact_data, headers=headers)
     resp = await client.patch('/facts', json=patch_data, headers=headers)
     message = await resp.json()
     patched = message['updated']
@@ -264,7 +264,7 @@ async def test_patch_relationship(knowledge_webapp, aiohttp_client):
             "edge": "has_admin_password"
         }
     }
-    await client.post('/create-relationships', json=relationship_data, headers=headers)
+    await client.post('/relationships', json=relationship_data, headers=headers)
     resp = await client.patch('/relationships', json=patch_data, headers=headers)
     message = await resp.json()
     patched = message['updated']
