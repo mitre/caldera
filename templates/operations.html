@@ -198,7 +198,7 @@
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-row is-justify-content-space-between">
                                 <div x-show="selectedOperation.chain.length > 0" class="has-text-grey-light is-size-7">
-                                    <em>Last ran <span class="has-text-grey-light" x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' at ' + getHumanFriendlyTime(selectedOperation.chain[selectedOperation.chain.length-1]?.decide)"></span></em>
+                                    <em>Last ran <span class="has-text-grey-light" x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTime(selectedOperation.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
                                 </div>
                                 <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                                     <div class="mb-6 mr-4 text-align-right">
@@ -711,7 +711,7 @@
                                                 <div class="select is-small my-2 ml-3">
                                                     <select id="link-agent"
                                                             x-model="selectedAgentIndex"
-                                                            x-on:change="potentialLink.agent = selectedAgent">
+                                                            x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
                                                         <template x-for="(agent, index) in selectedOperation.host_group"
                                                                   :key="agent.paw">
                                                             <option :value="index"
@@ -745,7 +745,7 @@
                                                     <select id="link-tactic"
                                                             x-model="potentialLink.tactic"
                                                             x-on:change="filterAbilities(abilities)">
-                                                        <option value="" default value="">Choose a tactic...</option>
+                                                        <option value="" default value="">All tactics</option>
                                                         <template x-for="tactic in tacticFiltersList"
                                                                   :key="tactic">
                                                             <option x-text="tactic"></option>
@@ -761,7 +761,7 @@
                                                     <select id="link-technique"
                                                             x-model="potentialLink.technique"
                                                             x-on:change="filterAbilities(abilities)">
-                                                        <option value="" default>Choose a technique...</option>
+                                                        <option value="" default>All techniques</option>
                                                         <template x-for="technique in techniqueFiltersList"
                                                                   :key="technique">
                                                             <option x-text="technique"></option>
@@ -1159,6 +1159,20 @@
                     });
             },
 
+            getAgent(agentPaw) {
+                apiV2('GET', `api/v2/agents/${agentPaw}`)
+                    .then((res) => {
+                        this.potentialLink.agent = res;
+                        // Check if agent has been seen in the last hour
+                        if ((new Date() - new Date(res.last_seen)) > 3600000) {
+                            toast(`Command might not run. Is Agent #${res.paw} still alive?`);
+                        }
+                    })
+                    .catch(() => {
+                        toast('Error getting agent.');
+                    });
+            },
+
             getAgents() {
                 apiV2('GET', 'api/v2/agents')
                     .then((res) => {
@@ -1173,10 +1187,11 @@
             getAbilities() {
                 apiV2('GET', '/api/v2/abilities').then((abilities) => {
                     this.abilities = abilities;
-                    if (this.selectedOperation.host_group && this.selectedOperation.host_group.length > 0) {
+                    if (!this.potentialLink.agent && this.selectedOperation.host_group && this.selectedOperation.host_group.length > 0) {
                         this.potentialLink.agent = this.selectedOperation.host_group[0];
                         this.potentialLink.executor = this.potentialLink.agent.executors[0];
                     }
+                    this.getAgent(this.potentialLink.agent.paw);
                     this.filterAbilities(abilities);
                     this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
                     this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
