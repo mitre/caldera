@@ -223,7 +223,7 @@
                                 <thead>
                                 <tr class="table-header">
                                     <th class="decideColumn">Decide</th>
-                                    <th title="Link Status Indicator" class="csv-exclude">Status</th>
+                                    <th class="statusColumn" title="Link Status Indicator" class="csv-exclude">Status</th>
                                     <th class="infoColumn">Link/Ability Name</th>
                                     <th>Agent #paw</th>
                                     <th>Host</th>
@@ -1659,6 +1659,10 @@
 
     #operationsPage .timeline-table table th.header {
         border-bottom: none;
+    }
+
+    #operationsPage .timeline-table th:not(.decideColumn), th:not(.statusColumn) {
+        text-align: left;
     }
 
     #operationsPage .timeline-table .decideColumn {
