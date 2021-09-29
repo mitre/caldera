@@ -197,8 +197,8 @@
                         <div class="navbar-divider mb-5 width-100"></div>
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-row is-justify-content-space-between">
-                                <div x-show="selectedOperation.chain.length > 0" class="has-text-grey-light is-size-7">
-                                    <em>Last ran <span class="has-text-grey-light" x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTime(selectedOperation.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
+                                <div class="has-text-grey-light is-size-7">
+                                    <em x-show="selectedOperation.chain.length > 0">Last ran <span class="has-text-grey-light" x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTime(selectedOperation.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
                                 </div>
                                 <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                                     <div class="mb-6 mr-4 text-align-right">
@@ -1230,10 +1230,11 @@
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
                 }
+                const executor = link.executors.find((e) => e.platform === this.potentialLink.agent.platform || this.potentialLink.executor === e.name);
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
                     ...link,
                     paw: this.potentialLink.agent.paw,
-                    executor: link.executors.find((e) => e.platform === this.potentialLink.agent.platform && this.potentialLink.executor === e.name)
+                    executor: executor
                 })
                     .then(() => {
                         toast('Added potential link.', true);
