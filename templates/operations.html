@@ -241,7 +241,7 @@
                                 <template x-if="selectedOperation.chain.length === 0">
                                     <tbody>
                                     <tr class="csv-exclude">
-                                        <td colspan="9"><em>No links––click the buttons on the right to add
+                                        <td colspan="9" class="has-text-centered"><em>No links––click the buttons on the right to add
                                             commands/links.</em>
                                         </td>
                                     </tr>
@@ -347,7 +347,7 @@
                                     <tbody>
                                     <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
                                         <template x-if="selectedOperation.host_group.length < 1">
-                                            <td colspan="9" class="text-align-right"><em>No agents running. Add an agent
+                                            <td colspan="9" class="has-text-right"><em>No agents running. Add an agent
                                                 to run an operation.</em></td>
                                         </template>
                                     </tr>
@@ -421,7 +421,7 @@
                         <!--                                ADD COMMAND/LINK BUTTONS-->
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
-                                <div class="mb-6 mr-4 text-align-right">
+                                <div class="mb-6 mr-4 has-text-right">
                                     <button title="add manual command" class="button is-primary is-small"
                                             x-on:click="addNewRow = true; getAgents()">
                                         <i class="pr-1 fas fa-plus"></i>Manual
@@ -1444,10 +1444,6 @@
         word-wrap: break-word;
     }
 
-    #operationsPage .text-align-right {
-        text-align: right !important;
-    }
-
     #operationsPage .ellipsis-divider {
         text-align: center;
         font-size: 0.3em;
@@ -1632,6 +1628,8 @@
     #operationsPage .operations-dashboard {
         width: 100%;
         justify-content: space-between;
+        overflow-y: scroll;
+        margin-bottom: 1em;
     }
 
     #operationsPage .hover-opacity {
