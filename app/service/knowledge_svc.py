@@ -75,23 +75,10 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return await self.__loaded_knowledge_module._delete_rule(criteria)
 
     async def save_state(self):
-        """
-        Save Internal Datastore state to disk
-        """
         return await self.__loaded_knowledge_module._save_state()
 
     async def restore_state(self):
-        """
-        Restore Internal Datastore state from disk
-        """
         return await self.__loaded_knowledge_module._restore_state()
 
     async def destroy(self):
-        """
-        Reset the caldera data directory and server state.
-
-        This creates a gzipped tarball backup of the data files tracked by caldera.
-        Paths are preserved within the tarball, with all files having "data/" as the
-        root.
-        """
         return self.__loaded_knowledge_module._destroy()
