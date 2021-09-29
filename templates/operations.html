@@ -226,7 +226,7 @@
                                 <thead>
                                 <tr class="table-header">
                                     <th class="decideColumn">Decide</th>
-                                    <th class="statusColumn" title="Link Status Indicator" class="csv-exclude">Status
+                                    <th id="link-status-header" class="statusColumn" title="Link Status Indicator" class="csv-exclude">Status
                                     </th>
                                     <th class="infoColumn">Link/Ability Name</th>
                                     <th>Agent #paw</th>
@@ -254,7 +254,7 @@
                                         <td class="decideColumn">
                                             <span class="has-text-grey-light" x-text="link.decide"></span>
                                         </td>
-                                        <td class="linkStatusColumn csv-exclude">
+                                        <td class="linkStatusColumn csv-exclude" headers="link-status-header">
                                             <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
                                                   x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
                                         </td>
