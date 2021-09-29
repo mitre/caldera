@@ -363,7 +363,6 @@
                                                                   :key="agent.paw">
                                                             <option x-bind:selected="index === 0"
                                                                     :value="index"
-                                                                    x-init="getAgent(agent.paw)"
                                                                     x-text="agent.display_name + '-' + agent.paw"></option>
                                                         </template>
                                                     </select>
@@ -375,12 +374,11 @@
                                                             id="manual-executors"
                                                             class="executor-selector">
                                                         <option value="" disabled>Choose executor</option>
-                                                        <template
-                                                                x-for="(executor, index) in selectedAgentExecutors"
-                                                                :key="executor.name">
-                                                            <option x-text="executor"
-                                                                    :value="selectedAgent?.executors[index]"
-                                                                    x-bind:selected="index === 0"></option>
+                                                        <template x-for="(executor, index) in selectedAgentExecutors"
+                                                                  :key="executor.executor">
+                                                            <option x-bind:selected="index === 0"
+                                                                    x-text="executor.display"
+                                                                    :value="executor.executor"></option>
                                                         </template>
                                                     </select>
                                                 </div>
@@ -731,8 +729,9 @@
                                                             x-model="potentialLink.executor"
                                                             x-on:change="filterAbilities(abilities)">
                                                         <template x-for="(exec, index) in selectedAgentExecutors"
-                                                                  :key="exec">
-                                                            <option x-text="exec"
+                                                                  :key="exec.executor.name">
+                                                            <option x-text="exec.display"
+                                                                    :value="exec.executor                                                       "
                                                                     x-bind:selected="index === 0"></option>
                                                         </template>
                                                     </select>
@@ -879,7 +878,6 @@
                                 </section>
                             </div>
                         </template>
-
                         <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
                             <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
                                 <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
@@ -928,9 +926,9 @@
             // CONSTANTS
             ENDPOINT: '/api/v2/operations',
             EXECUTOR_SHELLS: {
-                psh: 'PS >',
-                cmd: '>',
-                sh: '$'
+                psh: 'PS',
+                sh: '$',
+                zsh: '$'
             },
             LINK_STATUSES: {
                 0: 'success',
@@ -947,7 +945,7 @@
             usage: {},
             agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
             selectedOperation: null,
-            selectedAgentIndex: null,
+            selectedAgentIndex: 0,
             isSelectedAdversaryRepeatable: false,
             selectedLink: null,
             selectedLinkResults: null,
@@ -1028,12 +1026,18 @@
             },
 
             get selectedAgent() {
-                if (!this.selectedOperation || this.selectedAgentIndex > this.selectedOperation.host_group.length) return null;
+                if (!this.selectedOperation || this.selectedAgentIndex >= this.selectedOperation.host_group.length) return null;
                 return this.selectedOperation.host_group[this.selectedAgentIndex];
             },
 
             get selectedAgentExecutors() {
-                return this.selectedAgent ? this.selectedAgent.executors.map((e) => this.EXECUTOR_SHELLS[e]) : [];
+                if (!this.selectedAgent) return [];
+                return this.selectedAgent.executors.map((e) => {
+                    let cmd = `(${e})`;
+                    if (e in this.EXECUTOR_SHELLS)
+                        cmd += ` ${this.EXECUTOR_SHELLS[e]}`;
+                    return {executor: e, display: cmd + ' > '};
+                });
             },
 
             get isOperationRunning() {
@@ -1163,6 +1167,7 @@
             getAgent(agentPaw) {
                 apiV2('GET', `api/v2/agents/${agentPaw}`)
                     .then((res) => {
+                        this.selectedAgentIndex = 0;
                         this.potentialLink.agent = res;
                         // Check if agent has been seen in the last hour
                         if ((new Date() - new Date(res.last_seen)) > 3600000) {
@@ -1230,7 +1235,7 @@
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
                 }
-                const executor = link.executors.find((e) => e.platform === this.potentialLink.agent.platform || this.potentialLink.executor === e.name);
+                const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
                     ...link,
                     paw: this.potentialLink.agent.paw,
