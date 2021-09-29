@@ -250,8 +250,7 @@
                                 <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
                                     <tbody>
                                     <tr x-bind:id="link.id"
-                                        x-on:click="selectedLink = link"
-                                        x-bind:class="selectedLink === link ? 'selected' : ''">
+                                        x-on:click="selectedLink = link">
                                         <td class="decideColumn">
                                             <span class="has-text-grey-light" x-text="link.decide"></span>
                                         </td>
@@ -1571,23 +1570,11 @@
         padding-bottom: 5em;
     }
 
-    #operationsPage .timeline-table td.agentDetails {
-        padding-top: 3.5em !important;
-    }
-
     #operationsPage .timeline-table table tr th {
         font-weight: 400;
         font-size: 0.75rem;
         border-bottom: none;
         color: gray;
-    }
-
-    #operationsPage .timeline-table table tbody tr:hover, .timeline-table table tbody tr.selected {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-
-    #operationsPage .timeline-table table tbody tr:active {
-        background-color: rgba(255, 255, 255, 0.2);
     }
 
     #operationsPage .button:active, .button.is-active, .button:focus, .button.is-focused {
@@ -1661,12 +1648,6 @@
         max-height: 34px;
     }
 
-    #operationsPage .timeline-table table tbody td:not(.agentDetails) {
-        vertical-align: middle;
-        border: none;
-        height: 8em;
-    }
-
     #operationsPage .timeline-table table th.header {
         border-bottom: none;
     }
@@ -1683,25 +1664,14 @@
         text-align: center !important;
     }
 
-    #operationsPage .timeline-table td.decideColumn {
-        padding: 0 2em;
-        display: flex;
-        flex-flow: column wrap;
-        justify-content: center;
-    }
-
     #operationsPage .timeline-table .infoColumn {
         width: 200px;
     }
 
-    #operationsPage .timeline-table table tbody td.linkStatusColumn {
-        padding: 0;
-        vertical-align: top;
-    }
-
-    #operationsPage .timeline-table table tbody td.linkInfoColumn {
-        padding-top: 3.5em;
-        vertical-align: initial;
+    #operationsPage .timeline-table table tbody td {
+        vertical-align: middle;
+        border: none;
+        height: 5.5em;
     }
 
     #operationsPage .timeline-table table tbody td.linkActionsColumn {
@@ -1729,7 +1699,6 @@
 
     #operationsPage .timeline-table table tbody td.commandDetails button {
         width: max-content;
-        margin: 1em 0;
     }
 
     #operationsPage .timeline-table table tbody tr.linkEditCommandRow td:last-child {
@@ -1780,7 +1749,6 @@
     /*circle for event*/
     #operationsPage span.linkStatus::after {
         position: relative;
-        top: 40px;
         display: block;
         background: #161616;
         border-radius: 50%;
