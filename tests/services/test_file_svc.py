@@ -38,9 +38,9 @@ class TestFileService:
         loop.run_until_complete(file_svc.save_file(filename, payload, tmp_path, encrypt=False))
         file_location = tmp_path / filename
         # Read file contents from saved file
-        file_contents = open(file_location, "r")
         assert os.path.isfile(file_location)
-        assert payload.decode("utf-8") == file_contents.read()
+        with open(file_location, "r") as file_contents:
+            assert payload.decode("utf-8") == file_contents.read()
 
     def test_create_exfil_sub_directory(self, loop, file_svc):
         exfil_dir_name = 'unit-testing-Rocks'
