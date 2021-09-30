@@ -18,7 +18,7 @@
         </style>
     </head>
     <body>
-        <main id="home" class="main" x-data="alpineCore()">
+        <main id="home" class="main" x-data="alpineCore()" x-init="initPage()">
             <div class="navigation">
                 <div class="nav-logo">
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
@@ -76,6 +76,11 @@
                                 <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
                                 <span>Log out</span>
                             </a>
+                        </li>
+                    </ul>
+                    <ul class="menu-list has-text-centered">
+                        <li>
+                            <p class="mt-6" x-text="`v${version}`"></p>
                         </li>
                     </ul>
                 </aside>

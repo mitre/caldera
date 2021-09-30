@@ -1072,10 +1072,6 @@
                 this.getOperations();
                 this.getUsage();
 
-                function sleep(ms) {
-                    return new Promise((resolve) => setTimeout(resolve, ms));
-                }
-
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
