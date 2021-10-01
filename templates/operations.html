@@ -256,7 +256,8 @@
                                         </td>
                                         <td class="linkStatusColumn csv-exclude" headers="link-status-header">
                                             <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
-                                                  x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
+                                                  x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"
+                                                  x-bind:title="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
                                         </td>
                                         <td class="linkInfoColumn"
                                             x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
@@ -444,479 +445,542 @@
 
         <!--    MODALS      -->
         <template x-if="openModal">
-            <div class="modal is-active">
+            <div class="modal is-active" x-data="{ startOperation: EMPTY_OPERATIONS_OBJECT }">
                 <div class="modal-background" @click="openModal = null"></div>
-                <form class="m-1"  x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
-                    <template x-if="openModal === 'showOutput'">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Output</p>
-                            </header>
-                            <section class="modal-card-body">
+
+                <template x-if="openModal === 'showOutput'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Output</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div>
+                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'showCommand'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Command</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div>
+                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'addOperation'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Start New Operation</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
                                 <div>
-                                        <pre class="has-text-left white-space-pre-line"
-                                             x-text="selectedLinkResults"></pre>
+                                    <label for="op-name">Operation name</label>
+                                    <div class="modal-form-fields">
+                                        <input class="input is-small" id="op-name" type="text"
+                                                x-model="startOperation.name" required>
+                                    </div>
                                 </div>
-                            </section>
-                        </div>
-                    </template>
-                    <template x-if="openModal === 'showCommand'">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Command</p>
-                            </header>
-                            <section class="modal-card-body">
                                 <div>
-                                        <pre class="has-text-left white-space-pre-line"
-                                             x-text="selectedLinkCommand"></pre>
-                                </div>
-                            </section>
-                        </div>
-                    </template>
-
-                    <template x-if="openModal === 'addOperation'">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Start New Operation</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <label for="op-name">Operation name</label>
-                                        <div class="modal-form-fields">
-                                            <input class="input is-small" id="op-name" type="text"
-                                                   x-model="startOperation.name" required>
+                                    <label for="basic-adversary"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
+                                    <div class="modal-form-fields" id="basic-adversary">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select x-model="startOperation.adversary.adversary_id">
+                                                <option value="" selected>No adversary (manual)</option>
+                                                {% for adv in adversaries %}
+                                                <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
+                                                        value="{{ adv.adversary_id|e }}">
+                                                    {{ adv.name|e }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label for="basic-adversary"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
-                                        <div class="modal-form-fields" id="basic-adversary">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select x-model="startOperation.adversary.adversary_id">
-                                                    <option value="" selected>No adversary (manual)</option>
-                                                    {% for adv in adversaries %}
-                                                    <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
-                                                            value="{{ adv.adversary_id|e }}">
-                                                        {{ adv.name|e }}
-                                                    </option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
+                                </div>
+
+                                <div>
+                                    <label for="autonomous-source"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
+                                    <div class="modal-form-fields" id="autonomous-source">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select x-model="startOperation.source.id">
+                                                {% for s in sources %}
+                                                <option>{{ s.name|e }}</option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
-
-                                    <div>
-                                        <label for="autonomous-source"><span
-                                                class="has-tooltip-multiline has-tooltip-top"
-                                                x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
-                                        <div class="modal-form-fields" id="autonomous-source">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select x-model="startOperation.source.id">
-                                                    {% for s in sources %}
-                                                    <option>{{ s.name|e }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                 </div>
-                                <div class="modal-form-group-header">
-                                    <button type="button" class="button no-style heading pt-2"
-                                            x-on:click="openModalForm.advanced = !openModalForm.advanced"
-                                            x-bind:class="openModalForm.advanced ? 'expanded' : 'collapsed'">
-                                        <span>Advanced</span>
-                                        <span class="navbar-divider"></span>
-                                    </button>
-                                </div>
-                                <div class="modal-form" x-show="openModalForm.advanced">
-                                    <div>
-                                        <label for="basic-groups"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Group']">Group</span></label>
-                                        <div class="modal-form-fields"
-                                             id="basic-groups">
+
+                            </div>
+                            <div class="modal-form-group-header">
+                                <button type="button" class="button no-style heading pt-2"
+                                        x-on:click="openModalForm.advanced = !openModalForm.advanced"
+                                        x-bind:class="openModalForm.advanced ? 'expanded' : 'collapsed'">
+                                    <span>Advanced</span>
+                                    <span class="navbar-divider"></span>
+                                </button>
+                            </div>
+                            <div class="modal-form" x-show="openModalForm.advanced">
+                                <div>
+                                    <label for="basic-groups"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Group']">Group</span></label>
+                                    <div class="modal-form-fields"
+                                            id="basic-groups">
+                                        <button type="button"
+                                                class="is-small button is-rounded is-primary chip m-1"
+                                                x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="startOperation.group = ''">
+                                            all groups
+                                        </button>
+                                        <template x-for="(group, index) in agentGroups" :key="group">
                                             <button type="button"
                                                     class="is-small button is-rounded is-primary chip m-1"
-                                                    x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.group = ''">
-                                                all groups
+                                                    x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="startOperation.group = group"
+                                                    x-show="group !== ''"
+                                                    x-text="group">
                                             </button>
-                                            <template x-for="(group, index) in agentGroups" :key="group">
-                                                <button type="button"
-                                                        class="is-small button is-rounded is-primary chip m-1"
-                                                        x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
-                                                        x-on:click="startOperation.group = group"
-                                                        x-show="group !== ''"
-                                                        x-text="group">
-                                                </button>
-                                            </template>
-                                        </div>
+                                        </template>
                                     </div>
-                                    <div>
-                                        <label for="autonomous-planner"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Planner']">Planner</span></label>
-                                        <div class="modal-form-fields">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select id="autonomous-planner" x-model="startOperation.planner.id">
-                                                    {% for p in planners %}
-                                                    {% if p.allow_repeatable_abilities %}
-                                                    <option data-allow-repeatable-abilities>
-                                                        {{ p.name|e }}
-                                                    </option>
-                                                    {% else %}
-                                                    <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
-                                                        {{ p.name|e }}
-                                                    </option>
-                                                    {% endif %}
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="stealth-obfuscator"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
-                                        <div class="modal-form-fields" id="stealth-obfuscator">
-                                            {% for o in obfuscators %}
-                                            <button class="is-small button is-rounded is-primary chip m-1"
-                                                    type="button"
-                                                    x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.obfuscator = `{{ o.name|e }}`">
-                                                {{ o.name|e }}
-                                            </button>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="autonomous-autonomous"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
-                                        <div class="modal-form-fields" id="autonomous-autonomous">
-                                            <input type="radio" id="run-autonomously"
-                                                   x-model="startOperation.autonomous" value="1" checked>
-                                            <label for="run-autonomously">Run autonomously</label>
-                                            <input type="radio" id="manual-approval"
-                                                   x-model="startOperation.autonomous" value="0">
-                                            <label for="manual-approval">Require manual approval</label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label for="autonomous-use_learning_parsers"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Parser']">Parser</span></label>
-                                        <div class="modal-form-fields" id="autonomous-use_learning_parsers">
-                                            <input type="radio" id="parsers-default"
-                                                   x-model="startOperation.use_learning_parsers" value="1" checked>
-                                            <label for="parsers-default">Use default parsers</label>
-                                            <input type="radio" id="parsers-no_default"
-                                                   x-model="startOperation.use_learning_parsers" value="0">
-                                            <label for="parsers-no_default">Do not use default parsers</label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label for="basic-keep"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
-                                        <div class="modal-form-fields" id="basic-keep">
-                                            <input type="radio" id="keep-open"
-                                                   x-model="startOperation.auto_close"
-                                                   value="0" checked>
-                                            <label for="keep-open">Keep open forever</label>
-                                            <input type="radio" id="auto-close"
-                                                   x-model="startOperation.auto_close"
-                                                   value="1">
-                                            <label for="auto-close">Auto close operation</label>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="basic-run"><span
-                                                class="has-tooltip-multiline has-tooltip-bottom"
-                                                x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
-
-                                        <div class="modal-form-fields" id="basic-run">
-                                            <input type="radio" x-model="startOperation.state"
-                                                   id="run-immediately"
-                                                   value="running" checked>
-                                            <label for="run-immediately">Run immediately</label>
-                                            <input type="radio" x-model="startOperation.state"
-                                                   id="pause-on-start"
-                                                   value="paused">
-                                            <label for="pause-on-start">Pause on start</label>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label for="stealth-jitter"><span
-                                                class="has-tooltip-multiline has-tooltip-top"
-                                                x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
-                                        <div class="modal-form-fields" id="stealth-jitter">
-                                            <input class="input"
-                                                   x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
-                                                   x-model="jitterMin"
-                                                   id="stealth-jitterMin"
-                                                   type="number"
-                                                   required
-                                                   pattern="[0-9]*"
-                                                   placeholder="2"/>
-                                            <label class="input-hover-label" for="stealth-jitterMin">min</label>
-                                            <span>/</span>
-                                            <input class="input"
-                                                   x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
-                                                   x-model="jitterMax"
-                                                   id="stealth-jitterMax"
-                                                   type="number"
-                                                   required
-                                                   pattern="[0-9]*"
-                                                   placeholder="8"/>
-                                            <label class="input-hover-label" for="stealth-jitterMax">max</label>
-                                            <button type="button" class="button is-primary no-style reset"
-                                                    title="reset to default"
-                                                    x-on:click="jitterMin = 2; jitterMax = 8;">
-                                                Reset
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="stealth-queue"><span
-                                                class="has-tooltip-multiline has-tooltip-top"
-                                                x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
-                                        <div class="modal-form-fields">
-                                            <input x-model="startOperation.visibility"
-                                                   id="stealth-queue"
-                                                   type="range" value="50" min="1" max="100"
-                                                   x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
-                                            <span x-text="startOperation.visibility"></span>
+                                </div>
+                                <div>
+                                    <label for="autonomous-planner"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Planner']">Planner</span></label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="autonomous-planner" x-model="startOperation.planner.id">
+                                                {% for p in planners %}
+                                                {% if p.allow_repeatable_abilities %}
+                                                <option data-allow-repeatable-abilities>
+                                                    {{ p.name|e }}
+                                                </option>
+                                                {% else %}
+                                                <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
+                                                    {{ p.name|e }}
+                                                </option>
+                                                {% endif %}
+                                                {% endfor %}
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
-                    </template>
+                                <div>
+                                    <label for="stealth-obfuscator"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
+                                    <div class="modal-form-fields" id="stealth-obfuscator">
+                                        {% for o in obfuscators %}
+                                        <button class="is-small button is-rounded is-primary chip m-1"
+                                                type="button"
+                                                x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="startOperation.obfuscator = `{{ o.name|e }}`">
+                                            {{ o.name|e }}
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="autonomous-autonomous"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
+                                    <div class="modal-form-fields" id="autonomous-autonomous">
+                                        <input type="radio" id="run-autonomously"
+                                                x-model="startOperation.autonomous" value="1" checked>
+                                        <label for="run-autonomously">Run autonomously</label>
+                                        <input type="radio" id="manual-approval"
+                                                x-model="startOperation.autonomous" value="0">
+                                        <label for="manual-approval">Require manual approval</label>
+                                    </div>
+                                </div>
 
-                    <template x-if="openModal === 'addLink'">
-                        <div class="modal-card" x-init="getAbilities()">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Add New Potential Link</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <label for="link-agent">Agent</label>
-                                        <div class="modal-form-fields">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select id="link-agent"
-                                                        x-model="selectedAgentIndex"
-                                                        x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
-                                                    <template x-for="(agent, index) in selectedOperation.host_group"
-                                                              :key="agent.paw">
-                                                        <option :value="index"
-                                                                x-bind:selected="index === 0"
-                                                                x-text="agent.display_name + '-' + agent.paw"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
-                                        </div>
+                                <div>
+                                    <label for="autonomous-use_learning_parsers"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Parser']">Parser</span></label>
+                                    <div class="modal-form-fields" id="autonomous-use_learning_parsers">
+                                        <input type="radio" id="parsers-default"
+                                                x-model="startOperation.use_learning_parsers" value="1" checked>
+                                        <label for="parsers-default">Use default parsers</label>
+                                        <input type="radio" id="parsers-no_default"
+                                                x-model="startOperation.use_learning_parsers" value="0">
+                                        <label for="parsers-no_default">Do not use default parsers</label>
                                     </div>
-                                    <div>
-                                        <label for="link-exec">Executor</label>
-                                        <div class="modal-form-fields">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select id="link-exec"
-                                                        x-model="potentialLink.executor"
-                                                        x-on:change="filterAbilities(abilities)">
-                                                    <template x-for="(exec, index) in selectedAgentExecutors"
-                                                              :key="exec.executor.name">
-                                                        <option x-text="exec.display"
-                                                                :value="exec.executor                                                       "
-                                                                x-bind:selected="index === 0"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
-                                        </div>
+                                </div>
+
+                                <div>
+                                    <label for="basic-keep"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
+                                    <div class="modal-form-fields" id="basic-keep">
+                                        <input type="radio" id="keep-open"
+                                                x-model="startOperation.auto_close"
+                                                value="0" checked>
+                                        <label for="keep-open">Keep open forever</label>
+                                        <input type="radio" id="auto-close"
+                                                x-model="startOperation.auto_close"
+                                                value="1">
+                                        <label for="auto-close">Auto close operation</label>
                                     </div>
-                                    <div>
-                                        <label for="link-tactic">Tactic</label>
-                                        <div class="modal-form-fields">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select id="link-tactic"
-                                                        x-model="potentialLink.tactic"
-                                                        x-on:change="filterAbilities(abilities)">
-                                                    <option value="" default value="">All tactics</option>
-                                                    <template x-for="tactic in tacticFiltersList"
-                                                              :key="tactic">
-                                                        <option x-text="tactic"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
-                                        </div>
+                                </div>
+                                <div>
+                                    <label for="basic-run"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
+
+                                    <div class="modal-form-fields" id="basic-run">
+                                        <input type="radio" x-model="startOperation.state"
+                                                id="run-immediately"
+                                                value="running" checked>
+                                        <label for="run-immediately">Run immediately</label>
+                                        <input type="radio" x-model="startOperation.state"
+                                                id="pause-on-start"
+                                                value="paused">
+                                        <label for="pause-on-start">Pause on start</label>
                                     </div>
-                                    <div>
-                                        <label for="link-technique">Technique</label>
-                                        <div class="modal-form-fields">
-                                            <div class="select is-small my-2 ml-3">
-                                                <select id="link-technique"
-                                                        x-model="potentialLink.technique"
-                                                        x-on:change="filterAbilities(abilities)">
-                                                    <option value="" default>All techniques</option>
-                                                    <template x-for="technique in techniqueFiltersList"
-                                                              :key="technique">
-                                                        <option x-text="technique"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
+                                </div>
+
+                                <div>
+                                    <label for="stealth-jitter"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
+                                    <div class="modal-form-fields" id="stealth-jitter">
+                                        <input class="input"
+                                                x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                                x-model="jitterMin"
+                                                id="stealth-jitterMin"
+                                                type="number"
+                                                required
+                                                pattern="[0-9]*"
+                                                placeholder="2"/>
+                                        <label class="input-hover-label" for="stealth-jitterMin">min</label>
+                                        <span>/</span>
+                                        <input class="input"
+                                                x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                                x-model="jitterMax"
+                                                id="stealth-jitterMax"
+                                                type="number"
+                                                required
+                                                pattern="[0-9]*"
+                                                placeholder="8"/>
+                                        <label class="input-hover-label" for="stealth-jitterMax">max</label>
+                                        <button type="button" class="button is-primary no-style reset"
+                                                title="reset to default"
+                                                x-on:click="jitterMin = 2; jitterMax = 8;">
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="stealth-queue"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
+                                    <div class="modal-form-fields">
+                                        <input x-model="startOperation.visibility"
+                                                id="stealth-queue"
+                                                type="range" value="50" min="1" max="100"
+                                                x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
+                                        <span x-text="startOperation.visibility"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                            x-on:click="addOperation(false, startOperation)"
+                                            x-text="schedule ? 'Schedule' : 'Start'"></button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'addLink'">
+                    <div class="modal-card" x-init="getAbilities()">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Add New Potential Link</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <label for="link-agent">Agent</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-agent"
+                                                    x-model="selectedAgentIndex"
+                                                    x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
+                                                <template x-for="(agent, index) in selectedOperation.host_group"
+                                                            :key="agent.paw">
+                                                    <option :value="index"
+                                                            x-bind:selected="index === 0"
+                                                            x-text="agent.display_name + '-' + agent.paw"></option>
+                                                </template>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="modal-results">
-                                    <div class="navbar-divider"></div>
-                                    <p class="is-flex is-justify-content-flex-end is-size-7"
-                                       x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
-                                    <template x-if="filteredAbilitiesList">
-                                        <ul class="ml-0">
-                                            <template x-for="ability in filteredAbilitiesList"
-                                                      :key="ability.ability_id">
-                                                <li class="mb-4 abilities-list-item">
-                                                        <span class="is-flex is-justify-content-space-between">
-                                                            <span>
-                                                                <p class="mb-0" x-text="ability.name"></p>
-                                                            </span>
-                                                            <span>
-                                                                <button type="button"
-                                                                        class="button is-primary is-small"
-                                                                        x-bind:disabled="!isLinkAvailable(ability)"
-                                                                        x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
-                                                                        x-on:click="addPotentialLink(ability)">
-                                                                    Add Link
-                                                                </button>
-                                                            </span>
+                                <div>
+                                    <label for="link-exec">Executor</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-exec" x-model="potentialLink.executor" x-on:change="filterAbilities(abilities)">
+                                                <template x-for="(exec, index) of selectedAgentExecutors" :key="exec.executor">
+                                                    <option x-text="exec.display" :value="exec.executor" x-bind:selected="index === 0"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="link-tactic">Tactic</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-tactic"
+                                                    x-model="potentialLink.tactic"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <option value="" default value="">All tactics</option>
+                                                <template x-for="tactic in tacticFiltersList"
+                                                            :key="tactic">
+                                                    <option x-text="tactic"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="link-technique">Technique</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-technique"
+                                                    x-model="potentialLink.technique"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <option value="" default>All techniques</option>
+                                                <template x-for="technique in techniqueFiltersList"
+                                                            :key="technique">
+                                                    <option x-text="technique"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-results">
+                                <div class="navbar-divider"></div>
+                                <p class="is-flex is-justify-content-flex-end is-size-7"
+                                    x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
+                                <template x-if="filteredAbilitiesList">
+                                    <ul class="ml-0">
+                                        <template x-for="ability in filteredAbilitiesList"
+                                                    :key="ability.ability_id">
+                                            <li class="mb-4 abilities-list-item">
+                                                    <span class="is-flex is-justify-content-space-between">
+                                                        <span>
+                                                            <p class="mb-0" x-text="ability.name"></p>
                                                         </span>
-                                                    <span class="ml-3">
-                                                            <sub x-text="ability.description"></sub>
+                                                        <span>
+                                                            <button type="button"
+                                                                    class="button is-primary is-small"
+                                                                    x-bind:disabled="!isLinkAvailable(ability)"
+                                                                    x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
+                                                                    x-on:click="addPotentialLink(ability)">
+                                                                Add Link
+                                                            </button>
                                                         </span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </template>
-                                    <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
-                                    </template>
+                                                    </span>
+                                                <span class="ml-3">
+                                                        <sub x-text="ability.description"></sub>
+                                                    </span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
+                                </template>
+                            </div>
+                            <em x-show="showNotRepeatableText"
+                                class="has-text-grey-light is-pulled-right is-size-7">Note:
+                                Repeated links are not available for this operation</em>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
                                 </div>
-                                <em x-show="showNotRepeatableText"
-                                    class="has-text-grey-light is-pulled-right is-size-7">Note:
-                                    Repeated links are not available for this operation</em>
-                            </section>
-                        </div>
-                    </template>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
 
-                    <template x-if="openModal === 'showDownloadMenu'">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Download</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <label for="agent-output-field">Agent output</label>
-                                        <div class="modal-form-fields" id="agent-output-field">
-                                            <input id="agent-output"
-                                                   x-bind:disabled="selectedReportType === 'csv'"
-                                                   type="checkbox"
-                                                   class="mr-1"
-                                                   x-model="isAgentOutputSelected">
-                                            <label for="agent-output">include agent output</label>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label for="report-type">Report type</label>
-                                        <div class="modal-form-fields download-buttons-container" id="report-type">
-                                            <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                   value="full-report" id="full-report">
-                                            <label for="full-report">Full Report</label>
-                                            <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                   value="event-logs" id="event-logs">
-                                            <label for="event-logs">Event Logs</label>
-                                            <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                   value="csv" id="csv">
-                                            <label for="csv">CSV</label>
-                                        </div>
+                <template x-if="openModal === 'showDownloadMenu'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Download</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <label for="agent-output-field">Agent output</label>
+                                    <div class="modal-form-fields" id="agent-output-field">
+                                        <input id="agent-output"
+                                                x-bind:disabled="selectedReportType === 'csv'"
+                                                type="checkbox"
+                                                class="mr-1"
+                                                x-model="isAgentOutputSelected">
+                                        <label for="agent-output">include agent output</label>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
-                    </template>
+                                <div>
+                                    <label for="report-type">Report type</label>
+                                    <div class="modal-form-fields download-buttons-container" id="report-type">
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                value="full-report" id="full-report">
+                                        <label for="full-report">Full Report</label>
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                value="event-logs" id="event-logs">
+                                        <label for="event-logs">Event Logs</label>
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                                value="csv" id="csv">
+                                        <label for="csv">CSV</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="handleDownload()">
+                                            Download
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
 
-                    <template x-if="openModal === 'deleteOperationModal' && selectedOperation">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Delete operation?</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <p>Are you sure you want to delete the operation <em
-                                                x-text="selectedOperation.name"></em>?</p>
+                <template x-if="openModal === 'deleteOperationModal' && selectedOperation">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Delete operation?</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <p>Are you sure you want to delete the operation <em
+                                            x-text="selectedOperation.name"></em>?</p>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
-                    </template>
-                    <template x-if="openModal === 'deleteLinkModal'">
-                        <div class="modal-card">
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Delete link?</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div class="modal-form">
-                                    <div>
-                                        <p>Are you sure you want to delete the link <em
-                                                x-text="selectedLink.ability.name"></em>?</p>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="deleteOperation(); openModal = null;">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
-                    </template>
-                    <footer class="modal-card-foot is-flex is-justify-content-space-between is-align-items-center width-100">
-                        <template x-if="openModal === 'addLink' || openModal === 'showDownloadMenu'">
-                            <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
-                                Close
-                            </button>
-                        </template>
-                        <template x-if="!(openModal === 'addLink' || openModal === 'showDownloadMenu')">
-                            <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
-                                Cancel
-                            </button>
-                        </template>
-                        <template x-if="openModal === 'deleteOperationModal'">
-                            <button type="button" class="button is-primary is-small"
-                                    x-on:click="deleteOperation(); openModal = null;">
-                                Yes
-                            </button>
-                        </template>
-                        <template x-if="openModal === 'showDownloadMenu'">
-                            <button type="button" class="button is-primary is-small"
-                                    x-on:click="handleDownload()">
-                                Download
-                            </button>
-                        </template>
-                        <template x-if="openModal === 'deleteLinkModal'">
-                            <button type="button" class="button is-primary is-small"
-                                    x-on:click="updateLink(-2); openModal = null;">
-                                Yes
-                            </button>
-                        </template>
-                        <template x-if="openModal === 'addOperation'">
-                            <button type="button" class="button is-primary is-small"
-                                    x-on:click="addOperation(false, startOperation)"
-                                    x-text="schedule ? 'Schedule' : 'Start'"></button>
-                        </template>
-                    </footer>
-                </form>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'deleteLinkModal'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Delete link?</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <p>Are you sure you want to delete the link <em
+                                            x-text="selectedLink.ability.name"></em>?</p>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                            x-on:click="updateLink(-2); openModal = null;">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
             </div>
         </template>
     </div>
@@ -1295,7 +1359,6 @@
                 this.selectedOperation[field] = updateValue;
                 apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
                     .then((res) => {
-                        toast(`Updated operation ${field}`, true);
                         this.selectedOperation = res;
                         this.selectedLink = null
                     })
@@ -1366,7 +1429,6 @@
 
                 if (!isCSV) {
                     dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
-                    toast(`Downloading report: ${fileName}`, true);
                     fileName += '.json';
                 } else {
                     dataURL = window.URL.createObjectURL(data);
