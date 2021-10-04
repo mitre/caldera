@@ -1,5 +1,5 @@
 <div x-data="alpineExfilled()" x-init="initPage()">
-    <div>
+    <div x-ref="headerFiles">
         <h2>Exfilled Files</h2>
         <p>
             Exfilled files are uploaded from an agent on a host to the server during an operation are by default stored on the server at <span x-text="exfilDir"></span>.
@@ -9,26 +9,6 @@
     </div>
     <hr>
     <div>
-        <!-- <form>
-            <div id="select-operation" class="field has-addons">
-                <label class="label">Select an operation &nbsp;&nbsp;&nbsp;</label>
-                <div class="control is-expanded">
-                    <div class="select is-small is-fullwidth">
-                        <select x-on:change="loadFiles()" x-model="selectedOperationId">
-                            <option value="" selected>(all)</option>
-                            <template x-for="operation of operations" :key="operation.id">
-                                <option x-bind:value="operation.id" x-text="operation.name"></option>
-                            </template>
-                        </select>
-                    </div>
-                </div>
-                <div class="control">
-                    <button type="button" class="button is-primary is-small" @click="initPage()">
-                        <span class="icon"><i class="fas fa-sync"></i></span>
-                    </button>
-                </div>
-            </div>
-        </form> -->
         <div class="buttons" x-show="numFiles !== 0">
             <button class="button is-primary is-small" @click="toggleAllFiles(selectedFiles.length < numFiles)">
                 <span x-text="selectedFiles.length < numFiles ? 'Select' : 'Unselect'"></span>&nbsp;All Files
@@ -84,9 +64,15 @@
                 apiV2('GET', '/api/v2/config/main').then((config) => {
                     this.exfilDir = config.exfil_dir;
                     return apiV2('GET', '/api/v2/operations');
-                }).then((operations) => {
+                }).then(async (operations) => {
                     this.operations = operations;
                     this.loadFiles();
+
+                     // While the agents tab is open, keep checking for new/killed agents
+                     while (this.$refs.headerFiles) {
+                        await sleep(3000);
+                        this.loadFiles();
+                    }
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
