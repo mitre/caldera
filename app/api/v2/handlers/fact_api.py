@@ -18,8 +18,8 @@ class FactApi(BaseObjectApi):
 
     def add_routes(self, app: web.Application):
         router = app.router
-        router.add_post('/fetch-facts', self.get_facts)
-        router.add_post('/fetch-relationships', self.get_relationships)
+        router.add_get('/facts', self.get_facts)
+        router.add_get('/relationships', self.get_relationships)
         router.add_post('/facts', self.add_facts)
         router.add_post('/relationships', self.add_relationships)
         router.add_delete('/facts', self.delete_facts)
@@ -27,16 +27,17 @@ class FactApi(BaseObjectApi):
         router.add_patch('/facts', self.update_facts)
         router.add_patch('/relationships', self.update_relationships)
 
-    @aiohttp_apispec.docs(tags=['facts'])
+    @aiohttp_apispec.docs(tags=['facts'], summary="Retrieve facts by criteria. Use fields from the FactSchema "
+                                                  "in the request body to filter retrieved facts.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
-    @aiohttp_apispec.request_schema(FactSchema(partial=True))
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         resp = []
         if fact_data:
             try:
+                FactSchema(partial=True).load(fact_data)
                 store = await knowledge_svc_handle.get_facts(criteria=fact_data)
                 resp = await self._api_manager.verify_fact_integrity(store)
             except Exception as e:
@@ -45,16 +46,18 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
-    @aiohttp_apispec.docs(tags=['relationships'])
+    @aiohttp_apispec.docs(tags=['relationships'], summary="Retrieve relationships by criteria. Use fields from the "
+                                                          "RelationshipSchema in the request body to filter retrieved "
+                                                          "relationships.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
-    @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def get_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         resp = []
         if relationship_data:
             try:
+                RelationshipSchema(partial=True).load(relationship_data)
                 store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
                 resp = await self._api_manager.verify_relationship_integrity(store)
             except Exception as e:
