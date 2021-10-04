@@ -295,7 +295,6 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         os.chdir(str(Path(__file__).parents[1]))
 
         await app_svc.register_contacts()
-        # await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         await auth_svc.set_login_handlers(services)
