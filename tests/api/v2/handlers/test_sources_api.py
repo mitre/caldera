@@ -21,15 +21,25 @@ def new_source_payload(mocker, mock_time):
     with mocker.patch('datetime.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
-        fact = Fact(trait='test_fact', value=1)
-        rule = Rule(RuleAction.ALLOW, trait='test_rule')
-        relationship = Relationship(source=fact, edge="alpha", origin="new_test_operation")
+        fact = {
+            'trait': 'test_fact',
+            'value': 1
+        }
+        rule = {
+            'action': 1,
+            'trait': 'test_rule'
+        }
+        relationship = {
+            'source': fact,
+            'edge': 'alpha',
+            'origin': "new_test_operation"
+        }
         source = {
             'id': '456',
             'name': 'new test source',
-            'facts': [fact.schema.dump(fact)],
-            'rules': [rule.schema.dump(rule)],
-            'relationships': [relationship.schema.dump(relationship)]
+            'facts': [fact],
+            'rules': [rule],
+            'relationships': [relationship]
         }
         return source
 
@@ -69,7 +79,7 @@ def replaced_source_payload(test_source, mocker, mock_time):
 
 
 @pytest.fixture
-def test_source(loop, api_v2_client, executor, mocker, mock_time):
+def test_source(loop, mocker, mock_time):
     with mocker.patch('datetime.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
@@ -112,7 +122,7 @@ class TestSourcesApi:
         assert resp.status == HTTPStatus.OK
         source_data = await resp.json()
         assert source_data == new_source_payload
-        source_exists = await BaseService.get_service('data_svc').locate('sources', {'source_id': '456'})
+        source_exists = await BaseService.get_service('data_svc').locate('sources', {'id': '456'})
         assert source_exists
 
     async def test_unauthorized_create_source(self, api_v2_client, new_source_payload):
@@ -127,7 +137,7 @@ class TestSourcesApi:
     async def test_update_source(self, api_v2_client, api_cookies, test_source, updated_source_payload):
         resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
         assert resp.status == HTTPStatus.OK
-        source = (await BaseService.get_service('data_svc').locate('sources', {'source_id': '123'}))[0]
+        source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
         assert source.schema.dump(source) == updated_source_payload
 
     async def test_unauthorized_update_source(self, api_v2_client, test_source, updated_source_payload):
