@@ -26,14 +26,15 @@
         <table class="table is-striped is-fullwidth" x-show="agents.length">
             <thead>
                 <tr>
-                    <td><b>id (paw)</b></td>
-                    <td><b>host</b></td>
-                    <td><b>group</b></td>
-                    <td><b>platform</b></td>
-                    <td><b>contact</b></td>
-                    <td><b>pid</b></td>
-                    <td><b>privilege</b></td>
-                    <td><b>last seen</b></td>
+                    <th>id (paw)</th>
+                    <th>host</th>
+                    <th>group</th>
+                    <th>platform</th>
+                    <th>contact</th>
+                    <th>pid</th>
+                    <th>privilege</th>
+                    <th>status</th>
+                    <th>last seen</th>
                     <td></td>
                 </tr>
             </thead>
@@ -47,6 +48,10 @@
                         <td x-text="agent.contact"></td>
                         <td x-text="agent.pid"></td>
                         <td x-text="agent.privilege"></td>
+                        <td>
+                            <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-danger': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
+                            <span x-text="agent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !agent.trusted, 'has-text-success': agent.trusted }"></span>
+                        </td>
                         <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="new Date(agent.last_seen).toLocaleString()"></td>
                         <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
                     </tr>
@@ -363,6 +368,17 @@
                     <col width="70%">
                     <tbody>
                         <tr>
+                            <th class="has-text-right">Status</th>
+                            <td>
+                                <span x-text="getAgentStatus(selectedAgent)" x-bind:class="{ 'has-text-warning': getAgentStatus(selectedAgent) === 'dead', 'has-text-success': getAgentStatus(selectedAgent) === 'alive', 'has-text-danger': getAgentStatus(selectedAgent) === 'pending kill' }"></span><span>,</span>
+                                <span x-text="selectedAgent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !selectedAgent.trusted, 'has-text-success': selectedAgent.trusted }"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">Paw</th>
+                            <td x-text="selectedAgent.paw"></td>
+                        </tr>
+                        <tr>
                             <th class="has-text-right">Host</th>
                             <td x-text="`${selectedAgent.host} (${selectedAgent.host_ip_addrs})`"></td>
                         </tr>
@@ -486,6 +502,7 @@
             initPage() {
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
+                    this.agents.sort((a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime());
                     return apiV2('GET', '/api/v2/config/agents');
                 }).then((agentConfig) => {
                     this.agentConfig = agentConfig;
@@ -498,9 +515,6 @@
                     });
 
                     // While the agents tab is open, keep checking for new/killed agents
-                    function sleep(ms) {
-                        return new Promise((resolve) => setTimeout(resolve, ms));
-                    }
                     while (this.$refs.header) {
                         await sleep(3000);
                         this.refreshAgents();
@@ -514,6 +528,7 @@
             refreshAgents() {
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
+                    this.agents.sort((a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime())
                 }).catch((error) => {
                     toast('Error refreshing agents', false);
                     console.error(error);
@@ -611,6 +626,17 @@
                 this.isAddingBootstrapAbility = false;
             },
 
+            getAgentStatus(agent) {
+                let lastSeen = new Date(agent.last_seen).getTime();
+                let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000);
+
+                if (agent.sleep_max === 3 && agent.sleep_min === 3 && agent.watchdog === 1) {
+                    return (Date.now() - lastSeen > 60000) ? 'dead' : 'pending kill'
+                } else {
+                    return isAlive ? 'alive' : 'dead';
+                }
+            },
+
             saveAgent() {
                 this.fieldErrorsAgent = validateInputs(this.selectedAgent, this.requiredFieldsAgent);
                 if (this.fieldErrorsAgent.length) return;
@@ -657,7 +683,6 @@
                     };
 
                     apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
-                        this.agents.splice(this.agents.findIndex((a) => a.paw === agent.paw), 1);
                         toast('Agent will be killed after its next beacon.', true);
                     }).catch((error) => {
                         toast('Error killing the agent', false);
