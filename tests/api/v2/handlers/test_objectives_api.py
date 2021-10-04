@@ -30,7 +30,7 @@ def updated_objective_payload(test_objective, test_goal):
     updated_goal = Goal(target='updated target', value='complete')
     objective_data.update(dict(name='an updated test objective',
                                description='a test objective that has been updated',
-                               goals=[updated_goal.schema.dump(test_goal)]))
+                               goals=[updated_goal.schema.dump(updated_goal)]))
     return objective_data
 
 
@@ -50,28 +50,33 @@ def test_goal():
 
 
 @pytest.fixture
-def test_objective(loop, api_v2_client, test_goal):
+def test_objective(loop, test_goal):
     objective = Objective(id='123', name='test objective', description='a test objective', goals=[test_goal])
     loop.run_until_complete(BaseService.get_service('data_svc').store(objective))
     return objective
 
 
+@pytest.fixture
+def expected_test_objective_dump(test_objective):
+    return test_objective.schema.dump(test_objective)
+
+
 class TestObjectivesApi:
-    async def test_get_objectives(self, api_v2_client, api_cookies, test_objective):
+    async def test_get_objectives(self, api_v2_client, api_cookies, test_objective, expected_test_objective_dump):
         resp = await api_v2_client.get('/api/v2/objectives', cookies=api_cookies)
         objectives_list = await resp.json()
         assert len(objectives_list) == 1
         objective_dict = objectives_list[0]
-        assert objective_dict == test_objective.schema.dump(test_objective)
+        assert objective_dict == expected_test_objective_dump
 
     async def test_unauthorized_get_objectives(self, api_v2_client, test_objective):
         resp = await api_v2_client.get('/api/v2/objectives')
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_get_objective_by_id(self, api_v2_client, api_cookies, test_objective):
+    async def test_get_objective_by_id(self, api_v2_client, api_cookies, test_objective, expected_test_objective_dump):
         resp = await api_v2_client.get('/api/v2/objectives/123', cookies=api_cookies)
         objective_dict = await resp.json()
-        assert objective_dict == test_objective.schema.dump(test_objective)
+        assert objective_dict == expected_test_objective_dump
 
     async def test_unauthorized_get_objective_by_id(self, api_v2_client, test_objective):
         resp = await api_v2_client.get('/api/v2/objectives/123')
