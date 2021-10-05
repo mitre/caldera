@@ -5,7 +5,7 @@ from http import HTTPStatus
 
 
 @pytest.fixture
-def expected_caldera_info(loop, api_v2_client, app_svc):
+def expected_caldera_info():
     return {
         'application': 'CALDERA',
         'plugins': [
