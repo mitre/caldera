@@ -6,6 +6,13 @@ function alpineCore() {
         activeTabIndex: 0,
         errors: startupErrors,
         showErrors: false,
+        version: '0.0.0',
+
+        initPage() {
+            apiV2('GET', '/api/v2/health').then((response) => {
+                this.version = response.version;
+            })
+        },
 
         setTabContent(tab, html) {
             const newTabDiv = document.createElement('div');

@@ -158,27 +158,17 @@
                                 <tr x-data="{newFact: EMPTY_FACT_OBJECT}">
                                     <td></td>
                                     <td></td>
-                                    <td>
+                                    <td @click.outside="selectedFact = {}">
                                         <label x-show="false" for="new-fact-trait">Fact Trait</label>
-                                        <textarea id="new-fact-trait"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="newFact.trait"
-                                                  spellcheck="false"></textarea>
+                                        <input id="new-fact-trait" class="input is-small" x-model="newFact.trait" contenteditable>
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-fact-value">Fact Value</label>
-                                        <textarea id="new-fact-value"
-                                                  class="code is-italic"
-                                                  contenteditable
-                                                  x-model="newFact.value"
-                                                  spellcheck="false"></textarea>
+                                        <input id="new-fact-value" class="input is-small" x-model="newFact.value" contenteditable>
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-fact-score">Fact Score</label>
-                                        <input class="is-small input fact-score" id="new-fact-score" type="number"
-                                               x-model="newFact.score"
-                                               min="0"/>
+                                        <input class="is-small input fact-score" id="new-fact-score" type="number" x-model="newFact.score" min="0"/>
                                     </td>
                                     <td>
                                         <button type="button"
@@ -198,20 +188,12 @@
                                     <td x-show="selectedFact !== fact" x-text="fact.trait"></td>
                                     <td x-show="selectedFact === fact">
                                         <label x-show="false" for="edit-fact-trait">Fact Trait</label>
-                                        <textarea id="edit-fact-trait"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="fact.trait"
-                                                  spellcheck="false"></textarea>
+                                        <input id="edit-fact-trait" class="input is-small" x-model="fact.trait" contenteditable>
                                     </td>
                                     <td x-show="selectedFact !== fact" x-text="fact.value"></td>
                                     <td x-show="selectedFact === fact">
                                         <label x-show="false" for="edit-fact-value">Fact Value</label>
-                                        <textarea id="edit-fact-value"
-                                                  class="code is-italic"
-                                                  contenteditable
-                                                  x-model="fact.value"
-                                                  spellcheck="false"></textarea>
+                                        <input id="edit-fact-value" class="input is-small" x-model="fact.value" contenteditable>
                                     </td>
                                     <td x-text="fact.score"></td>
                                     <td>
@@ -299,19 +281,11 @@
                                     <td></td>
                                     <td>
                                         <label x-show="false" for="new-rule-match">Rule Match</label>
-                                        <textarea id="new-rule-match"
-                                                  class="code is-italic"
-                                                  contenteditable
-                                                  x-model="newRule.match"
-                                                  spellcheck="false"></textarea>
+                                        <input id="new-rule-match" class="input is-small" x-model="newRule.match" contenteditable>
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-rule-trait">Rule Trait</label>
-                                        <textarea id="new-rule-trait"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="newRule.trait"
-                                                  spellcheck="false"></textarea>
+                                        <input id="new-rule-trait" class="input is-small" x-model="newRule.trait" contenteditable>
                                     </td>
                                     <td>
                                         <label x-show="false" for="new-rule-action">Rule Action</label>
@@ -347,20 +321,12 @@
                                     <td class="index-column" x-text="index"></td>
                                     <td x-show="selectedRule === rule">
                                         <label x-show="false" for="edit-rule-match">Rule Match</label>
-                                        <textarea id="edit-rule-match"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="rule.match"
-                                                  spellcheck="false"></textarea>
+                                        <input id="edit-rule-match" class="input is-small" x-model="rule.match" contenteditable>
                                     </td>
                                     <td x-show="selectedRule !== rule" x-text="rule.match"></td>
                                     <td x-show="selectedRule === rule">
                                         <label x-show="false" for="edit-rule-trait">Rule Trait</label>
-                                        <textarea id="edit-rule-trait"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="rule.trait"
-                                                  spellcheck="false"></textarea>
+                                        <input id="edit-rule-trait" class="input is-small" x-model="rule.trait" contenteditable>
                                     </td>
                                     <td x-show="selectedRule !== rule" x-text="rule.trait"></td>
                                     <td x-show="selectedRule === rule">
@@ -429,71 +395,58 @@
                         <!-- RELATIONSHIPS TABLE -->
                         <table class="table is-striped">
                             <thead>
-                            <tr>
-                                <th class="index-column"></th>
-                                <th>Source</th>
-                                <th>Edge</th>
-                                <th>Target</th>
-                                <th></th>
-                            </tr>
+                                <tr>
+                                    <th class="index-column"></th>
+                                    <th>Source</th>
+                                    <th>Edge</th>
+                                    <th>Target</th>
+                                    <th></th>
+                                </tr>
                             </thead>
                             <template x-if="selectedSource.relationships.length < 1 && !showAddRelationshipRow">
                                 <tbody>
-                                <tr>
-                                    <td colspan="5" class="text-align-center py-2">
-                                        <em>No relationships; click 'Add Relationship' to get started.</em>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-align-center py-2">
+                                            <em>No relationships; click 'Add Relationship' to get started.</em>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </template>
                             <tbody>
-                            <template x-if="showAddRelationshipRow">
-                                <tr x-data="{newRelationship: EMPTY_RELATIONSHIP_OBJECT}">
-                                    <td></td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-source">Relationship Source</label>
-                                        <textarea id="new-relationship-source"
-                                                  class="code is-italic"
-                                                  contenteditable
-                                                  x-model="newRelationship.source.trait"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-edge">Relationship Edge</label>
-                                        <textarea id="new-relationship-edge"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="newRelationship.edge"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-target">Relationship Target</label>
-                                        <textarea id="new-relationship-target"
-                                                  class="code"
-                                                  contenteditable
-                                                  x-model="newRelationship.target.trait"
-                                                  spellcheck="false"></textarea>
-                                    </td>
-                                    <td>
-                                        <button type="button"
-                                                class="button is-small is-primary"
-                                                x-on:click="addRelationship(newRelationship); newRelationship = EMPTY_RULE_OBJECT">
-                                            Add
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
+                                <template x-if="showAddRelationshipRow">
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-source">Relationship Source</label>
+                                            <input id="new-relationship-source" class="input is-small" x-model="newRelationship.sourceTrait" contenteditable>
+                                        </td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-edge">Relationship Edge</label>
+                                            <input id="new-relationship-edge" class="input is-small" x-model="newRelationship.edge" contenteditable>
+                                        </td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-target">Relationship Target</label>
+                                            <input id="new-relationship-target" class="input is-small" x-model="newRelationship.targetTrait" contenteditable>
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="button is-small is-primary"
+                                                    x-on:click="addRelationship(newRelationship)">
+                                                Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
 
-                            <template x-for="(rel, index) in selectedSource.relationships">
-                                <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;"
-                                    x-bind:class="selectedRelationship === rel ? 'selected' : ''">
-                                    <td class="index-column" x-text="index"></td>
-                                    <td x-text="rel.source?.trait"></td>
-                                    <td x-text="rel.edge"></td>
-                                    <td x-text="rel.target?.trait"></td>
-                                    <td></td>
-                                </tr>
-                            </template>
+                                <template x-for="(rel, index) in selectedSource.relationships">
+                                    <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;" x-bind:class="selectedRelationship === rel ? 'selected' : ''">
+                                        <td class="index-column" x-text="index"></td>
+                                        <td x-text="rel.source?.trait"></td>
+                                        <td x-text="rel.edge"></td>
+                                        <td x-text="rel.target?.trait"></td>
+                                        <td></td>
+                                    </tr>
+                                </template>
                             </tbody>
                         </table>
                     </div>
@@ -566,17 +519,24 @@
             // CONSTANTS
             EMPTY_FACT_OBJECT: { trait: '', value: '', score: 1 },
             EMPTY_RULE_OBJECT: { action: 'ALLOW', match: '', trait: '' },
-            EMPTY_RELATIONSHIP_OBJECT: { source: { trait: '' }, edge: '', target: { trait: '' } },
 
             sources: [],
             filteredSources: [],
             filteredFacts: [],
             filteredRules: [],
             selectedSource: null,
+            selectedRelationship: null,
+            selectedFact: null,
+            selectedRule: null,
             showAddFactRow: false,
             showAddRuleRow: false,
             showAddRelationshipRow: false,
             openModalData: { name: '', item: null },
+            newRelationship: {
+                sourceTrait: '',
+                edge: '',
+                targetTrait: ''
+            },
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -625,7 +585,7 @@
                     toast('Added new fact source', res);
                     this.getSources();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding source', false);
                     console.error(error);
                 });
             },
@@ -636,7 +596,7 @@
                     toast('Added new fact source', res);
                     this.getSources();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error duplicating source', false);
                     console.error(error);
                 });
             },
@@ -648,7 +608,7 @@
                     toast('Updated source', res);
                     this.showAddFactRow = false;
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding fact', false);
                     console.error(error);
                 });
             },
@@ -668,19 +628,26 @@
                     toast('Updated source', true);
                     this.showAddRuleRow = false;
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding rule', false);
                     console.error(error);
                 });
             },
 
-            addRelationship(newRelationship) {
+            addRelationship() {
                 const updatedSource = { ...this.selectedSource };
-                updatedSource.relationships.push(newRelationship);
+                updatedSource.relationships.push({
+                    source: { trait: this.newRelationship.sourceTrait },
+                    target: { trait: this.newRelationship.targetTrait },
+                    edge: this.newRelationship.edge
+                });
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', true);
                     this.showAddRelationshipRow = false;
+                    this.newRelationship.sourceTrait = '';
+                    this.newRelationship.targetTrait = '';
+                    this.newRelationship.edge = '';
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding relationship', false);
                     console.error(error);
                 });
             },
@@ -691,7 +658,7 @@
                     this.getSources();
                     this.resetModal();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error deleting source', false);
                     console.error(error);
                 });
             },
@@ -721,6 +688,8 @@
             updateFactSource() {
                 apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
                     toast('Updated source', true);
+                    this.selectedFact = {};
+                    this.selectedRule = {};
                     this.getSources();
                 }).catch((error) => {
                     toast('Error loading page', false);
