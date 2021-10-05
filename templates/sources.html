@@ -395,59 +395,58 @@
                         <!-- RELATIONSHIPS TABLE -->
                         <table class="table is-striped">
                             <thead>
-                            <tr>
-                                <th class="index-column"></th>
-                                <th>Source</th>
-                                <th>Edge</th>
-                                <th>Target</th>
-                                <th></th>
-                            </tr>
+                                <tr>
+                                    <th class="index-column"></th>
+                                    <th>Source</th>
+                                    <th>Edge</th>
+                                    <th>Target</th>
+                                    <th></th>
+                                </tr>
                             </thead>
                             <template x-if="selectedSource.relationships.length < 1 && !showAddRelationshipRow">
                                 <tbody>
-                                <tr>
-                                    <td colspan="5" class="text-align-center py-2">
-                                        <em>No relationships; click 'Add Relationship' to get started.</em>
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-align-center py-2">
+                                            <em>No relationships; click 'Add Relationship' to get started.</em>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </template>
                             <tbody>
-                            <template x-if="showAddRelationshipRow">
-                                <tr x-data="{newRelationship: EMPTY_RELATIONSHIP_OBJECT}">
-                                    <td></td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-source">Relationship Source</label>
-                                        <input id="new-relationship-source" class="input is-small" x-model="newRelationship.source.trait" contenteditable>
-                                    </td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-edge">Relationship Edge</label>
-                                        <input id="new-relationship-edge" class="input is-small" x-model="newRelationship.edge" contenteditable>
-                                    </td>
-                                    <td>
-                                        <label x-show="false" for="new-relationship-target">Relationship Target</label>
-                                        <input id="new-relationship-target" class="input is-small" x-model="newRelationship.target.trait" contenteditable>
-                                    </td>
-                                    <td>
-                                        <button type="button"
-                                                class="button is-small is-primary"
-                                                x-on:click="addRelationship(newRelationship); newRelationship = EMPTY_RULE_OBJECT">
-                                            Add
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
+                                <template x-if="showAddRelationshipRow">
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-source">Relationship Source</label>
+                                            <input id="new-relationship-source" class="input is-small" x-model="newRelationship.sourceTrait" contenteditable>
+                                        </td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-edge">Relationship Edge</label>
+                                            <input id="new-relationship-edge" class="input is-small" x-model="newRelationship.edge" contenteditable>
+                                        </td>
+                                        <td>
+                                            <label x-show="false" for="new-relationship-target">Relationship Target</label>
+                                            <input id="new-relationship-target" class="input is-small" x-model="newRelationship.targetTrait" contenteditable>
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="button is-small is-primary"
+                                                    x-on:click="addRelationship(newRelationship)">
+                                                Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
 
-                            <template x-for="(rel, index) in selectedSource.relationships">
-                                <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;"
-                                    x-bind:class="selectedRelationship === rel ? 'selected' : ''">
-                                    <td class="index-column" x-text="index"></td>
-                                    <td x-text="rel.source?.trait"></td>
-                                    <td x-text="rel.edge"></td>
-                                    <td x-text="rel.target?.trait"></td>
-                                    <td></td>
-                                </tr>
-                            </template>
+                                <template x-for="(rel, index) in selectedSource.relationships">
+                                    <tr x-on:click="selectedRelationship = rel; showAddRelationshipRow = false;" x-bind:class="selectedRelationship === rel ? 'selected' : ''">
+                                        <td class="index-column" x-text="index"></td>
+                                        <td x-text="rel.source?.trait"></td>
+                                        <td x-text="rel.edge"></td>
+                                        <td x-text="rel.target?.trait"></td>
+                                        <td></td>
+                                    </tr>
+                                </template>
                             </tbody>
                         </table>
                     </div>
@@ -520,17 +519,24 @@
             // CONSTANTS
             EMPTY_FACT_OBJECT: { trait: '', value: '', score: 1 },
             EMPTY_RULE_OBJECT: { action: 'ALLOW', match: '', trait: '' },
-            EMPTY_RELATIONSHIP_OBJECT: { source: { trait: '' }, edge: '', target: { trait: '' } },
 
             sources: [],
             filteredSources: [],
             filteredFacts: [],
             filteredRules: [],
             selectedSource: null,
+            selectedRelationship: null,
+            selectedFact: null,
+            selectedRule: null,
             showAddFactRow: false,
             showAddRuleRow: false,
             showAddRelationshipRow: false,
             openModalData: { name: '', item: null },
+            newRelationship: {
+                sourceTrait: '',
+                edge: '',
+                targetTrait: ''
+            },
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -579,7 +585,7 @@
                     toast('Added new fact source', res);
                     this.getSources();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding source', false);
                     console.error(error);
                 });
             },
@@ -590,7 +596,7 @@
                     toast('Added new fact source', res);
                     this.getSources();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error duplicating source', false);
                     console.error(error);
                 });
             },
@@ -602,7 +608,7 @@
                     toast('Updated source', res);
                     this.showAddFactRow = false;
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding fact', false);
                     console.error(error);
                 });
             },
@@ -622,19 +628,26 @@
                     toast('Updated source', true);
                     this.showAddRuleRow = false;
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding rule', false);
                     console.error(error);
                 });
             },
 
-            addRelationship(newRelationship) {
+            addRelationship() {
                 const updatedSource = { ...this.selectedSource };
-                updatedSource.relationships.push(newRelationship);
+                updatedSource.relationships.push({
+                    source: { trait: this.newRelationship.sourceTrait },
+                    target: { trait: this.newRelationship.targetTrait },
+                    edge: this.newRelationship.edge
+                });
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', true);
                     this.showAddRelationshipRow = false;
+                    this.newRelationship.sourceTrait = '';
+                    this.newRelationship.targetTrait = '';
+                    this.newRelationship.edge = '';
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error adding relationship', false);
                     console.error(error);
                 });
             },
@@ -645,7 +658,7 @@
                     this.getSources();
                     this.resetModal();
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error deleting source', false);
                     console.error(error);
                 });
             },
