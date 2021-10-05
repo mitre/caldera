@@ -6,9 +6,9 @@ import unittest.mock as mock
 
 from app.objects.c_source import Source, SourceSchema
 from app.objects.secondclass.c_fact import Fact
-# from app.objects.secondclass.c_rule import Rule
+from app.objects.secondclass.c_rule import Rule
 from app.objects.secondclass.c_relationship import Relationship
-# from app.utility.rule_set import RuleAction
+from app.utility.rule_set import RuleAction
 from app.utility.base_service import BaseService
 
 
@@ -23,12 +23,7 @@ def new_source_payload():
         'trait': 'test_fact',
         'value': 1
     }
-    '''
-    rule = {
-        'action': 1,
-        'trait': 'test_rule'
-    }
-    '''
+    rule = Rule(action=RuleAction.ALLOW, trait="test_rule")
     relationship = {
         'source': fact,
         'edge': 'alpha',
@@ -38,7 +33,7 @@ def new_source_payload():
         'id': '456',
         'name': 'new test source',
         'facts': [fact],
-        # 'rules': [rule],
+        'rules': [rule.schema.dump(rule)],
         'relationships': [relationship]
     }
     return source
@@ -58,12 +53,7 @@ def updated_source_payload():
         'trait': 'updated_test_fact',
         'value': 2
     }
-    '''
-    rule = {
-        'action': 1,
-        'trait': 'updated_test_rule'
-    }
-    '''
+    rule = Rule(action=RuleAction.DENY, trait='updated_test_rule')
     relationship = {
         'source': fact,
         'edge': 'beta',
@@ -73,7 +63,7 @@ def updated_source_payload():
         'id': '123',
         'name': 'updated test source',
         'facts': [fact],
-        # 'rules': [rule],
+        'rules': [rule.schema.dump(rule)],
         'relationships': [relationship]
     }
     return source
@@ -97,12 +87,7 @@ def replaced_source_payload(test_source):
         'trait': 'replaced_test_fact',
         'value': 3
     }
-    '''
-    rule = {
-        'action': 1,
-        'trait': 'replaced_test_rule'
-    }
-    '''
+    rule = Rule(action=RuleAction.DENY, trait='replaced_test_rule')
     relationship = {
         'source': fact,
         'edge': 'delta',
@@ -110,7 +95,7 @@ def replaced_source_payload(test_source):
     }
     source_data.update(dict(name='an replaced test source',
                             facts=[fact],
-                            rules=[],
+                            rules=[rule.schema.dump(rule)],
                             relationships=[relationship]
                             ))
     return source_data
@@ -133,10 +118,10 @@ def test_source(loop, mocker, mock_time):
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         fact = Fact(trait='test_fact', value=1)
-        # rule = Rule(RuleAction.ALLOW, trait='test_rule')
+        rule = Rule(RuleAction.ALLOW, trait='test_rule')
         relationship = Relationship(source=fact, edge="alpha", origin="test_operation")
         source = Source(id='123', name='Test Source', facts=[fact],
-                        rules=[], adjustments=[], relationships=[relationship])
+                        rules=[rule], adjustments=[], relationships=[relationship])
         loop.run_until_complete(BaseService.get_service('data_svc').store(source))
         return source
 
