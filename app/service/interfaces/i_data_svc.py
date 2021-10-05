@@ -8,6 +8,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def apply(self, collection):
         """
         Add a new collection to RAM
+
         :param collection:
         :return:
         """
@@ -17,6 +18,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def load_data(self, plugins):
         """
         Non-blocking read all the data sources to populate the object store
+
         :return: None
         """
         pass
@@ -25,6 +27,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def reload_data(self, plugins):
         """
         Blocking read all the data sources to populate the object store
+
         :return: None
         """
         pass
@@ -33,6 +36,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def store(self, c_object):
         """
         Accept any c_object type and store it (create/update) in RAM
+
         :param c_object:
         :return: a single c_object
         """
@@ -42,6 +46,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def locate(self, object_name, match):
         """
         Find all c_objects which match a search. Return all c_objects if no match.
+
         :param object_name:
         :param match: dict()
         :return: a list of c_object types
@@ -52,6 +57,7 @@ class DataServiceInterface(ObjectServiceInterface):
     def remove(self, object_name, match):
         """
         Remove any c_objects which match a search
+
         :param object_name:
         :param match: dict()
         :return:
