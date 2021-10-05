@@ -55,8 +55,13 @@ class FactSchema(ma.Schema):
     technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
-    def build_fact(self, data, **_):
-        return Fact(**data)
+    def build_fact(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Fact(**data)
+
+
+class FactUpdateRequestSchema(ma.Schema):
+    criteria = ma.fields.Nested(FactSchema(partial=True), required=True)
+    updates = ma.fields.Nested(FactSchema(partial=True), required=True)
 
 
 class Fact(BaseObject):
