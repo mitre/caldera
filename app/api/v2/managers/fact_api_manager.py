@@ -2,7 +2,9 @@ from app.api.v2.managers.base_api_manager import BaseApiManager
 from json import JSONDecodeError
 from app.api.v2.responses import JsonHttpBadRequest
 from aiohttp import web
+
 import copy
+import json
 
 
 class FactApiManager(BaseApiManager):
@@ -13,9 +15,10 @@ class FactApiManager(BaseApiManager):
     @staticmethod
     async def extract_data(request: web.Request):
         fact_data = None
-        if request.body_exists:
+        raw_body = await request.read()
+        if raw_body:
             try:
-                fact_data = await request.json()
+                fact_data = json.loads(raw_body)
             except JSONDecodeError as e:
                 raise JsonHttpBadRequest('Received invalid json', details=e)
         return fact_data
