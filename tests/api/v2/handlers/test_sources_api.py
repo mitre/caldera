@@ -2,12 +2,13 @@ import pytest
 
 from http import HTTPStatus
 from datetime import datetime, timezone
+import unittest.mock as mock
 
-from app.objects.c_source import Source
+from app.objects.c_source import Source, SourceSchema
 from app.objects.secondclass.c_fact import Fact
-from app.objects.secondclass.c_rule import Rule
+# from app.objects.secondclass.c_rule import Rule
 from app.objects.secondclass.c_relationship import Relationship
-from app.utility.rule_set import RuleAction
+# from app.utility.rule_set import RuleAction
 from app.utility.base_service import BaseService
 
 
@@ -17,65 +18,113 @@ def mock_time():
 
 
 @pytest.fixture
-def new_source_payload(mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
-        mock_datetime.return_value = mock_datetime
-        mock_datetime.now.return_value = mock_time
-        fact = {
-            'trait': 'test_fact',
-            'value': 1
-        }
-        rule = {
-            'action': 1,
-            'trait': 'test_rule'
-        }
-        relationship = {
-            'source': fact,
-            'edge': 'alpha',
-            'origin': "new_test_operation"
-        }
-        source = {
-            'id': '456',
-            'name': 'new test source',
-            'facts': [fact],
-            'rules': [rule],
-            'relationships': [relationship]
-        }
-        return source
+def new_source_payload():
+    fact = {
+        'trait': 'test_fact',
+        'value': 1
+    }
+    '''
+    rule = {
+        'action': 1,
+        'trait': 'test_rule'
+    }
+    '''
+    relationship = {
+        'source': fact,
+        'edge': 'alpha',
+        'origin': "new_test_operation"
+    }
+    source = {
+        'id': '456',
+        'name': 'new test source',
+        'facts': [fact],
+        # 'rules': [rule],
+        'relationships': [relationship]
+    }
+    return source
 
 
 @pytest.fixture
-def updated_source_payload(test_source, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
-        mock_datetime.return_value = mock_datetime
-        mock_datetime.now.return_value = mock_time
-        source_data = test_source.schema.dump(test_source)
-        new_fact = Fact(trait='new_test_fact', value=2)
-        new_rule = Rule(RuleAction.DENY, trait='new_test_rule')
-        new_relationship = Relationship(source=new_fact, edge="beta", origin="test_operation_2")
-        source_data.update(dict(name='an updated test source',
-                                facts=[new_fact.schema.dump(new_fact)],
-                                rules=[new_rule.schema.dump(new_rule)],
-                                relationships=[new_relationship.schema.dump(new_relationship)]
-                                ))
-        return source_data
+def expected_new_source_dump(new_source_payload):
+    source = SourceSchema().load(new_source_payload)
+    dumped_obj = source.display_schema.dump(source)
+    dumped_obj['relationships'][0]['unique'] = mock.ANY
+    return dumped_obj
 
 
 @pytest.fixture
-def replaced_source_payload(test_source, mocker, mock_time):
+def updated_source_payload():
+    fact = {
+        'trait': 'updated_test_fact',
+        'value': 2
+    }
+    '''
+    rule = {
+        'action': 1,
+        'trait': 'updated_test_rule'
+    }
+    '''
+    relationship = {
+        'source': fact,
+        'edge': 'beta',
+        'origin': "updated_test_operation"
+    }
+    source = {
+        'id': '123',
+        'name': 'updated test source',
+        'facts': [fact],
+        # 'rules': [rule],
+        'relationships': [relationship]
+    }
+    return source
+
+
+@pytest.fixture
+def expected_updated_source_dump(updated_source_payload, mocker, mock_time):
     with mocker.patch('datetime.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
-        source_data = test_source.schema.dump(test_source)
-        new_fact = Fact(trait='replaced_test_fact', value=2)
-        new_rule = Rule(RuleAction.ALLOW, trait='replaced_test_rule')
-        new_relationship = Relationship(source=new_fact, edge="alpha", origin="test_operation_3")
-        source_data.update(dict(name='an replaced test source',
-                                facts=[new_fact.schema.dump(new_fact)],
-                                rules=[new_rule.schema.dump(new_rule)],
-                                relationships=[new_relationship.schema.dump(new_relationship)]
-                                ))
-        return source_data
+        source = SourceSchema().load(updated_source_payload)
+        dumped_obj = source.display_schema.dump(source)
+        dumped_obj['relationships'][0]['unique'] = mock.ANY
+        return dumped_obj
+
+
+@pytest.fixture
+def replaced_source_payload(test_source):
+    source_data = test_source.schema.dump(test_source)
+    fact = {
+        'trait': 'replaced_test_fact',
+        'value': 3
+    }
+    '''
+    rule = {
+        'action': 1,
+        'trait': 'replaced_test_rule'
+    }
+    '''
+    relationship = {
+        'source': fact,
+        'edge': 'delta',
+        'origin': "replaced_test_operation"
+    }
+    source_data.update(dict(name='an replaced test source',
+                            facts=[fact],
+                            rules=[],
+                            relationships=[relationship]
+                            ))
+    return source_data
+
+
+@pytest.fixture
+def expected_replaced_source_dump(replaced_source_payload, mocker, mock_time):
+    with mocker.patch('datetime.datetime') as mock_datetime:
+        mock_datetime.return_value = mock_datetime
+        mock_datetime.now.return_value = mock_time
+        source = SourceSchema().load(replaced_source_payload)
+        dumped_obj = source.display_schema.dump(source)
+        dumped_obj['relationships'][0]['unique'] = mock.ANY
+        return dumped_obj
 
 
 @pytest.fixture
@@ -84,10 +133,10 @@ def test_source(loop, mocker, mock_time):
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         fact = Fact(trait='test_fact', value=1)
-        rule = Rule(RuleAction.ALLOW, trait='test_rule')
+        # rule = Rule(RuleAction.ALLOW, trait='test_rule')
         relationship = Relationship(source=fact, edge="alpha", origin="test_operation")
         source = Source(id='123', name='Test Source', facts=[fact],
-                        rules=[rule], adjustments=[], relationships=[relationship])
+                        rules=[], adjustments=[], relationships=[relationship])
         loop.run_until_complete(BaseService.get_service('data_svc').store(source))
         return source
 
@@ -117,13 +166,17 @@ class TestSourcesApi:
         resp = await api_v2_client.get('/api/v2/sources/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_source(self, api_v2_client, api_cookies, new_source_payload):
-        resp = await api_v2_client.post('/api/v2/sources', cookies=api_cookies, json=new_source_payload)
-        assert resp.status == HTTPStatus.OK
-        source_data = await resp.json()
-        assert source_data == new_source_payload
-        source_exists = await BaseService.get_service('data_svc').locate('sources', {'id': '456'})
-        assert source_exists
+    async def test_create_source(self, api_v2_client, api_cookies, new_source_payload, expected_new_source_dump,
+                                 mocker, mock_time):
+        with mocker.patch('datetime.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            resp = await api_v2_client.post('/api/v2/sources', cookies=api_cookies, json=new_source_payload)
+            assert resp.status == HTTPStatus.OK
+            source_data = await resp.json()
+            assert source_data == expected_new_source_dump
+            stored_source = (await BaseService.get_service('data_svc').locate('sources', {'id': '456'}))[0]
+            assert stored_source.display_schema.dump(stored_source) == expected_new_source_dump
 
     async def test_unauthorized_create_source(self, api_v2_client, new_source_payload):
         resp = await api_v2_client.post('/api/v2/sources', json=new_source_payload)
@@ -134,11 +187,16 @@ class TestSourcesApi:
         resp = await api_v2_client.post('/api/v2/sources', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
-    async def test_update_source(self, api_v2_client, api_cookies, test_source, updated_source_payload):
-        resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
-        assert resp.status == HTTPStatus.OK
-        source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
-        assert source.schema.dump(source) == updated_source_payload
+    async def test_update_source(self, api_v2_client, api_cookies, test_source, updated_source_payload,
+                                 expected_updated_source_dump, mocker):
+        with mocker.patch('app.api.v2.managers.base_api_manager.BaseApiManager.strip_yml') as mock_strip_yml:
+            mock_strip_yml.return_value = [test_source.schema.dump(test_source)]
+            resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
+            assert resp.status == HTTPStatus.OK
+            source_data = await resp.json()
+            assert source_data == expected_updated_source_dump
+            source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
+            assert source.display_schema.dump(source) == expected_updated_source_dump
 
     async def test_unauthorized_update_source(self, api_v2_client, test_source, updated_source_payload):
         resp = await api_v2_client.patch('/api/v2/sources/123', json=updated_source_payload)
@@ -148,21 +206,33 @@ class TestSourcesApi:
         resp = await api_v2_client.patch('/api/v2/sources/999', cookies=api_cookies, json=updated_source_payload)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_replace_source(self, api_v2_client, api_cookies, test_source, replaced_source_payload):
-        resp = await api_v2_client.put('/api/v2/sources/123', cookies=api_cookies, json=replaced_source_payload)
-        assert resp.status == HTTPStatus.OK
-        source = await resp.json()
-        assert source == replaced_source_payload
+    async def test_replace_source(self, api_v2_client, api_cookies, test_source, replaced_source_payload, mocker,
+                                  mock_time, expected_replaced_source_dump):
+        with mocker.patch('datetime.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            resp = await api_v2_client.put('/api/v2/sources/123', cookies=api_cookies, json=replaced_source_payload)
+            assert resp.status == HTTPStatus.OK
+            source = await resp.json()
+            assert source == expected_replaced_source_dump
+            source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
+            assert source.display_schema.dump(source) == expected_replaced_source_dump
 
     async def test_unauthorized_replace_source(self, api_v2_client, test_source, replaced_source_payload):
         resp = await api_v2_client.put('/api/v2/sources/123', json=replaced_source_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_replace_nonexistent_source(self, api_v2_client, api_cookies, new_source_payload):
-        resp = await api_v2_client.put('/api/v2/sources/456', cookies=api_cookies, json=new_source_payload)
-        assert resp.status == HTTPStatus.OK
-        source = await resp.json()
-        assert source == new_source_payload
+    async def test_replace_nonexistent_source(self, api_v2_client, api_cookies, new_source_payload, mocker, mock_time,
+                                              expected_new_source_dump):
+        with mocker.patch('datetime.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            resp = await api_v2_client.put('/api/v2/sources/456', cookies=api_cookies, json=new_source_payload)
+            assert resp.status == HTTPStatus.OK
+            source = await resp.json()
+            assert source == expected_new_source_dump
+            source = (await BaseService.get_service('data_svc').locate('sources', {'id': '456'}))[0]
+            assert source.display_schema.dump(source) == expected_new_source_dump
 
     async def test_invalid_replace_source(self, api_v2_client, api_cookies, test_source):
         payload = dict(name='replaced test source', tactic='collection', technique_name='discovery', technique_id='2',
