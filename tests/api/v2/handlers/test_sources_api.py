@@ -40,11 +40,14 @@ def new_source_payload():
 
 
 @pytest.fixture
-def expected_new_source_dump(new_source_payload):
-    source = SourceSchema().load(new_source_payload)
-    dumped_obj = source.display_schema.dump(source)
-    dumped_obj['relationships'][0]['unique'] = mock.ANY
-    return dumped_obj
+def expected_new_source_dump(new_source_payload, mocker, mock_time):
+    with mocker.patch('datetime.datetime') as mock_datetime:
+        mock_datetime.return_value = mock_datetime
+        mock_datetime.now.return_value = mock_time
+        source = SourceSchema().load(new_source_payload)
+        dumped_obj = source.display_schema.dump(source)
+        dumped_obj['relationships'][0]['unique'] = mock.ANY
+        return dumped_obj
 
 
 @pytest.fixture
