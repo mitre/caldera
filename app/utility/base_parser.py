@@ -1,6 +1,8 @@
 import json
 import re
 
+PARSER_SIGNALS_FAILURE = 418  # Universal Teapot error code
+
 
 class BaseParser:
 
