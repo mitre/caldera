@@ -280,7 +280,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         for fact in facts:
             fact.source = self.paw
-            fact.origin_type = OriginType.SEEDED.name
+            fact.origin_type = OriginType.SEEDED
             await knowledge_svc_handle.add_fact(fact)
         self.links.extend(links)
         return links
