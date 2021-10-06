@@ -54,7 +54,7 @@ class LearningService(LearningServiceInterface, BaseService):
 
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):
-        fact.source_type = OriginType.LEARNED.name
+        fact.origin_type = OriginType.LEARNED
         fact.source = operation.id if operation else link.id
         if all(fact.trait) and not any(fact == f for f in facts):
             fact.collected_by = link.paw

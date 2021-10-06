@@ -76,12 +76,12 @@ class FactApi(BaseObjectApi):
             new_fact = Fact.load(fact_data)
             if 'source' not in fact_data:
                 new_fact.source = WILDCARD_STRING
-            new_fact.source_type = OriginType.USER.name
+            new_fact.origin_type = OriginType.USER
             await knowledge_svc_handle.add_fact(new_fact)
             store = await knowledge_svc_handle.get_facts(criteria=dict(trait=new_fact.trait,
                                                                        value=new_fact.value,
                                                                        source=WILDCARD_STRING,
-                                                                       source_type=OriginType.USER.name))
+                                                                       origin_type=OriginType.USER))
             resp = await self._api_manager.verify_fact_integrity(store)
             return web.json_response(dict(added=resp))
         except Exception as e:
@@ -105,10 +105,10 @@ class FactApi(BaseObjectApi):
             shorthand = new_relationship.shorthand
             new_relationship.source.relationships = [shorthand]
             new_relationship.source.source = origin_target
-            new_relationship.source.source_type = OriginType.USER.name
+            new_relationship.source.origin_type = OriginType.USER
             if 'target' in relationship_data:
                 new_relationship.target.source = origin_target
-                new_relationship.target.source_type = OriginType.USER.name
+                new_relationship.target.origin_type = OriginType.USER
                 new_relationship.target.relationships = [shorthand]
                 await knowledge_svc_handle.add_fact(new_relationship.target)
             await knowledge_svc_handle.add_fact(new_relationship.source)
