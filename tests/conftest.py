@@ -12,6 +12,7 @@ from aiohttp_apispec import validation_middleware
 from aiohttp import web
 from pathlib import Path
 
+from app.api.v2.handlers.agent_api import AgentApi
 from app.api.v2.handlers.ability_api import AbilityApi
 from app.api.v2.handlers.adversary_api import AdversaryApi
 from app.api.v2.handlers.operation_api import OperationApi
@@ -263,6 +264,51 @@ def agent_profile():
 
 
 @pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.html': '/weather',
+        'app.contact.http': '0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010',
+        'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
+        'app.contact.udp': '0.0.0.0:7013',
+        'app.contact.websocket': '0.0.0.0:7012',
+        'plugins': [
+            'stockpile',
+            'atomic'
+        ],
+        'host': '0.0.0.0',
+        'auth.login.handler.module': 'default',
+        'users': {
+            'red': {
+                'red': 'password-foo'
+            },
+            'blue': {
+                'blue': 'password-bar'
+            }
+        }
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'sleep_min': '30',
+        'sleep_max': '60',
+        'untrusted_timer': '90',
+        'watchdog': '0',
+        'implant_name': 'splunkd',
+        'deadman_abilities': [
+            'this-is-a-fake-ability'
+        ],
+        'bootstrap_abilities': [
+            'this-is-another-fake-ability'
+        ]
+    }
+
+
+@pytest.fixture
 def api_v2_client(loop, aiohttp_client, contact_svc):
     def make_app(svcs):
         app = web.Application(
@@ -271,6 +317,7 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
                 json_request_validation_middleware
             ]
         )
+        AgentApi(svcs).add_routes(app)
         AbilityApi(svcs).add_routes(app)
         OperationApi(svcs).add_routes(app)
         AdversaryApi(svcs).add_routes(app)
