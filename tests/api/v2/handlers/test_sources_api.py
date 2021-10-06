@@ -170,7 +170,7 @@ class TestSourcesApi:
         resp = await api_v2_client.post('/api/v2/sources', json=new_source_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_create_duplicate_source(self, api_v2_client, api_cookies, mocker, async_return, test_source):
+    async def test_create_duplicate_source(self, api_v2_client, api_cookies, test_source):
         payload = test_source.schema.dump(test_source)
         resp = await api_v2_client.post('/api/v2/sources', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
@@ -221,9 +221,3 @@ class TestSourcesApi:
             assert source == expected_new_source_dump
             source = (await BaseService.get_service('data_svc').locate('sources', {'id': '456'}))[0]
             assert source.display_schema.dump(source) == expected_new_source_dump
-
-    async def test_invalid_replace_source(self, api_v2_client, api_cookies, test_source):
-        payload = dict(name='replaced test source', tactic='collection', technique_name='discovery', technique_id='2',
-                       executors=[])
-        resp = await api_v2_client.put('/api/v2/sources/123', cookies=api_cookies, json=payload)
-        assert resp.status == HTTPStatus.BAD_REQUEST
