@@ -18,6 +18,7 @@ from app.api.v2.handlers.adversary_api import AdversaryApi
 from app.api.v2.handlers.operation_api import OperationApi
 from app.api.v2.handlers.contact_api import ContactApi
 from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
+from app.api.v2.handlers.health_api import HealthApi
 from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
@@ -322,6 +323,7 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         AdversaryApi(svcs).add_routes(app)
         ContactApi(svcs).add_routes(app)
         ObfuscatorApi(svcs).add_routes(app)
+        HealthApi(svcs).add_routes(app)
         return app
 
     async def initialize():
