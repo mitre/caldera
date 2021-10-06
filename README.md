@@ -8,7 +8,7 @@
 
 *Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/).*
 
-CALDERA&trade; is a cyber security framework designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
+CALDERA&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
 
