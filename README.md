@@ -56,6 +56,15 @@ These requirements are for the computer running the core framework:
 
 ## Installation
 
+Concise installation steps:
+```Bash
+git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0
+cd caldera
+pip3 install -r requirements.txt
+python3 server.py --insecure
+```
+
+Full steps:
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
 ```Bash
 git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0
@@ -72,19 +81,7 @@ Finally, start the server.
 python3 server.py --insecure
 ```
 
-Collectively this would be:
-```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0
-cd caldera
-pip3 install -r requirements.txt
-python3 server.py --insecure
-```
-
-Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
-
-## Video tutorial
-
-Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
+Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use CALDERA.
 
 ## Contributing
 
