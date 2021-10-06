@@ -58,7 +58,7 @@ These requirements are for the computer running the core framework:
 
 Concise installation steps:
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0
+git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0-alpha
 cd caldera
 pip3 install -r requirements.txt
 python3 server.py --insecure
@@ -67,7 +67,7 @@ python3 server.py --insecure
 Full steps:
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0
+git clone https://github.com/mitre/caldera.git --recursive --branch 4.0.0-alpha
 ```
 
 Next, install the PIP requirements:
