@@ -194,7 +194,7 @@
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
                         <br>
-                        <template x-for="(executor, index) of selectedAbility.executors" :key="`${executor.platform}-${executor.name}`">
+                        <template x-for="(executor, index) of selectedAbility.executors" :key="index">
                             <div class="box">
                                 <div class="has-text-right">
                                     <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>

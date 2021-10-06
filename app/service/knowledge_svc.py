@@ -27,10 +27,6 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return await self.__loaded_knowledge_module._update_fact(criteria, updates)
 
     async def get_facts(self, criteria, restrictions=None):
-        """
-        # Becomes a powerful function, because it sorts and filters out facts based on
-        # input (values, groupings) as well as underlying mechanisms such as fact mutexs
-        """
         return await self.__loaded_knowledge_module._get_facts(criteria, restrictions)
 
     async def delete_fact(self, criteria):
@@ -40,19 +36,9 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return await self.__loaded_knowledge_module._get_meta_facts(meta_fact, agent, group)
 
     async def get_fact_origin(self, fact):
-        """
-        # Retrieve the specific origin of a fact. If it was learned in the current operation, parse through
-        # links to identify the host it was discovered on.
-        """
         return await self.__loaded_knowledge_module._get_fact_origin(fact)
 
     async def check_fact_exists(self, fact, listing=None):
-        """
-        Check to see if a fact already exists in the knowledge store, or if a listing is provided, in said listing
-        :param fact: The fact to check for
-        :param listing: Optional specific listing to examine
-        :return: Bool indicating whether or not the fact is already present
-        """
         searchable = fact.display
         if not listing:
             results = await self.get_facts(criteria=searchable)
@@ -79,14 +65,6 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     # --- Rules ---
     async def add_rule(self, rule, constraints=None):
-        """
-        # Add a rule to the knowledge service
-        # Args:
-        #    rule.action: [DENY, ALLOW, EXCLUSIVE, EXCLUSIVE_TRAIT, EXCLUSIVE_VALUE], 'EXCLUSIVE_*' actions denote that
-        #        the trait/value will be made mutually exclusive in its use to the agent/group/operation that is
-        #        specified for. Essentially a fact is binded to mutex, and only one action can be using the fact
-        #        at any one time.
-        """
         if isinstance(rule, Rule):
             return await self.__loaded_knowledge_module._add_rule(rule, constraints)
 
@@ -103,7 +81,4 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
         return await self.__loaded_knowledge_module._restore_state()
 
     async def destroy(self):
-        """
-        Delete data stores
-        """
         return self.__loaded_knowledge_module._destroy()

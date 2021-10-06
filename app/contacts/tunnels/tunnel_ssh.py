@@ -22,8 +22,8 @@ class Tunnel(BaseWorld):
         host_key_passphrase = self.get_config('app.contact.tunnel.ssh.host_key_passphrase')
         try:
             host_key = asyncssh.read_private_key(host_key_filepath, passphrase=host_key_passphrase)
-        except Exception as e:
-            self.log.warning('Generating temporary SSH private key. Was unable to use provided SSH private key: %s' % e)
+        except Exception:
+            self.log.info('Generating temporary SSH private key. Was unable to use provided SSH private key')
             host_key = asyncssh.generate_private_key('ssh-rsa', comment='temporary key')
         try:
             await asyncssh.create_server(self.server_factory, addr, int(port),
