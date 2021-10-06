@@ -60,8 +60,7 @@ class BaseApiManager(BaseWorld):
         obj_schema = schema()
         obj = obj_schema.load(data)
         obj.access = self._get_allowed_from_access(access)
-        obj.store(self._data_svc.ram)
-        return obj
+        return obj.store(self._data_svc.ram)
 
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = data.get(id_property) or str(uuid.uuid4())
