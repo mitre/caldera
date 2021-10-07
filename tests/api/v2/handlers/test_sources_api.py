@@ -96,7 +96,7 @@ def replaced_source_payload(test_source):
         'edge': 'delta',
         'origin': "replaced_test_operation"
     }
-    source_data.update(dict(name='an replaced test source',
+    source_data.update(dict(name='a replaced test source',
                             facts=[fact],
                             rules=[rule.schema.dump(rule)],
                             relationships=[relationship]
