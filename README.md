@@ -76,6 +76,8 @@ pip3 install -r requirements.txt
 ```
 **Super-power your CALDERA server installation! [Install GoLang (1.13+)](https://golang.org/doc/install)**
 
+Note: some linux distros, including Amazon Linux 2, require some prerequisite packages, including `gcc` and `python3-devel` to be installed. If installation of `donut-shellcode` fails, install those packages using your distro's package manager and try again.
+
 Finally, start the server. 
 ```Bash
 python3 server.py --insecure
