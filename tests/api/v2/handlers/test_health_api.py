@@ -8,20 +8,7 @@ from http import HTTPStatus
 def expected_caldera_info():
     return {
         'application': 'CALDERA',
-        'plugins': [
-            {
-                'address': '/plugin/sandcat/gui',
-                'description': 'A custom multi-platform RAT',
-                'enabled': True,
-                'name': 'sandcat'
-            },
-            {
-                'address': 'plugin/ssl/gui',
-                'description': 'Run an SSL proxy in front of the server',
-                'enabled': False,
-                'name': 'ssl'
-            }
-        ],
+        'plugins': [],
         'version': app.get_version()
     }
 
