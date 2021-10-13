@@ -49,7 +49,7 @@ class FileSvc(FileServiceInterface, BaseService):
             if packer in self.packers:
                 file_path, contents = await self.get_payload_packer(packer).pack(file_path, contents)
             else:
-                self.log.warning('packer <%s> not available for payload <%s>, returning unpacked' % (packer, payload))
+                self.log.warning('packer not available for payload, returning unpacked')
         if headers.get('xor_key'):
             xor_key = headers['xor_key']
             contents = xor_bytes(contents, xor_key.encode())
@@ -70,7 +70,7 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
-    async def save_multipart_file_upload(self, request, target_dir):
+    async def save_multipart_file_upload(self, request, target_dir, encrypt=True):
         try:
             reader = await request.multipart()
             headers = CIMultiDict(request.headers)
@@ -80,7 +80,7 @@ class FileSvc(FileServiceInterface, BaseService):
                     break
                 _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
-                                     encoding=headers.get('x-file-encoding'))
+                                     encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
         except Exception as e:
@@ -92,7 +92,7 @@ class FileSvc(FileServiceInterface, BaseService):
                 file_path = await self.walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
                 if file_path:
                     return plugin.name, file_path
-        file_path = await self.walk_file_path(os.path.join('data'), name)
+        file_path = await self.walk_file_path(os.path.join('data', location), name)
         if file_path:
             return None, file_path
         return None, await self.walk_file_path('%s' % location, name)

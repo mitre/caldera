@@ -29,6 +29,10 @@ class OriginType(Enum):
     SEEDED = 1
     LEARNED = 2
     IMPORTED = 3
+    USER = 4
+
+
+WILDCARD_STRING = '[USER INPUT THIS UNBOUNDED FACT/RELATIONSHIP]'
 
 
 class FactSchema(ma.Schema):
@@ -36,14 +40,14 @@ class FactSchema(ma.Schema):
     class Meta:
         unknown = ma.EXCLUDE
 
-    unique = ma.fields.String()
-    trait = ma.fields.String()
-    name = ma.fields.String()
+    unique = ma.fields.String(dump_only=True)
+    trait = ma.fields.String(required=True)
+    name = ma.fields.String(dump_only=True)
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     score = ma.fields.Integer()
-    source = ma.fields.String()
-    origin_type = ma_enum.EnumField(OriginType)
+    source = ma.fields.String(allow_none=True)
+    origin_type = ma_enum.EnumField(OriginType, allow_none=True)
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
     limit_count = ma.fields.Integer()
@@ -51,8 +55,13 @@ class FactSchema(ma.Schema):
     technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
-    def build_fact(self, data, **_):
-        return Fact(**data)
+    def build_fact(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Fact(**data)
+
+
+class FactUpdateRequestSchema(ma.Schema):
+    criteria = ma.fields.Nested(FactSchema(partial=True), required=True)
+    updates = ma.fields.Nested(FactSchema(partial=True), required=True)
 
 
 class Fact(BaseObject):
@@ -92,7 +101,7 @@ class Fact(BaseObject):
 
     def __eq__(self, other):
         if isinstance(other, Fact):
-            return self.unique == other.unique
+            return self.unique == other.unique and self.source == other.source
         return False
 
     def __init__(self, trait, value=None, score=1, source=None, origin_type=None, links=None,

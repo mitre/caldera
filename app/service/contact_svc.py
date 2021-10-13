@@ -16,8 +16,8 @@ def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
         log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
-                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        args[0].report[agent.contact].append(log)
+                   date=BaseWorld.get_current_timestamp())
+        args[0].report[agent.contact.upper()].append(log)
         return agent, instructions
 
     return wrapper
@@ -120,19 +120,20 @@ class ContactService(ContactServiceInterface, BaseService):
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.executor.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
-                        loop.create_task(self.get_service('learning_svc').learn(agent[0].all_facts(), link,
+                        loop.create_task(self.get_service('learning_svc').learn(await agent[0].all_facts(), link,
                                                                                 result.output))
                     elif not operation:
                         loop.create_task(link.parse(None, result.output))
                     elif link.executor.parsers:
                         loop.create_task(link.parse(operation, result.output))
                     elif operation.use_learning_parsers:
-                        loop.create_task(self.get_service('learning_svc').learn(operation.all_facts(), link,
-                                                                                result.output))
+                        all_facts = await operation.all_facts()
+                        loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
+                                                                                operation))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
-        except Exception:
-            self.log.exception('Unexpected error occurred while saving link')
+        except Exception as e:
+            self.log.exception(f'Unexpected error occurred while saving link - {e}')
 
     async def _postprocess_link_result(self, result, link):
         if link.ability.HOOKS and link.executor.name in link.ability.HOOKS:
@@ -185,4 +186,4 @@ class ContactService(ContactServiceInterface, BaseService):
         """
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             if op.group == agent.group or not op.group:
-                await op.update_operation(self.get_services())
+                await op.update_operation_agents(self.get_services())

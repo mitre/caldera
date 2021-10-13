@@ -578,6 +578,9 @@ class Handler(asyncio.DatagramProtocol):
             response['new_contact'] = agent.pending_contact
             self.log.debug('Sending agent instructions to switch from C2 channel %s to %s'
                            % (agent.contact, agent.pending_contact))
+        if agent.executor_change_to_assign:
+            response['executor_change'] = agent.assign_pending_executor_change()
+            self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
         return response
 
     def _store_beacon_response(self, beacon_id, response_dict):

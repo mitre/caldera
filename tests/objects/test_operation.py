@@ -12,7 +12,13 @@ from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_event_svc import EventServiceInterface
 from app.utility.base_service import BaseService
+from app.objects.c_source import Source
+from app.objects.c_planner import Planner
+from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
+from app.objects.secondclass.c_fact import Fact
+
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 @pytest.fixture
@@ -64,17 +70,17 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
                             command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
-                            decide=datetime.strptime('2021-01-01 08:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 08:01:00', '%Y-%m-%d %H:%M:%S'),
+                            decide=datetime.strptime('2021-01-01 08:00:00', TIME_FORMAT),
+                            collect=datetime.strptime('2021-01-01 08:01:00', TIME_FORMAT),
                             finish='2021-01-01 08:02:00')
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                             command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
-                            decide=datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 09:01:00', '%Y-%m-%d %H:%M:%S'),
+                            decide=datetime.strptime('2021-01-01 09:00:00', TIME_FORMAT),
+                            collect=datetime.strptime('2021-01-01 09:01:00', TIME_FORMAT),
                             finish='2021-01-01 09:02:00')
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                                     command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
-                                    decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
+                                    decide=datetime.strptime('2021-01-01 10:00:00', TIME_FORMAT))
     op.chain = [link_1, link_2, discarded_link]
     return op
 
@@ -129,13 +135,29 @@ def make_test_result():
 
 @pytest.fixture
 def op_with_learning_parser(ability, adversary):
-    op = Operation(name='test', agents=[], adversary=adversary, use_learning_parsers=True)
+    op = Operation(id='12345', name='testA', agents=[], adversary=adversary, use_learning_parsers=True)
     return op
 
 
 @pytest.fixture
 def op_without_learning_parser(ability, adversary):
-    op = Operation(name='test', agents=[], adversary=adversary, use_learning_parsers=False)
+    op = Operation(id='54321', name='testB', agents=[], adversary=adversary, use_learning_parsers=False)
+    return op
+
+
+@pytest.fixture
+def op_with_learning_and_seeded(ability, adversary, operation_agent):
+    sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
+    op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
+    # patch operation to make it 'realistic'
+    op.start = datetime.strptime('2021-01-01 09:00:00', TIME_FORMAT)
+    op.adversary = op.adversary()
+    op.planner = Planner(planner_id='12345', name='test_planner',
+                                                  module='not.an.actual.planner', params=None)
+    op.objective = Objective(id='6428', name='not_an_objective')
+    t_operation_agent = operation_agent
+    t_operation_agent.paw = '123456'
+    op.agents = [t_operation_agent]
     return op
 
 
@@ -149,8 +171,8 @@ class TestOperation:
     def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
+        start_time = op_for_event_logs.start.strftime(TIME_FORMAT)
+        agent_creation_time = operation_agent.created.strftime(TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -219,8 +241,8 @@ class TestOperation:
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
 
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
+        start_time = op_for_event_logs.start.strftime(TIME_FORMAT)
+        agent_creation_time = operation_agent.created.strftime(TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -298,7 +320,8 @@ class TestOperation:
         mock_emit_state_change_method.assert_not_called()
 
     @mock.patch.object(Operation, '_emit_state_change_event')
-    def test_no_state_change_event_fired_when_setting_same_state(self, mock_emit_state_change_method, fake_event_svc, adversary):
+    def test_no_state_change_event_fired_when_setting_same_state(self, mock_emit_state_change_method, fake_event_svc,
+                                                                 adversary):
         initial_state = 'running'
         op = Operation(name='test', agents=[], adversary=adversary, state=initial_state)
         op.state = initial_state
@@ -329,7 +352,8 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser, make_test_link, make_test_result):
+    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+                                  make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
@@ -339,8 +363,13 @@ class TestOperation:
         fact = test_link.facts[0]
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
+        knowledge_data = loop.run_until_complete(op_with_learning_parser.all_facts())
+        assert len(knowledge_data) == 1
+        assert knowledge_data[0].trait == 'host.ip.address'
+        assert knowledge_data[0].value == '10.10.10.10'
 
-    def test_without_learning_parser(self, loop, app_svc, contact_svc, data_svc, learning_svc, event_svc, op_without_learning_parser, make_test_link, make_test_result):
+    def test_without_learning_parser(self, loop, app_svc, contact_svc, data_svc, learning_svc, event_svc,
+                                     op_without_learning_parser, make_test_link, make_test_result):
         app_svc = app_svc(loop)  # contact_svc._save(...) needs app service registered
         test_link = make_test_link(5678)
         op_without_learning_parser.add_link(test_link)
@@ -348,3 +377,26 @@ class TestOperation:
         loop.run_until_complete(data_svc.store(op_without_learning_parser))
         loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 0
+
+    def test_facts(self, loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
+                   op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
+        test_link = make_test_link(9876)
+        op_with_learning_and_seeded.add_link(test_link)
+
+        test_result = make_test_result(test_link.id)
+        loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))
+        loop.run_until_complete(op_with_learning_and_seeded._init_source())  # need to call this manually (no 'run')
+        loop.run_until_complete(contact_svc._save(test_result))
+        assert len(test_link.facts) == 1
+        fact = test_link.facts[0]
+        assert fact.trait == 'host.ip.address'
+        assert fact.value == '10.10.10.10'
+
+        knowledge_data = loop.run_until_complete(op_with_learning_and_seeded.all_facts())
+        assert len(knowledge_data) == 2
+        origin_set = [x.source for x in knowledge_data]
+        assert op_with_learning_and_seeded.id in origin_set
+        assert op_with_learning_and_seeded.source.id in origin_set
+
+        report = loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
+        assert len(report['facts']) == 2

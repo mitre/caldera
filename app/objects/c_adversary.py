@@ -1,10 +1,14 @@
 import os
+import uuid
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
 from app.utility.base_service import BaseService
+
+
+DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 
 
 class AdversarySchema(ma.Schema):
@@ -14,8 +18,8 @@ class AdversarySchema(ma.Schema):
     description = ma.fields.String()
     atomic_ordering = ma.fields.List(ma.fields.String())
     objective = ma.fields.String()
-    tags = ma.fields.List(ma.fields.String())
-    has_repeatable_abilities = ma.fields.Boolean()
+    tags = ma.fields.List(ma.fields.String(), allow_none=True)
+    has_repeatable_abilities = ma.fields.Boolean(dump_only=True)
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -35,9 +39,14 @@ class AdversarySchema(ma.Schema):
             del adversary['phases']
         return adversary
 
+    @ma.pre_load
+    def remove_properties(self, data, **_):
+        data.pop('has_repeatable_abilities', None)
+        return data
+
     @ma.post_load
-    def build_adversary(self, data, **_):
-        return Adversary(**data)
+    def build_adversary(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Adversary(**data)
 
 
 class Adversary(FirstClassObjectInterface, BaseObject):
@@ -48,13 +57,13 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, adversary_id, name, description, atomic_ordering, objective=None, tags=None):
+    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None):
         super().__init__()
-        self.adversary_id = adversary_id
+        self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name
         self.description = description
         self.atomic_ordering = atomic_ordering
-        self.objective = objective
+        self.objective = objective or DEFAULT_OBJECTIVE_ID
         self.tags = set(tags) if tags else set()
         self.has_repeatable_abilities = False
 
@@ -70,6 +79,20 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('tags', self.tags)
         existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram['abilities']))
         return existing
+
+    def verify(self, log, abilities, objectives):
+        for ability_id in self.atomic_ordering:
+            if not next((ability for ability in abilities if ability.ability_id == ability_id), None):
+                log.warning('Ability referenced in adversary %s but not found: %s', self.adversary_id, ability_id)
+
+        if not self.objective:
+            self.objective = DEFAULT_OBJECTIVE_ID
+        elif not next((objective for objective in objectives if objective.id == self.objective), None):
+            log.warning('Objective referenced in adversary %s but not found: %s. Setting default objective.',
+                        self.adversary_id, self.objective)
+            self.objective = DEFAULT_OBJECTIVE_ID
+
+        self.has_repeatable_abilities = self.check_repeatable_abilities(abilities)
 
     def has_ability(self, ability):
         for a in self.atomic_ordering:
