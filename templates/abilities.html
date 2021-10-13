@@ -302,9 +302,14 @@
                                             <label class="label">cleanup</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field ">
+                                            <div class="field has-addons">
+                                                <div class="control is-expanded">
+                                                    <textarea class="textarea is-small code" x-model="executor.cleanup"></textarea>
+                                                </div>
                                                 <div class="control">
-                                                    <input class="input is-small code" x-model="executor.cleanup">
+                                                    <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Add commands separated by new line." @click="executor.cleanup = transformCleanup(executor.cleanup)">
+                                                        <span class="icon is-small"><i class="fas fa-plus-square"></i></span>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -509,6 +514,15 @@
                         console.error(error);
                     });
                 }
+            },
+
+            transformCleanup(cleanup) {
+                if (typeof cleanup === 'string') {
+                    if (cleanup.includes('\n')) {
+                        return cleanup.split('\n');
+                    }
+                }
+                return cleanup;
             },
 
             addExecutorToAbility(bOrA) {
