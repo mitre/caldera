@@ -51,7 +51,10 @@ class AbilityApi(BaseObjectApi):
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
-    @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
+    @aiohttp_apispec.request_schema(AbilitySchema(partial=True, exclude=['ability_id',
+                                                                         'requirements',
+                                                                         'additional_info',
+                                                                         'access']))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def update_ability(self, request: web.Request):
         ability = await self.update_on_disk_object(request)
