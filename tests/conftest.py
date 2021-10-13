@@ -19,6 +19,7 @@ from app.api.v2.handlers.adversary_api import AdversaryApi
 from app.api.v2.handlers.operation_api import OperationApi
 from app.api.v2.handlers.contact_api import ContactApi
 from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
+from app.api.v2.handlers.plugins_api import PluginApi
 from app.api.v2.handlers.fact_source_api import FactSourceApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
@@ -327,6 +328,7 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         ContactApi(svcs).add_routes(app)
         ObjectiveApi(svcs).add_routes(app)
         ObfuscatorApi(svcs).add_routes(app)
+        PluginApi(svcs).add_routes(app)
         FactSourceApi(svcs).add_routes(app)
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
@@ -350,7 +352,6 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         os.chdir(str(Path(__file__).parents[1]))
 
         await app_svc.register_contacts()
-        await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         await auth_svc.set_login_handlers(services)
