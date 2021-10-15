@@ -537,7 +537,7 @@
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.source.id">
                                                 {% for s in sources %}
-                                                <option>{{ s.name|e }}</option>
+                                                <option value="{{s.id}}">{{ s.name|e }}</option>
                                                 {% endfor %}
                                             </select>
                                         </div>
