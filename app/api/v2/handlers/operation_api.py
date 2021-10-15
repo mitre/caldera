@@ -49,7 +49,15 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operation)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.request_schema(OperationSchema(exclude=['source.name', 'source.facts', 'source.rules',
+                                                             'source.adjustments', 'source.relationships',
+                                                             'planner.name', 'planner.module', 'planner.params',
+                                                             'planner.description', 'planner.stopping_conditions',
+                                                             'planner.ignore_enforcement_modules',
+                                                             'planner.allow_repeatable_abilities',
+                                                             'adversary.name', 'adversary.description',
+                                                             'adversary.atomic_ordering', 'adversary.objective',
+                                                             'adversary.tags', 'adversary.has_repeatable_abilities']))
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
@@ -130,7 +138,9 @@ class OperationApi(BaseObjectApi):
         link = await self._api_manager.update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are paw, '
+                                                       'executor.name, executor.command, and executor.platform. '
+                                                       'executor.command is expected to be unencoded.')
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
