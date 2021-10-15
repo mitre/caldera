@@ -288,88 +288,9 @@
         <div class="modal-background" @click="showAbilityModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
-                <p class="modal-card-title">Add an Ability to Adversary</p>
+                <p class="modal-card-title"><span x-text="isCreatingAbility ? 'Create' : 'Edit'"></span> an Ability</p>
             </header>
             <section class="modal-card-body">
-                <p class="has-text-centered">Select an Ability</p>
-                <form>
-                    <div class="field is-horizontal">
-                        <div class="field-label is-small">
-                            <label class="label"><span class="icon is-small"><i class="fas fa-search"></i></span></label>
-                        </div>
-                        <div class="field-body">
-                            <div class="field">
-                                <div class="control">
-                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
-                                    <div class="search-results">
-                                        <template x-for="result of abilitySearchResults" :key="result.ability_id">
-                                            <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-                <form>
-                    <div class="field is-horizontal">
-                        <div class="field-label is-small">
-                            <label class="label">Tactic</label>
-                        </div>
-                        <div class="field-body">
-                            <div class="field">
-                                <div class="control">
-                                    <div class="select is-small is-fullwidth">
-                                        <select x-model="selectedTactic" x-on:change="selectedAbilityId = ''">
-                                            <option default>Choose a tactic</option>
-                                            <template x-for="tactic of [...new Set(abilities.map((e) => e.tactic))]" :key="tactic">
-                                                <option x-bind:value="tactic" x-text="tactic"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="field is-horizontal">
-                        <div class="field-label is-small">
-                            <label class="label">Technique</label>
-                        </div>
-                        <div class="field-body">
-                            <div class="field">
-                                <div class="control">
-                                    <div class="select is-small is-fullwidth">
-                                        <select x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''">
-                                            <option default>Choose a technique</option>
-                                            <template :key="exploit.technique_id" x-for="exploit of [...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))">
-                                                <option x-bind:value="exploit.technique_id" x-text="`${exploit.technique_id} | ${exploit.technique_name}`"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="field is-horizontal is-fullwidth">
-                        <div class="field-label is-small">
-                            <label class="label">Ability</label>
-                        </div>
-                        <div class="field-body">
-                            <div class="field">
-                                <div class="control">
-                                    <div class="select is-small is-fullwidth">
-                                        <select x-model="selectedAbilityId" x-bind:disabled="!selectedTechnique" x-on:change="selectAbility(selectedAbilityId)">
-                                            <option default>Choose an ability</option>
-                                            <template :key="ability.ability_id" x-for="ability of abilities.filter((e) => selectedTactic === e.tactic && selectedTechnique === e.technique_id)">
-                                                <option x-bind:value="ability.ability_id" x-text="ability.name"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
                 <template x-if="selectedAbility">
                     <div class="content">
                         <form>
@@ -534,7 +455,7 @@
                                                         <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
-                                                            </template>      
+                                                            </template>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -558,30 +479,42 @@
                                             <label class="label">timeout</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field ">
+                                            <div class="field">
                                                 <div class="control">
                                                     <input class="input is-small" type="number" x-model="executor.timeout">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
-                                            <label class="label">cleanup</label>
-                                            <template x-for="i in executor.cleanup.length+1">
-                                                <div class="field-body">
-                                                    <div class="field has-addons">
-                                                        <div class="control is-expanded">
-                                                            <input class="input is-small code" x-model="executor.cleanup[i-1]"></input>
-                                                        </div>
-                                                        <div class="control">
-                                                            <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(i-1, 1)">
-                                                                <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
-                                                            </a>
-                                                        </div>
+                                    <template x-for="(cleanup, index) of executor.cleanup">
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small">
+                                                <label class="label" x-text="index === 0 ? 'cleanup': ' '"></label>
+                                            </div>
+                                            <div class="field-body">
+                                                <div class="field has-addons">
+                                                    <div class="control is-expanded">
+                                                        <input class="input is-small code" x-model="executor.cleanup[index]"></input>
+                                                    </div>
+                                                    <div class="control">
+                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
+                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                        </a>
                                                     </div>
                                                 </div>
-                                            </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small" x-show="!executor.cleanup.length">
+                                            <label class="label">cleanup</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control has-text-right">
+                                                    <button class="button is-small is-primary" @click.stop="executor.cleanup.push('')">+ Add Cleanup Command</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>
@@ -598,21 +531,21 @@
             <footer class="modal-card-foot">
                 <nav class="level">
                     <div class="level-left">
-                        <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-small" @click="saveAbility(false)" x-bind:disabled="!selectedAbilityId">
-                                <span class="icon"><i class="fas fa-save"></i></span>
-                                <span>Save</span>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="deleteAbility()" x-show="!isCreatingAbility">
+                                <span class="icon"><i class="fas fa-trash"></i></span>
+                                <span>Delete Ability</span>
                             </button>
                         </div>
                     </div>
                     <div class="level-right">
                         <div class="level-item">
                             <button class="button is-small" @click="showAbilityModal = false">Close</button>
-                        </divp>
-                        <div class="level-item" x-show="selectedAbility">
-                            <button class="button is-primary is-small" @click="saveAbility(true)" x-bind:disabled="!selectedAbilityId">
-                                <span class="icon"><i class="fas fa-plus"></i></span>
-                                <span>Save & Add</span>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="saveAbility()">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
                             </button>
                         </div>
                     </div>
