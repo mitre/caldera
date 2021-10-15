@@ -300,18 +300,20 @@
                                     <div class="field is-horizontal">
                                         <div class="field-label is-small">
                                             <label class="label">cleanup</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field has-addons">
-                                                <div class="control is-expanded">
-                                                    <textarea class="textarea is-small code" x-model="executor.cleanup"></textarea>
+                                            <template x-for="i in executor.cleanup.length+1">
+                                                <div class="field-body">
+                                                    <div class="field has-addons">
+                                                        <div class="control is-expanded">
+                                                            <input class="input is-small code" x-model="executor.cleanup[i-1]"></input>
+                                                        </div>
+                                                        <div class="control">
+                                                            <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(i-1, 1)">
+                                                                <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="control">
-                                                    <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Add commands separated by new line." @click="executor.cleanup = transformCleanup(executor.cleanup)">
-                                                        <span class="icon is-small"><i class="fas fa-plus-square"></i></span>
-                                                    </a>
-                                                </div>
-                                            </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </form>
@@ -516,20 +518,12 @@
                 }
             },
 
-            transformCleanup(cleanup) {
-                if (typeof cleanup === 'string') {
-                    if (cleanup.includes('\n')) {
-                        return cleanup.split('\n');
-                    }
-                }
-                return [cleanup];
-            },
-
             addExecutorToAbility(bOrA) {
                 const template = {
                     payloads: [],
                     platform: 'linux',
-                    name: 'sh'
+                    name: 'sh',
+                    cleanup: []
                 };
 
                 if (bOrA === 'after') {
