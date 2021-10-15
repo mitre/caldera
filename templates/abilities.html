@@ -290,30 +290,42 @@
                                             <label class="label">timeout</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field ">
+                                            <div class="field">
                                                 <div class="control">
                                                     <input class="input is-small" type="number" x-model="executor.timeout">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
-                                            <label class="label">cleanup</label>
-                                            <template x-for="i in executor.cleanup.length+1">
-                                                <div class="field-body">
-                                                    <div class="field has-addons">
-                                                        <div class="control is-expanded">
-                                                            <input class="input is-small code" x-model="executor.cleanup[i-1]"></input>
-                                                        </div>
-                                                        <div class="control">
-                                                            <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(i-1, 1)">
-                                                                <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
-                                                            </a>
-                                                        </div>
+                                    <template x-for="(cleanup, index) of executor.cleanup">
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small">
+                                                <label class="label" x-text="index === 0 ? 'cleanup': ' '"></label>
+                                            </div>
+                                            <div class="field-body">
+                                                <div class="field has-addons">
+                                                    <div class="control is-expanded">
+                                                        <input class="input is-small code" x-model="executor.cleanup[index]"></input>
+                                                    </div>
+                                                    <div class="control">
+                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
+                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                        </a>
                                                     </div>
                                                 </div>
-                                            </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small" x-show="!executor.cleanup.length">
+                                            <label class="label">cleanup</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control has-text-right">
+                                                    <button class="button is-small is-primary" @click.stop="executor.cleanup.push('')">+ Add Cleanup Command</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>
@@ -457,6 +469,7 @@
                 this.fieldErrors = [];
                 this.selectedAbility = ability;
                 this.showAbilityModal = true;
+                console.log(this.selectedAbility)
             },
 
             createAbility() {
@@ -475,7 +488,8 @@
                     singleton: true,
                     buckets: [],
                     requirements: [],
-                    access: {}
+                    access: {},
+                    cleanup: []
                 };
 
                 this.addExecutorToAbility('before');
