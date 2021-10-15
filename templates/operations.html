@@ -48,7 +48,7 @@
                             Quick Add
                         </button>
                         <button type="button" title="add operation" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
+                                x-on:click="openModal = 'addOperation'; getOperationFields();"><i class="pr-1 fas fa-plus"></i>
                             Create Operation
                         </button>
                     </div>
@@ -518,12 +518,11 @@
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.adversary.adversary_id">
                                                 <option value="" selected>No adversary (manual)</option>
-                                                {% for adv in adversaries %}
-                                                <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
-                                                        value="{{ adv.adversary_id|e }}">
-                                                    {{ adv.name|e }}
-                                                </option>
-                                                {% endfor %}
+                                                <template x-for="adv in adversaries" :key="adv.adversary_id">
+                                                    <option x-on:click="isSelectedAdversaryRepeatable = adv.has_repeatable_abilities"
+                                                            x-bind:value="adv.adversary_id" x-text="adv.name">
+                                                    </option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -536,9 +535,9 @@
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.source.id">
-                                                {% for s in sources %}
-                                                <option value="{{s.id}}">{{ s.name|e }}</option>
-                                                {% endfor %}
+                                                <template x-for="s in sources" :key="s.id">
+                                                    <option x-bind:value="s.id" x-text="s.name"></option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -584,17 +583,11 @@
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
                                             <select id="autonomous-planner" x-model="startOperation.planner.id">
-                                                {% for p in planners %}
-                                                {% if p.allow_repeatable_abilities %}
-                                                <option data-allow-repeatable-abilities>
-                                                    {{ p.name|e }}
-                                                </option>
-                                                {% else %}
-                                                <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
-                                                    {{ p.name|e }}
-                                                </option>
-                                                {% endif %}
-                                                {% endfor %}
+                                                <template x-for="p in planners" :key="p.name">
+                                                    <option :data-allow-repeatable-abilities="p.allow_repeatable_abilities"
+                                                            x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable) ? 'true' : null"
+                                                            x-text="p.name"></option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -1010,6 +1003,10 @@
             docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
             agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
+            adversaries: '',
+            sources: '',
+            planners: '',
+            obfuscators: JSON.parse('{{ obfuscators | tojson }}'),
             selectedOperation: null,
             selectedAgentIndex: 0,
             isSelectedAdversaryRepeatable: false,
@@ -1142,7 +1139,6 @@
             async initOperations() {
                 this.getOperations();
                 this.getUsage();
-
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
@@ -1339,6 +1335,19 @@
                         this.selectedLinkResults = b64DecodeUnicode(res.result);
                     }).catch(() => console.error('Error getting link results.'));
                 }
+            },
+
+            getOperationFields() {
+                this.getAgents();
+                Promise.all([apiV2('GET', '/api/v2/adversaries'),
+                    apiV2('GET', '/api/v2/sources'),
+                    apiV2('GET', '/api/v2/planners')]).then((values) => {
+                    this.adversaries = values[0];
+                    this.sources = values[1];
+                    this.planners = values[2];
+                }).catch((error) => {
+                    console.error(`Error updating operation fields: ${error}`);
+                });
             },
 
             updateLink(status, command = null) {
