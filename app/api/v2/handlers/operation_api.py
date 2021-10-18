@@ -49,8 +49,8 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operation)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='For nested schema fields (Adversary, Planner, and Source),'
-                                  'only id fields are required.')
+                          summary='Required nested schema fields are as follows: "adversary.adversary_id", '
+                                  '"planner.planner_id", and "source.id".')
     @aiohttp_apispec.request_schema(OperationSchema())
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
@@ -132,9 +132,9 @@ class OperationApi(BaseObjectApi):
         link = await self._api_manager.update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
-    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are paw, '
-                                                       'executor.name, executor.command, and executor.platform. '
-                                                       'executor.command is expected to be unencoded.')
+    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are "paw", '
+                                                       '"executor.name", "executor.command", and "executor.platform". '
+                                                       '"executor.command" is expected to be unencoded.')
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
