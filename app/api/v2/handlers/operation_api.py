@@ -48,16 +48,10 @@ class OperationApi(BaseObjectApi):
         operation = await self.get_object(request)
         return web.json_response(operation)
 
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(exclude=['source.name', 'source.facts', 'source.rules',
-                                                             'source.adjustments', 'source.relationships',
-                                                             'planner.name', 'planner.module', 'planner.params',
-                                                             'planner.description', 'planner.stopping_conditions',
-                                                             'planner.ignore_enforcement_modules',
-                                                             'planner.allow_repeatable_abilities',
-                                                             'adversary.name', 'adversary.description',
-                                                             'adversary.atomic_ordering', 'adversary.objective',
-                                                             'adversary.tags', 'adversary.has_repeatable_abilities']))
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='For nested schema fields (Adversary, Planner, and Source),'
+                                  'only id fields are required.')
+    @aiohttp_apispec.request_schema(OperationSchema())
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
