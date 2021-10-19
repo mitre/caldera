@@ -1,0 +1,3 @@
+celery_result_backend: db+sqlite:///
+celery_broker_url: sqla+sqlite:///
+celery_db: celery.db

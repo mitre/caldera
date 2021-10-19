@@ -2,11 +2,13 @@ import argparse
 import asyncio
 import logging
 import os
+import subprocess
 import sys
 
 import aiohttp_apispec
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
+from celery import Celery
 
 import app.api.v2
 from app import version
@@ -28,6 +30,10 @@ from app.service.rest_svc import RestService
 from app.utility.base_object import AppConfigGlobalVariableIdentifier
 from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
+
+
+celery_app = Celery('caldera', include=['app.utility.tasks'])
+celery_app.config_from_object('app.utility.celery_config:settings', namespace='celery')
 
 
 def setup_logger(level=logging.DEBUG):
@@ -70,6 +76,8 @@ def run_tasks(services):
         logging.info('All systems ready.')
         loop.run_forever()
     except KeyboardInterrupt:
+        celery_process.kill()
+        logging.debug('[!] Killed celery workers...')
         loop.run_until_complete(services.get('app_svc').teardown(main_config_file=args.environment))
 
 
@@ -135,6 +143,8 @@ if __name__ == '__main__':
     file_svc = FileSvc()
     learning_svc = LearningService()
     event_svc = EventService()
+
+    celery_process = subprocess.Popen(["celery", "-A", "server.celery_app", "worker", "-l", "INFO", "-E"], )
 
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
