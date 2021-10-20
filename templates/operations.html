@@ -48,7 +48,7 @@
                             Quick Add
                         </button>
                         <button type="button" title="add operation" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'addOperation'; getOperationFields();"><i class="pr-1 fas fa-plus"></i>
+                                x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
                             Create Operation
                         </button>
                     </div>
@@ -146,13 +146,13 @@
                             <template x-if="isOperationRunning">
                                 <div class="is-flex is-flex-direction-row is-flex-wrap-wrap is-justify-content-center pb-2"
                                      id="operation-obfuscator">
-                                    {% for o in obfuscators %}
-                                    <button x-bind:class="selectedOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
-                                            class="is-small button is-rounded is-primary chip m-1"
-                                            x-on:click="updateOperation('obfuscator', `{{ o.name|e }}`)">
-                                        {{ o.name|e }}
-                                    </button>
-                                    {% endfor %}
+                                    <template x-for="o in OBFUSCATORS" :key="o.name">
+                                        <button x-bind:class="selectedOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                class="is-small button is-rounded is-primary chip m-1"
+                                                x-on:click="updateOperation('obfuscator', o.name)"
+                                                x-text="o.name">
+                                        </button>
+                                    </template>
                                 </div>
                             </template>
                         </div>
@@ -518,9 +518,10 @@
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.adversary.adversary_id">
                                                 <option value="" selected>No adversary (manual)</option>
-                                                <template x-for="adv in adversaries" :key="adv.adversary_id">
-                                                    <option x-on:click="isSelectedAdversaryRepeatable = adv.has_repeatable_abilities"
-                                                            x-bind:value="adv.adversary_id" x-text="adv.name">
+                                                <template x-for="a in ADVERSARIES" :key="a.adversary_id">
+                                                    <option x-on:click="isSelectedAdversaryRepeatable = a.has_repeatable_abilities"
+                                                            :value="a.adversary_id"
+                                                            x-text="a.name">
                                                     </option>
                                                 </template>
                                             </select>
@@ -535,8 +536,8 @@
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.source.id">
-                                                <template x-for="s in sources" :key="s.id">
-                                                    <option x-bind:value="s.id" x-text="s.name"></option>
+                                                <template x-for="s in SOURCES" :key="s.id">
+                                                    <option :value="s.id" x-text="s.name"></option>
                                                 </template>
                                             </select>
                                         </div>
@@ -583,8 +584,9 @@
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
                                             <select id="autonomous-planner" x-model="startOperation.planner.id">
-                                                <template x-for="p in planners" :key="p.name">
-                                                    <option :data-allow-repeatable-abilities="p.allow_repeatable_abilities"
+                                                <template x-for="p in PLANNERS" :key="p.id">
+                                                    <option :value="p.id"
+                                                            x-bind:data-allow-repeatable-abilities="p.allow_repeatable_abilities"
                                                             x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable) ? 'true' : null"
                                                             x-text="p.name"></option>
                                                 </template>
@@ -597,14 +599,14 @@
                                             class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
                                     <div class="modal-form-fields" id="stealth-obfuscator">
-                                        {% for o in obfuscators %}
-                                        <button class="is-small button is-rounded is-primary chip m-1"
-                                                type="button"
-                                                x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="startOperation.obfuscator = `{{ o.name|e }}`">
-                                            {{ o.name|e }}
-                                        </button>
-                                        {% endfor %}
+                                        <template x-for="o in OBFUSCATORS" :key="o.name">
+                                            <button class="is-small button is-rounded is-primary chip m-1"
+                                                    type="button"
+                                                    x-bind:class="startOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="startOperation.obfuscator = o.name"
+                                                    x-text="o.name">
+                                            </button>
+                                        </template>
                                     </div>
                                 </div>
                                 <div>
@@ -999,14 +1001,14 @@
                 '-5': 'visible',
                 124: 'timeout'
             },
+            OBFUSCATORS: [],
+            PLANNERS: [],
+            ADVERSARIES: [],
+            SOURCES: [],
 
             docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
             agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
-            adversaries: '',
-            sources: '',
-            planners: '',
-            obfuscators: JSON.parse('{{ obfuscators | tojson }}'),
             selectedOperation: null,
             selectedAgentIndex: 0,
             isSelectedAdversaryRepeatable: false,
@@ -1138,13 +1140,27 @@
 
             async initOperations() {
                 this.getOperations();
+                this.getFields();
                 this.getUsage();
+
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
                     this.getAndCompareOperation();
                 }
+            },
+
+            getFields() {
+                Promise.all([apiV2('GET', '/api/v2/obfuscators'), apiV2('GET', '/api/v2/planners'), apiV2('GET', '/api/v2/adversaries'), apiV2('GET', '/api/v2/sources')]).then(([o, p, a, s]) => {
+                    console.log([o, p, a, s]);
+                    this.OBFUSCATORS = o;
+                    this.PLANNERS = p;
+                    this.ADVERSARIES = a;
+                    this.SOURCES = s;
+                }).catch((error) => {
+                    console.error(error);
+                });
             },
 
             getOperations() {
@@ -1337,19 +1353,6 @@
                 }
             },
 
-            getOperationFields() {
-                this.getAgents();
-                Promise.all([apiV2('GET', '/api/v2/adversaries'),
-                    apiV2('GET', '/api/v2/sources'),
-                    apiV2('GET', '/api/v2/planners')]).then((values) => {
-                    this.adversaries = values[0];
-                    this.sources = values[1];
-                    this.planners = values[2];
-                }).catch((error) => {
-                    console.error(`Error updating operation fields: ${error}`);
-                });
-            },
-
             updateLink(status, command = null) {
                 const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
                 if (command) {
@@ -1369,7 +1372,7 @@
                 apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
                     .then((res) => {
                         this.selectedOperation = res;
-                        this.selectedLink = null
+                        this.selectedLink = null;
                     })
                     .catch(() => {
                         toast(`Error updating operation ${field}. Operation may have already finished running.`);
