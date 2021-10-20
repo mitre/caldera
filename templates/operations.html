@@ -1153,7 +1153,6 @@
 
             getFields() {
                 Promise.all([apiV2('GET', '/api/v2/obfuscators'), apiV2('GET', '/api/v2/planners'), apiV2('GET', '/api/v2/adversaries'), apiV2('GET', '/api/v2/sources')]).then(([o, p, a, s]) => {
-                    console.log([o, p, a, s]);
                     this.OBFUSCATORS = o;
                     this.PLANNERS = p;
                     this.ADVERSARIES = a;
