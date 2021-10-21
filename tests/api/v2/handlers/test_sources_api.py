@@ -176,15 +176,18 @@ class TestSourcesApi:
         assert resp.status == HTTPStatus.BAD_REQUEST
 
     async def test_update_source(self, api_v2_client, api_cookies, test_source, updated_source_payload,
-                                 expected_updated_source_dump, mocker):
+                                 expected_updated_source_dump, mocker, mock_time):
         with mocker.patch('app.api.v2.managers.base_api_manager.BaseApiManager.strip_yml') as mock_strip_yml:
             mock_strip_yml.return_value = [test_source.schema.dump(test_source)]
-            resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
-            assert resp.status == HTTPStatus.OK
-            source_data = await resp.json()
-            assert source_data == expected_updated_source_dump
-            source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
-            assert source.display_schema.dump(source) == expected_updated_source_dump
+            with mocker.patch('datetime.datetime') as mock_datetime:
+                mock_datetime.return_value = mock_datetime
+                mock_datetime.now.return_value = mock_time
+                resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
+                assert resp.status == HTTPStatus.OK
+                source_data = await resp.json()
+                assert source_data == expected_updated_source_dump
+                source = (await BaseService.get_service('data_svc').locate('sources', {'id': '123'}))[0]
+                assert source.display_schema.dump(source) == expected_updated_source_dump
 
     async def test_unauthorized_update_source(self, api_v2_client, test_source, updated_source_payload):
         resp = await api_v2_client.patch('/api/v2/sources/123', json=updated_source_payload)
