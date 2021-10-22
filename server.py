@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import sys
-import warnings
 
 import aiohttp_apispec
 from aiohttp_apispec import validation_middleware
@@ -78,10 +77,6 @@ def init_swagger_documentation(app):
     """Makes swagger documentation available at /api/docs for any endpoints
     marked for aiohttp_apispec documentation.
     """
-    warnings.filterwarnings(
-        "ignore",
-        message="Multiple schemas resolved to the name"
-    )
     aiohttp_apispec.setup_aiohttp_apispec(
         app=app,
         title='CALDERA',
