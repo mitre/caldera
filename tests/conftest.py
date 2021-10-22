@@ -6,6 +6,7 @@ import string
 import uuid
 import yaml
 import aiohttp_apispec
+import warnings
 
 from unittest import mock
 from aiohttp_apispec import validation_middleware
@@ -315,6 +316,11 @@ def agent_config():
 @pytest.fixture
 def api_v2_client(loop, aiohttp_client, contact_svc):
     def make_app(svcs):
+        warnings.filterwarnings(
+            "ignore",
+            message="Multiple schemas resolved to the name"
+        )
+
         app = web.Application(
             middlewares=[
                 authentication_required_middleware_factory(svcs['auth_svc']),
