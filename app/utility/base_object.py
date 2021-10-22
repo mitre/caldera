@@ -84,10 +84,12 @@ class BaseObject(BaseWorld):
     def created(self, value):
         self._created = value
 
-    def replace_app_props(self, encoded_string):
+    def replace_app_props(self, encoded_string, config=None):
+        if not config:
+            config = self.get_config()
         if encoded_string:
             decoded_test = self.decode_bytes(encoded_string)
-            for k, v in self.get_config().items():
+            for k, v in config.items():
                 if k.startswith('app.'):
                     var = '#{%s}' % k
                     decoded_test = decoded_test.replace(var, str(v).strip())

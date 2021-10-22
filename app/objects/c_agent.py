@@ -156,7 +156,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
     async def calculate_sleep(self):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
 
-    async def capabilities(self, abilities):
+    def capabilities(self, abilities):
         """Get abilities that the agent is capable of running
         :param abilities: List of abilities to check agent capability
         :type abilities: List[Ability]
@@ -169,7 +169,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
                 capabilities.append(ability)
         return capabilities
 
-    async def get_preferred_executor(self, ability):
+    def get_preferred_executor(self, ability):
         """Get preferred executor for ability
         Will return None if the agent is not capable of running any
         executors in the given ability.
@@ -263,7 +263,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         preferred_executor_name = self._get_preferred_executor_name()
 
         links = []
-        for ability in await self.capabilities(abilities):
+        for ability in self.capabilities(abilities):
             executors = ability.find_executors(self.executors, self.platform)
             executors = sorted(executors, key=lambda ex: ex.name == preferred_executor_name, reverse=True)
 

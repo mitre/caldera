@@ -102,17 +102,17 @@ class TestPlanningService:
         # PART A:
         ability, agent, operation, _ = setup_planning_test
         # Add a link to operation.chain
-        operation.add_link(Link.load(
-            dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0)))
+        link = Link.load(dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0))
+        operation.add_link(link)
         # Set id to match planner.operation.chain[0].id
         operation.chain[0].id = "123"
         planner = PlannerFake(operation)
         # Create a list containing only the id used above
-        link_ids = ["123"]
+        links = [link]
         # Make sure program doesn't hang in wait_for_links_completion()
         planner.operation.chain[0].finish = True
         assert loop.run_until_complete(planning_svc.wait_for_links_and_monitor(
-            planner, operation, link_ids, condition_stop=True)) is False
+            planner, operation, links, condition_stop=True)) is False
 
         # PART B:
         # Make sure program hangs in wait_for_links_completion()
@@ -121,7 +121,7 @@ class TestPlanningService:
         try:
             loop.run_until_complete(asyncio.wait_for(
                 planning_svc.wait_for_links_and_monitor(planner, operation,
-                                                        link_ids,
+                                                        links,
                                                         condition_stop=True),
                 timeout=5.0))
         except asyncio.TimeoutError:

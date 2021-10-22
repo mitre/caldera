@@ -66,7 +66,7 @@ class TestAgent:
 
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['psh', 'cmd'], platform='windows')
 
-        preferred_executor = loop.run_until_complete(agent.get_preferred_executor(test_ability))
+        preferred_executor = agent.get_preferred_executor(test_ability)
         assert preferred_executor is executor_psh  # 'psh' preferred if available
 
     def test_preferred_executor_from_agent_executor(self, loop, ability, executor):
@@ -77,7 +77,7 @@ class TestAgent:
 
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')
 
-        preferred_executor = loop.run_until_complete(agent.get_preferred_executor(test_ability))
+        preferred_executor = agent.get_preferred_executor(test_ability)
         assert preferred_executor is executor_cmd  # prefer agent's first executor, not ability's
 
     def test_set_pending_executor_path_update(self):

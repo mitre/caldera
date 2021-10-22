@@ -197,7 +197,7 @@ class RestService(RestServiceInterface, BaseService):
     async def find_abilities(self, paw):
         data_svc = self.get_service('data_svc')
         agent = (await data_svc.locate('agents', match=dict(paw=paw)))[0]
-        return await agent.capabilities(await self.get_service('data_svc').locate('abilities'))
+        return agent.capabilities(await self.get_service('data_svc').locate('abilities'))
 
     async def get_potential_links(self, op_id, paw=None):
         operation = (await self.get_service('data_svc').locate('operations', match=dict(id=op_id)))[0]

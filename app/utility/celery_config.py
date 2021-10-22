@@ -8,13 +8,26 @@ with open(path, encoding='utf-8') as seed:
 
 broker = config['celery_broker_url']
 backend = config['celery_result_backend']
+
+database_path = ''
+
 if config['celery_db']:
-    db_path = os.getcwd() + '/data/' + config['celery_db']
-    conn = sqlite3.connect(db_path)
+    database_path = os.getcwd() + '/data/' + config['celery_db']
+    conn = sqlite3.connect(database_path)
+    cur = conn.cursor()
+    cur.execute('PRAGMA auto_vacuum = 1')
     if conn:
         conn.close()
-    broker = broker + db_path
-    backend = backend + db_path
+    broker = broker + database_path
+    backend = backend + database_path
+
 
 settings = {'celery_result_backend': backend,
-            'celery_broker_url': broker}
+            'celery_broker_url': broker,
+            'celery_beat_schedule': {
+                'clean-db-every-30s': {
+                    'task': 'app.utility.tasks.clean',
+                    'schedule': 30.0
+                }
+            }
+            }

@@ -42,7 +42,7 @@ class Executor(BaseObject):
     @property
     def test(self):
         """Get command with app property variables replaced"""
-        return self.decode_bytes(self.replace_app_props(self.encode_string(self.command)))
+        return self.decode_bytes(self.replace_app_props(encoded_string=self.encode_string(self.command)))
 
     def __init__(self, name, platform, command=None, code=None, language=None, build_target=None,
                  payloads=None, uploads=None, timeout=60, parsers=None, cleanup=None, variations=None,
@@ -82,6 +82,10 @@ class Executor(BaseObject):
 
     def replace_cleanup(self, command, payload):
         return command.replace(self.RESERVED['payload'], payload)
+
+    def test_with_config(self, config):
+        return self.decode_bytes(self.replace_app_props(encoded_string=self.encode_string(self.command),
+                                                        config=config))
 
 
 def get_variations(data):

@@ -1,6 +1,9 @@
+import asyncio
+
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
+from app.utility import tasks
 
 
 class PlanningService(PlanningServiceInterface, BasePlanningService):
@@ -120,6 +123,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
           events to the event service
         :type publish_transitions: bool
         """
+
         async def _publish_bucket_transition(bucket):
             """ subroutine to publish bucket transitions to event_svc"""
             await self.get_service('event_svc').fire_event(
@@ -158,26 +162,30 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type trim: bool, optional
         :return: a list of links sorted by score and atomic ordering
         """
-        ao = operation.adversary.atomic_ordering
-        abilities = await self.get_service('data_svc') \
-                              .locate('abilities', match=dict(ability_id=tuple(ao)))
-        if buckets:
-            # buckets specified - get all links for given buckets,
-            # (still in underlying atomic adversary order)
-            t = []
-            for bucket in buckets:
-                t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
-            abilities = t
-        links = []
+        abilities = await self._get_ao_abilities(operation, buckets)
+
+        all_agents_links = {}
+        agent_async_results = {}
         if agent:
-            links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            agents = [agent]
         else:
-            agent_links = []
-            for agent in operation.agents:
-                agent_links.append(await self.generate_and_trim_links(agent, operation, abilities, trim))
-            links = self._remove_links_of_duplicate_singletons(agent_links)
-        self.log.debug('Generated %s usable links' % (len(links)))
-        return await self.sort_links(links)
+            agents = operation.agents
+        for agent in agents:
+            agent_async_results[agent] = tasks.generate_new_links.delay(
+                operation.link_status(), operation.jitter, agent.schema.dump(agent), abilities, self.get_config())
+        results_ready = False
+        while not results_ready:
+            if all(r.ready() for r in agent_async_results.values()):
+                results_ready = True
+            ready_results = {agent: result for agent, result in agent_async_results.items() if result.ready()}
+            for agent, result in ready_results.items():
+                links = agent_async_results.pop(agent).get()
+                all_agents_links[agent] = await self._process_link_results(links, operation, agent, trim)
+            self.log.debug('Waiting for results to be ready...')
+            await asyncio.sleep(3)
+        if not agent:
+            all_agents_links = await self._remove_links_of_duplicate_singletons(all_agents_links)
+        return all_agents_links
 
     async def get_cleanup_links(self, operation, agent=None):
         """Generate cleanup links
@@ -221,7 +229,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         agent_links = []
         if agent.trusted:
-            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
+            agent_links = self._generate_new_links(operation, agent, abilities, operation.link_status())
             await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
@@ -275,6 +283,26 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         return sorted(links, key=lambda k: (-k.score))
 
     """ PRIVATE """
+
+    async def _get_ao_abilities(self, operation, buckets):
+        ao = operation.adversary.atomic_ordering
+        abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(ao)))
+        if buckets:
+            # buckets specified - get all links for given buckets,
+            # (still in underlying atomic adversary order)
+            t = []
+            for bucket in buckets:
+                t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
+            abilities = t
+
+        return [ability.schema.dump(ability) for ability in abilities]
+
+    async def _process_link_results(self, links, operation, agent, trim):
+        if operation.source.adjustments:
+            await self._apply_adjustments(operation, links)
+        if trim:
+            links = await self.trim_links(operation, links, agent)
+        return await self.sort_links(links)
 
     async def _stop_bucket_exhaustion(self, planner, operation, condition_stop):
         """Determine whether to continue running the bucket.
@@ -349,8 +377,9 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-        for ability in await agent.capabilities(abilities):
-            executor = await agent.get_preferred_executor(ability)
+
+        for ability in agent.capabilities(abilities):
+            executor = agent.get_preferred_executor(ability)
             if not executor:
                 continue
 
@@ -383,7 +412,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
             for cleanup in link.executor.cleanup:
                 decoded_cmd = agent.replace(self.encode_string(cleanup), file_svc=self.get_service('file_svc'))
-                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
+                variant, _, _ = self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
                 cleanup_command = self.encode_string(variant)
                 if cleanup_command and cleanup_command not in cleanup_commands:
                     cleanup_commands.add(cleanup_command)

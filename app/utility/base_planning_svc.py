@@ -132,7 +132,7 @@ class BasePlanningService(BaseService):
         """
         completed_links = [lnk for lnk in operation.chain if lnk.paw == agent.paw and (lnk.finish or lnk.can_ignore())]
 
-        singleton_links = BasePlanningService._list_historic_duplicate_singletons(operation)
+        singleton_links = await BasePlanningService._list_historic_duplicate_singletons(operation)
 
         return [lnk for lnk in links if lnk.ability.repeatable or
                 (lnk not in completed_links and
@@ -169,7 +169,7 @@ class BasePlanningService(BaseService):
     """ PRIVATE """
 
     @staticmethod
-    def _list_historic_duplicate_singletons(operation):
+    async def _list_historic_duplicate_singletons(operation):
         """
         Generate a list of successfully run singleton abilities for a given operation
         :param operation: Operation to scan
@@ -179,26 +179,24 @@ class BasePlanningService(BaseService):
         return [x for x in singleton if x]
 
     @staticmethod
-    def _remove_links_of_duplicate_singletons(agent_links):
+    async def _remove_links_of_duplicate_singletons(agent_links):
         """
         Filter links across agents
         :param agent_links: array of agent links
         :return: Flattened, filtered list of links
         """
 
-        links = []
         parallel_list = []
-        for agent_list in agent_links:
+        for agent, agent_list in agent_links.items():
             for individual_link in agent_list:
-                if not individual_link.ability.singleton:
-                    links.append(individual_link)
-                else:
+                if individual_link.ability.singleton:
                     compare = (individual_link.command_hash if individual_link.command_hash else
                                individual_link.command)
                     if compare not in parallel_list:
                         parallel_list.append(compare)
-                        links.append(individual_link)
-        return links
+                    else:
+                        agent_list.remove(individual_link)
+        return agent_links
 
     @staticmethod
     async def _build_single_test_variant(copy_test, combo, executor):
