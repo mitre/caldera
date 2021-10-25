@@ -187,7 +187,7 @@ class BasePlanningService(BaseService):
         """
 
         parallel_list = []
-        for agent, agent_list in agent_links.items():
+        for agent_list in agent_links.values():
             for individual_link in agent_list:
                 if individual_link.ability.singleton:
                     compare = (individual_link.command_hash if individual_link.command_hash else

@@ -178,7 +178,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if all(r.ready() for r in agent_async_results.values()):
                 results_ready = True
             ready_results = {agent: result for agent, result in agent_async_results.items() if result.ready()}
-            for agent, result in ready_results.items():
+            for agent in ready_results.keys():
                 links = agent_async_results.pop(agent).get()
                 all_agents_links[agent] = await self._process_link_results(links, operation, agent, trim)
             self.log.debug('Waiting for results to be ready...')

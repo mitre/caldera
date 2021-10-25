@@ -4,7 +4,7 @@ import yaml
 
 path = 'conf/celery.yml'
 with open(path, encoding='utf-8') as seed:
-    config = yaml.load(seed, Loader=yaml.FullLoader)
+    config = yaml.safe_load(seed, Loader=yaml.FullLoader)
 
 broker = config['celery_broker_url']
 backend = config['celery_result_backend']

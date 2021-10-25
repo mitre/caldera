@@ -1,4 +1,4 @@
-from celery import Celery, group
+from celery import Celery
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -43,10 +43,10 @@ def clean():
         # remove entries older than 2 minutes
         expiration_min = 2
         date_done_utc = (datetime.utcnow() - timedelta(minutes=expiration_min)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        sql_cmd = 'DELETE FROM celery_taskmeta where date_done < "%s"' % date_done_utc
+        sql_cmd = 'DELETE FROM celery_taskmeta where date_done < "%s";' % date_done_utc
         cur.execute(sql_cmd)
         timestamp = (datetime.now() - timedelta(minutes=expiration_min)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        sql_cmd = 'DELETE FROM kombu_message where timestamp < "%s"' % timestamp
+        sql_cmd = 'DELETE FROM kombu_message where timestamp < "%s";' % timestamp
         cur.execute(sql_cmd)
         conn.commit()
         conn.close()
