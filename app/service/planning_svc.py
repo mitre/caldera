@@ -41,7 +41,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         l_ids = []
         while True:
-            links = await self.get_links(operation, [bucket], agent)
+            agents_links = await self.get_links(operation, [bucket], agent)
+            links = [link for links in agents_links.values() for link in links]
             if len(links) == 0:
                 break
             for s_link in links:

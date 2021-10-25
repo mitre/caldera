@@ -145,16 +145,17 @@ if __name__ == '__main__':
     learning_svc = LearningService()
     event_svc = EventService()
 
-    celery_worker = subprocess.Popen(["celery", "-A", "server.celery_app", "worker", "-l", "INFO"])
-    celery_beat = subprocess.Popen(["celery", "-A", "server.celery_app", "beat", "-l", "INFO"])
-
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
 
     if args.fresh:
+        celery_app.control.purge()
         logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
         asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
+
+    celery_worker = subprocess.Popen(["celery", "-A", "server.celery_app", "worker", "-l", "INFO"])
+    celery_beat = subprocess.Popen(["celery", "-A", "server.celery_app", "beat", "-l", "INFO"])
 
     run_tasks(services=app_svc.get_services())
