@@ -102,17 +102,17 @@ class TestPlanningService:
         # PART A:
         ability, agent, operation, _ = setup_planning_test
         # Add a link to operation.chain
-        link = Link.load(dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0))
-        operation.add_link(link)
+        operation.add_link(Link.load(
+            dict(command='', paw=agent.paw, ability=ability, executor=next(ability.executors), status=0)))
         # Set id to match planner.operation.chain[0].id
         operation.chain[0].id = "123"
         planner = PlannerFake(operation)
         # Create a list containing only the id used above
-        links = [link]
+        link_ids = ["123"]
         # Make sure program doesn't hang in wait_for_links_completion()
         planner.operation.chain[0].finish = True
         assert loop.run_until_complete(planning_svc.wait_for_links_and_monitor(
-            planner, operation, links, condition_stop=True)) is False
+            planner, operation, link_ids, condition_stop=True)) is False
 
         # PART B:
         # Make sure program hangs in wait_for_links_completion()
@@ -121,13 +121,15 @@ class TestPlanningService:
         try:
             loop.run_until_complete(asyncio.wait_for(
                 planning_svc.wait_for_links_and_monitor(planner, operation,
-                                                        links,
+                                                        link_ids,
                                                         condition_stop=True),
                 timeout=5.0))
         except asyncio.TimeoutError:
             timeout = True
         assert timeout is True
 
+    @pytest.mark.usefixtures('celery_session_app')
+    @pytest.mark.usefixtures('celery_session_worker')
     def test_get_links(self, loop, setup_planning_test, planning_svc, data_svc, knowledge_svc):
         # PART A: Don't fill in facts for "cability" so only "tability"
         #   is returned in "links"
@@ -136,7 +138,7 @@ class TestPlanningService:
         links = loop.run_until_complete(planning_svc.get_links
                                         (operation=operation, buckets=None,
                                          agent=agent))
-        assert links[0].ability.ability_id == tability.ability_id
+        assert links[agent][0].ability.ability_id == tability.ability_id
 
         # PART B: Fill in facts to allow "cability" to be returned in "links"
         #   in addition to "tability"
@@ -152,11 +154,13 @@ class TestPlanningService:
                                         (operation=operation, buckets=None,
                                          agent=agent))
 
-        assert links[0].ability.ability_id == cability.ability_id
-        assert links[1].ability.ability_id == tability.ability_id
-        assert base64.b64decode(links[0].command).decode('utf-8') == target_string
+        assert links[agent][0].ability.ability_id == cability.ability_id
+        assert links[agent][1].ability.ability_id == tability.ability_id
+        assert base64.b64decode(links[agent][0].command).decode('utf-8') == target_string
 
-    def test_exhaust_bucket(self, loop, setup_planning_test, planning_svc):
+    @pytest.mark.usefixtures('celery_session_app')
+    @pytest.mark.usefixtures('celery_session_worker')
+    def test_exhaust_bucket(self, loop, setup_planning_test, planning_svc, celery_worker):
         ability, agent, operation, _ = setup_planning_test
         operation.adversary.atomic_ordering = ["123"]
         operation.add_link(Link.load(
@@ -362,9 +366,10 @@ class TestPlanningService:
         assert 1 == len(filt)
 
         # test parallel filtering
-        flat_fil = planning_svc._remove_links_of_duplicate_singletons([[l0, l1, l2, l3],
-                                                                       [l0, l1, l2, l3],
-                                                                       [l0, l1, l2, l3]])
+        filtered = loop.run_until_complete(planning_svc._remove_links_of_duplicate_singletons({'0': [l0, l1, l2, l3],
+                                                                                               '1': [l0, l1, l2, l3],
+                                                                                               '2': [l0, l1, l2, l3]}))
+        flat_fil = [link for links in filtered.values() for link in links]
         assert 7 == len(flat_fil)
 
     async def test_trait_with_one_part(self, setup_planning_test, planning_svc):

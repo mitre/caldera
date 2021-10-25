@@ -2,9 +2,9 @@ import os
 import sqlite3
 import yaml
 
-path = 'conf/celery.yml'
+path = os.getcwd() + '/conf/celery.yml'
 with open(path, encoding='utf-8') as seed:
-    config = yaml.safe_load(seed, Loader=yaml.FullLoader)
+    config = yaml.safe_load(seed)
 
 broker = config['celery_broker_url']
 backend = config['celery_result_backend']

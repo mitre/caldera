@@ -57,6 +57,15 @@ def init_base_world():
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'payloads.yml'))[0])
 
 
+@pytest.fixture(scope='session')
+def celery_config():
+    db_path = os.getcwd() + '/data/celery.db'
+    return {
+        'broker_url': 'sqla+sqlite:///%s' % db_path,
+        'result_backend': 'db+sqlite:///%s' % db_path
+    }
+
+
 @pytest.fixture(scope='class')
 def app_svc():
     async def _init_app_svc():

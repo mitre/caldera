@@ -229,7 +229,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         agent_links = []
         if agent.trusted:
-            agent_links = self._generate_new_links(operation, agent, abilities, operation.link_status())
+            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
             await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
@@ -412,7 +412,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
             for cleanup in link.executor.cleanup:
                 decoded_cmd = agent.replace(self.encode_string(cleanup), file_svc=self.get_service('file_svc'))
-                variant, _, _ = self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
+                variant, _, _ = await self._build_single_test_variant(decoded_cmd, link.used, link.executor.name)
                 cleanup_command = self.encode_string(variant)
                 if cleanup_command and cleanup_command not in cleanup_commands:
                     cleanup_commands.add(cleanup_command)

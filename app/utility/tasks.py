@@ -1,6 +1,6 @@
 from celery import Celery
-import sqlite3
 from datetime import datetime, timedelta
+import sqlite3
 
 from app.objects.c_agent import Agent
 from app.objects.c_ability import Ability
