@@ -43,11 +43,11 @@ def clean():
         # remove entries older than 2 minutes
         expiration_min = 2
         date_done_utc = (datetime.utcnow() - timedelta(minutes=expiration_min)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        sql_cmd = 'DELETE FROM celery_taskmeta where date_done < "%s";' % date_done_utc
-        cur.execute(sql_cmd)
+        sql_cmd = "DELETE FROM celery_taskmeta where date_done < (?);"
+        cur.execute(sql_cmd, (date_done_utc,))
         timestamp = (datetime.now() - timedelta(minutes=expiration_min)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        sql_cmd = 'DELETE FROM kombu_message where timestamp < "%s";' % timestamp
-        cur.execute(sql_cmd)
+        sql_cmd = "DELETE FROM kombu_message where timestamp < (?);"
+        cur.execute(sql_cmd, (timestamp,))
         conn.commit()
         conn.close()
         return 'Clean up success'
