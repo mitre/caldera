@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 import marshmallow as ma
@@ -109,7 +109,7 @@ class Fact(BaseObject):
         super().__init__()
         self.trait = trait
         self.value = value
-        self.created = datetime.now()
+        self.created = datetime.now(timezone.utc)
         self.score = score
         self.source = source
         self.origin_type = origin_type

@@ -5,7 +5,7 @@ import itertools
 import os
 import pathlib
 import uuid
-from datetime import time
+from datetime import time, timezone
 import re
 
 import yaml
@@ -177,7 +177,7 @@ class RestService(RestServiceInterface, BaseService):
         else:
             scheduled = await self.get_service('data_svc').store(
                 Schedule(name=operation.name,
-                         schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
+                         schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0, tzinfo=timezone.utc),
                          task=operation)
             )
             self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
