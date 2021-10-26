@@ -186,6 +186,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             await asyncio.sleep(3)
         if not agent:
             all_agents_links = await self._remove_links_of_duplicate_singletons(all_agents_links)
+        self.log.debug('Generated %s usable links' %
+                       len([link for links in all_agents_links.values() for link in links]))
         return all_agents_links
 
     async def get_cleanup_links(self, operation, agent=None):
@@ -378,7 +380,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :rtype: list(Link)
         """
         links = []
-
         for ability in agent.capabilities(abilities):
             executor = agent.get_preferred_executor(ability)
             if not executor:

@@ -155,7 +155,7 @@ if __name__ == '__main__':
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
         asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
-    celery_worker = subprocess.Popen(["celery", "-A", "server.celery_app", "worker", "-l", "INFO"])
-    celery_beat = subprocess.Popen(["celery", "-A", "server.celery_app", "beat", "-l", "INFO"])
+    celery_worker = subprocess.Popen(["celery", "-A", "server.celery_app", "worker"], stdout=subprocess.DEVNULL)
+    celery_beat = subprocess.Popen(["celery", "-A", "server.celery_app", "beat"], stdout=subprocess.DEVNULL)
 
     run_tasks(services=app_svc.get_services())
