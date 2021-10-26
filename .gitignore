@@ -11,6 +11,7 @@
 .idea/*
 logs/*
 !logs/.gitkeep
+celerybeat-schedule.db
 core.db
 .venv/
 venv/
@@ -18,6 +19,7 @@ calderaenv/
 .env
 conf/*.yml
 !conf/default.yml
+data/celery.db
 data/object_store
 data/results/*
 !data/results/.gitkeep
