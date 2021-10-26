@@ -5,7 +5,7 @@ import re
 import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from importlib import import_module
 
@@ -145,7 +145,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def set_start_details(self):
         self.id = self.id if self.id else str(uuid.uuid4())
-        self.start = datetime.now()
+        self.start = datetime.now(timezone.utc)
 
     def add_link(self, link):
         self.chain.append(link)

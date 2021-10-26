@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.utility.base_world import BaseWorld
 
 
@@ -82,7 +82,7 @@ class TestBaseWorld:
     def test_get_current_timestamp(self):
         date_format = '%Y-%m-%d %H'
         output = BaseWorld.get_current_timestamp(date_format)
-        cur_time = datetime.now().strftime(date_format)
+        cur_time = datetime.now(timezone.utc).strftime(date_format)
         assert cur_time == output
 
     def test_is_not_base64(self):
