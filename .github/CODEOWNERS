@@ -3,3 +3,4 @@
 /app/service/interfaces/i_planning_svc.py   @mitre/squad-x
 /app/utility/base_planning_svc.py   @mitre/squad-x
 /tests/services/test_planning_svc.py  @mitre/squad-x
+/requirements.txt @wbooth
