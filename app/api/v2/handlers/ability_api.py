@@ -36,14 +36,14 @@ class AbilityApi(BaseObjectApi):
         ability = await self.get_object(request)
         return web.json_response(ability)
 
-    @aiohttp_apispec.docs(tags=['abilities'])
+    @aiohttp_apispec.docs(tags=['abilities'], summary='"name", "tactic", and "executors" are all required fields.')
     @aiohttp_apispec.request_schema(AbilitySchema)
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def create_ability(self, request: web.Request):
         ability = await self.create_on_disk_object(request)
         return web.json_response(ability.display)
 
-    @aiohttp_apispec.docs(tags=['abilities'])
+    @aiohttp_apispec.docs(tags=['abilities'], summary='"name", "tactic", and "executors" are all required fields.')
     @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def create_or_update_ability(self, request: web.Request):
@@ -51,7 +51,10 @@ class AbilityApi(BaseObjectApi):
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'])
-    @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
+    @aiohttp_apispec.request_schema(AbilitySchema(partial=True, exclude=['ability_id',
+                                                                         'requirements',
+                                                                         'additional_info',
+                                                                         'access']))
     @aiohttp_apispec.response_schema(AbilitySchema)
     async def update_ability(self, request: web.Request):
         ability = await self.update_on_disk_object(request)
