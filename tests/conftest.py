@@ -12,11 +12,17 @@ from aiohttp_apispec import validation_middleware
 from aiohttp import web
 from pathlib import Path
 
+from app.api.v2.handlers.agent_api import AgentApi
 from app.api.v2.handlers.ability_api import AbilityApi
+from app.api.v2.handlers.objective_api import ObjectiveApi
 from app.api.v2.handlers.adversary_api import AdversaryApi
 from app.api.v2.handlers.operation_api import OperationApi
 from app.api.v2.handlers.contact_api import ContactApi
 from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
+from app.api.v2.handlers.plugins_api import PluginApi
+from app.api.v2.handlers.fact_source_api import FactSourceApi
+from app.api.v2.handlers.planner_api import PlannerApi
+from app.api.v2.handlers.health_api import HealthApi
 from app.objects.c_obfuscator import Obfuscator
 from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
@@ -271,6 +277,51 @@ def agent_profile():
 
 
 @pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.html': '/weather',
+        'app.contact.http': '0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010',
+        'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
+        'app.contact.udp': '0.0.0.0:7013',
+        'app.contact.websocket': '0.0.0.0:7012',
+        'plugins': [
+            'stockpile',
+            'atomic'
+        ],
+        'host': '0.0.0.0',
+        'auth.login.handler.module': 'default',
+        'users': {
+            'red': {
+                'red': 'password-foo'
+            },
+            'blue': {
+                'blue': 'password-bar'
+            }
+        }
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'sleep_min': '30',
+        'sleep_max': '60',
+        'untrusted_timer': '90',
+        'watchdog': '0',
+        'implant_name': 'splunkd',
+        'deadman_abilities': [
+            'this-is-a-fake-ability'
+        ],
+        'bootstrap_abilities': [
+            'this-is-another-fake-ability'
+        ]
+    }
+
+
+@pytest.fixture
 def api_v2_client(loop, aiohttp_client, contact_svc):
     def make_app(svcs):
         app = web.Application(
@@ -279,11 +330,17 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
                 json_request_validation_middleware
             ]
         )
+        AgentApi(svcs).add_routes(app)
         AbilityApi(svcs).add_routes(app)
         OperationApi(svcs).add_routes(app)
         AdversaryApi(svcs).add_routes(app)
         ContactApi(svcs).add_routes(app)
+        ObjectiveApi(svcs).add_routes(app)
         ObfuscatorApi(svcs).add_routes(app)
+        PluginApi(svcs).add_routes(app)
+        FactSourceApi(svcs).add_routes(app)
+        PlannerApi(svcs).add_routes(app)
+        HealthApi(svcs).add_routes(app)
         return app
 
     async def initialize():
@@ -304,7 +361,6 @@ def api_v2_client(loop, aiohttp_client, contact_svc):
         os.chdir(str(Path(__file__).parents[1]))
 
         await app_svc.register_contacts()
-        await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         await auth_svc.set_login_handlers(services)

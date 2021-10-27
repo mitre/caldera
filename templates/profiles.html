@@ -92,7 +92,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <template x-for="(ability, index) in selectedProfileAbilities">
+                    <template x-for="(ability, index) of selectedProfileAbilities">
                         <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1, 'row-hover': ability.ability_id === abilityTableDragHoverId }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
                             <td x-text="index + 1"></td>
@@ -464,7 +464,7 @@
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
                         <br>
-                        <template x-for="(executor, index) of getAbilityExecutors()" :key="`${executor.platform}-${executor.name}`">
+                        <template x-for="(executor, index) of getAbilityExecutors()" :key="index">
                             <div class="box">
                                 <div class="has-text-right">
                                     <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
@@ -958,6 +958,9 @@
             addExecutorToAbility(bOrA) {
                 const template = {
                     payloads: [],
+                    parsers: [],
+                    cleanup: [],
+                    requirements: [],
                     platform: 'linux'
                 };
 
