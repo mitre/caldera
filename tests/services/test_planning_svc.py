@@ -63,8 +63,9 @@ def setup_planning_test(loop, executor, ability, agent, operation, data_svc, eve
     texecutor = executor(name='sh', platform='darwin', command='mkdir test', cleanup='rm -rf test')
     tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'])
     tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin', server='http://127.0.0.1:8000')
+    tagent2 = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['psh'], platform='windows', server='http://127.0.0.1:8000')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
-    toperation = operation(name='test1', agents=[tagent],
+    toperation = operation(name='test1', agents=[tagent, tagent2],
                            adversary=Adversary(name='test', description='test',
                                                atomic_ordering=[],
                                                adversary_id='XYZ'),
@@ -157,6 +158,11 @@ class TestPlanningService:
         assert links[agent][0].ability.ability_id == cability.ability_id
         assert links[agent][1].ability.ability_id == tability.ability_id
         assert base64.b64decode(links[agent][0].command).decode('utf-8') == target_string
+
+        links_no_agent = loop.run_until_complete(planning_svc.get_links
+                                                 (operation=operation, buckets=None,
+                                                  agent=None))
+        assert len(links_no_agent.keys()) == 2
 
     @pytest.mark.usefixtures('celery_session_app')
     @pytest.mark.usefixtures('celery_session_worker')
@@ -304,8 +310,14 @@ class TestPlanningService:
             planning_svc.get_cleanup_links(operation=operation, agent=agent)
         )
         link_list = list(links)
+        links_no_agent = loop.run_until_complete(
+            planning_svc.get_cleanup_links(operation=operation, agent=None)
+        )
+        link_no_agent_list = list(links_no_agent)
+
         assert len(link_list) == 1
         assert BaseWorld.decode_bytes(link_list[0].command) == executor.cleanup[0]
+        assert link_list == link_no_agent_list
 
     def test_generate_and_trim_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
