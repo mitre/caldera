@@ -43,7 +43,7 @@ class ObjectiveApi(BaseObjectApi):
         return web.json_response(objective.display)
 
     @aiohttp_apispec.docs(tags=['objectives'])
-    @aiohttp_apispec.request_schema(ObjectiveSchema(partial=True))
+    @aiohttp_apispec.request_schema(ObjectiveSchema(partial=True, exclude=['id', 'percentage']))
     @aiohttp_apispec.response_schema(ObjectiveSchema)
     async def update_objective(self, request: web.Request):
         objective = await self.update_on_disk_object(request)

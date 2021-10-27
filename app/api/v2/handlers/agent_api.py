@@ -48,7 +48,12 @@ class AgentApi(BaseObjectApi):
         return web.json_response(agent.display)
 
     @aiohttp_apispec.docs(tags=['agents'])
-    @aiohttp_apispec.request_schema(AgentSchema(partial=True))
+    @aiohttp_apispec.request_schema(AgentSchema(partial=True, only=['group',
+                                                                    'trusted',
+                                                                    'sleep_min',
+                                                                    'sleep_max',
+                                                                    'watchdog',
+                                                                    'pending_contact']))
     @aiohttp_apispec.response_schema(AgentSchema)
     async def update_agent(self, request: web.Request):
         agent = await self.update_object(request)
