@@ -146,13 +146,13 @@
                             <template x-if="isOperationRunning">
                                 <div class="is-flex is-flex-direction-row is-flex-wrap-wrap is-justify-content-center pb-2"
                                      id="operation-obfuscator">
-                                    {% for o in obfuscators %}
-                                    <button x-bind:class="selectedOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
-                                            class="is-small button is-rounded is-primary chip m-1"
-                                            x-on:click="updateOperation('obfuscator', `{{ o.name|e }}`)">
-                                        {{ o.name|e }}
-                                    </button>
-                                    {% endfor %}
+                                    <template x-for="o in OBFUSCATORS" :key="o.name">
+                                        <button x-bind:class="selectedOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                class="is-small button is-rounded is-primary chip m-1"
+                                                x-on:click="updateOperation('obfuscator', o.name)"
+                                                x-text="o.name">
+                                        </button>
+                                    </template>
                                 </div>
                             </template>
                         </div>
@@ -226,7 +226,8 @@
                                 <thead>
                                 <tr class="table-header">
                                     <th class="decideColumn">Decide</th>
-                                    <th id="link-status-header" class="statusColumn" title="Link Status Indicator" class="csv-exclude">Status
+                                    <th id="link-status-header" class="statusColumn csv-exclude" title="Link Status Indicator">
+                                        Status
                                     </th>
                                     <th class="infoColumn">Link/Ability Name</th>
                                     <th>Agent #paw</th>
@@ -507,7 +508,7 @@
                                     <label for="op-name">Operation name</label>
                                     <div class="modal-form-fields">
                                         <input class="input is-small" id="op-name" type="text"
-                                                x-model="startOperation.name" required>
+                                               x-model="startOperation.name" required>
                                     </div>
                                 </div>
                                 <div>
@@ -518,12 +519,12 @@
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.adversary.adversary_id">
                                                 <option value="" selected>No adversary (manual)</option>
-                                                {% for adv in adversaries %}
-                                                <option x-on:click="isSelectedAdversaryRepeatable = {{ adv.has_repeatable_abilities }}"
-                                                        value="{{ adv.adversary_id|e }}">
-                                                    {{ adv.name|e }}
-                                                </option>
-                                                {% endfor %}
+                                                <template x-for="a in ADVERSARIES" :key="a.adversary_id">
+                                                    <option x-on:click="isSelectedAdversaryRepeatable = a.has_repeatable_abilities"
+                                                            :value="a.adversary_id"
+                                                            x-text="a.name">
+                                                    </option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -536,9 +537,9 @@
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="startOperation.source.id">
-                                                {% for s in sources %}
-                                                <option>{{ s.name|e }}</option>
-                                                {% endfor %}
+                                                <template x-for="s in SOURCES" :key="s.id">
+                                                    <option :value="s.id" x-text="s.name"></option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -559,7 +560,7 @@
                                             class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Group']">Group</span></label>
                                     <div class="modal-form-fields"
-                                            id="basic-groups">
+                                         id="basic-groups">
                                         <button type="button"
                                                 class="is-small button is-rounded is-primary chip m-1"
                                                 x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
@@ -584,17 +585,12 @@
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
                                             <select id="autonomous-planner" x-model="startOperation.planner.id">
-                                                {% for p in planners %}
-                                                {% if p.allow_repeatable_abilities %}
-                                                <option data-allow-repeatable-abilities>
-                                                    {{ p.name|e }}
-                                                </option>
-                                                {% else %}
-                                                <option x-bind:disabled="isSelectedAdversaryRepeatable ? 'true' : null">
-                                                    {{ p.name|e }}
-                                                </option>
-                                                {% endif %}
-                                                {% endfor %}
+                                                <template x-for="p in PLANNERS" :key="p.id">
+                                                    <option :value="p.id"
+                                                            x-bind:data-allow-repeatable-abilities="p.allow_repeatable_abilities"
+                                                            x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable) ? 'true' : null"
+                                                            x-text="p.name"></option>
+                                                </template>
                                             </select>
                                         </div>
                                     </div>
@@ -604,14 +600,14 @@
                                             class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
                                     <div class="modal-form-fields" id="stealth-obfuscator">
-                                        {% for o in obfuscators %}
-                                        <button class="is-small button is-rounded is-primary chip m-1"
-                                                type="button"
-                                                x-bind:class="startOperation.obfuscator === `{{ o.name|e }}` ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="startOperation.obfuscator = `{{ o.name|e }}`">
-                                            {{ o.name|e }}
-                                        </button>
-                                        {% endfor %}
+                                        <template x-for="o in OBFUSCATORS" :key="o.name">
+                                            <button class="is-small button is-rounded is-primary chip m-1"
+                                                    type="button"
+                                                    x-bind:class="startOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="startOperation.obfuscator = o.name"
+                                                    x-text="o.name">
+                                            </button>
+                                        </template>
                                     </div>
                                 </div>
                                 <div>
@@ -620,10 +616,10 @@
                                             x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
                                     <div class="modal-form-fields" id="autonomous-autonomous">
                                         <input type="radio" id="run-autonomously"
-                                                x-model="startOperation.autonomous" value="1" checked>
+                                               x-model="startOperation.autonomous" value="1" checked>
                                         <label for="run-autonomously">Run autonomously</label>
                                         <input type="radio" id="manual-approval"
-                                                x-model="startOperation.autonomous" value="0">
+                                               x-model="startOperation.autonomous" value="0">
                                         <label for="manual-approval">Require manual approval</label>
                                     </div>
                                 </div>
@@ -634,10 +630,10 @@
                                             x-bind:data-tooltip="usage['Parser']">Parser</span></label>
                                     <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                         <input type="radio" id="parsers-default"
-                                                x-model="startOperation.use_learning_parsers" value="1" checked>
+                                               x-model="startOperation.use_learning_parsers" value="1" checked>
                                         <label for="parsers-default">Use default parsers</label>
                                         <input type="radio" id="parsers-no_default"
-                                                x-model="startOperation.use_learning_parsers" value="0">
+                                               x-model="startOperation.use_learning_parsers" value="0">
                                         <label for="parsers-no_default">Do not use default parsers</label>
                                     </div>
                                 </div>
@@ -648,12 +644,12 @@
                                             x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
                                     <div class="modal-form-fields" id="basic-keep">
                                         <input type="radio" id="keep-open"
-                                                x-model="startOperation.auto_close"
-                                                value="0" checked>
+                                               x-model="startOperation.auto_close"
+                                               value="0" checked>
                                         <label for="keep-open">Keep open forever</label>
                                         <input type="radio" id="auto-close"
-                                                x-model="startOperation.auto_close"
-                                                value="1">
+                                               x-model="startOperation.auto_close"
+                                               value="1">
                                         <label for="auto-close">Auto close operation</label>
                                     </div>
                                 </div>
@@ -664,12 +660,12 @@
 
                                     <div class="modal-form-fields" id="basic-run">
                                         <input type="radio" x-model="startOperation.state"
-                                                id="run-immediately"
-                                                value="running" checked>
+                                               id="run-immediately"
+                                               value="running" checked>
                                         <label for="run-immediately">Run immediately</label>
                                         <input type="radio" x-model="startOperation.state"
-                                                id="pause-on-start"
-                                                value="paused">
+                                               id="pause-on-start"
+                                               value="paused">
                                         <label for="pause-on-start">Pause on start</label>
                                     </div>
                                 </div>
@@ -680,23 +676,23 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                                x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
-                                                x-model="jitterMin"
-                                                id="stealth-jitterMin"
-                                                type="number"
-                                                required
-                                                pattern="[0-9]*"
-                                                placeholder="2"/>
+                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-model="jitterMin"
+                                               id="stealth-jitterMin"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="2"/>
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                                x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
-                                                x-model="jitterMax"
-                                                id="stealth-jitterMax"
-                                                type="number"
-                                                required
-                                                pattern="[0-9]*"
-                                                placeholder="8"/>
+                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-model="jitterMax"
+                                               id="stealth-jitterMax"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="8"/>
                                         <label class="input-hover-label" for="stealth-jitterMax">max</label>
                                         <button type="button" class="button is-primary no-style reset"
                                                 title="reset to default"
@@ -711,9 +707,9 @@
                                             x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
                                     <div class="modal-form-fields">
                                         <input x-model="startOperation.visibility"
-                                                id="stealth-queue"
-                                                type="range" value="50" min="1" max="100"
-                                                x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
+                                               id="stealth-queue"
+                                               type="range" value="50" min="1" max="100"
+                                               x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
                                         <span x-text="startOperation.visibility"></span>
                                     </div>
                                 </div>
@@ -729,8 +725,8 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="addOperation(false, startOperation)"
-                                            x-text="schedule ? 'Schedule' : 'Start'"></button>
+                                                x-on:click="addOperation(false, startOperation)"
+                                                x-text="schedule ? 'Schedule' : 'Start'"></button>
                                     </div>
                                 </div>
                             </nav>
@@ -753,7 +749,7 @@
                                                     x-model="selectedAgentIndex"
                                                     x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
                                                 <template x-for="(agent, index) in selectedOperation.host_group"
-                                                            :key="agent.paw">
+                                                          :key="agent.paw">
                                                     <option :value="index"
                                                             x-bind:selected="index === 0"
                                                             x-text="agent.display_name + '-' + agent.paw"></option>
@@ -766,9 +762,12 @@
                                     <label for="link-exec">Executor</label>
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
-                                            <select id="link-exec" x-model="potentialLink.executor" x-on:change="filterAbilities(abilities)">
-                                                <template x-for="(exec, index) of selectedAgentExecutors" :key="exec.executor">
-                                                    <option x-text="exec.display" :value="exec.executor" x-bind:selected="index === 0"></option>
+                                            <select id="link-exec" x-model="potentialLink.executor"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <template x-for="(exec, index) of selectedAgentExecutors"
+                                                          :key="exec.executor">
+                                                    <option x-text="exec.display" :value="exec.executor"
+                                                            x-bind:selected="index === 0"></option>
                                                 </template>
                                             </select>
                                         </div>
@@ -783,7 +782,7 @@
                                                     x-on:change="filterAbilities(abilities)">
                                                 <option value="" default value="">All tactics</option>
                                                 <template x-for="tactic in tacticFiltersList"
-                                                            :key="tactic">
+                                                          :key="tactic">
                                                     <option x-text="tactic"></option>
                                                 </template>
                                             </select>
@@ -799,7 +798,7 @@
                                                     x-on:change="filterAbilities(abilities)">
                                                 <option value="" default>All techniques</option>
                                                 <template x-for="technique in techniqueFiltersList"
-                                                            :key="technique">
+                                                          :key="technique">
                                                     <option x-text="technique"></option>
                                                 </template>
                                             </select>
@@ -810,11 +809,11 @@
                             <div class="modal-results">
                                 <div class="navbar-divider"></div>
                                 <p class="is-flex is-justify-content-flex-end is-size-7"
-                                    x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
+                                   x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
                                 <template x-if="filteredAbilitiesList">
                                     <ul class="ml-0">
                                         <template x-for="ability in filteredAbilitiesList"
-                                                    :key="ability.ability_id">
+                                                  :key="ability.ability_id">
                                             <li class="mb-4 abilities-list-item">
                                                     <span class="is-flex is-justify-content-space-between">
                                                         <span>
@@ -869,10 +868,10 @@
                                     <label for="agent-output-field">Agent output</label>
                                     <div class="modal-form-fields" id="agent-output-field">
                                         <input id="agent-output"
-                                                x-bind:disabled="selectedReportType === 'csv'"
-                                                type="checkbox"
-                                                class="mr-1"
-                                                x-model="isAgentOutputSelected">
+                                               x-bind:disabled="selectedReportType === 'csv'"
+                                               type="checkbox"
+                                               class="mr-1"
+                                               x-model="isAgentOutputSelected">
                                         <label for="agent-output">include agent output</label>
                                     </div>
                                 </div>
@@ -880,13 +879,13 @@
                                     <label for="report-type">Report type</label>
                                     <div class="modal-form-fields download-buttons-container" id="report-type">
                                         <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                value="full-report" id="full-report">
+                                               value="full-report" id="full-report">
                                         <label for="full-report">Full Report</label>
                                         <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                value="event-logs" id="event-logs">
+                                               value="event-logs" id="event-logs">
                                         <label for="event-logs">Event Logs</label>
                                         <input class="mr-1" type="radio" x-model="selectedReportType"
-                                                value="csv" id="csv">
+                                               value="csv" id="csv">
                                         <label for="csv">CSV</label>
                                     </div>
                                 </div>
@@ -929,7 +928,8 @@
                             <nav class="level">
                                 <div class="level-left">
                                     <div class="level-item">
-                                        <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
+                                        <button type="button" class="button ml-2 is-small"
+                                                x-on:click="openModal = null">
                                             Cancel
                                         </button>
                                     </div>
@@ -972,7 +972,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="updateLink(-2); openModal = null;">
+                                                x-on:click="updateLink(-2); openModal = null;">
                                             Delete
                                         </button>
                                     </div>
@@ -1006,6 +1006,10 @@
                 '-5': 'visible',
                 124: 'timeout'
             },
+            OBFUSCATORS: [],
+            PLANNERS: [],
+            ADVERSARIES: [],
+            SOURCES: [],
 
             docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
@@ -1048,12 +1052,12 @@
                 return {
                     name: '',
                     group: '',
-                    adversary: {adversary_id: ''},
+                    adversary: { adversary_id: '' },
                     auto_close: 0,
                     state: 'running',
                     autonomous: 1,
-                    planner: {id: 'atomic'},
-                    source: {id: 'basic'},
+                    planner: { id: 'atomic' },
+                    source: { id: 'basic' },
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
                     jitter: '2/8',
@@ -1100,9 +1104,8 @@
                 if (!this.selectedAgent) return [];
                 return this.selectedAgent.executors.map((e) => {
                     let cmd = `(${e})`;
-                    if (e in this.EXECUTOR_SHELLS)
-                        cmd += ` ${this.EXECUTOR_SHELLS[e]}`;
-                    return {executor: e, display: cmd + ' > '};
+                    if (e in this.EXECUTOR_SHELLS) cmd += ` ${this.EXECUTOR_SHELLS[e]}`;
+                    return { executor: e, display: `${cmd} > ` };
                 });
             },
 
@@ -1141,6 +1144,7 @@
 
             async initOperations() {
                 this.getOperations();
+                this.getFields();
                 this.getUsage();
 
                 while (this.$refs.operationsHeader) {
@@ -1149,6 +1153,17 @@
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
                     this.getAndCompareOperation();
                 }
+            },
+
+            getFields() {
+                Promise.all([apiV2('GET', '/api/v2/obfuscators'), apiV2('GET', '/api/v2/planners'), apiV2('GET', '/api/v2/adversaries'), apiV2('GET', '/api/v2/sources')]).then(([o, p, a, s]) => {
+                    this.OBFUSCATORS = o;
+                    this.PLANNERS = p;
+                    this.ADVERSARIES = a;
+                    this.SOURCES = s;
+                }).catch((error) => {
+                    console.error(error);
+                });
             },
 
             getOperations() {
@@ -1360,7 +1375,7 @@
                 apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
                     .then((res) => {
                         this.selectedOperation = res;
-                        this.selectedLink = null
+                        this.selectedLink = null;
                     })
                     .catch(() => {
                         toast(`Error updating operation ${field}. Operation may have already finished running.`);
@@ -1378,9 +1393,8 @@
                 }
             },
 
-
             downloadInfo(formatType) {
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, {enable_agent_output: this.isAgentOutputSelected})
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, { enable_agent_output: this.isAgentOutputSelected })
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
@@ -1411,7 +1425,7 @@
                     });
                     csv.push(rowItems.join(','));
                 });
-                this.createDownloadReport(new Blob([csv.join('\n')], {type: 'text/csv'}), this.selectedOperation.name, true);
+                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
             },
 
             handleDownload() {
