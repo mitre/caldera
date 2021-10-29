@@ -268,6 +268,10 @@ class Link(BaseObject):
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
+            if operation and operation.source:
+                if any([(fact.trait, fact.value) == (x.trait, x.value) for x in
+                        await knowledge_svc_handle.get_facts(criteria=dict(source=operation.source.id))]):
+                    source = operation.source.id
             fact.source = source  # Manual addition to ensure the check works correctly
             if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
                 f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
