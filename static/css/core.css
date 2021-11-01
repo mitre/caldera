@@ -57,7 +57,13 @@ main.main {
   padding-bottom: 20px;
 }
 
-.menu-label {
+.menu-label.nav-header {
+  cursor: default;
+  color: white;
+  background: none !important;
+  border-bottom: 2px solid #8B0000;
+  font-size: 0.75em;
+  letter-spacing: 0.1em;
   color: white !important;
   padding: 8px;
   border-radius: 4px;
@@ -111,10 +117,6 @@ main.main {
 
 #nav-menu {
   background-color: #060606;
-}
-
-.nav-header {
-  cursor: default;
 }
 
 .nav-item.disabled {
