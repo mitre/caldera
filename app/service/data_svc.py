@@ -160,6 +160,7 @@ class DataService(DataServiceInterface, BaseService):
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
+                plugin = ab.pop('plugin', filename.split('/')[1])
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
@@ -167,7 +168,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
-                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton,
+                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
                                            **ab)
 
     async def convert_v0_ability_executor(self, ability_data: dict):
@@ -239,6 +240,7 @@ class DataService(DataServiceInterface, BaseService):
         for src in self.strip_yml(filename):
             obj = object_class.load(src)
             obj.access = access
+            obj.plugin = filename.split('/')[1]
             await self.store(obj)
 
     """ PRIVATE """
@@ -338,11 +340,11 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
-                              repeatable=False, buckets=None, access=None, singleton=False, **kwargs):
+                              repeatable=False, buckets=None, access=None, singleton=False, plugin=None, **kwargs):
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
-                          access=access, singleton=singleton, **kwargs)
+                          access=access, singleton=singleton, plugin=plugin, **kwargs)
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):

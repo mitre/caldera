@@ -23,7 +23,8 @@ def new_ability_payload():
             'privilege': '',
             'repeatable': False,
             'requirements': [],
-            'singleton': False
+            'singleton': False,
+            'plugin': 'abilities'
             }
 
 
@@ -47,7 +48,7 @@ def replaced_ability_payload(test_ability):
 def test_ability(loop, api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
     ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
-                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery')
+                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery', plugin='testplugin')
     loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     return ability
 
