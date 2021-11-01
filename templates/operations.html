@@ -1314,7 +1314,7 @@
                 }
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
-                    ...link,
+                    ability: link,
                     paw: this.potentialLink.agent.paw,
                     executor: executor
                 })
