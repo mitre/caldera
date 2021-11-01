@@ -25,9 +25,18 @@ function restRequest(requestType, data, callback = (r) => {
         .catch((error) => console.error(error));
 }
 
-function apiV2(requestType, endpoint, body = null) {
-    let requestBody = { method: requestType, headers: { 'Content-Type': 'application/json' } };
-    if (requestType !== 'GET') requestBody.body = JSON.stringify(body);
+function apiV2(requestType, endpoint, body = null, jsonRequest = true) {
+    let requestBody = { method: requestType };
+    if (jsonRequest) {
+        requestBody.headers = { 'Content-Type': 'application/json' };
+        if (body) {
+            requestBody.body = JSON.stringify(body);
+        }
+    } else {
+        if (body) {
+            requestBody.body = body;
+        }
+    }
 
     return new Promise((resolve, reject) => {
         fetch(endpoint, requestBody)

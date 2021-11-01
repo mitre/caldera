@@ -37,6 +37,10 @@ body {
   border-radius: 50%;
 }
 
+.is-underlined {
+  text-decoration: underline;
+}
+
 main.main {
   min-height: 100%;
   width: 100%;
