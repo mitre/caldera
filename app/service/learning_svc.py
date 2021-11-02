@@ -73,8 +73,6 @@ class LearningService(LearningServiceInterface, BaseService):
                 if fact.trait in relationship:
                     matches.append(fact)
                     facts_covered.append(fact)
-                else:
-                    await link._save_fact(operation=operation, fact=fact, score=link.score, relationship=None)
             for pair in itertools.combinations(matches, r=2):
                 if pair[0].trait != pair[1].trait:
                     await link._create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],

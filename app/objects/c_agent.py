@@ -37,7 +37,7 @@ class AgentFieldsSchema(ma.Schema):
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
                                      allow_none=True)
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
-    origin_link_id = ma.fields.Integer()
+    origin_link_id = ma.fields.String()
     deadman_enabled = ma.fields.Boolean(allow_none=True)
     available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
     host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
@@ -98,7 +98,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
+                 proxy_receivers=None, proxy_chain=None, origin_link_id='', deadman_enabled=False,
                  available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)

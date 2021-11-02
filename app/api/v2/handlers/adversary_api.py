@@ -46,7 +46,7 @@ class AdversaryApi(BaseObjectApi):
         return web.json_response(adversary.display)
 
     @aiohttp_apispec.docs(tags=['adversaries'])
-    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
+    @aiohttp_apispec.request_schema(AdversarySchema(partial=True, exclude=['adversary_id']))
     @aiohttp_apispec.response_schema(AdversarySchema)
     async def update_adversary(self, request: web.Request):
         adversary = await self.update_on_disk_object(request)
