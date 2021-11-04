@@ -59,7 +59,6 @@ main.main {
 
 .menu-label.nav-header {
   cursor: default;
-  color: white;
   background: none !important;
   border-bottom: 2px solid #8B0000;
   font-size: 0.75em;
