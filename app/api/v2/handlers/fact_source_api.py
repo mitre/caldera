@@ -43,7 +43,8 @@ class FactSourceApi(BaseObjectApi):
         source = await self.create_on_disk_object(request)
         return web.json_response(source.display)
 
-    @aiohttp_apispec.docs(tags=['sources'])
+    @aiohttp_apispec.docs(tags=['sources'], summary='All fields can be updated excluding "id" '
+                                                    'and "adjustments".')
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema)
     async def update_fact_source(self, request: web.Request):

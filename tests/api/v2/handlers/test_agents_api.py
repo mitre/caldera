@@ -57,7 +57,7 @@ def new_agent_payload():
         'contact': 'HTTP',
         'proxy_receivers': {},
         'proxy_chain': [],
-        'origin_link_id': 0,
+        'origin_link_id': '',
         'deadman_enabled': True,
         'available_contacts': ['HTTP'],
         'host_ip_addrs': []

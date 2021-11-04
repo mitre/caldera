@@ -144,7 +144,7 @@
                             </div>
                             <div class="box container">
                                 <pre class="box" x-text="getCommandField(command.command)"></pre>
-                                <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(command.command))">
+                                <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(command.command))" x-show="window.isSecureContext">
                                     <span class="icon"><i class="far fa-lg fa-copy"></i></span>
                                     <span>Copy</span>
                                 </a>
@@ -163,7 +163,7 @@
                                     </div>
                                     <div class="box container">
                                         <pre class="box" x-text="getCommandField(variation.command).replaceAll(';', ';\n')"></pre>
-                                        <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(variation.command))">
+                                        <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(variation.command))" x-show="window.isSecureContext">
                                             <span class="icon"><i class="far fa-lg fa-copy"></i></span>
                                             <span>Copy</span>
                                         </a>
