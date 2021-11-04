@@ -1,11 +1,9 @@
-import os
 import uuid
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 from app.objects.secondclass.c_fact import Fact, FactSchema
 
 

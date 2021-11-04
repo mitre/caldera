@@ -1,5 +1,4 @@
 import collections
-import os
 import uuid
 
 import marshmallow as ma
@@ -8,7 +7,6 @@ from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_executor import ExecutorSchema
 from app.objects.secondclass.c_requirement import RequirementSchema
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 from app.utility.base_world import AccessSchema
 
 

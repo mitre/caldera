@@ -1,11 +1,9 @@
-import os
 import uuid
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 
 
 DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
