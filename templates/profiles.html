@@ -60,7 +60,7 @@
                 </div>
             </form>
             <div class="control-buttons is-flex is-flex-direction-row">
-                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityModal = true;">
+                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>Add Ability</span>
                 </button>
@@ -284,15 +284,96 @@
         </div>
     </div>
 
-    <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }"> 
-        <div class="modal-background" @click="showAbilityModal = false"></div>
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityChoiceModal }"> 
+        <div class="modal-background" @click="showAbilityChoiceModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
-                <p class="modal-card-title"><span x-text="isCreatingAbility ? 'Create' : 'Edit'"></span> an Ability</p>
+                <p class="modal-card-title">Add an Ability to Adversary</p>
             </header>
             <section class="modal-card-body">
-                <template x-if="selectedAbility">
+                <p class="has-text-centered">Select an Ability</p>
+                <form>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label"><span class="icon is-small"><i class="fas fa-search"></i></span></label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
+                                    <div class="search-results">
+                                        <template x-for="result of abilitySearchResults" :key="result.ability_id">
+                                            <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <form>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label">Tactic</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedTactic" x-on:change="selectedAbilityId = ''">
+                                            <option default>Choose a tactic</option>
+                                            <template x-for="tactic of [...new Set(abilities.map((e) => e.tactic))]" :key="tactic">
+                                                <option x-bind:value="tactic" x-text="tactic"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal">
+                        <div class="field-label is-small">
+                            <label class="label">Technique</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''">
+                                            <option default>Choose a technique</option>
+                                            <template :key="exploit.technique_id" x-for="exploit of [...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))">
+                                                <option x-bind:value="exploit.technique_id" x-text="`${exploit.technique_id} | ${exploit.technique_name}`"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field is-horizontal is-fullwidth">
+                        <div class="field-label is-small">
+                            <label class="label">Ability</label>
+                        </div>
+                        <div class="field-body">
+                            <div class="field">
+                                <div class="control">
+                                    <div class="select is-small is-fullwidth">
+                                        <select x-model="selectedAbilityId" x-bind:disabled="!selectedTechnique" x-on:change="selectAbility(selectedAbilityId)">
+                                            <option default>Choose an ability</option>
+                                            <template :key="ability.ability_id" x-for="ability of abilities.filter((e) => selectedTactic === e.tactic && selectedTechnique === e.technique_id)">
+                                                <option x-bind:value="ability.ability_id" x-text="ability.name"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <template x-if="selectedAbilityId">
                     <div class="content">
+                        <hr>
+                        <p class="has-text-centered">Ability Details</p>
                         <form>
                             <div class="field is-horizontal">
                                 <div class="field-label is-small">
@@ -318,8 +399,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('name') }" x-model="selectedAbility.name">
-                                            <p x-show="fieldErrors.includes('name')" class="help is-danger">This field is required.</p>
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('name') }" x-model="selectedAbility.name">
+                                            <p x-show="fieldErrorsAbility.includes('name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -331,8 +412,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('description') }" x-model="selectedAbility.description">
-                                            <p x-show="fieldErrors.includes('description')" class="help is-danger">This field is required.</p>
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('description') }" x-model="selectedAbility.description">
+                                            <p x-show="fieldErrorsAbility.includes('description')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -344,8 +425,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('tactic') }" x-model="selectedAbility.tactic">
-                                            <p x-show="fieldErrors.includes('tactic')" class="help is-danger">This field is required.</p>
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic">
+                                            <p x-show="fieldErrorsAbility.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -357,8 +438,8 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_id') }" x-model="selectedAbility.technique_id">
-                                            <p x-show="fieldErrors.includes('technique_id')" class="help is-danger">This field is required.</p>
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                            <p x-show="fieldErrorsAbility.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -370,20 +451,20 @@
                                 <div class="field-body">
                                     <div class="field">
                                         <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_name') }" x-model="selectedAbility.technique_name">
-                                            <p x-show="fieldErrors.includes('technique_name')" class="help is-danger">This field is required.</p>
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                            <p x-show="fieldErrorsAbility.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </form>
                         <p class="has-text-centered">Executors</p>
-                        <p x-show="fieldErrors.includes('executors')" class="help is-danger">At least one executor is required.</p>
+                        <p x-show="fieldErrorsAbility.includes('executors')" class="help is-danger">At least one executor is required.</p>
                         <div class="has-text-centered">
                             <button class="button is-small is-primary" @click="addExecutorToAbility('before')">+ Add Executor</button>
                         </div>
                         <br>
-                        <template x-for="(executor, index) of selectedAbility.executors" :key="index">
+                        <template x-for="(executor, index) of getAbilityExecutors()" :key="index">
                             <div class="box">
                                 <div class="has-text-right">
                                     <button class="delete" @click="selectedAbility.executors.splice(index, 1)"></button>
@@ -455,7 +536,7 @@
                                                         <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
-                                                            </template>
+                                                            </template>      
                                                         </select>
                                                     </div>
                                                 </div>
@@ -479,40 +560,21 @@
                                             <label class="label">timeout</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field">
+                                            <div class="field ">
                                                 <div class="control">
                                                     <input class="input is-small" type="number" x-model="executor.timeout">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <template x-for="(cleanup, index) of executor.cleanup">
-                                        <div class="field is-horizontal">
-                                            <div class="field-label is-small">
-                                                <label class="label" x-text="index === 0 ? 'cleanup': ' '"></label>
-                                            </div>
-                                            <div class="field-body">
-                                                <div class="field has-addons">
-                                                    <div class="control is-expanded">
-                                                        <input class="input is-small code" x-model="executor.cleanup[index]"></input>
-                                                    </div>
-                                                    <div class="control">
-                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
-                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
                                     <div class="field is-horizontal">
-                                        <div class="field-label is-small" x-show="!executor.cleanup.length">
+                                        <div class="field-label is-small">
                                             <label class="label">cleanup</label>
                                         </div>
                                         <div class="field-body">
-                                            <div class="field">
-                                                <div class="control has-text-right">
-                                                    <button class="button is-small is-primary" @click.stop="executor.cleanup.push('')">+ Add Cleanup Command</button>
+                                            <div class="field ">
+                                                <div class="control">
+                                                    <input class="input is-small code" x-model="executor.cleanup">
                                                 </div>
                                             </div>
                                         </div>
@@ -520,7 +582,7 @@
                                 </form>
                             </div>
                         </template>
-                        <template x-if="selectedAbility.executors.length > 0">
+                        <template x-if="selectedAbility.executors && selectedAbility.executors.length > 0">
                             <div class="has-text-centered">
                                 <button class="button is-small is-primary" @click="addExecutorToAbility('after')">+ Add Executor</button>
                             </div>
@@ -531,21 +593,21 @@
             <footer class="modal-card-foot">
                 <nav class="level">
                     <div class="level-left">
-                        <div class="level-item">
-                            <button class="button is-primary is-small" @click="deleteAbility()" x-show="!isCreatingAbility">
-                                <span class="icon"><i class="fas fa-trash"></i></span>
-                                <span>Delete Ability</span>
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-small" @click="saveAbility(false)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Save</span>
                             </button>
                         </div>
                     </div>
                     <div class="level-right">
                         <div class="level-item">
-                            <button class="button is-small" @click="showAbilityModal = false">Close</button>
-                        </div>
-                        <div class="level-item">
-                            <button class="button is-primary is-small" @click="saveAbility()">
-                                <span class="icon"><i class="fas fa-save"></i></span>
-                                <span>Save</span>
+                            <button class="button is-small" @click="showAbilityChoiceModal = false">Close</button>
+                        </divp>
+                        <div class="level-item" x-show="selectedAbility">
+                            <button class="button is-primary is-small" @click="saveAbility(true)" x-bind:disabled="!selectedAbilityId">
+                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                <span>Save & Add</span>
                             </button>
                         </div>
                     </div>
@@ -599,7 +661,7 @@
             selectedObjectiveId: '',
 
             // Ability modal
-            showAbilityModal: false,
+            showAbilityChoiceModal: false,
             selectedTactic: '',
             selectedTechnique: '',
             selectedAbilityId: '',
@@ -929,7 +991,7 @@
                 this.selectedTactic = this.selectedAbility.tactic;
                 this.selectedTechnique = this.selectedAbility.technique_id;
                 this.selectedAbilityId = id;
-                this.showAbilityModal = true;
+                this.showAbilityChoiceModal = true;
             },
 
             getPlatforms(platform) {
@@ -967,7 +1029,7 @@
                         this.selectedProfileAbilities.push(response);
                         this.unsavedChanges = true;
                         this.selectedAbilityId = '';
-                        this.showAbilityModal = false;
+                        this.showAbilityChoiceModal = false;
                     }
                 }).catch((error) => {
                     toast('Error saving ability', false);
