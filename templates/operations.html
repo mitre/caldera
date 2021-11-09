@@ -1247,7 +1247,6 @@
                         if ((new Date() - new Date(res.last_seen)) > 3600000) {
                             toast(`Command might not run. Is Agent #${res.paw} still alive?`);
                         } else {
-                            this.selectedAgentIndex = 0;
                             this.potentialLink.agent = res;
                         }
                     })
