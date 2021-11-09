@@ -19,6 +19,13 @@ class ConfigApi(BaseApi):
         router.add_patch('/config/agents', self.update_agents_config)
 
     @aiohttp_apispec.docs(tags=['config'], summary='Retrieve Config',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'name',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'Name of the configuration file to be retrieved.'
+                          }],
                           description='Retrieves configuration by name, as specified by {name} in the request url.')
     async def get_config_with_name(self, request):
         config_name = request.match_info['name']
