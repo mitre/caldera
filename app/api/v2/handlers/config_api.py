@@ -40,7 +40,9 @@ class ConfigApi(BaseApi):
                           description='Use fields from the AgentConfigUpdateSchema in the request body to '
                                       'update the Agent Configuration file.')
     @aiohttp_apispec.request_schema(AgentConfigUpdateSchema)
-    @aiohttp_apispec.response_schema(AgentConfigUpdateSchema)
+    @aiohttp_apispec.response_schema(AgentConfigUpdateSchema,
+                                     description='The response consists of data from the Agent configuration file '
+                                                 'dumped in the AgentConfigUpdateSchema format.')
     async def update_agents_config(self, request):
         schema = AgentConfigUpdateSchema()
         data = await self.parse_json_body(request, schema)
