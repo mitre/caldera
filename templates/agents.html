@@ -13,15 +13,26 @@
     <!-- AGENTS TABLE AND CONFIGURATION -->
 
     <div>
+        <nav class="level">
+            <div class="level-left">
+                <button class="button is-primary is-small level-item" @click="showDeployModal = true">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Deploy an agent</span>
+                </button>
+                <button class="button is-primary is-small level-item" @click="showConfigModal = true">
+                    <span class="icon"><i class="fas fa-cog"></i></span>
+                    <span>Configuration</span>
+                </button>
+            </div>
+            <div class="level-right">
+                <button class="button is-danger is-outlined is-small level-item" @click="killAllAgents()">
+                    <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
+                    <span>Kill All Agents</span>
+                </button>
+            </div>
+        </nav>
         <div class="buttons">
-            <button class="button is-primary is-small" @click="showDeployModal = true">
-                <span class="icon"><i class="fas fa-plus"></i></span>
-                <span>Deploy an agent</span>
-            </button>
-            <button class="button is-primary is-small" @click="showConfigModal = true">
-                <span class="icon"><i class="fas fa-cog"></i></span>
-                <span>Configuration</span>
-            </button>
+            
         </div>
         <table class="table is-striped is-fullwidth" x-show="agents.length">
             <thead>
@@ -52,7 +63,11 @@
                             <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-danger': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
                             <span x-text="agent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !agent.trusted, 'has-text-success': agent.trusted }"></span>
                         </td>
+<<<<<<< HEAD
                         <td x-text="getHumanFriendlyTimeISO8601(agent.last_seen)" x-bind:data-tooltip="new Date(agent.last_seen).toLocaleString()"></td>
+=======
+                        <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="agent.last_seen"></td>
+>>>>>>> d8f1bb4d... Bug fixes to agents page, add deadman abilities
                         <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
                     </tr>
                 </template>
@@ -250,17 +265,17 @@
                             </th>
                             <td>
                                 <div class="field is-grouped is-grouped-multiline">
-                                    <template x-for="(abilityId, index) of agentConfig.bootstrap_abilities">
+                                    <template x-for="(abilityId, index) of bootstrapAbilities">
                                         <div class="control">
                                             <div class="tags has-addons">
                                                 <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
-                                                <a class="tag is-delete" @click="agentConfig.bootstrap_abilities.splice(index, 1)"></a>
+                                                <a class="tag is-delete" @click="bootstrapAbilities.splice(index, 1)"></a>
                                             </div>
                                         </div>
                                     </template>
                                     <div class="control">
                                         <div class="tags has-addons">
-                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true" x-show="!isAddingBootstrapAbility">
+                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true; isAddingDeadmanAbility = false" x-show="!isAddingBootstrapAbility">
                                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                             </a>
                                         </div>
@@ -277,6 +292,43 @@
                                     </div>
                                     <div class="control">
                                         <a class="button is-small" @click="isAddingBootstrapAbility = false">Cancel</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="has-text-right">
+                                <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Deadman Abilities</span>
+                            </th>
+                            <td>
+                                <div class="field is-grouped is-grouped-multiline">
+                                    <template x-for="(abilityId, index) of deadmanAbilities">
+                                        <div class="control">
+                                            <div class="tags has-addons">
+                                                <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
+                                                <a class="tag is-delete" @click="deadmanAbilities.splice(index, 1)"></a>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="control">
+                                        <div class="tags has-addons">
+                                            <a class="tag is-primary" @click="isAddingDeadmanAbility = true; isAddingBootstrapAbility = false" x-show="!isAddingDeadmanAbility">
+                                                <span class="icon"><i class="fas fa-plus"></i></span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field has-addons" x-show="isAddingDeadmanAbility">
+                                    <div class="control is-expanded">
+                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()">
+                                        <div class="search-results">
+                                            <template x-for="result of abilitySearchResults" :key="result.ability_id">
+                                                <p @click="addDeadmanAbility(result.ability_id)" x-text="result.name"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="control">
+                                        <a class="button is-small" @click="isAddingDeadmanAbility = false">Cancel</a>
                                     </div>
                                 </div>
                             </td>
@@ -383,6 +435,10 @@
                             <td x-text="`${selectedAgent.host} (${selectedAgent.host_ip_addrs})`"></td>
                         </tr>
                         <tr>
+                            <th class="has-text-right">Display Name</th>
+                            <td x-text="selectedAgent.display_name"></td>
+                        </tr>
+                        <tr>
                             <th class="has-text-right">Username</th>
                             <td x-text="selectedAgent.username"></td>
                         </tr>
@@ -484,7 +540,10 @@
             filteredCommands: [],
             pageOpen: true,
 
+            bootstrapAbilities: [],
+            deadmanAbilities: [],
             isAddingBootstrapAbility: false,
+            isAddingDeadmanAbility: false,
             abilitySearchQuery: [],
             abilitySearchResults: [],
 
@@ -502,10 +561,12 @@
             initPage() {
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
-                    this.agents.sort((a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime());
+                    this.sortAgents();
                     return apiV2('GET', '/api/v2/config/agents');
                 }).then((agentConfig) => {
                     this.agentConfig = agentConfig;
+                    this.bootstrapAbilities = this.agentConfig.bootstrap_abilities || [];
+                    this.deadmanAbilities = this.agentConfig.deadman_abilities || [];
                     return apiV2('GET', '/api/v2/abilities');
                 }).then(async (allAbilities) => {
                     this.abilities = allAbilities;
@@ -528,11 +589,15 @@
             refreshAgents() {
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
-                    this.agents.sort((a, b) => new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime())
+                    this.sortAgents();
                 }).catch((error) => {
                     toast('Error refreshing agents', false);
                     console.error(error);
                 });
+            },
+
+            sortAgents() {
+                this.agents.sort((a, b) => new Date(b.last_seen.replace(/-/g, "/")).getTime() - new Date(a.last_seen.replace(/-/g, "/")).getTime());
             },
 
             selectAbility() {
@@ -620,21 +685,30 @@
             },
 
             addBootstrapAbility(id) {
-                this.agentConfig.bootstrap_abilities.push(id);
+                this.bootstrapAbilities.push(id);
                 this.abilitySearchQuery = '';
                 this.abilitySearchResults = [];
                 this.isAddingBootstrapAbility = false;
             },
 
+            addDeadmanAbility(id) {
+                this.deadmanAbilities.push(id);
+                this.abilitySearchQuery = '';
+                this.abilitySearchResults = [];
+                this.isAddingDeadmanAbility = false;
+            },
+
             getAgentStatus(agent) {
+<<<<<<< HEAD
                 let lastSeen = Date.parse(agent.last_seen);
                 let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000) + 500;
+=======
+                if (!agent.last_seen) return '';
+                let lastSeen = new Date(agent.last_seen.replace(/-/g, "/")).getTime();
+                let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000);
+>>>>>>> d8f1bb4d... Bug fixes to agents page, add deadman abilities
 
-                if (agent.sleep_max === 3 && agent.sleep_min === 3 && agent.watchdog === 1) {
-                    return (Date.now() - lastSeen > 60000) ? 'dead' : 'pending kill'
-                } else {
-                    return isAlive ? 'alive' : 'dead';
-                }
+                return isAlive ? 'alive' : 'dead';
             },
 
             saveAgent() {
@@ -653,7 +727,11 @@
                 this.fieldErrorsConfig = validateInputs(this.agentConfig, this.requiredFieldsConfig);
                 if (this.fieldErrorsConfig.length) return;
 
-                let reqBody = { ...this.agentConfig };
+                let reqBody = { 
+                    ...this.agentConfig,
+                    bootstrap_abilities: this.bootstrapAbilities,
+                    deadman_abilities: this.deadmanAbilities
+                };
                 delete reqBody.deployments;
                 apiV2('PATCH', '/api/v2/config/agents', reqBody).then((response) => {
                     this.showConfigModal = false;
@@ -667,7 +745,6 @@
             removeAgent(paw, index) {
                 apiV2('DELETE', `/api/v2/agents/${paw}`).then(() => {
                     this.agents.splice(index, 1);
-                    toast('Agent has been removed, but may reappear if it beacons again.', true);
                 }).catch((error) => {
                     toast('Error removing the agent', false);
                     console.error(error);
@@ -684,11 +761,36 @@
 
                     apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
                         toast('Agent will be killed after its next beacon.', true);
+                        this.removeAgent(agent.paw, this.agents.findIndex((a) => agent.paw === a.paw))
                     }).catch((error) => {
                         toast('Error killing the agent', false);
                         console.error(error);
                     });
                     this.showDetailsModal = false;
+                }
+            },
+        
+            killAllAgents() {
+                if (confirm(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n          You are about to kill all agents. Are you sure?     \n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`)) {
+                    let reqBody = {
+                        watchdog: 1,
+                        sleep_min: 3,
+                        sleep_max: 3
+                    };
+                    let numKilled = 0;
+
+                    this.agents.forEach((agent, index) => {
+                        apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
+                            numKilled++;
+                            if (numKilled === this.agents.length) {
+                                toast('All agents have been configured to be killed by next beacon.', true);
+                            }
+                            this.removeAgent(agent.paw, index);
+                        }).catch((error) => {
+                            toast('Error killing the agent', false);
+                            console.error(error);
+                        });
+                    });
                 }
             }
         };
