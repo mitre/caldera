@@ -2,7 +2,6 @@ import base64
 import json
 import os
 from base64 import b64encode
-from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -37,6 +36,11 @@ def operation_agent(agent):
 
 
 @pytest.fixture
+def op_agent_creation_time(operation_agent):
+    return operation_agent.created.strftime(BaseObject.TIME_FORMAT)
+
+
+@pytest.fixture
 def operation_adversary(adversary):
     return adversary(adversary_id='123', name='test adversary', description='test adversary desc')
 
@@ -64,7 +68,8 @@ def encoded_command():
 
 
 @pytest.fixture
-def op_for_event_logs(operation_agent, operation_adversary, executor, ability, operation_link, encoded_command):
+def op_for_event_logs(operation_agent, operation_adversary, executor, ability, operation_link, encoded_command,
+                      parse_datestring):
     op = Operation(name='test', agents=[operation_agent], adversary=operation_adversary)
     op.set_start_details()
     command_1 = 'whoami'
@@ -77,19 +82,24 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
                             command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
-                            decide=datetime.strptime(LINK1_DECIDE_TIME, BaseObject.TIME_FORMAT),
-                            collect=datetime.strptime(LINK1_COLLECT_TIME, BaseObject.TIME_FORMAT),
+                            decide=parse_datestring(LINK1_DECIDE_TIME),
+                            collect=parse_datestring(LINK1_COLLECT_TIME),
                             finish=LINK1_FINISH_TIME)
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                             command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
-                            decide=datetime.strptime(LINK2_DECIDE_TIME, BaseObject.TIME_FORMAT),
-                            collect=datetime.strptime(LINK2_COLLECT_TIME, BaseObject.TIME_FORMAT),
+                            decide=parse_datestring(LINK2_DECIDE_TIME),
+                            collect=parse_datestring(LINK2_COLLECT_TIME),
                             finish=LINK2_FINISH_TIME)
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                                     command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
-                                    decide=datetime.strptime('2021-01-01T10:00:00Z', BaseObject.TIME_FORMAT))
+                                    decide=parse_datestring('2021-01-01T10:00:00Z'))
     op.chain = [link_1, link_2, discarded_link]
     return op
+
+
+@pytest.fixture
+def event_log_op_start_time(op_for_event_logs):
+    return op_for_event_logs.start.strftime(BaseObject.TIME_FORMAT)
 
 
 @pytest.fixture
@@ -153,11 +163,11 @@ def op_without_learning_parser(ability, adversary):
 
 
 @pytest.fixture
-def op_with_learning_and_seeded(ability, adversary, operation_agent):
+def op_with_learning_and_seeded(ability, adversary, operation_agent, parse_datestring):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
     # patch operation to make it 'realistic'
-    op.start = datetime.strptime(OP_START_TIME, BaseObject.TIME_FORMAT)
+    op.start = parse_datestring(OP_START_TIME)
     op.adversary = op.adversary()
     op.planner = Planner(planner_id='12345', name='test_planner',
                                                   module='not.an.actual.planner', params=None)
@@ -175,11 +185,10 @@ class TestOperation:
         op.chain = [mock_link]
         assert op.ran_ability_id('123')
 
-    def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+    def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
+                        op_agent_creation_time):
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
-        start_time = op_for_event_logs.start.strftime(BaseObject.TIME_FORMAT)
-        agent_creation_time = operation_agent.created.strftime(BaseObject.TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -191,11 +200,11 @@ class TestOperation:
             privilege='User',
             host='WORKSTATION',
             contact='unknown',
-            created=agent_creation_time,
+            created=op_agent_creation_time,
         )
         want_operation_metadata = dict(
             operation_name='test',
-            operation_start=start_time,
+            operation_start=event_log_op_start_time,
             operation_adversary='test adversary',
         )
         want_attack_metadata = dict(
@@ -244,12 +253,11 @@ class TestOperation:
         event_logs = loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
-    def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
+    def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc,
+                                        event_log_op_start_time, op_agent_creation_time):
         loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         loop.run_until_complete(data_svc.store(operation_agent))
 
-        start_time = op_for_event_logs.start.strftime(BaseObject.TIME_FORMAT)
-        agent_creation_time = operation_agent.created.strftime(BaseObject.TIME_FORMAT)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -261,11 +269,11 @@ class TestOperation:
             privilege='User',
             host='WORKSTATION',
             contact='unknown',
-            created=agent_creation_time,
+            created=op_agent_creation_time,
         )
         want_operation_metadata = dict(
             operation_name='test',
-            operation_start=start_time,
+            operation_start=event_log_op_start_time,
             operation_adversary='test adversary',
         )
         want_attack_metadata = dict(

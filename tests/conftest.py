@@ -8,6 +8,7 @@ import yaml
 import aiohttp_apispec
 import warnings
 
+from datetime import datetime
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
@@ -25,7 +26,6 @@ from app.api.v2.handlers.fact_source_api import FactSourceApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
 from app.objects.c_obfuscator import Obfuscator
-from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
@@ -46,10 +46,13 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
+from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.rest_api import RestApi
+
 from app import version
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -395,3 +398,10 @@ def async_return():
         f.set_result(return_param)
         return f
     return _async_return
+
+
+@pytest.fixture
+def parse_datestring():
+    def _parse_datestring(datestring):
+        return datetime.strptime(datestring, BaseObject.TIME_FORMAT)
+    return _parse_datestring
