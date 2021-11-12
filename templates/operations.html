@@ -284,7 +284,6 @@
                                             <template x-if="!isLinkEditable">
                                                 <div class="is-flex is-justify-content-center is-flex-direction-column">
                                                     <button class="button is-primary is-small"
-                                                            x-bind:class="{'hover-opacity':selectedLink !== link}"
                                                             x-on:click="getLink(link); openModal='showCommand'"
                                                             title="view output">View Command
                                                     </button>
@@ -1244,11 +1243,11 @@
             getAgent(agentPaw) {
                 apiV2('GET', `api/v2/agents/${agentPaw}`)
                     .then((res) => {
-                        this.selectedAgentIndex = 0;
-                        this.potentialLink.agent = res;
                         // Check if agent has been seen in the last hour
                         if ((new Date() - new Date(res.last_seen)) > 3600000) {
                             toast(`Command might not run. Is Agent #${res.paw} still alive?`);
+                        } else {
+                            this.potentialLink.agent = res;
                         }
                     })
                     .catch(() => {
@@ -1702,14 +1701,6 @@
         justify-content: space-between;
         overflow-y: scroll;
         margin-bottom: 1em;
-    }
-
-    #operationsPage .hover-opacity {
-        opacity: 0.5;
-    }
-
-    #operationsPage .hover-opacity:hover {
-        opacity: 1;
     }
 
     #operationsPage .controls-container button {
