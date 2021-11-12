@@ -24,16 +24,45 @@
                     <span>Configuration</span>
                 </button>
             </div>
+            <div class="level-center">
+                <div class="tags">
+                    <span class="level-item tag is-medium is-success" x-show="isHoveringAgentCount">
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'alive').length"></span>&nbsp;alive&nbsp;·&nbsp;
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => a.trusted).length"></span>&nbsp;trusted
+                    </span>
+                    <span class="level-item tag is-medium" x-on:mouseenter="isHoveringAgentCount = true" x-on:mouseleave="isHoveringAgentCount = false">
+                        <strong x-text="agents.length"></strong>&nbsp;agents
+                    </span>
+                    <span class="level-item tag is-medium is-warning" x-show="isHoveringAgentCount">
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'dead').length"></span>&nbsp;dead&nbsp;·&nbsp;
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => !a.trusted).length"></span>&nbsp;untrusted
+                    </span>
+                </div>
+            </div>
             <div class="level-right">
-                <button class="button is-danger is-outlined is-small level-item" @click="killAllAgents()">
-                    <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
-                    <span>Kill All Agents</span>
-                </button>
+                <div class="dropdown is-right is-hoverable">
+                    <div class="dropdown-trigger">
+                        <button class="button is-small is-primary" aria-haspopup="true" aria-controls="bulk-actions">
+                            <span>Bulk Actions</span>
+                            <span class="icon is-small"><i class="fas fa-angle-down" aria-hidden="true"></i></span>
+                        </button>
+                    </div>
+                    <div class="dropdown-menu" id="bulk-actions" role="menu">
+                        <div class="dropdown-content">
+                            <a href="#" class="dropdown-item" @click="removeDeadAgents()">
+                                Remove dead agents
+                            </a>
+                            <a href="#" class="dropdown-item" @click="removeAllAgents()">
+                                Remove all agents
+                            </a>
+                            <a href="#" class="dropdown-item has-text-danger" @click="killAllAgents()">
+                                Kill all agents
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </nav>
-        <div class="buttons">
-            
-        </div>
         <table class="table is-striped is-fullwidth" x-show="agents.length">
             <thead>
                 <tr>
@@ -497,7 +526,7 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <button class="button is-danger is-outlined is-small" @click="killAgent(selectedAgent)">
+                            <button class="button is-danger is-outlined is-small has-text-white" @click="killAgent(selectedAgent)">
                                 <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
                                 <span>Kill Agent</span>
                             </button>
@@ -542,6 +571,8 @@
             isAddingDeadmanAbility: false,
             abilitySearchQuery: [],
             abilitySearchResults: [],
+
+            isHoveringAgentCount: false,
 
             // Modals
             showDeployModal: false,
@@ -740,6 +771,24 @@
                     toast('Error removing the agent', false);
                     console.error(error);
                 });
+            },
+
+            removeDeadAgents() {
+                if (confirm(`Are you sure you want to remove all dead agents?`)) {
+                    this.agents.forEach((agent, index) => {
+                        if (this.getAgentStatus(agent) === 'dead') {
+                            this.removeAgent(agent.paw, index);
+                        }
+                    });
+                }
+            },
+
+            removeAllAgents() {
+                if (confirm(`Are you sure you want to remove all agents? No agents will be killed, so any agent that beacons again will reappear.`)) {
+                    this.agents.forEach((agent, index) => {
+                        this.removeAgent(agent.paw, index);
+                    });
+                }
             },
 
             killAgent(agent) {
