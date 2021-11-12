@@ -116,7 +116,7 @@ fieldset[disabled] .file-name, fieldset[disabled] .select select, .select fields
   width: 20px;
 }
 .modal-close::before, .delete::before, .modal-close::after, .delete::after {
-  background-color: white;
+  background-color: #262626;
   content: "";
   display: block;
   left: 50%;
@@ -1918,7 +1918,7 @@ div.icon-text {
 }
 .notification code,
 .notification pre {
-  background: white;
+  background: #262626;
 }
 .notification pre code {
   background: transparent;
@@ -3782,7 +3782,7 @@ a.tag:hover {
 }
 
 .card {
-  background-color: white;
+  background-color: #262626;
   border-radius: 0.25rem;
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
   color: white;
@@ -3898,7 +3898,7 @@ a.tag:hover {
 }
 
 .dropdown-content {
-  background-color: white;
+  background-color: #262626;
   border-radius: 4px;
   box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0px 0 1px rgba(10, 10, 10, 0.02);
   padding-bottom: 0.5rem;
@@ -3923,8 +3923,8 @@ button.dropdown-item {
 }
 a.dropdown-item:hover,
 button.dropdown-item:hover {
-  background-color: #262626;
-  color: #0a0a0a;
+  background-color: #1D1D1D;
+  color: #b0b0b0;
 }
 a.dropdown-item.is-active,
 button.dropdown-item.is-active {
@@ -4135,7 +4135,7 @@ button.dropdown-item.is-active {
 
 .menu-label {
   color: white;
-  border-bottom: 2px solid #191970;
+  background-color: #191970;
   font-size: 0.75em;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4308,7 +4308,7 @@ button.dropdown-item.is-active {
 }
 .message-body code,
 .message-body pre {
-  background-color: white;
+  background-color: #262626;
 }
 .message-body pre code {
   background-color: transparent;
@@ -4409,7 +4409,7 @@ button.dropdown-item.is-active {
 }
 
 .navbar {
-  background-color: white;
+  background-color: #262626;
   min-height: 3.25rem;
   position: relative;
   z-index: 30;
@@ -5181,7 +5181,7 @@ a.navbar-item:focus, a.navbar-item:focus-within, a.navbar-item:hover, a.navbar-i
   }
 
   .navbar-menu {
-    background-color: white;
+    background-color: #262626;
     box-shadow: 0 8px 16px rgba(10, 10, 10, 0.1);
     padding: 0.5rem 0;
   }
@@ -5309,7 +5309,7 @@ body.has-navbar-fixed-bottom-touch {
   }
 
   .navbar-dropdown {
-    background-color: white;
+    background-color: #262626;
     border-bottom-left-radius: 6px;
     border-bottom-right-radius: 6px;
     border-top: 2px solid #363636;

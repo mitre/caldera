@@ -53,7 +53,12 @@ main.main {
   padding-bottom: 20px;
 }
 
-.menu-label {
+.menu-label.nav-header {
+  cursor: default;
+  background: none !important;
+  border-bottom: 2px solid #8B0000;
+  font-size: 0.75em;
+  letter-spacing: 0.1em;
   color: white !important;
   padding: 8px;
   border-radius: 4px;
@@ -152,6 +157,10 @@ main.main {
   padding-bottom: 10px;
   min-height: 52px;
   border: 0 !important;
+}
+
+.nav.tabs span {
+  color: white;
 }
 
 #startup-errors-warning {
