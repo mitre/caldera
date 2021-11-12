@@ -63,11 +63,7 @@
                             <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-danger': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
                             <span x-text="agent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !agent.trusted, 'has-text-success': agent.trusted }"></span>
                         </td>
-<<<<<<< HEAD
-                        <td x-text="getHumanFriendlyTimeISO8601(agent.last_seen)" x-bind:data-tooltip="new Date(agent.last_seen).toLocaleString()"></td>
-=======
                         <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="agent.last_seen"></td>
->>>>>>> d8f1bb4d... Bug fixes to agents page, add deadman abilities
                         <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
                     </tr>
                 </template>
@@ -699,14 +695,9 @@
             },
 
             getAgentStatus(agent) {
-<<<<<<< HEAD
-                let lastSeen = Date.parse(agent.last_seen);
-                let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000) + 500;
-=======
                 if (!agent.last_seen) return '';
                 let lastSeen = new Date(agent.last_seen.replace(/-/g, "/")).getTime();
                 let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000);
->>>>>>> d8f1bb4d... Bug fixes to agents page, add deadman abilities
 
                 return isAlive ? 'alive' : 'dead';
             },
