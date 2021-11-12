@@ -19,6 +19,14 @@ from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_object import BaseObject
 
+LINK1_DECIDE_TIME, MOCK_LINK_FINISH_TIME = '2021-01-01T08:00:00Z'
+LINK1_COLLECT_TIME = '2021-01-01T08:01:00Z'
+LINK1_FINISH_TIME = '2021-01-01T08:02:00Z'
+
+LINK2_DECIDE_TIME, OP_START_TIME = '2021-01-01T09:00:00Z'
+LINK2_COLLECT_TIME = '2021-01-01T09:01:00Z'
+LINK2_FINISH_TIME = '2021-01-01T09:02:00Z'
+
 
 @pytest.fixture
 def operation_agent(agent):
@@ -69,14 +77,14 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
                             command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
-                            decide=datetime.strptime('2021-01-01T08:00:00Z', BaseObject.TIME_FORMAT),
-                            collect=datetime.strptime('2021-01-01T08:01:00Z', BaseObject.TIME_FORMAT),
-                            finish='2021-01-01T08:02:00Z')
+                            decide=datetime.strptime(LINK1_DECIDE_TIME, BaseObject.TIME_FORMAT),
+                            collect=datetime.strptime(LINK1_COLLECT_TIME, BaseObject.TIME_FORMAT),
+                            finish=LINK1_FINISH_TIME)
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                             command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
-                            decide=datetime.strptime('2021-01-01T09:00:00Z', BaseObject.TIME_FORMAT),
-                            collect=datetime.strptime('2021-01-01T09:01:00Z', BaseObject.TIME_FORMAT),
-                            finish='2021-01-01T09:02:00Z')
+                            decide=datetime.strptime(LINK2_DECIDE_TIME, BaseObject.TIME_FORMAT),
+                            collect=datetime.strptime(LINK2_COLLECT_TIME, BaseObject.TIME_FORMAT),
+                            finish=LINK2_FINISH_TIME)
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
                                     command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
                                     decide=datetime.strptime('2021-01-01T10:00:00Z', BaseObject.TIME_FORMAT))
@@ -149,7 +157,7 @@ def op_with_learning_and_seeded(ability, adversary, operation_agent):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
     # patch operation to make it 'realistic'
-    op.start = datetime.strptime('2021-01-01T09:00:00Z', BaseObject.TIME_FORMAT)
+    op.start = datetime.strptime(OP_START_TIME, BaseObject.TIME_FORMAT)
     op.adversary = op.adversary()
     op.planner = Planner(planner_id='12345', name='test_planner',
                                                   module='not.an.actual.planner', params=None)
@@ -163,7 +171,7 @@ def op_with_learning_and_seeded(ability, adversary, operation_agent):
 class TestOperation:
     def test_ran_ability_id(self, ability, adversary):
         op = Operation(name='test', agents=[], adversary=adversary)
-        mock_link = MagicMock(spec=Link, ability=ability(ability_id='123'), finish='2021-01-01T08:00:00Z')
+        mock_link = MagicMock(spec=Link, ability=ability(ability_id='123'), finish=MOCK_LINK_FINISH_TIME)
         op.chain = [mock_link]
         assert op.ran_ability_id('123')
 
@@ -172,7 +180,6 @@ class TestOperation:
         loop.run_until_complete(data_svc.store(operation_agent))
         start_time = op_for_event_logs.start.strftime(BaseObject.TIME_FORMAT)
         agent_creation_time = operation_agent.created.strftime(BaseObject.TIME_FORMAT)
-        print('Expected agent creation time: ' + agent_creation_time)
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -199,9 +206,9 @@ class TestOperation:
         want = [
             dict(
                 command='d2hvYW1p',
-                delegated_timestamp='2021-01-01T08:00:00Z',
-                collected_timestamp='2021-01-01T08:01:00Z',
-                finished_timestamp='2021-01-01T08:02:00Z',
+                delegated_timestamp=LINK1_DECIDE_TIME,
+                collected_timestamp=LINK1_COLLECT_TIME,
+                finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -217,9 +224,9 @@ class TestOperation:
             ),
             dict(
                 command='aG9zdG5hbWU=',
-                delegated_timestamp='2021-01-01T09:00:00Z',
-                collected_timestamp='2021-01-01T09:01:00Z',
-                finished_timestamp='2021-01-01T09:02:00Z',
+                delegated_timestamp=LINK2_DECIDE_TIME,
+                collected_timestamp=LINK2_COLLECT_TIME,
+                finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -269,9 +276,9 @@ class TestOperation:
         want = [
             dict(
                 command='d2hvYW1p',
-                delegated_timestamp='2021-01-01T08:00:00Z',
-                collected_timestamp='2021-01-01T08:01:00Z',
-                finished_timestamp='2021-01-01T08:02:00Z',
+                delegated_timestamp=LINK1_DECIDE_TIME,
+                collected_timestamp=LINK1_COLLECT_TIME,
+                finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -287,9 +294,9 @@ class TestOperation:
             ),
             dict(
                 command='aG9zdG5hbWU=',
-                delegated_timestamp='2021-01-01T09:00:00Z',
-                collected_timestamp='2021-01-01T09:01:00Z',
-                finished_timestamp='2021-01-01T09:02:00Z',
+                delegated_timestamp=LINK2_DECIDE_TIME,
+                collected_timestamp=LINK2_COLLECT_TIME,
+                finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
