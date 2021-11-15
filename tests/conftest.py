@@ -1,6 +1,6 @@
 import asyncio
 import os.path
-from datetime import datetime, timezone
+from datetime import timezone
 
 import pytest
 import random
@@ -404,9 +404,10 @@ def async_return():
 
 @pytest.fixture
 def mock_time():
-    return datetime(2021, 1, 1, tzinfo=timezone.utc)
+    return datetime.datetime(2021, 1, 1, tzinfo=timezone.utc)
 
 
+@pytest.fixture
 def parse_datestring():
     def _parse_datestring(datestring):
         return datetime.strptime(datestring, BaseObject.TIME_FORMAT)
