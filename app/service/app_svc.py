@@ -6,7 +6,7 @@ import json
 import os
 import time
 from collections import namedtuple
-from datetime import datetime, date
+from datetime import datetime, timezone
 from importlib import import_module
 
 import aiohttp_jinja2
@@ -42,7 +42,7 @@ class AppService(AppServiceInterface, BaseService):
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
                 next_check = self.get_config(name='agents', prop='untrusted_timer')
                 for a in trusted_agents:
-                    silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
+                    silence_time = (datetime.now(timezone.utc) - a.last_trusted_seen).total_seconds()
                     if silence_time > (self.get_config(name='agents', prop='untrusted_timer') + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
@@ -75,8 +75,9 @@ class AppService(AppServiceInterface, BaseService):
         while True:
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
-                now = datetime.now().time()
-                diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
+                now = datetime.now(timezone.utc).time()
+                today_utc = datetime.now(timezone.utc).date()
+                diff = datetime.combine(today_utc, now) - datetime.combine(today_utc, s.schedule)
                 if interval > diff.total_seconds() > 0:
                     self.log.debug('Pulling %s off the scheduler' % s.name)
                     sop = copy.deepcopy(s.task)

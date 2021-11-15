@@ -63,9 +63,9 @@ function getHumanFriendlyTime(date) {
     let hDate = Number(split[2].split(' ')[0]);
     let hTime = split[2].split(' ')[1].split(':');
 
-    const givenDate = new Date(split[0], hMonth, hDate, hTime[0], hTime[1], hTime[2]);
+    const givenDate = Date.UTC(split[0], hMonth, hDate, hTime[0], hTime[1], hTime[2]);
     // Make a fuzzy time
-    let delta = Math.round((new Date - givenDate) / 1000);
+    let delta = Math.round((Date.now() - givenDate) / 1000);
 
     let minute = 60,
         hour = minute * 60,
@@ -132,6 +132,15 @@ function getHumanFriendlyTime(date) {
         fuzzy = hMonth + ' ' + hDate + ' ' + hTime.join(':');
     }
     return fuzzy;
+}
+
+//
+// Parse timestamp into human-friendly date format
+// Expected ISO8601 input in UTC time: (i.e.) 2021-08-25T10:03:23Z
+// Output: (i.e.) 5 hrs ago; (i.e. if older than 1 day): yesterday 10:03:23; (i.e. if older than 2 days): Aug 25 10:03:23
+//
+function getHumanFriendlyTimeISO8601(dateTime) {
+	return getHumanFriendlyTime(dateTime.replace('T', ' ').replace('Z', ''));
 }
 
 function sortAlphabetically(list) {
