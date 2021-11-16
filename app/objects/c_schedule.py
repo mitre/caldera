@@ -8,7 +8,7 @@ from app.utility.base_object import BaseObject
 class ScheduleSchema(ma.Schema):
 
     name = ma.fields.String(required=True)
-    schedule = ma.fields.Time()
+    schedule = ma.fields.Time(required=True)
     task = ma.fields.Nested(OperationSchema())
 
     @ma.post_load
@@ -34,4 +34,5 @@ class Schedule(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['schedules'].append(self)
             return self.retrieve(ram['schedules'], self.unique)
+        existing.update('schedule', self.schedule)
         return existing
