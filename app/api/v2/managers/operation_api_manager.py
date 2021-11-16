@@ -22,10 +22,15 @@ class OperationApiManager(BaseApiManager):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
 
-    async def get_operation_report(self, operation_id: str, access: dict):
+    async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
-        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
+        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
         return report
+
+    async def get_operation_event_logs(self, operation_id: str, access: dict, output: bool):
+        operation = await self.get_operation_object(operation_id, access)
+        event_logs = await operation.event_logs(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
+        return event_logs
 
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
@@ -55,6 +60,15 @@ class OperationApiManager(BaseApiManager):
         link = self.search_operation_for_link(operation, link_id)
         return link.display
 
+    async def get_operation_link_result(self, operation_id: str, link_id: str, access: dict):
+        operation = await self.get_operation_object(operation_id, access)
+        link = self.search_operation_for_link(operation, link_id)
+        try:
+            result = self.services['file_svc'].read_result_file('%s' % link_id)
+            return dict(link=link.display, result=result)
+        except FileNotFoundError:
+            return dict(link=link.display, result='')
+
     async def update_operation_link(self, operation_id: str, link_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation_object(operation_id, access)
         link = self.search_operation_for_link(operation, link_id)
@@ -62,15 +76,16 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
         if link.is_finished() or link.can_ignore():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
+        if link_data.get('command'):
+            command_str = link_data.get('command')
+            link.executor.command = command_str
+            link.ability = self.build_ability({}, link.executor)
+            link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
             if not link.is_valid_status(link_status):
                 raise JsonHttpBadRequest(f'Cannot update link {link_id} due to invalid link status.')
             link.status = link_status
-        if link_data.get('command'):
-            link.command = link_data.get('command')
-            command_str = self._decode_string(link_data.get('command'))
-            link.executor.command = command_str
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):

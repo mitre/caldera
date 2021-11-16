@@ -1,3 +1,4 @@
+import json
 import aiohttp_apispec
 
 from aiohttp import web
@@ -6,7 +7,7 @@ from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_operation import Operation, OperationSchema
+from app.objects.c_operation import Operation, OperationSchema, OperationOutputRequestSchema
 from app.objects.secondclass.c_link import LinkSchema
 
 
@@ -23,9 +24,11 @@ class OperationApi(BaseObjectApi):
         router.add_post('/operations', self.create_operation)
         router.add_patch('/operations/{id}', self.update_operation)
         router.add_delete('/operations/{id}', self.delete_operation)
-        router.add_get('/operations/{id}/report', self.get_operation_report)
+        router.add_post('/operations/{id}/report', self.get_operation_report)
+        router.add_post('/operations/{id}/event-logs', self.get_operation_event_logs)
         router.add_get('/operations/{id}/links', self.get_operation_links)
         router.add_get('/operations/{id}/links/{link_id}', self.get_operation_link)
+        router.add_get('/operations/{id}/links/{link_id}/result', self.get_operation_link_result)
         router.add_patch('/operations/{id}/links/{link_id}', self.update_operation_link)
         router.add_post('/operations/{id}/potential-links', self.create_potential_link)
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
@@ -45,15 +48,19 @@ class OperationApi(BaseObjectApi):
         operation = await self.get_object(request)
         return web.json_response(operation)
 
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Required nested schema fields are as follows: "adversary.adversary_id", '
+                                  '"planner.planner_id", and "source.id".')
+    @aiohttp_apispec.request_schema(OperationSchema())
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state',
+                                                                        'autonomous',
+                                                                        'obfuscator']))
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
@@ -67,10 +74,22 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
-        report = await self._api_manager.get_operation_report(operation_id, access)
+        output = await self._read_output_parameter_(request)
+        report = await self._api_manager.get_operation_report(operation_id, access, output)
+        return web.json_response(report)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
+    async def get_operation_event_logs(self, request: web.Request):
+        operation_id = request.match_info.get('id')
+        access = await self.get_request_permissions(request)
+        output = await self._read_output_parameter_(request)
+        report = await self._api_manager.get_operation_event_logs(operation_id, access, output)
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'])
@@ -93,7 +112,17 @@ class OperationApi(BaseObjectApi):
         return web.json_response(link)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(LinkSchema(partial=True))
+    @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
+    async def get_operation_link_result(self, request: web.Request):
+        operation_id = request.match_info.get('id')
+        link_id = request.match_info.get('link_id')
+        access = await self.get_request_permissions(request)
+        result = await self._api_manager.get_operation_link_result(operation_id, link_id, access)
+        return web.json_response(result)
+
+    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.request_schema(LinkSchema(partial=True, only=['command', 'status']))
     @aiohttp_apispec.response_schema(LinkSchema)
     async def update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
@@ -103,7 +132,9 @@ class OperationApi(BaseObjectApi):
         link = await self._api_manager.update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are "paw", '
+                                                       '"executor.name", "executor.command", and "executor.platform". '
+                                                       '"executor.command" is expected to be unencoded.')
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
@@ -133,6 +164,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(potential_links)
 
     '''Overridden Methods'''
+
     async def create_object(self, request: web.Request):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
@@ -145,3 +177,12 @@ class OperationApi(BaseObjectApi):
         if not obj:
             raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
         return obj
+
+    ''' PRIVATE '''
+
+    async def _read_output_parameter_(self, request: web.Request):
+        raw_body = await request.read()
+        output = False
+        if raw_body:
+            output = json.loads(raw_body).get('enable_agent_output', False)
+        return output

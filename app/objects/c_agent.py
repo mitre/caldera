@@ -1,6 +1,6 @@
 import re
 from base64 import b64decode
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 import marshmallow as ma
@@ -37,16 +37,16 @@ class AgentFieldsSchema(ma.Schema):
     proxy_receivers = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.String()),
                                      allow_none=True)
     proxy_chain = ma.fields.List(ma.fields.List(ma.fields.String()), allow_none=True)
-    origin_link_id = ma.fields.Integer()
+    origin_link_id = ma.fields.String()
     deadman_enabled = ma.fields.Boolean(allow_none=True)
     available_contacts = ma.fields.List(ma.fields.String(), allow_none=True)
     host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
 
     display_name = ma.fields.String(dump_only=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
-    last_seen = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
+    last_seen = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
-    pending_contact = ma.fields.String(dump_only=True)
+    pending_contact = ma.fields.String()
 
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
@@ -58,7 +58,6 @@ class AgentFieldsSchema(ma.Schema):
         data.pop('created', None)
         data.pop('last_seen', None)
         data.pop('links', None)
-        data.pop('pending_contact', None)
         return data
 
 
@@ -99,8 +98,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
     def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
-                 proxy_receivers=None, proxy_chain=None, origin_link_id=0, deadman_enabled=False,
-                 available_contacts=None, host_ip_addrs=None, upstream_dest=None):
+                 proxy_receivers=None, proxy_chain=None, origin_link_id='', deadman_enabled=False,
+                 available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -114,7 +113,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.pid = pid
         self.ppid = ppid
         self.trusted = trusted
-        self.created = datetime.now()
+        self.created = datetime.now(timezone.utc)
         self.last_seen = self.created
         self.last_trusted_seen = self.created
         self.executors = executors
@@ -131,7 +130,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.origin_link_id = origin_link_id
         self.deadman_enabled = deadman_enabled
         self.available_contacts = available_contacts if available_contacts else [self.contact]
-        self.pending_contact = contact
+        self.pending_contact = pending_contact if pending_contact else contact
         self.host_ip_addrs = host_ip_addrs if host_ip_addrs else []
         if upstream_dest:
             upstream_url = urlparse(upstream_dest)
@@ -146,6 +145,12 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if not existing:
             ram['agents'].append(self)
             return self.retrieve(ram['agents'], self.unique)
+        existing.update('group', self.group)
+        existing.update('trusted', self.trusted)
+        existing.update('sleep_min', self.sleep_min)
+        existing.update('sleep_max', self.sleep_max)
+        existing.update('watchdog', self.watchdog)
+        existing.update('pending_contact', self.pending_contact)
         return existing
 
     async def calculate_sleep(self):
@@ -184,7 +189,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         return potential_executors[0]
 
     async def heartbeat_modification(self, **kwargs):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         self.last_seen = now
         if self.trusted:
             self.last_trusted_seen = now
@@ -275,7 +280,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         for fact in facts:
             fact.source = self.paw
-            fact.origin_type = OriginType.SEEDED.name
+            fact.origin_type = OriginType.SEEDED
             await knowledge_svc_handle.add_fact(fact)
         self.links.extend(links)
         return links

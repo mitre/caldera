@@ -12,7 +12,6 @@ from aiohttp_jinja2 import template, render_template
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
-from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
@@ -171,6 +170,4 @@ class RestApi(BaseWorld):
     @staticmethod
     def _request_errors(request):
         errors = []
-        if 'Chrome' not in request.headers.get('User-Agent'):
-            errors.append(dict(Error('browser', 'chrome not being used')._asdict()))
         return errors

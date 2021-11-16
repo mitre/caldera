@@ -15,12 +15,13 @@ class AdversaryApi(BaseObjectApi):
 
     def add_routes(self, app: web.Application):
         router = app.router
+        adversaries_by_id_path = '/adversaries/{adversary_id}'
         router.add_get('/adversaries', self.get_adversaries)
-        router.add_get('/adversaries/{adversary_id}', self.get_adversary_by_id)
+        router.add_get(adversaries_by_id_path, self.get_adversary_by_id)
         router.add_post('/adversaries', self.create_adversary)
-        router.add_patch('/adversaries/{adversary_id}', self.update_adversary)
-        router.add_put('/adversaries/{adversary_id}', self.create_or_update_adversary)
-        router.add_delete('/adversaries/{adversary_id}', self.delete_adversary)
+        router.add_patch(adversaries_by_id_path, self.update_adversary)
+        router.add_put(adversaries_by_id_path, self.create_or_update_adversary)
+        router.add_delete(adversaries_by_id_path, self.delete_adversary)
 
     @aiohttp_apispec.docs(tags=['adversaries'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -45,7 +46,7 @@ class AdversaryApi(BaseObjectApi):
         return web.json_response(adversary.display)
 
     @aiohttp_apispec.docs(tags=['adversaries'])
-    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
+    @aiohttp_apispec.request_schema(AdversarySchema(partial=True, exclude=['adversary_id']))
     @aiohttp_apispec.response_schema(AdversarySchema)
     async def update_adversary(self, request: web.Request):
         adversary = await self.update_on_disk_object(request)

@@ -8,7 +8,7 @@ class ResultSchema(ma.Schema):
     output = ma.fields.String()
     pid = ma.fields.String()
     status = ma.fields.String()
-    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
+    agent_reported_time = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, missing=None)
 
     @ma.post_load
     def build_result(self, data, **_):

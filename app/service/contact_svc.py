@@ -1,7 +1,7 @@
 import asyncio
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from base64 import b64decode
 
 from app.objects.c_agent import Agent
@@ -16,8 +16,8 @@ def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
         log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
-                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        args[0].report[agent.contact].append(log)
+                   date=BaseWorld.get_current_timestamp())
+        args[0].report[agent.contact.upper()].append(log)
         return agent, instructions
 
     return wrapper
@@ -162,7 +162,7 @@ class ContactService(ContactServiceInterface, BaseService):
 
     @staticmethod
     def _convert_link_to_instruction(link):
-        link.collect = datetime.now()
+        link.collect = datetime.now(timezone.utc)
         payloads = [] if link.cleanup else link.executor.payloads
         uploads = [] if link.cleanup else link.executor.uploads
         return Instruction(id=link.unique,

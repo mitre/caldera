@@ -1,917 +1,1914 @@
-<div id="operations" class="section-profile">
-  <div class="row">
-    <div class="bottomright duk-icon"><img onclick="toggleSidebar('operations-sidebar')" src="/gui/img/expand.png"></div>
-    <div class="topleft duk-icon"><img onclick="removeSection('operations')" src="/gui/img/x.png"></div>
-    <div id="operations-sidebar" class="column section-border" style="flex:25%">
-      <img src="/gui/img/operation.png">
-      <h4>Operations</h4>
-      <br>
-      <div class="toggle">
-        <label class="switch"><input type="checkbox" id="togBtnOp" onchange="toggleOperationView()">
-          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
-        </label>
-      </div>
-      <p class="section-description">
-        Start a new operation or review previous ones here.
-      </p>
-      <div id="viewOperation">
-        <select id="operation-list" style="margin-bottom: 15px;" onchange="refresh();checkOpBtns()">
-          <option id="operationDefault" value="" disabled selected>Operations</option>
-          {% for op in operations %}
-                {%  if op.start|length%}
-                    <option class="operationOption" id="{{ op.id|e }}-{{ op.name|e }}" value="{{ op.id|e }}">{{ op.name|e }} - {{ op.start|e }}</option>
-                {% endif %}
-          {% endfor %}
-        </select>
-        <br>
-        <center>
-        <table>
-            <tr>
-                <td><input id="agent-output" type="checkbox"></td>
-                <td><label for="agent-output"><p>&nbsp;&nbsp;include agent output</p></label></td>
-            </tr>
-        </table>
-        </center>
-        <button id="fullReportBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationFullReport()">Download full report</button>
-        <button id="eventLogBtn" type="button" class="button-notready atomic-button" onclick="downloadOperationEventLogs()">Download event logs</button>
-        <hr>
-        <button id="opDelete" type="button" class="button-notready atomic-button" onclick="deleteOperation()">Delete</button>
-      </div>
-
-      <div id="addOperation" style="display: none;">
-          <input id="queueName" class="queueOption" style="opacity:0.5" disabled="true" placeholder="Operation name" oninput="checkOpformValid()"/>
-          <div id="optional" class="sidebar-header">
-              <h5>Basic Options</h5>
-          </div>
-          <div id="optional-options" class="sidebar-cutout" style="display: none">
-              <select name="host" id="queueGroup" class="queueOption" style="opacity:0.5" disabled="true" onchange="checkOpformValid()">
-                <option value="" class="default-option" selected>Use all groups</option>
-                {% for g in groups %}
-                    <option id="qgroup-{{ g|e }}" value="{{ g|e }}">{{ g|e }}</option>
-                {% endfor %}
-              </select>
-              <select name="work" id="queueFlow" class="queueOption" style="opacity:0.5" disabled="true" onchange="advHasRepeatableAbilities(this.value)">
-                <option value="" class="default-option" selected>No adversary (manual)</option>
-                {% for adv in adversaries %}
-                  {% if adv.has_repeatable_abilities %}
-                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}" data-has-repeatable>{{ adv.name|e }}</option>
-                  {% else %}
-                    <option id="qflow-{{ adv.adversary_id|e }}" value="{{ adv.adversary_id|e }}">{{ adv.name|e }}</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <select name="phases" id="queueAutoClose" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="0" selected>Keep open forever</option>
-                <option value="1">Auto close operation</option>
-              </select>
-              <select name="state" id="queueState" class="queueOption" style="opacity:0.5" disabled="false">
-                <option id="qstate-run" value="running">Run immediately</option>
-                <option id="qstate-paused" value="paused">Pause on start</option>
-              </select>
-          </div>
-
-          <div id="autonomous" class="sidebar-header">
-              <h5>Autonomous</h5>
-          </div>
-          <div id="autonomous-options" class="sidebar-cutout" style="display: none;">
-              <select name="autonomous" id="queueAuto" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="1" selected>Run autonomously</option>
-                <option value="0">Require manual approval</option>
-              </select>
-              <select name="planner" id="queuePlanner" class="queueOption" style="opacity:0.5;" disabled="true">
-                {% for p in planners %}
-                  {% if p.name == "atomic" %}
-                    <option value="{{ p.name|e }}" selected>Use {{ p.name|e }} planner</option>
-                  {% elif p.allow_repeatable_abilities %}
-                    <option value="{{ p.name|e }}" data-allow-repeatable-abilities>Use {{ p.name|e }} planner</option>
-                  {% else %}
-                    <option value="{{ p.name|e }}">Use {{ p.name|e }} planner</option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <select name="source" id="queueSource" class="queueOption" style="opacity:0.5" disabled="true">
-                {% for s in sources %}
-                    <option value="{{ s.name|e }}">Use {{ s.name|e }} facts</option>
-                {% endfor %}
-              </select>
-              <select name="parsers" id="queueDefaultParsers" class="queueOption" style="opacity:0.5" disabled="true">
-                <option value="1" selected>Use default parsers</option>
-                <option value="0">Do not use default parsers</option>
-              </select>
-              <p style="margin-bottom:-10px">Cleanup Timeout (secs)</p>
-              <input id="queueTimeout" class="queueOption" type="number" value="30" min="0" max="300"
-                      onchange="stream('The number of seconds Caldera will wait per cleanup action to complete before continuing.')">
-          </div>
-
-          <div id="stealth" class="sidebar-header">
-              <h5>Stealth</h5>
-          </div>
-          <div id="stealth-options" class="sidebar-cutout" style="display: none;">
-              <select name="phases" id="queueObfuscated" class="queueOption" style="opacity:0.5" disabled="true">
-                  {% for o in obfuscators %}
-                    <option value="{{ o.name|e }}">{{ o.name|e }} obfuscation</option>
-                  {% endfor %}
-              </select>
-              <input name="jitter" id="queueJitter" class="queueOption" placeholder="Jitter (min/max) sec" style="opacity:0.5;" disabled="true" helpinfo="jitterInfo"/>
-              <p style="margin-bottom:-10px">adjust visibility: </p>
-              <input id="queueVisibility" class="queueOption" type="range" value="50" min="1" max="100" onchange="stream('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.')">
-          </div>
-
-          <div id="schedules" class="sidebar-header">
-              <h5>Schedule</h5>
-          </div>
-          <div id="schedules-options" class="sidebar-cutout" style="display: none;">
-              <input type="time" id="schedule-time" onchange="checkOpformValid()">
-              <button id="scheduleBtn" type="button" style="opacity:0.5;" disabled="true" class="button-notready atomic-button" onclick="handleScheduleAction()">
-                  Schedule
-              </button>
-          </div>
-      </div>
-      <button id="opBtn" type="button" style="opacity:0.5" disabled="true" class="button-notready atomic-button" onclick="handleStartAction()">
-          Start
-      </button>
-    </div>
-    <div class="column op-selected" style="flex:75%">
-      <div class="op-dets">
-        <center>
-            <span title="Current Operation Status" class="op-control-text" id="op-control-state">
-                <div id="op-control-info-wrapper">
-                    <div id="op-control-info-status" class="op-control-info-entry" style="border-right: 2px solid"></div>
-                    <div id="op-control-info-start" class="op-control-info-entry" style="border-right: 2px solid"></div>
-                    <div id="op-control-info-length" class="op-control-info-entry"></div>
-                </div>
-            </span>
-            <br><br>
-            <div class="op-control-container">
-                <span title="Complete Operation" class="op-control-item"><button id="op-control-stop" onclick="changeCurrentOperationState('cleanup')">&#9632;</button></span>
-                <span title="Pause Operation" class="op-control-item"><button id="op-control-pause" onclick="changeCurrentOperationState('paused')">&#2405;</button></span>
-                <span title="Run One Step" class="op-control-item"><button id="run-one-link" onclick="changeCurrentOperationState('run_one_link')">&#9658;&#10072;</button></span>
-                <span title="Run Operation" class="op-control-item"><button id="op-control-run" onclick="changeCurrentOperationState('running')">&#9658;</button></span>
-                <br>
-                <div class="toggle">
-                    <label class="switch"><input type="checkbox" id="togBtnHil" onchange="toggleHil()">
-                        <div class="slider round"><span class="on">Autonomous&emsp;&emsp;</span><span class="off">Manual</span></div>
-                    </label>
-                </div>
+<div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()"
+     xmlns="http://www.w3.org/1999/html"
+     @resize.window="getOperationsMenuCaretDisplay()">
+    <div>
+        <div>
+            <div x-ref="operationsHeader">
+                <h2>Operations</h2>
+                <p>
+                    Start a new operation or review previous ones here.
+                </p>
             </div>
-            <br>
-            <table class="legend">
-              <tr>
-                  <td class="queued">queued</td>
-                  <td class="collected">collected</td>
-                  <td class="success">success</td>
-                  <td class="failure">failure</td>
-                  <td class="timeout">timeout</td>
-                  <td class="discarded">discarded</td>
-                  <td class="untrusted">untrusted</td>
-                  <td class="visibility">visible</td>
-              </tr>
-            </table>
-            <br>
+            <hr>
+        </div>
+
+        <div>
+            <div class="is-flex is-flex-direction-row operations-dashboard">
+                <div class="is-flex is-flex-direction-column pb-0 my-2"
+                     x-bind:class="{'operations-menu-set-width': selectedOperation}">
+                    <div class="pl-0 is-flex is-align-content-flex-start mb-2"
+                         x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
+                        <div>
+                            <div class="field has-addons">
+                                <div class="control has-icons-left">
+                                    <input class="input is-small"
+                                           id="op-search"
+                                           placeholder="Find an operation..."
+                                           x-ref="search"
+                                           x-on:keyup="filterOperations($el.value)">
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                </div>
+                                <div class="control">
+                                    <a class="button is-small"
+                                       x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-times"></i>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div>&nbsp;&nbsp;</div>
+                        <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
+                                title="creates a new operation based on the last created operation settings "
+                                class="button is-primary is-small"
+                                x-on:click="addOperation(true, startOperation)"><i class="pr-1 fas fa-plus"></i>
+                            Quick Add
+                        </button>
+                        <button type="button" title="add operation" class="ml-2 button is-primary is-small"
+                                x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
+                            Create Operation
+                        </button>
+                    </div>
+                    <div class="is-flex is-flex-direction-row is-align-items-center">
+                        <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
+                            <template x-if="filteredOperations.length < 1">
+                                <em class="is-flex is-justify-content-center">No operations available; click on the
+                                    'Create Operation' button to get started.</em>
+                            </template>
+                            <template x-for="op in filteredOperations" :key="op.id">
+                                <button class="no-style operation-menu-links"
+                                        x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'"
+                                        x-on:click="selectedOperation = op; getOperations(); getOperation()">
+                                    <i x-show="selectedOperationID !== op.id" class="far fa-folder">
+                                        <span class="decisionsIcon" x-text="op.chain.length"></span></i>
+                                    <i x-show="selectedOperationID === op.id" class="far fa-folder-open"></i>
+                                    <span class="operation-name" x-text="op.name"></span>
+                                    <span class="readable-time" x-text="getHumanFriendlyTime(op.start)"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <template x-if="showOperationsMenuCaret">
+                            <div class="ml-2 scroll-more-caret">
+                                <i class="fas fa-angle-right"></i>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <template x-if="selectedOperation">
+                    <div x-show="selectedOperationID"
+                         class="is-flex is-flex-direction-column mx-5">
+                        <div class="is-flex is-flex-direction-row is-justify-content-center ml-5">
+                            <div class="mr-6">
+                                <h3 class="my-1 is-size-4" x-text="selectedOperation.name"></h3>
+                                <h2 class="is-size-6 has-text-weight-normal mb-5 mt-0">Operation</h2>
+                            </div>
+                            <div class="mr-6">
+                                <h3 class="my-1 is-size-5" x-text="selectedOperation.state"></h3>
+                                <h2 class="is-size-7 has-text-weight-normal mb-5 mt-0">Current state</h2>
+                            </div>
+                            <div>
+                                <h3 class="decisionsDisplay my-1 is-size-5"
+                                    x-text="selectedOperation.chain.length"></h3>
+                                <h2 class="is-size-7 has-text-weight-normal mb-5 mt-0">Decisions</h2>
+                            </div>
+                        </div>
+                        <div class="controls-container is-flex is-justify-content-center is-align-items-center">
+                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
+                                    x-on:click="updateOperation('state', 'cleanup')"><i
+                                    title="stop" class="fas fa-stop"></i></button>
+                            <template x-if="selectedOperation.state ==='running'">
+                                <button x-bind:disabled="!isOperationRunning"
+                                        class="button no-style is-larger"
+                                        x-on:click="updateOperation('state', 'paused')"><i
+                                        title="pause" class="fas fa-pause-circle"></i></button>
+                            </template>
+                            <template x-if="selectedOperation.state !== 'running'">
+                                <button x-bind:disabled="!isOperationRunning"
+                                        class="button no-style is-larger"
+                                        x-on:click="updateOperation('state', 'running')">
+                                    <i title="run" class="fas fa-play-circle"></i></button>
+                            </template>
+                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
+                                    x-on:click="updateOperation('state', 'run_one_link')">
+                                <i title="run one step" class="fas fa-play"><sub>1</sub></i></button>
+                        </div>
+
+                        <div class="is-flex is-justify-content-center pt-2 hover-opacity">
+                            <button title="download reports"
+                                    class="mx-2 button no-style"
+                                    x-on:click="openModal = 'showDownloadMenu'"><i
+                                    class="pr-1 fas fa-arrow-down"></i>
+                            </button>
+                            <button type="button" title="delete operation"
+                                    class="mx-2 button no-style"
+                                    x-on:click="openModal = 'deleteOperationModal'"><i
+                                    class="pr-1 fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="selectedOperation">
+                    <div x-show="selectedOperationID"
+                         class="is-flex is-flex-direction-column is-flex-wrap-wrap hover-opacity">
+                        <div class="mb-4 is-flex is-flex-direction-row is-flex-wrap-wrap">
+                            <label x-show="false" for="operation-obfuscator" class="is-size-6">
+                                Obfuscation method:
+                            </label>
+                            <template x-if="!isOperationRunning">
+                                <div class="is-flex is-justify-content-center">
+                                    <button class="is-small button is-rounded chip m-1"
+                                            x-text="selectedOperation.obfuscator + ' obfuscation'"></button>
+                                </div>
+                            </template>
+                            <template x-if="isOperationRunning">
+                                <div class="is-flex is-flex-direction-row is-flex-wrap-wrap is-justify-content-center pb-2"
+                                     id="operation-obfuscator">
+                                    <template x-for="o in OBFUSCATORS" :key="o.name">
+                                        <button x-bind:class="selectedOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                class="is-small button is-rounded is-primary chip m-1"
+                                                x-on:click="updateOperation('obfuscator', o.name)"
+                                                x-text="o.name">
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-row is-justify-content-center is-align-items-center width-100">
+                                <div class="toggleContainer">
+                                    <label for="toggleAutonomous">Manual</label>
+                                    <div class="toggleSwitch mx-2">
+                                        <input type="checkbox"
+                                               id="toggleAutonomous"
+                                               x-model="selectedOperation.autonomous"
+                                               x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                              title="Toggle operation to run autonomously"
+                                              x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
+                                              x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
+                                                    <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                                </span>
+                                    </div>
+                                    <label for="toggleAutonomous">Autonomous</label>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template x-if="!isOperationRunning">
+                            <div class="is-flex is-justify-content-center mt-5">
+                                <em>Operation has finished running.</em>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <template x-if="filteredOperations.length > 0 && !selectedOperation">
+                <em class="is-flex is-justify-content-center">Click on an operation above to get started.</em>
+            </template>
+
+            <!--            TIMELINE-->
             <div>
-                <select id="currentObfuscation" onchange="updateObfuscation()" class="dark-select" style="width:33%">
-                  {% for o in obfuscators %}
-                    <option value="{{ o.name|e }}">Use {{ o.name|e }} obfuscation</option>
-                  {% endfor %}
-              </select>
+                <template x-if="selectedOperation">
+                    <div x-show="selectedOperationID">
+                        <div class="navbar-divider mb-5 width-100"></div>
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-row is-justify-content-space-between">
+                                <div class="has-text-grey-light is-size-7">
+                                    <em x-show="selectedOperation.chain.length > 0">Last ran <span
+                                            class="has-text-grey-light"
+                                            x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTime(selectedOperation.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
+                                </div>
+                                <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
+                                    <div class="mb-6 mr-4 text-align-right">
+                                        <button title="add manual command" class="button is-primary is-small"
+                                                x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
+                                            <i class="pr-1 fas fa-plus"></i>Manual
+                                            Command
+                                        </button>
+                                    </div>
+                                    <div class="mb-6 mr-4">
+                                        <button title="add potential link" class="button is-primary is-small"
+                                                x-on:click="openModal = 'addLink'; getAgents()"><i
+                                                class="pr-1 fas fa-plus"></i>Potential
+                                            Link
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="timeline-table">
+                            <table class="table" @click.outside="selectedLink = null;">
+                                <thead>
+                                <tr class="table-header">
+                                    <th class="decideColumn">Decide</th>
+                                    <th id="link-status-header" class="statusColumn csv-exclude" title="Link Status Indicator">
+                                        Status
+                                    </th>
+                                    <th class="infoColumn">Link/Ability Name</th>
+                                    <th>Agent #paw</th>
+                                    <th>Host</th>
+                                    <th>pid</th>
+                                    <th>Link Command</th>
+                                    <th>Link Output</th>
+                                    <th title="Link Actions" class="csv-exclude"></th>
+                                </tr>
+                                </thead>
+
+                                <template x-if="selectedOperation.chain.length === 0">
+                                    <tbody>
+                                    <tr class="csv-exclude">
+                                        <td colspan="9" class="has-text-centered"><em>No links––click the buttons on the right to add
+                                            commands/links.</em>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </template>
+                                <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
+                                    <tbody>
+                                    <tr x-bind:id="link.id"
+                                        x-on:click="selectedLink = link">
+                                        <td class="decideColumn">
+                                            <span class="has-text-grey-light" x-text="link.decide"></span>
+                                        </td>
+                                        <td class="linkStatusColumn csv-exclude" headers="link-status-header">
+                                            <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                                  x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"
+                                                  x-bind:title="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
+                                        </td>
+                                        <td class="linkInfoColumn"
+                                            x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
+
+                                        <!--AGENT COLUMN-->
+                                        <td class="agentDetails">
+                                            <p x-show="!link.paw"><em>n/a</em></p>
+                                            <p x-show="link.paw"><em x-text="link.paw"></em></p>
+                                        </td>
+                                        <td class="agentDetails">
+                                            <p x-show="!link.host"><em>n/a</em></p>
+                                            <p x-show="link.host"><em
+                                                    x-text="link.host"></em></p>
+                                        </td>
+                                        <td class="agentDetails">
+                                            <p x-show="!link.pid"><em>n/a</em></p>
+                                            <p x-show="link.pid"><em
+                                                    x-text="link.pid"></em></p>
+                                        </td>
+
+                                        <!--COMMAND COLUMN-->
+                                        <td class="commandDetails">
+                                            <template x-if="!isLinkEditable">
+                                                <div class="is-flex is-justify-content-center is-flex-direction-column">
+                                                    <button class="button is-primary is-small"
+                                                            x-on:click="getLink(link); openModal='showCommand'"
+                                                            title="view output">View Command
+                                                    </button>
+                                                </div>
+                                            </template>
+                                            <template x-if="isLinkEditable">
+                                                <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
+                                                    <label x-show="false" for="edit-command">Edit command</label>
+                                                    <textarea id="edit-command"
+                                                              class="code"
+                                                              contenteditable
+                                                              x-model="editableCommand"
+                                                              spellcheck="false"></textarea>
+
+                                                    <!-- BUTTONS TO MANUALLY EXECUTE (APPROVE/DISCARD) COMMAND-->
+                                                    <div class="is-flex is-justify-content-space-between">
+                                                        <button type="button"
+                                                                class="button is-small mr-3"
+                                                                x-on:click="updateLink(-2)">
+                                                            Discard
+                                                        </button>
+                                                        <button type="button"
+                                                                class="button is-primary is-small"
+                                                                x-on:click="updateLink(-3, editableCommand)">
+                                                            Approve
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </td>
+
+                                        <!--OUTPUT/FACTS COLUMN-->
+                                        <td class="outputDetails">
+                                            <template x-if="link.output !== 'True'">
+                                                <p class="is-size-7">No output available.</p>
+                                            </template>
+                                            <template x-if="link.output === 'True'">
+                                                <div>
+                                                    <button class="button is-primary is-small"
+                                                            x-bind:class="{'hover-opacity':selectedLink !== link}"
+                                                            x-on:click="getLink(link); openModal='showOutput'"
+                                                            title="view output">View Output
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </td>
+
+                                        <td class="csv-exclude">
+                                            <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
+                                                    type="button" title="delete link"
+                                                    class="button is-primary is-small ml-2"
+                                                    x-on:click="openModal = 'deleteLinkModal'"><i
+                                                    class="pr-1 fas fa-trash"></i>Discard Link
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </template>
+
+                                <!--                                NEW ROW TO ADD MANUAL COMMAND-->
+                                <template x-if="addNewRow">
+                                    <tbody>
+                                    <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
+                                        <template x-if="selectedOperation.host_group.length < 1">
+                                            <td colspan="9" class="has-text-right"><em>No agents running. Add an agent
+                                                to run an operation.</em></td>
+                                        </template>
+                                    </tr>
+
+                                    <template x-if="selectedOperation.host_group.length > 0">
+                                        <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
+                                            <td></td>
+                                            <td></td>
+                                            <td>New Manual Command</td>
+                                            <td>
+                                                <label x-show="false" for="manual-agent">Choose an agent:</label>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select id="manual-agent" x-model="selectedAgentIndex"
+                                                            x-on:change="getAgent(selectedAgent.paw)" required>
+                                                        <option value="" disabled>Choose agent</option>
+                                                        <template x-for="(agent, index) in selectedOperation.host_group"
+                                                                  :key="agent.paw">
+                                                            <option x-bind:selected="index === 0"
+                                                                    :value="index"
+                                                                    x-text="agent.display_name + '-' + agent.paw"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="select is-small my-2 ml-3">
+                                                    <select x-model="manualCommand.executor.name"
+                                                            id="manual-executors"
+                                                            class="executor-selector">
+                                                        <option value="" disabled>Choose executor</option>
+                                                        <template x-for="(executor, index) in selectedAgentExecutors"
+                                                                  :key="executor.executor">
+                                                            <option x-bind:selected="index === 0"
+                                                                    x-text="executor.display"
+                                                                    :value="executor.executor"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td colspan="2">
+                                                <label x-show="false" for="input-command">Type manual command:</label>
+                                                <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
+                                                <textarea x-model="manualCommand.executor.command"
+                                                          class="input executor-command"
+                                                          id="input-command"
+                                                          type="text"
+                                                          spellcheck="false"
+                                                          contenteditable
+                                                          required></textarea>
+                                                </div>
+                                            </td>
+                                            <td class="is-flex is-justify-content-center is-flex-direction-column">
+                                                <button type="button"
+                                                        class="button is-primary is-small my-2"
+                                                        x-on:click="addManualCommand(manualCommand)">
+                                                    Add Command
+                                                </button>
+                                                <button type="button"
+                                                        class="button is-small"
+                                                        x-on:click="addNewRow = false">
+                                                    Cancel
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    </tbody>
+                                </template>
+                            </table>
+                        </div>
+
+                        <!--                                ADD COMMAND/LINK BUTTONS-->
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
+                                <div class="mb-6 mr-4 has-text-right">
+                                    <button title="add manual command" class="button is-primary is-small"
+                                            x-on:click="addNewRow = true; getAgents()">
+                                        <i class="pr-1 fas fa-plus"></i>Manual
+                                        Command
+                                    </button>
+                                </div>
+                                <div class="mb-6 mr-4">
+                                    <button title="add potential link" class="button is-primary is-small"
+                                            x-on:click="openModal = 'addLink'; getAgents()"><i
+                                            class="pr-1 fas fa-plus"></i>Potential
+                                        Link
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
             </div>
-        </center>
-      </div>
-      <div id="content">
-          <span class="op-potential-links" onclick="document.getElementById('potential-modal').style.display='block';">&#10010; potential links</span>
-          <span class="op-manual-commands" onclick="document.getElementById('manual-modal').style.display='block';">&#10010; manual command</span>
-          <br>
-          <ul id="timeline" class="timeline">
-              <li id="time-start">
-          </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="more-modal" class="modal">
-    <form class="modal-content ability-viewer">
-        <div class="imgcontainer">
-          <span onclick="resetMoreModal();" class="close" title="Close Modal">&times;</span>
         </div>
-        <div class="container" style="text-align:left">
-            <code id="resultCmd"></code>
-            <hr>
-            <pre id="resultView" style="text-align: left;max-width:800px;"></pre>
-        </div>
-    </form>
-</div>
 
-<div id="potential-modal" class="modal">
-    <div class="modal-content" style="width:100%;">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column control-width" style="flex:100%;">
-                <select id="potential-agent-filter" onchange="fetchPotentialLinks('potential-modal');">
-                    <option disabled selected>Choose an agent</option>
-                </select>
-                <select id="potential-link-tactic-filter" onchange="updateTacticFilter('potential-modal');">
-                    <option disabled selected>Choose a tactic</option>
-                    <option selected value="-- any --">-- any --</option>
-                </select>
-                <select id="potential-link-technique-filter" onchange="updateTechniqueFilter('potential-modal');">
-                    <option disabled selected>Choose an technique</option>
-                    <option selected value="-- any --">-- any --</option>
-                </select>
-                <h2 id="potential-links-count"></h2>
-                <ul id="potential-links"></ul>
+        <!--    MODALS      -->
+        <template x-if="openModal">
+            <div class="modal is-active" x-data="{ startOperation: EMPTY_OPERATIONS_OBJECT }">
+                <div class="modal-background" @click="openModal = null"></div>
+
+                <template x-if="openModal === 'showOutput'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Output</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div>
+                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'showCommand'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Command</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div>
+                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'addOperation'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Start New Operation</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <label for="op-name">Operation name</label>
+                                    <div class="modal-form-fields">
+                                        <input class="input is-small" id="op-name" type="text"
+                                               x-model="startOperation.name" required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="basic-adversary"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
+                                    <div class="modal-form-fields" id="basic-adversary">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select x-model="startOperation.adversary.adversary_id">
+                                                <option value="" selected>No adversary (manual)</option>
+                                                <template x-for="a in ADVERSARIES" :key="a.adversary_id">
+                                                    <option x-on:click="isSelectedAdversaryRepeatable = a.has_repeatable_abilities"
+                                                            :value="a.adversary_id"
+                                                            x-text="a.name">
+                                                    </option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="autonomous-source"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
+                                    <div class="modal-form-fields" id="autonomous-source">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select x-model="startOperation.source.id">
+                                                <template x-for="s in SOURCES" :key="s.id">
+                                                    <option :value="s.id" x-text="s.name"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="modal-form-group-header">
+                                <button type="button" class="button no-style heading pt-2"
+                                        x-on:click="openModalForm.advanced = !openModalForm.advanced"
+                                        x-bind:class="openModalForm.advanced ? 'expanded' : 'collapsed'">
+                                    <span>Advanced</span>
+                                    <span class="navbar-divider"></span>
+                                </button>
+                            </div>
+                            <div class="modal-form" x-show="openModalForm.advanced">
+                                <div>
+                                    <label for="basic-groups"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Group']">Group</span></label>
+                                    <div class="modal-form-fields"
+                                         id="basic-groups">
+                                        <button type="button"
+                                                class="is-small button is-rounded is-primary chip m-1"
+                                                x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="startOperation.group = ''">
+                                            all groups
+                                        </button>
+                                        <template x-for="(group, index) in agentGroups" :key="group">
+                                            <button type="button"
+                                                    class="is-small button is-rounded is-primary chip m-1"
+                                                    x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="startOperation.group = group"
+                                                    x-show="group !== ''"
+                                                    x-text="group">
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="autonomous-planner"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Planner']">Planner</span></label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="autonomous-planner" x-model="startOperation.planner.id">
+                                                <template x-for="p in PLANNERS" :key="p.id">
+                                                    <option :value="p.id"
+                                                            x-bind:data-allow-repeatable-abilities="p.allow_repeatable_abilities"
+                                                            x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable) ? 'true' : null"
+                                                            x-text="p.name"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="stealth-obfuscator"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
+                                    <div class="modal-form-fields" id="stealth-obfuscator">
+                                        <template x-for="o in OBFUSCATORS" :key="o.name">
+                                            <button class="is-small button is-rounded is-primary chip m-1"
+                                                    type="button"
+                                                    x-bind:class="startOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="startOperation.obfuscator = o.name"
+                                                    x-text="o.name">
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="autonomous-autonomous"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
+                                    <div class="modal-form-fields" id="autonomous-autonomous">
+                                        <input type="radio" id="run-autonomously"
+                                               x-model="startOperation.autonomous" value="1" checked>
+                                        <label for="run-autonomously">Run autonomously</label>
+                                        <input type="radio" id="manual-approval"
+                                               x-model="startOperation.autonomous" value="0">
+                                        <label for="manual-approval">Require manual approval</label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="autonomous-use_learning_parsers"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Parser']">Parser</span></label>
+                                    <div class="modal-form-fields" id="autonomous-use_learning_parsers">
+                                        <input type="radio" id="parsers-default"
+                                               x-model="startOperation.use_learning_parsers" value="1" checked>
+                                        <label for="parsers-default">Use default parsers</label>
+                                        <input type="radio" id="parsers-no_default"
+                                               x-model="startOperation.use_learning_parsers" value="0">
+                                        <label for="parsers-no_default">Do not use default parsers</label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="basic-keep"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
+                                    <div class="modal-form-fields" id="basic-keep">
+                                        <input type="radio" id="keep-open"
+                                               x-model="startOperation.auto_close"
+                                               value="0" checked>
+                                        <label for="keep-open">Keep open forever</label>
+                                        <input type="radio" id="auto-close"
+                                               x-model="startOperation.auto_close"
+                                               value="1">
+                                        <label for="auto-close">Auto close operation</label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="basic-run"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
+                                            x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
+
+                                    <div class="modal-form-fields" id="basic-run">
+                                        <input type="radio" x-model="startOperation.state"
+                                               id="run-immediately"
+                                               value="running" checked>
+                                        <label for="run-immediately">Run immediately</label>
+                                        <input type="radio" x-model="startOperation.state"
+                                               id="pause-on-start"
+                                               value="paused">
+                                        <label for="pause-on-start">Pause on start</label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="stealth-jitter"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
+                                    <div class="modal-form-fields" id="stealth-jitter">
+                                        <input class="input"
+                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-model="jitterMin"
+                                               id="stealth-jitterMin"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="2"/>
+                                        <label class="input-hover-label" for="stealth-jitterMin">min</label>
+                                        <span>/</span>
+                                        <input class="input"
+                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-model="jitterMax"
+                                               id="stealth-jitterMax"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="8"/>
+                                        <label class="input-hover-label" for="stealth-jitterMax">max</label>
+                                        <button type="button" class="button is-primary no-style reset"
+                                                title="reset to default"
+                                                x-on:click="jitterMin = 2; jitterMax = 8;">
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="stealth-queue"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
+                                            x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
+                                    <div class="modal-form-fields">
+                                        <input x-model="startOperation.visibility"
+                                               id="stealth-queue"
+                                               type="range" value="50" min="1" max="100"
+                                               x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
+                                        <span x-text="startOperation.visibility"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="addOperation(false, startOperation)"
+                                                x-text="schedule ? 'Schedule' : 'Start'"></button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'addLink'">
+                    <div class="modal-card" x-init="getAbilities()">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Add New Potential Link</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <label for="link-agent">Agent</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-agent"
+                                                    x-model="selectedAgentIndex"
+                                                    x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
+                                                <template x-for="(agent, index) in selectedOperation.host_group"
+                                                          :key="agent.paw">
+                                                    <option :value="index"
+                                                            x-bind:selected="index === 0"
+                                                            x-text="agent.display_name + '-' + agent.paw"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="link-exec">Executor</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-exec" x-model="potentialLink.executor"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <template x-for="(exec, index) of selectedAgentExecutors"
+                                                          :key="exec.executor">
+                                                    <option x-text="exec.display" :value="exec.executor"
+                                                            x-bind:selected="index === 0"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="link-tactic">Tactic</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-tactic"
+                                                    x-model="potentialLink.tactic"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <option value="" default value="">All tactics</option>
+                                                <template x-for="tactic in tacticFiltersList"
+                                                          :key="tactic">
+                                                    <option x-text="tactic"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="link-technique">Technique</label>
+                                    <div class="modal-form-fields">
+                                        <div class="select is-small my-2 ml-3">
+                                            <select id="link-technique"
+                                                    x-model="potentialLink.technique"
+                                                    x-on:change="filterAbilities(abilities)">
+                                                <option value="" default>All techniques</option>
+                                                <template x-for="technique in techniqueFiltersList"
+                                                          :key="technique">
+                                                    <option x-text="technique"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-results">
+                                <div class="navbar-divider"></div>
+                                <p class="is-flex is-justify-content-flex-end is-size-7"
+                                   x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
+                                <template x-if="filteredAbilitiesList">
+                                    <ul class="ml-0">
+                                        <template x-for="ability in filteredAbilitiesList"
+                                                  :key="ability.ability_id">
+                                            <li class="mb-4 abilities-list-item">
+                                                    <span class="is-flex is-justify-content-space-between">
+                                                        <span>
+                                                            <p class="mb-0" x-text="ability.name"></p>
+                                                        </span>
+                                                        <span>
+                                                            <button type="button"
+                                                                    class="button is-primary is-small"
+                                                                    x-bind:disabled="!isLinkAvailable(ability)"
+                                                                    x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
+                                                                    x-on:click="addPotentialLink(ability)">
+                                                                Add Link
+                                                            </button>
+                                                        </span>
+                                                    </span>
+                                                <span class="ml-3">
+                                                        <sub x-text="ability.description"></sub>
+                                                    </span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
+                                </template>
+                            </div>
+                            <em x-show="showNotRepeatableText"
+                                class="has-text-grey-light is-pulled-right is-size-7">Note:
+                                Repeated links are not available for this operation</em>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'showDownloadMenu'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Download</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <label for="agent-output-field">Agent output</label>
+                                    <div class="modal-form-fields" id="agent-output-field">
+                                        <input id="agent-output"
+                                               x-bind:disabled="selectedReportType === 'csv'"
+                                               type="checkbox"
+                                               class="mr-1"
+                                               x-model="isAgentOutputSelected">
+                                        <label for="agent-output">include agent output</label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="report-type">Report type</label>
+                                    <div class="modal-form-fields download-buttons-container" id="report-type">
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                               value="full-report" id="full-report">
+                                        <label for="full-report">Full Report</label>
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                               value="event-logs" id="event-logs">
+                                        <label for="event-logs">Event Logs</label>
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                               value="csv" id="csv">
+                                        <label for="csv">CSV</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="handleDownload()">
+                                            Download
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'deleteOperationModal' && selectedOperation">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Delete operation?</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <p>Are you sure you want to delete the operation <em
+                                            x-text="selectedOperation.name"></em>?</p>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button type="button" class="button ml-2 is-small"
+                                                x-on:click="openModal = null">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="deleteOperation(); openModal = null;">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+
+                <template x-if="openModal === 'deleteLinkModal'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Delete link?</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <div>
+                                    <p>Are you sure you want to delete the link <em
+                                            x-text="selectedLink.ability.name"></em>?</p>
+                                </div>
+                            </div>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button type="button" class="button ml-2 is-small" x-on:click="openModal = null">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button type="button" class="button is-primary is-small"
+                                                x-on:click="updateLink(-2); openModal = null;">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
             </div>
-            <div class="imgcontainer">
-                <span onclick="closePotentialLinksModal()" class="close" title="Close Modal">&times;</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="manual-modal" class="modal">
-    <div class="modal-content" style="width:100%;">
-        <div class="container section-profile row ability-viewer modal-box">
-            <div class="column control-width" style="flex:100%;">
-                <select id="manual-agent" onchange="selectManualAgent();">
-                    <option disabled selected>Choose an agent</option>
-                </select>
-                <div id="manual-command-settings" style="display:none">
-                  <select id="manual-executor"></select>
-                  <input type="text" id="manual-command" placeholder="Run arbitrary command" />
-                  <button id="manual-run" type="button" class="button-success atomic-button" onclick="runManualCommand()">Run</button>
-                </div>
-            </div>
-            <div class="imgcontainer">
-                <span onclick="closeManualCommandModal()" class="close" title="Close Modal">&times;</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<li id="potential-link-template" class="potential-links" style="display: none;margin-bottom:-50px">
-    <div class="row-simple">
-        <div class="column">
-            <hr>
-            <table frame=void style="border-spacing:5px;border-collapse:separate;width:100%;">
-                <tr>
-                    <td><b>name:</b></td>
-                    <td><p id="potential-name"></td>
-                    <td><button class="button-success potential-button" onclick="addLink($(this))">add</button></td>
-                </tr>
-                <tr>
-                    <td><b>technique:</b></td>
-                    <td><p id="potential-technique"></td>
-                </tr>
-                <tr>
-                    <td><b>description:</b></td>
-                    <td><p id="potential-description" style="white-space:pre-wrap;font-family:monospace;font-size:13px;overflow:auto;display:block;"></td>
-                </tr>
-                <tr>
-                    <td><b>command:</b></td>
-                    <td><code contenteditable="true" id="potential-command"></code></td>
-                </tr>
-                <tr>
-                    <td><b>score:</b></td>
-                    <td><p contenteditable="false" id="potential-score"></p></td>
-                </tr>
-                <tr>
-                    <td><b>visibility:</b></td>
-                    <td><p contenteditable="false" id="potential-visibility"></p></td>
-                </tr>
-            </table>
-        </div>
-    </div>
-</li>
-
-<li id="link-template" class="event" data-date="" style="display: none">
-  <div class="member-infos">
-    <h1 id="time-tactic" class="member-title"></h1>
-    <div id="inner-contents">
-      <div id="decision-card" class="decision-card">
-        <table style="border-spacing:15px;">
-        </table>
-      </div>
-    </div>
-  </div>
-</li>
-
-<div id="loop-template" class="loop-section" style="display:none">
-    <div style="display:flex">
-        <div class="column" style="flex:15%; margin:5px">
-            <button class="atomic-button button-success approve" type="button" onclick="submitHilChanges(this, -3)" style="margin: 5px">Approve</button>
-            <button class="atomic-button button-embedded discard" type="button" onclick="submitHilChanges(this, -2)" style="margin: 5px;margin-bottom: 15px">Discard</button>
-        </div>
-        <div class="column codearea" style="flex:85%; margin:5px">
-            <p class="hil-linkId" style="display:none"></p>
-            <div class="hil-command" role="textbox" contenteditable spellcheck="false"></div>
-        </div>
+        </template>
     </div>
 </div>
 
 <script>
-    let refresher = setInterval(refresh, 10000);
-    $('.section-profile').bind('destroyed', function() {
-        clearInterval(refresher);
-    });
-
-    $(document).ready(function(){
-        stream('Want to run a new operation? If you have at least 1 agent deployed, click the "View" toggle button.')
-
-        $("#optional").click(function(){
-            stream('Basic options are your most likely to modify. Note, if you select no group, all agents will be in scope.');
-            $("#optional-options").slideToggle();
-        });
-        $("#schedules").click(function(){
-            stream('Schedule your operation to run every day.');
-            $("#schedules-options").slideToggle();
-            $('#opBtn').fadeToggle('slow');
-        });
-        $("#stealth").click(function(){
-            stream('Stealth options will determine just how noticeable your operation is to the defense.');
-            $("#stealth-options").slideToggle();
-        });
-        $("#autonomous").click(function(){
-            stream('Autonomous options allow you to configure how much manual intervention you want.');
-            $("#autonomous-options").slideToggle();
-        });
-    });
-
-    function toggleOperationView() {
-        $('#viewOperation').toggle();
-        $('#addOperation').toggle();
-
-        if ($('#togBtnOp').is(':checked')) {
-            stream('Operation name required. Click the headers below to reveal optional properties.');
-            showHide('.queueOption,#opBtn,#scheduleBtn', '#operation-list');
-            $('#opBtn').addClass('separated-button');
-            checkOpformValid();
-        } else {
-            showHide('#operation-list', '.queueOption,#opBtn,#scheduleBtn');
-            $('#opBtn').removeClass('separated-button');
-        }
-    }
-
-    function handleStartAction(){
-        $('.op-selected').css('visibility', 'hidden');
-        restRequest('PUT', buildOperationObject(), handleStartActionCallback);
-    }
-
-    function checkOpBtns(){
-        validateFormState(($('#operation-list').val()), '#opDelete');
-        validateFormState(($('#operation-list').val()), '#fullReportBtn');
-        validateFormState(($('#operation-list').val()), '#eventLogBtn');
-    }
-
-    function deleteOperation(){
-        function deleteCallback(data){
-            // Remove operation from main view
-            $('.op-selected').css('visibility', 'hidden');
-            
-            // Remove operation from sidebar dropdown
-            $('#operation-list option[value="' + operation_id + '"]').remove();
-            $('#operationDefault').prop('selected', true);
-
-            // Change sidebar button color
-            checkOpBtns();
-
-            stream(data);
-        }
-        let operation_id = $('#operation-list option:selected').attr('value');
-        let data = {'index': 'operations', 'id': operation_id};
-        restRequest('DELETE', data, deleteCallback);
-    }
-
-    function handleScheduleAction(){
-        let op = buildOperationObject();
-        let time = document.getElementById("schedule-time").value;
-        restRequest('PUT', {'index': 'schedule', 'operation': op, 'schedule':
-                {'hour': parseInt(time.split(":")[0]), 'minute': parseInt(time.split(":")[1])}}, doNothing);
-        stream('New operation scheduled!');
-    }
-
-    function buildOperationObject() {
-        let name = document.getElementById("queueName").value;
-        if(!name){ warn('Please enter an operation name'); return; }
-
-        let jitter = document.getElementById("queueJitter").value || "4/8";
-        try {
-            let [jitterMin, jitterMax] = jitter.split("/");
-            jitterMin = parseInt(jitterMin);
-            jitterMax = parseInt(jitterMax);
-            if(!jitterMin || !jitterMax){
-                throw true;
-            }
-            if(jitterMin >= jitterMax){
-                warn('Jitter MIN must be less than the jitter MAX.');
-                return;
-            }
-        } catch (e) {
-            warn('Jitter must be of the form "min/max" (e.x. 4/8)');
-            return;
-        }
+    function alpineOperations() {
         return {
-            "index": "operations",
-            "name":name,
-            "group":document.getElementById("queueGroup").value,
-            "adversary_id":document.getElementById("queueFlow").value,
-            "state":document.getElementById("queueState").value,
-            "planner":document.getElementById("queuePlanner").value,
-            "autonomous":document.getElementById("queueAuto").value,
-            "obfuscator":document.getElementById("queueObfuscated").value,
-            "auto_close": document.getElementById("queueAutoClose").value,
-            "use_learning_parsers": document.getElementById("queueDefaultParsers").value,
-            "jitter":jitter,
-            "source":document.getElementById("queueSource").value,
-            "visibility": document.getElementById("queueVisibility").value,
-            "timeout": document.getElementById("queueTimeout").value
-        };
-    }
+            // CONSTANTS
+            ENDPOINT: '/api/v2/operations',
+            EXECUTOR_SHELLS: {
+                psh: 'PS',
+                sh: '$',
+                zsh: '$'
+            },
+            LINK_STATUSES: {
+                0: 'success',
+                '-1': 'paused',
+                1: 'failed',
+                '-2': 'discarded',
+                '-3': 'collect',
+                '-4': 'untrusted',
+                '-5': 'visible',
+                124: 'timeout'
+            },
+            OBFUSCATORS: [],
+            PLANNERS: [],
+            ADVERSARIES: [],
+            SOURCES: [],
 
-    function changeCurrentOperationState(newState){
-        let op_id = $('#operation-list option:selected').attr('value');
-        stream('Changing operation state to '+newState);
-        restRequest('POST', {'index':'operation','op_id': op_id, 'state': newState}, doNothing, `/api/rest`);
-    }
+            docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
+            usage: {},
+            agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
+            selectedOperation: null,
+            selectedAgentIndex: 0,
+            isSelectedAdversaryRepeatable: false,
+            selectedLink: null,
+            selectedLinkResults: null,
+            selectedLinkFacts: null,
+            selectedLinkCommand: null,
+            selectedReportType: 'full-report',
+            isAgentOutputSelected: false,
+            openModal: null,
+            openModalForm: {
+                advanced: false
+            },
+            operations: [],
+            filteredOperations: [],
+            searchInput: '',
+            jitterMin: 2,
+            jitterMax: 8,
+            potentialLink: {
+                agent: '',
+                executor: '',
+                tactic: '',
+                technique: '',
+            },
+            tacticFiltersList: [],
+            techniqueFiltersList: [],
+            abilities: [],
+            filteredAbilitiesList: [],
+            schedule: '',
+            editableCommand: null,
+            showOperationsMenuCaret: true,
+            addNewRow: false,
+            addedTechniquesIDs: new Set(),
 
-    function updateObfuscation() {
-        let op_id = $('#operation-list option:selected').attr('value');
-        let newObfuscation = $('#currentObfuscation').val();
-        stream('Changing operation obfuscation to '+newObfuscation);
-        restRequest('POST', {'index':'operation','op_id': op_id, 'obfuscator': newObfuscation}, doNothing, `/api/rest`);
-    }
+            get EMPTY_OPERATIONS_OBJECT() {
+                return {
+                    name: '',
+                    group: '',
+                    adversary: { adversary_id: '' },
+                    auto_close: 0,
+                    state: 'running',
+                    autonomous: 1,
+                    planner: { id: 'atomic' },
+                    source: { id: 'basic' },
+                    use_learning_parsers: 1,
+                    obfuscator: 'plain-text',
+                    jitter: '2/8',
+                    visibility: '51',
+                };
+            },
 
-    function handleStartActionCallback(data){
-        $("#togBtnOp").prop("checked", false).change();
-        checkOpformValid();
-        stream('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.');
-        restRequest('POST', {'index':'operations'}, reloadOperationsElements);
-    }
-
-    function reloadOperationsElements(data){
-        let op_elem = $("#operation-list");
-        $.each(data, function(index, op) {
-            if(!op_elem.find('option[value="'+op.id+'"]').length > 0){
-                op_elem.append($('<option></option>')
-                    .attr('id', op.id)
-                    .addClass('operationOption')
-                    .val(op.id)
-                    .text(op.name + ' - ' + op.start)
-                );
-            }
-        });
-        op_elem.prop('selectedIndex', op_elem.find('option').length-1).change();
-    }
-
-    function clearTimeline() {
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        $('.event').each(function() {
-            let opId = $(this).attr('operation');
-            if(opId && opId !== selectedOperationId) {
-                $(this).remove();
-            }
-        });
-    }
-
-    function refresh() {
-        function operationCallback(data){
-            let OPERATION = data[0];
-            $('#op-control-info-status').text(OPERATION.state);
-            $('#op-control-info-start').text(OPERATION.start);
-            $('#op-control-info-length').text(OPERATION.chain.length + ' DECISIONS');
-            if (OPERATION.autonomous) {
-                $("#togBtnHil").prop("checked", true);
-            } else {
-                $("#togBtnHil").prop("checked", false);
-            }
-            $('#currentObfuscation').val(OPERATION.obfuscator);
-            applyOperationAgents(OPERATION);
-            clearTimeline();
-            for (let i=0; i<OPERATION.chain.length; i++) {
-                if ($("#op_id_" + OPERATION.chain[i].id).length === 0) {
-                    let template = $("#link-template").clone();
-                    let title = OPERATION.chain[i].ability.name;
-                    if(OPERATION.chain[i].cleanup) {
-                        title = title + " (CLEANUP)"
+            get EMPTY_MANUAL_COMMAND_OBJECT() {
+                return {
+                    paw: '',
+                    executor: {
+                        name: '',
+                        platform: '',
+                        command: '',
                     }
-                    let agentPaw = OPERATION.chain[i].paw;
-                    let lnk = OPERATION.chain[i].id;
-                    template.attr("id", "op_id_" + OPERATION.chain[i].id);
-                    template.attr("operation", OPERATION.id);
-                    template.attr("data-date", OPERATION.chain[i].decide.split('.')[0]);
-                    template.find('#time-tactic')
-                        .append($('<div></div>')
-                            .css('font-size', '13px')
-                            .css('font-weight', '100')
-                            .dblclick( () => {
-                                rollup(OPERATION.chain[i].id);
-                            })
-                            .text('agent#' + agentPaw + '... ' + title)
-                            .append($('<span></span>')
-                                .attr('id', OPERATION.chain[i].id + '-rs')
-                                .addClass('tactic-find-result')
-                                .attr('data-encoded-cmd', OPERATION.chain[i].command)
-                                .click( event => {
-                                    findResults($(event.currentTarget), lnk);
-                                })
-                            )
-                            .append($('<span style="font-size:11px;float:right;cursor:pointer;margin-left:5px"></span>')
-                                .attr('id', OPERATION.chain[i].id + '-rm')
-                                .click( () => {
-                                    updateLinkStatus2(lnk, OPERATION.id, -2);
-                                })
-                                .html('&#x274C;')
-                            )
-                            .append($('<img style="height: 20px;border: none;float: right;cursor: pointer;margin-right: .14em" />')
-                                .attr('id', OPERATION.chain[i].id + '-cm')
-                                .attr('src', '/gui/img/duk.png')
-                                .click( () => {
-                                    showCommand(OPERATION.chain[i].command);
-                                })
-                            )
-                            .append($('<span style="font-size:22px;float:right;cursor:pointer;"></span>')
-                                .attr('id', OPERATION.chain[i].id + '-add')
-                                .click( () => {
-                                    updateLinkStatus2(lnk, OPERATION.id, -3);
-                                })
-                                .html('&#x002B;')
-                            )
+                };
+            },
 
-                        )
-
-                    if (OPERATION.chain[i].status === -1) {
-                        let loop_template = $("#loop-template").clone();
-                        loop_template.removeAttr('id');
-                        loop_template.find('.hil-linkId').text(OPERATION.chain[i].unique);
-                        loop_template.find('.hil-command').text(b64DecodeUnicode(OPERATION.chain[i].command));
-                        loop_template.css('display', 'block');
-                        loop_template.insertAfter(template.find(".member-infos"));
-                        template.find('#'+OPERATION.chain[i].id+'-rm').remove();
-                        template.find('#'+OPERATION.chain[i].id+'-cm').remove()
-                    }
-
-                    refreshUpdatableFields(OPERATION.chain[i], template, true);
-
-                    template.insertAfter("#time-start");
-                    $(template.find("#inner-contents")).slideUp();
-                    template.show();
-
-                } else {
-                    let existing = $("#op_id_"+OPERATION.chain[i].id);
-                    refreshUpdatableFields(OPERATION.chain[i], existing);
+            getUsage() {
+                if (this.docs) {
+                    this.docs.forEach((obj) => {
+                        if (obj) {
+                            let items = obj.split('{')[1].split(': ');
+                            this.usage[items[0]] = items[1];
+                        }
+                    });
                 }
-            }
-            if(OPERATION.state == "running" && OPERATION.chain.length == 0) {
-                stream("No abilities were ran. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
-            }
-            else if(OPERATION.state == "running" && OPERATION.chain.every(function(link, idx) { return link.status != -3 })) {
-                stream("Abilities exhausted. Click '+ potential links' to add new abilities to run in your operation or click the stop button to finish the operation.");
-            }
-        }
-        function updateGroups(data) {
-            // Update the group dropdown list with new agent groups
-            var options = $('#queueGroup option');
-            var groups = $.map(options, function(option) {
-                if (option.value) {
-                    return option.value;
-                }
-            });
-            $.each(data, function(index, agent) {
-                if ($.inArray(agent.group, groups) === -1) {
-                    var newOption = $('<option></option>')
-                        .attr('id', 'qgroup-' + agent.group)
-                        .attr('value', agent.group)
-                        .text(agent.group);
-                    $('#queueGroup').append(newOption);
-                    groups.push(agent.group);
-                }
-            });
-        }
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        if(selectedOperationId !== '') {
-            let postData = selectedOperationId ? {'index':'operations','id': selectedOperationId} : null;
-            if (selectedOperationId != null){
-                $('.op-selected').css('visibility', 'visible');
-            }
-            stream('Go to the GameBoard plugin to see if the blue team can detect your activities.');
-            restRequest('POST', postData, operationCallback, '/api/rest');
-        }
-        restRequest('POST', {'index':'agents'}, updateGroups);
-    }
+            },
 
-    function applyOperationAgents(operation) {
-        for(let i=0; i<operation.host_group.length; i++){
-            let paw = operation.host_group[i].paw;
-            if($("#potential-agent-filter option[value='agent-"+paw+"'").length === 0){
-                 $('#potential-agent-filter').append($("<option></option>")
-                        .attr("value", 'agent-'+paw)
-                        .text(operation.host_group[i].display_name + '-'+operation.host_group[i].paw));
-            }
-            if($("#manual-agent option[value='" + paw + "'").length === 0){
-                 $('#manual-agent').append($("<option></option>")
-                        .attr('value', paw)
-                        .text(operation.host_group[i].display_name + '-'+operation.host_group[i].paw)
-                        .data('executors', operation.host_group[i].executors));
-            }
-        }
-    }
+            get showNotRepeatableText() {
+                return !this.selectedOperation?.adversary?.has_repeatable_abilities;
+            },
 
-    function fetchPotentialLinks() {
-        $('#potential-links').empty();
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let selectedAgent = $('#potential-agent-filter option:selected').attr('value');
-        let paw = selectedAgent.split('-')[1];
-        let postData = {"index":"link","op_id": selectedOperationId, "paw": paw};
-        restRequest('POST', postData, potentialLinksCallback, '/api/rest');
-        $('#potential-links-count').text('Building potential links...');
-    }
+            get selectedOperationID() {
+                return this.selectedOperation ? this.selectedOperation.id : null;
+            },
 
-    function potentialLinksCallback(data){
-        $('#potential-agent-filter option:selected').data(data);
-        tacticFilter = $('#potential-link-tactic-filter option:selected').attr('value')
-        techniqueFilter = $('#potential-link-technique-filter option:selected').attr('value')
-        $('#potential-links').empty()
-        for(let i=0; i<data.links.length; i++){
-            let link = data.links[i];
-            let template = $("#potential-link-template").clone();
-            let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
-            if(!(tacticFilter === '-- any --' || typeof tacticFilter === 'undefined') && !(tacticFilter === ("tactic-" + link.ability.tactic)))
-                continue;
-            if(!(techniqueFilter === '-- any --' || typeof techniqueFilter === 'undefined') && !(techniqueFilter === ("technique-"+link.ability.technique_id)))
-                continue;/**/
-            template.attr('id', uniqueLinkId);
-            template.find('#potential-name').text(link.ability.name);
-            template.find('#potential-technique').text(link.ability.technique_id+' - '+link.ability.technique_name+' ('+link.ability.tactic+')')
-            template.find('#potential-description').text(link.ability.description);
-            template.find('#potential-command').text(b64DecodeUnicode(link.command));
-            template.find('#potential-score').text(link.score);
-            template.find('#potential-visibility').text(link.visibility.score);
-            template.data('link', link);
-            template.show();
-            if($("#potential-link-tactic-filter option[value='tactic-"+link.ability.tactic+"'").length === 0){
-                $('#potential-link-tactic-filter').append($("<option></option>")
-                    .attr("value", 'tactic-'+link.ability.tactic)
-                    .text(link.ability.tactic)
-                );
-            }
-            if($("#potential-link-technique-filter option[value='technique-"+link.ability.technique_id+"'").length === 0){
-                $('#potential-link-technique-filter').append($("<option></option>")
-                    .attr("value", 'technique-'+link.ability.technique_id)
-                    .text(link.ability.technique_id + ' - ' + link.ability.technique_name)
-                );
-            }
-            $('#potential-links').append(template);
-        }
-        alphabetize_dropdown($('#potential-link-tactic-filter'));
-        alphabetize_dropdown($('#potential-link-technique-filter'));
-        updatePotentialLinkCount();
-    }
+            get selectedAgent() {
+                if (!this.selectedOperation || this.selectedAgentIndex >= this.selectedOperation.host_group.length) return null;
+                return this.selectedOperation.host_group[this.selectedAgentIndex];
+            },
 
-    function updateTacticFilter() {
-        $('#potential-link-technique-filter').children('option:not(:first)').remove();
-        $('#potential-link-technique-filter').append($("<option></option>").text("-- any --"));/**/
-        potentialLinksCallback($('#potential-agent-filter option:selected').data());
-    }
-
-    function updateTechniqueFilter() {
-        potentialLinksCallback($('#potential-agent-filter option:selected').data());
-    }
-
-    function closePotentialLinksModal() {
-        document.getElementById('potential-modal').style.display='none';
-        $('#potential-links-count').text('');
-        $('#potential-links').empty();
-        $('#potential-agent-filter').prop("selectedIndex", 0);
-    }
-
-    function addLink(l) {
-        let linkDiv = l.parent().parent().parent().parent().parent().parent().parent();
-        let link = linkDiv.data('link');
-        let uniqueLinkId = 'potential-link-template-'+link.ability.executor+'-'+link.ability.ability_id;
-        link.command = b64EncodeUnicode(linkDiv.find('#potential-command').text());
-        $('#'+uniqueLinkId).remove();
-        updatePotentialLinkCount();
-        link["index"] = "link";
-        restRequest('PUT', link, refresh, '/api/rest');
-    }
-
-    function updatePotentialLinkCount(){
-        $('#potential-links-count').text($('#potential-links li').length + ' potential links');
-    }
-
-    function selectManualAgent() {
-        $('#manual-executor').empty();
-        let executorShells = {
-            'psh': 'PS >',
-            'cmd': '>',
-            'sh': '$'
-        };
-        $.each($('#manual-agent option:selected').data('executors'), function(index, executor) {
-            if (executor in executorShells) {
-                var newOption = $('<option></option>')
-                                .attr('value', executor)
-                                .text(executorShells[executor]);
-                                $('#manual-executor').append(newOption);
-            }
-        });
-        $('#manual-command-settings').show();
-    }
-
-    function closeManualCommandModal() {
-        $('#manual-modal').hide();
-        $('#manual-agent-filter').prop('selectedIndex', 0);
-        $('#manual-command-settings').hide();
-    }
-
-    function runManualCommand() {
-        function runManualCommandCallback(data) {
-            if (data['error']) {
-                stream('Error running manual command: ' + data['error']);
-            } else {
-                stream('Manual command queued');
-                $('#manual-command').val('');
-            }
-            $('#manual-run').addClass('button-success').removeClass('button-notready');
-        }
-        let agent = $('#manual-agent').val();
-        let operation = $('#operation-list').val();
-        let executor = $('#manual-executor').val();
-        let command = $('#manual-command').val();
-        if (agent !== null && operation !== null && executor !== null && command !== '') {
-            $('#manual-run').addClass('button-notready').removeClass('button-success');
-            let request = {
-                'index': 'manual_command',
-                'agent': agent,
-                'operation': operation,
-                'executor': executor,
-                'command': command
-            };
-            restRequest('PUT', request, runManualCommandCallback);
-        }
-    }
-
-    function refreshUpdatableFields(chain, div, newEntry=false){
-        if(chain.status !== -5) {
-            div.find('#'+chain.id+'-add').remove();
-        }
-        if(chain.collect || chain.status <= -4) {
-            div.find('#'+chain.id+'-rm').remove();
-        }
-        if(chain.finish && chain.output) {
-            let resultStar = div.find('#'+chain.id+'-rs');
-            if(chain.facts.length > 0){
-                stream('Click the stars to view command output. Gold ones mean information was learned.');
-                resultStar.removeClass('tactic-no-facts');
-                resultStar.addClass('tactic-has-facts');
-            } else {
-                resultStar.addClass('tactic-no-facts');
-            }
-            div.find('#'+chain.id+'-rm').remove();
-            div.find('#'+chain.id+'-cm').remove();
-        }
-        if(chain.status === 0) {
-            applyTimelineColor(div, 'success');
-        } else if (chain.status === -2) {
-            div.find('#'+chain.id+'-rm').remove();
-            applyTimelineColor(div, 'discarded');
-        } else if (chain.status === 1) {
-            applyTimelineColor(div, 'failure');
-        } else if (chain.status === 124) {
-            applyTimelineColor(div, 'timeout');
-        } else if (chain.status === -3 && chain.collect) {
-            applyTimelineColor(div, 'collected');
-        } else if (chain.status === -4) {
-            applyTimelineColor(div, 'untrusted');
-        } else if (chain.status === -5) {
-            applyTimelineColor(div, 'visibility');
-        } else {
-            applyTimelineColor(div, 'queued');
-        }
-    }
-
-    function applyTimelineColor(div, color) {
-        div.removeClass('collected');
-        div.removeClass('queued');
-        div.removeClass('visibility');
-        div.addClass(color);
-    }
-
-    function rollup(id) {
-        let inner = $("#op_id_"+id).find("#inner-contents");
-        if ($("#op_id_"+id).find("#inner-contents").is(":visible")) {
-            $(inner).slideUp();
-        } else {
-            $(inner).slideDown();
-        }
-    }
-
-    function findResults(elem, lnk){
-        function loadResults(data){
-            if (data) {
-                let res = b64DecodeUnicode(data.output);
-                $('#resultView').text(res);
-                resultText = $('#resultView').html();
-
-                let factValues = Array.from(data.link.facts, fact => fact.value.toString());
-                factValues = Array.from(new Set(factValues));
-                factValues.sort((a, b) => { return b.length - a.length });
-                $.each(factValues, (i, factValue) => {
-                    let encodedValue = $('<div/>').text(factValue).html();
-                    resultText = resultText.replaceAll(encodedValue, '<span class="highlight">' + encodedValue + '</span>');
+            get selectedAgentExecutors() {
+                if (!this.selectedAgent) return [];
+                return this.selectedAgent.executors.map((e) => {
+                    let cmd = `(${e})`;
+                    if (e in this.EXECUTOR_SHELLS) cmd += ` ${this.EXECUTOR_SHELLS[e]}`;
+                    return { executor: e, display: `${cmd} > ` };
                 });
-                $('#resultView').html(resultText);
-            } else {
-              $('#resultView').empty();
-            }
-        }
-        document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').text(b64DecodeUnicode($(elem).attr('data-encoded-cmd')));
-        restRequest('POST', {'index':'result','link_id':lnk}, loadResults);
-    }
+            },
 
-    function downloadOperationFullReport() {
-        downloadOperationInfo('full-report');
-    }
+            get isOperationRunning() {
+                if (!this.selectedOperation) return false;
+                return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time');
+            },
 
-    function downloadOperationEventLogs() {
-        downloadOperationInfo('event-logs');
-    }
+            get isLinkEditable() {
+                if (!this.selectedLink) return false;
+                // Link can only be editable if operation is running, and if link is paused, queued, or completed
+                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in this.LINK_STATUSES))
+                    && !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'));
+            },
 
-    function downloadOperationInfo(format) {
-        let selectedOperationId = $('#operation-list option:selected').attr('value');
-        let agentOutput = $('#agent-output').prop("checked");
-        let postData = selectedOperationId ? {
-                'index':'operation_report',
-                'op_id': selectedOperationId,
-                'agent_output': Number(agentOutput),
-                'format': format,
-            } : null;
-        let selectedOpName = $('#operation-list option:selected').text();
-        downloadReport('/api/rest', selectedOpName, postData);
-    }
+            getOperationsMenuCaretDisplay() {
+                const el = document.querySelector('.operation-menu-container');
+                if (el) this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
+            },
 
-    function resetMoreModal() {
-        let modal = $('#more-modal');
-        modal.hide();
-        modal.find('#resultCmd').text('');
-        modal.find('#resultView').text('');
-    }
+            // Controls whether user can add link or not--depending on whether adversary allows repeatable abilities, and ability has been added already or not
+            isLinkAvailable(ability) {
+                return this.selectedOperation.adversary.has_repeatable_abilities ? true : !this.addedTechniquesIDs.has(ability.technique_id);
+            },
 
-    function submitHilChanges(link_button, status){
-        link_loop = $(link_button).parent().parent();
-        let command = $(link_loop).find('.hil-command').val();
-        updateLinkStatus($(link_loop).find('.hil-linkId').html(), status, b64EncodeUnicode(command));
-        $(link_loop).parent().parent().remove();
-        refresh();
-        return false;
-    }
+            generateAddedLinksList() {
+                this.addedTechniquesIDs = new Set();
+                this.selectedOperation.chain.forEach((link) => {
+                    if (!this.addedTechniquesIDs.has(link.ability.technique_id)) this.addedTechniquesIDs.add(link.ability.technique_id);
+                });
+            },
 
-    function updateLinkStatus2(lnk, op_id, status) {
-        let data = {'index':'chain', 'link_id': lnk, 'status': status};
-        restRequest('PUT', data, refresh);
-    }
+            //
+            // API CALLS
+            //
 
-    function updateLinkStatus(lnk, status, command='') {
-        let data = {'index':'chain', 'link_id': lnk, 'status': status};
-        if(command) {
-            data['command'] = command;
-        }
-        restRequest('PUT', data, doNothing);
-    }
+            async initOperations() {
+                this.getOperations();
+                this.getFields();
+                this.getUsage();
 
-    function toggleHil(){
-        let op_id = $('#operation-list option:selected').attr('value');
-        restRequest('POST', {'index':'operation','op_id': op_id,'autonomous':'toggleMe'}, doNothing, `/api/rest`);
-    }
-
-    function checkOpformValid(){
-        validateFormState(($('#togBtnOp').is(':checked') && $('#queueName').val()), '#opBtn');
-        validateFormState(($('#queueName').val()) && (document.getElementById("schedule-time").value !== ""), '#scheduleBtn');
-        if ($('#togBtnOp').is(':checked')) {
-            $('#opBtn').addClass('separated-button');
-        }
-    }
-
-    function showCommand(command){
-        document.getElementById('more-modal').style.display='block';
-        $('#resultCmd').text(b64DecodeUnicode(command));
-        $('#resultView').empty();
-    }
-    //# sourceURL=operations.js
-
-    function advHasRepeatableAbilities(selectedAdversary) {
-        if ($('#qflow-' + selectedAdversary).data('has-repeatable') != null) {
-            $("#queuePlanner option").each(function() {
-                if (!this.hasAttribute('data-allow-repeatable-abilities')) {
-                    this.setAttribute('disabled', '');
-                    this.removeAttribute('selected');
+                while (this.$refs.operationsHeader) {
+                    await sleep(3000);
+                    this.getOperations();
+                    this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
+                    this.getAndCompareOperation();
                 }
-            });
-            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
-            stream('The profile selected has repeatable abilities. Some planners do not support repeatable abilities and have been disabled.');
-        }
-        else {
-            $('#queuePlanner option').each(function() { this.removeAttribute('disabled'); this.removeAttribute('selected') });
-            $('#queuePlanner').val($('#queuePlanner option:not([disabled]):first').val());
-            stream('Selecting first available planner: ' + $('#queuePlanner').val() + '.');
-        }
+            },
+
+            getFields() {
+                Promise.all([apiV2('GET', '/api/v2/obfuscators'), apiV2('GET', '/api/v2/planners'), apiV2('GET', '/api/v2/adversaries'), apiV2('GET', '/api/v2/sources')]).then(([o, p, a, s]) => {
+                    this.OBFUSCATORS = o;
+                    this.PLANNERS = p;
+                    this.ADVERSARIES = a;
+                    this.SOURCES = s;
+                }).catch((error) => {
+                    console.error(error);
+                });
+            },
+
+            getOperations() {
+                apiV2('GET', this.ENDPOINT).then((res) => {
+                    this.operations = res;
+                    this.filterOperations(this.searchInput);
+                }).catch(() => {
+                    toast('Error getting operations');
+                });
+            },
+
+            getOperation() {
+                if (this.selectedOperationID) {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
+                        this.selectedOperation = res;
+                        this.generateAddedLinksList();
+                    }).catch(() => {
+                        toast('Error getting operation');
+                    });
+                } else {
+                    toast('Select a valid operation to view.');
+                }
+            },
+
+            getAndCompareOperation() {
+                if (this.selectedOperationID) {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
+                        if (this.selectedLink) {
+                            this.selectedOperation = {
+                                ...res,
+                                chain: res.chain.map(link => link.id === this.selectedLink.id ? this.selectedLink : link)
+                            };
+                        } else {
+                            this.selectedOperation = res;
+                        }
+                        this.generateAddedLinksList();
+                    }).catch(() => {
+                        console.error('Error getting operation');
+                    });
+                }
+            },
+
+            addOperation(isQuickAdd = false, startOperation) {
+                if (isQuickAdd) startOperation.name = this.searchInput;
+                if (!startOperation.name) {
+                    toast('Error: Operation name field is empty.');
+                } else {
+                    startOperation.autonomous = Number(startOperation.autonomous);
+                    startOperation.use_learning_parsers = parseInt(startOperation.use_learning_parsers, 10) === 1;
+                    startOperation.auto_close = parseInt(startOperation.auto_close, 10) === 1;
+
+                    apiV2('POST', this.ENDPOINT, startOperation)
+                        .then((res) => {
+                            toast(`Started operation ${startOperation.name}!`, true);
+                            this.getOperations();
+                            this.selectedOperation = res;
+                            this.openModal = null;
+                            toast('Notice that you can pause or stop the operation at any time. Toggle into manual mode if you want full control or click potential links to add TTPs to the operation.', true);
+                        }).catch(() => {
+                        toast('Error adding operation');
+                    });
+                }
+            },
+
+            deleteOperation() {
+                apiV2('DELETE', `${this.ENDPOINT}/${this.selectedOperationID}`)
+                    .then(() => {
+                        if (this.filteredOperations.length > 1) this.selectedOperation = this.filteredOperations.find((op) => op.id !== this.selectedOperationID);
+                        else this.selectedOperation = null;
+                        this.getOperations();
+                        toast('Deleted operation.', true);
+                    })
+                    .catch(() => {
+                        toast('Error deleting operation.');
+                    });
+            },
+
+            getAgent(agentPaw) {
+                apiV2('GET', `api/v2/agents/${agentPaw}`)
+                    .then((res) => {
+                        // Check if agent has been seen in the last hour
+                        if ((new Date() - new Date(res.last_seen)) > 3600000) {
+                            toast(`Command might not run. Is Agent #${res.paw} still alive?`);
+                        } else {
+                            this.potentialLink.agent = res;
+                        }
+                    })
+                    .catch(() => {
+                        toast('Error getting agent.');
+                    });
+            },
+
+            getAgents() {
+                apiV2('GET', 'api/v2/agents')
+                    .then((res) => {
+                        this.updateAgentGroups(res);
+                        this.selectedAgentIndex = 0;
+                    })
+                    .catch(() => {
+                        toast('Error getting agents.');
+                    });
+            },
+
+            getAbilities() {
+                apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.abilities = abilities;
+                    if (!this.potentialLink.agent && this.selectedOperation.host_group && this.selectedOperation.host_group.length > 0) {
+                        this.potentialLink.agent = this.selectedOperation.host_group[0];
+                        this.potentialLink.executor = this.potentialLink.agent.executors[0];
+                    }
+                    this.getAgent(this.potentialLink.agent.paw);
+                    this.filterAbilities(abilities);
+                    this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
+                    this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
+                }).catch(() => {
+                    toast('Error getting abilities', false);
+                });
+            },
+
+            addManualCommand(manualCommand) {
+                if (!manualCommand.executor.command) {
+                    toast('Enter manual command.');
+                    return;
+                }
+                manualCommand.paw = this.selectedAgent.paw;
+                manualCommand.executor.name = document.getElementById('manual-executors').selectedOptions[0].value;
+                manualCommand.executor.platform = this.selectedAgent.platform;
+
+                if (this.selectedOperation.state === 'paused') {
+                    toast('Operation is currently paused, and new links might not be added.', true);
+                    this.addNewRow = false;
+                }
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, manualCommand)
+                    .then((res) => {
+                        toast('Added manual command.', true);
+                        this.getOperation();
+
+                        // Reset
+                        this.addNewRow = false;
+                        this.selectedAgentIndex = null;
+                    })
+                    .catch(() => toast('Error adding manual command.'));
+            },
+
+            addPotentialLink(link) {
+                if (this.selectedOperation.state === 'paused') {
+                    toast('Operation is currently paused, and new links might not be added.', true);
+                }
+                const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
+                    ability: link,
+                    paw: this.potentialLink.agent.paw,
+                    executor: executor
+                })
+                    .then(() => {
+                        toast('Added potential link.', true);
+                        this.getOperation();
+                        this.addedTechniquesIDs.add(link.technique_id);
+                    })
+                    .catch(() => {
+                        toast('Error adding potential link.');
+                    });
+            },
+
+            getLink(link) {
+                apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}`)
+                    .then((res) => {
+                        this.getLinkResults(res.output, link);
+                        if (res.facts) {
+                            this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score);
+                        }
+                        this.selectedLinkCommand = b64DecodeUnicode(res.command);
+                        this.editableCommand = b64DecodeUnicode(res.command);
+                    })
+                    .catch(() => {
+                        this.selectedLinkResults = null;
+                        this.selectedLinkFacts = null;
+                        this.selectedLinkCommand = null;
+                        toast('Error getting link results.');
+                    });
+            },
+
+            getLinkResults(output, link) {
+                if (output !== 'True') {
+                    this.selectedLinkResults = null;
+                } else {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
+                        this.selectedLinkResults = b64DecodeUnicode(res.result);
+                    }).catch(() => console.error('Error getting link results.'));
+                }
+            },
+
+            updateLink(status, command = null) {
+                const updateLink = {...this.selectedLink, command: b64DecodeUnicode(this.selectedLink.command)};
+                if (command) {
+                    updateLink.command = command;
+                }
+                updateLink.status = status;
+                apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}/links/${this.selectedLink.id}`, updateLink)
+                    .then((res) => {
+                        this.getOperation();
+                        toast(`Updating link status to: ${this.LINK_STATUSES[status]}`, true);
+                    })
+                    .catch(() => toast('Error updating link state.'));
+            },
+
+            updateOperation(field, updateValue) {
+                this.selectedOperation[field] = updateValue;
+                apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
+                    .then((res) => {
+                        this.selectedOperation = res;
+                        this.selectedLink = null;
+                    })
+                    .catch(() => {
+                        toast(`Error updating operation ${field}. Operation may have already finished running.`);
+                    });
+            },
+
+            updateOperationState() {
+                if (this.selectedOperationID) {
+                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
+                        this.selectedOperation.state = res.state;
+                        // toast('Go to the GameBoard plugin to see if the blue team can detect your activities.', true);
+                    }).catch(() => {
+                        toast('Error getting operation state');
+                    });
+                }
+            },
+
+            downloadInfo(formatType) {
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, { enable_agent_output: this.isAgentOutputSelected })
+                    .then((res) => {
+                        this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
+                    })
+                    .catch(() => toast('Error generating operation report.'));
+            },
+
+            downloadCSV() {
+                const csv = [];
+                const rows = document.querySelector('#operationsPage').querySelectorAll('table tr:not(.csv-exclude)');
+
+                rows.forEach((row, i) => {
+                    const cols = row.querySelectorAll('td:not(.csv-exclude), th:not(.csv-exclude)');
+                    const rowItems = [];
+                    cols.forEach((col) => {
+                        const link = this.selectedOperation.chain[i - 1];
+                        if (col.className.includes('agentDetails')) {
+                            let agentDetails = `Agent #${link.paw}`;
+                            if (link.host) agentDetails += `\nHost: ${link.host}`;
+                            if (link.pid) agentDetails += `\nPid: ${link.pid}`;
+                            rowItems.push(`"${agentDetails}"`);
+                        } else if (col.className.includes('commandDetails')) {
+                            rowItems.push(`"${b64DecodeUnicode(link.command)}"`);
+                        } else if (col.className.includes('outputDetails')) {
+                            rowItems.push(`"${link.facts}"`);
+                        } else {
+                            rowItems.push(`"${col.innerText}"`);
+                        }
+                    });
+                    csv.push(rowItems.join(','));
+                });
+                this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
+            },
+
+            handleDownload() {
+                if (this.selectedReportType === 'full-report') this.downloadInfo('full-report');
+                else if (this.selectedReportType === 'event-logs') this.downloadInfo('event-logs');
+                else if (this.selectedReportType === 'csv') this.downloadCSV();
+            },
+
+            //
+            // OBJECT MANIPULATION
+            //
+
+            createDownloadReport(data, fileName, isCSV = false) {
+                let dataURL;
+
+                if (!isCSV) {
+                    dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+                    fileName += '.json';
+                } else {
+                    dataURL = window.URL.createObjectURL(data);
+                }
+
+                const elem = document.createElement('a');
+                elem.setAttribute('href', dataURL);
+                elem.setAttribute('download', fileName);
+                elem.click();
+            },
+
+            updateAgentGroups(agents) {
+                if (agents) {
+                    agents.forEach((agent) => {
+                        if (!this.agentGroups.includes(agent.group)) this.agentGroups.push(agent.group);
+                    });
+                }
+            },
+
+            validateJitter(startOperation, newValue = '') {
+                if (!newValue.includes('/')) return false;
+                let [jitterMin, jitterMax] = newValue.split('/');
+                jitterMin = parseInt(jitterMin, 10);
+                jitterMax = parseInt(jitterMax, 10);
+
+                if (jitterMin < 0 || jitterMax < 0) {
+                    toast(`Error: Jitter ${!jitterMin ? 'MIN' : 'MAX'} must be valid.`);
+                    return false;
+                }
+                if (jitterMin >= jitterMax) {
+                    toast('Error: Jitter MIN must be less than the jitter MAX.');
+                    return false;
+                }
+
+                startOperation.jitter = newValue;
+                return true;
+            },
+
+            filterOperations(userInput) {
+                this.searchInput = userInput;
+                this.filteredOperations = this.operations.filter((op) => op.name.includes(userInput)).sort((a, b) => {
+                    let c = new Date(a.start);
+                    let d = new Date(b.start);
+                    return d - c;
+                }); // Filter and sort by start time (newest -> oldest)
+                this.getOperationsMenuCaretDisplay();
+            },
+
+            filterAbilities(abilities) {
+                this.filteredAbilitiesList = abilities.filter((ability) => {
+                    let matchAgent = true, matchTactic = true, matchTechnique = true;
+                    if (this.potentialLink.executor) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
+                    if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
+                    if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === ability.technique_name;
+                    return matchAgent && matchTactic && matchTechnique;
+                });
+            },
+        };
     }
 </script>
+
+<style>
+    :scope {
+        --dark-gray: gray;
+        --light-gray: #e6e6e6;
+        --decisions-color: #4fdcfc;
+    }
+
+    #operationsPage .white-space-pre-line {
+        white-space: pre-line;
+        word-wrap: break-word;
+    }
+
+    #operationsPage .ellipsis-divider {
+        text-align: center;
+        font-size: 0.3em;
+    }
+
+    #operationsPage .ellipsis-divider i {
+        color: #484747;
+        padding: 0 7em;
+    }
+
+    #operationsPage span.decisionsIcon {
+        font-size: x-small;
+        font-weight: 500;
+        font-family: sans-serif;
+        position: relative;
+        top: -21px;
+        left: 35%;
+        color: var(--decisions-color);
+    }
+
+    #operationsPage .decisionsDisplay {
+        color: var(--decisions-color) !important;
+    }
+
+    #operationsPage .operation-menu-container {
+        overflow-x: scroll;
+        overflow-y: hidden;
+    }
+
+    #operationsPage .operation-menu-links {
+        color: white;
+        margin-right: 2em;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        width: 5em;
+        flex-flow: column wrap;
+        padding: 10px;
+    }
+
+    #operationsPage .operation-menu-links .readable-time {
+        width: 5em;
+        text-align: center;
+        color: gray;
+    }
+
+    #operationsPage .operation-menu-links .operation-name {
+        max-width: 100%;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    #operationsPage .operation-menu-links i {
+        font-size: 3em;
+        padding-bottom: 5px;
+        min-width: 35px;
+    }
+
+    #operationsPage .modal-card {
+        max-height: 90vh;
+    }
+
+    #operationsPage .width-100 {
+        width: 100% !important;
+    }
+
+    #operationsPage .column {
+        margin: 0;
+    }
+
+    /*MODAL FORM STYLE*/
+    #operationsPage .modal-form-fields.download-buttons-container button {
+        width: fit-content;
+    }
+
+    #operationsPage .modal-results {
+        overflow-x: hidden;
+        overflow-y: scroll;
+        height: 50vh;
+    }
+
+    #operationsPage .modal-results li.abilities-list-item {
+        box-sizing: border-box;
+        padding: .5em;
+        list-style: none;
+    }
+
+    #operationsPage .modal-results li.abilities-list-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /*END MODAL FORM STYLE*/
+
+    #operationsPage span.output-container {
+        height: 8em;
+        display: block;
+        overflow: hidden;
+        white-space: pre-line;
+        max-width: 25ch;
+    }
+
+    #operationsPage .cursor-pointer:hover {
+        cursor: pointer;
+    }
+
+    #operationsPage .timeline-table .modal-card code, table code, .modal-form code {
+        color: #ff8181;
+        background-color: initial;
+        white-space: pre-line;
+    }
+
+    #operationsPage .timeline-table table .highlight {
+        width: fit-content !important;
+    }
+
+    #operationsPage .timeline-table {
+        padding-bottom: 5em;
+    }
+
+    #operationsPage .timeline-table table tr th {
+        font-weight: 400;
+        font-size: 0.75rem;
+        border-bottom: none;
+        color: gray;
+    }
+
+    #operationsPage .button:active, .button.is-active, .button:focus, .button.is-focused {
+        color: inherit;
+    }
+
+    #operationsPage button.is-larger {
+        font-size: 2.1rem;
+    }
+
+    #operationsPage .linkActionsColumn button[disabled] {
+        background-color: transparent;
+    }
+
+    #operationsPage button.no-style {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    #operationsPage button.no-style.reset {
+        padding: 0.5em;
+        width: fit-content;
+        font-size: .75em;
+    }
+
+    #operationsPage button.no-style[disabled] {
+        background-color: initial !important;
+    }
+
+    #operationsPage .caret-button {
+        font-size: 1em;
+        padding-bottom: 0;
+        margin-top: -30px;
+    }
+
+    #operationsPage .scroll-more-caret {
+        color: gray;
+    }
+
+    #operationsPage button.no-style:hover {
+        border: none;
+        color: white;
+        transform: scale(1.2);
+    }
+
+    #operationsPage i sub {
+        font-family: sans-serif;
+    }
+
+    #operationsPage .operations-menu-set-width {
+        max-width: 45%;
+    }
+
+    #operationsPage .operations-dashboard {
+        width: 100%;
+        justify-content: space-between;
+        overflow-y: scroll;
+        margin-bottom: 1em;
+    }
+
+    #operationsPage .controls-container button {
+        margin: 0 2rem;
+        padding: 0;
+        max-height: 34px;
+    }
+
+    #operationsPage .timeline-table table th.header {
+        border-bottom: none;
+    }
+
+    #operationsPage .timeline-table th:not(.decideColumn), th:not(.statusColumn) {
+        text-align: left;
+    }
+
+    #operationsPage .timeline-table .decideColumn {
+        color: gray;
+        width: 120px;
+        word-break: break-word;
+        font-size: 0.75rem;
+        text-align: center !important;
+    }
+
+    #operationsPage .timeline-table .infoColumn {
+        width: 200px;
+    }
+
+    #operationsPage .timeline-table table tbody td {
+        vertical-align: middle;
+        border: none;
+        height: 5.5em;
+    }
+
+    #operationsPage .timeline-table table tbody td.linkActionsColumn {
+        display: flex;
+        align-items: center;
+        flex-flow: row-reverse;
+        padding-bottom: 0;
+    }
+
+    #operationsPage .timeline-table table tbody td.commandDetails textarea {
+        color: #ff8181;
+        background-color: #262626;
+        height: 150px;
+        max-width: 22ch;
+        word-break: break-word;
+        padding: 5px;
+        border-radius: 5px;
+    }
+
+    #operationsPage .timeline-table table tbody td textarea[contenteditable] {
+        width: 100%;
+        height: 5em;
+        margin-top: 1em;
+    }
+
+    #operationsPage .timeline-table table tbody td.commandDetails button {
+        width: max-content;
+    }
+
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow td:last-child {
+        display: flex;
+        justify-content: space-around;
+        padding: 0;
+        flex-flow: row;
+        align-items: center;
+        background-color: #2b2929;
+        border-radius: 2px;
+    }
+
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow textarea {
+        border-radius: 2px;
+        line-height: 0.75rem;
+        width: 10rem;
+    }
+
+    #operationsPage .timeline-table table tbody tr.linkEditCommandRow .linkEditControls {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    #operationsPage .timeline-table table tfoot td {
+        padding-top: 1em;
+        border: none !important;
+    }
+
+    /*gray timeline*/
+    #operationsPage span.linkStatus {
+        justify-content: flex-start;
+        display: flex;
+    }
+
+    #operationsPage span.linkStatus::before {
+        width: 2px;
+        height: 180px;
+        background-color: white;
+        content: "";
+        display: inline-block;
+        position: absolute;
+        margin-left: 25px;
+        margin-top: 40px;
+    }
+
+    /*circle for event*/
+    #operationsPage span.linkStatus::after {
+        position: relative;
+        display: block;
+        background: #161616;
+        border-radius: 50%;
+        height: 50px;
+        width: 50px;
+        content: attr(data-content);
+        padding-top: 18px;
+        text-align: center;
+        font-size: 0.5em;
+    }
+
+    #operationsPage span.status {
+        position: relative;
+        top: 55px;
+        z-index: 10;
+        font-size: .5em;
+        color: white;
+        left: 15px;
+        display: flex;
+    }
+
+    /*queued*/
+    #operationsPage span.status-queued {
+        color: #555;
+    }
+
+    #operationsPage span.status-queued::after {
+        box-shadow: 0 0 0 0.2em #555;
+    }
+
+    /*success*/
+    #operationsPage span.status-success {
+        color: #4a9;
+    }
+
+    #operationsPage span.status-success::after {
+        box-shadow: 0 0 0 0.2em #4a9;
+    }
+
+    /*failure*/
+    #operationsPage span.status-failed {
+        color: #c31;
+    }
+
+    #operationsPage span.status-failed::after {
+        box-shadow: 0 0 0 0.2em #c31;
+    }
+
+    /*paused*/
+    #operationsPage span.status-paused {
+        color: #ffc500;
+    }
+
+    #operationsPage span.status-paused::after {
+        box-shadow: 0 0 0 0.2em #ffc500;
+    }
+
+    /*removed*/
+    #operationsPage span.status-discarded {
+        color: #a05195;
+    }
+
+    #operationsPage span.status-discarded::after {
+        box-shadow: 0 0 0 0.2em #a05195;
+    }
+
+    /*collected*/
+    #operationsPage span.status-collect {
+        color: #ffb000;
+    }
+
+    #operationsPage span.status-collect::after {
+        box-shadow: 0 0 0 0.2em #ffb000;
+    }
+
+    /*untrusted*/
+    #operationsPage span.status-untrusted {
+        color: white;
+    }
+
+    #operationsPage span.status-untrusted::after {
+        box-shadow: 0 0 0 0.2em white;
+    }
+
+    /*visible*/
+    #operationsPage span.status-visible {
+        color: #f012be;
+    }
+
+    #operationsPage span.status-visible::after {
+        box-shadow: 0 0 0 0.2em #f012be;
+    }
+
+    /*timeout*/
+    #operationsPage span.status-timeout {
+        color: cornflowerblue;
+    }
+
+    #operationsPage span.status-timeout::after {
+        box-shadow: 0 0 0 0.2em cornflowerblue;
+    }
+</style>

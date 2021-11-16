@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 import marshmallow as ma
@@ -44,7 +44,7 @@ class FactSchema(ma.Schema):
     trait = ma.fields.String(required=True)
     name = ma.fields.String(dump_only=True)
     value = ma.fields.Function(lambda x: x.value, deserialize=lambda x: str(x), allow_none=True)
-    created = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    created = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     score = ma.fields.Integer()
     source = ma.fields.String(allow_none=True)
     origin_type = ma_enum.EnumField(OriginType, allow_none=True)
@@ -55,8 +55,13 @@ class FactSchema(ma.Schema):
     technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
-    def build_fact(self, data, **_):
-        return Fact(**data)
+    def build_fact(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Fact(**data)
+
+
+class FactUpdateRequestSchema(ma.Schema):
+    criteria = ma.fields.Nested(FactSchema(partial=True), required=True)
+    updates = ma.fields.Nested(FactSchema(partial=True), required=True)
 
 
 class Fact(BaseObject):
@@ -104,7 +109,7 @@ class Fact(BaseObject):
         super().__init__()
         self.trait = trait
         self.value = value
-        self.created = datetime.now()
+        self.created = datetime.now(timezone.utc)
         self.score = score
         self.source = source
         self.origin_type = origin_type

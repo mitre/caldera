@@ -65,14 +65,6 @@ class TestLink:
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
-    def test_no_status_change_event_fired_when_setting_same_status(self, mock_emit_status_change_method, ability, executor):
-        executor = executor('psh', 'windows')
-        ability = ability(executor=executor)
-        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
-        link.status = link.status
-        mock_emit_status_change_method.assert_not_called()
-
-    @mock.patch.object(Link, '_emit_status_change_event')
     def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
@@ -113,16 +105,17 @@ class TestLink:
         assert loaded_link.agent_reported_time is None
 
     def test_link_agent_reported_time_present_when_set_roundtrip(self, ability, executor):
+        agent_reported_time = '2021-02-23T11:50:16Z'
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123')
         test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
                          paw='123456', ability=test_ability, executor=test_executor, id=111111,
-                         agent_reported_time=BaseService.get_timestamp_from_string('2021-02-23 11:50:16'))
+                         agent_reported_time=BaseService.get_timestamp_from_string(agent_reported_time))
         serialized_link = test_link.display
         loaded_link = Link.load(serialized_link)
 
-        assert serialized_link['agent_reported_time'] == '2021-02-23 11:50:16'
-        assert loaded_link.agent_reported_time == BaseService.get_timestamp_from_string('2021-02-23 11:50:16')
+        assert serialized_link['agent_reported_time'] == agent_reported_time
+        assert loaded_link.agent_reported_time == BaseService.get_timestamp_from_string(agent_reported_time)
 
     def test_link_knowledge_svc_synchronization(self, loop, executor, ability, knowledge_svc):
         test_executor = executor(name='psh', platform='windows')

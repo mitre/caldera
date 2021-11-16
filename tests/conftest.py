@@ -1,15 +1,33 @@
+import asyncio
 import os.path
-
 import pytest
 import random
 import string
 import uuid
 import yaml
-from unittest import mock
+import aiohttp_apispec
+import warnings
 
+from datetime import datetime
+from unittest import mock
+from aiohttp_apispec import validation_middleware
+from aiohttp import web
+from pathlib import Path
+
+from app.api.v2.handlers.agent_api import AgentApi
+from app.api.v2.handlers.ability_api import AbilityApi
+from app.api.v2.handlers.objective_api import ObjectiveApi
+from app.api.v2.handlers.adversary_api import AdversaryApi
+from app.api.v2.handlers.operation_api import OperationApi
+from app.api.v2.handlers.contact_api import ContactApi
+from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
+from app.api.v2.handlers.plugins_api import PluginApi
+from app.api.v2.handlers.fact_source_api import FactSourceApi
+from app.api.v2.handlers.planner_api import PlannerApi
+from app.api.v2.handlers.health_api import HealthApi
 from app.objects.c_obfuscator import Obfuscator
-from app.utility.base_world import BaseWorld
 from app.service.app_svc import AppService
+from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
 from app.service.contact_svc import ContactService
 from app.service.event_svc import EventService
@@ -28,6 +46,14 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
+from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
+from app.api.v2.responses import json_request_validation_middleware
+from app.api.v2.security import authentication_required_middleware_factory
+from app.api.v2.responses import apispec_request_validation_middleware
+from app.api.rest_api import RestApi
+
+from app import version
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -243,3 +269,139 @@ def agent_profile():
         )
 
     return _agent_profile
+
+
+@pytest.fixture
+def app_config():
+    return {
+        'app.contact.dns.domain': 'mycaldera.caldera',
+        'app.contact.dns.socket': '0.0.0.0:8853',
+        'app.contact.html': '/weather',
+        'app.contact.http': '0.0.0.0:8888',
+        'app.contact.tcp': '0.0.0.0:7010',
+        'app.contact.tunnel.ssh.socket': '0.0.0.0:8022',
+        'app.contact.udp': '0.0.0.0:7013',
+        'app.contact.websocket': '0.0.0.0:7012',
+        'plugins': [
+            'stockpile',
+            'atomic'
+        ],
+        'host': '0.0.0.0',
+        'auth.login.handler.module': 'default',
+        'users': {
+            'red': {
+                'red': 'password-foo'
+            },
+            'blue': {
+                'blue': 'password-bar'
+            }
+        }
+    }
+
+
+@pytest.fixture
+def agent_config():
+    return {
+        'sleep_min': '30',
+        'sleep_max': '60',
+        'untrusted_timer': '90',
+        'watchdog': '0',
+        'implant_name': 'splunkd',
+        'deadman_abilities': [
+            'this-is-a-fake-ability'
+        ],
+        'bootstrap_abilities': [
+            'this-is-another-fake-ability'
+        ]
+    }
+
+
+@pytest.fixture
+def api_v2_client(loop, aiohttp_client, contact_svc):
+    def make_app(svcs):
+        warnings.filterwarnings(
+            "ignore",
+            message="Multiple schemas resolved to the name"
+        )
+
+        app = web.Application(
+            middlewares=[
+                authentication_required_middleware_factory(svcs['auth_svc']),
+                json_request_validation_middleware
+            ]
+        )
+        AgentApi(svcs).add_routes(app)
+        AbilityApi(svcs).add_routes(app)
+        OperationApi(svcs).add_routes(app)
+        AdversaryApi(svcs).add_routes(app)
+        ContactApi(svcs).add_routes(app)
+        ObjectiveApi(svcs).add_routes(app)
+        ObfuscatorApi(svcs).add_routes(app)
+        PluginApi(svcs).add_routes(app)
+        FactSourceApi(svcs).add_routes(app)
+        PlannerApi(svcs).add_routes(app)
+        HealthApi(svcs).add_routes(app)
+        return app
+
+    async def initialize():
+        with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
+            BaseWorld.apply_config('main', yaml.safe_load(fle))
+        with open(Path(__file__).parents[1] / 'conf' / 'payloads.yml', 'r') as fle:
+            BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+
+        app_svc = AppService(web.Application(client_max_size=5120 ** 2))
+        _ = DataService()
+        _ = RestService()
+        _ = PlanningService()
+        _ = LearningService()
+        auth_svc = AuthService()
+        _ = FileSvc()
+        _ = EventService()
+        services = app_svc.get_services()
+        os.chdir(str(Path(__file__).parents[1]))
+
+        await app_svc.register_contacts()
+        _ = await RestApi(services).enable()
+        await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
+        await auth_svc.set_login_handlers(services)
+
+        app_svc.register_subapp('/api/v2', make_app(svcs=services))
+        aiohttp_apispec.setup_aiohttp_apispec(
+            app=app_svc.application,
+            title='CALDERA',
+            version=version.get_version(),
+            swagger_path='/api/docs',
+            url='/api/docs/swagger.json',
+            static_path='/static/swagger'
+        )
+        app_svc.application.middlewares.append(apispec_request_validation_middleware)
+        app_svc.application.middlewares.append(validation_middleware)
+
+        return app_svc.application
+
+    app = loop.run_until_complete(initialize())
+    return loop.run_until_complete(aiohttp_client(app))
+
+
+@pytest.fixture
+def api_cookies(loop, api_v2_client):
+    async def get_cookie():
+        r = await api_v2_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
+        return r.cookies
+    return loop.run_until_complete(get_cookie())
+
+
+@pytest.fixture
+def async_return():
+    def _async_return(return_param):
+        f = asyncio.Future()
+        f.set_result(return_param)
+        return f
+    return _async_return
+
+
+@pytest.fixture
+def parse_datestring():
+    def _parse_datestring(datestring):
+        return datetime.strptime(datestring, BaseObject.TIME_FORMAT)
+    return _parse_datestring

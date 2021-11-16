@@ -54,7 +54,7 @@ class LearningService(LearningServiceInterface, BaseService):
 
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):
-        fact.source_type = OriginType.LEARNED.name
+        fact.origin_type = OriginType.LEARNED
         fact.source = operation.id if operation else link.id
         if all(fact.trait) and not any(fact == f for f in facts):
             fact.collected_by = link.paw
@@ -73,8 +73,6 @@ class LearningService(LearningServiceInterface, BaseService):
                 if fact.trait in relationship:
                     matches.append(fact)
                     facts_covered.append(fact)
-                else:
-                    await link._save_fact(operation=operation, fact=fact, score=link.score, relationship=None)
             for pair in itertools.combinations(matches, r=2):
                 if pair[0].trait != pair[1].trait:
                     await link._create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],

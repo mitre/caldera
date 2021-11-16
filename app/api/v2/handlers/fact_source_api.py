@@ -20,6 +20,7 @@ class FactSourceApi(BaseObjectApi):
         router.add_post('/sources', self.create_fact_source)
         router.add_patch('/sources/{id}', self.update_fact_source)
         router.add_put('/sources/{id}', self.create_or_update_source)
+        router.add_delete('/sources/{id}', self.delete_source)
 
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -42,7 +43,8 @@ class FactSourceApi(BaseObjectApi):
         source = await self.create_on_disk_object(request)
         return web.json_response(source.display)
 
-    @aiohttp_apispec.docs(tags=['sources'])
+    @aiohttp_apispec.docs(tags=['sources'], summary='All fields can be updated excluding "id" '
+                                                    'and "adjustments".')
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema)
     async def update_fact_source(self, request: web.Request):
@@ -55,3 +57,9 @@ class FactSourceApi(BaseObjectApi):
     async def create_or_update_source(self, request: web.Request):
         source = await self.create_or_update_on_disk_object(request)
         return web.json_response(source.display)
+
+    @aiohttp_apispec.docs(tags=['sources'])
+    @aiohttp_apispec.response_schema(SourceSchema)
+    async def delete_source(self, request: web.Request):
+        await self.delete_object(request)
+        return web.HTTPNoContent()

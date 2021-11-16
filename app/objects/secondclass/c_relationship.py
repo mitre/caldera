@@ -13,9 +13,19 @@ class RelationshipSchema(ma.Schema):
     score = ma.fields.Integer()
     origin = ma.fields.String(allow_none=True)
 
+    @ma.pre_load
+    def remove_unique(self, data, **_):
+        data.pop('unique', None)
+        return data
+
     @ma.post_load
-    def build_relationship(self, data, **_):
-        return Relationship(**data)
+    def build_relationship(self, data, **kwargs):
+        return None if kwargs.get('partial') is True else Relationship(**data)
+
+
+class RelationshipUpdateSchema(ma.Schema):
+    criteria = ma.fields.Nested(RelationshipSchema(partial=True), required=True)
+    updates = ma.fields.Nested(RelationshipSchema(partial=True), required=True)
 
 
 class Relationship(BaseObject):

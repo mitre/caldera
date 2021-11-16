@@ -5,7 +5,7 @@ import re
 import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from importlib import import_module
 
@@ -25,6 +25,10 @@ from app.utility.base_service import BaseService
 NO_PREVIOUS_STATE = object()
 
 
+class OperationOutputRequestSchema(ma.Schema):
+    enable_agent_output = ma.fields.Boolean(default=False)
+
+
 class OperationSchema(ma.Schema):
     id = ma.fields.String()
     name = ma.fields.String(required=True)
@@ -32,7 +36,7 @@ class OperationSchema(ma.Schema):
     adversary = ma.fields.Nested(AdversarySchema())
     jitter = ma.fields.String()
     planner = ma.fields.Nested(PlannerSchema())
-    start = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    start = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     state = ma.fields.String()
     obfuscator = ma.fields.String()
     autonomous = ma.fields.Integer()
@@ -141,7 +145,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def set_start_details(self):
         self.id = self.id if self.id else str(uuid.uuid4())
-        self.start = datetime.now()
+        self.start = datetime.now(timezone.utc)
 
     def add_link(self, link):
         self.chain.append(link)
@@ -269,10 +273,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
             skipped_abilities.append({agent.paw: list(agent_skipped.values())})
         return skipped_abilities
 
-    async def report(self, file_svc, data_svc, output=False, redacted=False):
+    async def report(self, file_svc, data_svc, output=False):
         try:
             report = dict(name=self.name, host_group=[a.display for a in self.agents],
-                          start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                          start=self.start.strftime(self.TIME_FORMAT),
                           steps=[], finish=self.finish, planner=self.planner.name, adversary=self.adversary.display,
                           jitter=self.jitter, objectives=self.objective.display,
                           facts=[f.display for f in await self.all_facts()])
@@ -281,7 +285,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 step_report = dict(link_id=step.id,
                                    ability_id=step.ability.ability_id,
                                    command=step.command,
-                                   delegated=step.decide.strftime('%Y-%m-%d %H:%M:%S'),
+                                   delegated=step.decide.strftime(self.TIME_FORMAT),
                                    run=step.finish,
                                    status=step.status,
                                    platform=step.executor.platform,
@@ -295,7 +299,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 if output and step.output:
                     step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
                 if step.agent_reported_time:
-                    step_report['agent_reported_time'] = step.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
+                    step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
@@ -309,20 +313,19 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return [await self._convert_link_to_event_log(step, file_svc, data_svc, output=output) for step in self.chain
                 if not step.can_ignore()]
 
+    async def cede_control_to_planner(self, services):
+        planner = await self._get_planning_module(services)
+        await planner.execute()
+        while not await self.is_closeable():
+            await asyncio.sleep(10)
+        await self.close(services)
+
     async def run(self, services):
         await self._init_source()
-        # load objective
         data_svc = services.get('data_svc')
         await self._load_objective(data_svc)
         try:
-            # Operation cedes control to planner
-            planner = await self._get_planning_module(services)
-            await planner.execute()
-            while not await self.is_closeable():
-                await asyncio.sleep(10)
-            await self.close(services)
-
-            # Automatic event log output
+            await self.cede_control_to_planner(services)
             await self.write_event_logs_to_disk(services.get('file_svc'), data_svc, output=True)
         except Exception as e:
             logging.error(e, exc_info=True)
@@ -348,8 +351,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
         event_dict = dict(command=link.command,
-                          delegated_timestamp=link.decide.strftime('%Y-%m-%d %H:%M:%S'),
-                          collected_timestamp=link.collect.strftime('%Y-%m-%d %H:%M:%S') if link.collect else None,
+                          delegated_timestamp=link.decide.strftime(self.TIME_FORMAT),
+                          collected_timestamp=link.collect.strftime(self.TIME_FORMAT) if link.collect else None,
                           finished_timestamp=link.finish,
                           status=link.status,
                           platform=link.executor.platform,
@@ -362,7 +365,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         if output and link.output:
             event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
         if link.agent_reported_time:
-            event_dict['agent_reported_time'] = link.agent_reported_time.strftime('%Y-%m-%d %H:%M:%S')
+            event_dict['agent_reported_time'] = link.agent_reported_time.strftime(self.TIME_FORMAT)
         return event_dict
 
     async def _init_source(self):
@@ -454,7 +457,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def _get_operation_metadata_for_event_log(self):
         return dict(operation_name=self.name,
-                    operation_start=self.start.strftime('%Y-%m-%d %H:%M:%S'),
+                    operation_start=self.start.strftime(self.TIME_FORMAT),
                     operation_adversary=self.adversary.name)
 
     def _emit_state_change_event(self, from_state, to_state):
@@ -502,7 +505,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                         privilege=agent.privilege,
                         host=agent.host,
                         contact=agent.contact,
-                        created=agent.created.strftime('%Y-%m-%d %H:%M:%S'))
+                        created=agent.created.strftime(BaseObject.TIME_FORMAT))
 
     class Reason(Enum):
         PLATFORM = 0
