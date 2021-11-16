@@ -8,7 +8,7 @@ import yaml
 import aiohttp_apispec
 import warnings
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
@@ -398,6 +398,11 @@ def async_return():
         f.set_result(return_param)
         return f
     return _async_return
+
+
+@pytest.fixture
+def mock_time():
+    return datetime(2021, 1, 1, tzinfo=timezone.utc)
 
 
 @pytest.fixture
