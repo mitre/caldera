@@ -1,6 +1,7 @@
 import pytest
 
 from http import HTTPStatus
+from unittest import mock
 
 from app.objects.c_ability import AbilitySchema
 from app.objects.c_operation import OperationSchema
@@ -107,10 +108,45 @@ def test_ability(test_executor, loop):
 
 
 @pytest.fixture
-def test_schedule(test_operation, loop, mock_time):
+def updated_schedule_payload(test_schedule):
+    payload = test_schedule.schema.dump(test_schedule)
+    payload['schedule'] = '01:00:00.000000'
+    return payload
+
+
+@pytest.fixture
+def expected_updated_schedule_dump(updated_schedule_payload):
+    schedule = ScheduleSchema().load(updated_schedule_payload)
+    return schedule.schema.dump(schedule)
+
+
+@pytest.fixture
+def new_schedule_payload():
+    payload = dict(name='post_test',
+                   schedule='00:00:00.000000',
+                   task={
+                       'name': 'new_operation',
+                       'planner': {'id': '123'},
+                       'adversary': {'adversary_id': '123', 'name': 'ad-hoc'},
+                       'source': {'id': '123'}
+                   })
+    return payload
+
+
+@pytest.fixture
+def expected_new_schedule_dump(new_schedule_payload):
+    schedule = ScheduleSchema().load(new_schedule_payload)
+    dump = schedule.schema.dump(schedule)
+    dump['task']['id'] = mock.ANY
+    return dump
+
+
+@pytest.fixture
+def test_schedule(test_operation, loop):
+    operation = OperationSchema().load(test_operation)
     schedule = ScheduleSchema().load(dict(name='123',
-                                          schedule=mock_time,
-                                          task=test_operation))
+                                          schedule='03:00:00.000000',
+                                          task=operation.schema.dump(operation)))
     loop.run_until_complete(BaseService.get_service('data_svc').store(schedule))
     return schedule
 
@@ -161,57 +197,67 @@ class TestOperationsApi:
         resp = await api_v2_client.get('/api/v2/schedules/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_schedule(self, api_v2_client, api_cookies):
-        payload = dict(name='post_test', planner={'id': '123'},
-                       adversary={'adversary_id': '123', 'name': 'ad-hoc'}, source={'id': '123'})
-        resp = await api_v2_client.post('/api/v2/schedules', cookies=api_cookies, json=payload)
+    async def test_create_schedule(self, api_v2_client, api_cookies, new_schedule_payload, expected_new_schedule_dump):
+        resp = await api_v2_client.post('/api/v2/schedules', cookies=api_cookies, json=new_schedule_payload)
         assert resp.status == HTTPStatus.OK
-        op_exists = await BaseService.get_service('data_svc').locate('schedules', {'name': 'post_test'})
-        assert op_exists
-        op_data = await resp.json()
-        assert op_data['name'] == payload['name']
-        assert op_data['start']
-        assert op_data['planner']['id'] == payload['planner']['id']
-        assert op_data['adversary']['name'] == payload['adversary']['name']
-        assert op_data['source']['id'] == payload['source']['id']
+        schedule_exists = await BaseService.get_service('data_svc').locate('schedules',
+                                                                           {'name': new_schedule_payload['name']})
+        assert schedule_exists
+        stored_schedule = schedule_exists[0]
+        returned_schedule_data = await resp.json()
+        assert returned_schedule_data == stored_schedule.schema.dump(stored_schedule)
+        assert returned_schedule_data == expected_new_schedule_dump
 
     async def test_duplicate_create_schedule(self, api_v2_client, api_cookies, test_schedule):
-        payload = dict(name='post_test', id=test_schedule['id'], planner={'id': '123'},
-                       adversary={'adversary_id': '123'}, source={'id': '123'})
+        payload = test_schedule.schema.dump(test_schedule)
         resp = await api_v2_client.post('/api/v2/schedules', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
-    async def test_unauthorized_create_schedule(self, api_v2_client):
-        payload = dict(name='post_test', planner={'id': '123'},
-                       adversary={'adversary_id': '123'}, source={'id': '123'})
-        resp = await api_v2_client.post('/api/v2/schedules', json=payload)
+    async def test_unauthorized_create_schedule(self, api_v2_client, new_schedule_payload):
+        resp = await api_v2_client.post('/api/v2/schedules', json=new_schedule_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_update_schedule(self, api_v2_client, api_cookies, mocker, async_return, test_operation):
-        op_manager_path = 'app.api.v2.managers.operation_api_manager.OperationApiManager.validate_schedule_state'
-        with mocker.patch(op_manager_path) as mock_validate:
-            mock_validate.return_value = async_return(True)
-            payload = dict(state='running', obfuscator='base64')
-            resp = await api_v2_client.patch('/api/v2/schedules/123', cookies=api_cookies, json=payload)
-            assert resp.status == HTTPStatus.OK
-            op = (await BaseService.get_service('data_svc').locate('schedules', {'id': '123'}))[0]
-            assert op.state == payload['state']
-            assert op.obfuscator == payload['obfuscator']
-            assert op.id == test_schedule['id']
-            assert op.name == test_schedule['name']
-            assert op.planner.planner_id == test_schedule['planner']['id']
+    async def test_update_schedule(self, api_v2_client, api_cookies, mocker, async_return, updated_schedule_payload,
+                                   expected_updated_schedule_dump):
+        resp = await api_v2_client.patch('/api/v2/schedules/123', cookies=api_cookies, json=updated_schedule_payload)
+        assert resp.status == HTTPStatus.OK
+        returned_schedule_data = await resp.json()
+        stored_schedule = (await BaseService.get_service('data_svc').locate('schedules',
+                                                                            {'name': updated_schedule_payload['name']}))[0]
+        assert stored_schedule.schema.dump(stored_schedule) == expected_updated_schedule_dump
+        assert returned_schedule_data == expected_updated_schedule_dump
 
-    async def test_unauthorized_update_schedule(self, api_v2_client):
-        payload = dict(state='running', obfuscator='base64')
-        resp = await api_v2_client.patch('/api/v2/schedules/123', json=payload)
+    async def test_unauthorized_update_schedule(self, api_v2_client, updated_schedule_payload):
+        resp = await api_v2_client.patch('/api/v2/schedules/123', json=updated_schedule_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
-    async def test_nonexistent_schedule_update(self, api_v2_client, api_cookies):
-        payload = dict(state='running', obfuscator='base64')
-        resp = await api_v2_client.patch('/api/v2/schedules/999', json=payload, cookies=api_cookies)
+    async def test_nonexistent_schedule_update(self, api_v2_client, api_cookies, updated_schedule_payload):
+        resp = await api_v2_client.patch('/api/v2/schedules/999', json=updated_schedule_payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_update_finished_schedule(self, api_v2_client, api_cookies, setup_finished_operation):
-        payload = dict(state='running', obfuscator='base64')
-        resp = await api_v2_client.patch('/api/v2/schedules/000', cookies=api_cookies, json=payload)
-        assert resp.status == HTTPStatus.BAD_REQUEST
+    async def test_replace_schedule(self, api_v2_client, api_cookies, test_schedule, updated_schedule_payload,
+                                    expected_updated_schedule_dump):
+        resp = await api_v2_client.put('/api/v2/schedules/123', cookies=api_cookies, json=updated_schedule_payload)
+        assert resp.status == HTTPStatus.OK
+        returned_schedule_data = await resp.json()
+        stored_schedule = await BaseService.get_service('data_svc').locate('schedules',
+                                                                           {'name': updated_schedule_payload['name']})
+        stored_schedule = stored_schedule[0].schema.dump(stored_schedule[0])
+        assert returned_schedule_data == stored_schedule
+        assert returned_schedule_data == expected_updated_schedule_dump
+
+    async def test_unauthorized_replace_schedule(self, api_v2_client, test_schedule, updated_schedule_payload):
+        resp = await api_v2_client.put('/api/v2/schedules/123', json=updated_schedule_payload)
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+
+    async def test_replace_nonexistent_schedule(self, api_v2_client, api_cookies, new_schedule_payload,
+                                                expected_new_schedule_dump):
+        resp = await api_v2_client.put(f'/api/v2/schedules/{new_schedule_payload["name"]}',
+                                       cookies=api_cookies, json=new_schedule_payload)
+        assert resp.status == HTTPStatus.OK
+        returned_schedule_data = await resp.json()
+        stored_schedule = await BaseService.get_service('data_svc').locate('schedules',
+                                                                           {'name': expected_new_schedule_dump['name']})
+        stored_schedule = stored_schedule[0].schema.dump(stored_schedule[0])
+        assert returned_schedule_data == stored_schedule
+        assert returned_schedule_data == expected_new_schedule_dump
