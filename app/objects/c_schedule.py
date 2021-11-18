@@ -7,12 +7,14 @@ from app.utility.base_object import BaseObject
 
 class ScheduleSchema(ma.Schema):
 
-    name = ma.fields.String(required=True)
+    name = ma.fields.String()
     schedule = ma.fields.Time(required=True)
     task = ma.fields.Nested(OperationSchema())
 
     @ma.post_load
     def build_schedule(self, data, **kwargs):
+        if data.get('task'):
+            data['name'] = data['task'].name
         return None if kwargs.get('partial') is True else Schedule(**data)
 
 

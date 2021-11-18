@@ -49,7 +49,7 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Create Schedule',
                           description='Use fields from the ScheduleSchema in the request body '
                                       'to create a new Schedule.')
-    @aiohttp_apispec.request_schema(ScheduleSchema)
+    @aiohttp_apispec.request_schema(ScheduleSchema(exclude=['name']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'created Schedule object.')
     async def create_schedule(self, request: web.Request):
@@ -83,7 +83,7 @@ class ScheduleApi(BaseObjectApi):
                           }],
                           description='Use fields from the ScheduleSchema in the request body '
                                       'to replace an existing Schedule or create a new Schedule.')
-    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True))
+    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, exclude=['name']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'Replaced Schedule object.')
     async def create_or_update_schedule(self, request: web.Request):
@@ -105,3 +105,12 @@ class ScheduleApi(BaseObjectApi):
     async def delete_schedule(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
+
+    '''Overridden Methods'''
+
+    async def create_object(self, request: web.Request):
+        data = await request.json()
+        data['name'] = data.get('task').get('name')
+        await self._error_if_object_with_id_exists(data.get(self.id_property))
+        access = await self.get_request_permissions(request)
+        return self._api_manager.create_object_from_schema(ScheduleSchema, data, access)
