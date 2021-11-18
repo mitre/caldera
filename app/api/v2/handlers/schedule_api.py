@@ -25,8 +25,7 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Retrieve Schedules', description='Returns all stored schedules.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(ScheduleSchema(many=True, partial=True),
-                                     description='The response is a list of all the scheduled operations that have not '
-                                                 'been completed.')
+                                     description='The response is a list of all scheduled operations.')
     async def get_schedules(self, request: web.Request):
         schedules = await self.get_all_objects(request)
         return web.json_response(schedules)
@@ -85,7 +84,7 @@ class ScheduleApi(BaseObjectApi):
                                       'to replace an existing Schedule or create a new Schedule.')
     @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, exclude=['name']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
-                                                                 'Replaced Schedule object.')
+                                                                 'replaced Schedule object.')
     async def create_or_update_schedule(self, request: web.Request):
         schedule = await self.create_or_update_object(request)
         return web.json_response(schedule.display)
