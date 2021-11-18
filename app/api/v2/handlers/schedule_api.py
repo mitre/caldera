@@ -47,7 +47,8 @@ class ScheduleApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['schedules'], summary='Create Schedule',
                           description='Use fields from the ScheduleSchema in the request body '
-                                      'to create a new Schedule.')
+                                      'to create a new Schedule. The name of the Schedule will be set to '
+                                      'that of the tasked Operation.')
     @aiohttp_apispec.request_schema(ScheduleSchema(exclude=['name']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'created Schedule object.')
@@ -81,7 +82,8 @@ class ScheduleApi(BaseObjectApi):
                               'description': 'Name of the Schedule to be replaced.'
                           }],
                           description='Use fields from the ScheduleSchema in the request body '
-                                      'to replace an existing Schedule or create a new Schedule.')
+                                      'to replace an existing Schedule or create a new Schedule. '
+                                      'The name of the Schedule will be set to that of the tasked Operation.')
     @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, exclude=['name']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'replaced Schedule object.')
