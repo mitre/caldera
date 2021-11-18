@@ -1,6 +1,6 @@
 import re
 from base64 import b64decode
-from datetime import datetime
+from datetime import datetime, timezone
 from urllib.parse import urlparse
 
 import marshmallow as ma
@@ -113,7 +113,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.pid = pid
         self.ppid = ppid
         self.trusted = trusted
-        self.created = datetime.now()
+        self.created = datetime.now(timezone.utc)
         self.last_seen = self.created
         self.last_trusted_seen = self.created
         self.executors = executors
@@ -189,7 +189,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         return potential_executors[0]
 
     async def heartbeat_modification(self, **kwargs):
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         self.last_seen = now
         if self.trusted:
             self.last_trusted_seen = now
