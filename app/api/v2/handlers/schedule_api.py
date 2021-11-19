@@ -2,7 +2,7 @@ import aiohttp_apispec
 from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
-from app.api.v2.managers.base_api_manager import BaseApiManager
+from app.api.v2.managers.schedule_api_manager import ScheduleApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_schedule import Schedule, ScheduleSchema
 
@@ -11,7 +11,8 @@ class ScheduleApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='schedule', obj_class=Schedule, schema=ScheduleSchema, ram_key='schedules',
                          id_property='name', auth_svc=services['auth_svc'])
-        self._api_manager = BaseApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
+        self._api_manager = ScheduleApiManager(services)
+        self._rest_svc = services['rest_svc']
 
     def add_routes(self, app: web.Application):
         router = app.router
@@ -114,4 +115,6 @@ class ScheduleApi(BaseObjectApi):
         data['name'] = data.get('task').get('name')
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
+        operation = await self._api_manager.setup_operation(access, data['task'])
+        data['task'] = operation
         return self._api_manager.create_object_from_schema(ScheduleSchema, data, access)
