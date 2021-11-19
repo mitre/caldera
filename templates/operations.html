@@ -198,11 +198,13 @@
                         <div class="navbar-divider mb-5 width-100"></div>
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-row is-justify-content-space-between">
+                                <template x-if="selectedOperation.chain.length > 0">
                                 <div class="has-text-grey-light is-size-7">
-                                    <em x-show="selectedOperation.chain.length > 0">Last ran <span
+                                    <em>Last ran <span
                                             class="has-text-grey-light"
-                                            x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTimeISO8601(selectedOperation?.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
+                                            x-text="selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getHumanFriendlyTimeISO8601(selectedOperation.chain[selectedOperation.chain.length-1]?.decide) + ')'"></span></em>
                                 </div>
+                                </template>
                                 <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                                     <div class="mb-6 mr-4 text-align-right">
                                         <button title="add manual command" class="button is-primary is-small"
