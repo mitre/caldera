@@ -41,16 +41,21 @@
                             </div>
                         </div>
                         <div>&nbsp;&nbsp;</div>
-                        <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)" type="button"
+                        <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)"
                                 title="creates a new operation based on the last created operation settings "
                                 class="button is-primary is-small"
                                 x-on:click="addOperation(true, startOperation)"><i class="pr-1 fas fa-plus"></i>
                             Quick Add
                         </button>
-                        <button type="button" title="add operation" class="ml-2 button is-primary is-small"
+                        <button title="add operation" class="ml-2 button is-primary is-small"
                                 x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
                             Create Operation
                         </button>
+                        <button title="download reports" class="ml-2 button is-primary is-small"
+                                x-on:click="openModal = 'showDownloadMenu'"><i class="pr-1 fas fa-arrow-down"></i>
+                            Download
+                        </button>
+                        <div class="is-flex is-justify-content-center pt-2"></div>
                     </div>
                     <div class="is-flex is-flex-direction-row is-align-items-center">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-start operation-menu-container">
@@ -115,15 +120,9 @@
                                     x-on:click="updateOperation('state', 'run_one_link')">
                                 <i title="run one step" class="fas fa-play"><sub>1</sub></i></button>
                         </div>
-
                         <div class="is-flex is-justify-content-center pt-2 hover-opacity">
-                            <button title="download reports"
-                                    class="mx-2 button no-style"
-                                    x-on:click="openModal = 'showDownloadMenu'"><i
-                                    class="pr-1 fas fa-arrow-down"></i>
-                            </button>
                             <button type="button" title="delete operation"
-                                    class="mx-2 button no-style"
+                                    class="mx-2 mt-2 button no-style"
                                     x-on:click="openModal = 'deleteOperationModal'"><i
                                     class="pr-1 fas fa-trash"></i>
                             </button>
@@ -132,7 +131,7 @@
                 </template>
                 <template x-if="selectedOperation">
                     <div x-show="selectedOperationID"
-                         class="is-flex is-flex-direction-column is-flex-wrap-wrap hover-opacity">
+                         class="is-flex is-flex-direction-column is-flex-wrap-wrap">
                         <div class="mb-4 is-flex is-flex-direction-row is-flex-wrap-wrap">
                             <label x-show="false" for="operation-obfuscator" class="is-size-6">
                                 Obfuscation method:
@@ -325,7 +324,6 @@
                                             <template x-if="link.output === 'True'">
                                                 <div>
                                                     <button class="button is-primary is-small"
-                                                            x-bind:class="{'hover-opacity':selectedLink !== link}"
                                                             x-on:click="getLink(link); openModal='showOutput'"
                                                             title="view output">View Output
                                                     </button>
@@ -861,7 +859,7 @@
                 <template x-if="openModal === 'showDownloadMenu'">
                     <div class="modal-card">
                         <header class="modal-card-head">
-                            <p class="modal-card-title">Download</p>
+                            <p class="modal-card-title">Download Reports</p>
                         </header>
                         <section class="modal-card-body">
                             <div class="modal-form">
@@ -1695,7 +1693,7 @@
     }
 
     #operationsPage .operations-menu-set-width {
-        max-width: 45%;
+        width: 45%;
     }
 
     #operationsPage .operations-dashboard {
