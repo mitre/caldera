@@ -22,13 +22,13 @@ def expected_updated_schedule_dump(updated_schedule_payload):
 
 
 @pytest.fixture
-def new_schedule_payload():
+def new_schedule_payload(test_planner, test_adversary, test_source):
     payload = dict(schedule='00:00:00.000000',
                    task={
                        'name': 'new_scheduled_operation',
-                       'planner': {'id': '123'},
-                       'adversary': {'adversary_id': '123', 'name': 'ad-hoc'},
-                       'source': {'id': '123'}
+                       'planner': test_planner.schema.dump(test_planner),
+                       'adversary': test_adversary.schema.dump(test_adversary),
+                       'source': test_source.schema.dump(test_source)
                    })
     return payload
 
@@ -53,7 +53,7 @@ def test_schedule(test_operation, loop):
 @pytest.mark.usefixtures(
     "setup_operations_api_test"
 )
-class TestOperationsApi:
+class TestSchedulesApi:
     async def test_get_schedules(self, api_v2_client, api_cookies, test_schedule):
         resp = await api_v2_client.get('/api/v2/schedules', cookies=api_cookies)
         schedules_list = await resp.json()
