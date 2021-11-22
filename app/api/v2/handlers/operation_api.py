@@ -34,14 +34,21 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
         router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_links_by_paw)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve operations',
+                          description='Retrieve all CALDERA operations from memory.  Use fields from the '
+                                      '`BaseGetAllQuerySchema` in the request body to filter.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True))
     async def get_operations(self, request: web.Request):
         operations = await self.get_all_objects(request)
         return web.json_response(operations)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve an operation by operation id',
+                          description='Retrieve one CALDERA operation from memory based on the operation id (String '
+                                      'UUID).  Use fields from the `BaseGetOneQuerySchema` in the request body to add '
+                                      '`include` and `exclude` filters.')
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def get_operation_by_id(self, request: web.Request):
@@ -49,24 +56,31 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operation)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Required nested schema fields are as follows: "adversary.adversary_id", '
-                                  '"planner.planner_id", and "source.id".')
-    @aiohttp_apispec.request_schema(OperationSchema())
+                          summary='Create a new CALDERA operation record',
+                          description='Create a new CALDERA operation using the format provided in the '
+                                      '`OperationSchema`. Required nested schema fields are as follows: '
+                                      '"adversary.adversary_id", "planner.planner_id", and "source.id"')
+    @aiohttp_apispec.request_schema(OperationSchema)
     @aiohttp_apispec.response_schema(OperationSchema)
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
         return web.json_response(operation.display)
 
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state',
-                                                                        'autonomous',
-                                                                        'obfuscator']))
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Update fields within an operation',
+                          description='Update one CALDERA operation in memory based on the operation id (String '
+                                      'UUID). Any fields in the operation object may be edited in the request body '
+                                      'using the `OperationSchema`.')
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
         return web.json_response(operation.display)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Delete an operation by operation id',
+                          description='Delete one CALDERA operation from memory based on the operation id (String '
+                                      'UUID).')
     @aiohttp_apispec.response_schema(OperationSchema)
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
