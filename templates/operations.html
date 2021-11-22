@@ -225,7 +225,7 @@
                                 <thead>
                                 <tr class="table-header">
                                     <th class="decideColumn">Decide</th>
-                                    <th id="link-status-header" class="statusColumn csv-exclude" title="Link Status Indicator">
+                                    <th id="link-status-header" class="statusColumn csv-exclude pl-4" title="Link Status Indicator">
                                         Status
                                     </th>
                                     <th class="infoColumn">Link/Ability Name</th>
@@ -289,10 +289,10 @@
                                                 </div>
                                             </template>
                                             <template x-if="isLinkEditable">
-                                                <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
+                                                <div class="is-flex is-align-items-flex-start is-justify-content-flex-start is-flex-direction-column">
                                                     <label x-show="false" for="edit-command">Edit command</label>
                                                     <textarea id="edit-command"
-                                                              class="code"
+                                                              class="code mb-2"
                                                               contenteditable
                                                               x-model="editableCommand"
                                                               spellcheck="false"></textarea>
@@ -454,6 +454,14 @@
                         <section class="modal-card-body">
                             <div>
                                 <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                            </div>
+                            <div>
+                                <p class="mt-3 mb-2">Facts:</p>
+                                <pre class="has-text-left white-space-pre-line">
+                                    <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
+                                        <span class="has-background-warning has-text-black mr-2" x-text="fact"></span>
+                                    </template>
+                                </pre>
                             </div>
                         </section>
                         <footer class="modal-card-foot">
