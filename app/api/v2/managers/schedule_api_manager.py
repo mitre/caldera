@@ -1,4 +1,5 @@
 from marshmallow.schema import SchemaMeta
+from typing import Any
 
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.objects.c_operation import OperationSchema
@@ -10,9 +11,14 @@ class ScheduleApiManager(OperationApiManager):
         super().__init__(services)
         self.services = services
 
-    async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
-                                        access: BaseWorld.Access):
-        super(OperationApiManager, self).create_object_from_schema(schema, data, access)
+    def find_and_update_object(self, ram_key: str, data: dict, search: dict = None):
+        return super(OperationApiManager, self).find_and_update_object(ram_key, data, search)
+
+    def update_object(self, obj: Any, data: dict):
+        return super(OperationApiManager, self).update_object(obj, data)
+
+    def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
+        return super(OperationApiManager, self).create_object_from_schema(schema, data, access)
 
     async def setup_operation(self, data: dict, access: BaseWorld.Access):
         """Applies default settings to an operation if data is missing."""

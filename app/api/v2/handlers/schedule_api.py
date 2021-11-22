@@ -115,6 +115,6 @@ class ScheduleApi(BaseObjectApi):
         data['name'] = data.get('task').get('name')
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
-        operation = await self._api_manager.setup_operation(access, data['task'])
-        data['task'] = operation
+        operation = await self._api_manager.setup_operation(data['task'], access)
+        data['task'] = operation.schema.dump(operation)
         return self._api_manager.create_object_from_schema(ScheduleSchema, data, access)
