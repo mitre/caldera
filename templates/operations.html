@@ -452,11 +452,8 @@
                             <p class="modal-card-title">Output</p>
                         </header>
                         <section class="modal-card-body">
-                            <div>
-                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
-                            </div>
                             <template x-if="selectedLinkFacts?.length > 0">
-                                <div>
+                                <div class="mb-2">
                                     <p class="mt-3 mb-2">Facts:</p>
                                     <pre class="has-text-left white-space-pre-line">
                                         <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
@@ -465,6 +462,9 @@
                                     </pre>
                                 </div>
                             </template>
+                            <div>
+                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                            </div>
                         </section>
                         <footer class="modal-card-foot">
                             <nav class="level">
