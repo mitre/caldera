@@ -21,7 +21,10 @@ class ObjectiveApi(BaseObjectApi):
         router.add_patch('/objectives/{id}', self.update_objective)
         router.add_put('/objectives/{id}', self.create_or_update_objective)
 
-    @aiohttp_apispec.docs(tags=['objectives'])
+    @aiohttp_apispec.docs(tags=['objectives'],
+                          summary='Retrieve objectives',
+                          description='Retrieve all objectives by criteria. Use fields from the `ObjectiveSchema` in '
+                                      'the request body to filter retrieved objectives.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True))
     async def get_objectives(self, request: web.Request):
@@ -35,7 +38,9 @@ class ObjectiveApi(BaseObjectApi):
         objective = await self.get_object(request)
         return web.json_response(objective)
 
-    @aiohttp_apispec.docs(tags=['objectives'])
+    @aiohttp_apispec.docs(tags=['objectives'],
+                          summary='Create a new objective',
+                          description='Create a new objective using the format provided in the `ObjectiveSchema`.')
     @aiohttp_apispec.request_schema(ObjectiveSchema)
     @aiohttp_apispec.response_schema(ObjectiveSchema)
     async def create_objective(self, request: web.Request):
