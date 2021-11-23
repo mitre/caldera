@@ -41,7 +41,8 @@ class ScheduleApi(BaseObjectApi):
                           }],
                           description='Retrieves Schedule by name, as specified by {name} in the request url.')
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(ScheduleSchema(partial=True))
+    @aiohttp_apispec.response_schema(ScheduleSchema(partial=True),
+                                     description='The response is a single dumped Scheduled object.')
     async def get_schedule_by_name(self, request: web.Request):
         schedule = await self.get_object(request)
         return web.json_response(schedule)
