@@ -161,8 +161,7 @@ class DataService(DataServiceInterface, BaseService):
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
-                plugin_path = pathlib.PurePath(filename).parts
-                plugin = plugin_path[1] if 'plugins' in plugin_path else ''
+                plugin = self._get_plugin_name(filename)
                 ab.pop('plugin', plugin)
 
                 if tactic and tactic not in filename:
@@ -243,8 +242,7 @@ class DataService(DataServiceInterface, BaseService):
         for src in self.strip_yml(filename):
             obj = object_class.load(src)
             obj.access = access
-            plugin_path = pathlib.PurePath(filename).parts
-            obj.plugin = plugin_path[1] if 'plugins' in plugin_path else ''
+            obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
 
     """ PRIVATE """
@@ -418,3 +416,7 @@ class DataService(DataServiceInterface, BaseService):
     async def _verify_adversary_profiles(self):
         for adv in await self.locate('adversaries'):
             adv.verify(log=self.log, abilities=self.ram['abilities'], objectives=self.ram['objectives'])
+
+    def _get_plugin_name(self, filename):
+        plugin_path = pathlib.PurePath(filename).parts
+        return plugin_path[1] if 'plugins' in plugin_path else ''
