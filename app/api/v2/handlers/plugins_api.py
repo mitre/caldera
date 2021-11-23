@@ -18,14 +18,25 @@ class PluginApi(BaseObjectApi):
         router.add_get('/plugins', self.get_plugins)
         router.add_get('/plugins/{name}', self.get_plugin_by_name)
 
-    @aiohttp_apispec.docs(tags=['plugins'])
+    @aiohttp_apispec.docs(tags=['plugins'],
+                          summary='Retrieve all plugins',
+                          description='Returns a list of all available plugins in the system, including directory, description, and active status.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(PluginSchema(many=True, partial=True))
     async def get_plugins(self, request: web.Request):
         plugins = await self.get_all_objects(request)
         return web.json_response(plugins)
 
-    @aiohttp_apispec.docs(tags=['plugins'])
+    @aiohttp_apispec.docs(tags=['plugins'],
+                          summary='Retrieve plugin by name',
+                          description='If plugin was found with a matching name, an object containing information about the plugin is returned.',
+                          parameters=[{
+                                'in': 'path',
+                                'name': 'name',
+                                'description': 'The name of the plugin',
+                                'schema': {'type': 'string'},
+                                'required': 'true'
+                            }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(PluginSchema(partial=True))
     async def get_plugin_by_name(self, request: web.Request):
