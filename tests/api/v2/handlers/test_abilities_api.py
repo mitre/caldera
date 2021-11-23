@@ -24,14 +24,14 @@ def new_ability_payload():
             'repeatable': False,
             'requirements': [],
             'singleton': False,
-            'plugin': 'abilities'
+            'plugin': ''
             }
 
 
 @pytest.fixture
 def updated_ability_payload(test_ability):
     ability_data = test_ability.schema.dump(test_ability)
-    ability_data.update(dict(name='an updated test ability', tactic='defense-evasion'))
+    ability_data.update(dict(name='an updated test ability', tactic='defense-evasion', plugin=''))
     return ability_data
 
 
@@ -40,7 +40,7 @@ def replaced_ability_payload(test_ability):
     ability_data = test_ability.schema.dump(test_ability)
     test_executor_linux = Executor(name='sh', platform='linux', command='whoami')
     ability_data.update(dict(name='replaced test ability', tactic='collection', technique_name='discovery',
-                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)]))
+                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)], plugin=''))
     return ability_data
 
 

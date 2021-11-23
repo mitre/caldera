@@ -34,7 +34,8 @@ def new_source_payload():
         'name': 'new test source',
         'facts': [fact],
         'rules': [rule.schema.dump(rule)],
-        'relationships': [relationship]
+        'relationships': [relationship],
+        'plugin': ''
     }
     return source
 
@@ -80,6 +81,7 @@ def expected_updated_source_dump(updated_source_payload, mocker, mock_time):
         source = SourceSchema().load(updated_source_payload)
         dumped_obj = source.display_schema.dump(source)
         dumped_obj['relationships'][0]['unique'] = mock.ANY
+        dumped_obj['plugin'] = ''
         return dumped_obj
 
 
