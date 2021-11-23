@@ -3,6 +3,7 @@ from aiohttp import web
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.schedule_api_manager import ScheduleApiManager
+from app.api.v2.responses import JsonHttpForbidden
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_schedule import Schedule, ScheduleSchema
 
@@ -118,4 +119,13 @@ class ScheduleApi(BaseObjectApi):
         access = await self.get_request_permissions(request)
         operation = await self._api_manager.setup_operation(data['task'], access)
         data['task'] = operation.schema.dump(operation)
-        return self._api_manager.create_object_from_schema(ScheduleSchema, data, access)
+        return self._api_manager.create_object_from_schema(self.schema, data, access)
+
+    async def create_or_update_object(self, request: web.Request):
+        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        matched_obj = self._api_manager.find_object(self.ram_key, query)
+        if matched_obj and matched_obj.access not in access['access']:
+            raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
+        operation = await self._api_manager.setup_operation(data['task'], access)
+        data['task'] = operation.schema.dump(operation)
+        return self._api_manager.create_object_from_schema(self.schema, data, access)
