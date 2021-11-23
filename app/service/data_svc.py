@@ -7,6 +7,7 @@ import pickle
 import tarfile
 import shutil
 import warnings
+import pathlib
 from importlib import import_module
 
 from app.objects.c_ability import Ability
@@ -160,7 +161,8 @@ class DataService(DataServiceInterface, BaseService):
                 requirements = await self._load_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
-                plugin = ab.pop('plugin', filename.split('/')[1])
+                plugin_path = pathlib.PurePath(filename).parts
+                plugin = plugin_path[1] if 'plugins' in plugin_path else None
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
@@ -240,7 +242,8 @@ class DataService(DataServiceInterface, BaseService):
         for src in self.strip_yml(filename):
             obj = object_class.load(src)
             obj.access = access
-            obj.plugin = filename.split('/')[1]
+            plugin_path = pathlib.PurePath(filename).parts
+            obj.plugin = plugin_path[1] if 'plugins' in plugin_path else None
             await self.store(obj)
 
     """ PRIVATE """
