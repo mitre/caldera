@@ -33,7 +33,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         return self.hash(self.name)
 
     def __init__(self, name='', planner_id='', module='', params=None, stopping_conditions=None, description=None,
-                 ignore_enforcement_modules=(), allow_repeatable_abilities=False, plugin=None):
+                 ignore_enforcement_modules=(), allow_repeatable_abilities=False, plugin=''):
         super().__init__()
         self.name = name
         self.planner_id = planner_id if planner_id else str(uuid.uuid4())

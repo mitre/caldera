@@ -162,7 +162,8 @@ class DataService(DataServiceInterface, BaseService):
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
                 plugin_path = pathlib.PurePath(filename).parts
-                plugin = plugin_path[1] if 'plugins' in plugin_path else None
+                plugin = plugin_path[1] if 'plugins' in plugin_path else ''
+                ab.pop('plugin', plugin)
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
@@ -243,7 +244,7 @@ class DataService(DataServiceInterface, BaseService):
             obj = object_class.load(src)
             obj.access = access
             plugin_path = pathlib.PurePath(filename).parts
-            obj.plugin = plugin_path[1] if 'plugins' in plugin_path else None
+            obj.plugin = plugin_path[1] if 'plugins' in plugin_path else ''
             await self.store(obj)
 
     """ PRIVATE """
@@ -343,7 +344,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
-                              repeatable=False, buckets=None, access=None, singleton=False, plugin=None, **kwargs):
+                              repeatable=False, buckets=None, access=None, singleton=False, plugin='', **kwargs):
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,

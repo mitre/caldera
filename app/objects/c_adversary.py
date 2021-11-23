@@ -56,7 +56,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None, plugin=None):
+    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None, plugin=''):
         super().__init__()
         self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name

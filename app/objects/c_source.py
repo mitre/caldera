@@ -82,7 +82,7 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=(), plugin=None):
+    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=(), plugin=''):
         super().__init__()
         self.id = id if id else str(uuid.uuid4())
         self.name = name

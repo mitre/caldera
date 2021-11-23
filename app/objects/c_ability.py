@@ -57,7 +57,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
-                 additional_info=None, tags=None, singleton=False, plugin=None, **kwargs):
+                 additional_info=None, tags=None, singleton=False, plugin='', **kwargs):
         super().__init__()
         self.ability_id = ability_id if ability_id else str(uuid.uuid4())
         self.tactic = tactic.lower() if tactic else None
