@@ -1392,8 +1392,16 @@
                 }
             },
 
-            downloadInfo(formatType) {
+            downloadReport(formatType) {
                 apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, { enable_agent_output: this.isAgentOutputSelected })
+                    .then((res) => {
+                        this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
+                    })
+                    .catch(() => toast('Error generating operation report.'));
+            },
+
+            downloadEventLogs(formatType) {
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/event-logs`, { enable_agent_output: this.isAgentOutputSelected })
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
@@ -1428,8 +1436,8 @@
             },
 
             handleDownload() {
-                if (this.selectedReportType === 'full-report') this.downloadInfo('full-report');
-                else if (this.selectedReportType === 'event-logs') this.downloadInfo('event-logs');
+                if (this.selectedReportType === 'full-report') this.downloadReport('full-report');
+                else if (this.selectedReportType === 'event-logs') this.downloadEventLogs('event-logs');
                 else if (this.selectedReportType === 'csv') this.downloadCSV();
             },
 
