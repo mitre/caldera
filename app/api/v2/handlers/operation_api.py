@@ -66,13 +66,19 @@ class OperationApi(BaseObjectApi):
         operation = await self.update_object(request)
         return web.json_response(operation.display)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Delete Operation',
+                          description='Delete an operation with confirmation from user. Returns with the OperationSchema format.')
     @aiohttp_apispec.response_schema(OperationSchema)
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Get Operation Report',
+                          description='Retrieves the report for a given operation_id. Uses "Include agent output"',
+                                      ' parameter for additional operation information. Uses fields from BaseGetOneQuerySchema',
+                                      ' for parameters. Returns operation in format provided by OperationOutputRequestSchema.')
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
     async def get_operation_report(self, request: web.Request):
@@ -82,7 +88,11 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_report(operation_id, access, output)
         return web.json_response(report)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Get Operation Event Logs',
+                          description='Retrieves the event logs for a given operation_id. Uses "Include agent output"',
+                                      ' parameter for additional operation information. Uses fields from BaseGetOneQuerySchema',
+                                      ' for parameters. Returns logs in format provided by OperationOutputRequestSchema.')
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
     async def get_operation_event_logs(self, request: web.Request):
@@ -92,7 +102,10 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_event_logs(operation_id, access, output)
         return web.json_response(report)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Get Links from Operation',
+                          description='Retrieves all links for a given operation_id. Uses fields from BaseGetAllQuerySchema',
+                                      ' for parameters. Returns links in format provided by LinkSchema.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
     async def get_operation_links(self, request: web.Request):
