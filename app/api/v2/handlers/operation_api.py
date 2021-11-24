@@ -48,9 +48,16 @@ class OperationApi(BaseObjectApi):
                           summary='Retrieve an operation by operation id',
                           description='Retrieve one CALDERA operation from memory based on the operation id (String '
                                       'UUID).  Use fields from the `BaseGetOneQuerySchema` in the request body to add '
-                                      '`include` and `exclude` filters.')
+                                      '`include` and `exclude` filters.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']))
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
         return web.json_response(operation)
@@ -70,7 +77,14 @@ class OperationApi(BaseObjectApi):
                           summary='Update fields within an operation',
                           description='Update one CALDERA operation in memory based on the operation id (String '
                                       'UUID). Any fields in the operation object may be edited in the request body '
-                                      'using the `OperationSchema`.')
+                                      'using the `OperationSchema`.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
     @aiohttp_apispec.request_schema(OperationSchema(partial=True))
     @aiohttp_apispec.response_schema(OperationSchema(partial=True))
     async def update_operation(self, request: web.Request):
@@ -80,7 +94,14 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Delete an operation by operation id',
                           description='Delete one CALDERA operation from memory based on the operation id (String '
-                                      'UUID).')
+                                      'UUID).',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
     @aiohttp_apispec.response_schema(OperationSchema)
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
@@ -136,7 +157,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(result)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(LinkSchema(partial=True, only=['command', 'status']))
+    @aiohttp_apispec.request_schema(LinkSchema(partial=True))
     @aiohttp_apispec.response_schema(LinkSchema)
     async def update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
@@ -146,9 +167,7 @@ class OperationApi(BaseObjectApi):
         link = await self._api_manager.update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
-    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are "paw", '
-                                                       '"executor.name", "executor.command", and "executor.platform". '
-                                                       '"executor.command" is expected to be unencoded.')
+    @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
