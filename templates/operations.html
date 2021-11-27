@@ -27,14 +27,14 @@
                                            x-ref="search"
                                            x-on:keyup="filterOperations($el.value)">
                                     <span class="icon is-small is-left">
-                                        <i class="fas fa-search"></i>
+                                        <em class="fas fa-search"></em>
                                     </span>
                                 </div>
                                 <div class="control">
                                     <a class="button is-small"
                                        x-on:click="filterOperations(''); searchInput = ''; $refs.search.value=''">
                                         <span class="icon is-small is-right">
-                                            <i class="fas fa-times"></i>
+                                            <em class="fas fa-times"></em>
                                         </span>
                                     </a>
                                 </div>
@@ -44,17 +44,19 @@
                         <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)"
                                 title="creates a new operation based on the last created operation settings "
                                 class="button is-primary is-small"
-                                x-on:click="addOperation(true, startOperation)"><i class="pr-1 fas fa-plus"></i>
+                                x-on:click="addOperation(true, startOperation)"><em class="pr-1 fas fa-plus"></em>
                             Quick Add
                         </button>
                         <button title="add operation" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'addOperation'; getAgents()"><i class="pr-1 fas fa-plus"></i>
+                                x-on:click="openModal = 'addOperation'; getAgents()"><em class="pr-1 fas fa-plus"></em>
                             Create Operation
                         </button>
-                        <button title="download reports" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'showDownloadMenu'"><i class="pr-1 fas fa-arrow-down"></i>
-                            Download
-                        </button>
+                        <template x-if="selectedOperation">
+                            <button title="download reports" class="ml-2 button is-primary is-small"
+                                    x-on:click="openModal = 'showDownloadMenu'"><em class="pr-1 fas fa-arrow-down"></em>
+                                Download
+                            </button>
+                        </template>
                         <div class="is-flex is-justify-content-center pt-2"></div>
                     </div>
                     <div class="is-flex is-flex-direction-row is-align-items-center">
@@ -67,9 +69,9 @@
                                 <button class="no-style operation-menu-links"
                                         x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'"
                                         x-on:click="selectedOperation = op; getOperations(); getOperation()">
-                                    <i x-show="selectedOperationID !== op.id" class="far fa-folder">
-                                        <span class="decisionsIcon" x-text="op.chain.length"></span></i>
-                                    <i x-show="selectedOperationID === op.id" class="far fa-folder-open"></i>
+                                    <em x-show="selectedOperationID !== op.id" class="far fa-folder">
+                                        <span class="decisionsIcon" x-text="op.chain.length"></span></em>
+                                    <em x-show="selectedOperationID === op.id" class="far fa-folder-open"></em>
                                     <span class="operation-name" x-text="op.name"></span>
                                     <span class="readable-time" x-text="getHumanFriendlyTimeISO8601(op.start ? op.start : '')"></span>
                                 </button>
@@ -77,7 +79,7 @@
                         </div>
                         <template x-if="showOperationsMenuCaret">
                             <div class="ml-2 scroll-more-caret">
-                                <i class="fas fa-angle-right"></i>
+                                <em class="fas fa-angle-right"></em>
                             </div>
                         </template>
                     </div>
@@ -102,29 +104,29 @@
                         </div>
                         <div class="controls-container is-flex is-justify-content-center is-align-items-center">
                             <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
-                                    x-on:click="updateOperation('state', 'cleanup')"><i
-                                    title="stop" class="fas fa-stop"></i></button>
+                                    x-on:click="updateOperation('state', 'cleanup')"><em
+                                    title="stop" class="fas fa-stop"></em></button>
                             <template x-if="selectedOperation.state ==='running'">
                                 <button x-bind:disabled="!isOperationRunning"
                                         class="button no-style is-larger"
-                                        x-on:click="updateOperation('state', 'paused')"><i
-                                        title="pause" class="fas fa-pause-circle"></i></button>
+                                        x-on:click="updateOperation('state', 'paused')"><em
+                                        title="pause" class="fas fa-pause-circle"></em></button>
                             </template>
                             <template x-if="selectedOperation.state !== 'running'">
                                 <button x-bind:disabled="!isOperationRunning"
                                         class="button no-style is-larger"
                                         x-on:click="updateOperation('state', 'running')">
-                                    <i title="run" class="fas fa-play-circle"></i></button>
+                                    <em title="run" class="fas fa-play-circle"></em></button>
                             </template>
                             <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
                                     x-on:click="updateOperation('state', 'run_one_link')">
-                                <i title="run one step" class="fas fa-play"><sub>1</sub></i></button>
+                                <em title="run one step" class="fas fa-play"><sub>1</sub></em></button>
                         </div>
                         <div class="is-flex is-justify-content-center pt-2 hover-opacity">
                             <button type="button" title="delete operation"
                                     class="mx-2 mt-2 button no-style"
-                                    x-on:click="openModal = 'deleteOperationModal'"><i
-                                    class="pr-1 fas fa-trash"></i>
+                                    x-on:click="openModal = 'deleteOperationModal'"><em
+                                    class="pr-1 fas fa-trash"></em>
                             </button>
                         </div>
                     </div>
@@ -206,14 +208,14 @@
                                     <div class="mb-6 mr-4 text-align-right">
                                         <button title="add manual command" class="button is-primary is-small"
                                                 x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
-                                            <i class="pr-1 fas fa-plus"></i>Manual
+                                            <em class="pr-1 fas fa-plus"></em>Manual
                                             Command
                                         </button>
                                     </div>
                                     <div class="mb-6 mr-4">
                                         <button title="add potential link" class="button is-primary is-small"
-                                                x-on:click="openModal = 'addLink'; getAgents()"><i
-                                                class="pr-1 fas fa-plus"></i>Potential
+                                                x-on:click="openModal = 'addLink'; getAgents()"><em
+                                                class="pr-1 fas fa-plus"></em>Potential
                                             Link
                                         </button>
                                     </div>
@@ -252,7 +254,7 @@
                                     <tr x-bind:id="link.id"
                                         x-on:click="selectedLink = link">
                                         <td class="decideColumn">
-                                            <span class="has-text-grey-light" x-text="link.decide"></span>
+                                            <span class="has-text-grey-light" x-text="getReadableTime(link.decide)"></span>
                                         </td>
                                         <td class="linkStatusColumn csv-exclude" headers="link-status-header">
                                             <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
@@ -333,8 +335,8 @@
                                             <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
                                                     type="button" title="delete link"
                                                     class="button is-primary is-small ml-2"
-                                                    x-on:click="openModal = 'deleteLinkModal'"><i
-                                                    class="pr-1 fas fa-trash"></i>Discard Link
+                                                    x-on:click="openModal = 'deleteLinkModal'"><em
+                                                    class="pr-1 fas fa-trash"></em>Discard Link
                                             </button>
                                         </td>
                                     </tr>
@@ -423,14 +425,14 @@
                                 <div class="mb-6 mr-4 has-text-right">
                                     <button title="add manual command" class="button is-primary is-small"
                                             x-on:click="addNewRow = true; getAgents()">
-                                        <i class="pr-1 fas fa-plus"></i>Manual
+                                        <em class="pr-1 fas fa-plus"></em>Manual
                                         Command
                                     </button>
                                 </div>
                                 <div class="mb-6 mr-4">
                                     <button title="add potential link" class="button is-primary is-small"
-                                            x-on:click="openModal = 'addLink'; getAgents()"><i
-                                            class="pr-1 fas fa-plus"></i>Potential
+                                            x-on:click="openModal = 'addLink'; getAgents()"><em
+                                            class="pr-1 fas fa-plus"></em>Potential
                                         Link
                                     </button>
                                 </div>
@@ -1133,6 +1135,19 @@
                 if (el) this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
             },
 
+            getReadableTime(date) {
+                // i.e. format 2021-08-03 19:37:08
+                if (!date) return '';
+                date = date.replace('T', ' ').replace('Z', '');
+                let split = date.split('-');
+
+                let hMonth = Number(split[1]) - 1;
+                let hDate = Number(split[2].split(' ')[0]);
+                let hTime = split[2].split(' ')[1].split(':');
+
+                return new Date(Date.UTC(split[0], hMonth, hDate, hTime[0], hTime[1], hTime[2])).toLocaleString('en-US', { timeZoneName: 'short' });
+            },
+
             getLastDecideTime() {
                 if (!this.selectedOperation || !this.selectedOperation.chain || this.selectedOperation.chain.length === 0) return '';
                 return getHumanFriendlyTimeISO8601(this.selectedOperation.chain[this.selectedOperation.chain.length - 1].decide);
@@ -1533,7 +1548,7 @@
         font-size: 0.3em;
     }
 
-    #operationsPage .ellipsis-divider i {
+    #operationsPage .ellipsis-divider em {
         color: #484747;
         padding: 0 7em;
     }
@@ -1583,7 +1598,7 @@
         overflow: hidden;
     }
 
-    #operationsPage .operation-menu-links i {
+    #operationsPage .operation-menu-links em {
         font-size: 3em;
         padding-bottom: 5px;
         min-width: 35px;
@@ -1701,7 +1716,7 @@
         transform: scale(1.2);
     }
 
-    #operationsPage i sub {
+    #operationsPage em sub {
         font-family: sans-serif;
     }
 
