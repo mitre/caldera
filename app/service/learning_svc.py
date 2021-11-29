@@ -51,7 +51,6 @@ class LearningService(LearningServiceInterface, BaseService):
         await self._store_results(link, found_facts, operation)
 
 
-
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):
         fact.origin_type = OriginType.LEARNED

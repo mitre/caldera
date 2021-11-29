@@ -167,7 +167,6 @@ class BasePlanningService(BaseService):
         return links
 
 
-
     @staticmethod
     def _list_historic_duplicate_singletons(operation):
         """
