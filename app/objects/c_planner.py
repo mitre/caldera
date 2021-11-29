@@ -62,7 +62,6 @@ class Planner(FirstClassObjectInterface, BaseObject):
                 return plugin
         return None
 
-
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:

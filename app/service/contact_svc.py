@@ -93,7 +93,6 @@ class ContactService(ContactServiceInterface, BaseService):
         tunnel = [t for t in self.tunnels if t.name == name]
         return tunnel[0] if len(tunnel) > 0 else None
 
-
     async def _sanitize_paw(self, input_paw):
         """
         Remove any characters from the given paw that do not fall in the following set:
