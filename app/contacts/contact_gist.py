@@ -141,8 +141,6 @@ class Contact(BaseWorld):
             self.log.error('Receiving file uploads over c2 (%s) failed: %s' % (self.__class__.__name__, e))
             return []
 
-    """ PRIVATE """
-
     async def _send_instructions(self, agent, instructions):
         response = dict(paw=agent.paw,
                         sleep=await agent.calculate_sleep(),
