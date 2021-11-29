@@ -50,7 +50,7 @@ class LearningService(LearningServiceInterface, BaseService):
         await update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
         await self._store_results(link, found_facts, operation)
 
-    """ PRIVATE """
+
 
     @staticmethod
     async def _save_fact(link, facts, fact, operation=None):

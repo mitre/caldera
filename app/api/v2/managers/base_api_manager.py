@@ -23,7 +23,7 @@ class BaseApiManager(BaseWorld):
     def log(self):
         return self._log
 
-    """Object Retrieval"""
+
 
     def find_objects(self, ram_key: str, search: dict = None):
         """Find objects matching the given criteria"""
@@ -54,7 +54,7 @@ class BaseApiManager(BaseWorld):
                 dumped.pop(exclude_attribute, None)
         return dumped
 
-    """Object Creation"""
+
 
     def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
@@ -79,7 +79,7 @@ class BaseApiManager(BaseWorld):
         else:
             return self._data_svc.Access.RED
 
-    """Object Updates"""
+
 
     def find_and_update_object(self, ram_key: str, data: dict, search: dict = None):
         for obj in self.find_objects(ram_key, search):
@@ -112,7 +112,7 @@ class BaseApiManager(BaseWorld):
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
-    """"Object Replacement"""
+
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         obj_id = getattr(obj, id_property)
@@ -121,7 +121,7 @@ class BaseApiManager(BaseWorld):
         await self._save_and_reload_object(file_path, data, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
-    """"Object Removal"""
+
 
     async def remove_object_from_memory_by_id(self, identifier: str, ram_key: str, id_property: str):
         await self._data_svc.remove(ram_key, {id_property: identifier})
@@ -132,7 +132,7 @@ class BaseApiManager(BaseWorld):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    """Helpers"""
+
 
     @staticmethod
     async def _get_new_object_file_path(identifier: str, ram_key: str) -> str:

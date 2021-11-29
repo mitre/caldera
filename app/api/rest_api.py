@@ -43,7 +43,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 
-    """ BOILERPLATE """
+
 
     @template('login.html', status=401)
     async def login(self, request):
@@ -65,7 +65,7 @@ class RestApi(BaseWorld):
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
         return render_template('%s.html' % access[0].name, request, data)
 
-    """ API ENDPOINTS """
+
 
     @check_authorization
     async def rest_core(self, request):
@@ -165,7 +165,7 @@ class RestApi(BaseWorld):
                 return web.HTTPNotFound(body=str(e))
         return web.HTTPBadRequest(body='A file needs to be specified for download')
 
-    """ PRIVATE """
+
 
     @staticmethod
     def _request_errors(request):

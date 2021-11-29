@@ -337,7 +337,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         await self._write_logs_to_disk(event_logs, file_name, event_logs_dir, file_svc)
         logging.debug('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
 
-    """ PRIVATE """
+
 
     async def _write_logs_to_disk(self, logs, file_name, dest_dir, file_svc):
         logs_dumps = json.dumps(logs)

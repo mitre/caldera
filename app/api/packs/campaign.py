@@ -21,7 +21,7 @@ class CampaignPack(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/campaign/profiles', self._section_profiles)
         self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
 
-    """ PRIVATE """
+
 
     @check_authorization
     @template('agents.html')
@@ -110,7 +110,7 @@ class CampaignPack(BaseWorld):
         return dict(operations=operations, groups=groups, adversaries=adversaries, sources=sources, planners=planners,
                     obfuscators=obfuscators, usage=usage)
 
-    """ PRIVATE """
+
 
     @staticmethod
     def _rollup_abilities(abilities):
