@@ -26,7 +26,7 @@ class FactSourceApi(BaseObjectApi):
                           summary='Retrieve all fact sources.',
                           description='Returns a list of all fact sources, including custom-created ones.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(SourceSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(SourceSchema(many=True, partial=True), description='Returns a list of all Sources dumped in SourceSchema format.')
     async def get_fact_sources(self, request: web.Request):
         sources = await self.get_all_objects(request)
         return web.json_response(sources)
@@ -42,7 +42,7 @@ class FactSourceApi(BaseObjectApi):
                               'required': 'true'
                             }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(SourceSchema(partial=True))
+    @aiohttp_apispec.response_schema(SourceSchema(partial=True), description='Returns a single Source dumped in SourceSchema format.')
     async def get_fact_source_by_id(self, request: web.Request):
         source = await self.get_object(request)
         return web.json_response(source)
@@ -59,7 +59,7 @@ class FactSourceApi(BaseObjectApi):
                                 }])
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.request_schema(SourceSchema)
-    @aiohttp_apispec.response_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
     async def create_fact_source(self, request: web.Request):
         source = await self.create_on_disk_object(request)
         return web.json_response(source.display)
@@ -68,7 +68,7 @@ class FactSourceApi(BaseObjectApi):
                           summary='Update an existing fact source.',
                           description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".')
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
-    @aiohttp_apispec.response_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
     async def update_fact_source(self, request: web.Request):
         source = await self.update_on_disk_object(request)
         return web.json_response(source.display)
@@ -77,7 +77,7 @@ class FactSourceApi(BaseObjectApi):
                           summary='Update an existing or create a new fact source.',
                           description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".')
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
-    @aiohttp_apispec.response_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
     async def create_or_update_source(self, request: web.Request):
         source = await self.create_or_update_on_disk_object(request)
         return web.json_response(source.display)
@@ -92,7 +92,7 @@ class FactSourceApi(BaseObjectApi):
                                 'schema': {'type': 'string'},
                                 'required': 'true'
                               }])
-    @aiohttp_apispec.response_schema(SourceSchema)
+    @aiohttp_apispec.response_schema(SourceSchema, description='Returns DELETE status.')
     async def delete_source(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
