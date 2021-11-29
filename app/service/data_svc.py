@@ -241,7 +241,7 @@ class DataService(DataServiceInterface, BaseService):
             obj.access = access
             await self.store(obj)
 
-    """ PRIVATE """
+
 
     async def _load(self, plugins=()):
         try:

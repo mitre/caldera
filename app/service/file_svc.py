@@ -201,7 +201,7 @@ class FileSvc(FileServiceInterface, BaseService):
             return filename
         return '%s.xored' % filename
 
-    """ PRIVATE """
+
 
     def _save(self, filename, content, encrypt=True):
         if encrypt and (self.encryptor and self.encrypt_output):

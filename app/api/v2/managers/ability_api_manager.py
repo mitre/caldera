@@ -45,7 +45,7 @@ class AbilityApiManager(BaseApiManager):
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
-    '''Helpers'''
+
     def _validate_ability_data(self, create: bool, data: dict):
         # Correct ability_id key for ability file saving.
         data['id'] = data.pop('ability_id', '')

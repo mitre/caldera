@@ -16,7 +16,7 @@ class Contact(BaseWorld):
     async def start(self):
         self.app_svc.application.router.add_route('*', self.get_config('app.contact.html'), self._accept_beacon)
 
-    """ PRIVATE """
+
 
     @template('weather.html')
     async def _accept_beacon(self, request):

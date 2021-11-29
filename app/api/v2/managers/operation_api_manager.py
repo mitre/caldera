@@ -122,7 +122,7 @@ class OperationApiManager(BaseApiManager):
         potential_links = [potential_link.display for potential_link in operation.potential_links]
         return potential_links
 
-    """Object Creation Helpers"""
+
     async def get_operation_object(self, operation_id: str, access: dict):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]

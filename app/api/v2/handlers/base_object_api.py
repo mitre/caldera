@@ -23,7 +23,7 @@ class BaseObjectApi(BaseApi):
     def add_routes(self, app: web.Application):
         pass
 
-    """GET"""
+
 
     async def get_all_objects(self, request: web.Request):
         access = await self.get_request_permissions(request)
@@ -48,7 +48,7 @@ class BaseObjectApi(BaseApi):
 
         return self._api_manager.dump_object_with_filters(obj, include, exclude)
 
-    """POST"""
+
 
     async def create_object(self, request: web.Request):
         data = await request.json()
@@ -75,7 +75,7 @@ class BaseObjectApi(BaseApi):
             if self._api_manager.find_object(self.ram_key, search):
                 raise JsonHttpBadRequest(f'{self.description.capitalize()} with given id already exists: {obj_id}')
 
-    """PATCH"""
+
 
     async def update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
@@ -94,7 +94,7 @@ class BaseObjectApi(BaseApi):
             raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
         return obj
 
-    """PUT"""
+
 
     async def create_or_update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
@@ -120,7 +120,7 @@ class BaseObjectApi(BaseApi):
 
         return obj
 
-    """DELETE"""
+
 
     async def delete_object(self, request: web.Request):
         obj_id = request.match_info.get(self.id_property)
@@ -141,7 +141,7 @@ class BaseObjectApi(BaseApi):
         obj_id = request.match_info.get(self.id_property)
         await self._api_manager.remove_object_from_disk_by_id(identifier=obj_id, ram_key=self.ram_key)
 
-    """Helpers"""
+
 
     async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
         data = {}

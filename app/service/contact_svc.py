@@ -93,7 +93,7 @@ class ContactService(ContactServiceInterface, BaseService):
         tunnel = [t for t in self.tunnels if t.name == name]
         return tunnel[0] if len(tunnel) > 0 else None
 
-    """ PRIVATE """
+
 
     async def _sanitize_paw(self, input_paw):
         """
