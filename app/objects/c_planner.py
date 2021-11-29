@@ -1,11 +1,9 @@
-import os
 import uuid
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 from app.objects.secondclass.c_fact import Fact, FactSchema
 
 
@@ -18,6 +16,7 @@ class PlannerSchema(ma.Schema):
     stopping_conditions = ma.fields.List(ma.fields.Nested(FactSchema()))
     ignore_enforcement_modules = ma.fields.List(ma.fields.String())
     allow_repeatable_abilities = ma.fields.Boolean()
+    plugin = ma.fields.String(missing=None)
 
     @ma.post_load()
     def build_planner(self, data, **kwargs):
@@ -34,7 +33,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         return self.hash(self.name)
 
     def __init__(self, name='', planner_id='', module='', params=None, stopping_conditions=None, description=None,
-                 ignore_enforcement_modules=(), allow_repeatable_abilities=False):
+                 ignore_enforcement_modules=(), allow_repeatable_abilities=False, plugin=''):
         super().__init__()
         self.name = name
         self.planner_id = planner_id if planner_id else str(uuid.uuid4())
@@ -44,6 +43,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         self.stopping_conditions = self._set_stopping_conditions(stopping_conditions)
         self.ignore_enforcement_modules = ignore_enforcement_modules
         self.allow_repeatable_abilities = allow_repeatable_abilities
+        self.plugin = plugin
 
     def store(self, ram):
         existing = self.retrieve(ram['planners'], self.unique)
@@ -53,14 +53,11 @@ class Planner(FirstClassObjectInterface, BaseObject):
         else:
             existing.update('stopping_conditions', self.stopping_conditions)
             existing.update('params', self.params)
+            existing.update('plugin', self.plugin)
         return existing
 
     async def which_plugin(self):
-        file_svc = BaseService.get_service('file_svc')
-        for plugin in os.listdir('plugins'):
-            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.planner_id):
-                return plugin
-        return None
+        return self.plugin
 
     @staticmethod
     def _set_stopping_conditions(conditions):
