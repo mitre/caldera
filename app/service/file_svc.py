@@ -202,7 +202,6 @@ class FileSvc(FileServiceInterface, BaseService):
         return '%s.xored' % filename
 
 
-
     def _save(self, filename, content, encrypt=True):
         if encrypt and (self.encryptor and self.encrypt_output):
             content = bytes(FILE_ENCRYPTION_FLAG, 'utf-8') + self.encryptor.encrypt(content)

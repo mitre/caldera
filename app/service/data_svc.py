@@ -242,7 +242,6 @@ class DataService(DataServiceInterface, BaseService):
             await self.store(obj)
 
 
-
     async def _load(self, plugins=()):
         try:
             async_tasks = []

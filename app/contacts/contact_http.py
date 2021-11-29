@@ -18,7 +18,6 @@ class Contact(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/beacon', self._beacon)
 
 
-
     async def _beacon(self, request):
         try:
             profile = json.loads(self.contact_svc.decode_bytes(await request.read()))

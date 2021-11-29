@@ -44,7 +44,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 
 
-
     @template('login.html', status=401)
     async def login(self, request):
         return dict()
@@ -64,7 +63,6 @@ class RestApi(BaseWorld):
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
         return render_template('%s.html' % access[0].name, request, data)
-
 
 
     @check_authorization
@@ -164,7 +162,6 @@ class RestApi(BaseWorld):
             except Exception as e:
                 return web.HTTPNotFound(body=str(e))
         return web.HTTPBadRequest(body='A file needs to be specified for download')
-
 
 
     @staticmethod

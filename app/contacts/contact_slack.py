@@ -151,7 +151,6 @@ class Contact(BaseWorld):
             return []
 
 
-
     async def _send_instructions(self, agent, instructions):
         response = dict(paw=agent.paw,
                         sleep=await agent.calculate_sleep(),

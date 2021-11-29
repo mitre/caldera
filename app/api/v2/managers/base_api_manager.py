@@ -24,7 +24,6 @@ class BaseApiManager(BaseWorld):
         return self._log
 
 
-
     def find_objects(self, ram_key: str, search: dict = None):
         """Find objects matching the given criteria"""
         for obj in self._data_svc.ram[ram_key]:
@@ -55,7 +54,6 @@ class BaseApiManager(BaseWorld):
         return dumped
 
 
-
     def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
         obj = obj_schema.load(data)
@@ -78,7 +76,6 @@ class BaseApiManager(BaseWorld):
             return self._data_svc.Access.BLUE
         else:
             return self._data_svc.Access.RED
-
 
 
     def find_and_update_object(self, ram_key: str, data: dict, search: dict = None):
@@ -113,14 +110,12 @@ class BaseApiManager(BaseWorld):
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
 
-
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
 
         await self._save_and_reload_object(file_path, data, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
-
 
 
     async def remove_object_from_memory_by_id(self, identifier: str, ram_key: str, id_property: str):
@@ -131,7 +126,6 @@ class BaseApiManager(BaseWorld):
 
         if os.path.exists(file_path):
             os.remove(file_path)
-
 
 
     @staticmethod

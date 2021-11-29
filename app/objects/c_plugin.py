@@ -85,7 +85,6 @@ class Plugin(FirstClassObjectInterface, BaseObject):
             logging.error('Error expanding plugin=%s, %s' % (self.name, e))
 
 
-
     def _load_module(self):
         try:
             return import_module('plugins.%s.hook' % self.name)

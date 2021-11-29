@@ -94,7 +94,6 @@ class TcpSessionHandler(BaseWorld):
             return 1, '~$ ', str(e), ''
 
 
-
     @staticmethod
     async def _handshake(reader):
         profile_bites = (await reader.readline()).strip()
