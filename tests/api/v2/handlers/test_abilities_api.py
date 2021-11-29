@@ -23,14 +23,15 @@ def new_ability_payload():
             'privilege': '',
             'repeatable': False,
             'requirements': [],
-            'singleton': False
+            'singleton': False,
+            'plugin': ''
             }
 
 
 @pytest.fixture
 def updated_ability_payload(test_ability):
     ability_data = test_ability.schema.dump(test_ability)
-    ability_data.update(dict(name='an updated test ability', tactic='defense-evasion'))
+    ability_data.update(dict(name='an updated test ability', tactic='defense-evasion', plugin=''))
     return ability_data
 
 
@@ -39,7 +40,7 @@ def replaced_ability_payload(test_ability):
     ability_data = test_ability.schema.dump(test_ability)
     test_executor_linux = Executor(name='sh', platform='linux', command='whoami')
     ability_data.update(dict(name='replaced test ability', tactic='collection', technique_name='discovery',
-                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)]))
+                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)], plugin=''))
     return ability_data
 
 
@@ -47,7 +48,7 @@ def replaced_ability_payload(test_ability):
 def test_ability(loop, api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
     ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
-                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery')
+                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery', plugin='testplugin')
     loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     return ability
 
