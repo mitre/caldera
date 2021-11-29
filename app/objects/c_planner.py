@@ -59,8 +59,6 @@ class Planner(FirstClassObjectInterface, BaseObject):
     async def which_plugin(self):
         return self.plugin
 
-    """ PRIVATE """
-
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:

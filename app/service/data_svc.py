@@ -245,8 +245,6 @@ class DataService(DataServiceInterface, BaseService):
             obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
 
-    """ PRIVATE """
-
     async def _load(self, plugins=()):
         try:
             async_tasks = []
