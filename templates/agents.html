@@ -13,8 +13,8 @@
     <!-- AGENTS TABLE AND CONFIGURATION -->
 
     <div>
-        <nav class="level">
-            <div class="level-left">
+        <div class="columns">
+            <div class="column is-4 buttons m-0 is-flex is-justify-content-flex-start">
                 <button class="button is-primary is-small level-item" @click="showDeployModal = true">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>Deploy an agent</span>
@@ -24,22 +24,20 @@
                     <span>Configuration</span>
                 </button>
             </div>
-            <div class="level-center">
-                <div class="tags">
-                    <span class="level-item tag is-medium is-success" x-show="isHoveringAgentCount">
-                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'alive').length"></span>&nbsp;alive&nbsp;·&nbsp;
+            <div class="column is-4 m-0 is-flex is-justify-content-center">
+                <span class="level-item tag is-medium m-0" x-on:mouseenter="isHoveringAgentCount = true" x-on:mouseleave="isHoveringAgentCount = false">
+                    <span class="mr-4 has-text-success" x-show="isHoveringAgentCount">
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'alive' || getAgentStatus(a) === 'pending kill').length"></span>&nbsp;alive&nbsp;·
                         <span class="has-text-weight-bold" x-text="agents.filter((a) => a.trusted).length"></span>&nbsp;trusted
                     </span>
-                    <span class="level-item tag is-medium" x-on:mouseenter="isHoveringAgentCount = true" x-on:mouseleave="isHoveringAgentCount = false">
-                        <strong x-text="agents.length"></strong>&nbsp;agents
-                    </span>
-                    <span class="level-item tag is-medium is-warning" x-show="isHoveringAgentCount">
-                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'dead').length"></span>&nbsp;dead&nbsp;·&nbsp;
+                    <strong x-text="agents.length"></strong>&nbsp;agent<span x-show="agents.length !== 1">s</span>
+                    <span class="ml-4 has-text-warning" x-show="isHoveringAgentCount">
+                        <span class="has-text-weight-bold" x-text="agents.filter((a) => getAgentStatus(a) === 'dead').length"></span>&nbsp;dead&nbsp;·
                         <span class="has-text-weight-bold" x-text="agents.filter((a) => !a.trusted).length"></span>&nbsp;untrusted
                     </span>
-                </div>
+                </span>
             </div>
-            <div class="level-right">
+            <div class="column is-4 m-0 is-flex is-justify-content-flex-end">
                 <div class="dropdown is-right is-hoverable">
                     <div class="dropdown-trigger">
                         <button class="button is-small is-primary" aria-haspopup="true" aria-controls="bulk-actions">
@@ -62,7 +60,7 @@
                     </div>
                 </div>
             </div>
-        </nav>
+        </div>
         <table class="table is-striped is-fullwidth" x-show="agents.length">
             <thead>
                 <tr>
@@ -89,7 +87,7 @@
                         <td x-text="agent.pid"></td>
                         <td x-text="agent.privilege"></td>
                         <td>
-                            <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-danger': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
+                            <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-info': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
                             <span x-text="agent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !agent.trusted, 'has-text-success': agent.trusted }"></span>
                         </td>
                         <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="agent.last_seen"></td>
@@ -259,7 +257,7 @@
                         </tr>
                         <tr>
                             <th class="has-text-right">
-                                <span class="has-tooltip-multiline" data-tooltip="Set the number of seconds to wait, once the server is unreachable, before killing an agent.">Watchdog Timer (s)</span>
+                                <span class="has-tooltip-multiline has-tooltip-bottom" data-tooltip="Set the number of seconds to wait, once the server is unreachable, before killing an agent.">Watchdog Timer (s)</span>
                             </th>
                             <td>
                                 <input class="input is-small is-small-number" type="number" placeholder="0" x-model="agentConfig.watchdog" x-bind:class="{ 'is-danger': fieldErrorsConfig.includes('watchdog') }">
@@ -323,7 +321,7 @@
                         </tr>
                         <tr>
                             <th class="has-text-right">
-                                <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Deadman Abilities</span>
+                                <span class="has-tooltip-multiline" data-tooltip="A list of abilities to be run immediately prior to agent termination. The agent must support deadman abilities in order for them to run.">Deadman Abilities</span>
                             </th>
                             <td>
                                 <div class="field is-grouped is-grouped-multiline">
@@ -447,7 +445,7 @@
                         <tr>
                             <th class="has-text-right">Status</th>
                             <td>
-                                <span x-text="getAgentStatus(selectedAgent)" x-bind:class="{ 'has-text-warning': getAgentStatus(selectedAgent) === 'dead', 'has-text-success': getAgentStatus(selectedAgent) === 'alive', 'has-text-danger': getAgentStatus(selectedAgent) === 'pending kill' }"></span><span>,</span>
+                                <span x-text="getAgentStatus(selectedAgent)" x-bind:class="{ 'has-text-warning': getAgentStatus(selectedAgent) === 'dead', 'has-text-success': getAgentStatus(selectedAgent) === 'alive', 'has-text-info': getAgentStatus(selectedAgent) === 'pending kill' }"></span><span>,</span>
                                 <span x-text="selectedAgent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !selectedAgent.trusted, 'has-text-success': selectedAgent.trusted }"></span>
                             </td>
                         </tr>
@@ -563,7 +561,6 @@
             agentFieldConfig: {},
             deployCommands: [],
             filteredCommands: [],
-            pageOpen: true,
 
             bootstrapAbilities: [],
             deadmanAbilities: [],
@@ -728,9 +725,15 @@
             getAgentStatus(agent) {
                 if (!agent.last_seen) return '';
                 let lastSeen = new Date(agent.last_seen.replace(/-/g, "/")).getTime();
-                let isAlive = Date.now() - lastSeen < (agent.sleep_max * 1000);
+                let msSinceSeen = Date.now() - lastSeen;
+                // Give a buffer of 1 minute to mark an agent dead
+                let isAlive = (msSinceSeen < (agent.sleep_max * 1000));
 
-                return isAlive ? 'alive' : 'dead';
+                if (msSinceSeen <= 60000 && agent.sleep_min === 3 && agent.sleep_max === 3 && agent.watchdog === 1) {
+                    return 'pending kill'
+                } else {
+                    return msSinceSeen <= 60000 || isAlive ? 'alive' : 'dead';
+                }
             },
 
             saveAgent() {
@@ -801,7 +804,7 @@
 
                     apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
                         toast('Agent will be killed after its next beacon.', true);
-                        this.removeAgent(agent.paw, this.agents.findIndex((a) => agent.paw === a.paw))
+                        console.log(response)
                     }).catch((error) => {
                         toast('Error killing the agent', false);
                         console.error(error);
@@ -825,7 +828,6 @@
                             if (numKilled === this.agents.length) {
                                 toast('All agents have been configured to be killed by next beacon.', true);
                             }
-                            this.removeAgent(agent.paw, index);
                         }).catch((error) => {
                             toast('Error killing the agent', false);
                             console.error(error);
