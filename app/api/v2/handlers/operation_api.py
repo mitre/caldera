@@ -39,7 +39,8 @@ class OperationApi(BaseObjectApi):
                           description='Retrieve all CALDERA operations from memory.  Use fields from the '
                                       '`BaseGetAllQuerySchema` in the request body to filter.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True),
+                                     description='The response is a list of all operations.')
     async def get_operations(self, request: web.Request):
         operations = await self.get_all_objects(request)
         return web.json_response(operations)
@@ -57,7 +58,8 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']),
+                                     description='The response is the operation with the specified id, if any.')
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
         return web.json_response(operation)
@@ -68,7 +70,8 @@ class OperationApi(BaseObjectApi):
                                       '`OperationSchema`. Required nested schema fields are as follows: '
                                       '"adversary.adversary_id", "planner.planner_id", and "source.id"')
     @aiohttp_apispec.request_schema(OperationSchema)
-    @aiohttp_apispec.response_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema,
+                                     description='The response is the newly-created operation report.')
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
         return web.json_response(operation.display)
@@ -86,7 +89,8 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
     @aiohttp_apispec.request_schema(OperationSchema(partial=True))
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
+                                     description='The response is the updated operation, including user modifications.')
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
         return web.json_response(operation.display)
@@ -102,7 +106,8 @@ class OperationApi(BaseObjectApi):
                               'required': 'true',
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
-    @aiohttp_apispec.response_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema,
+                                     description='There is an empty response from a successful delete request.')
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
