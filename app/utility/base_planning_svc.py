@@ -166,7 +166,6 @@ class BasePlanningService(BaseService):
             s_link.command = self.encode_string(mod.run(s_link))
         return links
 
-
     @staticmethod
     def _list_historic_duplicate_singletons(operation):
         """

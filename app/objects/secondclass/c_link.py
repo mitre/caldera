@@ -223,7 +223,6 @@ class Link(BaseObject):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
 
-
     def _emit_status_change_event(self, from_status, to_status):
         event_svc = BaseService.get_service('event_svc')
 
