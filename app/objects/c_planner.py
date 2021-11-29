@@ -62,8 +62,6 @@ class Planner(FirstClassObjectInterface, BaseObject):
                 return plugin
         return None
 
-    """ PRIVATE """
-
     @staticmethod
     def _set_stopping_conditions(conditions):
         if conditions:
