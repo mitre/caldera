@@ -287,7 +287,7 @@
                                 <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Bootstrap Abilities</span>
                             </th>
                             <td>
-                                <div class="field is-grouped is-grouped-multiline">
+                                <div class="field is-grouped is-grouped-multiline" x-show="!isAddingBootstrapAbility || bootstrapAbilities.length">
                                     <template x-for="(abilityId, index) of bootstrapAbilities">
                                         <div class="control">
                                             <div class="tags has-addons">
@@ -324,7 +324,7 @@
                                 <span class="has-tooltip-multiline" data-tooltip="A list of abilities to be run immediately prior to agent termination. The agent must support deadman abilities in order for them to run.">Deadman Abilities</span>
                             </th>
                             <td>
-                                <div class="field is-grouped is-grouped-multiline">
+                                <div class="field is-grouped is-grouped-multiline" x-show="!isAddingDeadmanAbility || deadmanAbilities.length">
                                     <template x-for="(abilityId, index) of deadmanAbilities">
                                         <div class="control">
                                             <div class="tags has-addons">
