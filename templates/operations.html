@@ -1405,7 +1405,7 @@
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
-                    .catch(() => toast('Error generating operation report.'));
+                    .catch(() => toast('Error generating event logs.'));
             },
 
             downloadCSV() {
