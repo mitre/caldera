@@ -2,7 +2,7 @@ import asyncio
 import logging
 import uuid
 from base64 import b64decode
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import import_module
 
 import marshmallow as ma
@@ -31,14 +31,14 @@ class LinkSchema(ma.Schema):
     status = ma.fields.Integer(missing=-3)
     score = ma.fields.Integer(missing=0)
     jitter = ma.fields.Integer(missing=0)
-    decide = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    decide = ma.fields.DateTime(format=BaseObject.TIME_FORMAT)
     pin = ma.fields.Integer(missing=0)
     pid = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     used = ma.fields.List(ma.fields.Nested(FactSchema()))
     unique = ma.fields.String()
-    collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
+    collect = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
     executor = ma.fields.Nested(ExecutorSchema())
@@ -47,7 +47,7 @@ class LinkSchema(ma.Schema):
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
-    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
+    agent_reported_time = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, missing=None)
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -165,7 +165,7 @@ class Link(BaseObject):
         self.status = status
         self.score = score
         self.jitter = jitter
-        self.decide = datetime.now()
+        self.decide = datetime.now(timezone.utc)
         self.pid = None
         self.collect = None
         self.finish = None
@@ -222,8 +222,6 @@ class Link(BaseObject):
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
-
-    """ PRIVATE """
 
     def _emit_status_change_event(self, from_status, to_status):
         event_svc = BaseService.get_service('event_svc')

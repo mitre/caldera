@@ -47,13 +47,13 @@
                     </div>
                     <div class="dropdown-menu" id="bulk-actions" role="menu">
                         <div class="dropdown-content">
-                            <a href="#" class="dropdown-item" @click="removeDeadAgents()">
+                            <a href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all dead agents?', removeDeadAgents)">
                                 Remove dead agents
                             </a>
-                            <a href="#" class="dropdown-item" @click="removeAllAgents()">
+                            <a href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all agents? Agents that beacon after they are removed will reappear.', removeAllAgents)">
                                 Remove all agents
                             </a>
-                            <a href="#" class="dropdown-item has-text-danger" @click="killAllAgents()">
+                            <a href="#" class="dropdown-item has-text-danger" @click="confirmAlt('You are about to kill all agents. Are you sure?', killAllAgents)">
                                 Kill all agents
                             </a>
                         </div>
@@ -90,8 +90,8 @@
                             <span x-text="getAgentStatus(agent)" x-bind:class="{ 'has-text-warning': getAgentStatus(agent) === 'dead', 'has-text-success': getAgentStatus(agent) === 'alive', 'has-text-info': getAgentStatus(agent) === 'pending kill' }"></span><span>,</span>
                             <span x-text="agent.trusted ? 'trusted' : 'untrusted'" x-bind:class="{ 'has-text-warning': !agent.trusted, 'has-text-success': agent.trusted }"></span>
                         </td>
-                        <td x-text="getHumanFriendlyTime(agent.last_seen)" x-bind:data-tooltip="agent.last_seen"></td>
-                        <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAgent(agent.paw, index)"></button></td>
+                        <td x-text="getHumanFriendlyTimeISO8601(agent.last_seen)" x-bind:data-tooltip="agent.last_seen"></td>
+                        <td class="has-text-centered"><button class="delete is-white" @click.stop="removeAgent(agent.paw, index)"></button></td>
                     </tr>
                 </template>
             </tbody>
@@ -238,7 +238,7 @@
                     <col width="65%">
                     <tbody>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline has-tooltip-bottom" data-tooltip="Set the minimum and maximum seconds the agent will take to beacon home.">Beacon Timers (s)</span>
                             </th>
                             <td>
@@ -256,7 +256,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline has-tooltip-bottom" data-tooltip="Set the number of seconds to wait, once the server is unreachable, before killing an agent.">Watchdog Timer (s)</span>
                             </th>
                             <td>
@@ -265,7 +265,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline" data-tooltip="Set the number of seconds to wait before marking a missing agent as untrusted. Operations will not generate new links for untrusted agents.">Untrusted Timer (s)</span> *
                             </th>
                             <td>
@@ -274,7 +274,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline" data-tooltip="The base name of newly-spawned agents. If necessary, an extension will be added when an agent is created.">Implant Name</span>
                             </th>
                             <td>
@@ -283,7 +283,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline" data-tooltip="A list of ability IDs to be run on a new agent beacon. By default, this is set to run a command which clears command history.">Bootstrap Abilities</span>
                             </th>
                             <td>
@@ -320,7 +320,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">
+                            <th class="has-text-right pt-3">
                                 <span class="has-tooltip-multiline" data-tooltip="A list of abilities to be run immediately prior to agent termination. The agent must support deadman abilities in order for them to run.">Deadman Abilities</span>
                             </th>
                             <td>
@@ -392,7 +392,7 @@
                     <col width="70%">
                     <tbody>
                         <tr>
-                            <th class="has-text-right">Contact</th>
+                            <th class="has-text-right pt-3">Contact</th>
                             <td>
                                 <div class="select is-small">
                                     <select x-model="selectedAgent.pending_contact">
@@ -404,14 +404,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">Group</th>
+                            <th class="has-text-right pt-3">Group</th>
                             <td>
                                 <input class="input is-small" type="text" x-model="selectedAgent.group" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('group') }">
                                 <p x-show="fieldErrorsAgent.includes('group')" class="help is-danger">This field is required.</p>
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">Sleep Timer</th>
+                            <th class="has-text-right pt-3">Sleep Timer</th>
                             <td>
                                 <div class="is-align-items-center is-flex is-align-items-center">
                                     <span class="top-right-anchor">
@@ -427,7 +427,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <th class="has-text-right">Watchdog Timer</th>
+                            <th class="has-text-right pt-3">Watchdog Timer</th>
                             <td>
                                 <input class="input is-small is-small-number" type="number" x-model="selectedAgent.watchdog" x-bind:class="{ 'is-danger': fieldErrorsAgent.includes('watchdog') }">
                                 <p x-show="fieldErrorsAgent.includes('watchdog')" class="help is-danger">This field is required.</p>
@@ -524,7 +524,7 @@
                 <nav class="level">
                     <div class="level-left">
                         <div class="level-item">
-                            <button class="button is-danger is-outlined is-small has-text-white" @click="killAgent(selectedAgent)">
+                            <button class="button is-danger is-outlined is-small has-text-white" @click="confirmAlt(`Are you sure you want to kill agent '${selectedAgent.paw}'?`, () => killAgent(selectedAgent))">
                                 <span class="icon"><i class="fas fa-skull-crossbones"></i></span>
                                 <span>Kill Agent</span>
                             </button>
@@ -540,6 +540,31 @@
         </div>
     </div>
 
+    <div class="modal" x-bind:class="{ 'is-active': showConfirmModal }">
+        <div class="modal-background" @click="showConfirmModal = false"></div>
+        <div class="modal-card" style="z-index: 20">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Confirm</p>
+            </header>
+            <section class="modal-card-body">
+                <p x-text="confirmText"></p>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showConfirmModal = false">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="confirmFunction(); showConfirmModal = false;">Confirm</button>
+                        <div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
 
 </div>
 
@@ -575,6 +600,9 @@
             showDeployModal: false,
             showConfigModal: false,
             showDetailsModal: false,
+            showConfirmModal: false,
+            confirmText: '',
+            confirmFunction: () => {},
 
             // Input validation
             requiredFieldsConfig: ['sleep_min', 'sleep_max', 'watchdog', 'untrusted_timer', 'implant_name'],
@@ -724,7 +752,7 @@
 
             getAgentStatus(agent) {
                 if (!agent.last_seen) return '';
-                let lastSeen = new Date(agent.last_seen.replace(/-/g, "/")).getTime();
+                let lastSeen = new Date(agent.last_seen).getTime();
                 let msSinceSeen = Date.now() - lastSeen;
                 // Give a buffer of 1 minute to mark an agent dead
                 let isAlive = (msSinceSeen < (agent.sleep_max * 1000));
@@ -776,64 +804,61 @@
                 });
             },
 
+            confirmAlt(msg, fn) {
+                this.confirmText = msg;
+                this.confirmFunction = fn;
+                this.showConfirmModal = true;
+            },
+
             removeDeadAgents() {
-                if (confirm(`Are you sure you want to remove all dead agents?`)) {
-                    this.agents.forEach((agent, index) => {
-                        if (this.getAgentStatus(agent) === 'dead') {
-                            this.removeAgent(agent.paw, index);
-                        }
-                    });
-                }
+                this.agents.forEach((agent, index) => {
+                    if (this.getAgentStatus(agent) === 'dead') {
+                        this.removeAgent(agent.paw, index);
+                    }
+                });
             },
 
             removeAllAgents() {
-                if (confirm(`Are you sure you want to remove all agents? No agents will be killed, so any agent that beacons again will reappear.`)) {
-                    this.agents.forEach((agent, index) => {
-                        this.removeAgent(agent.paw, index);
-                    });
-                }
+                this.agents.forEach((agent, index) => {
+                    this.removeAgent(agent.paw, index);
+                });
             },
 
             killAgent(agent) {
-                if (confirm(`Are you sure you want to kill agent "${agent.paw}"?`)) {
-                    let reqBody = {
-                        watchdog: 1,
-                        sleep_min: 3,
-                        sleep_max: 3
-                    };
+                let reqBody = {
+                    watchdog: 1,
+                    sleep_min: 3,
+                    sleep_max: 3
+                };
 
+                apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
+                    toast('Agent will be killed after its next beacon.', true);
+                }).catch((error) => {
+                    toast('Error killing the agent', false);
+                    console.error(error);
+                });
+                this.showDetailsModal = false;
+            },
+        
+            killAllAgents() {
+                let reqBody = {
+                    watchdog: 1,
+                    sleep_min: 3,
+                    sleep_max: 3
+                };
+                let numKilled = 0;
+
+                this.agents.forEach((agent, index) => {
                     apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
-                        toast('Agent will be killed after its next beacon.', true);
-                        console.log(response)
+                        numKilled++;
+                        if (numKilled === this.agents.length) {
+                            toast('All agents have been configured to be killed by next beacon.', true);
+                        }
                     }).catch((error) => {
                         toast('Error killing the agent', false);
                         console.error(error);
                     });
-                    this.showDetailsModal = false;
-                }
-            },
-        
-            killAllAgents() {
-                if (confirm(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n          You are about to kill all agents. Are you sure?     \n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`)) {
-                    let reqBody = {
-                        watchdog: 1,
-                        sleep_min: 3,
-                        sleep_max: 3
-                    };
-                    let numKilled = 0;
-
-                    this.agents.forEach((agent, index) => {
-                        apiV2('PATCH', `/api/v2/agents/${agent.paw}`, reqBody).then((response) => {
-                            numKilled++;
-                            if (numKilled === this.agents.length) {
-                                toast('All agents have been configured to be killed by next beacon.', true);
-                            }
-                        }).catch((error) => {
-                            toast('Error killing the agent', false);
-                            console.error(error);
-                        });
-                    });
-                }
+                });
             }
         };
     }
@@ -862,6 +887,13 @@
 
     .is-small-number {
         width: 80px;
+    }
+
+    .is-white {
+        background-color: #636363;
+    }
+    .is-white:hover {
+        background-color: #505050 !important;
     }
 
     .cmd-copy-button {

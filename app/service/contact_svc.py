@@ -1,7 +1,7 @@
 import asyncio
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from base64 import b64decode
 
 from app.objects.c_agent import Agent
@@ -93,8 +93,6 @@ class ContactService(ContactServiceInterface, BaseService):
         tunnel = [t for t in self.tunnels if t.name == name]
         return tunnel[0] if len(tunnel) > 0 else None
 
-    """ PRIVATE """
-
     async def _sanitize_paw(self, input_paw):
         """
         Remove any characters from the given paw that do not fall in the following set:
@@ -162,7 +160,7 @@ class ContactService(ContactServiceInterface, BaseService):
 
     @staticmethod
     def _convert_link_to_instruction(link):
-        link.collect = datetime.now()
+        link.collect = datetime.now(timezone.utc)
         payloads = [] if link.cleanup else link.executor.payloads
         uploads = [] if link.cleanup else link.executor.uploads
         return Instruction(id=link.unique,

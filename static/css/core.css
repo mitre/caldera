@@ -37,6 +37,10 @@ body {
   border-radius: 50%;
 }
 
+.is-underlined {
+  text-decoration: underline;
+}
+
 main.main {
   min-height: 100%;
   width: 100%;
@@ -112,10 +116,6 @@ main.main {
 
 #nav-menu {
   background-color: #060606;
-}
-
-.nav-header {
-  cursor: default;
 }
 
 .nav-item.disabled {

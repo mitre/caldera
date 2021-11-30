@@ -46,7 +46,7 @@
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
                             <li>
-                                <a x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item" x-bind:class="{ 'disabled': '{{ plugin.name }}' === 'atomic' || '{{ plugin.name }}' === 'stockpile' }">
+                                <a href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
                                     {{ plugin.name }}
                                     <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
                                         <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
