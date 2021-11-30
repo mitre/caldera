@@ -332,8 +332,6 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self._executor_change_to_assign = None
         return executor_change
 
-    """ PRIVATE """
-
     def _replace_payload_data(self, decoded_cmd, file_svc):
         for uuid in re.findall(self.RESERVED['payload'], decoded_cmd):
             if self.is_uuid4(uuid):
