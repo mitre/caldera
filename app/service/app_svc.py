@@ -193,8 +193,6 @@ class AppService(AppServiceInterface, BaseService):
     def get_loaded_plugins(self):
         return tuple(self._loaded_plugins)
 
-    """ PRIVATE """
-
     async def _save_configurations(self, main_config_file='default'):
         for cfg_name, cfg_file in [('main', main_config_file), ('agents', 'agents'), ('payloads', 'payloads')]:
             with open('conf/%s.yml' % cfg_file, 'w') as config:

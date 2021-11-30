@@ -1405,7 +1405,7 @@
                     .then((res) => {
                         this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
                     })
-                    .catch(() => toast('Error generating operation report.'));
+                    .catch(() => toast('Error generating event logs.'));
             },
 
             downloadCSV() {
@@ -1453,6 +1453,7 @@
                     fileName += '.json';
                 } else {
                     dataURL = window.URL.createObjectURL(data);
+                    fileName += '.csv';
                 }
 
                 const elem = document.createElement('a');

@@ -8,7 +8,7 @@ from app.utility.base_service import BaseService
 
 @pytest.fixture
 def test_planner(loop, api_v2_client):
-    planner = Planner(name="test planner", planner_id="123", description="a test planner")
+    planner = Planner(name="test planner", planner_id="123", description="a test planner", plugin="planner")
     loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
     return planner
 
