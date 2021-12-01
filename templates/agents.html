@@ -455,7 +455,7 @@
                         </tr>
                         <tr>
                             <th class="has-text-right">Host</th>
-                            <td x-text="`${selectedAgent.host} (${selectedAgent.host_ip_addrs})`"></td>
+                            <td x-text="`${selectedAgent.host} (${selectedAgent.host_ip_addrs.join(', ')})`"></td>
                         </tr>
                         <tr>
                             <th class="has-text-right">Display Name</th>
