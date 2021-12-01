@@ -114,7 +114,7 @@ class ScheduleApi(BaseObjectApi):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
-        operation = await self._api_manager.setup_operation(data['task'], access)
+        operation = await self._api_manager.validate_and_setup_task(data['task'], access)
         data['task'] = operation.schema.dump(operation)
         return self._api_manager.create_object_from_schema(self.schema, data, access)
 
@@ -122,7 +122,7 @@ class ScheduleApi(BaseObjectApi):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
         matched_obj = self._api_manager.find_object(self.ram_key, query)
         if matched_obj and matched_obj.access not in access['access']:
-            raise JsonHttpForbidden(f'Cannot update {self.description} due to insufficient permissions: {obj_id}')
-        operation = await self._api_manager.setup_operation(data['task'], access)
+            raise JsonHttpForbidden(f'Cannot update Schedule {self.id} due to insufficient permissions: {obj_id}')
+        operation = await self._api_manager.validate_and_setup_task(data['task'], access)
         data['task'] = operation.schema.dump(operation)
         return self._api_manager.create_object_from_schema(self.schema, data, access)
