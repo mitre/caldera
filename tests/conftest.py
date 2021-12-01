@@ -1,6 +1,5 @@
 import asyncio
 import os.path
-from base64 import b64encode
 
 import pytest
 import random
@@ -11,6 +10,7 @@ import aiohttp_apispec
 import warnings
 
 from datetime import datetime, timezone
+from base64 import b64encode
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
