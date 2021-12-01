@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from datetime import datetime, timezone
 
 import pytest
 
@@ -7,11 +6,6 @@ from app.objects.c_ability import AbilitySchema
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import ExecutorSchema
 from app.utility.base_service import BaseService
-
-
-@pytest.fixture
-def mock_time():
-    return datetime(2021, 1, 1, tzinfo=timezone.utc)
 
 
 @pytest.fixture
@@ -66,7 +60,7 @@ def new_agent_payload():
 
 @pytest.fixture
 def expected_new_agent_dump(new_agent_payload, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         agent = Agent().load(new_agent_payload)
@@ -75,7 +69,7 @@ def expected_new_agent_dump(new_agent_payload, mocker, mock_time):
 
 @pytest.fixture
 def test_agent(loop, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux')
@@ -155,7 +149,7 @@ class TestAgentsApi:
 
     async def test_create_agent(self, api_v2_client, api_cookies, new_agent_payload, mocker, expected_new_agent_dump,
                                 mock_time):
-        with mocker.patch('datetime.datetime') as mock_datetime:
+        with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
             mock_datetime.return_value = mock_datetime
             mock_datetime.now.return_value = mock_time
             resp = await api_v2_client.post('/api/v2/agents', cookies=api_cookies, json=new_agent_payload)
@@ -200,13 +194,16 @@ class TestAgentsApi:
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_create_or_update_nonexistent_agent(self, api_v2_client, api_cookies, new_agent_payload,
-                                                      expected_new_agent_dump):
-        resp = await api_v2_client.put('/api/v2/agents/456', cookies=api_cookies, json=new_agent_payload)
-        assert resp.status == HTTPStatus.OK
-        agent_dict = await resp.json()
-        assert agent_dict == expected_new_agent_dump
-        stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
-        assert stored_agent.schema.dump(stored_agent) == expected_new_agent_dump
+                                                      expected_new_agent_dump, mocker, mock_time):
+        with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            resp = await api_v2_client.put('/api/v2/agents/456', cookies=api_cookies, json=new_agent_payload)
+            assert resp.status == HTTPStatus.OK
+            agent_dict = await resp.json()
+            assert agent_dict == expected_new_agent_dump
+            stored_agent = (await BaseService.get_service('data_svc').locate('agents', {'paw': agent_dict['paw']}))[0]
+            assert stored_agent.schema.dump(stored_agent) == expected_new_agent_dump
 
     async def test_get_deploy_commands(self, api_v2_client, api_cookies, deploy_ability, mocker, raw_ability,
                                        agent_config, app_config, combined_config):
