@@ -274,8 +274,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         return sorted(links, key=lambda k: (-k.score))
 
-    """ PRIVATE """
-
     async def _stop_bucket_exhaustion(self, planner, operation, condition_stop):
         """Determine whether to continue running the bucket.
 
