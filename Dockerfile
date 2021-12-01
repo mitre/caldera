@@ -43,7 +43,7 @@ RUN mkdir /tmp/gocatextensionstest/payloads
 RUN ./update-agents.sh
 
 # Clone atomic red team repo for the atomic plugin
-RUN git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git /usr/src/app/plugins/atomic/data/atomic-red-team
+RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ]; then git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git /usr/src/app/plugins/atomic/data/atomic-red-team; fi
 
 WORKDIR /usr/src/app
 
