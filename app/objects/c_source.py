@@ -33,6 +33,7 @@ class SourceSchema(ma.Schema):
     rules = ma.fields.List(ma.fields.Nested(RuleSchema))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema))
+    plugin = ma.fields.String(missing=None)
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):
@@ -81,7 +82,7 @@ class Source(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.id)
 
-    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=()):
+    def __init__(self, name='', id='', facts=(), relationships=(), rules=(), adjustments=(), plugin=''):
         super().__init__()
         self.id = id if id else str(uuid.uuid4())
         self.name = name
@@ -89,6 +90,7 @@ class Source(FirstClassObjectInterface, BaseObject):
         self.rules = rules
         self.adjustments = adjustments
         self.relationships = relationships
+        self.plugin = plugin
 
     def store(self, ram):
         existing = self.retrieve(ram['sources'], self.unique)
@@ -99,4 +101,5 @@ class Source(FirstClassObjectInterface, BaseObject):
         existing.update('facts', self.facts)
         existing.update('rules', self.rules)
         existing.update('relationships', self.relationships)
+        existing.update('plugin', self.plugin)
         return existing
