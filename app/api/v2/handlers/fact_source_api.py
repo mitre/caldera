@@ -49,14 +49,7 @@ class FactSourceApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['sources'],
                               summary='Create a fact source.',
-                              description='Returns a new fact source, given a name.',
-                              parameters=[{
-                                  'in': 'path',
-                                  'name': 'name',
-                                  'description': 'The name of the new fact source',
-                                  'schema': {'type': 'string'},
-                                  'required': 'true'
-                                }])
+                              description='Create a new Fact Source using the format provided in the SourceSchema.')
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.request_schema(SourceSchema)
     @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
@@ -66,7 +59,14 @@ class FactSourceApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['sources'],
                           summary='Update an existing fact source.',
-                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".')
+                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".',
+                          parameters=[{
+                            'in': 'path',
+                            'name': 'id',
+                            'description': 'The id of the fact source.',
+                            'schema': {'type': 'string'},
+                            'required': 'true'
+                          }])
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
     async def update_fact_source(self, request: web.Request):
@@ -75,7 +75,14 @@ class FactSourceApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['sources'],
                           summary='Update an existing or create a new fact source.',
-                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".')
+                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".',
+                          parameters=[{
+                            'in': 'path',
+                            'name': 'id',
+                            'description': 'The id of the fact source.',
+                            'schema': {'type': 'string'},
+                            'required': 'true'
+                          }])
     @aiohttp_apispec.request_schema(SourceSchema(partial=True))
     @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
     async def create_or_update_source(self, request: web.Request):
