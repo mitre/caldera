@@ -9,7 +9,7 @@ from app.objects.c_source import Source, SourceSchema
 
 class FactSourceApi(BaseObjectApi):
     def __init__(self, services):
-        super().__init__(description='fact source', obj_class=Source, schema=SourceSchema, ram_key='sources',
+        super().__init__(description='Fact Source', obj_class=Source, schema=SourceSchema, ram_key='sources',
                          id_property='id', auth_svc=services['auth_svc'])
         self._api_manager = BaseApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
 
@@ -23,8 +23,8 @@ class FactSourceApi(BaseObjectApi):
         router.add_delete('/sources/{id}', self.delete_source)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                          summary='Retrieve all fact sources.',
-                          description='Returns a list of all fact sources, including custom-created ones.')
+                          summary='Retrieve all Fact Sources.',
+                          description='Returns a list of all Fact Sources, including custom-created ones.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(SourceSchema(many=True, partial=True), description='Returns a list of all Sources dumped in SourceSchema format.')
     async def get_fact_sources(self, request: web.Request):
@@ -32,12 +32,12 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(sources)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                          summary='Retrieve a fact source by its id.',
-                          description='Returns a fact source, given a source id.',
+                          summary='Retrieve a Fact Source by its id.',
+                          description='Returns a Fact Source, given a source id.',
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
-                              'description': 'The id of the fact source',
+                              'description': 'The id of the Fact Source',
                               'schema': {'type': 'string'},
                               'required': 'true'
                             }])
@@ -48,7 +48,7 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                              summary='Create a fact source.',
+                              summary='Create a Fact Source.',
                               description='Create a new Fact Source using the format provided in the SourceSchema.')
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.request_schema(SourceSchema)
@@ -58,12 +58,12 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                          summary='Update an existing fact source.',
-                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".',
+                          summary='Update an existing Fact Source.',
+                          description='Returns an updated Fact Source. All fields in a Fact Source can be updated, except for "id" and "adjustments".',
                           parameters=[{
                             'in': 'path',
                             'name': 'id',
-                            'description': 'The id of the fact source.',
+                            'description': 'The id of the Fact Source.',
                             'schema': {'type': 'string'},
                             'required': 'true'
                           }])
@@ -74,12 +74,12 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                          summary='Update an existing or create a new fact source.',
-                          description='Returns an updated fact source. All fields in a fact source can be updated, except for "id" and "adjustments".',
+                          summary='Update an existing or create a new Fact Source.',
+                          description='Use fields from the SourceSchema in the request body to replace an existing Fact Source or create a new Fact Source.',
                           parameters=[{
                             'in': 'path',
                             'name': 'id',
-                            'description': 'The id of the fact source.',
+                            'description': 'The id of the Fact Source.',
                             'schema': {'type': 'string'},
                             'required': 'true'
                           }])
@@ -90,12 +90,12 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                              summary='Delete an existing fact source.',
-                              description='Delete a fact source, given its id.',
+                              summary='Delete an existing Fact Source.',
+                              description='Delete a Fact Source, given its id.',
                               parameters=[{
                                 'in': 'path',
                                 'name': 'id',
-                                'description': 'The id of the fact source to be deleted.',
+                                'description': 'The id of the Fact Source to be deleted.',
                                 'schema': {'type': 'string'},
                                 'required': 'true'
                               }])
