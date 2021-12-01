@@ -11,18 +11,18 @@ from app.objects.c_schedule import Schedule, ScheduleSchema
 class ScheduleApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='schedule', obj_class=Schedule, schema=ScheduleSchema, ram_key='schedules',
-                         id_property='name', auth_svc=services['auth_svc'])
+                         id_property='id', auth_svc=services['auth_svc'])
         self._api_manager = ScheduleApiManager(services)
         self._rest_svc = services['rest_svc']
 
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/schedules', self.get_schedules)
-        router.add_get('/schedules/{name}', self.get_schedule_by_name)
+        router.add_get('/schedules/{id}', self.get_schedule_by_id)
         router.add_post('/schedules', self.create_schedule)
-        router.add_patch('/schedules/{name}', self.update_schedule)
-        router.add_put('/schedules/{name}', self.create_or_update_schedule)
-        router.add_delete('/schedules/{name}', self.delete_schedule)
+        router.add_patch('/schedules/{id}', self.update_schedule)
+        router.add_put('/schedules/{id}', self.create_or_update_schedule)
+        router.add_delete('/schedules/{id}', self.delete_schedule)
 
     @aiohttp_apispec.docs(tags=['schedules'], summary='Retrieve Schedules', description='Returns all stored schedules.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -35,24 +35,23 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Retrieve Schedule',
                           parameters=[{
                               'in': 'path',
-                              'name': 'name',
+                              'name': 'id',
                               'schema': {'type': 'string'},
                               'required': 'true',
-                              'description': 'Name of the Schedule to be retrieved.'
+                              'description': 'UUID of the Schedule to be retrieved.'
                           }],
-                          description='Retrieves Schedule by name, as specified by {name} in the request url.')
+                          description='Retrieves Schedule by UUID, as specified by {id} in the request url.')
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(ScheduleSchema(partial=True),
                                      description='The response is a single dumped Scheduled object.')
-    async def get_schedule_by_name(self, request: web.Request):
+    async def get_schedule_by_id(self, request: web.Request):
         schedule = await self.get_object(request)
         return web.json_response(schedule)
 
     @aiohttp_apispec.docs(tags=['schedules'], summary='Create Schedule',
                           description='Use fields from the ScheduleSchema in the request body '
-                                      'to create a new Schedule. The name of the Schedule will be set to '
-                                      'that of the tasked Operation.')
-    @aiohttp_apispec.request_schema(ScheduleSchema(exclude=['name']))
+                                      'to create a new Schedule.')
+    @aiohttp_apispec.request_schema(ScheduleSchema())
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'created Schedule object.')
     async def create_schedule(self, request: web.Request):
@@ -62,10 +61,10 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Update Schedule',
                           parameters=[{
                               'in': 'path',
-                              'name': 'name',
+                              'name': 'id',
                               'schema': {'type': 'string'},
                               'required': 'true',
-                              'description': 'Name of the Schedule to be updated.'
+                              'description': 'UUID of the Schedule to be retrieved.'
                           }],
                           description='Use fields from the ScheduleSchema in the request body '
                                       'to update an existing Schedule.')
@@ -79,15 +78,14 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Replace Schedule',
                           parameters=[{
                               'in': 'path',
-                              'name': 'name',
+                              'name': 'id',
                               'schema': {'type': 'string'},
                               'required': 'true',
-                              'description': 'Name of the Schedule to be replaced.'
+                              'description': 'UUID of the Schedule to be retrieved.'
                           }],
                           description='Use fields from the ScheduleSchema in the request body '
-                                      'to replace an existing Schedule or create a new Schedule. '
-                                      'The name of the Schedule will be set to that of the tasked Operation.')
-    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, exclude=['name']))
+                                      'to replace an existing Schedule or create a new Schedule.')
+    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, exclude=['id']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'replaced Schedule object.')
     async def create_or_update_schedule(self, request: web.Request):
@@ -97,10 +95,10 @@ class ScheduleApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['schedules'], summary='Delete Schedule',
                           parameters=[{
                               'in': 'path',
-                              'name': 'name',
+                              'name': 'id',
                               'schema': {'type': 'string'},
                               'required': 'true',
-                              'description': 'Name of the Schedule to be deleted.'
+                              'description': 'UUID of the Schedule to be retrieved.'
                           }],
                           description='Deletes a Schedule object from the data service.')
     @aiohttp_apispec.response_schema(ScheduleSchema,
@@ -114,7 +112,6 @@ class ScheduleApi(BaseObjectApi):
 
     async def create_object(self, request: web.Request):
         data = await request.json()
-        data['name'] = data.get('task').get('name')
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
         operation = await self._api_manager.setup_operation(data['task'], access)

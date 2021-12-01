@@ -171,14 +171,14 @@ class RestService(RestServiceInterface, BaseService):
 
     async def create_schedule(self, access, data):
         operation = await self._build_operation_object(access, data['operation'])
-        schedules = await self.get_service('data_svc').locate('schedules', match=dict(name=operation.name))
+        schedule_id = str(uuid.uuid4())
+        schedules = await self.get_service('data_svc').locate('schedules', match=dict(id=schedule_id))
         if schedules:
-            self.log.debug('A scheduled operation with the name "%s" already exists, skipping' % operation.name)
+            self.log.debug('A scheduled operation with the id "%s" already exists, skipping' % schedule_id)
         else:
             scheduled = await self.get_service('data_svc').store(
-                Schedule(name=operation.name,
-                         schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
-                         task=operation)
+                Schedule(schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
+                         task=operation, id=schedule_id)
             )
             self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
 
