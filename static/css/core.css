@@ -159,6 +159,10 @@ main.main {
   border: 0 !important;
 }
 
+.nav.tabs span {
+  color: white;
+}
+
 #startup-errors-warning {
   font-size: 0.8em;
   padding: 10px;

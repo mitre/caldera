@@ -203,8 +203,6 @@ class OperationApi(BaseObjectApi):
         potential_links = await self._api_manager.get_potential_links(operation_id, access, paw)
         return web.json_response(potential_links)
 
-    '''Overridden Methods'''
-
     async def create_object(self, request: web.Request):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
@@ -217,8 +215,6 @@ class OperationApi(BaseObjectApi):
         if not obj:
             raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
         return obj
-
-    ''' PRIVATE '''
 
     async def _read_output_parameter_(self, request: web.Request):
         raw_body = await request.read()
