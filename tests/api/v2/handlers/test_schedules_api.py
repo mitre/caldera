@@ -9,16 +9,50 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def updated_schedule_payload(test_schedule):
-    payload = test_schedule.schema.dump(test_schedule)
-    payload['schedule'] = '01:00:00.000000'
+def updated_schedule_payload():
+    payload = {
+        'schedule': '01:00:00.000000',
+        'task': {
+            'autonomous': 1,
+            'obfuscator': 'base64',
+            'state': 'running'
+        }
+    }
     return payload
 
 
 @pytest.fixture
-def expected_updated_schedule_dump(updated_schedule_payload):
-    schedule = ScheduleSchema().load(updated_schedule_payload)
+def expected_updated_schedule_dump(test_schedule, updated_schedule_payload):
+    test_schedule_dump = test_schedule.schema.dump(test_schedule)
+
+    def _merge_dictionaries(dict1, dict2):
+        for key in dict1.keys():
+            if type(dict1[key]) == dict:
+                _merge_dictionaries(dict1[key], dict2[key])
+            else:
+                dict2[key] = dict1[key]
+        return dict2
+    expected_dict = _merge_dictionaries(updated_schedule_payload, test_schedule_dump)
+    schedule = ScheduleSchema().load(expected_dict)
     return schedule.schema.dump(schedule)
+
+
+@pytest.fixture
+def replaced_schedule_payload():
+    payload = {
+        'schedule': '12:12:00.000000',
+        'task': {
+            'autonomous': 1,
+            'obfuscator': 'base64',
+            'state': 'running',
+            'name': 'replaced_op',
+            'planner': {'id': '123'},
+            'adversary': {'adversary_id': '123', 'name': 'ad-hoc'},
+            'source': {'id': '123'}
+        },
+        'id': '123'
+    }
+    return payload
 
 
 @pytest.fixture
@@ -107,7 +141,7 @@ class TestSchedulesApi:
         assert resp.status == HTTPStatus.OK
         returned_schedule_data = await resp.json()
         stored_schedule = (await BaseService.get_service('data_svc').locate('schedules',
-                                                                            {'id': updated_schedule_payload['id']}))[0]
+                                                                            {'id': '123'}))[0]
         assert stored_schedule.schema.dump(stored_schedule) == expected_updated_schedule_dump
         assert returned_schedule_data == expected_updated_schedule_dump
 
@@ -119,16 +153,18 @@ class TestSchedulesApi:
         resp = await api_v2_client.patch('/api/v2/schedules/999', json=updated_schedule_payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_replace_schedule(self, api_v2_client, api_cookies, test_schedule, updated_schedule_payload,
-                                    expected_updated_schedule_dump):
-        resp = await api_v2_client.put('/api/v2/schedules/123', cookies=api_cookies, json=updated_schedule_payload)
+    async def test_replace_schedule(self, api_v2_client, api_cookies, test_schedule, replaced_schedule_payload):
+        resp = await api_v2_client.put('/api/v2/schedules/123', cookies=api_cookies, json=replaced_schedule_payload)
         assert resp.status == HTTPStatus.OK
         returned_schedule_data = await resp.json()
         stored_schedule = await BaseService.get_service('data_svc').locate('schedules',
-                                                                           {'id': updated_schedule_payload['id']})
+                                                                           {'id': replaced_schedule_payload['id']})
         stored_schedule = stored_schedule[0].schema.dump(stored_schedule[0])
         assert returned_schedule_data == stored_schedule
-        assert returned_schedule_data == expected_updated_schedule_dump
+        returned_task = returned_schedule_data['task']
+        assert returned_task['planner']['id'] == replaced_schedule_payload['task']['planner']['id']
+        assert returned_task['adversary']['name'] == replaced_schedule_payload['task']['adversary']['name']
+        assert returned_task['source']['id'] == replaced_schedule_payload['task']['source']['id']
 
     async def test_unauthorized_replace_schedule(self, api_v2_client, test_schedule, updated_schedule_payload):
         resp = await api_v2_client.put('/api/v2/schedules/123', json=updated_schedule_payload)
