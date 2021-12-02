@@ -79,8 +79,8 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Update fields within an operation',
                           description='Update one CALDERA operation in memory based on the operation id (String '
-                                      'UUID). Any fields in the operation object may be edited in the request body '
-                                      'using the `OperationSchema`.',
+                                      'UUID). The `state`, `autonomous` and `obfuscator` fields in the operation '
+                                      'object may be edited in the request body using the `OperationSchema`.',
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
