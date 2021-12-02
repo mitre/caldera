@@ -59,32 +59,61 @@ class AgentApi(BaseObjectApi):
         agent = await self.update_object(request)
         return web.json_response(agent.display)
 
-    @aiohttp_apispec.docs(tags=['agents'], summary="Update an agent, or if a existing agent match cannot be found, "
-                                                   "create one. Use the paw field in the URL to specify matching "
-                                                   "criteria and the fields from the AgentSchema in the request body"
-                                                   " to specify new field values.")
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Create or Update an Agent",
+                          description="Update an agent, or if a existing agent match cannot be found, "
+                                      "create one. Use the paw field in the URL to specify matching "
+                                      "criteria and the fields from the AgentSchema in the request body"
+                                      " to specify new field values.",
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'paw',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'paw of the Agent to be retrieved'
+                          }])
     @aiohttp_apispec.request_schema(AgentSchema(partial=True))
     @aiohttp_apispec.response_schema(AgentSchema)
     async def create_or_update_agent(self, request: web.Request):
         agent = await self.create_or_update_object(request)
         return web.json_response(agent.display)
 
-    @aiohttp_apispec.docs(tags=['agents'], summary="Delete an agent. Use the paw field in the URL to specify matching "
-                                                   "criteria for the agent(s) to delete.")
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Delete an Agent",
+                          description="Delete an agent. Use the paw field in the URL to specify matching "
+                                      "criteria for the agent(s) to delete.",
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'paw',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'paw of the Agent to be deleted'
+                          }])
     @aiohttp_apispec.response_schema(AgentSchema)
     async def delete_agent(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
 
-    @aiohttp_apispec.docs(tags=['agents'], summary="Retrieve the deploy commands currently configured within Caldera.")
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Retrieve deploy commands",
+                          description="Retrieve the deploy commands currently configured within Caldera.")
     @aiohttp_apispec.response_schema(DeployCommandsSchema)
     async def get_deploy_commands(self, request: web.Request):
         deploy_commands = await self._api_manager.get_deploy_commands()
         return web.json_response(deploy_commands)
 
-    @aiohttp_apispec.docs(tags=['agents'], summary="Retrieve the deploy commands associated with a given ability ID. "
-                                                   "Use the 'ability_id' field in the URL specify which ability to "
-                                                   "retrieve deploy commands for.")
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Retrieve deploy commands for an Ability",
+                          description="Retrieve the deploy commands associated with a given ability ID. "
+                                      "Use the 'ability_id' field in the URL specify which ability to "
+                                      "retrieve deploy commands for.",
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'ability_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'ID of the ability to retrieve deploy commands for'
+                          }])
     @aiohttp_apispec.response_schema(DeployCommandsSchema)
     async def get_deploy_commands_for_ability(self, request: web.Request):
         ability_id = request.match_info.get('ability_id')
