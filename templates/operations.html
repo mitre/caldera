@@ -1421,11 +1421,12 @@
             },
 
             downloadInfo(formatType) {
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/report`, { enable_agent_output: this.isAgentOutputSelected })
-                    .then((res) => {
-                        this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
-                    })
-                    .catch(() => toast('Error generating operation report.'));
+              const endpoint = formatType === 'full-report' ? 'report' : formatType;
+                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/${endpoint}`, { enable_agent_output: this.isAgentOutputSelected })
+                  .then((res) => {
+                    this.createDownloadReport(res, `${this.selectedOperation.name}_${formatType}`);
+                  })
+                  .catch(() => toast(`Error generating operation ${formatType.replace('-', ' ')}`));
             },
 
             downloadCSV() {
@@ -1473,6 +1474,7 @@
                     fileName += '.json';
                 } else {
                     dataURL = window.URL.createObjectURL(data);
+                    fileName += '.csv';
                 }
 
                 const elem = document.createElement('a');
