@@ -37,5 +37,7 @@ class Schedule(FirstClassObjectInterface, BaseObject):
             ram['schedules'].append(self)
             return self.retrieve(ram['schedules'], self.unique)
         existing.update('schedule', self.schedule)
-        existing.update('task', self.task)
+        existing.task.update('state', self.task.state)
+        existing.task.update('autonomous', self.task.autonomous)
+        existing.task.update('obfuscator', self.task.obfuscator)
         return existing

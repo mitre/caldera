@@ -68,7 +68,8 @@ class ScheduleApi(BaseObjectApi):
                           }],
                           description='Use fields from the ScheduleSchema in the request body '
                                       'to update an existing Schedule.')
-    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, only=['schedule']))
+    @aiohttp_apispec.request_schema(ScheduleSchema(partial=True, only=['schedule', 'task.autonomous', 'task.state',
+                                                                       'task.obfuscator']))
     @aiohttp_apispec.response_schema(ScheduleSchema, description='The response is a dump of the newly '
                                                                  'updated Schedule object.')
     async def update_schedule(self, request: web.Request):
