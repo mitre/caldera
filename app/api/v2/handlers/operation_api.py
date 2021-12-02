@@ -58,7 +58,7 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']),
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
                                      description='The response is the operation with the specified id, if any.')
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
@@ -89,7 +89,7 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
     @aiohttp_apispec.request_schema(OperationSchema(partial=True))
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']),
                                      description='The response is the updated operation, including user modifications.')
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
@@ -162,7 +162,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(result)
 
     @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(LinkSchema(partial=True))
+    @aiohttp_apispec.request_schema(LinkSchema(partial=True, only=['command', 'status']))
     @aiohttp_apispec.response_schema(LinkSchema)
     async def update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
