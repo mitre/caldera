@@ -88,8 +88,8 @@ class OperationApi(BaseObjectApi):
                               'required': 'true',
                               'description': 'UUID of the Operation object to be retrieved.'
                           }])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True))
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']),
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
                                      description='The response is the updated operation, including user modifications.')
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
@@ -132,7 +132,9 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_event_logs(operation_id, access, output)
         return web.json_response(report)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are "paw", '
+                                                       '"executor.name", "executor.command", and "executor.platform". '
+                                                       '"executor.command" is expected to be unencoded.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
     async def get_operation_links(self, request: web.Request):
