@@ -3927,8 +3927,8 @@ button.dropdown-item {
 }
 a.dropdown-item:hover,
 button.dropdown-item:hover {
-  background-color: #262626;
-  color: #0a0a0a;
+  background-color: #1D1D1D;
+  color: #b0b0b0;
 }
 a.dropdown-item.is-active,
 button.dropdown-item.is-active {

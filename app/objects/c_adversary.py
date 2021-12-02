@@ -1,11 +1,9 @@
-import os
 import uuid
 
 import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 
 
 DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
@@ -20,6 +18,7 @@ class AdversarySchema(ma.Schema):
     objective = ma.fields.String()
     tags = ma.fields.List(ma.fields.String(), allow_none=True)
     has_repeatable_abilities = ma.fields.Boolean(dump_only=True)
+    plugin = ma.fields.String(missing=None)
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -57,7 +56,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
     def unique(self):
         return self.hash('%s' % self.adversary_id)
 
-    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None):
+    def __init__(self, name='', adversary_id='', description='', atomic_ordering=(), objective='', tags=None, plugin=''):
         super().__init__()
         self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name
@@ -66,6 +65,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         self.objective = objective or DEFAULT_OBJECTIVE_ID
         self.tags = set(tags) if tags else set()
         self.has_repeatable_abilities = False
+        self.plugin = plugin
 
     def store(self, ram):
         existing = self.retrieve(ram['adversaries'], self.unique)
@@ -78,6 +78,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         existing.update('objective', self.objective)
         existing.update('tags', self.tags)
         existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram['abilities']))
+        existing.update('plugin', self.plugin)
         return existing
 
     def verify(self, log, abilities, objectives):
@@ -101,11 +102,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         return False
 
     async def which_plugin(self):
-        file_svc = BaseService.get_service('file_svc')
-        for plugin in os.listdir('plugins'):
-            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.adversary_id):
-                return plugin
-        return None
+        return self.plugin
 
     def check_repeatable_abilities(self, ability_list):
         return any(ab.repeatable for ab_id in self.atomic_ordering for ab in ability_list if ab.ability_id == ab_id)

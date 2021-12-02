@@ -84,8 +84,6 @@ class Plugin(FirstClassObjectInterface, BaseObject):
         except Exception as e:
             logging.error('Error expanding plugin=%s, %s' % (self.name, e))
 
-    """ PRIVATE """
-
     def _load_module(self):
         try:
             return import_module('plugins.%s.hook' % self.name)
