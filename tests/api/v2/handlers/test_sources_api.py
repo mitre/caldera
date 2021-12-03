@@ -1,8 +1,7 @@
 import pytest
+import unittest.mock as mock
 
 from http import HTTPStatus
-from datetime import datetime, timezone
-import unittest.mock as mock
 
 from app.objects.c_source import Source, SourceSchema
 from app.objects.secondclass.c_fact import Fact
@@ -10,11 +9,6 @@ from app.objects.secondclass.c_rule import Rule
 from app.objects.secondclass.c_relationship import Relationship
 from app.utility.rule_set import RuleAction
 from app.utility.base_service import BaseService
-
-
-@pytest.fixture
-def mock_time():
-    return datetime(2021, 1, 1, tzinfo=timezone.utc)
 
 
 @pytest.fixture
@@ -34,14 +28,15 @@ def new_source_payload():
         'name': 'new test source',
         'facts': [fact],
         'rules': [rule.schema.dump(rule)],
-        'relationships': [relationship]
+        'relationships': [relationship],
+        'plugin': ''
     }
     return source
 
 
 @pytest.fixture
 def expected_new_source_dump(new_source_payload, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         source = SourceSchema().load(new_source_payload)
@@ -74,12 +69,13 @@ def updated_source_payload():
 
 @pytest.fixture
 def expected_updated_source_dump(updated_source_payload, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         source = SourceSchema().load(updated_source_payload)
         dumped_obj = source.display_schema.dump(source)
         dumped_obj['relationships'][0]['unique'] = mock.ANY
+        dumped_obj['plugin'] = ''
         return dumped_obj
 
 
@@ -106,7 +102,7 @@ def replaced_source_payload(test_source):
 
 @pytest.fixture
 def expected_replaced_source_dump(replaced_source_payload, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         source = SourceSchema().load(replaced_source_payload)
@@ -117,7 +113,7 @@ def expected_replaced_source_dump(replaced_source_payload, mocker, mock_time):
 
 @pytest.fixture
 def test_source(loop, mocker, mock_time):
-    with mocker.patch('datetime.datetime') as mock_datetime:
+    with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         fact = Fact(trait='test_fact', value=1)
@@ -156,7 +152,7 @@ class TestSourcesApi:
 
     async def test_create_source(self, api_v2_client, api_cookies, new_source_payload, expected_new_source_dump,
                                  mocker, mock_time):
-        with mocker.patch('datetime.datetime') as mock_datetime:
+        with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
             mock_datetime.return_value = mock_datetime
             mock_datetime.now.return_value = mock_time
             resp = await api_v2_client.post('/api/v2/sources', cookies=api_cookies, json=new_source_payload)
@@ -179,7 +175,7 @@ class TestSourcesApi:
                                  expected_updated_source_dump, mocker, mock_time):
         with mocker.patch('app.api.v2.managers.base_api_manager.BaseApiManager.strip_yml') as mock_strip_yml:
             mock_strip_yml.return_value = [test_source.schema.dump(test_source)]
-            with mocker.patch('datetime.datetime') as mock_datetime:
+            with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
                 mock_datetime.return_value = mock_datetime
                 mock_datetime.now.return_value = mock_time
                 resp = await api_v2_client.patch('/api/v2/sources/123', cookies=api_cookies, json=updated_source_payload)
@@ -199,7 +195,7 @@ class TestSourcesApi:
 
     async def test_replace_source(self, api_v2_client, api_cookies, test_source, replaced_source_payload, mocker,
                                   mock_time, expected_replaced_source_dump):
-        with mocker.patch('datetime.datetime') as mock_datetime:
+        with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
             mock_datetime.return_value = mock_datetime
             mock_datetime.now.return_value = mock_time
             resp = await api_v2_client.put('/api/v2/sources/123', cookies=api_cookies, json=replaced_source_payload)
@@ -215,7 +211,7 @@ class TestSourcesApi:
 
     async def test_replace_nonexistent_source(self, api_v2_client, api_cookies, new_source_payload, mocker, mock_time,
                                               expected_new_source_dump):
-        with mocker.patch('datetime.datetime') as mock_datetime:
+        with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
             mock_datetime.return_value = mock_datetime
             mock_datetime.now.return_value = mock_time
             resp = await api_v2_client.put('/api/v2/sources/456', cookies=api_cookies, json=new_source_payload)
