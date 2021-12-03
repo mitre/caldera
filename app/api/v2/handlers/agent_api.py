@@ -73,7 +73,8 @@ class AgentApi(BaseObjectApi):
                               'description': 'paw of the Agent to be retrieved'
                           }])
     @aiohttp_apispec.request_schema(AgentSchema(partial=True))
-    @aiohttp_apispec.response_schema(AgentSchema)
+    @aiohttp_apispec.response_schema(AgentSchema, description="Json dictionary representation of the created or "
+                                                              "updated Agent")
     async def create_or_update_agent(self, request: web.Request):
         agent = await self.create_or_update_object(request)
         return web.json_response(agent.display)
@@ -89,7 +90,7 @@ class AgentApi(BaseObjectApi):
                               'required': 'true',
                               'description': 'paw of the Agent to be deleted'
                           }])
-    @aiohttp_apispec.response_schema(AgentSchema)
+    @aiohttp_apispec.response_schema(AgentSchema(only=[]), description="Returns HTTP 200")
     async def delete_agent(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
@@ -97,7 +98,8 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Retrieve deploy commands",
                           description="Retrieve the deploy commands currently configured within Caldera.")
-    @aiohttp_apispec.response_schema(DeployCommandsSchema)
+    @aiohttp_apispec.response_schema(DeployCommandsSchema, description="Json dictionary representation of deploy "
+                                                                       "commands, sorted by Ability ID")
     async def get_deploy_commands(self, request: web.Request):
         deploy_commands = await self._api_manager.get_deploy_commands()
         return web.json_response(deploy_commands)
@@ -114,7 +116,8 @@ class AgentApi(BaseObjectApi):
                               'required': 'true',
                               'description': 'ID of the ability to retrieve deploy commands for'
                           }])
-    @aiohttp_apispec.response_schema(DeployCommandsSchema)
+    @aiohttp_apispec.response_schema(DeployCommandsSchema, description="Json dictionary representation of deploy "
+                                                                       "commands for the specified Ability ID")
     async def get_deploy_commands_for_ability(self, request: web.Request):
         ability_id = request.match_info.get('ability_id')
         deploy_commands = await self._api_manager.get_deploy_commands(ability_id)
