@@ -26,7 +26,8 @@ class ObjectiveApi(BaseObjectApi):
                           description='Retrieve all objectives by criteria. Use fields from the `ObjectiveSchema` in '
                                       'the request body to filter retrieved objectives.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True),
+                                     desctiption='Returns a list of all objectives dumped in ObjectiveSchema format.')
     async def get_objectives(self, request: web.Request):
         objectives = await self.get_all_objects(request)
         return web.json_response(objectives)
@@ -42,7 +43,7 @@ class ObjectiveApi(BaseObjectApi):
                           summary='Create a new objective',
                           description='Create a new objective using the format provided in the `ObjectiveSchema`.')
     @aiohttp_apispec.request_schema(ObjectiveSchema)
-    @aiohttp_apispec.response_schema(ObjectiveSchema)
+    @aiohttp_apispec.response_schema(ObjectiveSchema, description='Returns single objective in ObjectiveSchema format.')
     async def create_objective(self, request: web.Request):
         objective = await self.create_on_disk_object(request)
         return web.json_response(objective.display)
