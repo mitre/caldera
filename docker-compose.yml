@@ -20,4 +20,4 @@ services:
       - "2222:2222"
     volumes:
       - ./:/usr/src/app
-    command: --fresh --insecure
+    command: --fresh --insecure --log DEBUG
