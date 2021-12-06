@@ -48,8 +48,8 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                              summary='Create a Fact Source.',
-                              description='Create a new Fact Source using the format provided in the SourceSchema.')
+                          summary='Create a Fact Source.',
+                          description='Create a new Fact Source using the format provided in the SourceSchema.')
     @aiohttp_apispec.docs(tags=['sources'])
     @aiohttp_apispec.request_schema(SourceSchema)
     @aiohttp_apispec.response_schema(SourceSchema, description='Returns a single Source dumped in SourceSchema format.')
@@ -90,9 +90,9 @@ class FactSourceApi(BaseObjectApi):
         return web.json_response(source.display)
 
     @aiohttp_apispec.docs(tags=['sources'],
-                              summary='Delete an existing Fact Source.',
-                              description='Delete a Fact Source, given its id.',
-                              parameters=[{
+                          summary='Delete an existing Fact Source.',
+                          description='Delete a Fact Source, given its id.',
+                          parameters=[{
                                 'in': 'path',
                                 'name': 'id',
                                 'description': 'The id of the Fact Source to be deleted.',
