@@ -98,7 +98,7 @@
             </div>
             <template x-for="ability in filteredAbilities" :key="ability.ability_id">
                 <div class="box mb-2 mr-2 p-3 ability" @click="selectAbility(ability)">
-                    <span class="tag m-0 mb-1" x-text="ability.tactic"></span>
+                    <span class="tag tactic m-0 mb-1" x-text="ability.tactic"></span>
                     <p>
                         <span class="has-text-weight-bold" x-text="ability.name"></span>
                         <span x-text="`(${ability.technique_id})`"></span>
@@ -665,11 +665,21 @@
         border-right: 1px solid rgb(97, 97, 97);
     }
 
+    @media(max-width: 1200px) {
+        .box.ability {
+            width: 98%;
+        }
+    }
+    @media(min-width: 1200px) {
+        .box.ability {
+            width: 48%;
+        }
+    }
     .box.ability {
         position: relative;
-        width: 49%;
         cursor: pointer;
         border: 1px solid transparent;
+        background-color: #272727;
     }
     .box.ability:hover {
         border: 1px solid #474747;
@@ -681,6 +691,10 @@
 
     .ability-detail.modal-card-body {
         overflow-x: hidden;
+    }
+
+    .tag.tactic {
+        background-color: #1a1a1a;
     }
     
     .scroll-top {
