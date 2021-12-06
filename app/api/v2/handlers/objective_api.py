@@ -27,7 +27,7 @@ class ObjectiveApi(BaseObjectApi):
                                       'the request body to filter retrieved objectives.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True),
-                                     desctiption='Returns a list of all objectives dumped in ObjectiveSchema format.')
+                                     description='Returns a list of all objectives dumped in ObjectiveSchema format.')
     async def get_objectives(self, request: web.Request):
         objectives = await self.get_all_objects(request)
         return web.json_response(objectives)
