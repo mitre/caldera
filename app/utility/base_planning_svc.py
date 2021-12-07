@@ -104,7 +104,7 @@ class BasePlanningService(BaseService):
                     for combo in list(itertools.product(*valid_facts)):
                         try:
                             copy_test = copy.copy(decoded_test)
-                            copy_link = pickle.loads(pickle.dumps(link))    #nosec
+                            copy_link = pickle.loads(pickle.dumps(link))    # nosec
                             variant, score, used = await self._build_single_test_variant(copy_test, combo,
                                                                                          link.executor.name)
                             copy_link.command = self.encode_string(variant)
