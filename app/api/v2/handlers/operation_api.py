@@ -78,7 +78,14 @@ class OperationApi(BaseObjectApi):
                           summary='Get Operation Report',
                           description='Retrieves the report for a given operation_id. Uses "Include agent output"',
                                       ' parameter for additional operation information. Uses fields from BaseGetOneQuerySchema',
-                                      ' for parameters. Returns operation in format provided by OperationOutputRequestSchema.')
+                                      ' for parameters. Returns operation in format provided by OperationOutputRequestSchema.'
+                          parameters=[{
+                              'operation_id' : 'Unique ID for operation'
+                              'access' : 'Format for report'
+                              'output' : 'Boolean for Agent Output in report'
+                              'schema': {'type': 'string'},
+                              'required': 'true'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
     async def get_operation_report(self, request: web.Request):
