@@ -46,9 +46,10 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
-    @aiohttp_apispec.docs(tags=['relationships'], summary="Retrieve relationships by criteria. Use fields from the "
-                                                          "RelationshipSchema in the request body to filter retrieved "
-                                                          "relationships.")
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary="Retrieve all relationships.",
+                          description='Returns a list of all Relationships.')
+    @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns a list of all Relationships, dumped in RelationshipSchema format.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
     async def get_relationships(self, request: web.Request):
