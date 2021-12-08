@@ -8,12 +8,14 @@
         <link rel="stylesheet" href="/gui/css/basic.css">
         <link rel="stylesheet" href="/gui/css/timeline.css">
         <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
-        <link rel="stylesheet" href="/gui/css/lib/custom-bulma-red.css">
+        <link rel="stylesheet" href="/gui/css/lib/custom-bulma.css">
         <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
         <style>
             :root {
                 --primary-color: #8B0000;
+                --primary-color-hover: #690000;
+                --primary-color-translucent: #8B000050;
             }
         </style>
     </head>
@@ -81,6 +83,11 @@
                     <ul class="menu-list has-text-centered">
                         <li>
                             <p class="mt-6" x-text="`v${version}`"></p>
+                            <p x-show="newVersionLink">
+                                <a class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
+                                    New version available <br> (v<span x-text="newVersionLink.split('/')[newVersionLink.split('/').length - 1]"></span>)
+                                </a>
+                            </p>
                         </li>
                     </ul>
                 </aside>
@@ -144,6 +151,54 @@
                     </div>
                     <footer class="modal-card-foot">
                         <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
+                    </footer>
+                </div>
+            </div>
+
+            <div x-bind:class="{ 'is-active': isFirstVisit }" class="modal">
+                <div class="modal-background" @click="isFirstVisit = false"></div>
+                <div class="modal-card">
+                    <div>
+                        <header class="modal-card-head">
+                            <h2>Welcome to CALDERA!</h2>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="block">
+                                <label class="label">📚 Learn</label>
+                                <div class="is-flex is-justify-content-space-between">
+                                    <p>
+                                        Never used CALDERA before? The training plugin will walk you through all the capabilities of the platform
+                                        in hands-on, capture-the-flag style exercises.
+                                    </p>
+                                    <button class="button is-small is-primary" @click="addTab('training', '/plugin/training/gui'); isFirstVisit = false">Start Training</button>
+                                </div>
+                            </div>
+                            <div class="block">
+                                <label class="label">📖 Documentation</label>
+                                <div class="is-flex is-justify-content-space-between">
+                                    <p>
+                                        Get familiar with all of CALDERA's capabilities, terminology, and plugins.
+                                    </p>
+                                    <a class="button is-small is-primary" target="_blank" href="/docs/index.html">Read the Docs</a>
+                                </div>
+                            </div>
+                            <div class="block">
+                                <label class="label">📬 Get in touch</label>
+                                <div class="is-flex is-justify-content-left">
+                                    <a class="button is-small is-primary mr-2" href="mailto:caldera@mitre.org">
+                                        <span class="icon"><i class="far fa-envelope"></i></span>
+                                        <span>Email us</span>
+                                    </a>
+                                    <a class="button is-small is-primary" target="_blank" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
+                                        <span class="icon"><i class="fab fa-slack"></i></span>
+                                        <span>Join our Slack</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="modal-card-foot">
+                        <button class="button fancy-button is-small is-fullwidth" @click="isFirstVisit = false">🚀 Get started</button>
                     </footer>
                 </div>
             </div>
