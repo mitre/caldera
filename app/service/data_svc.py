@@ -193,7 +193,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def convert_v0_ability_requirements(self, requirements_data: list):
         """Checks if ability file follows v0 requirement format, otherwise assumes v1 ability formatting."""
-        if 'relationship_match' not in requirements_data[0]:
+        if requirements_data and requirements_data[0].get('relationship_match'):
             return await self._load_ability_requirements(requirements_data)
         return await self.load_requirements_from_list(requirements_data)
 
