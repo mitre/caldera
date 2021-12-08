@@ -26,38 +26,38 @@
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
                 </div>
                 <div class="is-flex is-justify-content-center">
-                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><i class="fas fa-user pr-3"></i>blue</span>
+                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>blue</span>
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
                         <a id="startup-errors-warning" class="has-text-warning">
-                            <i class="fas fa-exclamation-triangle pr-1"></i>
+                            <em class="fas fa-exclamation-triangle pr-1"></em>
                             <span title="Click for to view startup errors" class="has-text-warning" x-text="`${errors.length} startup warnings`" @click="showErrors = true"></span>
                         </a>
                     </div>
                 </template>
                 <aside id="nav-menu" class="menu">
-                    <p class="menu-label nav-header"><i class="fas fa-flag pr-2"></i>Campaigns</p>
+                    <p class="menu-label nav-header"><em class="fas fa-flag pr-2"></em>Campaigns</p>
                     <ul class="menu-list">
                         <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/profiles')">defenders</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
                     </ul>
-                    <p class="menu-label nav-header"><i class="fas fa-puzzle-piece pr-2"></i>Plugins</p>
+                    <p class="menu-label nav-header"><em class="fas fa-puzzle-piece pr-2"></em>Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
                         <li>
                             <a href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
                                 {{ plugin.name }}
                                     <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
-                                        <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup>
+                                        <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup>
                                     </template>
                                 </a>
                             </li>
                         {% endfor %}
                     </ul>
-                    <p class="menu-label nav-header"><i class="fas fa-cog pr-2"></i></i>Configuration</p>
+                    <p class="menu-label nav-header"><em class="fas fa-cog pr-2"></em></em>Configuration</p>
                     <ul class="menu-list">
                         <li><a href="#home" class="nav-item" x-on:click="addTab('fact sources', '/advanced/sources')">fact sources</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
@@ -68,14 +68,14 @@
                         <li><a href="#home" class="nav-item" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
                         <li><a href="./api/docs" target="_blank">
                             api docs
-                            <sup><i class="fas fa-external-link-alt pl-1 is-size-7"></i></sup></a>
+                            <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup></a>
                         </li>
                     </ul>
                     <br>
                     <ul class="menu-list has-text-centered">
                         <li>
                             <a href="/logout">
-                                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                                <span class="icon"><em class="fas fa-sign-out-alt"></em></span>
                                 <span>Log out</span>
                             </a>
                         </li>
@@ -95,7 +95,7 @@
                             <li x-bind:class="activeTabIndex === index ? 'is-active' : ''">
                                 <a x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
-                                    <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><i class="fas fa-sm fa-times"></i></span>
+                                    <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><em class="fas fa-sm fa-times"></em></span>
                                 </a>
                             </li>
                         </template>
@@ -150,11 +150,11 @@
                                 <label class="label">📬 Get in touch</label>
                                 <div class="is-flex is-justify-content-left">
                                     <a class="button is-small is-primary mr-2" href="mailto:caldera@mitre.org">
-                                        <span class="icon"><i class="far fa-envelope"></i></span>
+                                        <span class="icon"><em class="far fa-envelope"></em></span>
                                         <span>Email us</span>
                                     </a>
-                                    <a class="button is-small is-primary" target="_blank" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
-                                        <span class="icon"><i class="fab fa-slack"></i></span>
+                                    <a class="button is-small is-primary" target="_blank" rel="noopener" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
+                                        <span class="icon"><em class="fab fa-slack"></em></span>
                                         <span>Join our Slack</span>
                                     </a>
                                 </div>

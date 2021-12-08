@@ -1459,7 +1459,6 @@ a.box:active {
   pointer-events: none;
 }
 .button.is-loading::after {
-  position: absolute;
   left: calc(50% - (1em / 2));
   top: calc(50% - (1em / 2));
   position: absolute !important;
