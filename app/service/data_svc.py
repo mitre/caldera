@@ -19,7 +19,7 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
@@ -158,7 +158,7 @@ class DataService(DataServiceInterface, BaseService):
                 privilege = ab.pop('privilege', None)
                 repeatable = ab.pop('repeatable', False)
                 singleton = ab.pop('singleton', False)
-                requirements = await self._load_ability_requirements(ab.pop('requirements', []))
+                requirements = await self.convert_v0_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
                 plugin = self._get_plugin_name(filename)
@@ -190,6 +190,12 @@ class DataService(DataServiceInterface, BaseService):
         if 'technique' in ability_data:
             return ability_data.get('technique', dict()).get('attack_id')
         return ability_data.pop('technique_id')
+
+    async def convert_v0_ability_requirements(self, requirements_data: list):
+        """Checks if ability file follows v0 requirement format, otherwise assumes v1 ability formatting."""
+        if 'relationship_match' not in requirements_data[0]:
+            return await self._load_ability_requirements(requirements_data)
+        return await self.load_requirements_from_list(requirements_data)
 
     async def load_executors_from_platform_dict(self, platforms):
         executors = []
@@ -225,6 +231,9 @@ class DataService(DataServiceInterface, BaseService):
 
     async def load_executors_from_list(self, executors: list):
         return [ExecutorSchema().load(entry) for entry in executors]
+
+    async def load_requirements_from_list(self, requirements: list):
+        return [RequirementSchema().load(entry) for entry in requirements]
 
     async def load_adversary_file(self, filename, access):
         warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
