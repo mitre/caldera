@@ -79,7 +79,7 @@ class AppService(AppServiceInterface, BaseService):
                 today_utc = datetime.now(timezone.utc).date()
                 diff = datetime.combine(today_utc, now) - datetime.combine(today_utc, s.schedule)
                 if interval > diff.total_seconds() > 0:
-                    self.log.debug('Pulling %s off the scheduler' % s.name)
+                    self.log.debug('Pulling %s off the scheduler' % s.id)
                     sop = copy.deepcopy(s.task)
                     sop.set_start_details()
                     await self._services.get('data_svc').store(sop)
