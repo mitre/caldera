@@ -6,6 +6,7 @@ from app.api.v2.managers.schedule_api_manager import ScheduleApiManager
 from app.api.v2.responses import JsonHttpForbidden
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_schedule import Schedule, ScheduleSchema
+from app.utility.base_world import BaseWorld
 
 
 class ScheduleApi(BaseObjectApi):
@@ -115,15 +116,18 @@ class ScheduleApi(BaseObjectApi):
         data = await request.json()
         await self._error_if_object_with_id_exists(data.get(self.id_property))
         access = await self.get_request_permissions(request)
-        operation = await self._api_manager.validate_and_setup_task(data['task'], access)
-        data['task'] = operation.schema.dump(operation)
-        return self._api_manager.create_object_from_schema(self.schema, data, access)
+        return await self._create_and_dump_schedule(data, access)
 
     async def create_or_update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
         matched_obj = self._api_manager.find_object(self.ram_key, query)
         if matched_obj and matched_obj.access not in access['access']:
             raise JsonHttpForbidden(f'Cannot update Schedule {self.id} due to insufficient permissions: {obj_id}')
+        return await self._create_and_dump_schedule(data, access)
+
+    '''Private Methods'''
+
+    async def _create_and_dump_schedule(self, data: dict, access: BaseWorld.Access):
         operation = await self._api_manager.validate_and_setup_task(data['task'], access)
         data['task'] = operation.schema.dump(operation)
         return self._api_manager.create_object_from_schema(self.schema, data, access)
