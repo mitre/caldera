@@ -147,7 +147,8 @@ class FactApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['relationships'],
                           summary='Delete a Relationship.',
-                          description='Delete Relationships using the format provided in the RelationshipSchema. This will delete all Relationships that match the criteria specified in the payload.')
+                          description=('Delete Relationships using the format provided in the RelationshipSchema. '
+                                       'This will delete all Relationships that match the criteria specified in the payload.'))
     @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the Relationship that was deleted, dumped in RelationshipSchema format.')
     @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def delete_relationships(self, request: web.Request):
@@ -187,7 +188,8 @@ class FactApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['relationships'],
                           summary='Update a Relationship.',
-                          description='Update existing Relationships using the format provided in the RelationshipSchema. This will update all Relationships that match the criteria specified in the payload.')
+                          description=('Update existing Relationships using the format provided in the RelationshipSchema. '
+                                       'This will update all Relationships that match the criteria specified in the payload.'))
     @aiohttp_apispec.request_schema(RelationshipUpdateSchema(partial=True))
     @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the Relationship that was updated, dumped in RelationshipSchema format.')
     async def update_relationships(self, request: web.Request):
