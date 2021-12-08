@@ -174,7 +174,7 @@ class RestService(RestServiceInterface, BaseService):
         schedule_id = str(uuid.uuid4())
         schedules = await self.get_service('data_svc').locate('schedules', match=dict(id=schedule_id))
         if schedules:
-            self.log.debug('A scheduled operation with the id "%s" already exists, skipping' % schedule_id)
+            self.log.debug('A Schedule with the id "%s" already exists, skipping' % schedule_id)
         else:
             scheduled = await self.get_service('data_svc').store(
                 Schedule(schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
