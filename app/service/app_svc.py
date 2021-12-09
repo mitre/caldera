@@ -82,6 +82,7 @@ class AppService(AppServiceInterface, BaseService):
                     self.log.debug('Pulling %s off the scheduler' % s.id)
                     sop = copy.deepcopy(s.task)
                     sop.set_start_details()
+                    await sop.update_operation_agents(self.get_services())
                     await self._services.get('data_svc').store(sop)
                     self.loop.create_task(sop.run(self.get_services()))
             await asyncio.sleep(interval)
