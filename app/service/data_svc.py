@@ -7,6 +7,7 @@ import pickle
 import tarfile
 import shutil
 import warnings
+import pathlib
 from importlib import import_module
 
 from app.objects.c_ability import Ability
@@ -18,7 +19,7 @@ from app.objects.c_source import Source
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_goal import Goal
 from app.objects.secondclass.c_parser import Parser
-from app.objects.secondclass.c_requirement import Requirement
+from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
@@ -157,9 +158,11 @@ class DataService(DataServiceInterface, BaseService):
                 privilege = ab.pop('privilege', None)
                 repeatable = ab.pop('repeatable', False)
                 singleton = ab.pop('singleton', False)
-                requirements = await self._load_ability_requirements(ab.pop('requirements', []))
+                requirements = await self.convert_v0_ability_requirements(ab.pop('requirements', []))
                 buckets = ab.pop('buckets', [tactic])
                 ab.pop('access', None)
+                plugin = self._get_plugin_name(filename)
+                ab.pop('plugin', plugin)
 
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % id)
@@ -167,7 +170,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
-                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton,
+                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
                                            **ab)
 
     async def convert_v0_ability_executor(self, ability_data: dict):
@@ -187,6 +190,12 @@ class DataService(DataServiceInterface, BaseService):
         if 'technique' in ability_data:
             return ability_data.get('technique', dict()).get('attack_id')
         return ability_data.pop('technique_id')
+
+    async def convert_v0_ability_requirements(self, requirements_data: list):
+        """Checks if ability file follows v0 requirement format, otherwise assumes v1 ability formatting."""
+        if requirements_data and 'relationship_match' not in requirements_data[0]:
+            return await self._load_ability_requirements(requirements_data)
+        return await self.load_requirements_from_list(requirements_data)
 
     async def load_executors_from_platform_dict(self, platforms):
         executors = []
@@ -223,6 +232,9 @@ class DataService(DataServiceInterface, BaseService):
     async def load_executors_from_list(self, executors: list):
         return [ExecutorSchema().load(entry) for entry in executors]
 
+    async def load_requirements_from_list(self, requirements: list):
+        return [RequirementSchema().load(entry) for entry in requirements]
+
     async def load_adversary_file(self, filename, access):
         warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning)
         await self.load_yaml_file(Adversary, filename, access)
@@ -239,9 +251,8 @@ class DataService(DataServiceInterface, BaseService):
         for src in self.strip_yml(filename):
             obj = object_class.load(src)
             obj.access = access
+            obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
-
-    """ PRIVATE """
 
     async def _load(self, plugins=()):
         try:
@@ -338,11 +349,11 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
-                              repeatable=False, buckets=None, access=None, singleton=False, **kwargs):
+                              repeatable=False, buckets=None, access=None, singleton=False, plugin='', **kwargs):
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
-                          access=access, singleton=singleton, **kwargs)
+                          access=access, singleton=singleton, plugin=plugin, **kwargs)
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):
@@ -412,3 +423,7 @@ class DataService(DataServiceInterface, BaseService):
     async def _verify_adversary_profiles(self):
         for adv in await self.locate('adversaries'):
             adv.verify(log=self.log, abilities=self.ram['abilities'], objectives=self.ram['objectives'])
+
+    def _get_plugin_name(self, filename):
+        plugin_path = pathlib.PurePath(filename).parts
+        return plugin_path[1] if 'plugins' in plugin_path else ''
