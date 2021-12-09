@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from app.objects.c_ability import Ability
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
+from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.utility.base_service import BaseService
 
 
@@ -39,8 +40,11 @@ def updated_ability_payload(test_ability):
 def replaced_ability_payload(test_ability):
     ability_data = test_ability.schema.dump(test_ability)
     test_executor_linux = Executor(name='sh', platform='linux', command='whoami')
+    test_requirement = Requirement(module='plugins.stockpile.app.requirements.paw_provenance',
+                                   relationship_match=[{'source': 'host.user.name'}])
     ability_data.update(dict(name='replaced test ability', tactic='collection', technique_name='discovery',
-                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)], plugin=''))
+                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)], plugin='',
+                             requirements=[RequirementSchema().dump(test_requirement)]))
     return ability_data
 
 
@@ -48,7 +52,8 @@ def replaced_ability_payload(test_ability):
 def test_ability(loop, api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
     ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
-                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery', plugin='testplugin')
+                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery',
+                      plugin='testplugin')
     loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     return ability
 
