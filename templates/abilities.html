@@ -106,9 +106,9 @@
                     <p class="help mb-0" x-text="ability.description"></p>
                     <p class="platforms">
                         <template x-for="platform of getAbilityPlatforms(ability)">
-                            <a class="has-tooltip-arrow" x-bind:data-tooltip="platform">
+                            <span class="has-tooltip-arrow has-tooltip-left no-underline" x-bind:data-tooltip="platform">
                                 <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
-                            </a>
+                            </span>
                         </template>
                     </p>
                 </div>
@@ -691,6 +691,10 @@
 
     .ability-detail.modal-card-body {
         overflow-x: hidden;
+    }
+
+    .has-tooltip-arrow.no-underline {
+        border-bottom: none;
     }
 
     .tag.tactic {
