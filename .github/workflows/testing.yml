@@ -15,7 +15,7 @@ jobs:
             toxenv: py38,style,coverage-ci
           - python-version: 3.9
             toxenv: py39,style,coverage-ci
-          - python-version: 3.10
+          - python-version: 3.10.0
             toxenv: py310,style,coverage-ci
 
     steps:
