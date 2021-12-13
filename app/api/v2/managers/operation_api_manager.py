@@ -37,6 +37,7 @@ class OperationApiManager(BaseApiManager):
         if data.get('state'):
             await self.validate_operation_state(data, existing_operation)
         operation = await self.setup_operation(data, access)
+        operation.set_start_details()
         operation.store(self._data_svc.ram)
         asyncio.get_event_loop().create_task(operation.run(self.services))
         return operation
@@ -143,7 +144,6 @@ class OperationApiManager(BaseApiManager):
         await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
         operation.access = allowed
-        operation.set_start_details()
         return operation
 
     async def _construct_and_dump_planner(self, planner_id: str):
