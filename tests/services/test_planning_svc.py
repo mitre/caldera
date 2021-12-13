@@ -209,7 +209,7 @@ class TestPlanningService:
         # add stopping condition to a fact, then to a link, then the link to the operation
         l0 = link(command='test', paw='0', ability=ability, executor=executor)
         l1 = link(command='test1', paw='1', ability=ability, executor=executor)
-        loop.run_until_complete(l1._save_fact(operation, stopping_conditions[0], 1, "dummy_relationship_visual_string"))
+        loop.run_until_complete(l1.save_fact(operation, stopping_conditions[0], 1, "dummy_relationship_visual_string"))
         operation.add_link(l0)
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping condition
@@ -229,7 +229,7 @@ class TestPlanningService:
         assert p.stopping_condition_met is False
         # add stopping condition to a fact, then to a link, then the link to the operation
         l1 = link(command='test1', paw='1', ability=ability, executor=next(ability.executors))
-        loop.run_until_complete(l1._save_fact(operation, stopping_condition, 1, "dummy_relationship_visual_string"))
+        loop.run_until_complete(l1.save_fact(operation, stopping_condition, 1, "dummy_relationship_visual_string"))
         operation.add_link(l1)
         # now verify stopping condition is met since we directly inserted fact that matches stopping conidition
         loop.run_until_complete(planning_svc.update_stopping_condition_met(p, operation))
