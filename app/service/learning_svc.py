@@ -5,7 +5,6 @@ from base64 import b64decode
 from importlib import import_module
 
 from app.objects.secondclass.c_relationship import Relationship
-from app.objects.secondclass.c_fact import OriginType
 from app.objects.secondclass.c_link import update_scores
 from app.service.interfaces.i_learning_svc import LearningServiceInterface
 from app.utility.base_service import BaseService
