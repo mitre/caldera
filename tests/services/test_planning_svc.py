@@ -362,9 +362,9 @@ class TestPlanningService:
         assert 1 == len(filt)
 
         # test parallel filtering
-        flat_fil = planning_svc._remove_links_of_duplicate_singletons([[l0, l1, l2, l3],
-                                                                       [l0, l1, l2, l3],
-                                                                       [l0, l1, l2, l3]])
+        flat_fil = loop.run_until_complete(planning_svc._remove_links_of_duplicate_singletons([[l0, l1, l2, l3],
+                                                                                               [l0, l1, l2, l3],
+                                                                                               [l0, l1, l2, l3]]))
         assert 7 == len(flat_fil)
 
     async def test_trait_with_one_part(self, setup_planning_test, planning_svc):
