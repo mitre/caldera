@@ -26,10 +26,10 @@ class AgentApi(BaseObjectApi):
         router.add_get('/deploy_commands', self.get_deploy_commands)
         router.add_get('/deploy_commands/{ability_id}', self.get_deploy_commands_for_ability)
 
-    @aiohttp_apispec.docs(tags=['agents'], 
+    @aiohttp_apispec.docs(tags=['agents'],
                           summary="Retrieve all agents",
                           description="Retrieve all agents by criteria. Use fields from the "
-                                    "'AgentSchema' in the request body to filter the retrieved agents.")
+                                      "'AgentSchema' in the request body to filter the retrieved agents.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
                           description="Returns a list of all agents in 'AgentSchema' format.")
@@ -44,7 +44,7 @@ class AgentApi(BaseObjectApi):
         agent = await self.get_object(request)
         return web.json_response(agent)
 
-    @aiohttp_apispec.docs(tags=['agents'], 
+    @aiohttp_apispec.docs(tags=['agents'],
                           summary="Create a new agent",
                           description="Creates a new agent using the format from 'AgentSchema'.")
     @aiohttp_apispec.request_schema(AgentSchema)
