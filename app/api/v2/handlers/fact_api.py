@@ -135,7 +135,6 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['facts'],
                           summary='Delete a fact',
                           description='Delete a fact by criteria provided in the `FactSchema`.')
-
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
     @aiohttp_apispec.response_schema(FactSchema, description='Returns the fact that was deleted in the `FactSchema` format.')
     async def delete_facts(self, request: web.Request):
