@@ -748,118 +748,146 @@
                         <header class="modal-card-head">
                             <p class="modal-card-title">Add New Potential Link</p>
                         </header>
-                        <section class="modal-card-body">
-                            <div class="modal-form">
-                                <div>
-                                    <label for="link-agent">Agent</label>
-                                    <div class="modal-form-fields">
-                                        <div class="select is-small my-2 ml-3">
-                                            <select id="link-agent"
-                                                    x-model="selectedAgentIndex"
-                                                    x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
-                                                <template x-for="(agent, index) in selectedOperation.host_group"
-                                                          :key="agent.paw">
-                                                    <option :value="index"
-                                                            x-bind:selected="index === 0"
-                                                            x-text="agent.display_name + '-' + agent.paw"></option>
-                                                </template>
-                                            </select>
+                        <section class="modal-card-body" x-show="!selectedPotentialLink.ability_id">
+                            <form>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label">Agent</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <div class="select is-small is-fullwidth">
+                                                    <select id="link-agent" x-model="selectedAgentIndex" x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
+                                                        <option default value="">Choose an agent</option>
+                                                        <template x-for="(agent, index) in selectedOperation.host_group" :key="agent.paw">
+                                                            <option :value="index" x-bind:selected="index === 0" x-text="agent.display_name + '-' + agent.paw"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="link-exec">Executor</label>
-                                    <div class="modal-form-fields">
-                                        <div class="select is-small my-2 ml-3">
-                                            <select id="link-exec" x-model="potentialLink.executor"
-                                                    x-on:change="filterAbilities(abilities)">
-                                                <template x-for="(exec, index) of selectedAgentExecutors"
-                                                          :key="exec.executor">
-                                                    <option x-text="exec.display" :value="exec.executor"
-                                                            x-bind:selected="index === 0"></option>
-                                                </template>
-                                            </select>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label">Executor</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <div class="select is-small is-fullwidth">
+                                                    <select id="link-exec" x-model="potentialLink.executor" x-on:change="filterAbilities(abilities)">
+                                                        <option default value="" disabled>Select an executor</option>
+                                                        <template x-for="(exec, index) of selectedAgentExecutors" :key="exec.executor">
+                                                            <option x-text="exec.display" :value="exec.executor"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="link-tactic">Tactic</label>
-                                    <div class="modal-form-fields">
-                                        <div class="select is-small my-2 ml-3">
-                                            <select id="link-tactic"
-                                                    x-model="potentialLink.tactic"
-                                                    x-on:change="filterAbilities(abilities)">
-                                                <option value="" default value="">All tactics</option>
-                                                <template x-for="tactic in tacticFiltersList"
-                                                          :key="tactic">
-                                                    <option x-text="tactic"></option>
-                                                </template>
-                                            </select>
+                                <div class="p-3"></div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label"><span class="icon is-small"><em class="fas fa-search"></em></span></label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <input class="input is-small" x-model="potentialLinkSearchQuery" placeholder="Search for a link..." x-on:keyup="filterAbilities(abilities)">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="link-technique">Technique</label>
-                                    <div class="modal-form-fields">
-                                        <div class="select is-small my-2 ml-3">
-                                            <select id="link-technique"
-                                                    x-model="potentialLink.technique"
-                                                    x-on:change="filterAbilities(abilities)">
-                                                <option value="" default>All techniques</option>
-                                                <template x-for="technique in techniqueFiltersList"
-                                                          :key="technique">
-                                                    <option x-text="technique"></option>
-                                                </template>
-                                            </select>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label">Tactic</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <div class="select is-small is-fullwidth">
+                                                    <select id="link-tactic" x-model="potentialLink.tactic" x-on:change="filterAbilities(abilities)">
+                                                        <option default value="">All tactics</option>
+                                                        <template x-for="tactic in tacticFiltersList" :key="tactic">
+                                                            <option x-text="tactic"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label">Technique</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <div class="select is-small is-fullwidth">
+                                                    <select id="link-technique" x-model="potentialLink.technique" x-on:change="filterAbilities(abilities)">
+                                                        <option default value="">All techniques</option>
+                                                        <template x-for="technique in techniqueFiltersList" :key="technique">
+                                                            <option x-text="technique"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr>
+                            <div class="is-flex is-justify-content-space-between mb-2">
+                                <strong x-show="filteredAbilitiesList.length">Select a potential link</strong>
+                                <p x-text="`${filteredAbilitiesList.length} potential link${((filteredAbilitiesList.length === 1) ? '' : 's')}`"></p>
                             </div>
-                            <div class="modal-results">
-                                <div class="navbar-divider"></div>
-                                <p class="is-flex is-justify-content-flex-end is-size-7"
-                                   x-text="filteredAbilitiesList.length + ' potential link' + ((filteredAbilitiesList.length === 1) ? '' : 's')"></p>
-                                <template x-if="filteredAbilitiesList">
-                                    <ul class="ml-0">
-                                        <template x-for="ability in filteredAbilitiesList"
-                                                  :key="ability.ability_id">
-                                            <li class="mb-4 abilities-list-item">
-                                                    <span class="is-flex is-justify-content-space-between">
-                                                        <span>
-                                                            <p class="mb-0" x-text="ability.name"></p>
-                                                        </span>
-                                                        <span>
-                                                            <button type="button"
-                                                                    class="button is-primary is-small"
-                                                                    x-bind:disabled="!isLinkAvailable(ability)"
-                                                                    x-bind:title="!isLinkAvailable(ability) ? 'Link is unavailable or has been already added.' : ''"
-                                                                    x-on:click="addPotentialLink(ability)">
-                                                                Add Link
-                                                            </button>
-                                                        </span>
-                                                    </span>
-                                                <span class="ml-3">
-                                                        <sub x-text="ability.description"></sub>
-                                                    </span>
-                                            </li>
-                                        </template>
-                                    </ul>
-                                </template>
-                                <template x-if="!filteredAbilitiesList"><p>Building potential links...</p>
-                                </template>
-                            </div>
-                            <em x-show="showNotRepeatableText"
-                                class="has-text-grey-light is-pulled-right is-size-7">Note:
-                                Repeated links are not available for this operation</em>
+                            <template x-for="ability in filteredAbilitiesList" :key="ability.ability_id">
+                                <div class="box mb-2 mr-2 p-3 ability" @click="selectPotentialLink(ability)">
+                                    <p style="width: 90%">
+                                        <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                        <span x-text="`(${ability.technique_id})`"></span>
+                                    </p>
+                                    <p class="help mb-0" x-text="ability.description" style="width: 90%"></p>
+                                    <span class="icon is-large ability-icon"><em class="fas fa-lg fa-arrow-right"></em></span>
+                                </div>
+                            </template>
+                            <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
-                        <footer class="modal-card-foot">
+                        <section class="modal-card-body" x-show="selectedPotentialLink.ability_id">
+                            <strong x-text="selectedPotentialLink.name" class="mb-2"></strong>
+                            <p x-text="selectedPotentialLink.description"></p>
+                        </section>
+                        <footer class="modal-card-foot" x-show="!selectedPotentialLink.ability_id">
                             <nav class="level">
                                 <div class="level-left">
                                 </div>
                                 <div class="level-right">
                                     <div class="level-item">
-                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                        <button class="button is-small" @click="openModal = null; selectPotentialLink({})">Close</button>
                                     </div>
+                                </div>
+                            </nav>
+                        </footer>
+                        <footer class="modal-card-foot" x-show="selectedPotentialLink.ability_id">
+                            <nav class="level">
+                                <div class="level-left">
+                                    <button class="button is-small" @click="selectPotentialLink({})">
+                                        <span class="icon"><em class="fas fa-arrow-left"></em></span>
+                                        <span>Back</span>
+                                    </button>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null; selectPotentialLink({})">Close</button>
+                                    </div>
+                                    <button class="button is-small is-primary" @click="addPotentialLink(selectedPotentialLink)">
+                                        <span class="icon"><em class="fas fa-plus"></em></span>
+                                        <span>Add Potential Link</span>
+                                    </button>
                                 </div>
                             </nav>
                         </footer>
@@ -1037,16 +1065,21 @@
                 advanced: false
             },
             operations: [],
+            facts: [],
             filteredOperations: [],
             searchInput: '',
             jitterMin: 2,
             jitterMax: 8,
+
+            selectedPotentialLink: {},
+            potentialLinkSearchQuery: '',
             potentialLink: {
                 agent: '',
                 executor: '',
                 tactic: '',
                 technique: '',
             },
+
             tacticFiltersList: [],
             techniqueFiltersList: [],
             abilities: [],
@@ -1173,10 +1206,12 @@
                 this.getOperations();
                 this.getFields();
                 this.getUsage();
+                this.getFacts();
 
                 while (this.$refs.operationsHeader) {
                     await sleep(3000);
                     this.getOperations();
+                    this.getFacts();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
                     this.getAndCompareOperation();
                 }
@@ -1199,6 +1234,14 @@
                     this.filterOperations(this.searchInput);
                 }).catch(() => {
                     toast('Error getting operations');
+                });
+            },
+
+            getFacts() {
+                apiV2('GET', '/api/v2/facts').then((facts) => {
+                    this.facts = facts;
+                }).catch(() => {
+                    toast('Error getting facts');
                 });
             },
 
@@ -1304,7 +1347,7 @@
                     this.getAgent(this.potentialLink.agent.paw);
                     this.filterAbilities(abilities);
                     this.tacticFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.tactic))]);
-                    this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => a.technique_name))]);
+                    this.techniqueFiltersList = sortAlphabetically([...new Set(abilities.flatMap((a) => `${a.technique_id} | ${a.technique_name}`))]);
                 }).catch(() => {
                     toast('Error getting abilities', false);
                 });
@@ -1335,6 +1378,16 @@
                     .catch(() => toast('Error adding manual command.'));
             },
 
+            selectPotentialLink(link) {
+                this.selectedPotentialLink = link;
+                if (!this.selectedPotentialLink.ability_id) return;
+
+                const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
+                const fields = [...new Set( [...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]) )]
+                const options = this.selectedOperation.source.facts.map((fact) => fact.name);
+                const foundOptions = this.facts.found.filter((fact) => )
+            },
+
             addPotentialLink(link) {
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
@@ -1344,15 +1397,13 @@
                     ability: link,
                     paw: this.potentialLink.agent.paw,
                     executor: executor
-                })
-                    .then(() => {
-                        toast('Added potential link.', true);
-                        this.getOperation();
-                        this.addedTechniquesIDs.add(link.technique_id);
-                    })
-                    .catch(() => {
-                        toast('Error adding potential link.');
-                    });
+                }).then(() => {
+                    toast('Added potential link.', true);
+                    this.getOperation();
+                    this.addedTechniquesIDs.add(link.technique_id);
+                }).catch(() => {
+                    toast('Error adding potential link.');
+                });
             },
 
             getLink(link) {
@@ -1522,11 +1573,17 @@
 
             filterAbilities(abilities) {
                 this.filteredAbilitiesList = abilities.filter((ability) => {
-                    let matchAgent = true, matchTactic = true, matchTechnique = true;
-                    if (this.potentialLink.executor) matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
+                    let matchAgent = true, matchTactic = true, matchTechnique = true, matchQuery = true;
+                    if (this.potentialLink.executor) {
+                        matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
+                    } else {
+                        let matchingExecutors = this.selectedAgentExecutors.map((e) => e.executor)
+                        matchAgent = ability.executors.some((ex) => ex.platform === this.potentialLink.agent.platform && matchingExecutors.includes(ex.name));
+                    }
                     if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
-                    if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === ability.technique_name;
-                    return matchAgent && matchTactic && matchTechnique;
+                    if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === `${ability.technique_id} | ${ability.technique_name}`;
+                    matchQuery = ability.name.toLowerCase().includes(this.potentialLinkSearchQuery) || ability.description.toLowerCase().includes(this.potentialLinkSearchQuery);
+                    return matchAgent && matchTactic && matchTechnique && matchQuery;
                 });
             },
         };
@@ -1616,6 +1673,21 @@
 
     #operationsPage .column {
         margin: 0;
+    }
+
+    #operationsPage .box.ability {
+        position: relative;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background-color: #272727;
+    }
+    #operationsPage .box.ability:hover {
+        border: 1px solid #474747;
+    }
+    #operationsPage .ability-icon {
+        position: absolute;
+        right: 0;
+        top: 20%;
     }
 
     /*MODAL FORM STYLE*/
