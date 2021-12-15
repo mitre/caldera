@@ -188,6 +188,7 @@ def test_find_and_dump_objects_with_sort_and_default(agent):
     manager.apply_config('objects.agents.default', 'agentE')
     dumped_agents = manager.find_and_dump_objects('agents', sort='paw')
     assert len(dumped_agents) == len(stub_data_svc.ram['agents'])
+    assert dumped_agents == [] # will always fail, but I NEED DEBUG
     assert dumped_agents[0]['paw'] == 'agentE'
     prev_paw = None
     for dumped_agent in dumped_agents[1:]:
