@@ -40,7 +40,6 @@ class BaseApiManager(BaseWorld):
             dumped_obj = self.dump_object_with_filters(obj, include, exclude)
             matched_objs.append(dumped_obj)
         sorted_objs = sorted(matched_objs, key=lambda p: p.get(sort, 0))
-        return sort  # real hard break, but seriously, this is stupid.
         if sorted_objs and sort in sorted_objs[0]:
             return sorted(sorted_objs,
                           key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)

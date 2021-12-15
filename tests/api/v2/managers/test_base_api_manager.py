@@ -12,12 +12,12 @@ class StubDataService:
         self.conf = {}
         self.Access = BaseWorld.Access
 
-    def apply_config(self, name, config):
-        self.conf[name] = config
+    def apply_config(self, prop, config):
+        self.conf[prop] = config
 
     def get_config(self, prop=None, name=None):
-        if name in self.conf:
-            return self.conf[name]
+        if prop in self.conf:
+            return self.conf[prop]
 
 
 class TestSchema(ma.Schema):
@@ -184,8 +184,8 @@ def test_find_and_dump_objects_with_sort_and_default(agent):
         agent(paw='agentE', sleep_min=2, sleep_max=5, watchdog=0),
         agent(paw='agentC', sleep_min=2, sleep_max=5, watchdog=0),
     ]
+    stub_data_svc.apply_config('objects.agents.default', 'agentE')
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
-    manager.apply_config('objects.agents.default', 'agentE')
     dumped_agents = manager.find_and_dump_objects('agents', sort='paw')
     assert len(dumped_agents) == len(stub_data_svc.ram['agents'])
     assert dumped_agents[0]['paw'] == 'agentE'
