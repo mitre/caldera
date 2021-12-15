@@ -11,6 +11,14 @@ class StubDataService:
         self.ram = {}
         self.Access = BaseWorld.Access
 
+    @staticmethod
+    def apply_config(name, config):
+        BaseWorld.apply_config(name, config)
+
+    @staticmethod
+    def get_config(prop=None, name=None):
+        return BaseWorld.get_config(prop, name)
+
 
 class TestSchema(ma.Schema):
     __test__ = False
@@ -162,6 +170,29 @@ def test_find_and_dump_objects_with_sort(agent):
     assert len(dumped_agents) == len(stub_data_svc.ram['agents'])
     prev_paw = None
     for dumped_agent in dumped_agents:
+        assert not prev_paw or dumped_agent[sort_property] > prev_paw
+        prev_paw = dumped_agent[sort_property]
+
+
+def test_find_and_dump_objects_with_sort_and_default(agent):
+    sort_property = 'paw'
+
+    stub_data_svc = StubDataService()
+    stub_data_svc.ram['agents'] = [
+        agent(paw='agent5', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agent1', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agent3', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agent0', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agent4', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agent2', sleep_min=2, sleep_max=5, watchdog=0),
+    ]
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
+    manager.apply_config('objects.agents.default', 'agent3')
+    dumped_agents = manager.find_and_dump_objects('agents', sort=sort_property)
+    assert len(dumped_agents) == len(stub_data_svc.ram['agents'])
+    assert dumped_agents[0]['paw'] == 'agent3'
+    prev_paw = None
+    for dumped_agent in dumped_agents[1:]:
         assert not prev_paw or dumped_agent[sort_property] > prev_paw
         prev_paw = dumped_agent[sort_property]
 
