@@ -9,15 +9,15 @@ from app.utility.base_world import BaseWorld
 class StubDataService:
     def __init__(self):
         self.ram = {}
+        self.conf = {}
         self.Access = BaseWorld.Access
 
-    @staticmethod
-    def apply_config(name, config):
-        BaseWorld.apply_config(name, config)
+    def apply_config(self, name, config):
+        self.conf[name] = config
 
-    @staticmethod
-    def get_config(prop=None, name=None):
-        return BaseWorld.get_config(prop, name)
+    def get_config(self, prop=None, name=None):
+        if name in self.conf:
+            return self.conf[name]
 
 
 class TestSchema(ma.Schema):
