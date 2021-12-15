@@ -175,26 +175,24 @@ def test_find_and_dump_objects_with_sort(agent):
 
 
 def test_find_and_dump_objects_with_sort_and_default(agent):
-    sort_property = 'paw'
-
     stub_data_svc = StubDataService()
     stub_data_svc.ram['agents'] = [
-        agent(paw='agent5', sleep_min=2, sleep_max=5, watchdog=0),
-        agent(paw='agent1', sleep_min=2, sleep_max=5, watchdog=0),
-        agent(paw='agent3', sleep_min=2, sleep_max=5, watchdog=0),
-        agent(paw='agent0', sleep_min=2, sleep_max=5, watchdog=0),
-        agent(paw='agent4', sleep_min=2, sleep_max=5, watchdog=0),
-        agent(paw='agent2', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentF', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentB', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentD', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentA', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentE', sleep_min=2, sleep_max=5, watchdog=0),
+        agent(paw='agentC', sleep_min=2, sleep_max=5, watchdog=0),
     ]
     manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
-    manager.apply_config('objects.agents.default', 'agent3')
-    dumped_agents = manager.find_and_dump_objects('agents', sort=sort_property)
+    manager.apply_config('objects.agents.default', 'agentE')
+    dumped_agents = manager.find_and_dump_objects('agents', sort='paw')
     assert len(dumped_agents) == len(stub_data_svc.ram['agents'])
-    assert dumped_agents[0]['paw'] == 'agent3'
+    assert dumped_agents[0]['paw'] == 'agentE'
     prev_paw = None
     for dumped_agent in dumped_agents[1:]:
-        assert not prev_paw or dumped_agent[sort_property] > prev_paw
-        prev_paw = dumped_agent[sort_property]
+        assert not prev_paw or dumped_agent['paw'] > prev_paw
+        prev_paw = dumped_agent['paw']
 
 
 def test_create_object_from_schema():
