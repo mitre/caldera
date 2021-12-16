@@ -156,7 +156,7 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve the result of a link',
                           description='Retrieve the results of one link from memory based on the operation id (String '
-                                      'UUID) and link id (String UUID).  Use fields from the `BaseGetOneQuerySchema` in the'
+                                      'UUID) and link id (String UUID).  Use fields from the `BaseGetOneQuerySchema` in the '
                                       'request body to add `include` and `exclude` filters.',
                           parameters=[{
                               'in': 'path',
