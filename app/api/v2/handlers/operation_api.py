@@ -135,8 +135,8 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve links from an operation',
                           description='Retrieve all links from the operation with the provided operation `id` (String '
-                                      'UUID). Use fields from the `BaseGetOneQuerySchema` in the request body to add '
-                                      '`include` and `exclude` filters.',
+                                      'UUID). Use fields from the `BaseGetAllQuerySchema` in the request body to add '
+                                      '`include`, `exclude`, and `sort` filters.',
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
@@ -156,7 +156,9 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve a specified link from an operation',
                           description='Retrieve the link with the provided `link_id` (String UUID) from the operation '
-                                      'with the given operation `id` (String UUID).',
+                                      'with the given operation `id` (String UUID). Use fields from the '
+                                      '`BaseGetOneQuerySchema` in the request body to add `include` and `exclude` '
+                                      'filters.',
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
@@ -173,7 +175,8 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(partial=True),
                                      description='The link matching the provided `link_id` within the operation '
-                                                 'matching `id`.')
+                                                 'matching `id`. Use fields from the `BaseGetOneQuerySchema` in the '
+                                                 'request body to add `include` and `exclude` filters.')
     async def get_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
