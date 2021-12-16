@@ -31,7 +31,7 @@ class FactApi(BaseObjectApi):
                           summary='Retrieve Facts',
                           description='Retrieve facts by criteria. Use fields from the `FactSchema` in the request body to filter retrieved facts.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True), description='Returns facts in `FactSchema` format.')
+    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True), description='Returns matching facts in `FactSchema` format.')
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -69,8 +69,8 @@ class FactApi(BaseObjectApi):
         return web.json_response(dict(found=resp))
 
     @aiohttp_apispec.docs(tags=['facts'],
-                          summary='Create facts',
-                          description='Create facts by criteria provided in the `FactSchema`.')
+                          summary='Create a fact',
+                          description='Create a fact by format provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema)
     @aiohttp_apispec.response_schema(FactSchema, description='Returns created fact in `FactSchema` format.')
     async def add_facts(self, request: web.Request):
@@ -136,7 +136,7 @@ class FactApi(BaseObjectApi):
                           summary='Delete a fact',
                           description='Delete a fact by criteria provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
-    @aiohttp_apispec.response_schema(FactSchema, description='Returns the fact that was deleted in the `FactSchema` format.')
+    @aiohttp_apispec.response_schema(FactSchema, description='Returns any deleted facts matching the criteria in the `FactSchema` format.')
     async def delete_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
