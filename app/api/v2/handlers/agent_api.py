@@ -27,12 +27,11 @@ class AgentApi(BaseObjectApi):
         router.add_get('/deploy_commands/{ability_id}', self.get_deploy_commands_for_ability)
 
     @aiohttp_apispec.docs(tags=['agents'],
-                          summary="Retrieve all agents",
-                          description="Retrieve all agents by criteria. Use fields from the "
-                                      "'AgentSchema' in the request body to filter the retrieved agents.")
+                          summary="Retrieves all agents",
+                          description="Retrieves all stored agents.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
-                                     description="Returns a list of all agents in 'AgentSchema' format.")
+                                     description="Returns a list of all agents.")
     async def get_agents(self, request: web.Request):
         agents = await self.get_all_objects(request)
         return web.json_response(agents)
