@@ -134,7 +134,9 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve links from an operation',
-                          description='Retrieve all links from the operation with the provided operation `id` (String UUID). Use fields from the `BaseGetOneQuerySchema` in the request body to add `include` and `exclude` filters.',
+                          description='Retrieve all links from the operation with the provided operation `id` (String '
+                                      'UUID). Use fields from the `BaseGetOneQuerySchema` in the request body to add '
+                                      '`include` and `exclude` filters.',
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
