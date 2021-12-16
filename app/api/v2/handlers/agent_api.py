@@ -32,7 +32,7 @@ class AgentApi(BaseObjectApi):
                                       "'AgentSchema' in the request body to filter the retrieved agents.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
-                          description="Returns a list of all agents in 'AgentSchema' format.")
+                                     description="Returns a list of all agents in 'AgentSchema' format.")
     async def get_agents(self, request: web.Request):
         agents = await self.get_all_objects(request)
         return web.json_response(agents)
