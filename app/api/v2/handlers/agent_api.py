@@ -34,7 +34,7 @@ class AgentApi(BaseObjectApi):
         return web.json_response(agents)
 
     @aiohttp_apispec.docs(tags=['agents'],
-                          summary="Retrieve Agent Information",
+                          summary="Retrieve Agent by paw",
                           description="Retrieve information about a specific agent using its ID (paw). Use "
                                       "the paw field in the URL to specify matching criteria for the agent to "
                                       "obtain information about.",
@@ -77,7 +77,7 @@ class AgentApi(BaseObjectApi):
                                                                     'sleep_max',
                                                                     'watchdog',
                                                                     'pending_contact']))
-    @aiohttp_apispec.response_schema(AgentSchema(only=[]), description="Returns JSON response with updated Agent fields")
+    @aiohttp_apispec.response_schema(AgentSchema(), description="Returns JSON response with updated Agent fields")
     async def update_agent(self, request: web.Request):
         agent = await self.update_object(request)
         return web.json_response(agent.display)
