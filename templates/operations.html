@@ -16,8 +16,7 @@
             <div class="is-flex is-flex-direction-row operations-dashboard">
                 <div class="is-flex is-flex-direction-column pb-0 my-2"
                      x-bind:class="{'operations-menu-set-width': selectedOperation}">
-                    <div class="pl-0 is-flex is-align-content-flex-start mb-2"
-                         x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
+                    <div class="pl-0 is-flex is-align-content-flex-start mb-2">
                         <div>
                             <div class="field has-addons">
                                 <div class="control has-icons-left">
@@ -44,11 +43,11 @@
                         <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)"
                                 title="creates a new operation based on the last created operation settings "
                                 class="button is-primary is-small"
-                                x-on:click="addOperation(true, startOperation)"><em class="pr-1 fas fa-plus"></em>
+                                x-on:click="addOperation(true, operationToAdd)"><em class="pr-1 fas fa-plus"></em>
                             Quick Add
                         </button>
                         <button title="add operation" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'addOperation'; getAgents()"><em class="pr-1 fas fa-plus"></em>
+                                x-on:click="openOperationCreateModal()"><em class="pr-1 fas fa-plus"></em>
                             Create Operation
                         </button>
                         <template x-if="selectedOperation">
@@ -445,8 +444,8 @@
 
         <!--    MODALS      -->
         <template x-if="openModal">
-            <div class="modal is-active" x-data="{ startOperation: EMPTY_OPERATIONS_OBJECT }">
-                <div class="modal-background" @click="openModal = null"></div>
+            <div class="modal is-active">
+                <div class="modal-background" @click="openModal = null; selectPotentialLink({})"></div>
 
                 <template x-if="openModal === 'showOutput'">
                     <div class="modal-card">
@@ -517,7 +516,7 @@
                                     <label for="op-name">Operation name</label>
                                     <div class="modal-form-fields">
                                         <input class="input is-small" id="op-name" type="text"
-                                               x-model="startOperation.name" required>
+                                               x-model="operationToAdd.name" required>
                                     </div>
                                 </div>
                                 <div>
@@ -526,7 +525,7 @@
                                             x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
                                     <div class="modal-form-fields" id="basic-adversary">
                                         <div class="select is-small my-2 ml-3">
-                                            <select x-model="startOperation.adversary.adversary_id">
+                                            <select x-model="operationToAdd.adversary.adversary_id">
                                                 <option value="" selected>No adversary (manual)</option>
                                                 <template x-for="a in ADVERSARIES" :key="a.adversary_id">
                                                     <option x-on:click="isSelectedAdversaryRepeatable = a.has_repeatable_abilities"
@@ -540,12 +539,10 @@
                                 </div>
 
                                 <div>
-                                    <label for="autonomous-source"><span
-                                            class="has-tooltip-multiline has-tooltip-top"
-                                            x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
+                                    <label for="autonomous-source"><span class="has-tooltip-multiline has-tooltip-top" x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
-                                            <select x-model="startOperation.source.id">
+                                            <select x-model="operationToAdd.source.id">
                                                 <template x-for="s in SOURCES" :key="s.id">
                                                     <option :value="s.id" x-text="s.name"></option>
                                                 </template>
@@ -572,15 +569,15 @@
                                          id="basic-groups">
                                         <button type="button"
                                                 class="is-small button is-rounded is-primary m-1"
-                                                x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="startOperation.group = ''">
+                                                x-bind:class="(operationToAdd.group === '') ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="operationToAdd.group = ''">
                                             all groups
                                         </button>
                                         <template x-for="(group, index) in agentGroups" :key="group">
                                             <button type="button"
                                                     class="is-small button is-rounded is-primary m-1"
-                                                    x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.group = group"
+                                                    x-bind:class="(operationToAdd.group === group) ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToAdd.group = group"
                                                     x-show="group !== ''"
                                                     x-text="group">
                                             </button>
@@ -593,7 +590,7 @@
                                             x-bind:data-tooltip="usage['Planner']">Planner</span></label>
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
-                                            <select id="autonomous-planner" x-model="startOperation.planner.id">
+                                            <select id="autonomous-planner" x-model="operationToAdd.planner.id">
                                                 <template x-for="p in PLANNERS" :key="p.id">
                                                     <option :value="p.id"
                                                             x-bind:data-allow-repeatable-abilities="p.allow_repeatable_abilities"
@@ -612,8 +609,8 @@
                                         <template x-for="o in OBFUSCATORS" :key="o.name">
                                             <button class="is-small button is-rounded is-primary m-1"
                                                     type="button"
-                                                    x-bind:class="startOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.obfuscator = o.name"
+                                                    x-bind:class="operationToAdd.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToAdd.obfuscator = o.name"
                                                     x-text="o.name">
                                             </button>
                                         </template>
@@ -625,10 +622,10 @@
                                             x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
                                     <div class="modal-form-fields" id="autonomous-autonomous">
                                         <input type="radio" id="run-autonomously"
-                                               x-model="startOperation.autonomous" value="1" checked>
+                                               x-model="operationToAdd.autonomous" value="1" checked>
                                         <label for="run-autonomously">Run autonomously</label>
                                         <input type="radio" id="manual-approval"
-                                               x-model="startOperation.autonomous" value="0">
+                                               x-model="operationToAdd.autonomous" value="0">
                                         <label for="manual-approval">Require manual approval</label>
                                     </div>
                                 </div>
@@ -639,10 +636,10 @@
                                             x-bind:data-tooltip="usage['Parser']">Parser</span></label>
                                     <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                         <input type="radio" id="parsers-default"
-                                               x-model="startOperation.use_learning_parsers" value="1" checked>
+                                               x-model="operationToAdd.use_learning_parsers" value="1" checked>
                                         <label for="parsers-default">Use default parsers</label>
                                         <input type="radio" id="parsers-no_default"
-                                               x-model="startOperation.use_learning_parsers" value="0">
+                                               x-model="operationToAdd.use_learning_parsers" value="0">
                                         <label for="parsers-no_default">Do not use default parsers</label>
                                     </div>
                                 </div>
@@ -653,11 +650,11 @@
                                             x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
                                     <div class="modal-form-fields" id="basic-keep">
                                         <input type="radio" id="keep-open"
-                                               x-model="startOperation.auto_close"
+                                               x-model="operationToAdd.auto_close"
                                                value="0" checked>
                                         <label for="keep-open">Keep open forever</label>
                                         <input type="radio" id="auto-close"
-                                               x-model="startOperation.auto_close"
+                                               x-model="operationToAdd.auto_close"
                                                value="1">
                                         <label for="auto-close">Auto close operation</label>
                                     </div>
@@ -668,11 +665,11 @@
                                             x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
 
                                     <div class="modal-form-fields" id="basic-run">
-                                        <input type="radio" x-model="startOperation.state"
+                                        <input type="radio" x-model="operationToAdd.state"
                                                id="run-immediately"
                                                value="running" checked>
                                         <label for="run-immediately">Run immediately</label>
-                                        <input type="radio" x-model="startOperation.state"
+                                        <input type="radio" x-model="operationToAdd.state"
                                                id="pause-on-start"
                                                value="paused">
                                         <label for="pause-on-start">Pause on start</label>
@@ -685,7 +682,7 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter(operationToAdd, jitterMin+'/'+jitterMax)"
                                                x-model="jitterMin"
                                                id="stealth-jitterMin"
                                                type="number"
@@ -695,7 +692,7 @@
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter(operationToAdd, jitterMin+'/'+jitterMax)"
                                                x-model="jitterMax"
                                                id="stealth-jitterMax"
                                                type="number"
@@ -715,11 +712,11 @@
                                             class="has-tooltip-multiline has-tooltip-top"
                                             x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
                                     <div class="modal-form-fields">
-                                        <input x-model="startOperation.visibility"
+                                        <input x-model="operationToAdd.visibility"
                                                id="stealth-queue"
                                                type="range" value="50" min="1" max="100"
                                                x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
-                                        <span x-text="startOperation.visibility"></span>
+                                        <span x-text="operationToAdd.visibility"></span>
                                     </div>
                                 </div>
                             </div>
@@ -734,7 +731,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                                x-on:click="addOperation(false, startOperation)"
+                                                x-on:click="addOperation(false, operationToAdd)"
                                                 x-text="schedule ? 'Schedule' : 'Start'"></button>
                                     </div>
                                 </div>
@@ -857,9 +854,41 @@
                             </template>
                             <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
-                        <section class="modal-card-body" x-show="selectedPotentialLink.ability_id">
-                            <strong x-text="selectedPotentialLink.name" class="mb-2"></strong>
+                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
+                            <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong> 
+                            <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description"></p>
+                            <hr>
+                            <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
+                            <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
+                                This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
+                                values and a potential link will be added for each possible combination.
+                            </p>
+                            <p class="help" x-show="!Object.keys(selectedPotentialLinkFacts).length">
+                                This link has no fact templates.
+                            </p>
+                            <template x-for="factName in Object.keys(selectedPotentialLinkFacts)" :key="factName">
+                                <div class="block">
+                                    <span class="icon-text">
+                                        <label class="label" x-text="factName"></label>
+                                        <span class="icon has-text-warning" x-show="selectedPotentialLinkFacts[factName] ? selectedPotentialLinkFacts[factName].every((fact) => !fact.selected) : false">
+                                            <em class="fas fa-exclamation-triangle""></em>
+                                        </span>
+                                    </span>
+                                    <template x-for="fact in selectedPotentialLinkFacts[factName] || null" :key="fact.value">
+                                        <div>
+                                            <label class="checkbox">
+                                                <input type="checkbox" x-model="fact.selected" x-on:change="setPotentialLinksToAdd()">
+                                                <span x-text="fact.value"></span>
+                                                <span class="tag" x-text="fact.origin" data-tooltip="The origin of this fact"></span>
+                                            </label>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <p class="help has-text-warning" x-show="isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length">
+                                There are currently empty fact templates. You can still add this link but it may not run properly.
+                            </p>
                         </section>
                         <footer class="modal-card-foot" x-show="!selectedPotentialLink.ability_id">
                             <nav class="level">
@@ -884,9 +913,16 @@
                                     <div class="level-item">
                                         <button class="button is-small" @click="openModal = null; selectPotentialLink({})">Close</button>
                                     </div>
-                                    <button class="button is-small is-primary" @click="addPotentialLink(selectedPotentialLink)">
-                                        <span class="icon"><em class="fas fa-plus"></em></span>
-                                        <span>Add Potential Link</span>
+                                    <button class="button is-small" x-bind:class="{ 'is-primary': !isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length, 'is-warning': isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length }" @click="addPotentialLinks()">
+                                        <span class="icon">
+                                            <em class="fas fa-plus" x-show="!isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length"></em>
+                                            <em class="fas fa-exclamation-triangle" x-show="isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length"></em>
+                                        </span>
+                                        <span>
+                                            Add 
+                                            <span x-text="potentialLinksToAdd.length"></span>
+                                            Potential Link<span x-show="potentialLinksToAdd.length > 1">s</span>
+                                        </span>
                                     </button>
                                 </div>
                             </nav>
@@ -1064,15 +1100,21 @@
             openModalForm: {
                 advanced: false
             },
-            operations: [],
+            
             facts: [],
             filteredOperations: [],
             searchInput: '',
             jitterMin: 2,
             jitterMax: 8,
 
+            operations: [],
+            operationToAdd: {},
+
             selectedPotentialLink: {},
+            selectedPotentialLinkFacts: {},
+            potentialLinksToAdd: [],
             potentialLinkSearchQuery: '',
+            isAddingBlankPotentialLink: false,
             potentialLink: {
                 agent: '',
                 executor: '',
@@ -1089,23 +1131,6 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
-
-            get EMPTY_OPERATIONS_OBJECT() {
-                return {
-                    name: '',
-                    group: '',
-                    adversary: { adversary_id: '' },
-                    auto_close: 0,
-                    state: 'running',
-                    autonomous: 1,
-                    planner: { id: 'atomic' },
-                    source: { id: 'basic' },
-                    use_learning_parsers: 1,
-                    obfuscator: 'plain-text',
-                    jitter: '2/8',
-                    visibility: '51',
-                };
-            },
 
             get EMPTY_MANUAL_COMMAND_OBJECT() {
                 return {
@@ -1212,6 +1237,7 @@
                     await sleep(3000);
                     this.getOperations();
                     this.getFacts();
+                    this.getFields();
                     this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
                     this.getAndCompareOperation();
                 }
@@ -1226,6 +1252,25 @@
                 }).catch((error) => {
                     console.error(error);
                 });
+            },
+
+            openOperationCreateModal() {
+                this.operationToAdd = {
+                    name: '',
+                    group: '',
+                    adversary: { adversary_id: '' },
+                    auto_close: 0,
+                    state: 'running',
+                    autonomous: 1,
+                    planner: { id: 'atomic' },
+                    source: { id: this.SOURCES[0].id },
+                    use_learning_parsers: 1,
+                    obfuscator: 'plain-text',
+                    jitter: '2/8',
+                    visibility: '51',
+                }
+                this.openModal = 'addOperation';
+                this.getAgents();
             },
 
             getOperations() {
@@ -1276,18 +1321,18 @@
                 }
             },
 
-            addOperation(isQuickAdd = false, startOperation) {
-                if (isQuickAdd) startOperation.name = this.searchInput;
-                if (!startOperation.name) {
+            addOperation(isQuickAdd = false, operationToAdd) {
+                if (isQuickAdd) operationToAdd.name = this.searchInput;
+                if (!operationToAdd.name) {
                     toast('Error: Operation name field is empty.');
                 } else {
-                    startOperation.autonomous = Number(startOperation.autonomous);
-                    startOperation.use_learning_parsers = parseInt(startOperation.use_learning_parsers, 10) === 1;
-                    startOperation.auto_close = parseInt(startOperation.auto_close, 10) === 1;
+                    operationToAdd.autonomous = Number(operationToAdd.autonomous);
+                    operationToAdd.use_learning_parsers = parseInt(operationToAdd.use_learning_parsers, 10) === 1;
+                    operationToAdd.auto_close = parseInt(operationToAdd.auto_close, 10) === 1;
 
-                    apiV2('POST', this.ENDPOINT, startOperation)
+                    apiV2('POST', this.ENDPOINT, operationToAdd)
                         .then((res) => {
-                            toast(`Started operation ${startOperation.name}!`, true);
+                            toast(`Started operation ${operationToAdd.name}!`, true);
                             this.getOperations();
                             this.selectedOperation = res;
                             this.openModal = null;
@@ -1380,30 +1425,107 @@
 
             selectPotentialLink(link) {
                 this.selectedPotentialLink = link;
+                this.selectedPotentialLinkFacts = {};
+                this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 const fields = [...new Set( [...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]) )]
-                const options = this.selectedOperation.source.facts.map((fact) => fact.name);
-                const foundOptions = this.facts.found.filter((fact) => )
+                const opSource = this.selectedOperation.source;
+                const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
+                const facts = opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : []);
+
+                fields.filter((field) => facts.find((fact) => fact.name === field)).forEach((field) => {
+                    this.selectedPotentialLinkFacts[field] = []
+                    facts.filter((fact) => fact.name === field).forEach((fact) => {
+                        this.selectedPotentialLinkFacts[field].push({
+                            value: fact.value,
+                            origin: fact.origin_type,
+                            selected: false
+                        }) 
+                    })
+                });
             },
 
-            addPotentialLink(link) {
+            getPotentialLinkFacts(factName) {
+                return this.selectedPotentialLinkFacts[factName] || null;
+            },
+
+            setPotentialLinksToAdd() {
+                this.potentialLinksToAdd = [];
+                
+                function cartesian(args) {
+                    if (!args.length) return [];
+                    let r = [], max = args.length - 1;
+                    function helper(arr, i) {
+                        for (let j = 0; j < args[i].length; j++) {
+                            let a = arr.slice(0); 
+                            a.push(args[i][j]);
+                            (i === max) ? r.push(a) : helper(a, i + 1);
+                        }
+                    }
+                    helper([], 0);
+                    return r;
+                }
+
+                let combinations = [];
+                Object.keys(this.selectedPotentialLinkFacts).forEach((factName) => {
+                    combinations.push(this.selectedPotentialLinkFacts[factName].filter((fact) => fact.selected).map((fact) => `${factName}|${fact.value}`));
+                });
+                combinations = cartesian(combinations);
+
+                let executor;
+                if (this.selectedPotentialLink.executors) {
+                    executor = this.selectedPotentialLink.executors.find((e) => this.potentialLink.executor === e.name);
+                }
+
+                if (!combinations.length) {
+                    this.potentialLinksToAdd.push({
+                        ability: this.selectedPotentialLink,
+                        paw: this.potentialLink.agent.paw,
+                        executor: executor
+                    })
+                    this.isAddingBlankPotentialLink = true;
+                    return;
+                }
+
+                combinations.forEach((factGroup) => {
+                    let command = executor.command;
+                    factGroup.forEach((fact) => {
+                        let split = fact.split('|');
+                        command = command.replaceAll(`#{${split[0]}}`, split[1])
+                    })
+
+                    this.potentialLinksToAdd.push({
+                        ability: this.selectedPotentialLink,
+                        paw: this.potentialLink.agent.paw,
+                        executor: {
+                            ...executor,
+                            command: command
+                        }
+                    })
+                })
+                this.isAddingBlankPotentialLink = false;
+            },
+
+            async addPotentialLinks() {
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
                 }
-                const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, {
-                    ability: link,
-                    paw: this.potentialLink.agent.paw,
-                    executor: executor
-                }).then(() => {
-                    toast('Added potential link.', true);
+                
+                try {
+                    for (let link of this.potentialLinksToAdd) {
+                        await apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link);
+                    }
+                    toast(`Added ${this.potentialLinksToAdd.length} links.`, true);
                     this.getOperation();
-                    this.addedTechniquesIDs.add(link.technique_id);
-                }).catch(() => {
+                    this.addedTechniquesIDs.add(this.potentialLinksToAdd.map((link) => link.ability.technique_id));
+                    this.openModal = false;
+                    this.selectPotentialLink({});
+                } catch (error) {
                     toast('Error adding potential link.');
-                });
+                    console.error(error);
+                }
             },
 
             getLink(link) {
@@ -1542,7 +1664,7 @@
                 }
             },
 
-            validateJitter(startOperation, newValue = '') {
+            validateJitter(operationToAdd, newValue = '') {
                 if (!newValue.includes('/')) return false;
                 let [jitterMin, jitterMax] = newValue.split('/');
                 jitterMin = parseInt(jitterMin, 10);
@@ -1557,7 +1679,7 @@
                     return false;
                 }
 
-                startOperation.jitter = newValue;
+                operationToAdd.jitter = newValue;
                 return true;
             },
 
@@ -1582,7 +1704,7 @@
                     }
                     if (this.potentialLink.tactic) matchTactic = this.potentialLink.tactic === ability.tactic;
                     if (this.potentialLink.technique) matchTechnique = this.potentialLink.technique === `${ability.technique_id} | ${ability.technique_name}`;
-                    matchQuery = ability.name.toLowerCase().includes(this.potentialLinkSearchQuery) || ability.description.toLowerCase().includes(this.potentialLinkSearchQuery);
+                    matchQuery = ability.name.toLowerCase().includes(this.potentialLinkSearchQuery.toLowerCase()) || ability.description.toLowerCase().includes(this.potentialLinkSearchQuery.toLowerCase());
                     return matchAgent && matchTactic && matchTechnique && matchQuery;
                 });
             },
@@ -1744,6 +1866,10 @@
         font-size: 0.75rem;
         border-bottom: none;
         color: gray;
+    }
+
+    #operationsPage .tag {
+        border-bottom: none;
     }
 
     #operationsPage .button:active, .button.is-active, .button:focus, .button.is-focused {
