@@ -38,10 +38,10 @@ jobs:
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
+      - name: Override Coverage Source Path for Sonar
+        run: sed -i "s/<source>\/home\/runner\/work\/caldera\/caldera<\/source>/<source>\/github\/workspace<\/source>/g" /home/runner/work/caldera/caldera/coverage.xml
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          files: ./coverage.xml
