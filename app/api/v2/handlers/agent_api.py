@@ -77,7 +77,7 @@ class AgentApi(BaseObjectApi):
                                                                     'sleep_max',
                                                                     'watchdog',
                                                                     'pending_contact']))
-    @aiohttp_apispec.response_schema(AgentSchema(), description="Returns JSON response with updated Agent fields")
+    @aiohttp_apispec.response_schema(AgentSchema, description="Returns JSON response with updated Agent fields")
     async def update_agent(self, request: web.Request):
         agent = await self.update_object(request)
         return web.json_response(agent.display)
