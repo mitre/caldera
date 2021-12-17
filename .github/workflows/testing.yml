@@ -32,6 +32,8 @@ jobs:
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
-      - uses: codecov/codecov-action@v1
-        with:
-          files: ./coverage.xml
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
