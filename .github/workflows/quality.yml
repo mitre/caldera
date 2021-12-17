@@ -1,4 +1,4 @@
-name: Code Testing
+name: Code Quality
 
 on:
   push:
@@ -16,10 +16,10 @@ jobs:
         include:
           - python-version: 3.7
             toxenv: py37,style,coverage-ci
-          - python-version: 3.8
-            toxenv: py38,style,coverage-ci
-          - python-version: 3.9
-            toxenv: py39,style,coverage-ci
+#           - python-version: 3.8
+#             toxenv: py38,style,coverage-ci
+#           - python-version: 3.9
+#             toxenv: py39,style,coverage-ci
 
     steps:
       - uses: actions/checkout@v2
