@@ -58,3 +58,7 @@ class TestIPRule:
     async def test_same_subnet(self):
         assert await self.rs._is_ip_rule_match(self.rule, self.fact6)
         assert (not await self.rs.is_fact_allowed(self.fact6))
+        
+   async def test_same_subnet2(self):
+        assert await self.rs._is_ip_rule_match(self.rule, self.fact6)
+        assert (not await self.rs.is_fact_allowed(self.fact6))
