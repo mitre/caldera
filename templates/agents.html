@@ -502,12 +502,16 @@
                             <td x-text="selectedAgent.location"></td>
                         </tr>
                         <tr>
+                            <th class="has-text-right">Handlers</th>
+                            <td x-text="selectedAgent.handlers.join(', ')"></td>
+                        </tr>
+                        <tr>
                             <th class="has-text-right">Executors</th>
-                            <td x-text="selectedAgent.executors"></td>
+                            <td x-text="selectedAgent.executors.join(', ')"></td>
                         </tr>
                         <tr>
                             <th class="has-text-right">Host IP Addresses</th>
-                            <td x-text="selectedAgent.host_ip_addrs"></td>
+                            <td x-text="selectedAgent.host_ip_addrs.join(', ')"></td>
                         </tr>
                         <tr>
                             <th class="has-text-right">Peer-to-Peer Proxy Receivers</th>

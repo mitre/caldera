@@ -459,6 +459,19 @@
                             </div>
                             <div class="field is-horizontal">
                                 <div class="field-label is-small">
+                                    <label class="label">Command Handler</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('handler') }" x-model="selectedAbility.technique_name">
+                                            <p x-show="fieldErrors.includes('handler')" class="help is-danger"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
                                     <label class="label">Singleton</label>
                                 </div>
                                 <div class="field-body">
