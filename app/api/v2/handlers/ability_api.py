@@ -23,17 +23,26 @@ class AbilityApi(BaseObjectApi):
         router.add_delete('/abilities/{ability_id}', self.delete_ability)
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Get all abilities.',
-                          descriptions='Provides a list of all available abilities.')
+                          description='Provides a list of all available abilities.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True),
+                                     description='Returns a list of all abilities.')
     async def get_abilities(self, request: web.Request):
         abilities = await self.get_all_objects(request)
         return web.json_response(abilities)
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Get an ability.',
-                          description='Provides one ability based on its ability id.')
+                          description='Provides one ability based on its ability id.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'ability_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Ability to be retrieved'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(AbilitySchema(partial=True))
+    @aiohttp_apispec.response_schema(AbilitySchema(partial=True),
+                                     description='JSON dictionary representation of the existing Ability.')
     async def get_ability_by_id(self, request: web.Request):
         ability = await self.get_object(request)
         return web.json_response(ability)
@@ -42,39 +51,61 @@ class AbilityApi(BaseObjectApi):
                           description='Creates a new adversary based on the `AbilitySchema`. '
                                       '"name", "tactic", and "executors" are all required fields.')
     @aiohttp_apispec.request_schema(AbilitySchema)
-    @aiohttp_apispec.response_schema(AbilitySchema)
+    @aiohttp_apispec.response_schema(AbilitySchema,
+                                     description='JSON dictionary representation of the created Ability.')
     async def create_ability(self, request: web.Request):
         ability = await self.create_on_disk_object(request)
         return web.json_response(ability.display)
 
-    @aiohttp_apispec.docs(tags=['abilities'], summary='Creates new or updates an existing ability.',
-                          description='Given an ability based on the `AbilitySchema` if the identifier '
-                                      'matches an existing ability it will update it replacing it with '
-                                      'the contents received on the request. Otherwise a new ability will '
-                                      'be created. "name", "tactic", and "executors" are all required fields.')
+    @aiohttp_apispec.docs(tags=['abilities'], summary='Replaces an existing ability.',
+                          description='Replaces an ability based on the `AbilitySchema` values provided '
+                                      'in the message body.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'ability_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Ability to be retrieved'
+                          }])
     @aiohttp_apispec.request_schema(AbilitySchema(partial=True))
-    @aiohttp_apispec.response_schema(AbilitySchema)
+    @aiohttp_apispec.response_schema(AbilitySchema,
+                                     description='JSON dictionary representation of the replaced Ability.')
     async def create_or_update_ability(self, request: web.Request):
         ability = await self.create_or_update_on_disk_object(request)
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Updates an existing ability.',
-                          description='Given an ability based on the `AbilitySchema` if the identifier '
-                                      'matches an existing ability it will update it replacing it with '
-                                      'the contents received on the request. "name", "tactic", and '
-                                      '"executors" are all required fields.')
-    @aiohttp_apispec.request_schema(AbilitySchema(partial=True, exclude=['ability_id',
-                                                                         'requirements',
-                                                                         'additional_info',
-                                                                         'access']))
-    @aiohttp_apispec.response_schema(AbilitySchema)
+                          description='Updates an ability based on the `AbilitySchema` values provided '
+                                      'in the message body.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'ability_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Ability to be retrieved'
+                          }])
+    @aiohttp_apispec.request_schema(AbilitySchema(partial=True,
+                                                  exclude=['ability_id',
+                                                           'requirements',
+                                                           'additional_info',
+                                                           'access']))
+    @aiohttp_apispec.response_schema(AbilitySchema,
+                                     description='JSON dictionary representation of the replaced Ability.')
     async def update_ability(self, request: web.Request):
         ability = await self.update_on_disk_object(request)
         return web.json_response(ability.display)
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Deletes an ability.',
-                          description='Deletes an existing ability.')
-    @aiohttp_apispec.response_schema(AbilitySchema)
+                          description='Deletes an existing ability.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'ability_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Ability to be retrieved'
+                          }])
+    @aiohttp_apispec.response_schema(AbilitySchema, code=204,
+                                     description='HTTP 204 Status Code (No Content)')
     async def delete_ability(self, request: web.Request):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
