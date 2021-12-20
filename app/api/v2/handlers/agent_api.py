@@ -46,7 +46,8 @@ class AgentApi(BaseObjectApi):
                               'description': 'ID of the Agent to retrieve information about'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(AgentSchema(partial=True), description="Returns JSON response with specified Agent")
+    @aiohttp_apispec.response_schema(AgentSchema(partial=True), description="Returns JSON response with "
+                                                                            "specified Agent")
     async def get_agent_by_id(self, request: web.Request):
         agent = await self.get_object(request)
         return web.json_response(agent)
