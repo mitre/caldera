@@ -68,14 +68,12 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, await operation.all_facts(), operation.rules)
-        links = await self.remove_links_with_unset_variables(links)
-        links = await self.remove_links_missing_requirements(links, operation)
+        links[:] = await self.add_test_variants(links, agent, operation, await operation.all_facts(), operation.rules)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
 
-    async def add_test_variants(self, links, agent, facts=(), rules=()):
+    async def add_test_variants(self, links, agent, operation, facts=(), rules=()):
         """
         Create a list of all possible links for a given set of templates
 
@@ -93,7 +91,6 @@ class BasePlanningService(BaseService):
 
             if variables:
                 relevant_facts = await self._build_relevant_facts(variables, facts)
-
                 if relevant_facts:
                     good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
                     valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
@@ -103,10 +100,18 @@ class BasePlanningService(BaseService):
 
                     for combo in list(itertools.product(*valid_facts)):
                         try:
+
+                            if await self._has_unset_variables(combo, variables):
+                                continue
+                            
+                            if await self._is_missing_requirements(link, combo, operation):
+                                continue
+                            
                             copy_test = copy.copy(decoded_test)
-                            copy_link = pickle.loads(pickle.dumps(link))    # nosec
                             variant, score, used = await self._build_single_test_variant(copy_test, combo,
                                                                                          link.executor.name)
+
+                            copy_link = pickle.loads(pickle.dumps(link))    # nosec
                             copy_link.command = self.encode_string(variant)
                             copy_link.score = score
                             copy_link.used.extend(used)
@@ -118,8 +123,9 @@ class BasePlanningService(BaseService):
                 # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
                 link.apply_id(agent.host)
+                link_variants.append(link)
 
-        return links + link_variants
+        return link_variants
 
     @staticmethod
     async def remove_completed_links(operation, agent, links):
@@ -150,6 +156,17 @@ class BasePlanningService(BaseService):
         links[:] = [s_link for s_link in links if not
                     BasePlanningService.re_variable.findall(b64decode(s_link.command).decode('utf-8'))]
         return links
+    
+    async def _has_unset_variables(self, combo, variable_set):
+        unset_variables = [var.name not in variable_set for var in combo]
+        return any(unset_variables)
+    
+    async def _is_missing_requirements(self, link, combo, operation):
+        copy_used = list(link.used)
+        link.used.extend(combo)
+        missing = not (link.cleanup or await self._do_enforcements(link, operation))
+        link.used = copy_used
+        return missing
 
     async def remove_links_missing_requirements(self, links, operation):
         links[:] = [s_link for s_link in links if s_link.cleanup or await self._do_enforcements(s_link, operation)]
@@ -253,7 +270,7 @@ class BasePlanningService(BaseService):
     async def _trim_by_limit(self, decoded_test, facts):
         limited_facts = []
         for limit in re.findall(self.re_limited, decoded_test):
-            limited = copy.deepcopy(facts)
+            limited = pickle.loads(pickle.dumps(facts))
             trait = re.search(self.re_trait, limit).group(0).split('#{')[-1]
 
             limit_definitions = re.search(self.re_index, limit).group(0)
