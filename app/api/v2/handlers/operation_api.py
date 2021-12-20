@@ -207,7 +207,7 @@ class OperationApi(BaseObjectApi):
                           }])
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema,
-                                     description='Response contains a completed Link object.')
+                                     description='Response contains the newly assigned Link object.')
     async def create_potential_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -216,7 +216,7 @@ class OperationApi(BaseObjectApi):
         return web.json_response(potential_link)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Retrieve links for an operation.',
+                          summary='Retrieve potential links for an operation.',
                           description='Retrieve all potential links for an operation based on the operation id (String '
                                       'UUID).  Use fields from the `BaseGetAllQuerySchema` in the request body to add '
                                       '`include`, `exclude`, and `sort` filters.',
