@@ -59,7 +59,8 @@ class AbilityApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Replaces an existing ability.',
                           description='Replaces an ability based on the `AbilitySchema` values provided '
-                                      'in the message body.',
+                                      'in the message body. "name", "tactic", and "executors" '
+                                      'are all required fields.',
                           parameters=[{
                               'in': 'path',
                               'name': 'ability_id',
