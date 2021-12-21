@@ -95,7 +95,7 @@ class FactApi(BaseObjectApi):
             raise JsonHttpBadRequest(error_msg)
 
     @aiohttp_apispec.docs(tags=['relationships'],
-                          summary='Create a Relationship.',
+                          summary='Create a Relationship',
                           description='Create a new relationship using the format provided in the `RelationshipSchema`.')
     @aiohttp_apispec.request_schema(RelationshipSchema)
     @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the created relationship, dumped in `RelationshipSchema` format.')
@@ -134,7 +134,7 @@ class FactApi(BaseObjectApi):
             raise JsonHttpBadRequest(error_msg)
 
     @aiohttp_apispec.docs(tags=['facts'],
-                          summary='Delete One or More Fact(s)',
+                          summary='Delete One or More Facts',
                           description='Delete facts using the format provided in the `FactSchema`. '
                                       'This will delete all facts that match the criteria specified in the payload.')
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
