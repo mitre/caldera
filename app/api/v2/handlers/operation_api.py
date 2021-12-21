@@ -34,60 +34,99 @@ class OperationApi(BaseObjectApi):
         router.add_get('/operations/{id}/potential-links', self.get_potential_links)
         router.add_get('/operations/{id}/potential-links/{paw}', self.get_potential_links_by_paw)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve operations',
+                          description='Retrieve all CALDERA operations from memory.  Use fields from the '
+                                      '`BaseGetAllQuerySchema` in the request body to filter.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True),
+                                     description='The response is a list of all operations.')
     async def get_operations(self, request: web.Request):
         operations = await self.get_all_objects(request)
         return web.json_response(operations)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve an operation by operation id',
+                          description='Retrieve one CALDERA operation from memory based on the operation id (String '
+                                      'UUID).  Use fields from the `BaseGetOneQuerySchema` in the request body to add '
+                                      '`include` and `exclude` filters.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
+                                     description='The response is the operation with the specified id, if any.')
     async def get_operation_by_id(self, request: web.Request):
         operation = await self.get_object(request)
         return web.json_response(operation)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Required nested schema fields are as follows: "adversary.adversary_id", '
-                                  '"planner.planner_id", and "source.id".')
-    @aiohttp_apispec.request_schema(OperationSchema())
-    @aiohttp_apispec.response_schema(OperationSchema)
+                          summary='Create a new CALDERA operation record',
+                          description='Create a new CALDERA operation using the format provided in the '
+                                      '`OperationSchema`. Required nested schema fields are as follows: '
+                                      '"adversary.adversary_id", "planner.planner_id", and "source.id"')
+    @aiohttp_apispec.request_schema(OperationSchema)
+    @aiohttp_apispec.response_schema(OperationSchema,
+                                     description='The response is the newly-created operation report.')
     async def create_operation(self, request: web.Request):
         operation = await self.create_object(request)
         return web.json_response(operation.display)
 
-    @aiohttp_apispec.docs(tags=['operations'])
-    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state',
-                                                                        'autonomous',
-                                                                        'obfuscator']))
-    @aiohttp_apispec.response_schema(OperationSchema(partial=True))
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Update fields within an operation',
+                          description='Update one CALDERA operation in memory based on the operation id (String '
+                                      'UUID). The `state`, `autonomous` and `obfuscator` fields in the operation '
+                                      'object may be edited in the request body using the `OperationSchema`.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
+    @aiohttp_apispec.request_schema(OperationSchema(partial=True, only=['state', 'autonomous', 'obfuscator']))
+    @aiohttp_apispec.response_schema(OperationSchema(partial=True),
+                                     description='The response is the updated operation, including user modifications.')
     async def update_operation(self, request: web.Request):
         operation = await self.update_object(request)
         return web.json_response(operation.display)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Delete Operation',
-                          description='Delete an operation with confirmation from user. Returns with the OperationSchema format.')
-    @aiohttp_apispec.response_schema(OperationSchema)
+                          summary='Delete an operation by operation id',
+                          description='Delete one CALDERA operation from memory based on the operation id (String '
+                                      'UUID).',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Operation object to be retrieved.'
+                          }])
+    @aiohttp_apispec.response_schema(OperationSchema,
+                                     description='There is an empty response from a successful delete request.')
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
         return web.HTTPNoContent()
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Get Operation Report',
-                          description='Retrieves the report for a given operation_id. Uses "Include agent output"',
-                                      ' parameter for additional operation information. Uses fields from BaseGetOneQuerySchema',
-                                      ' for parameters. Returns operation in format provided by OperationOutputRequestSchema.'
+                          description='Retrieves the report for a given operation_id.',
                           parameters=[{
-                              'operation_id' : 'Unique ID for operation'
-                              'access' : 'Format for report'
-                              'output' : 'Boolean for Agent Output in report'
+                              'in': 'path',
+                              'name': 'id',
+                              'operation_id' : 'Unique ID for operation',
+                              'access' : 'Format for report',
+                              'output' : 'Boolean for Agent Output in report',
                               'schema': {'type': 'string'},
                               'required': 'true'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
+    @aiohttp_apispec.response_schema(OperationOutputRequestSchema)
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -97,11 +136,19 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Get Operation Event Logs',
-                          description='Retrieves the event logs for a given operation_id. Uses "Include agent output"',
-                                      ' parameter for additional operation information. Uses fields from BaseGetOneQuerySchema',
-                                      ' for parameters. Returns logs in format provided by OperationOutputRequestSchema.')
+                          description='Retrieves the event logs for a given operation_id.',
+                          parameters=[{
+                                'in': 'path',
+                                'name': 'id',
+                                'operation_id' : 'Unique ID for operation',
+                                'access' : 'Format for report',
+                                'output' : 'Boolean for Agent Output in report',
+                                'schema' : {'type': 'string'},
+                                'required': 'true'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
+    @aiohttp_apispec.response_schema(OperationOutputRequestSchema)
     async def get_operation_event_logs(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -111,8 +158,14 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Get Links from Operation',
-                          description='Retrieves all links for a given operation_id. Uses fields from BaseGetAllQuerySchema',
-                                      ' for parameters. Returns links in format provided by LinkSchema.')
+                          description='Retrieves all links for a given operation_id.',
+                          parameters=[{
+                                'in': 'path',
+                                'name': 'id',
+                                'operation_id' : 'Unique ID for operation',
+                                'schema' : {'type': 'string'},
+                                'required': 'true'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
     async def get_operation_links(self, request: web.Request):
@@ -152,9 +205,7 @@ class OperationApi(BaseObjectApi):
         link = await self._api_manager.update_operation_link(operation_id, link_id, data, access)
         return web.json_response(link)
 
-    @aiohttp_apispec.docs(tags=['operations'], summary='The only required fields for this endpoint are "paw", '
-                                                       '"executor.name", "executor.command", and "executor.platform". '
-                                                       '"executor.command" is expected to be unencoded.')
+    @aiohttp_apispec.docs(tags=['operations'])
     @aiohttp_apispec.request_schema(LinkSchema)
     @aiohttp_apispec.response_schema(LinkSchema)
     async def create_potential_link(self, request: web.Request):
