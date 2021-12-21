@@ -27,10 +27,11 @@ class FactApi(BaseObjectApi):
         router.add_patch('/facts', self.update_facts)
         router.add_patch('/relationships', self.update_relationships)
 
-    @aiohttp_apispec.docs(tags=['facts'], summary="Retrieve facts by criteria. Use fields from the FactSchema "
-                                                  "in the request body to filter retrieved facts.")
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Retrieve Facts',
+                          description='Retrieve facts by criteria. Use fields from the `FactSchema` in the request body to filter retrieved facts.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True), description='Returns matching facts in `FactSchema` format.')
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -46,9 +47,10 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
-    @aiohttp_apispec.docs(tags=['relationships'], summary="Retrieve relationships by criteria. Use fields from the "
-                                                          "RelationshipSchema in the request body to filter retrieved "
-                                                          "relationships.")
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary="Retrieve all relationships.",
+                          description='Returns a list of all Relationships.')
+    @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns a list of all Relationships, dumped in RelationshipSchema format.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
     async def get_relationships(self, request: web.Request):
@@ -66,9 +68,11 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
-    @aiohttp_apispec.docs(tags=['facts'])
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Create a fact',
+                          description='Create a fact by format provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema)
-    @aiohttp_apispec.response_schema(FactSchema)
+    @aiohttp_apispec.response_schema(FactSchema, description='Returns created fact in `FactSchema` format.')
     async def add_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -89,9 +93,11 @@ class FactApi(BaseObjectApi):
             self.log.warning(error_msg)
             raise JsonHttpBadRequest(error_msg)
 
-    @aiohttp_apispec.docs(tags=['relationships'])
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary='Create a Relationship.',
+                          description='Create a new Relationship using the format provided in the RelationshipSchema.')
     @aiohttp_apispec.request_schema(RelationshipSchema)
-    @aiohttp_apispec.response_schema(RelationshipSchema)
+    @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the Relationship that was created, dumped in RelationshipSchema format.')
     async def add_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
@@ -126,9 +132,11 @@ class FactApi(BaseObjectApi):
             self.log.warning(error_msg)
             raise JsonHttpBadRequest(error_msg)
 
-    @aiohttp_apispec.docs(tags=['facts'])
-    @aiohttp_apispec.response_schema(FactSchema)
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Delete a fact',
+                          description='Delete a fact by criteria provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
+    @aiohttp_apispec.response_schema(FactSchema, description='Returns any deleted facts matching the criteria in the `FactSchema` format.')
     async def delete_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -142,8 +150,11 @@ class FactApi(BaseObjectApi):
                 self.log.warning(f'Encountered issue removing fact {fact_data} - {e}')
         raise JsonHttpBadRequest('Invalid fact data was provided.')
 
-    @aiohttp_apispec.docs(tags=['relationships'])
-    @aiohttp_apispec.response_schema(RelationshipSchema)
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary='Delete a Relationship.',
+                          description=('Delete Relationships using the format provided in the RelationshipSchema. '
+                                       'This will delete all Relationships that match the criteria specified in the payload.'))
+    @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the Relationship that was deleted, dumped in RelationshipSchema format.')
     @aiohttp_apispec.request_schema(RelationshipSchema(partial=True))
     async def delete_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
@@ -180,9 +191,12 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         raise JsonHttpBadRequest("Need a 'criteria' to match on and 'updates' to apply.")
 
-    @aiohttp_apispec.docs(tags=['relationships'])
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary='Update a Relationship.',
+                          description=('Update existing Relationships using the format provided in the RelationshipSchema. '
+                                       'This will update all Relationships that match the criteria specified in the payload.'))
     @aiohttp_apispec.request_schema(RelationshipUpdateSchema(partial=True))
-    @aiohttp_apispec.response_schema(RelationshipSchema)
+    @aiohttp_apispec.response_schema(RelationshipSchema, description='Returns the Relationship that was updated, dumped in RelationshipSchema format.')
     async def update_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
