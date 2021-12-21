@@ -68,12 +68,12 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, operation, await operation.all_facts(), operation.rules)
+        links[:] = await self.add_test_variants(links, agent, operation, await operation.all_facts(), operation.rules, trim=True)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
 
-    async def add_test_variants(self, links, agent, operation, facts=(), rules=()):
+    async def add_test_variants(self, links, agent, operation, facts=(), rules=(), trim=False):
         """
         Create a list of all possible links for a given set of templates
 
@@ -100,13 +100,13 @@ class BasePlanningService(BaseService):
 
                     for combo in list(itertools.product(*valid_facts)):
                         try:
-
-                            if await self._has_unset_variables(combo, variables):
+                            """
+                            if await self._has_unset_variables(combo, variables) and trim:
                                 continue
                             
-                            if await self._is_missing_requirements(link, combo, operation):
+                            if await self._is_missing_requirements(link, combo, operation) and trim:
                                 continue
-                            
+                            """
                             copy_test = copy.copy(decoded_test)
                             variant, score, used = await self._build_single_test_variant(copy_test, combo,
                                                                                          link.executor.name)

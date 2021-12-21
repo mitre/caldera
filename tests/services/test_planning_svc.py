@@ -318,7 +318,7 @@ class TestPlanningService:
         f2 = Fact(trait='a.b.d', value='2')
         f3 = Fact(trait='a.b.e', value='3')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, operation=operation, facts=[f0, f1, f2, f3]))
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
@@ -336,7 +336,7 @@ class TestPlanningService:
         f5 = Fact(trait='a.b.e', value='5')
         f6 = Fact(trait='a.b.e', value='6')
 
-        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3, f4, f5, f6]))
+        gen = loop.run_until_complete(planning_svc.add_test_variants([link], agent, operation=operation, facts=[f0, f1, f2, f3, f4, f5, f6]))
 
         assert len(gen) == 4
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
@@ -381,7 +381,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        new_links = await planning_svc.add_test_variants([link], agent, operation=operation, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -402,7 +402,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        new_links = await planning_svc.add_test_variants([link], agent, operation=operation, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -423,7 +423,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        new_links = await planning_svc.add_test_variants([link], agent, operation=operation, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -444,7 +444,7 @@ class TestPlanningService:
             Fact(trait='server', value='5')
         ]
 
-        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        new_links = await planning_svc.add_test_variants([link], agent, operation=operation, facts=input_facts)
         assert len(new_links) == 2
 
         found_commands = set(x.command for x in new_links)
@@ -466,7 +466,7 @@ class TestPlanningService:
         planning_svc.add_global_variable_owner(Agent)  # handles #{server}
         planning_svc.add_global_variable_owner(Link)  # handles #{origin_link_id}
 
-        new_links = await planning_svc.add_test_variants([link], agent, facts=input_facts)
+        new_links = await planning_svc.add_test_variants([link], agent, operation=operation, facts=input_facts)
         assert len(new_links) == 1
         assert new_links[0].raw_command == f'{agent.server} {link.id}'
 
