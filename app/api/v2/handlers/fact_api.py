@@ -27,10 +27,11 @@ class FactApi(BaseObjectApi):
         router.add_patch('/facts', self.update_facts)
         router.add_patch('/relationships', self.update_relationships)
 
-    @aiohttp_apispec.docs(tags=['facts'], summary="Retrieve facts by criteria. Use fields from the FactSchema "
-                                                  "in the request body to filter retrieved facts.")
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Retrieve Facts',
+                          description='Retrieve facts by criteria. Use fields from the `FactSchema` in the request body to filter retrieved facts.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True), description='Returns matching facts in `FactSchema` format.')
     async def get_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -67,9 +68,11 @@ class FactApi(BaseObjectApi):
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
 
-    @aiohttp_apispec.docs(tags=['facts'])
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Create a fact',
+                          description='Create a fact by format provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema)
-    @aiohttp_apispec.response_schema(FactSchema)
+    @aiohttp_apispec.response_schema(FactSchema, description='Returns created fact in `FactSchema` format.')
     async def add_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
@@ -129,9 +132,11 @@ class FactApi(BaseObjectApi):
             self.log.warning(error_msg)
             raise JsonHttpBadRequest(error_msg)
 
-    @aiohttp_apispec.docs(tags=['facts'])
-    @aiohttp_apispec.response_schema(FactSchema)
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Delete a fact',
+                          description='Delete a fact by criteria provided in the `FactSchema`.')
     @aiohttp_apispec.request_schema(FactSchema(partial=True))
+    @aiohttp_apispec.response_schema(FactSchema, description='Returns any deleted facts matching the criteria in the `FactSchema` format.')
     async def delete_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
