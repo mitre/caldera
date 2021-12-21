@@ -23,7 +23,7 @@ function alpineCore() {
             document.getElementById('active-tab-display').appendChild(newTabDiv);
         },
 
-        async addTab(tabName, address) {
+        async addTab(tabName, address, queryString = '') {
             // Field manual does not create a tab
             if (tabName === 'fieldmanual') {
                 restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
@@ -34,6 +34,7 @@ function alpineCore() {
             const existingTabIndex = this.openTabs.findIndex((tab) => tab.name === tabName);
             if (existingTabIndex !== -1) {
                 this.activeTabIndex = existingTabIndex;
+                this.checkQueryString(queryString);
                 return;
             }
 
@@ -44,9 +45,19 @@ function alpineCore() {
             this.activeTabIndex = this.openTabs.length - 1;
             try {
                 this.setTabContent(tab, await apiV2('GET', tab.address));
+                this.checkQueryString(queryString);
             } catch (error) {
                 toast('Unable to load page', false);
                 console.error(error);
+            }
+        },
+
+        checkQueryString(queryString) {
+            if (history.pushState) {
+                const newurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${queryString}${window.location.hash}`;
+                window.history.replaceState({ path: newurl }, "", newurl);
+            } else {
+                window.location.search = queryString;
             }
         },
 
