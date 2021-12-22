@@ -68,12 +68,16 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
-        links[:] = await self.add_test_variants(links, agent, operation, await operation.all_facts(), operation.rules, trim=True)
+        links[:] = await self.add_test_variants(links, agent, facts=await operation.all_facts(), rules=operation.rules, operation=operation,
+                                                trim_unset_variables=True, trim_missing_requirements=True)
+        #links = await self.remove_links_with_unset_variables(links)
+        #links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
 
-    async def add_test_variants(self, links, agent, operation, facts=(), rules=(), trim=False):
+    async def add_test_variants(self, links, agent, facts=(), rules=(), operation=None,
+                                trim_unset_variables=False, trim_missing_requirements=False):
         """
         Create a list of all possible links for a given set of templates
 
@@ -81,51 +85,61 @@ class BasePlanningService(BaseService):
         :param agent:
         :param facts:
         :param rules:
+        :param operation:
+        :param trim_unset_variables:
+        :param trim_missing_requirements:
         :return: updated list of links
         """
         link_variants = []
+        rule_set = RuleSet(rules=rules)
 
         for link in links:
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
 
-            if variables:
-                relevant_facts = await self._build_relevant_facts(variables, facts)
-                if relevant_facts:
-                    good_facts = [await RuleSet(rules=rules).apply_rules(facts=fact_set) for fact_set in relevant_facts]
-                    valid_facts = [await self._trim_by_limit(decoded_test, g_fact[0]) for g_fact in good_facts]
-
-                    if not valid_facts:
-                        continue
-
-                    for combo in list(itertools.product(*valid_facts)):
-                        try:
-                            """
-                            if await self._has_unset_variables(combo, variables) and trim:
-                                continue
-                            
-                            if await self._is_missing_requirements(link, combo, operation) and trim:
-                                continue
-                            """
-                            copy_test = copy.copy(decoded_test)
-                            variant, score, used = await self._build_single_test_variant(copy_test, combo,
-                                                                                         link.executor.name)
-
-                            copy_link = pickle.loads(pickle.dumps(link))    # nosec
-                            copy_link.command = self.encode_string(variant)
-                            copy_link.score = score
-                            copy_link.used.extend(used)
-                            copy_link.apply_id(agent.host)
-                            link_variants.append(copy_link)
-                        except Exception as ex:
-                            logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
-            else:
+            if not variables:
                 # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
                 link.apply_id(agent.host)
-                link_variants.append(link)
+                #link_variants.append(link)
+                continue
 
-        return link_variants
+            relevant_facts = await self._build_relevant_facts(variables, facts)
+            valid_facts = [await self._trim_by_limit(
+                decoded_test,
+                (await rule_set.apply_rules(facts=fact_set))[0]
+            ) for fact_set in relevant_facts]
+            combos = list(itertools.product(*valid_facts))
+
+            if trim_unset_variables:
+                combos = [combo for combo in combos if not await self._has_unset_variables(combo, variables)]
+            if trim_missing_requirements:
+                combos = [combo for combo in combos if not await self._is_missing_requirements(link, combo, operation)]
+
+            for combo in combos:
+                try:
+                    copy_test = copy.copy(decoded_test)
+                    variant, score, used = await self._build_single_test_variant(copy_test, combo,
+                                                                                    link.executor.name)
+
+                    copy_link = pickle.loads(pickle.dumps(link))    # nosec
+                    copy_link.command = self.encode_string(variant)
+                    copy_link.score = score
+                    copy_link.used.extend(used)
+                    copy_link.apply_id(agent.host)
+                    link_variants.append(copy_link)
+                except Exception as ex:
+                    logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
+        
+        if trim_unset_variables:
+            links = [link for link in links if len(set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))) == 0]
+        
+        for link in links:
+            print(b64decode(link.command).decode('utf-8'))
+        for link in link_variants:
+            print(b64decode(link.command).decode('utf-8'))
+
+        return links + link_variants
 
     @staticmethod
     async def remove_completed_links(operation, agent, links):
