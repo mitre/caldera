@@ -13,6 +13,10 @@ jobs:
             toxenv: safety
           - python-version: 3.8
             toxenv: safety
+          - python-version: 3.9
+            toxenv: safety
+          - python-version: 3.10.0
+            toxenv: safety
 
     steps:
       - uses: actions/checkout@v2
@@ -30,4 +34,3 @@ jobs:
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
-

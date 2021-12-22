@@ -26,35 +26,63 @@ class AgentApi(BaseObjectApi):
         router.add_get('/deploy_commands', self.get_deploy_commands)
         router.add_get('/deploy_commands/{ability_id}', self.get_deploy_commands_for_ability)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Retrieves all agents",
+                          description="Retrieves all stored agents.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
+                                     description="Returns a list of all agents.")
     async def get_agents(self, request: web.Request):
         agents = await self.get_all_objects(request)
         return web.json_response(agents)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Retrieve Agent by paw",
+                          description="Retrieve information about a specific agent using its ID (paw). Use "
+                                      "the paw field in the URL to specify matching criteria for the agent to "
+                                      "obtain information about.",
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'paw',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'ID of the Agent to retrieve information about'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(AgentSchema(partial=True))
+    @aiohttp_apispec.response_schema(AgentSchema(partial=True), description="Returns JSON response with "
+                                                                            "specified Agent")
     async def get_agent_by_id(self, request: web.Request):
         agent = await self.get_object(request)
         return web.json_response(agent)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Create a new agent",
+                          description="Creates a new agent using the format from 'AgentSchema'.")
     @aiohttp_apispec.request_schema(AgentSchema)
-    @aiohttp_apispec.response_schema(AgentSchema)
+    @aiohttp_apispec.response_schema(AgentSchema, description="Returns a single agent in 'AgentSchema' format")
     async def create_agent(self, request: web.Request):
         agent = await self.create_object(request)
         return web.json_response(agent.display)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Update an Agent",
+                          description="Update the attributes of a specific Agent using its ID (paw). Use the paw "
+                                      "field in the URL to specify matching criteria and the fields from the "
+                                      "AgentSchema in the request body to specify updated field values.",
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'paw',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'ID of the Agent to update'
+                          }])
     @aiohttp_apispec.request_schema(AgentSchema(partial=True, only=['group',
                                                                     'trusted',
                                                                     'sleep_min',
                                                                     'sleep_max',
                                                                     'watchdog',
                                                                     'pending_contact']))
-    @aiohttp_apispec.response_schema(AgentSchema)
+    @aiohttp_apispec.response_schema(AgentSchema, description="Returns JSON response with updated Agent fields")
     async def update_agent(self, request: web.Request):
         agent = await self.update_object(request)
         return web.json_response(agent.display)
