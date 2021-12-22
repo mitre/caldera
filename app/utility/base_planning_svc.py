@@ -101,7 +101,6 @@ class BasePlanningService(BaseService):
                 # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
                 link.apply_id(agent.host)
-                #link_variants.append(link)
                 continue
 
             relevant_facts = await self._build_relevant_facts(variables, facts)
@@ -132,12 +131,7 @@ class BasePlanningService(BaseService):
                     logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
         
         if trim_unset_variables:
-            links = [link for link in links if len(set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))) == 0]
-        
-        for link in links:
-            print(b64decode(link.command).decode('utf-8'))
-        for link in link_variants:
-            print(b64decode(link.command).decode('utf-8'))
+            links = [link for link in links if not set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))]
 
         return links + link_variants
 
