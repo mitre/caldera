@@ -70,8 +70,6 @@ class BasePlanningService(BaseService):
         """
         links[:] = await self.add_test_variants(links, agent, facts=await operation.all_facts(), rules=operation.rules, operation=operation,
                                                 trim_unset_variables=True, trim_missing_requirements=True)
-        #links = await self.remove_links_with_unset_variables(links)
-        #links = await self.remove_links_missing_requirements(links, operation)
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
@@ -131,7 +129,7 @@ class BasePlanningService(BaseService):
                     logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
         
         if trim_unset_variables:
-            links = [link for link in links if not set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))]
+            links = await self.remove_links_with_unset_variables(links)
 
         return links + link_variants
 
@@ -166,8 +164,8 @@ class BasePlanningService(BaseService):
         return links
     
     async def _has_unset_variables(self, combo, variable_set):
-        unset_variables = [var.name not in variable_set for var in combo]
-        return any(unset_variables)
+        variables_present = [any(c.name in var for c in combo) for var in variable_set]
+        return not all(variables_present)
     
     async def _is_missing_requirements(self, link, combo, operation):
         copy_used = list(link.used)
@@ -175,10 +173,6 @@ class BasePlanningService(BaseService):
         missing = not (link.cleanup or await self._do_enforcements(link, operation))
         link.used = copy_used
         return missing
-
-    async def remove_links_missing_requirements(self, links, operation):
-        links[:] = [s_link for s_link in links if s_link.cleanup or await self._do_enforcements(s_link, operation)]
-        return links
 
     @staticmethod
     async def remove_links_above_visibility(links, operation):
