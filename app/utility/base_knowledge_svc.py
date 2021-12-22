@@ -13,7 +13,7 @@ from app.objects.secondclass.c_fact import Fact, WILDCARD_STRING
 from app.objects.secondclass.c_relationship import Relationship
 
 DATA_BACKUP_DIR = app.service.data_svc.DATA_BACKUP_DIR
-FACT_STORE_PATH = "data/fact_store"
+FACT_STORE_PATH = f"data{os.path.sep}fact_store"
 
 
 class BaseKnowledgeService(BaseService):
@@ -282,8 +282,8 @@ class BaseKnowledgeService(BaseService):
 
         :return: None
         """
-        await self.get_service('file_svc').save_file(FACT_STORE_PATH.split('/')[1], pickle.dumps(self.fact_ram),
-                                                     FACT_STORE_PATH.split('/')[0])
+        await self.get_service('file_svc').save_file(FACT_STORE_PATH.split(os.path.sep)[1], pickle.dumps(self.fact_ram),
+                                                     FACT_STORE_PATH.split(os.path.sep)[0])
 
     async def _restore_state(self):
         """
