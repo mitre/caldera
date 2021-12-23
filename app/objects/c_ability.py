@@ -1,4 +1,5 @@
 import collections
+import logging
 import uuid
 
 import marshmallow as ma
@@ -90,6 +91,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
         if not existing:
+            name_match = [x for x in ram['abilities'] if x.name == self.name]
+            if name_match:
+                self.name = self.name + " (2)"
+                logging.info(f"Collision in ability name detected for {self.id} and {name_match[0].id} "
+                             f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
         existing.update('tactic', self.tactic)
