@@ -234,6 +234,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <template x-if="selectedAbility.handler">
+                                <div class="field is-horizontal">
+                                    <div class="field-label is-small">
+                                        <label class="label">Command Handler</label>
+                                    </div>
+                                    <div class="field-body">
+                                        <div class="field">
+                                            <div class="control">
+                                                <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('handler') }" x-model="selectedAbility.handler">
+                                                <p x-show="fieldErrors.includes('handler')" class="help is-danger">Default is 'base'</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </form>
                         <p class="has-text-centered">Executors</p>
                         <p x-show="fieldErrors.includes('executors')" class="help is-danger">At least one executor is required.</p>
