@@ -29,6 +29,7 @@ class AgentFieldsSchema(ma.Schema):
     pid = ma.fields.Integer()
     ppid = ma.fields.Integer()
     trusted = ma.fields.Boolean()
+    handlers = ma.fields.List(ma.fields.String())
     executors = ma.fields.List(ma.fields.String())
     privilege = ma.fields.String()
     exe_name = ma.fields.String()
@@ -97,7 +98,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
-                 trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
+                 trusted=True, handlers=(), executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id='', deadman_enabled=False,
                  available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
         super().__init__()
@@ -116,6 +117,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.created = datetime.now(timezone.utc)
         self.last_seen = self.created
         self.last_trusted_seen = self.created
+        self.handlers = handlers
         self.executors = executors
         self.privilege = privilege
         self.exe_name = exe_name

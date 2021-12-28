@@ -41,6 +41,7 @@ class LinkSchema(ma.Schema):
     collect = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
+    handler = ma.fields.String(missing=None)
     executor = ma.fields.Nested(ExecutorSchema())
     cleanup = ma.fields.Integer(missing=0)
     visibility = ma.fields.Nested(VisibilitySchema())
@@ -151,7 +152,7 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
+    def __init__(self, command='', paw='', ability=None, handler=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
                  pin=0, host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
@@ -161,6 +162,7 @@ class Link(BaseObject):
         self.host = host
         self.cleanup = cleanup
         self.ability = ability
+        self.handler = handler
         self.executor = executor
         self.status = status
         self.score = score

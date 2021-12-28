@@ -17,6 +17,7 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
+    handler = ma.fields.String(missing=None)
     executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
@@ -56,7 +57,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         yield from self._executor_map.values()
 
     def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
-                 executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
+                 handler=None, executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
                  additional_info=None, tags=None, singleton=False, plugin='', **kwargs):
         super().__init__()
         self.ability_id = ability_id if ability_id else str(uuid.uuid4())
@@ -66,6 +67,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.description = description
 
+        self.handler = handler
         self._executor_map = collections.OrderedDict()
         self.add_executors(executors)
 

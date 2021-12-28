@@ -166,6 +166,7 @@ class ContactService(ContactServiceInterface, BaseService):
         return Instruction(id=link.unique,
                            sleep=link.jitter,
                            command=link.command,
+                           handler=link.handler,
                            executor=link.executor.name,
                            timeout=link.executor.timeout,
                            payloads=payloads,
