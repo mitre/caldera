@@ -26,9 +26,12 @@ class AgentApi(BaseObjectApi):
         router.add_get('/deploy_commands', self.get_deploy_commands)
         router.add_get('/deploy_commands/{ability_id}', self.get_deploy_commands_for_ability)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Retrieves all agents",
+                          description="Retrieves all stored agents.")
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
+                                     description="Returns a list of all agents.")
     async def get_agents(self, request: web.Request):
         agents = await self.get_all_objects(request)
         return web.json_response(agents)
@@ -52,9 +55,11 @@ class AgentApi(BaseObjectApi):
         agent = await self.get_object(request)
         return web.json_response(agent)
 
-    @aiohttp_apispec.docs(tags=['agents'])
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Create a new agent",
+                          description="Creates a new agent using the format from 'AgentSchema'.")
     @aiohttp_apispec.request_schema(AgentSchema)
-    @aiohttp_apispec.response_schema(AgentSchema)
+    @aiohttp_apispec.response_schema(AgentSchema, description="Returns a single agent in 'AgentSchema' format")
     async def create_agent(self, request: web.Request):
         agent = await self.create_object(request)
         return web.json_response(agent.display)

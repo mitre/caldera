@@ -101,30 +101,30 @@
                             <td x-text="ability.technique_name"></td>
                             <td>
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
-                                    <a class="has-tooltip-arrow" x-bind:data-tooltip="platform">
+                                    <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
                                         <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
-                                    </a>
+                                    </span>
                                 </template>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
-                                <a class=" has-tooltip-arrow" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
+                                <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
                                     <span class="icon is-small"><i class="fas fa-lock"></i></span>
-                                </a>
+                                </span>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
-                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
                                     <span class="icon is-small"><i class="fas fa-key"></i></span>
-                                </a>
+                                </span>
                             </td>
                             <td class="has-text-centered">
-                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
-                                </a> 
+                                </span> 
                             </td>
                             <td class="has-text-centered">
-                                <a class="has-tooltip-arrow" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
                                     <span class="icon is-small"><i class="fas fa-trash"></i></span>
-                                </a>
+                                </span>
                             </td>
                             <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAbility(index)"></button></td>
                         </tr>
@@ -1145,6 +1145,10 @@
 
     .lock {
         background-color: blueviolet !important;
+    }
+
+    .no-underline.has-tooltip-arrow {
+        border-bottom: none;
     }
 
     .pointer {

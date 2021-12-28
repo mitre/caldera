@@ -167,16 +167,38 @@ class OperationApi(BaseObjectApi):
                                 'required': 'true'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True))
+    @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True),
+                                     description='All links contained in operation with the given `id` (String UUID).')
     async def get_operation_links(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
         links = await self._api_manager.get_operation_links(operation_id, access)
         return web.json_response(links)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve a specified link from an operation',
+                          description='Retrieve the link with the provided `link_id` (String UUID) from the operation '
+                                      'with the given operation `id` (String UUID). Use fields from the '
+                                      '`BaseGetOneQuerySchema` in the request body to add `include` and `exclude` '
+                                      'filters.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'String UUID of the Operation containing desired link.'},
+                              {
+                              'in': 'path',
+                              'name': 'link_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'String UUID of the Link with the above operation.'}
+                          ])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True),
+                                     description='The link matching the provided `link_id` within the operation '
+                                                 'matching `id`. Use fields from the `BaseGetOneQuerySchema` in the '
+                                                 'request body to add `include` and `exclude` filters.')
     async def get_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
@@ -194,9 +216,27 @@ class OperationApi(BaseObjectApi):
         result = await self._api_manager.get_operation_link_result(operation_id, link_id, access)
         return web.json_response(result)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Update the specified link within an operation',
+                          description='Update the `command` (String) or `status` (Integer) field within the link with '
+                                      'the provided  `link_id` (String UUID) from the operation with the given '
+                                      'operation `id` (String UUID).',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'String UUID of the Operation containing desired link.'},
+                              {
+                              'in': 'path',
+                              'name': 'link_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'String UUID of the Link with the above operation.'}
+                          ])
     @aiohttp_apispec.request_schema(LinkSchema(partial=True, only=['command', 'status']))
-    @aiohttp_apispec.response_schema(LinkSchema)
+    @aiohttp_apispec.response_schema(LinkSchema,
+                                     description='The updated link after a successful `PATCH` request.')
     async def update_operation_link(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
