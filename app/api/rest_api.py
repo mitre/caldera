@@ -45,7 +45,6 @@ class RestApi(BaseWorld):
 
     @template('login.html', status=401)
     async def login(self, request):
-        print('yo')
         return dict()
 
     async def validate_login(self, request):
