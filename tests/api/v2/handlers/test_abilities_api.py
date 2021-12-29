@@ -16,6 +16,7 @@ def new_ability_payload():
             'tactic': 'collection',
             'technique_name': 'collection',
             'technique_id': '1',
+            'handler': 'base',
             'executors': [ExecutorSchema().dump(test_executor_linux)],
             'access': {},
             'additional_info': {},
@@ -43,7 +44,7 @@ def replaced_ability_payload(test_ability):
     test_requirement = Requirement(module='plugins.stockpile.app.requirements.paw_provenance',
                                    relationship_match=[{'source': 'host.user.name'}])
     ability_data.update(dict(name='replaced test ability', tactic='collection', technique_name='discovery',
-                             technique_id='2', executors=[ExecutorSchema().dump(test_executor_linux)], plugin='',
+                             technique_id='2', handler='base', executors=[ExecutorSchema().dump(test_executor_linux)], plugin='',
                              requirements=[RequirementSchema().dump(test_requirement)]))
     return ability_data
 
@@ -51,7 +52,7 @@ def replaced_ability_payload(test_ability):
 @pytest.fixture
 def test_ability(loop, api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
-    ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
+    ability = Ability(ability_id='123', name='Test Ability', handler='base', executors=[executor_linux],
                       technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery',
                       plugin='testplugin')
     loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
@@ -102,7 +103,7 @@ class TestAbilitiesApi:
 
     async def test_create_invalid_ability(self, api_v2_client, api_cookies, mocker, async_return, test_ability):
         payload = dict(name='new test ability', ability_id='123', technique_name='collection',
-                       technique_id='1', executors=[])
+                       technique_id='1', handler='base', executors=[])
         resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
@@ -138,6 +139,6 @@ class TestAbilitiesApi:
 
     async def test_invalid_replace_ability(self, api_v2_client, api_cookies, test_ability):
         payload = dict(name='replaced test ability', tactic='collection', technique_name='discovery', technique_id='2',
-                       executors=[])
+                       handler='base', executors=[])
         resp = await api_v2_client.put('/api/v2/abilities/123', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
