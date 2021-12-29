@@ -22,24 +22,24 @@ def setup_rest_svc_test(loop, data_svc):
                                                 'encryption_key': 'ADMIN123',
                                                 'exfil_dir': '/tmp'})
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='123', executors=[
+        Ability(ability_id='123', handler='', executors=[
             Executor(name='psh', platform='windows', command='curl #{app.contact.http}')
         ])
     ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='456', executors=[
+        Ability(ability_id='456', handler='', executors=[
             Executor(name='sh', platform='linux', command='whoami')
         ])
     ))
     loop.run_until_complete(data_svc.store(
-        Ability(ability_id='789', executors=[
+        Ability(ability_id='789', handler='', executors=[
             Executor(name='sh', platform='linux', command='hostname')
         ])
     ))
     adversary = Adversary(adversary_id='123', name='test', description='test', atomic_ordering=[])
     loop.run_until_complete(data_svc.store(adversary))
 
-    agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
+    agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, handlers=[''], executors=['pwsh', 'psh'], platform='windows')
     loop.run_until_complete(data_svc.store(agent))
 
     loop.run_until_complete(data_svc.store(
@@ -81,7 +81,7 @@ class TestRestSvc:
                                           'ignore_enforcement_modules': [], 'id': '123', 'plugin': ''}, 'jitter': '2/8',
                               'host_group': [{'trusted': True, 'architecture': 'unknown', 'watchdog': 0,
                                               'contact': 'unknown', 'username': 'unknown', 'links': [], 'sleep_max': 8,
-                                              'exe_name': 'unknown', 'executors': ['pwsh', 'psh'], 'ppid': 0,
+                                              'exe_name': 'unknown', 'handlers': [''], 'executors': ['pwsh', 'psh'], 'ppid': 0,
                                               'sleep_min': 2, 'server': '://None:None', 'platform': 'windows',
                                               'host': 'unknown', 'paw': '123', 'pid': 0,
                                               'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown',
@@ -157,7 +157,7 @@ class TestRestSvc:
                 'source': '',
                 'host_group': [
                     {'trusted': True, 'architecture': 'unknown', 'watchdog': 0, 'contact': 'unknown',
-                     'username': 'unknown', 'links': [], 'sleep_max': 8, 'exe_name': 'unknown',
+                     'username': 'unknown', 'links': [], 'sleep_max': 8, 'exe_name': 'unknown', 'handlers': [''],
                      'executors': ['pwsh', 'psh'], 'ppid': 0, 'sleep_min': 2, 'server': '://None:None',
                      'platform': 'windows', 'host': 'unknown', 'paw': '123', 'pid': 0,
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',

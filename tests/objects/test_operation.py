@@ -31,7 +31,7 @@ LINK2_FINISH_TIME = '2021-01-01T09:02:00Z'
 def operation_agent(agent):
     return agent(sleep_min=30, sleep_max=60, watchdog=0, platform='windows', host='WORKSTATION',
                  username='testagent', architecture='amd64', group='red', location=r'C:\Users\Public\test.exe',
-                 pid=1234, ppid=123, executors=['psh'], privilege='User', exe_name='test.exe', contact='unknown',
+                 pid=1234, ppid=123, handlers=[''], executors=['psh'], privilege='User', exe_name='test.exe', contact='unknown',
                  paw='testpaw')
 
 
@@ -47,8 +47,8 @@ def operation_adversary(adversary):
 
 @pytest.fixture
 def operation_link():
-    def _generate_link(command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
-        generated_link = Link(command, paw, ability, executor, **kwargs)
+    def _generate_link(command, paw, ability, handler, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
+        generated_link = Link(command, paw, ability, handler, executor, **kwargs)
         generated_link.pid = pid
         if decide:
             generated_link.decide = decide
@@ -77,20 +77,20 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
     executor_1 = executor(name='psh', platform='windows', command=command_1)
     executor_2 = executor(name='psh', platform='windows', command=command_2)
     ability_1 = ability(ability_id='123', tactic='test tactic', technique_id='T0000', technique_name='test technique',
-                        name='test ability', description='test ability desc', executors=[executor_1])
+                        name='test ability', description='test ability desc', handler='', executors=[executor_1])
     ability_2 = ability(ability_id='456', tactic='test tactic', technique_id='T0000', technique_name='test technique',
-                        name='test ability 2', description='test ability 2 desc', executors=[executor_2])
-    link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
+                        name='test ability 2', description='test ability 2 desc', handler='', executors=[executor_2])
+    link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, handler='', executor=executor_1,
                             command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
                             decide=parse_datestring(LINK1_DECIDE_TIME),
                             collect=parse_datestring(LINK1_COLLECT_TIME),
                             finish=LINK1_FINISH_TIME)
-    link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
+    link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, handler='', executor=executor_2,
                             command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
                             decide=parse_datestring(LINK2_DECIDE_TIME),
                             collect=parse_datestring(LINK2_COLLECT_TIME),
                             finish=LINK2_FINISH_TIME)
-    discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
+    discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, handler='', executor=executor_2,
                                     command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
                                     decide=parse_datestring('2021-01-01T10:00:00Z'))
     op.chain = [link_1, link_2, discarded_link]
@@ -220,6 +220,7 @@ class TestOperation:
                 finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
+                handler='',
                 executor='psh',
                 pid=789,
                 agent_metadata=want_agent_metadata,
@@ -238,6 +239,7 @@ class TestOperation:
                 finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
+                handler='',
                 executor='psh',
                 pid=7890,
                 agent_metadata=want_agent_metadata,
@@ -289,6 +291,7 @@ class TestOperation:
                 finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
+                handler='',
                 executor='psh',
                 pid=789,
                 agent_metadata=want_agent_metadata,
@@ -307,6 +310,7 @@ class TestOperation:
                 finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
+                handler='',
                 executor='psh',
                 pid=7890,
                 agent_metadata=want_agent_metadata,
