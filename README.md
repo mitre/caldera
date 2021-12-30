@@ -53,7 +53,7 @@ These requirements are for the computer running the core framework:
 * Any Linux or MacOS
 * Python 3.7+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
-* GoLang 1.17+ to dynamically compile GoLang-based agents.
+* Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
 
 ## Installation
 
