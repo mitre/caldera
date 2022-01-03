@@ -34,18 +34,17 @@ class ObjectiveApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['objectives'],
                           summary='Retrieve objective by ID',
-                          description='Retrieve objectives by ID. Use fields from the `ObjectiveSchema` in '
+                          description='Retrieve one objective by ID. Use fields from the `ObjectiveSchema` in '
                                       'the request body to filter retrieved objective.',
                           parameters=[{
                             'in': 'path',
                             'name': 'id',
                             'schema': {'type': 'string'},
                             'required': 'true',
-                            'description': 'Return objective by ID'}])
+                            'description': 'Return UUID of the objective to be retrieved'}])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True),
+    @aiohttp_apispec.response_schema(ObjectiveSchema(partial=True),
                                      description='Returns single objective in ObjectiveSchema format.')
-    @aiohttp_apispec.response_schema(ObjectiveSchema(partial=True))
     async def get_objective_by_id(self, request: web.Request):
         objective = await self.get_object(request)
         return web.json_response(objective)
