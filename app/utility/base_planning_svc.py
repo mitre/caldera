@@ -1,6 +1,7 @@
 import copy
 import itertools
 import logging
+import pickle
 import re
 from base64 import b64decode
 
@@ -103,7 +104,7 @@ class BasePlanningService(BaseService):
                     for combo in list(itertools.product(*valid_facts)):
                         try:
                             copy_test = copy.copy(decoded_test)
-                            copy_link = copy.deepcopy(link)
+                            copy_link = pickle.loads(pickle.dumps(link))    # nosec
                             variant, score, used = await self._build_single_test_variant(copy_test, combo,
                                                                                          link.executor.name)
                             copy_link.command = self.encode_string(variant)
@@ -132,7 +133,7 @@ class BasePlanningService(BaseService):
         """
         completed_links = [lnk for lnk in operation.chain if lnk.paw == agent.paw and (lnk.finish or lnk.can_ignore())]
 
-        singleton_links = BasePlanningService._list_historic_duplicate_singletons(operation)
+        singleton_links = await BasePlanningService._list_historic_duplicate_singletons(operation)
 
         return [lnk for lnk in links if lnk.ability.repeatable or
                 (lnk not in completed_links and
@@ -167,7 +168,7 @@ class BasePlanningService(BaseService):
         return links
 
     @staticmethod
-    def _list_historic_duplicate_singletons(operation):
+    async def _list_historic_duplicate_singletons(operation):
         """
         Generate a list of successfully run singleton abilities for a given operation
         :param operation: Operation to scan
@@ -177,7 +178,7 @@ class BasePlanningService(BaseService):
         return [x for x in singleton if x]
 
     @staticmethod
-    def _remove_links_of_duplicate_singletons(agent_links):
+    async def _remove_links_of_duplicate_singletons(agent_links):
         """
         Filter links across agents
         :param agent_links: array of agent links
