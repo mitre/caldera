@@ -207,15 +207,13 @@
                                     <div class="mb-6 mr-4 text-align-right">
                                         <button title="add manual command" class="button is-primary is-small"
                                                 x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
-                                            <em class="pr-1 fas fa-plus"></em>Manual
-                                            Command
+                                            <em class="pr-1 fas fa-plus"></em>Manual Command
                                         </button>
                                     </div>
                                     <div class="mb-6 mr-4">
                                         <button title="add potential link" class="button is-primary is-small"
-                                                x-on:click="openModal = 'addLink'; getAgents()"><em
-                                                class="pr-1 fas fa-plus"></em>Potential
-                                            Link
+                                                x-on:click="openPotentialLinkModal()"><em
+                                                class="pr-1 fas fa-plus"></em>Potential Link
                                         </button>
                                     </div>
                                 </div>
@@ -424,15 +422,13 @@
                                 <div class="mb-6 mr-4 has-text-right">
                                     <button title="add manual command" class="button is-primary is-small"
                                             x-on:click="addNewRow = true; getAgents()">
-                                        <em class="pr-1 fas fa-plus"></em>Manual
-                                        Command
+                                        <em class="pr-1 fas fa-plus"></em>Manual Command
                                     </button>
                                 </div>
                                 <div class="mb-6 mr-4">
                                     <button title="add potential link" class="button is-primary is-small"
-                                            x-on:click="openModal = 'addLink'; getAgents()"><em
-                                            class="pr-1 fas fa-plus"></em>Potential
-                                        Link
+                                            x-on:click="openPotentialLinkModal()"><em
+                                            class="pr-1 fas fa-plus"></em>Potential Link
                                     </button>
                                 </div>
                             </div>
@@ -1421,6 +1417,15 @@
                         this.selectedAgentIndex = null;
                     })
                     .catch(() => toast('Error adding manual command.'));
+            },
+
+            openPotentialLinkModal() {
+                this.potentialLink.tactic = '';
+                this.potentialLink.technique = '';
+                this.potentialLinkSearchQuery = '';
+                this.filterAbilities(this.abilities);
+                this.getAgents();
+                this.openModal = 'addLink';
             },
 
             selectPotentialLink(link) {
