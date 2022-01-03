@@ -41,7 +41,7 @@ class ObjectiveApi(BaseObjectApi):
                             'name': 'id',
                             'schema': {'type': 'string'},
                             'required': 'true',
-                            'description': 'Return UUID of the objective to be retrieved'}])
+                            'description': 'UUID of the objective to be retrieved'}])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(ObjectiveSchema(partial=True),
                                      description='Returns single objective in ObjectiveSchema format.')
