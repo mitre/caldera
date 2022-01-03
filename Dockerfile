@@ -21,7 +21,12 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 ADD . .
 
 # Download golang dependencies
-RUN go get github.com/grandcat/zeroconf github.com/google/go-github/github github.com/grandcat/zeroconf github.com/miekg/dns golang.org/x/oauth2 gopkg.in/natefinch/npipe.v2
+RUN go get github.com/grandcat/zeroconf 	  \
+		   github.com/google/go-github/github \
+		   github.com/grandcat/zeroconf 	  \
+		   github.com/miekg/dns 			  \
+		   golang.org/x/oauth2 				  \
+		   gopkg.in/natefinch/npipe.v2
 
 # Update default sandcat agent binaries
 WORKDIR /usr/src/app/plugins/sandcat
@@ -43,7 +48,10 @@ RUN mkdir /tmp/gocatextensionstest/payloads
 RUN ./update-agents.sh
 
 # Clone atomic red team repo for the atomic plugin
-RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ]; then git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git /usr/src/app/plugins/atomic/data/atomic-red-team; fi
+RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ]; then   \
+	git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git \
+		/usr/src/app/plugins/atomic/data/atomic-red-team; 				   \
+fi
 
 WORKDIR /usr/src/app
 
