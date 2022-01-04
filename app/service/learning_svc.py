@@ -5,7 +5,6 @@ from base64 import b64decode
 from importlib import import_module
 
 from app.objects.secondclass.c_relationship import Relationship
-from app.objects.secondclass.c_fact import OriginType
 from app.objects.secondclass.c_link import update_scores
 from app.service.interfaces.i_learning_svc import LearningServiceInterface
 from app.utility.base_service import BaseService
@@ -50,19 +49,6 @@ class LearningService(LearningServiceInterface, BaseService):
         await update_scores(operation=None, increment=len(found_facts), used=facts, facts=link.facts)
         await self._store_results(link, found_facts, operation)
 
-    @staticmethod
-    async def _save_fact(link, facts, fact, operation=None):
-        fact.origin_type = OriginType.LEARNED
-        fact.source = operation.id if operation else link.id
-        if all(fact.trait) and not any(fact == f for f in facts):
-            fact.collected_by = link.paw
-            fact.technique_id = link.ability.technique_id
-            fact.links = [link]
-            fact.relationships = []
-            knowledge_svc_handle = BaseService.get_service('knowledge_svc')
-            await knowledge_svc_handle.add_fact(fact)
-            link.facts.append(fact)
-
     async def _store_results(self, link, facts, operation=None):
         facts_covered = []
         for relationship in self.model:
@@ -73,11 +59,7 @@ class LearningService(LearningServiceInterface, BaseService):
                     facts_covered.append(fact)
             for pair in itertools.combinations(matches, r=2):
                 if pair[0].trait != pair[1].trait:
-                    await link._create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],
-                                                     operation=operation)
-        # make sure we always record all the facts, even if there isn't a model set, or it would slip through otherwise
-        e_facts = link.facts
-        if operation:
-            e_facts = await operation.all_facts()
+                    await link.create_relationships([Relationship(source=pair[0], edge='has', target=pair[1])],
+                                                    operation=operation)
         for f in [x for x in facts if x not in facts_covered]:
-            await self._save_fact(link, e_facts, f, operation)
+            await link.save_fact(operation=operation, fact=f, score=1, relationship=[])
