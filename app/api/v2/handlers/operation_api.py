@@ -118,9 +118,9 @@ class OperationApi(BaseObjectApi):
                           parameters=[{
                               'in': 'path',
                               'name': 'id',
-                              'operation_id' : 'Unique ID for operation',
-                              'access' : 'Format for report',
-                              'output' : 'Boolean for Agent Output in report',
+                              'operation_id': 'Unique ID for operation',
+                              'access': 'Format for report',
+                              'output': 'Boolean for Agent Output in report',
                               'schema': {'type': 'string'},
                               'required': 'true'
                           }])
@@ -140,10 +140,10 @@ class OperationApi(BaseObjectApi):
                           parameters=[{
                                 'in': 'path',
                                 'name': 'id',
-                                'operation_id' : 'Unique ID for operation',
-                                'access' : 'Format for report',
-                                'output' : 'Boolean for Agent Output in report',
-                                'schema' : {'type': 'string'},
+                                'operation_id': 'Unique ID for operation',
+                                'access': 'Format for report',
+                                'output': 'Boolean for Agent Output in report',
+                                'schema': {'type': 'string'},
                                 'required': 'true'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
@@ -162,8 +162,8 @@ class OperationApi(BaseObjectApi):
                           parameters=[{
                                 'in': 'path',
                                 'name': 'id',
-                                'operation_id' : 'Unique ID for operation',
-                                'schema' : {'type': 'string'},
+                                'operation_id': 'Unique ID for operation',
+                                'schema': {'type': 'string'},
                                 'required': 'true'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
