@@ -8,85 +8,75 @@
     </div>
     <hr>
     <div>
-        <!-- TOP PANEL -->
-        <div>
-            <div class="is-flex is-flex-direction-row" x-data="{filterKeyword: ''}">
-                <!-- SEARCH BAR -->
-                <div class="mb-4 is-flex is-justify-content-space-between is-flex-direction-column">
-                    <div class="is-flex is-align-items-center filter-search-box">
-                        <i class="fas fa-search"></i>
-                        <input class="input is-small"
-                               id="source-search"
-                               placeholder="Fact source"
-                               x-model="filterKeyword"
-                               x-on:keyup="filterSources($el.value)">
-                        <i class="fas fa-times"
-                           x-on:click="filterSources(''); filterKeyword=''"></i>
-                    </div>
-                    <label class="is-size-7" for="source-search">
-                        <em x-text="filterKeyword !== '' ? ('searching: ' + filterKeyword) : 'type fact source name'"></em>
-                    </label>
-                </div>
-                <div class="pl-0 is-flex is-align-content-flex-start">
-                    <button
-                            type="button"
-                            class="ml-2 button is-primary is-small"
-                            x-on:click="addSource(filterKeyword)"
-                            title="Create a new source">
-                        <i class="pr-1 fas fa-plus"></i>
-                        <span>Add Source</span>
-                    </button>
-                    <button type="button"
-                            x-bind:disabled="!selectedSource"
-                            class="ml-2 button is-primary is-small"
-                            x-on:click="duplicateSource(selectedSource)"
-                            title="Duplicate selected source">
-                        <i class="pr-1 fas fa-plus"></i>
-                        <span>Duplicate</span>
-                    </button>
-                    <button type="button"
-                            x-bind:disabled="!selectedSource"
-                            class="ml-2 button is-primary is-small"
-                            x-on:click="openModalData.name = 'deleteSource'; openModalData.item = selectedSource"
-                            title="Delete selected source">
-                        <i class="pr-1 fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
 
-            <!-- SOURCES MENU -->
-            <div class="is-flex is-flex-direction-row is-justify-content-flex-start sources-menu-container">
-                <template x-if="filteredSources.length < 1">
-                    <em class="is-flex is-justify-content-center">No sources available; click on the 'Add Source'
-                        button to get started.</em>
-                </template>
-                <template x-for="source of filteredSources" :key="source.id" x-data="{ editSourceName: false}">
-                    <button class="pt-2 no-style source-menu-links"
-                            x-bind:class="selectedSource === source ? 'active' : ''"
-                            x-on:click="handleSelectSource(source)">
-                        <i class="fas fa-project-diagram"></i>
-                        <span x-on:click="editSourceName = (selectedSource === source)"
-                              x-show="!editSourceName || selectedSource !== source" x-text="source.name"></span>
-                        <label for="edit-source-name" x-show="false">Edit source name</label>
-                        <textarea id="edit-source-name"
-                                  @click.outside="handleEditSource(editSourceName)"
-                                  class="is-small edit-field"
-                                  x-model="source.name"
-                                  x-show="editSourceName && selectedSource === source"
-                                  contenteditable
-                                  spellcheck="false"></textarea>
-                    </button>
-                </template>
+        <!-- FACT SELECTION -->
+
+        <form>
+            <div id="select-source" class="field has-addons">
+                <label class="label">Select a source &nbsp;&nbsp;&nbsp;</label>
+                <div class="control is-expanded">
+                    <div class="select is-small is-fullwidth">
+                        <select x-on:change="handleSelectSource()" x-model="selectedSourceId">
+                            <option value="" default disabled selected>Select a source...</option>
+                            <template x-for="source of sources" :key="source.id">
+                                <option x-bind:value="source.id" x-text="source.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button type="button" class="button is-primary is-small" @click="createSource()">+ New</button>
+                </div>
             </div>
-        </div>
+        </form>
 
         <!-- CONTENT -->
+        
         <template x-if="!selectedSource">
             <em class="is-flex is-justify-content-center">Click on a fact source to get started.</em>
         </template>
 
         <template x-if="selectedSource">
             <div>
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item" x-show="!isEditingSourceName">
+                            <h2 x-text="selectedSource.name" class="mb-2"></h2>
+                        </div>
+                        <div class="level-item">
+                            <a class="mb-2 has-text-white" @click="isEditingSourceName = true" x-show="!isEditingSourceName">
+                                <span class="icon"><em class="fas fa-pencil-alt"></em></span>
+                            </a>
+                        </div>
+                        <div class="level-item" x-show="isEditingSourceName">
+                            <input id="sourceName" class="input is-small" placeholder="Enter a source name" x-model="selectedSource.name">
+                        </div>
+                        <div class="level-item" x-show="isEditingSourceName">
+                            <button class="button is-small is-primary" @click="saveSourceName()">
+                                <span class="icon"><em class="fas fa-save"></em></span>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                        <div class="level-item" x-show="isEditingSourceName">
+                            <button class="button is-small" @click="isEditingSourceName = false">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="level-right">  
+                        <div class="level-item">
+                            <button class="button is-small is-primary" @click="duplicateSource(selectedSource)">
+                                <span class="icon"><em class="fas fa-copy"></em></span>
+                                <span>Duplicate</span>
+                            </button>
+                        </div>
+                        <div class="level-item">
+                            <button class="button is-small is-primary" @click="isConfirmDeleteModalOpen = true">
+                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+
                 <!-- FACTS CONTENT -->
                 <div class="my-5" x-data="{collapseFacts: false}">
                     <div class="collapsible-header">
@@ -104,15 +94,12 @@
                                     <i class="fas fa-search"></i>
                                     <input class="input is-small"
                                            id="fact-search"
-                                           placeholder="Fact keyword"
+                                           placeholder="Find a trait or value..."
                                            x-model="factsFilterKeyword"
                                            x-on:keyup="filterFacts($el.value)">
                                     <i class="fas fa-times"
                                        x-on:click="filterFacts(''); factsFilterKeyword=''"></i>
                                 </div>
-                                <label class="is-size-7" for="fact-search">
-                                    <em x-text="factsFilterKeyword !== '' ? ('searching: ' + factsFilterKeyword) : 'type fact trait or value'"></em>
-                                </label>
                             </div>
                             <div class="pl-0 is-flex is-align-content-flex-start">
                                 <button type="button"
@@ -227,15 +214,12 @@
                                     <i class="fas fa-search"></i>
                                     <input class="input is-small"
                                            id="rule-search"
-                                           placeholder="Rule keyword"
+                                           placeholder="Find a match rule or trait..."
                                            x-model="rulesFilterKeyword"
                                            x-on:keyup="filterRules($el.value)">
                                     <i class="fas fa-times"
                                        x-on:click="filterRules(''); rulesFilterKeyword=''"></i>
                                 </div>
-                                <label class="is-size-7" for="rule-search">
-                                    <em x-text="rulesFilterKeyword !== '' ? ('searching: ' + rulesFilterKeyword) : 'type match rule or fact trait'"></em>
-                                </label>
                             </div>
                             <div class="pl-0 is-flex is-align-content-flex-start">
                                 <button type="button"
@@ -455,62 +439,37 @@
         </template>
     </div>
 
-    <!-- MODAL -->
-    <template x-if="openModalData.item">
-        <div class="modal is-active">
-            <div class="modal-background"></div>
-            <form class="m-1">
-                <div class="modal-card">
-                    <template x-if="openModalData.name.includes('delete')">
-                        <div>
-                            <header class="modal-card-head">
-                                <p class="modal-card-title">Confirm Delete</p>
-                            </header>
-                            <section class="modal-card-body">
-                                <div>
-                                    <p>Are you sure you want to delete
-                                        <em x-show="openModalData.name === 'deleteSource'" x-text="openModalData.item?.name"></em>
-                                        <em x-show="openModalData.name === 'deleteFact'"
-                                            x-text="openModalData.item?.name"></em>
-                                        <em x-show="openModalData.name === 'deleteRule'"
-                                            x-text="openModalData.item?.trait"></em>
-                                        <em x-show="openModalData.name === 'deleteRelationship'"
-                                            x-text="openModalData.item?.trait"></em>
-                                        ?</p>
-                                </div>
-                            </section>
+    <div class="modal" x-bind:class="{ 'is-active': isConfirmDeleteModalOpen }">
+        <div class="modal-background" @click="isConfirmDeleteModalOpen = false"></div>
+        <div class="modal-card" style="z-index: 20">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Delete Fact Source?</p>
+            </header>
+            <section class="modal-card-body">
+                <p>
+                    Are you sure you want to delete this fact source? This cannot be undone.
+                </p>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="isConfirmDeleteModalOpen = false">Cancel</button>
                         </div>
-                    </template>
-                    <footer class="modal-card-foot is-flex is-justify-content-space-between">
-                        <button type="button" class="button ml-2 is-small"
-                                x-on:click="resetModal()">
-                            Cancel
-                        </button>
-                        <button x-show="openModalData.name === 'deleteSource'" type="button"
-                                class="button is-primary is-small"
-                                x-on:click="deleteSource(openModalData.item)">
-                            Yes
-                        </button>
-                        <button x-show="openModalData.name === 'deleteFact'" type="button"
-                                class="button is-primary is-small"
-                                x-on:click="deleteFact(openModalData.item)">
-                            Yes
-                        </button>
-                        <button x-show="openModalData.name === 'deleteRule'" type="button"
-                                class="button is-primary is-small"
-                                x-on:click="deleteRule(openModalData.item)">
-                            Yes
-                        </button>
-                        <button x-show="openModalData.name === 'deleteRelationship'" type="button"
-                                class="button is-primary is-small"
-                                x-on:click="deleteRelationship(openModalData.item)">
-                            Yes
-                        </button>
-                    </footer>
-                </div>
-            </form>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-danger is-small" @click="deleteSource(); isConfirmDeleteModalOpen = false;">
+                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                <span>Delete Source</span>
+                            </button>
+                        <div>
+                    </div>
+                </nav>
+            </footer>
         </div>
-    </template>
+    </div>
+
 </div>
 
 <script>
@@ -524,14 +483,21 @@
             filteredSources: [],
             filteredFacts: [],
             filteredRules: [],
+
             selectedSource: null,
+            selectedSourceId: '',
             selectedRelationship: null,
             selectedFact: null,
             selectedRule: null,
+
+            isEditingSourceName: false,
+
+            isConfirmDeleteModalOpen: false,
+
             showAddFactRow: false,
             showAddRuleRow: false,
             showAddRelationshipRow: false,
-            openModalData: { name: '', item: null },
+
             newRelationship: {
                 sourceTrait: '',
                 edge: '',
@@ -540,28 +506,17 @@
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
-                    this.sources = sources;
-                    this.filteredSources = sources;
+                    this.sources = sources.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase());
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
                 });
             },
 
-            handleSelectSource(source) {
-                this.selectedSource = source;
-                this.filteredFacts = source.facts;
-                this.filteredRules = source.rules;
-            },
-
-            handleEditSource(editSourceName) {
-                editSourceName = false;
-                this.updateFactSource();
-            },
-
-            filterSources(input = '') {
-                input = input.toLowerCase();
-                this.filteredSources = this.sources.filter((s) => s.name.toLowerCase().includes(input));
+            handleSelectSource() {
+                this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
+                this.filteredFacts = this.selectedSource.facts;
+                this.filteredRules = this.selectedSource.rules;
             },
 
             filterFacts(input = '') {
@@ -574,16 +529,22 @@
                 this.filteredRules = this.selectedSource.rules.filter((r) => (r.match.toLowerCase().includes(input) || r.trait.toLowerCase().includes(input)));
             },
 
-            addSource(newSourceName) {
+            createSource(newSourceName) {
                 const newSource = {
-                    name: newSourceName === '' ? 'new source' : newSourceName,
+                    name: '',
                     facts: [],
                     rules: [],
                     relationships: []
                 };
-                apiV2('POST', '/api/v2/sources', newSource).then((res) => {
-                    toast('Added new fact source', res);
-                    this.getSources();
+                apiV2('POST', '/api/v2/sources', newSource).then((newSource) => {
+                    toast('Added new fact source', true);
+                    this.isEditingSourceName = true;
+                    this.sources.push(newSource);
+                    this.selectedSourceId = newSource.id;
+                    this.selectedSource = newSource;
+                    this.$nextTick(() => {
+                        document.getElementById('sourceName').focus();
+                    });
                 }).catch((error) => {
                     toast('Error adding source', false);
                     console.error(error);
@@ -652,11 +613,11 @@
                 });
             },
 
-            deleteSource(source) {
-                apiV2('DELETE', `/api/v2/sources/${source.id}`).then((res) => {
+            deleteSource() {
+                apiV2('DELETE', `/api/v2/sources/${this.selectedSourceId}`).then((res) => {
                     toast('Deleted fact source', true);
+                    this.selectedSourceId = '';
                     this.getSources();
-                    this.resetModal();
                 }).catch((error) => {
                     toast('Error deleting source', false);
                     console.error(error);
@@ -666,23 +627,26 @@
             deleteFact(fact) {
                 this.selectedSource.facts.splice(this.selectedSource.facts.findIndex((f) => f.unique === fact.unique), 1);
                 this.updateFactSource();
-                this.resetModal();
             },
 
             deleteRule(rule) {
                 this.selectedSource.rules.splice(this.selectedSource.rules.findIndex((r) => r === rule), 1);
                 this.updateFactSource();
-                this.resetModal();
             },
 
             deleteRelationship(rel) {
                 this.selectedSource.relationships.splice(this.selectedSource.relationships.find((r) => r === rel), 1);
                 this.updateFactSource();
-                this.resetModal();
             },
 
-            resetModal() {
-                this.openModalData = { name: '', item: null };
+            saveSourceName() {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, { name: this.selectedSource.name }).then((res) => {
+                    toast('Source name updated', true);
+                    this.isEditingSourceName = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
             },
 
             updateFactSource() {
@@ -848,6 +812,11 @@
     /*DOMAIN*/
     #sourcePage td.origin-DOMAIN {
         color: cornflowerblue;
+    }
+
+    #select-source {
+        max-width: 800px;
+        margin: 0 auto;
     }
 
 </style>
