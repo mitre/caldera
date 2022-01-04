@@ -7,11 +7,30 @@ function alpineCore() {
         errors: startupErrors,
         showErrors: false,
         version: '0.0.0',
+        isFirstVisit: false,
+        newVersionLink: '',
 
         initPage() {
             apiV2('GET', '/api/v2/health').then((response) => {
                 this.version = response.version;
-            })
+                return apiV2('GET', 'https://api.github.com/repos/mitre/caldera/releases');
+            }).then((releases) => {
+                if (releases.findIndex((release) => release.tag_name === this.version) > 0) {
+                    this.newVersionLink = releases[0].html_url;
+                }
+                this.checkIfFirstVisit();
+            }).catch((error) => {
+                console.error(error);
+                toast('Error loading page', false);
+            });
+        },
+
+        checkIfFirstVisit() {
+            let localStorage = window.localStorage;
+            this.isFirstVisit = !localStorage.getItem('firstVisit')
+            if (this.isFirstVisit) {
+                localStorage.setItem('firstVisit', new Date().toISOString());
+            }
         },
 
         setTabContent(tab, html) {
