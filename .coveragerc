@@ -1,9 +1,5 @@
 [run]
 source =
-    .
-omit =
-    *tests*
-    *.tox*
-    *venv*
+    ./app
 [html]
 directory = _htmlcov
