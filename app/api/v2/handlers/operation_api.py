@@ -112,9 +112,21 @@ class OperationApi(BaseObjectApi):
         await self.delete_object(request)
         return web.HTTPNoContent()
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Get Operation Report',
+                          description='Retrieves the report for a given operation_id.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'id',
+                              'operation_id' : 'Unique ID for operation',
+                              'access' : 'Format for report',
+                              'output' : 'Boolean for Agent Output in report',
+                              'schema': {'type': 'string'},
+                              'required': 'true'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
+    @aiohttp_apispec.response_schema(OperationOutputRequestSchema)
     async def get_operation_report(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -122,9 +134,21 @@ class OperationApi(BaseObjectApi):
         report = await self._api_manager.get_operation_report(operation_id, access, output)
         return web.json_response(report)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Get Operation Event Logs',
+                          description='Retrieves the event logs for a given operation_id.',
+                          parameters=[{
+                                'in': 'path',
+                                'name': 'id',
+                                'operation_id' : 'Unique ID for operation',
+                                'access' : 'Format for report',
+                                'output' : 'Boolean for Agent Output in report',
+                                'schema' : {'type': 'string'},
+                                'required': 'true'
+                          }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.request_schema(OperationOutputRequestSchema)
+    @aiohttp_apispec.response_schema(OperationOutputRequestSchema)
     async def get_operation_event_logs(self, request: web.Request):
         operation_id = request.match_info.get('id')
         access = await self.get_request_permissions(request)
@@ -133,16 +157,14 @@ class OperationApi(BaseObjectApi):
         return web.json_response(report)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Retrieve links from an operation',
-                          description='Retrieve all links from the operation with the provided operation `id` (String '
-                                      'UUID). Use fields from the `BaseGetAllQuerySchema` in the request body to add '
-                                      '`include`, `exclude`, and `sort` filters.',
+                          summary='Get Links from Operation',
+                          description='Retrieves all links for a given operation_id.',
                           parameters=[{
-                              'in': 'path',
-                              'name': 'id',
-                              'schema': {'type': 'string'},
-                              'required': 'true',
-                              'description': 'String UUID of the Operation from which to gather links.'
+                                'in': 'path',
+                                'name': 'id',
+                                'operation_id' : 'Unique ID for operation',
+                                'schema' : {'type': 'string'},
+                                'required': 'true'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(many=True, partial=True),
