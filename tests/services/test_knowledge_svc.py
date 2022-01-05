@@ -8,9 +8,9 @@ class TestKnowledgeService:
 
     def test_no_duplicate_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234')))
+                                                            collected_by=['thin_air'], technique_id='T1234')))
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234')))
+                                                            collected_by=['thin_air'], technique_id='T1234')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='test')))
         assert len(facts) == 1
 
@@ -21,7 +21,7 @@ class TestKnowledgeService:
         assert len(rules) == 1
 
     def test_no_duplicate_relationship(self, loop, knowledge_svc):
-        dummy = Fact(trait='test', value='demo', score=1, collected_by='thin_air', technique_id='T1234')
+        dummy = Fact(trait='test', value='demo', score=1, collected_by=['thin_air'], technique_id='T1234')
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='potato', target=dummy)))
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='potato', target=dummy)))
         relationships = loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='potato')))
@@ -29,10 +29,10 @@ class TestKnowledgeService:
 
     def test_remove_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='rtest', value='rdemo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234'),
+                                                            collected_by=['thin_air'], technique_id='T1234'),
                                                        constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='ktest', value='rdemo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234')))
+                                                            collected_by=['thin_air'], technique_id='T1234')))
         loop.run_until_complete(knowledge_svc.delete_fact(dict(trait='rtest')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(value='rdemo')))
         assert len(facts) == 1
@@ -47,7 +47,7 @@ class TestKnowledgeService:
         assert len(knowledge_svc._KnowledgeService__loaded_knowledge_module.fact_ram['constraints']) == 0
 
     def test_remove_relationship(self, loop, knowledge_svc):
-        dummy = Fact(trait='rtest', value='rdemo', score=1, collected_by='thin_air', technique_id='T1234')
+        dummy = Fact(trait='rtest', value='rdemo', score=1, collected_by=['thin_air'], technique_id='T1234')
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='rpotato', target=dummy),
                                                                constraints=dict(test_field='test_value')))
         loop.run_until_complete(knowledge_svc.delete_relationship(dict(edge='rpotato')))
@@ -57,7 +57,7 @@ class TestKnowledgeService:
 
     def test_update_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='utest', value='udemo', score=1,
-                                                            collected_by='thin_air', technique_id='T1234')))
+                                                            collected_by=['thin_air'], technique_id='T1234')))
         loop.run_until_complete(knowledge_svc.update_fact(criteria=dict(trait='utest'),
                                                           updates=dict(trait='utest2', value='udemo2')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='utest2')))
@@ -65,8 +65,8 @@ class TestKnowledgeService:
         assert facts[0].value == 'udemo2'
 
     def test_update_relationship(self, loop, knowledge_svc):
-        dummy = Fact(trait='utest', value='udemo', score=1, collected_by='thin_air', technique_id='T1234')
-        dummy2 = Fact(trait='utest2', value='udemo2', score=1, collected_by='thin_air', technique_id='T4321')
+        dummy = Fact(trait='utest', value='udemo', score=1, collected_by=['thin_air'], technique_id='T1234')
+        dummy2 = Fact(trait='utest2', value='udemo2', score=1, collected_by=['thin_air'], technique_id='T4321')
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='upotato', target=dummy)))
         loop.run_until_complete(knowledge_svc.update_relationship(criteria=dict(edge='upotato'),
                                                                   updates=dict(source=dummy2, edge='ubacon')))
@@ -76,9 +76,9 @@ class TestKnowledgeService:
 
     def test_retrieve_fact(self, loop, knowledge_svc):
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='ttestA', value='tdemoB', score=24,
-                                                            collected_by='thin_airA', technique_id='T1234')))
+                                                            collected_by=['thin_airA'], technique_id='T1234')))
         loop.run_until_complete(knowledge_svc.add_fact(Fact(trait='ttestB', value='tdemoA', score=42,
-                                                            collected_by='thin_airB', technique_id='T4321')))
+                                                            collected_by=['thin_airB'], technique_id='T4321')))
         facts = loop.run_until_complete(knowledge_svc.get_facts(dict(trait='ttestB')))
         assert len(facts) == 1
         readable = facts[0].display
@@ -86,8 +86,8 @@ class TestKnowledgeService:
         assert readable['score'] == 42
 
     def test_retrieve_relationship(self, loop, knowledge_svc):
-        dummy = Fact(trait='ttest', value='tdemo', score=1, collected_by='thin_air', technique_id='T1234')
-        dummy2 = Fact(trait='ttest2', value='tdemo2', score=1, collected_by='thin_air', technique_id='T1234')
+        dummy = Fact(trait='ttest', value='tdemo', score=1, collected_by=['thin_air'], technique_id='T1234')
+        dummy2 = Fact(trait='ttest2', value='tdemo2', score=1, collected_by=['thin_air'], technique_id='T1234')
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy, edge='tpotato',
                                                                             target=dummy2)))
         loop.run_until_complete(knowledge_svc.add_relationship(Relationship(source=dummy2, edge='tpotato',
@@ -119,11 +119,11 @@ class TestKnowledgeService:
         tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'])
         link = Link.load(dict(command='', paw='n1234', ability=tability, executor=next(tability.executors), status=0,
                               id='ganymede'))
-        type1_fact = Fact(trait='t1', value='d1', score=1, collected_by='thin_air', technique_id='T1234',
+        type1_fact = Fact(trait='t1', value='d1', score=1, collected_by=['thin_air'], technique_id='T1234',
                           links=[link.id], origin_type=OriginType.LEARNED)
-        type2_fact = Fact(trait='t2', value='d2', score=1, collected_by='thin_air', technique_id='T1234',
+        type2_fact = Fact(trait='t2', value='d2', score=1, collected_by=['thin_air'], technique_id='T1234',
                           links=[link.id], origin_type=OriginType.LEARNED)
-        type3_fact = Fact(trait='t3', value='d3', score=1, collected_by='tiny_lightning_bolts_running_through_sand',
+        type3_fact = Fact(trait='t3', value='d3', score=1, collected_by=['tiny_lightning_bolts_running_through_sand'],
                           technique_id='T1234', origin_type=OriginType.SEEDED, source="Europa")
         loop.run_until_complete(knowledge_svc.add_fact(type1_fact))
         loop.run_until_complete(knowledge_svc.add_fact(type2_fact))
