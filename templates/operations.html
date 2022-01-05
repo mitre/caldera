@@ -1401,6 +1401,7 @@
 
             handleSelectAdversary(adversaryId) {
                 let adversaryMatch = this.ADVERSARIES.find((a) => a.adversary_id === this.operationToStart.adversary.adversary_id);
+                let lastAdversaryHadRepeatableAbilities = this.isSelectedAdversaryRepeatable;
 
                 this.isSelectedAdversaryRepeatable = adversaryMatch.has_repeatable_abilities;
                 if (this.isSelectedAdversaryRepeatable) {
@@ -1408,6 +1409,8 @@
                     if (plannerMatch && !plannerMatch.allow_repeatable_abilities) {
                         this.operationToStart.planner.id = this.PLANNERS.find((p) => p.allow_repeatable_abilities).id;
                     }
+                } else if (!this.isSelectedAdversaryRepeatable && lastAdversaryHadRepeatableAbilities) {
+                    this.operationToStart.planner.id = this.PLANNERS[0].id;
                 }
             },
 
