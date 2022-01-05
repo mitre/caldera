@@ -14,10 +14,8 @@
 
         <div>
             <div class="is-flex is-flex-direction-row operations-dashboard">
-                <div class="is-flex is-flex-direction-column pb-0 my-2"
-                     x-bind:class="{'operations-menu-set-width': selectedOperation}">
-                    <div class="pl-0 is-flex is-align-content-flex-start mb-2"
-                         x-data="{startOperation: EMPTY_OPERATIONS_OBJECT}">
+                <div class="is-flex is-flex-direction-column pb-0 my-2" x-bind:class="{'operations-menu-set-width': selectedOperation}">
+                    <div class="pl-0 is-flex is-align-content-flex-start mb-2">
                         <div>
                             <div class="field has-addons">
                                 <div class="control has-icons-left">
@@ -44,14 +42,14 @@
                         <button x-bind:disabled="!(searchInput && filteredOperations.length === 0)"
                                 title="creates a new operation based on the last created operation settings "
                                 class="button is-primary is-small"
-                                x-on:click="addOperation(true, startOperation)"><em class="pr-1 fas fa-plus"></em>
+                                x-on:click="addOperation(true)"><em class="pr-1 fas fa-plus"></em>
                             Quick Add
                         </button>
                         <button title="add operation" class="ml-2 button is-primary is-small"
-                                x-on:click="openModal = 'addOperation'; getAgents()"><em class="pr-1 fas fa-plus"></em>
+                                x-on:click="openModal = 'addOperation'; operationToStart = EMPTY_OPERATIONS_OBJECT; getAgents()"><em class="pr-1 fas fa-plus"></em>
                             Create Operation
                         </button>
-                        <template x-if="selectedOperation">
+                        <template x-if="selectedOperationID">
                             <button title="download reports" class="ml-2 button is-primary is-small"
                                     x-on:click="openModal = 'showDownloadMenu'"><em class="pr-1 fas fa-arrow-down"></em>
                                 Download
@@ -84,9 +82,8 @@
                         </template>
                     </div>
                 </div>
-                <template x-if="selectedOperation">
-                    <div x-show="selectedOperationID"
-                         class="is-flex is-flex-direction-column mx-5">
+                <template x-if="selectedOperation && selectedOperationID">
+                    <div class="is-flex is-flex-direction-column mx-5">
                         <div class="is-flex is-flex-direction-row is-justify-content-center ml-5">
                             <div class="mr-6">
                                 <h3 class="my-1 is-size-4" x-text="selectedOperation.name"></h3>
@@ -131,9 +128,8 @@
                         </div>
                     </div>
                 </template>
-                <template x-if="selectedOperation">
-                    <div x-show="selectedOperationID"
-                         class="is-flex is-flex-direction-column is-flex-wrap-wrap">
+                <template x-if="selectedOperation && selectedOperationID">
+                    <div class="is-flex is-flex-direction-column is-flex-wrap-wrap">
                         <div class="mb-4 is-flex is-flex-direction-row is-flex-wrap-wrap">
                             <label x-show="false" for="operation-obfuscator" class="is-size-6">
                                 Obfuscation method:
@@ -194,8 +190,8 @@
 
             <!--            TIMELINE-->
             <div>
-                <template x-if="selectedOperation">
-                    <div x-show="selectedOperationID">
+                <template x-if="selectedOperation && selectedOperationID">
+                    <div>
                         <div class="navbar-divider mb-5 width-100"></div>
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-row is-justify-content-space-between">
@@ -445,7 +441,7 @@
 
         <!--    MODALS      -->
         <template x-if="openModal">
-            <div class="modal is-active" x-data="{ startOperation: EMPTY_OPERATIONS_OBJECT }">
+            <div class="modal is-active">
                 <div class="modal-background" @click="openModal = null"></div>
 
                 <template x-if="openModal === 'showOutput'">
@@ -517,7 +513,7 @@
                                     <label for="op-name">Operation name</label>
                                     <div class="modal-form-fields">
                                         <input class="input is-small" id="op-name" type="text"
-                                               x-model="startOperation.name" required>
+                                               x-model="operationToStart.name" required>
                                     </div>
                                 </div>
                                 <div>
@@ -526,13 +522,10 @@
                                             x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
                                     <div class="modal-form-fields" id="basic-adversary">
                                         <div class="select is-small my-2 ml-3">
-                                            <select x-model="startOperation.adversary.adversary_id">
+                                            <select x-model="operationToStart.adversary.adversary_id" x-on:change="handleSelectAdversary()">
                                                 <option value="" selected>No adversary (manual)</option>
                                                 <template x-for="a in ADVERSARIES" :key="a.adversary_id">
-                                                    <option x-on:click="isSelectedAdversaryRepeatable = a.has_repeatable_abilities"
-                                                            :value="a.adversary_id"
-                                                            x-text="a.name">
-                                                    </option>
+                                                    <option :value="a.adversary_id" x-text="a.name"></option>
                                                 </template>
                                             </select>
                                         </div>
@@ -545,9 +538,9 @@
                                             x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
-                                            <select x-model="startOperation.source.id">
+                                            <select x-model="operationToStart.source.id">
                                                 <template x-for="s in SOURCES" :key="s.id">
-                                                    <option :value="s.id" x-text="s.name"></option>
+                                                    <option :value="s.id" x-text="s.name" x-bind:selected="operationToStart.source.id === s.id"></option>
                                                 </template>
                                             </select>
                                         </div>
@@ -572,15 +565,15 @@
                                          id="basic-groups">
                                         <button type="button"
                                                 class="is-small button is-rounded is-primary m-1"
-                                                x-bind:class="(startOperation.group === '') ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="startOperation.group = ''">
+                                                x-bind:class="(operationToStart.group === '') ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="operationToStart.group = ''">
                                             all groups
                                         </button>
                                         <template x-for="(group, index) in agentGroups" :key="group">
                                             <button type="button"
                                                     class="is-small button is-rounded is-primary m-1"
-                                                    x-bind:class="(startOperation.group === group) ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.group = group"
+                                                    x-bind:class="(operationToStart.group === group) ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToStart.group = group"
                                                     x-show="group !== ''"
                                                     x-text="group">
                                             </button>
@@ -593,15 +586,15 @@
                                             x-bind:data-tooltip="usage['Planner']">Planner</span></label>
                                     <div class="modal-form-fields">
                                         <div class="select is-small my-2 ml-3">
-                                            <select id="autonomous-planner" x-model="startOperation.planner.id">
+                                            <select id="autonomous-planner" x-model="operationToStart.planner.id">
                                                 <template x-for="p in PLANNERS" :key="p.id">
-                                                    <option :value="p.id"
-                                                            x-bind:data-allow-repeatable-abilities="p.allow_repeatable_abilities"
-                                                            x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable) ? 'true' : null"
-                                                            x-text="p.name"></option>
+                                                    <option :value="p.id"  x-bind:selected="operationToStart.planner.id === p.id" x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable)" x-text="p.name"></option>
                                                 </template>
                                             </select>
                                         </div>
+                                        <span x-show="isSelectedAdversaryRepeatable" class="icon has-text-warning ml-2" data-tooltip="The selected adversary has repeated abilities so some planners are unavailable.">
+                                            <em class="fas fa-exclamation-triangle"></em>
+                                        </span>
                                     </div>
                                 </div>
                                 <div>
@@ -612,8 +605,8 @@
                                         <template x-for="o in OBFUSCATORS" :key="o.name">
                                             <button class="is-small button is-rounded is-primary m-1"
                                                     type="button"
-                                                    x-bind:class="startOperation.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
-                                                    x-on:click="startOperation.obfuscator = o.name"
+                                                    x-bind:class="operationToStart.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToStart.obfuscator = o.name"
                                                     x-text="o.name">
                                             </button>
                                         </template>
@@ -625,10 +618,10 @@
                                             x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
                                     <div class="modal-form-fields" id="autonomous-autonomous">
                                         <input type="radio" id="run-autonomously"
-                                               x-model="startOperation.autonomous" value="1" checked>
+                                               x-model="operationToStart.autonomous" value="1" checked>
                                         <label for="run-autonomously">Run autonomously</label>
                                         <input type="radio" id="manual-approval"
-                                               x-model="startOperation.autonomous" value="0">
+                                               x-model="operationToStart.autonomous" value="0">
                                         <label for="manual-approval">Require manual approval</label>
                                     </div>
                                 </div>
@@ -639,10 +632,10 @@
                                             x-bind:data-tooltip="usage['Parser']">Parser</span></label>
                                     <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                         <input type="radio" id="parsers-default"
-                                               x-model="startOperation.use_learning_parsers" value="1" checked>
+                                               x-model="operationToStart.use_learning_parsers" value="1" checked>
                                         <label for="parsers-default">Use default parsers</label>
                                         <input type="radio" id="parsers-no_default"
-                                               x-model="startOperation.use_learning_parsers" value="0">
+                                               x-model="operationToStart.use_learning_parsers" value="0">
                                         <label for="parsers-no_default">Do not use default parsers</label>
                                     </div>
                                 </div>
@@ -653,11 +646,11 @@
                                             x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
                                     <div class="modal-form-fields" id="basic-keep">
                                         <input type="radio" id="keep-open"
-                                               x-model="startOperation.auto_close"
+                                               x-model="operationToStart.auto_close"
                                                value="0" checked>
                                         <label for="keep-open">Keep open forever</label>
                                         <input type="radio" id="auto-close"
-                                               x-model="startOperation.auto_close"
+                                               x-model="operationToStart.auto_close"
                                                value="1">
                                         <label for="auto-close">Auto close operation</label>
                                     </div>
@@ -668,11 +661,11 @@
                                             x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
 
                                     <div class="modal-form-fields" id="basic-run">
-                                        <input type="radio" x-model="startOperation.state"
+                                        <input type="radio" x-model="operationToStart.state"
                                                id="run-immediately"
                                                value="running" checked>
                                         <label for="run-immediately">Run immediately</label>
-                                        <input type="radio" x-model="startOperation.state"
+                                        <input type="radio" x-model="operationToStart.state"
                                                id="pause-on-start"
                                                value="paused">
                                         <label for="pause-on-start">Pause on start</label>
@@ -685,7 +678,7 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter(operationToStart, jitterMin+'/'+jitterMax)"
                                                x-model="jitterMin"
                                                id="stealth-jitterMin"
                                                type="number"
@@ -695,7 +688,7 @@
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(startOperation, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter(operationToStart, jitterMin+'/'+jitterMax)"
                                                x-model="jitterMax"
                                                id="stealth-jitterMax"
                                                type="number"
@@ -715,11 +708,11 @@
                                             class="has-tooltip-multiline has-tooltip-top"
                                             x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
                                     <div class="modal-form-fields">
-                                        <input x-model="startOperation.visibility"
+                                        <input x-model="operationToStart.visibility"
                                                id="stealth-queue"
                                                type="range" value="50" min="1" max="100"
                                                x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
-                                        <span x-text="startOperation.visibility"></span>
+                                        <span x-text="operationToStart.visibility"></span>
                                     </div>
                                 </div>
                             </div>
@@ -734,7 +727,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                                x-on:click="addOperation(false, startOperation)"
+                                                x-on:click="addOperation(false)"
                                                 x-text="schedule ? 'Schedule' : 'Start'"></button>
                                     </div>
                                 </div>
@@ -1038,6 +1031,7 @@
             },
             operations: [],
             filteredOperations: [],
+            operationToStart: {},
             searchInput: '',
             jitterMin: 2,
             jitterMax: 8,
@@ -1065,8 +1059,8 @@
                     auto_close: 0,
                     state: 'running',
                     autonomous: 1,
-                    planner: { id: 'atomic' },
-                    source: { id: 'basic' },
+                    planner: { id: 'aaa7c857-37a0-4c4a-85f7-4e9f7f30e31a' },
+                    source: { id: 'ed32b9c3-9593-4c33-b0db-e2007315096b' },
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
                     jitter: '2/8',
@@ -1170,6 +1164,8 @@
             //
 
             async initOperations() {
+                this.operationToStart = this.EMPTY_OPERATIONS_OBJECT;
+
                 this.getOperations();
                 this.getFields();
                 this.getUsage();
@@ -1186,7 +1182,7 @@
                 Promise.all([apiV2('GET', '/api/v2/obfuscators'), apiV2('GET', '/api/v2/planners'), apiV2('GET', '/api/v2/adversaries'), apiV2('GET', '/api/v2/sources')]).then(([o, p, a, s]) => {
                     this.OBFUSCATORS = o;
                     this.PLANNERS = p;
-                    this.ADVERSARIES = a;
+                    this.ADVERSARIES = a.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase());
                     this.SOURCES = s;
                 }).catch((error) => {
                     console.error(error);
@@ -1233,18 +1229,21 @@
                 }
             },
 
-            addOperation(isQuickAdd = false, startOperation) {
-                if (isQuickAdd) startOperation.name = this.searchInput;
-                if (!startOperation.name) {
+            addOperation(isQuickAdd = false) {
+                if (isQuickAdd) {
+                    this.operationToStart = this.EMPTY_OPERATIONS_OBJECT;
+                    this.operationToStart.name = this.searchInput;
+                }
+
+                if (!this.operationToStart.name) {
                     toast('Error: Operation name field is empty.');
                 } else {
-                    startOperation.autonomous = Number(startOperation.autonomous);
-                    startOperation.use_learning_parsers = parseInt(startOperation.use_learning_parsers, 10) === 1;
-                    startOperation.auto_close = parseInt(startOperation.auto_close, 10) === 1;
-
-                    apiV2('POST', this.ENDPOINT, startOperation)
+                    this.operationToStart.autonomous = Number(this.operationToStart.autonomous);
+                    this.operationToStart.use_learning_parsers = parseInt(this.operationToStart.use_learning_parsers, 10) === 1;
+                    this.operationToStart.auto_close = parseInt(this.operationToStart.auto_close, 10) === 1;
+                    apiV2('POST', this.ENDPOINT, this.operationToStart)
                         .then((res) => {
-                            toast(`Started operation ${startOperation.name}!`, true);
+                            toast(`Started operation ${this.operationToStart.name}!`, true);
                             this.getOperations();
                             this.selectedOperation = res;
                             this.openModal = null;
@@ -1258,8 +1257,11 @@
             deleteOperation() {
                 apiV2('DELETE', `${this.ENDPOINT}/${this.selectedOperationID}`)
                     .then(() => {
-                        if (this.filteredOperations.length > 1) this.selectedOperation = this.filteredOperations.find((op) => op.id !== this.selectedOperationID);
-                        else this.selectedOperation = null;
+                        if (this.filteredOperations.length > 1) {
+                            this.selectedOperation = this.filteredOperations.find((op) => op.id !== this.selectedOperationID);
+                        } else {
+                            this.selectedOperation = { chain: [] };
+                        }
                         this.getOperations();
                         toast('Deleted operation.', true);
                     })
@@ -1397,6 +1399,19 @@
                     .catch(() => toast('Error updating link state.'));
             },
 
+            handleSelectAdversary(adversaryId) {
+                let adversaryMatch = this.ADVERSARIES.find((a) => a.adversary_id === this.operationToStart.adversary.adversary_id);
+
+                this.isSelectedAdversaryRepeatable = adversaryMatch.has_repeatable_abilities;
+                if (this.isSelectedAdversaryRepeatable) {
+                    let plannerMatch = this.PLANNERS.find((p) => p.id === this.operationToStart.planner.id);
+                    console.log(plannerMatch)
+                    if (plannerMatch && !plannerMatch.allow_repeatable_abilities) {
+                        this.operationToStart.planner.id = this.PLANNERS.find((p) => p.allow_repeatable_abilities).id;
+                    }
+                }
+            },
+
             updateOperation(field, updateValue) {
                 this.selectedOperation[field] = updateValue;
                 apiV2('PATCH', `${this.ENDPOINT}/${this.selectedOperationID}`, this.selectedOperation)
@@ -1491,7 +1506,7 @@
                 }
             },
 
-            validateJitter(startOperation, newValue = '') {
+            validateJitter(operation, newValue = '') {
                 if (!newValue.includes('/')) return false;
                 let [jitterMin, jitterMax] = newValue.split('/');
                 jitterMin = parseInt(jitterMin, 10);
@@ -1506,7 +1521,7 @@
                     return false;
                 }
 
-                startOperation.jitter = newValue;
+                operation.jitter = newValue;
                 return true;
             },
 
