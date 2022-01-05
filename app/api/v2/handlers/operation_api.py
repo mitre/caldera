@@ -307,9 +307,30 @@ class OperationApi(BaseObjectApi):
         potential_links = await self._api_manager.get_potential_links(operation_id, access)
         return web.json_response(potential_links)
 
-    @aiohttp_apispec.docs(tags=['operations'])
+    @aiohttp_apispec.docs(tags=['operations'],
+                          summary='Retrieve potential links for an operation filterd by agent paw (id)',
+                          description='Retrieve all potential links for an operation-agent pair based on the operation id (String '
+                                      'UUID) and the agent paw (id) (String).  Use fields from the `BaseGetAllQuerySchema` '
+                                      'in the request body to add `include`, `exclude`, and `sort` filters.',
+                          parameters=[
+                              {
+                                'in': 'path',
+                                'name': 'id',
+                                'schema': {'type': 'string'},
+                                'required': 'true',
+                                'description': 'String UUID of the Operation containing desired links.'},
+                              {
+                                'in': 'path',
+                                'name': 'paw',
+                                'schema': {'type': 'string'},
+                                'required': 'true',
+                                'description': 'Agent paw for the specified operation.'
+                              }
+                          ]
+                        )
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(LinkSchema(partial=True))
+    @aiohttp_apispec.response_schema(LinkSchema(partial=True),
+                                     description='All potential links for operation and the specified agent paw.')
     async def get_potential_links_by_paw(self, request: web.Request):
         operation_id = request.match_info.get('id')
         paw = request.match_info.get('paw')
