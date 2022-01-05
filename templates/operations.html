@@ -1405,7 +1405,6 @@
                 this.isSelectedAdversaryRepeatable = adversaryMatch.has_repeatable_abilities;
                 if (this.isSelectedAdversaryRepeatable) {
                     let plannerMatch = this.PLANNERS.find((p) => p.id === this.operationToStart.planner.id);
-                    console.log(plannerMatch)
                     if (plannerMatch && !plannerMatch.allow_repeatable_abilities) {
                         this.operationToStart.planner.id = this.PLANNERS.find((p) => p.allow_repeatable_abilities).id;
                     }
