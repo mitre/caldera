@@ -325,9 +325,7 @@ class OperationApi(BaseObjectApi):
                                 'schema': {'type': 'string'},
                                 'required': 'true',
                                 'description': 'Agent paw for the specified operation.'
-                              }
-                          ]
-                        )
+                              }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(partial=True),
                                      description='All potential links for operation and the specified agent paw.')
