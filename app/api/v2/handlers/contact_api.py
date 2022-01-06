@@ -18,10 +18,10 @@ class ContactApi(BaseApi):
     @aiohttp_apispec.docs(tags=['contacts'],
                           summary='Retrieve a List of Beacons made by Agents to the specified Contact',
                           description='Returns a list of beacons made by agents to the specified contact. The response'
-                                      ' is formatted as a list of dictionaries. The dictionaries have the keys "paw",'
-                                      ' "instructions", and "date". "paw" being the paw of the agent that made the'
-                                      ' beacon. "instructions" being a list of strings (commands) executed by the'
-                                      ' agent since its last beacon. "date" being a UTC date/time string.',
+                                      ' is formatted as a list of dictionaries. The dictionaries have the keys `paw`,'
+                                      ' `instructions`, and `date`. `paw` being the paw of the agent that made the'
+                                      ' beacon. `instructions` being a list of strings (commands) executed by the'
+                                      ' agent since its last beacon. `date` being a UTC date/time string.',
                           parameters=[{
                               'in': 'path',
                               'name': 'name',
