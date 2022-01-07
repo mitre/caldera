@@ -61,8 +61,9 @@ def planner_stub(**kwargs):
 @pytest.fixture
 def setup_planning_test(loop, executor, ability, agent, operation, data_svc, event_svc, init_base_world):
     texecutor = executor(name='sh', platform='darwin', command='mkdir test', cleanup='rm -rf test')
-    tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'])
-    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin', server='http://127.0.0.1:8000')
+    tability = ability(ability_id='123', executors=[texecutor], repeatable=True, buckets=['test'], name='test1')
+    tagent = agent(sleep_min=1, sleep_max=2, watchdog=0, executors=['sh'], platform='darwin',
+                   server='http://127.0.0.1:8000')
     tsource = Source(id='123', name='test', facts=[], adjustments=[])
     toperation = operation(name='test1', agents=[tagent],
                            adversary=Adversary(name='test', description='test',
@@ -71,7 +72,7 @@ def setup_planning_test(loop, executor, ability, agent, operation, data_svc, eve
                            source=tsource)
 
     cexecutor = executor(name='sh', platform='darwin', command=test_string, cleanup='whoami')
-    cability = ability(ability_id='321', executors=[cexecutor], singleton=True)
+    cability = ability(ability_id='321', executors=[cexecutor], singleton=True, name='test2')
 
     loop.run_until_complete(data_svc.store(tability))
     loop.run_until_complete(data_svc.store(cability))
