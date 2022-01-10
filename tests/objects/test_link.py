@@ -6,6 +6,7 @@ from app.objects.c_adversary import Adversary
 from app.objects.c_source import Source
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_fact import OriginType
 from app.objects.secondclass.c_relationship import Relationship
 from app.service.interfaces.i_event_svc import EventServiceInterface
 from app.utility.base_service import BaseService
@@ -160,3 +161,20 @@ class TestLink:
         assert len(fact_store_operation_source) == 1
         assert len(fact_store_operation) == 1
         assert len(fact_store_operation_source[0].collected_by) == 2
+
+    def test_save_discover_seeded_fact_not_in_command(self, loop, ability, executor, operation, knowledge_svc):
+        test_executor = executor(name='psh', platform='windows')
+        test_ability = ability(ability_id='123', executors=[test_executor])
+        fact1 = Fact(trait='remote.host.fqdn', value='dc')
+        fact2 = Fact(trait='domain.user.name', value='Bob')
+        relationship = Relationship(source=fact1, edge='has_user', target=fact2)
+        link = Link(command='net user', paw='123456', ability=test_ability, id='111111', executor=test_executor)
+        operation = operation(name='test-op', agents=[],
+                              adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
+                                                  description='test'),
+                              source=Source(id='test-source', facts=[fact1, fact2]))
+        loop.run_until_complete(operation._init_source())
+        loop.run_until_complete(link.save_fact(operation, fact2, 1, relationship))
+
+        assert fact2.origin_type == OriginType.SEEDED
+        assert '123456' in fact2.collected_by

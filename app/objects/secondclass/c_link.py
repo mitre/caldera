@@ -285,7 +285,7 @@ class Link(BaseObject):
                     existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
-                if self.paw not in existing_fact.collected_by:
+                if self.paw not in existing_fact.collected_by and existing_fact not in self.used:
                     existing_fact.collected_by.append(self.paw)
                 await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
                                                                      source=fact.source),
