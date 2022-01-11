@@ -237,7 +237,7 @@ class TestAgentsApi:
                                                                app_config, combined_config):
         with mocker.patch('app.api.v2.managers.agent_api_manager.AgentApiManager.get_config') as mock_config:
             mock_config.side_effect = [app_config, agent_config]
-            resp = await api_v2_client.get(f'/api/v2/deploy_commands/999', cookies=api_cookies)
+            resp = await api_v2_client.get('/api/v2/deploy_commands/999', cookies=api_cookies)
             assert resp.status == HTTPStatus.OK
             result = await resp.json()
             assert result['app_config'] == combined_config
