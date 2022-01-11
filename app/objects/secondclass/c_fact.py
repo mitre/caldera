@@ -51,7 +51,7 @@ class FactSchema(ma.Schema):
     links = ma.fields.List(ma.fields.String())
     relationships = ma.fields.List(ma.fields.String())
     limit_count = ma.fields.Integer()
-    collected_by = ma.fields.String(allow_none=True)
+    collected_by = ma.fields.List(ma.fields.String())
     technique_id = ma.fields.String(allow_none=True)
 
     @ma.post_load()
@@ -116,5 +116,5 @@ class Fact(BaseObject):
         self.links = links or []
         self.relationships = relationships or []
         self.limit_count = limit_count
-        self.collected_by = collected_by
+        self.collected_by = collected_by or []
         self.technique_id = technique_id

@@ -14,14 +14,15 @@ def setup_learning_service(loop, data_svc, ability, operation, link):
     toperation = operation(name='sample', agents=None, adversary=Adversary(name='sample', adversary_id='XYZ',
                                                                            atomic_ordering=[], description='test'))
     loop.run_until_complete(data_svc.store(toperation))
-    tlink = link(ability=tability, command='', paw='', executor=texecutor)
-    yield toperation, tlink
+    tlink1 = link(ability=tability, command='', paw='1234', executor=texecutor)
+    tlink2 = link(ability=tability, command='', paw='5678', executor=texecutor)
+    yield toperation, tlink1, tlink2
 
 
 class TestLearningSvc:
 
     def test_learn(self, loop, setup_learning_service, learning_svc, knowledge_svc):
-        operation, link = setup_learning_service
+        operation, link, _ = setup_learning_service
         operation.add_link(link)
         all_facts = loop.run_until_complete(operation.all_facts())
         loop.run_until_complete(learning_svc.learn(
@@ -33,8 +34,35 @@ class TestLearningSvc:
         assert len(link.facts) == 2
         assert len(knowledge_facts) == 2
 
+    def test_same_fact_different_agents(self, loop, setup_learning_service, learning_svc, knowledge_svc):
+        operation, link1, link2 = setup_learning_service
+        link1.id = 'link1'
+        link2.id = 'link2'
+        operation.add_link(link1)
+        all_facts = loop.run_until_complete(operation.all_facts())
+        loop.run_until_complete(learning_svc.learn(
+            facts=all_facts,
+            link=link1,
+            blob=BaseWorld.encode_string('i contain 1 ip address 192.168.0.1 and one file /etc/host.txt. that is all.'),
+            operation=operation)
+        )
+        operation.add_link(link2)
+        all_facts = loop.run_until_complete(operation.all_facts())
+        loop.run_until_complete(learning_svc.learn(
+            facts=all_facts,
+            link=link2,
+            blob=BaseWorld.encode_string('i contain 1 ip address 192.168.0.1 and one file /etc/host.txt. that is all.'),
+            operation=operation)
+        )
+
+        knowledge_facts = loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.id)))
+        assert len(link1.facts) == 2
+        assert len(link2.facts) == 2
+        assert len(knowledge_facts) == 2
+        assert len(knowledge_facts[0].collected_by) == 2
+
     def test_build_relationships(self, loop, setup_learning_service, learning_svc, knowledge_svc):
-        _, link = setup_learning_service
+        _, link, _ = setup_learning_service
         learning_svc.model.add(frozenset({'host.user.name', 'target.org.name'}))
         learning_svc.model.add(frozenset({'host.file.extension', 'host.user.name', 'domain.user.name'}))
         facts = [
