@@ -95,7 +95,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
             if name_match:
                 self.name = self.name + " (2)"
                 logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
-                             f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
+                              f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
         existing.update('tactic', self.tactic)
