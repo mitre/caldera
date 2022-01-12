@@ -40,11 +40,9 @@
         </form>
 
         <template x-if="selectedOperation && selectedOperationID">
-            <div class="section">
+            <div class="section pt-0">
                 <div>
                     <h3 x-text="selectedOperation.name"></h3>
-                    <p class="mb-4"><span class="decisionsText" x-text="selectedOperation.chain.length"></span>
-                        decisions</p>
                 </div>
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
                     <div class="is-flex is-flex-direction-row">
@@ -100,7 +98,7 @@
                     <div class="is-flex is-flex-direction-row">
                         <!-- OBFUSCATION DROPDOWN -->
                         <div class="mt-1">
-                            <span>Obfuscation:
+                            <span class="mt-1">Obfuscation:
                                 <template x-if="!isOperationRunning">
                                     <span class="level-item tag is-medium m-0"><span
                                             class="mr-4 has-text-success"
