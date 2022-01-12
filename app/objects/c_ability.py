@@ -94,7 +94,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
             name_match = [x for x in ram['abilities'] if x.name == self.name]
             if name_match:
                 self.name = self.name + " (2)"
-                logging.info(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
+                logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
                              f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
