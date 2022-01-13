@@ -110,3 +110,9 @@ class TestAbility:
         test_ability.remove_all_executors()
 
         assert len(list(test_ability.executors)) == 0
+
+    def test_ability_name_duplication(self, loop, data_svc):
+        ability1 = loop.run_until_complete(data_svc.store(Ability(ability_id='12345', name='testA')))
+        ability2 = loop.run_until_complete(data_svc.store(Ability(ability_id='54321', name='testA')))
+        assert ability1.name != ability2.name
+        assert ability2.name == 'testA (2)'

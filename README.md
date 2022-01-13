@@ -53,6 +53,7 @@ These requirements are for the computer running the core framework:
 * Any Linux or MacOS
 * Python 3.7+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
+* Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
 
 ## Installation
 
@@ -74,7 +75,7 @@ Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-**Super-power your CALDERA server installation! [Install GoLang (1.13+)](https://golang.org/doc/install)**
+**Super-power your CALDERA server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
 
 Finally, start the server. 
 ```Bash
