@@ -88,14 +88,15 @@
                             <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
                                     x-on:click="updateOperation('state', 'run_one_link')" id="op-run-1-button">
                                 <em title="run one step" class="fas fa-play"><sub>1</sub></em></button>
-                            <label class="label is-small" for="op-run-1-button">Run 1 Step</label>
+                            <label class="label is-small" for="op-run-1-button">Run 1 Link</label>
                         </div>
                     </div>
 
                     <div class="is-flex is-flex-direction-row">
                         <!-- OBFUSCATION DROPDOWN -->
                         <div>
-                            <span class="mt-1">Obfuscation:
+                            <span class="is-flex is-align-items-center">
+                                <span class="mr-2">Obfuscation:</span>
                                 <template x-if="!isOperationRunning">
                                     <span class="level-item tag is-medium m-0"><span
                                             class="has-text-success"
@@ -145,7 +146,7 @@
             <!--            TIMELINE-->
             <template x-if="selectedOperation && selectedOperationID">
                 <div>
-                    <div class="navbar-divider mb-5 width-100"></div>
+                    <div class="navbar-divider mb-5"></div>
                     <template x-if="isOperationRunning">
                         <div class="is-flex is-flex-direction-row is-justify-content-space-between">
                             <div class="has-text-grey-light is-size-7">
@@ -155,14 +156,14 @@
                             </div>
                             <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                                 <div class="mb-6 mr-4 text-align-right">
-                                    <button title="add manual command" class="button is-primary is-small"
+                                    <button title="add manual command" class="button is-small"
                                             x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
                                         <em class="pr-1 fas fa-plus"></em>Manual
                                         Command
                                     </button>
                                 </div>
                                 <div class="mb-6 mr-4">
-                                    <button title="add potential link" class="button is-primary is-small"
+                                    <button title="add potential link" class="button is-small"
                                             x-on:click="openModal = 'addLink'; getAgents()"><em
                                             class="pr-1 fas fa-plus"></em>Potential
                                         Link
@@ -235,7 +236,7 @@
                                     <td class="commandDetails">
                                         <template x-if="!isLinkEditable">
                                             <div class="is-flex is-justify-content-center is-flex-direction-column">
-                                                <button class="button is-primary is-small"
+                                                <button class="button is-small"
                                                         x-on:click="getLink(link); openModal='showCommand'"
                                                         title="view output">View Command
                                                 </button>
@@ -270,11 +271,11 @@
                                     <!--OUTPUT/FACTS COLUMN-->
                                     <td class="outputDetails">
                                         <template x-if="link.output !== 'True'">
-                                            <p class="is-size-7">No output available.</p>
+                                            <p class="is-size-7 is-italic ml-4">No output.</p>
                                         </template>
                                         <template x-if="link.output === 'True'">
                                             <div>
-                                                <button class="button is-primary is-small"
+                                                <button class="button is-small"
                                                         x-on:click="getLink(link); openModal='showOutput'"
                                                         title="view output">View Output
                                                 </button>
@@ -374,14 +375,14 @@
                     <template x-if="isOperationRunning">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                             <div class="mb-6 mr-4 has-text-right">
-                                <button title="add manual command" class="button is-primary is-small"
+                                <button title="add manual command" class="button is-small"
                                         x-on:click="addNewRow = true; getAgents()">
                                     <em class="pr-1 fas fa-plus"></em>Manual
                                     Command
                                 </button>
                             </div>
                             <div class="mb-6 mr-4">
-                                <button title="add potential link" class="button is-primary is-small"
+                                <button title="add potential link" class="button is-small"
                                         x-on:click="openModal = 'addLink'; getAgents()"><em
                                         class="pr-1 fas fa-plus"></em>Potential
                                     Link
@@ -1520,19 +1521,9 @@
 </script>
 
 <style>
-    :scope {
-        --dark-gray: gray;
-        --light-gray: #e6e6e6;
-        --decisions-color: #4fdcfc;
-    }
-
     #operationsPage #select-operation {
         max-width: 800px;
         margin: 0 auto;
-    }
-
-    #operationsPage .decisionsText {
-        color: var(--decisions-color) !important;
     }
 
     #operationsPage .control-buttons > .button {
@@ -1573,27 +1564,10 @@
     }
 
     /*END MODAL FORM STYLE*/
-
-    #operationsPage span.output-container {
-        height: 8em;
-        display: block;
-        overflow: hidden;
-        white-space: pre-line;
-        max-width: 25ch;
-    }
-
-    #operationsPage .cursor-pointer:hover {
-        cursor: pointer;
-    }
-
     #operationsPage .timeline-table .modal-card code, table code, .modal-form code {
         color: #ff8181;
         background-color: initial;
         white-space: pre-line;
-    }
-
-    #operationsPage .timeline-table table .highlight {
-        width: fit-content !important;
     }
 
     #operationsPage .timeline-table {
@@ -1615,10 +1589,6 @@
         font-size: 2.1rem;
     }
 
-    #operationsPage .linkActionsColumn button[disabled] {
-        background-color: transparent;
-    }
-
     #operationsPage button.no-style {
         background-color: transparent;
         border: none;
@@ -1635,16 +1605,6 @@
         background-color: initial !important;
     }
 
-    #operationsPage .caret-button {
-        font-size: 1em;
-        padding-bottom: 0;
-        margin-top: -30px;
-    }
-
-    #operationsPage .scroll-more-caret {
-        color: gray;
-    }
-
     #operationsPage button.no-style:hover {
         border: none;
         color: white;
@@ -1655,25 +1615,10 @@
         font-family: sans-serif;
     }
 
-    #operationsPage .operations-menu-set-width {
-        width: 45%;
-    }
-
-    #operationsPage .operations-dashboard {
-        width: 100%;
-        justify-content: space-between;
-        overflow-y: scroll;
-        margin-bottom: 1em;
-    }
-
     #operationsPage .controls-container button {
         margin: 0 2rem;
         padding: 0;
         max-height: 34px;
-    }
-
-    #operationsPage .timeline-table table th.header {
-        border-bottom: none;
     }
 
     #operationsPage .timeline-table th:not(.decideColumn), th:not(.statusColumn) {
@@ -1698,13 +1643,6 @@
         height: 5.5em;
     }
 
-    #operationsPage .timeline-table table tbody td.linkActionsColumn {
-        display: flex;
-        align-items: center;
-        flex-flow: row-reverse;
-        padding-bottom: 0;
-    }
-
     #operationsPage .timeline-table table tbody td.commandDetails textarea {
         color: #ff8181;
         background-color: #262626;
@@ -1725,35 +1663,12 @@
         width: max-content;
     }
 
-    #operationsPage .timeline-table table tbody tr.linkEditCommandRow td:last-child {
-        display: flex;
-        justify-content: space-around;
-        padding: 0;
-        flex-flow: row;
-        align-items: center;
-        background-color: #2b2929;
-        border-radius: 2px;
-    }
-
-    #operationsPage .timeline-table table tbody tr.linkEditCommandRow textarea {
-        border-radius: 2px;
-        line-height: 0.75rem;
-        width: 10rem;
-    }
-
-    #operationsPage .timeline-table table tbody tr.linkEditCommandRow .linkEditControls {
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: flex-end;
-        align-items: center;
-    }
-
     #operationsPage .timeline-table table tfoot td {
         padding-top: 1em;
         border: none !important;
     }
 
-    /*gray timeline*/
+    /* white time-line */
     #operationsPage span.linkStatus {
         justify-content: flex-start;
         display: flex;
