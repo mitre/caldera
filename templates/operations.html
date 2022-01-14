@@ -121,22 +121,29 @@
 
                         <!-- TOGGLE -->
                         <div class="mb-5 is-flex is-flex-direction-row is-justify-content-center is-align-items-center">
-                            <div class="toggleContainer">
-                                <label for="toggleAutonomous">Manual</label>
-                                <div class="toggleSwitch mx-2">
-                                    <input type="checkbox"
-                                           id="toggleAutonomous"
-                                           x-model="selectedOperation.autonomous"
-                                           x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
-                                    <span class="toggleSlider toggleSliderRound"
-                                          title="Toggle operation to run autonomously"
-                                          x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
-                                          x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
-                                                        <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                                    </span>
+                            <template x-if="!isOperationRunning">
+                                <span class="level-item tag is-medium m-0"><span
+                                        class="has-text-success"
+                                        x-text="selectedOperation.autonomous === 0 ? 'manual' : 'autonomous'"></span></span>
+                            </template>
+                            <template x-if="isOperationRunning">
+                                <div class="toggleContainer">
+                                    <label for="toggleAutonomous">Manual</label>
+                                    <div class="toggleSwitch mx-2">
+                                        <input type="checkbox"
+                                               id="toggleAutonomous"
+                                               x-model="selectedOperation.autonomous"
+                                               x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                              title="Toggle operation to run autonomously"
+                                              x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
+                                              x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
+                                                            <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                                        </span>
+                                    </div>
+                                    <label for="toggleAutonomous">Autonomous</label>
                                 </div>
-                                <label for="toggleAutonomous">Autonomous</label>
-                            </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -1534,12 +1541,8 @@
         max-height: 90vh;
     }
 
-    #operationsPage .width-100 {
-        width: 100% !important;
-    }
-
-    #operationsPage .column {
-        margin: 0;
+    #operationsPage .toggleContainer label {
+        font-size: 1em !important;
     }
 
     /*MODAL FORM STYLE*/
