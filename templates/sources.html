@@ -93,7 +93,7 @@
                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                 <span>Add Fact</span>
                             </button>
-                            <div class="field mr-2" x-show="filteredFacts.length >= 1 || showAddFactRow">
+                            <div class="field mr-2" x-show="selectedSource.facts && selectedSource.facts.length >= 1 || showAddFactRow">
                                 <p class="control has-icons-left">
                                     <input class="input is-small"
                                            id="fact-search"
@@ -230,11 +230,11 @@
                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                 <span>Add Rule</span>
                             </button>
-                            <div class="field mr-2" x-show="filteredFacts.length >= 1 || showAddFactRow">
+                            <div class="field mr-2" x-show="selectedSource.rules && selectedSource.rules.length >= 1 || showAddRuleRow">
                                 <p class="control has-icons-left">
                                     <input class="input is-small"
                                         id="rule-search"
-                                        placeholder="Find a match rule or trait..."
+                                        placeholder="Find a matching rule or trait..."
                                         x-model="rulesFilterKeyword"
                                         x-on:keyup="filterRules($el.value)">
                                     <span class="icon is-small is-left">
@@ -855,30 +855,6 @@
 
     #sourcePage td {
         word-wrap: anywhere;
-    }
-
-    #sourcePage .toggle-on.toggleSlider.toggleSlider::before {
-        transform: translatex(24px);
-    }
-
-    #sourcePage .toggleSwitch {
-        width: 55px;
-        height: 28px;
-    }
-
-    #sourcePage .toggle-off {
-        background-color: var(--primary-color);
-    }
-
-    #sourcePage .toggleSlider::before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        bottom: 4px;
-        transition: all 0.3s ease;
-        left: 3px;
-        top: 2px;
     }
 
     /*IMPORTED*/
