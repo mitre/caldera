@@ -812,7 +812,7 @@
                             </div>
                             <em x-show="showNotRepeatableText"
                                 class="has-text-grey-light is-pulled-right is-size-7">Note:
-                                Repeated links are not available for this operation</em>
+                                Repeated links are not available for this operation.</em>
                         </section>
                         <footer class="modal-card-foot">
                             <nav class="level">
@@ -1229,6 +1229,7 @@
                     .then(() => {
                         if (this.filteredOperations.length > 1) {
                             this.selectedOperation = this.filteredOperations.find((op) => op.id !== this.selectedOperationID);
+                            this.selectedOperationID = this.selectedOperation.id;
                         } else {
                             this.selectedOperation = { chain: [] };
                         }
