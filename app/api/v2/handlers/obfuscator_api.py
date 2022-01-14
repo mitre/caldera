@@ -18,7 +18,7 @@ class ObfuscatorApi(BaseObjectApi):
         router.add_get('/obfuscators', self.get_obfuscators)
         router.add_get('/obfuscators/{name}', self.get_obfuscator_by_name)
 
-    @aiohttp_apispec.docs(tags=['obfuscators'], 
+    @aiohttp_apispec.docs(tags=['obfuscators'],
                           summary='Retrieve obfuscators',
                           description='Retrieves all stored obfuscators.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -28,9 +28,9 @@ class ObfuscatorApi(BaseObjectApi):
         sources = await self.get_all_objects(request)
         return web.json_response(sources)
 
-    @aiohttp_apispec.docs(tags=['obfuscators'], 
+    @aiohttp_apispec.docs(tags=['obfuscators'],
                           summary='Retrieve an obfuscator by name',
-                          description='Retrieve an obfuscator by name, as specified by {name} in the request url.', 
+                          description='Retrieve an obfuscator by name, as specified by {name} in the request url.',
                           parameters=[{
                               'in': 'path',
                               'name': 'name',
