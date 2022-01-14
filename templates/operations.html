@@ -5,9 +5,6 @@
         <div>
             <div x-ref="operationsHeader">
                 <h2>Operations</h2>
-                <p>
-                    Start a new operation or review previous ones here.
-                </p>
             </div>
             <hr>
         </div>
@@ -40,7 +37,7 @@
         </form>
 
         <template x-if="selectedOperation && selectedOperationID">
-            <div class="section pt-0">
+            <div class="section p-0 pb-2">
                 <div>
                     <h3 x-text="selectedOperation.name"></h3>
                 </div>
@@ -58,7 +55,7 @@
                         </button>
                         <div class="vr"></div>
                         <span>Current state: <span class="level-item tag is-medium m-0"><span
-                                class="mr-4 has-text-success" x-text="selectedOperation.state"></span></span></span>
+                                class="has-text-success" x-text="selectedOperation.state"></span></span></span>
                     </div>
 
                     <!-- OPERATION CONTROLS -->
@@ -97,11 +94,11 @@
 
                     <div class="is-flex is-flex-direction-row">
                         <!-- OBFUSCATION DROPDOWN -->
-                        <div class="mt-1">
+                        <div>
                             <span class="mt-1">Obfuscation:
                                 <template x-if="!isOperationRunning">
                                     <span class="level-item tag is-medium m-0"><span
-                                            class="mr-4 has-text-success"
+                                            class="has-text-success"
                                             x-text="selectedOperation.obfuscator"></span></span>
                                 </template>
                                 <template x-if="isOperationRunning">
