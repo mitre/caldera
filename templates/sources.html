@@ -70,7 +70,7 @@
                             </button>
                         </div>
                         <div class="level-item">
-                            <button class="button is-small is-primary" @click="isConfirmSourceDeleteModalOpen = true">
+                            <button class="button is-small is-danger is-outlined" @click="isConfirmSourceDeleteModalOpen = true">
                                 <span class="icon"><em class="fas fa-trash"></em></span>
                                 <span>Delete Source</span>
                             </button>
@@ -88,8 +88,8 @@
                     </div>
                     <span class="navbar-divider"></span>
                     <div x-show="!collapseFacts">
-                        <div class="is-flex is-flex-direction-row" x-data="{factsFilterKeyword: ''}">
-                            <button type="button" class="button is-primary is-small mr-2" x-on:click="showAddFactRow = true; selectedFactIndex = -1">
+                        <div class="is-flex is-flex-direction-row">
+                            <button type="button" class="button is-primary is-small mr-2" x-on:click="showAddFactRow = true; selectedFactIndex = -1" x-bind:disabled="showAddFactRow">
                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                 <span>Add Fact</span>
                             </button>
@@ -98,7 +98,6 @@
                                     <input class="input is-small"
                                            id="fact-search"
                                            placeholder="Find a trait or value..."
-                                           x-model="factsFilterKeyword"
                                            x-on:keyup="filterFacts($el.value)">
                                     <span class="icon is-small is-left">
                                         <i class="fas fa-search"></i>
@@ -223,10 +222,11 @@
                     </div>
                     <span class="navbar-divider"></span>
                     <div x-show="!collapseRules">
-                        <div class="is-flex is-flex-direction-row" x-data="{rulesFilterKeyword: ''}">
+                        <div class="is-flex is-flex-direction-row">
                             <button type="button"
                                     class="button is-primary is-small mr-2"
-                                    x-on:click="showAddRuleRow = true; selectedRuleIndex = -1">
+                                    x-on:click="showAddRuleRow = true; selectedRuleIndex = -1"
+                                    x-bind:disabled="showAddRuleRow">
                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                 <span>Add Rule</span>
                             </button>
@@ -235,7 +235,6 @@
                                     <input class="input is-small"
                                         id="rule-search"
                                         placeholder="Find a matching rule or trait..."
-                                        x-model="rulesFilterKeyword"
                                         x-on:keyup="filterRules($el.value)">
                                     <span class="icon is-small is-left">
                                         <i class="fas fa-search"></i>
@@ -397,11 +396,23 @@
                         <div class="is-flex is-flex-direction-row">
                             <div class="pl-0 is-flex is-align-content-flex-start">
                                 <button type="button"
-                                        class="button is-primary is-small"
-                                        x-on:click="showAddRelationshipRow = true; selectedRelationshipIndex = -1">
+                                        class="button is-primary is-small mr-2"
+                                        x-on:click="showAddRelationshipRow = true; selectedRelationshipIndex = -1"
+                                        x-bind:disabled="showAddRelationshipRow">
                                     <span class="icon"><i class="fas fa-plus"></i></span>
                                     <span>Add Relationship</span>
                                 </button>
+                                <div class="field mr-2" x-show="selectedSource.relationships && selectedSource.relationships.length >= 1 || showAddRelationshipRow">
+                                    <p class="control has-icons-left">
+                                        <input class="input is-small"
+                                               id="relationship-search"
+                                               placeholder="Find a source or target..."
+                                               x-on:keyup="filterRelationships($el.value)">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -449,7 +460,7 @@
                                     </td>
                                 </tr>
 
-                                <template x-for="(rel, index) in selectedSource.relationships">
+                                <template x-for="(rel, index) in filteredRelationships">
                                     <tr x-on:click="selectedRelationshipIndex = index; showAddRelationshipRow = false;" x-bind:class="selectedRelationshipIndex === index ? 'selected' : ''">
                                         <td class="index-column" x-text="index"></td>
 
@@ -535,7 +546,7 @@
                         <div class="level-item">
                             <button class="button is-danger is-small" @click="deleteSource(); isConfirmSourceDeleteModalOpen = false;">
                                 <span class="icon"><em class="fas fa-trash"></em></span>
-                                <span>Delete Source</span>
+                                <span class="has-text-weight-bold">Delete Source</span>
                             </button>
                         <div>
                     </div>
@@ -557,6 +568,7 @@
             filteredSources: [],
             filteredFacts: [],
             filteredRules: [],
+            filteredRelationships: [],
 
             selectedSource: { name: '', relationships: [] },
             selectedSourceId: '',
@@ -596,6 +608,7 @@
                 this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
                 this.filteredFacts = this.selectedSource.facts;
                 this.filteredRules = this.selectedSource.rules;
+                this.filteredRelationships = this.selectedSource.relationships;
             },
 
             filterFacts(input = '') {
@@ -608,9 +621,14 @@
                 this.filteredRules = this.selectedSource.rules.filter((r) => (r.match.toLowerCase().includes(input) || r.trait.toLowerCase().includes(input)));
             },
 
+            filterRelationships(input = '') {
+                input = input.toLowerCase();
+                this.filteredRelationships = this.selectedSource.relationships.filter((r) => (r.source.trait.toLowerCase().includes(input) || r.target.trait.toLowerCase().includes(input)));
+            },
+            
             createSource(newSourceName) {
                 const newSource = {
-                    name: '',
+                    name: 'New source',
                     facts: [],
                     rules: [],
                     relationships: []
@@ -651,6 +669,7 @@
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', res);
                     this.showAddFactRow = false;
+                    this.getSources();
                 }).catch((error) => {
                     toast('Error adding fact', false);
                     console.error(error);
@@ -671,6 +690,7 @@
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
                     toast('Updated source', true);
                     this.showAddRuleRow = false;
+                    this.getSources();
                 }).catch((error) => {
                     toast('Error adding rule', false);
                     console.error(error);
@@ -690,6 +710,7 @@
                     this.newRelationship.sourceTrait = '';
                     this.newRelationship.targetTrait = '';
                     this.newRelationship.edge = '';
+                    this.getSources();
                 }).catch((error) => {
                     toast('Error adding relationship', false);
                     console.error(error);
@@ -727,6 +748,11 @@
             },
 
             saveSourceName() {
+                if (!this.selectedSource.name) {
+                    toast('Source name cannot be blank', false);
+                    return;
+                }
+
                 apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, { name: this.selectedSource.name }).then((res) => {
                     toast('Source name updated', true);
                     this.isEditingSourceName = false;
