@@ -27,7 +27,7 @@ function alpineCore() {
 
         checkIfFirstVisit() {
             let localStorage = window.localStorage;
-            this.isFirstVisit = !localStorage.getItem('firstVisit')
+            this.isFirstVisit = !localStorage.getItem('firstVisit');
             if (this.isFirstVisit) {
                 localStorage.setItem('firstVisit', new Date().toISOString());
             }
@@ -88,9 +88,9 @@ function alpineCore() {
             }
 
             if (this.activeTabIndex >= index) {
-                this.activeTabIndex -= 1;
+                this.activeTabIndex = Math.max(0, this.activeTabIndex - 1);
             }
-            
+
             this.openTabs.splice(index, 1);
         },
 
