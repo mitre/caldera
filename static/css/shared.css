@@ -1,3 +1,9 @@
+.vr {
+  width: 1px;
+  height: 30px;
+  margin: 0 20px 0 10px;
+  background-color: grey;
+}
 
 /* FILTER SEARCH BOX STYLE */
 .filter-search-box i {
