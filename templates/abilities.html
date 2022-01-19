@@ -15,11 +15,11 @@
     </a>
 
     <!-- ABILITIES TABLE -->
-    
+
     <div class="columns">
         <div class="column m-0 is-2 filters">
             <button class="button is-primary is-small is-fullwidth mb-4" @click="createAbility">+ Create an Ability</button>
-            <p class="has-text-weight-bold">Filters</p>        
+            <p class="has-text-weight-bold">Filters</p>
             <form>
                 <div class="field">
                     <label class="label is-small">Search</label>
@@ -87,10 +87,10 @@
             <button class="button is-small is-fullwidth mb-2" x-show="searchTerm || selectedTactic || selectedTechnique || selectedPlugin" @click="clearFilters()">Clear Filters</button>
             <p class="has-text-centered">
                 <strong x-text="filteredAbilities.length" class="pr-1"></strong>
-                / 
+                /
                 <span x-text="abilities.length" class="pl-1"></span>&nbsp;
                 abilities
-            </p>   
+            </p>
         </div>
         <div class="column abilities is-10 m-0 is-flex is-flex-wrap-wrap is-align-content-flex-start">
             <div x-show="!isLoaded">
@@ -118,7 +118,7 @@
 
     <!-- MODALS -->
 
-    <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }"> 
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityModal }">
         <div class="modal-background" @click="showAbilityModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
@@ -167,6 +167,25 @@
                                         <div class="control">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('description') }" x-model="selectedAbility.description">
                                             <p x-show="fieldErrors.includes('description')" class="help is-danger">This field is required.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">
+                                        <span class="icon is-small"><em class="fas fa-search"></em></span>
+                                    </label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control auto-complete">
+                                            <input class="input is-small" x-model="searchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
+                                            <div class="search-results is-size-7">
+                                                <template x-for="result of searchResults" :key="result.ability_id">
+                                                    <p @click="selectAbility(result)" x-text="result.name"></p>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -313,7 +332,7 @@
                                                         <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
-                                                            </template>      
+                                                            </template>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -423,6 +442,8 @@
             searchTerm: '',
             selectedAbility: '',
             windowHref: '',
+            searchQuery: '',
+            searchResults: [],
             scrollTop: document.body.scrollTop,
 
             tactics: [],
@@ -514,9 +535,9 @@
                 this.filteredAbilities = this.abilities.filter((ability, index) => {
                     let lcSearchTerm = this.searchTerm.toLowerCase();
                     let matchesSearch = (
-                        ability.name.toLowerCase().includes(lcSearchTerm) || 
+                        ability.name.toLowerCase().includes(lcSearchTerm) ||
                         ability.description.toLowerCase().includes(lcSearchTerm) ||
-                        ability.tactic.toLowerCase().includes(lcSearchTerm) || 
+                        ability.tactic.toLowerCase().includes(lcSearchTerm) ||
                         ability.technique_id.toLowerCase().includes(lcSearchTerm) ||
                         ability.technique_name.toLowerCase().includes(lcSearchTerm)
                     );
@@ -566,11 +587,22 @@
                 return execs;
             },
 
+            searchForAbility() {
+                this.searchResults = [];
+                if (!this.searchQuery) return;
+                this.abilities.forEach((ability) => {
+                    if (ability.name.toLowerCase().indexOf(this.searchQuery.toLowerCase()) > -1) {
+                        this.searchResults.push(ability);
+                    }
+                });
+            },
+
             selectAbility(ability) {
                 this.isCreatingAbility = false;
                 this.fieldErrors = [];
                 this.selectedAbility = ability;
                 this.showAbilityModal = true;
+                this.searchResults = [];
             },
 
             createAbility() {
@@ -700,7 +732,7 @@
     .tag.tactic {
         background-color: #1a1a1a;
     }
-    
+
     .scroll-top {
         width: 0;
         position: fixed;
