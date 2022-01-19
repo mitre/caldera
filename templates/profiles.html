@@ -119,7 +119,7 @@
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
-                                </span> 
+                                </span>
                             </td>
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
@@ -201,17 +201,17 @@
                     </div>
                     <div class="field" x-show="selectedAddAdversary">
                         <div class="control">
-                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = true)">Select All</a> 
-                            / 
+                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = true)">Select All</a>
+                            /
                             <a @click="abilitiesAddAdversary.forEach(a => a.selected = false)">Deselect All</a>
                         </div>
                     </div>
                     <template x-for="ability of abilitiesAddAdversary">
                         <div class="field">
                             <label class="checkbox">
-                                <input type="checkbox" x-model="ability.selected"> 
+                                <input type="checkbox" x-model="ability.selected">
                                 <span>
-                                    <b x-text="ability.name"></b> | 
+                                    <b x-text="ability.name"></b> |
                                     <span x-text="ability.tactic"></span> |
                                     <template x-for="platform of getExecutorDetail('platforms', ability)">
                                         <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
@@ -284,7 +284,7 @@
         </div>
     </div>
 
-    <div class="modal" x-bind:class="{ 'is-active': showAbilityChoiceModal }"> 
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityChoiceModal }">
         <div class="modal-background" @click="showAbilityChoiceModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
@@ -299,9 +299,9 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control">
+                                <div class="control auto-complete">
                                     <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
-                                    <div class="search-results">
+                                    <div class="search-results is-size-7">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>
@@ -560,7 +560,7 @@
                                                         <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
-                                                            </template>      
+                                                            </template>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1161,21 +1161,6 @@
 
     .row-hover {
         background-color: #484848 !important;
-    }
-
-    .search-results {
-        overflow-y: scroll;
-        max-height: 200px;
-        background-color: #010101;
-        border-radius: 0 4px;
-    }
-    .search-results p {
-        margin-bottom: 0 !important;
-        padding: 5px;
-        cursor: pointer;
-    }
-    .search-results p:hover {
-        background-color: #484848;
     }
 
     .unlock {
