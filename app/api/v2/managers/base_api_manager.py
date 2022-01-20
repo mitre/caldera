@@ -39,7 +39,11 @@ class BaseApiManager(BaseWorld):
         for obj in self.find_objects(ram_key, search):
             dumped_obj = self.dump_object_with_filters(obj, include, exclude)
             matched_objs.append(dumped_obj)
-        return sorted(matched_objs, key=lambda p: p.get(sort, 0))
+        sorted_objs = sorted(matched_objs, key=lambda p: p.get(sort, 0))
+        if sorted_objs and sort in sorted_objs[0]:
+            return sorted(sorted_objs,
+                          key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)
+        return sorted_objs
 
     @staticmethod
     def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:
