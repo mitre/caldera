@@ -10,10 +10,6 @@
     </div>
     <hr>
 
-    <a href="#home" class="scroll-top button is-rounded is-primary" x-show="scrollTop > 0">
-        <span class="icon"><i class="fas fa-chevron-up"></i></span>
-    </a>
-
     <!-- ABILITIES TABLE -->
 
     <div class="columns">
@@ -469,11 +465,9 @@
 
             initPage() {
                 apiV2('GET', 'api/v2/abilities').then(async (abilities) => {
-                    this.abilities = abilities
+                    this.abilities = abilities;
                     this.checkUrlParameters();
                     this.filterAbilities();
-
-                    window.onscroll = () => this.scrollTop = document.body.scrollTop;
 
                     while (this.$refs.headerAbilities) {
                         await sleep(500);
