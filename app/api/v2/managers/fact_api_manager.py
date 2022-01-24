@@ -41,6 +41,15 @@ class FactApiManager(BaseApiManager):
                 self.log.warning(f"Unable to properly display relationship {x}. Specific error encountered - {e}.")
         return out
 
+    async def verify_operation_state(self, new_fact):
+        if self._data_svc.is_uuid4(new_fact.source):
+            try:
+                operation = (await self._data_svc.locate('operations', match=dict(id=new_fact.source)))[0]
+            except IndexError:
+                return
+            if operation and await operation.is_finished():
+                raise ValueError("Cannot add fact to finished operation.")
+
     @staticmethod
     async def copy_object(obj):
         return copy.deepcopy(obj)
