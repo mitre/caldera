@@ -1,5 +1,4 @@
 import websockets
-import asyncio
 
 from app.utility.base_world import BaseWorld
 
@@ -25,6 +24,8 @@ class Contact(BaseWorld):
 
     async def stop(self):
         await self.socket.close()
+
+
 class Handler:
 
     def __init__(self, services):

@@ -234,7 +234,7 @@ class TestFileService:
         upload_dir = event_loop.run_until_complete(file_svc.create_exfil_sub_directory('testencodeduploaddir'))
         upload_filename = 'testencodedupload.txt'
         event_loop.run_until_complete(file_svc.save_file(upload_filename, upload_content, upload_dir, encrypt=False,
-                                                   encoding=encoding))
+                                      encoding=encoding))
         uploaded_file_path = os.path.join(upload_dir, upload_filename)
         assert os.path.isfile(uploaded_file_path)
         with open(uploaded_file_path, 'rb') as file:

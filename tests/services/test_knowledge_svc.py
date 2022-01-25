@@ -8,9 +8,9 @@ class TestKnowledgeService:
 
     async def test_no_duplicate_fact(self, knowledge_svc):
         await knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
-                                                            collected_by=['thin_air'], technique_id='T1234'))
+                                     collected_by=['thin_air'], technique_id='T1234'))
         await knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
-                                                            collected_by=['thin_air'], technique_id='T1234'))
+                                     collected_by=['thin_air'], technique_id='T1234'))
         facts = await knowledge_svc.get_facts(dict(trait='test'))
         assert len(facts) == 1
 
@@ -29,10 +29,10 @@ class TestKnowledgeService:
 
     async def test_remove_fact(self, knowledge_svc):
         await knowledge_svc.add_fact(Fact(trait='rtest', value='rdemo', score=1,
-                                                            collected_by=['thin_air'], technique_id='T1234'),
-                                                       constraints=dict(test_field='test_value'))
+                                     collected_by=['thin_air'], technique_id='T1234'),
+                                     constraints=dict(test_field='test_value'))
         await knowledge_svc.add_fact(Fact(trait='ktest', value='rdemo', score=1,
-                                                            collected_by=['thin_air'], technique_id='T1234'))
+                                          collected_by=['thin_air'], technique_id='T1234'))
         await knowledge_svc.delete_fact(dict(trait='rtest'))
         facts = await knowledge_svc.get_facts(dict(value='rdemo'))
         assert len(facts) == 1
@@ -40,7 +40,7 @@ class TestKnowledgeService:
 
     async def test_remove_rules(self, knowledge_svc):
         await knowledge_svc.add_rule(Rule(action='rBLOCK', trait='ra.c', match='.*'),
-                                                       constraints=dict(test_field='test_value'))
+                                     constraints=dict(test_field='test_value'))
         await knowledge_svc.delete_rule(dict(trait='ra.c'))
         rules = await knowledge_svc.get_rules(dict(trait='ra.c'))
         assert len(rules) == 0
@@ -49,7 +49,7 @@ class TestKnowledgeService:
     async def test_remove_relationship(self, knowledge_svc):
         dummy = Fact(trait='rtest', value='rdemo', score=1, collected_by=['thin_air'], technique_id='T1234')
         await knowledge_svc.add_relationship(Relationship(source=dummy, edge='rpotato', target=dummy),
-                                                               constraints=dict(test_field='test_value'))
+                                             constraints=dict(test_field='test_value'))
         await knowledge_svc.delete_relationship(dict(edge='rpotato'))
         relationships = await knowledge_svc.get_relationships(dict(edge='rpotato'))
         assert len(relationships) == 0
@@ -57,9 +57,9 @@ class TestKnowledgeService:
 
     async def test_update_fact(self, knowledge_svc):
         await knowledge_svc.add_fact(Fact(trait='utest', value='udemo', score=1,
-                                                            collected_by=['thin_air'], technique_id='T1234'))
+                                     collected_by=['thin_air'], technique_id='T1234'))
         await knowledge_svc.update_fact(criteria=dict(trait='utest'),
-                                                          updates=dict(trait='utest2', value='udemo2'))
+                                        updates=dict(trait='utest2', value='udemo2'))
         facts = await knowledge_svc.get_facts(dict(trait='utest2'))
         assert len(facts) == 1
         assert facts[0].value == 'udemo2'
@@ -69,16 +69,16 @@ class TestKnowledgeService:
         dummy2 = Fact(trait='utest2', value='udemo2', score=1, collected_by=['thin_air'], technique_id='T4321')
         await knowledge_svc.add_relationship(Relationship(source=dummy, edge='upotato', target=dummy))
         await knowledge_svc.update_relationship(criteria=dict(edge='upotato'),
-                                                                  updates=dict(source=dummy2, edge='ubacon'))
+                                                updates=dict(source=dummy2, edge='ubacon'))
         relationships = await knowledge_svc.get_relationships(dict(edge='ubacon'))
         assert len(relationships) == 1
         assert relationships[0].source == dummy2
 
     async def test_retrieve_fact(self, knowledge_svc):
         await knowledge_svc.add_fact(Fact(trait='ttestA', value='tdemoB', score=24,
-                                                            collected_by=['thin_airA'], technique_id='T1234'))
+                                     collected_by=['thin_airA'], technique_id='T1234'))
         await knowledge_svc.add_fact(Fact(trait='ttestB', value='tdemoA', score=42,
-                                                            collected_by=['thin_airB'], technique_id='T4321'))
+                                          collected_by=['thin_airB'], technique_id='T4321'))
         facts = await knowledge_svc.get_facts(dict(trait='ttestB'))
         assert len(facts) == 1
         readable = facts[0].display
@@ -88,10 +88,8 @@ class TestKnowledgeService:
     async def test_retrieve_relationship(self, knowledge_svc):
         dummy = Fact(trait='ttest', value='tdemo', score=1, collected_by=['thin_air'], technique_id='T1234')
         dummy2 = Fact(trait='ttest2', value='tdemo2', score=1, collected_by=['thin_air'], technique_id='T1234')
-        await knowledge_svc.add_relationship(Relationship(source=dummy, edge='tpotato',
-                                                                            target=dummy2))
-        await knowledge_svc.add_relationship(Relationship(source=dummy2, edge='tpotato',
-                                                                            target=dummy))
+        await knowledge_svc.add_relationship(Relationship(source=dummy, edge='tpotato', target=dummy2))
+        await knowledge_svc.add_relationship(Relationship(source=dummy2, edge='tpotato', target=dummy))
         relationships = await knowledge_svc.get_relationships(dict(edge='tpotato'))
         assert len(relationships) == 2
         specific = await knowledge_svc.get_relationships(dict(source=dummy))

@@ -48,7 +48,7 @@ class TestContactSsh:
     async def test_tunnel(self, ssh_contact):
         await ssh_contact.start()
         conn = await asyncssh.connect('127.0.0.1', port=8122, known_hosts=None, username='sandcat',
-                                                        password='s4ndc4t!', config=None)
+                                      password='s4ndc4t!', config=None)
         assert conn and conn.get_extra_info('username') == 'sandcat'
         listener = await conn.forward_local_port('', 61234, 'localhost', 8888)
         assert listener and listener.get_port() == 61234

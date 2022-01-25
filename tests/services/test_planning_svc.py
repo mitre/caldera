@@ -98,8 +98,7 @@ def stop_bucket_exhaustion_setup(request, setup_planning_test):
 
 
 class TestPlanningService:
-    async def test_wait_for_links_and_monitor(self, planning_svc, fact,
-                                        setup_planning_test):
+    async def test_wait_for_links_and_monitor(self, planning_svc, fact, setup_planning_test):
         # PART A:
         ability, agent, operation, _ = setup_planning_test
         # Add a link to operation.chain
@@ -134,8 +133,7 @@ class TestPlanningService:
         #   is returned in "links"
         tability, agent, operation, cability = setup_planning_test
         operation.adversary.atomic_ordering = ["123", "321"]
-        links = await planning_svc.get_links(operation=operation, buckets=None,
-                                         agent=agent)
+        links = await planning_svc.get_links(operation=operation, buckets=None, agent=agent)
         assert links[0].ability.ability_id == tability.ability_id
 
         # PART B: Fill in facts to allow "cability" to be returned in "links"
@@ -148,8 +146,7 @@ class TestPlanningService:
         await knowledge_svc.add_fact(Fact(trait='a.b.d', value='2', source=operation.id))
         await knowledge_svc.add_fact(Fact(trait='a.b.e', value='3', source=operation.id))
 
-        links = await planning_svc.get_links(operation=operation, buckets=None,
-                                         agent=agent)
+        links = await planning_svc.get_links(operation=operation, buckets=None, agent=agent)
 
         assert links[0].ability.ability_id == cability.ability_id
         assert links[1].ability.ability_id == tability.ability_id
@@ -295,7 +292,7 @@ class TestPlanningService:
         ability, agent, operation, _ = setup_planning_test
         executor = next(ability.executors)
         operation.add_link(Link.load(dict(command='', paw=agent.paw, ability=ability, executor=executor, status=0)))
-        links =  await planning_svc.get_cleanup_links(operation=operation, agent=agent)
+        links = await planning_svc.get_cleanup_links(operation=operation, agent=agent)
         link_list = list(links)
         assert len(link_list) == 1
         assert BaseWorld.decode_bytes(link_list[0].command) == executor.cleanup[0]
@@ -360,8 +357,8 @@ class TestPlanningService:
 
         # test parallel filtering
         flat_fil = await planning_svc._remove_links_of_duplicate_singletons([[l0, l1, l2, l3],
-                                                                                               [l0, l1, l2, l3],
-                                                                                               [l0, l1, l2, l3]])
+                                                                            [l0, l1, l2, l3],
+                                                                            [l0, l1, l2, l3]])
         assert 7 == len(flat_fil)
 
     async def test_trait_with_one_part(self, setup_planning_test, planning_svc):

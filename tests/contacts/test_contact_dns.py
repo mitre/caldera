@@ -181,7 +181,7 @@ class TestContactDns:
                 self._assert_even_ipv4(response_msg)
 
     async def test_instruction_download(self, get_dns_response, get_beacon_profile_qnames, message_id,
-                                  get_instruction_response):
+                                        get_instruction_response):
         # Send beacon before asking for instructions
         for qname in get_beacon_profile_qnames(message_id):
             await get_dns_response(qname, 'a')
@@ -219,7 +219,7 @@ class TestContactDns:
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
 
     async def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
-                         get_file_upload_data_qnames):
+                               get_file_upload_data_qnames):
         paw = 'asdasd'
         filename = 'testupload.txt'
         hostname = 'testhost'

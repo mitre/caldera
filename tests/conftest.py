@@ -556,6 +556,7 @@ def finished_link(test_executor, test_agent, test_ability):
         'output': 'test_dir'
     }
 
+
 @pytest.fixture
 def setup_finished_operation(event_loop, test_operation):
     finished_operation = OperationSchema().load(test_operation)
