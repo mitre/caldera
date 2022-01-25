@@ -1,3 +1,17 @@
+.scroll-top {
+    width: 0;
+    position: fixed !important;
+    bottom: 40px;
+    right: 40px;
+    z-index: 2;
+}
+
+.vr {
+  width: 1px;
+  height: 30px;
+  margin: 0 20px 0 10px;
+  background-color: grey;
+}
 
 /* FILTER SEARCH BOX STYLE */
 .filter-search-box i {
@@ -41,8 +55,8 @@
 .toggleSwitch {
   position: relative;
   display: inline-block;
-  width: 65px;
-  height: 34px;
+  width: 50px;
+  height: 12px;
 }
 
 .toggleSwitch input {
@@ -50,7 +64,7 @@
 }
 
 .toggleSlider {
-  border: 2px solid white;
+  border: 2px solid #7e7e7e;
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -63,12 +77,12 @@
 .toggleSlider::before {
   position: absolute;
   content: "";
-  height: 24px;
-  width: 24px;
+  height: 17px;
+  width: 17px;
   bottom: 4px;
   transition: all 0.3s ease;
   left: 3px;
-  top: 3px;
+  top: 6px;
 }
 
 .toggle-off {
@@ -76,7 +90,7 @@
 }
 
 .toggle-on {
-  background-color: #339c3f;
+  background-color: #87FA5F;
 }
 
 .toggle-slider-on,
@@ -92,12 +106,12 @@
 
 .toggle-on.toggleSlider.toggleSlider::before {
   background-color: white;
-  transform: translateX(30px);
+  transform: translate(30px, -11px);
 }
 
 .toggle-off.toggleSlider.toggleSlider::before {
   background-color: white;
-  transform: translateX(0);
+  transform: translate(-5px, -11px);
 }
 
 .toggleSlider.toggleSliderRound::before {

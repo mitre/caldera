@@ -27,14 +27,24 @@ class ObjectiveApi(BaseObjectApi):
                                       'the request body to filter retrieved objectives.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(ObjectiveSchema(many=True, partial=True),
-                                     description='Returns a list of all objectives dumped in ObjectiveSchema format.')
+                                     description='A list of all objectives dumped in ObjectiveSchema format.')
     async def get_objectives(self, request: web.Request):
         objectives = await self.get_all_objects(request)
         return web.json_response(objectives)
 
-    @aiohttp_apispec.docs(tags=['objectives'])
+    @aiohttp_apispec.docs(tags=['objectives'],
+                          summary='Retrieve objective by ID',
+                          description='Retrieve one objective by ID. Use fields from the `ObjectiveSchema` in '
+                                      'the request body to filter retrieved objective.',
+                          parameters=[{
+                            'in': 'path',
+                            'name': 'id',
+                            'schema': {'type': 'string'},
+                            'required': 'true',
+                            'description': 'UUID of the objective to be retrieved'}])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(ObjectiveSchema(partial=True))
+    @aiohttp_apispec.response_schema(ObjectiveSchema(partial=True),
+                                     description='Returns single objective in ObjectiveSchema format.')
     async def get_objective_by_id(self, request: web.Request):
         objective = await self.get_object(request)
         return web.json_response(objective)
@@ -43,21 +53,45 @@ class ObjectiveApi(BaseObjectApi):
                           summary='Create a new objective',
                           description='Create a new objective using the format provided in the `ObjectiveSchema`.')
     @aiohttp_apispec.request_schema(ObjectiveSchema)
-    @aiohttp_apispec.response_schema(ObjectiveSchema, description='Returns single objective in ObjectiveSchema format.')
+    @aiohttp_apispec.response_schema(ObjectiveSchema, description='A single objective in ObjectiveSchema format.')
     async def create_objective(self, request: web.Request):
         objective = await self.create_on_disk_object(request)
         return web.json_response(objective.display)
 
+    @aiohttp_apispec.docs(tags=['objectives'],
+                          summary='Update an objective',
+                          description='Update an objective using fields from the `ObjectiveSchema` in the request body.',
+                          parameters=[{
+                            'in': 'path',
+                            'name': 'id',
+                            'schema': {'type': 'string'},
+                            'required': 'true',
+                            'description': 'UUID of the Objective to be updated'
+                          }])
     @aiohttp_apispec.docs(tags=['objectives'])
     @aiohttp_apispec.request_schema(ObjectiveSchema(partial=True, exclude=['id', 'percentage']))
-    @aiohttp_apispec.response_schema(ObjectiveSchema)
+    @aiohttp_apispec.response_schema(ObjectiveSchema,
+                                     description='The updated Objective in ObjectiveSchema format.')
     async def update_objective(self, request: web.Request):
         objective = await self.update_on_disk_object(request)
         return web.json_response(objective.display)
 
+    @aiohttp_apispec.docs(tags=['objectives'],
+                          summary='Create or update an objective',
+                          description='Attempt to update an objective using fields from the `ObjectiveSchema` '
+                                      'in the request body. If the objective does not already exist, '
+                                      'then create a new one using the `ObjectiveSchema` format.',
+                          parameters=[{
+                            'in': 'path',
+                            'name': 'id',
+                            'schema': {'type': 'string'},
+                            'required': 'true',
+                            'description': 'UUID of the Objective to be created or updated'
+                          }])
     @aiohttp_apispec.docs(tags=['objectives'])
     @aiohttp_apispec.request_schema(ObjectiveSchema(partial=True))
-    @aiohttp_apispec.response_schema(ObjectiveSchema)
+    @aiohttp_apispec.response_schema(ObjectiveSchema,
+                                     description='A single Objective, either newly created or updated, in ObjectiveSchema format.')
     async def create_or_update_objective(self, request: web.Request):
         objective = await self.create_or_update_on_disk_object(request)
         return web.json_response(objective.display)
