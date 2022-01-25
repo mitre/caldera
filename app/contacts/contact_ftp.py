@@ -39,14 +39,18 @@ class Contact(BaseWorld):
         self.user = self.get_config('app.contact.ftp.user')
         self.pword = self.get_config('app.contact.ftp.pword')
         self.server = None
+        self.task = None
 
     async def start(self):
         self.set_up_server()
         if sys.version_info >= (3, 7):
-            t = asyncio.create_task(self.ftp_server_python_new())
+            self.task = asyncio.create_task(self.ftp_server_python_new())
         else:
-            t = asyncio.create_task(self.ftp_server_python_old())
-        await t
+            self.task = asyncio.create_task(self.ftp_server_python_old())
+        await self.task
+
+    async def stop(self):
+        self.task.cancel()
 
     def set_up_server(self):
         user = self.setup_ftp_users()

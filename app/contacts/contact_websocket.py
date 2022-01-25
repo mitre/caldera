@@ -1,4 +1,5 @@
 import websockets
+import asyncio
 
 from app.utility.base_world import BaseWorld
 
@@ -10,18 +11,20 @@ class Contact(BaseWorld):
         self.description = 'Accept data through web sockets'
         self.log = self.create_logger('contact_websocket')
         self.handler = Handler(services)
+        self.socket = None
 
     async def start(self):
         web_socket = self.get_config('app.contact.websocket')
         try:
-            await websockets.serve(self.handler.handle, *web_socket.split(':'))
+            self.socket = websockets.serve(self.handler.handle, *web_socket.split(':'))
             # as soon as we start serving from websockets, we need to suppress their excessive debug messages
             self.log.manager.loggerDict['websockets.protocol'].level = 100
             self.log.manager.loggerDict['websockets.server'].level = 100
         except OSError as e:
             self.log.error("WebSocket error: {}".format(e))
 
-
+    async def stop(self):
+        await self.socket.close()
 class Handler:
 
     def __init__(self, services):
