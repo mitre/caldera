@@ -22,6 +22,9 @@
     <body>
         <main id="home" class="main" x-data="alpineCore()" x-init="initPage()">
             <div class="navigation">
+                <a href="#home" class="scroll-top button is-rounded is-primary" x-show="scrollTop > 0">
+                    <span class="icon"><i class="fas fa-chevron-up"></i></span>
+                </a>
                 <div class="nav-logo">
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
                 </div>
