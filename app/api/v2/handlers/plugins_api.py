@@ -24,8 +24,8 @@ class PluginApi(BaseObjectApi):
                           'and active status. Supply fields from the `PluginSchema` to the include and exclude fields of the '
                           '`BaseGetAllQuerySchema` in the request body to filter retrieved plugins.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
-    @aiohttp_apispec.response_schema(PluginSchema(many=True, partial=True), 
-        description='Returns a list in `PluginSchema` format of all available plugins in the system.')
+    @aiohttp_apispec.response_schema(PluginSchema(many=True, partial=True),
+                                     description='Returns a list in `PluginSchema` format of all available plugins in the system.')
     async def get_plugins(self, request: web.Request):
         plugins = await self.get_all_objects(request)
         return web.json_response(plugins)
@@ -41,8 +41,8 @@ class PluginApi(BaseObjectApi):
                                 'required': 'true'
                             }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(PluginSchema(partial=True), 
-        description='Returns a plugin in `PluginSchema` format with the requested name, if it exists.')
+    @aiohttp_apispec.response_schema(PluginSchema(partial=True),
+                                     description='Returns a plugin in `PluginSchema` format with the requested name, if it exists.')
     async def get_plugin_by_name(self, request: web.Request):
         plugin = await self.get_object(request)
         return web.json_response(plugin)
