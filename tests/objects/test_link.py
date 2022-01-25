@@ -13,7 +13,7 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def fake_event_svc(loop):
+def fake_event_svc(event_loop):
     class FakeEventService(BaseService, EventServiceInterface):
         def __init__(self):
             self.fired = {}
@@ -75,13 +75,13 @@ class TestLink:
         link.status = -5
         mock_emit_status_change_method.assert_called_with(from_status=-3, to_status=-5)
 
-    def test_emit_status_change_event(self, loop, fake_event_svc, ability, executor):
+    def test_emit_status_change_event(self, event_loop, fake_event_svc, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
         link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
         fake_event_svc.reset()
 
-        loop.run_until_complete(
+        event_loop.run_until_complete(
             link._emit_status_change_event(
                 from_status=-3,
                 to_status=-5
@@ -120,7 +120,7 @@ class TestLink:
         assert serialized_link['agent_reported_time'] == agent_reported_time
         assert loaded_link.agent_reported_time == BaseService.get_timestamp_from_string(agent_reported_time)
 
-    def test_link_knowledge_svc_synchronization(self, loop, executor, ability, knowledge_svc):
+    def test_link_knowledge_svc_synchronization(self, event_loop, executor, ability, knowledge_svc):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
@@ -129,17 +129,17 @@ class TestLink:
         test_link = Link(command='echo "this was a triumph"',
                          paw='123456', ability=test_ability, id=111111, executor=test_executor)
 
-        loop.run_until_complete(test_link.create_relationships([relationship], None))
+        event_loop.run_until_complete(test_link.create_relationships([relationship], None))
         checkable = [(x.trait, x.value) for x in test_link.facts]
         assert (fact.trait, fact.value) in checkable
         assert (fact2.trait, fact2.value) in checkable
-        knowledge_base_f = loop.run_until_complete(knowledge_svc.get_facts(dict(source=test_link.id)))
+        knowledge_base_f = event_loop.run_until_complete(knowledge_svc.get_facts(dict(source=test_link.id)))
         assert len(knowledge_base_f) == 2
         assert test_link.id in knowledge_base_f[0].links
-        knowledge_base_r = loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='has_admin')))
+        knowledge_base_r = event_loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='has_admin')))
         assert len(knowledge_base_r) == 1
 
-    def test_create_relationship_source_fact(self, loop, ability, executor, operation, knowledge_svc):
+    def test_create_relationship_source_fact(self, event_loop, ability, executor, operation, knowledge_svc):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
@@ -150,19 +150,19 @@ class TestLink:
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
                               source=Source(id='test-source', facts=[fact1]))
-        loop.run_until_complete(operation._init_source())
-        loop.run_until_complete(link1.create_relationships([relationship], operation))
+        event_loop.run_until_complete(operation._init_source())
+        event_loop.run_until_complete(link1.create_relationships([relationship], operation))
 
         link2 = Link(command='echo "Bob"', paw='789100', ability=test_ability, id='222222', executor=test_executor)
-        loop.run_until_complete(link2.create_relationships([relationship], operation))
+        event_loop.run_until_complete(link2.create_relationships([relationship], operation))
 
-        fact_store_operation_source = loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.source.id)))
-        fact_store_operation = loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.id)))
+        fact_store_operation_source = event_loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.source.id)))
+        fact_store_operation = event_loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.id)))
         assert len(fact_store_operation_source) == 1
         assert len(fact_store_operation) == 1
         assert len(fact_store_operation_source[0].collected_by) == 2
 
-    def test_save_discover_seeded_fact_not_in_command(self, loop, ability, executor, operation, knowledge_svc):
+    def test_save_discover_seeded_fact_not_in_command(self, event_loop, ability, executor, operation, knowledge_svc):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
@@ -173,8 +173,8 @@ class TestLink:
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
                               source=Source(id='test-source', facts=[fact1, fact2]))
-        loop.run_until_complete(operation._init_source())
-        loop.run_until_complete(link.save_fact(operation, fact2, 1, relationship))
+        event_loop.run_until_complete(operation._init_source())
+        event_loop.run_until_complete(link.save_fact(operation, fact2, 1, relationship))
 
         assert fact2.origin_type == OriginType.SEEDED
         assert '123456' in fact2.collected_by

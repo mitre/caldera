@@ -44,14 +44,14 @@ def base_world():
     BaseWorld.clear_config()
 
 
-@pytest.fixture()
-def ftp_c2(loop, app_svc, base_world, contact_svc, data_svc, file_svc, obfuscator):
-    services = app_svc(loop).get_services()
+@pytest.fixture
+async def ftp_c2(app_svc, base_world, contact_svc, data_svc, file_svc, obfuscator):
+    services = app_svc.get_services()
     ftp_c2 = contact_ftp.Contact(services)
     return ftp_c2
 
 
-@pytest.fixture()
+@pytest.fixture
 def ftp_c2_my_server(ftp_c2):
     ftp_c2.set_up_server()
     return ftp_c2.server
