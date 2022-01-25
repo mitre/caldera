@@ -552,10 +552,17 @@ def finished_link(test_executor, test_agent, test_ability):
 
 
 @pytest.fixture
-def setup_finished_operation(loop, test_operation):
-    finished_operation = OperationSchema().load(test_operation)
-    finished_operation.id = '000'
-    finished_operation.state = 'finished'
+def finished_operation_payload(test_operation):
+    op_id = "00000000-0000-0000-0000-000000000000"
+    test_operation['id'] = op_id
+    test_operation['name'] = op_id
+    test_operation['state'] = 'finished'
+    return test_operation
+
+
+@pytest.fixture
+def setup_finished_operation(loop, finished_operation_payload):
+    finished_operation = OperationSchema().load(finished_operation_payload)
     loop.run_until_complete(BaseService.get_service('data_svc').store(finished_operation))
 
 
@@ -572,6 +579,15 @@ def setup_operations_api_test(loop, api_v2_client, test_operation, test_agent, t
     finished_link.host = test_agent.host
     test_operation.chain.append(test_link)
     test_operation.chain.append(finished_link)
+    test_objective = Objective(id='123', name='test objective', description='test', goals=[])
+    test_operation.objective = test_objective
+    loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
+
+
+@pytest.fixture
+def setup_empty_operation(loop, test_operation):
+    test_operation = OperationSchema().load(test_operation)
+    test_operation.set_start_details()
     test_objective = Objective(id='123', name='test objective', description='test', goals=[])
     test_operation.objective = test_objective
     loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
