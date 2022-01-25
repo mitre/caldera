@@ -1,4 +1,5 @@
 from app.api.v2.managers.base_api_manager import BaseApiManager
+from app.objects.c_operation import InvalidOperationStateError
 from json import JSONDecodeError
 from app.api.v2.responses import JsonHttpBadRequest
 from aiohttp import web
@@ -43,12 +44,9 @@ class FactApiManager(BaseApiManager):
 
     async def verify_operation_state(self, new_fact):
         if self._data_svc.is_uuid4(new_fact.source):
-            try:
-                operation = (await self._data_svc.locate('operations', match=dict(id=new_fact.source)))[0]
-            except IndexError:
-                return
-            if operation and await operation.is_finished():
-                raise ValueError("Cannot add fact to finished operation.")
+            operation = (await self._data_svc.locate('operations', match=dict(id=new_fact.source)))
+            if operation and await operation[0].is_finished():
+                raise InvalidOperationStateError("Cannot add fact to finished operation.")
 
     @staticmethod
     async def copy_object(obj):
