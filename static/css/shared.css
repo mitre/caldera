@@ -1,3 +1,11 @@
+.scroll-top {
+    width: 0;
+    position: fixed !important;
+    bottom: 40px;
+    right: 40px;
+    z-index: 2;
+}
+
 .vr {
   width: 1px;
   height: 30px;
