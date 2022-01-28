@@ -223,6 +223,7 @@ async def test_add_fact_to_finished_operation(knowledge_webapp, aiohttp_client, 
     resp = await client.post('/facts', json=fact_data, headers=headers)
     data = await resp.json()
     assert 'error' in data
+    assert 'Cannot add fact to finished operation.' in data['error']
 
 
 async def test_add_relationship(knowledge_webapp, aiohttp_client):
