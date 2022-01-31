@@ -412,10 +412,24 @@
                                 <div class="mb-2">
                                     <p class="mt-3 mb-2">Facts:</p>
                                     <pre class="has-text-left white-space-pre-line">
-                                        <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
-                                            <span class="has-background-warning has-text-black mr-2"
-                                                  x-text="fact"></span>
-                                        </template>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Value</th>
+                                                    <th>Trait</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
+                                                    <tr>
+                                                        <td x-text="fact.name"></td>
+                                                        <td x-text="fact.value"></td>
+                                                        <td x-text="fact.score"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
                                     </pre>
                                 </div>
                             </template>
