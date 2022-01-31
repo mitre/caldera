@@ -37,12 +37,11 @@ def base_world():
 
 
 @pytest.fixture
-def knowledge_webapp(loop, app_svc, base_world, data_svc):
-    link = app_svc(loop)
-    link.add_service('auth_svc', AuthService())
-    link.add_service('knowledge_svc', KnowledgeService())
-    link.add_service('file_svc', FileSvc())  # This needs to be done this way, or it we won't have a valid BaseWorld
-    services = link.get_services()
+def knowledge_webapp(event_loop, app_svc, base_world, data_svc):
+    app_svc.add_service('auth_svc', AuthService())
+    app_svc.add_service('knowledge_svc', KnowledgeService())
+    app_svc.add_service('file_svc', FileSvc())  # This needs to be done this way, or it we won't have a valid BaseWorld
+    services = app_svc.get_services()
     app = web.Application(
         middlewares=[
             authentication_required_middleware_factory(services['auth_svc']),
