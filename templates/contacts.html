@@ -22,11 +22,13 @@
                         <th x-text="contact.name"></th>
                         <td x-text="contact.description"></td>
                         <td>
-                            <span x-show="hasNoReport.includes(contact.name)" class="is-size-7">No contacts to show</span>
-                            <button class="button is-small is-primary" @click="downloadContactReport(contact.name)" x-show="!hasNoReport.includes(contact.name)">
-                                <span class="icon"><i class="fas fa-file-download"></i></span>
-                                <span>Download Report</span>
-                            </button>
+                            <span x-show="hasNoReport.has(contact.name)" class="is-size-7">No contacts to show</span>
+                            <template x-if="!hasNoReport.has(contact.name)">
+                                <button class="button is-small is-primary" @click="downloadContactReport(contact.name)">
+                                    <span class="icon"><i class="fas fa-file-download"></i></span>
+                                    <span>Download Report</span>
+                                </button>
+                            </template>
                         </td>
                     </tr>
                 </template>
@@ -39,15 +41,15 @@
     function alpineContacts() {
         return {
             contacts: JSON.parse('{{ contacts | tojson }}'),
-            hasNoReport: [],
+            hasNoReport: new Set(),
 
             initPage() {
-                this.hasNoReport = [];
+                this.hasNoReport = new Set();
                 this.contacts.forEach(async (contact) => {
                     try {
                         await apiV2('GET', `/api/v2/contacts/${contact.name}`);
                     } catch (error) {
-                        this.hasNoReport.push(contact.name);
+                        this.hasNoReport.add(contact.name);
                     }
                 });
             },

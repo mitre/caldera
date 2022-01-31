@@ -103,7 +103,7 @@ def event_log_op_start_time(op_for_event_logs):
 
 
 @pytest.fixture
-def fake_event_svc(loop):
+def fake_event_svc(event_loop):
     class FakeEventService(BaseService, EventServiceInterface):
         def __init__(self):
             self.fired = {}
@@ -185,10 +185,10 @@ class TestOperation:
         op.chain = [mock_link]
         assert op.ran_ability_id('123')
 
-    def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
+    def test_event_logs(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
                         op_agent_creation_time):
-        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
-        loop.run_until_complete(data_svc.store(operation_agent))
+        event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
+        event_loop.run_until_complete(data_svc.store(operation_agent))
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -250,13 +250,13 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
         ]
-        event_logs = loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
+        event_logs = event_loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
-    def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc,
+    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
                                         event_log_op_start_time, op_agent_creation_time):
-        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
-        loop.run_until_complete(data_svc.store(operation_agent))
+        event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
+        event_loop.run_until_complete(data_svc.store(operation_agent))
 
         want_agent_metadata = dict(
             paw='testpaw',
@@ -319,7 +319,7 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
         ]
-        loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
+        event_loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
         target_path = '/tmp/event_logs/operation_%s.json' % op_for_event_logs.id
         assert os.path.isfile(target_path)
         try:
@@ -348,11 +348,11 @@ class TestOperation:
         op.state = 'finished'
         mock_emit_state_change_method.assert_called_with(from_state='running', to_state='finished')
 
-    def test_emit_state_change_event(self, loop, fake_event_svc, adversary):
+    def test_emit_state_change_event(self, event_loop, fake_event_svc, adversary):
         op = Operation(name='test', agents=[], adversary=adversary, state='running')
         fake_event_svc.reset()
 
-        loop.run_until_complete(
+        event_loop.run_until_complete(
             op._emit_state_change_event(
                 from_state='running',
                 to_state='finished'
@@ -367,51 +367,50 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+    def test_with_learning_parser(self, event_loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
                                   make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_with_learning_parser))
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_with_learning_parser))
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 1
         fact = test_link.facts[0]
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
-        knowledge_data = loop.run_until_complete(op_with_learning_parser.all_facts())
+        knowledge_data = event_loop.run_until_complete(op_with_learning_parser.all_facts())
         assert len(knowledge_data) == 1
         assert knowledge_data[0].trait == 'host.ip.address'
         assert knowledge_data[0].value == '10.10.10.10'
 
-    def test_without_learning_parser(self, loop, app_svc, contact_svc, data_svc, learning_svc, event_svc,
+    def test_without_learning_parser(self, event_loop, app_svc, contact_svc, data_svc, learning_svc, event_svc,
                                      op_without_learning_parser, make_test_link, make_test_result):
-        app_svc = app_svc(loop)  # contact_svc._save(...) needs app service registered
         test_link = make_test_link(5678)
         op_without_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_without_learning_parser))
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_without_learning_parser))
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 0
 
-    def test_facts(self, loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
+    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
                    op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)
 
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))
-        loop.run_until_complete(op_with_learning_and_seeded._init_source())  # need to call this manually (no 'run')
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))
+        event_loop.run_until_complete(op_with_learning_and_seeded._init_source())  # need to call this manually (no 'run')
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 1
         fact = test_link.facts[0]
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
 
-        knowledge_data = loop.run_until_complete(op_with_learning_and_seeded.all_facts())
+        knowledge_data = event_loop.run_until_complete(op_with_learning_and_seeded.all_facts())
         assert len(knowledge_data) == 2
         origin_set = [x.source for x in knowledge_data]
         assert op_with_learning_and_seeded.id in origin_set
         assert op_with_learning_and_seeded.source.id in origin_set
 
-        report = loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
+        report = event_loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
         assert len(report['facts']) == 2
