@@ -33,7 +33,6 @@ plugins:
 - compass
 - debrief
 - fieldmanual
-- gameboard
 - manx
 - response
 - sandcat
