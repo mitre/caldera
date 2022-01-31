@@ -20,7 +20,7 @@ class Contact(BaseWorld):
                 # as soon as we start serving from websockets, we need to suppress their excessive debug messages
                 self.log.manager.loggerDict['websockets.protocol'].level = 100
                 self.log.manager.loggerDict['websockets.server'].level = 100
-            
+
                 await self.stop_future
 
         except OSError as e:
