@@ -7,9 +7,9 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def test_plugin(loop, api_v2_client):
+def test_plugin(event_loop, api_v2_client):
     plugin = Plugin(name="test_plugin", enabled=True, description="a test plugin", address="test_address")
-    loop.run_until_complete(BaseService.get_service('data_svc').store(plugin))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(plugin))
     return plugin
 
 

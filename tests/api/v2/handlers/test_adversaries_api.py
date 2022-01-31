@@ -44,7 +44,7 @@ def expected_new_adversary_dump(new_adversary_payload):
 
 
 @pytest.fixture
-def test_adversary(loop):
+def test_adversary(event_loop):
     expected_adversary = {'name': 'test',
                           'description': 'an empty adversary profile',
                           'adversary_id': '123',
@@ -53,7 +53,7 @@ def test_adversary(loop):
                           'atomic_ordering': [],
                           'plugin': ''}
     test_adversary = AdversarySchema().load(expected_adversary)
-    loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
     return test_adversary
 
 
