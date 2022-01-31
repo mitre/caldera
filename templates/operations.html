@@ -170,8 +170,8 @@
                                 </div>
                                 <div class="mb-6 mr-4">
                                     <button title="add potential link" class="button is-small" x-on:click="openPotentialLinkModal()">
-                                            <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
-                                            <span>Potential Link</span>
+                                        <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
+                                        <span>Potential Link</span>
                                     </button>
                                 </div>
                             </div>
@@ -387,8 +387,8 @@
                             </div>
                             <div class="mb-6 mr-4">
                                 <button title="add potential link" class="button is-small" x-on:click="openPotentialLinkModal()">
-                                        <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
-                                        <span>Potential Link</span>
+                                    <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
+                                    <span>Potential Link</span>
                                 </button>
                             </div>
                         </div>
@@ -412,10 +412,24 @@
                                 <div class="mb-2">
                                     <p class="mt-3 mb-2">Facts:</p>
                                     <pre class="has-text-left white-space-pre-line">
-                                        <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
-                                            <span class="has-background-warning has-text-black mr-2"
-                                                  x-text="fact"></span>
-                                        </template>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Value</th>
+                                                    <th>Trait</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template x-for="(fact, index) in selectedLinkFacts" :key="fact+index">
+                                                    <tr>
+                                                        <td x-text="fact.name"></td>
+                                                        <td x-text="fact.value"></td>
+                                                        <td x-text="fact.score"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
                                     </pre>
                                 </div>
                             </template>
@@ -641,7 +655,7 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(operationToStart, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter()"
                                                x-model="jitterMin"
                                                id="stealth-jitterMin"
                                                type="number"
@@ -651,7 +665,7 @@
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(operationToStart, jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter()"
                                                x-model="jitterMax"
                                                id="stealth-jitterMax"
                                                type="number"
@@ -814,7 +828,7 @@
                             <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
                         <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
-                            <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong> 
+                            <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="word-wrap: anywhere;"></p>
                             <hr>
@@ -830,9 +844,9 @@
                                 <div class="block">
                                     <span class="icon-text">
                                         <label class="label" x-text="factName"></label>
-                                        <span class="icon has-text-warning" 
-                                            x-show="selectedPotentialLinkFacts[factName] ? selectedPotentialLinkFacts[factName].every((fact) => !fact.selected) : false"
-                                            data-tooltip="There are currently empty fact templates. You can still add this link but it may not run properly.">
+                                        <span class="icon has-text-warning"
+                                              x-show="selectedPotentialLinkFacts[factName] ? selectedPotentialLinkFacts[factName].every((fact) => !fact.selected) : false"
+                                              data-tooltip="There are currently empty fact templates. You can still add this link but it may not run properly.">
                                             <em class="fas fa-exclamation-triangle"></em>
                                         </span>
                                     </span>
@@ -883,7 +897,7 @@
                                             <em class="fas fa-exclamation-triangle" x-show="isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length"></em>
                                         </span>
                                         <span>
-                                            Add 
+                                            Add
                                             <span x-text="potentialLinksToAdd.length"></span>
                                             Potential Link<span x-show="potentialLinksToAdd.length > 1">s</span>
                                         </span>
@@ -1066,7 +1080,7 @@
             openModalForm: {
                 advanced: false
             },
-            
+
             facts: [],
             jitterMin: 2,
             jitterMax: 8,
@@ -1416,20 +1430,20 @@
                             value: fact.value,
                             origin: fact.origin_type,
                             selected: false
-                        }) 
+                        })
                     })
                 });
             },
 
             setPotentialLinksToAdd() {
                 this.potentialLinksToAdd = [];
-                
+
                 function cartesian(args) {
                     if (!args.length) return [];
                     let r = [], max = args.length - 1;
                     function helper(arr, i) {
                         for (let j = 0; j < args[i].length; j++) {
-                            let a = arr.slice(0); 
+                            let a = arr.slice(0);
                             a.push(args[i][j]);
                             (i === max) ? r.push(a) : helper(a, i + 1);
                         }
@@ -1485,7 +1499,7 @@
                 if (this.selectedOperation.state === 'paused') {
                     toast('Operation is currently paused, and new links might not be added.', true);
                 }
-                
+
                 try {
                     for (let link of this.potentialLinksToAdd) {
                         await apiV2('POST', `${this.ENDPOINT}/${this.selectedOperationID}/potential-links`, link);
@@ -1657,11 +1671,9 @@
                 }
             },
 
-            validateJitter(newValue = '') {
-                if (!newValue.includes('/')) return false;
-                let [jitterMin, jitterMax] = newValue.split('/');
-                jitterMin = parseInt(jitterMin, 10);
-                jitterMax = parseInt(jitterMax, 10);
+            validateJitter() {
+                jitterMin = parseInt(this.jitterMin, 10);
+                jitterMax = parseInt(this.jitterMax, 10);
 
                 if (jitterMin < 0 || jitterMax < 0) {
                     toast(`Error: Jitter ${!jitterMin ? 'MIN' : 'MAX'} must be valid.`);
@@ -1672,7 +1684,7 @@
                     return false;
                 }
 
-                this.operationToStart.jitter = newValue;
+                this.operationToStart.jitter = `${jitterMin}/${jitterMax}`;
                 return true;
             },
 
