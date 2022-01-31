@@ -10,66 +10,66 @@ from app.objects.secondclass.c_executor import Executor
 
 class TestDataService:
 
-    def test_no_duplicate_adversary(self, loop, data_svc):
-        loop.run_until_complete(data_svc.store(
+    def test_no_duplicate_adversary(self, event_loop, data_svc):
+        event_loop.run_until_complete(data_svc.store(
             Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=list())
         ))
-        loop.run_until_complete(data_svc.store(
+        event_loop.run_until_complete(data_svc.store(
             Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=list())
         ))
-        adversaries = loop.run_until_complete(data_svc.locate('adversaries'))
+        adversaries = event_loop.run_until_complete(data_svc.locate('adversaries'))
 
         assert len(adversaries) == 1
         for x in adversaries:
             json.dumps(x.display)
 
-    def test_no_duplicate_planner(self, loop, data_svc):
-        loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
-        loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
-        planners = loop.run_until_complete(data_svc.locate('planners'))
+    def test_no_duplicate_planner(self, event_loop, data_svc):
+        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
+        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
+        planners = event_loop.run_until_complete(data_svc.locate('planners'))
 
         assert len(planners) == 1
         for x in planners:
             json.dumps(x.display)
 
-    def test_multiple_agents(self, loop, data_svc):
-        loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
-        loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
-        agents = loop.run_until_complete(data_svc.locate('agents'))
+    def test_multiple_agents(self, event_loop, data_svc):
+        event_loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
+        event_loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
+        agents = event_loop.run_until_complete(data_svc.locate('agents'))
 
         assert len(agents) == 2
         for x in agents:
             json.dumps(x.display)
 
-    def test_no_duplicate_ability(self, loop, data_svc):
+    def test_no_duplicate_ability(self, event_loop, data_svc):
         executor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
-        loop.run_until_complete(data_svc.store(
+        event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
                     description='find active user', privilege=None, executors=[executor])
         ))
-        loop.run_until_complete(data_svc.store(
+        event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
                     description='find active user', privilege=None, executors=[executor])
         ))
-        abilities = loop.run_until_complete(data_svc.locate('abilities'))
+        abilities = event_loop.run_until_complete(data_svc.locate('abilities'))
 
         assert len(abilities) == 1
 
-    def test_operation(self, loop, data_svc):
-        adversary = loop.run_until_complete(data_svc.store(
+    def test_operation(self, event_loop, data_svc):
+        adversary = event_loop.run_until_complete(data_svc.store(
             Adversary(adversary_id='123', name='test', description='test adversary', atomic_ordering=list())
         ))
-        loop.run_until_complete(data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
+        event_loop.run_until_complete(data_svc.store(Operation(name='my first op', agents=[], adversary=adversary)))
 
-        operations = loop.run_until_complete(data_svc.locate('operations'))
+        operations = event_loop.run_until_complete(data_svc.locate('operations'))
         assert len(operations) == 1
         for x in operations:
             json.dumps(x.display)
 
-    def test_remove(self, loop, data_svc):
-        a1 = loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
-        agents = loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
+    def test_remove(self, event_loop, data_svc):
+        a1 = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=2, sleep_max=8, watchdog=0)))
+        agents = event_loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
         assert len(agents) == 1
-        loop.run_until_complete(data_svc.remove('agents', match=dict(paw=a1.paw)))
-        agents = loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
+        event_loop.run_until_complete(data_svc.remove('agents', match=dict(paw=a1.paw)))
+        agents = event_loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
         assert len(agents) == 0
