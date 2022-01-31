@@ -38,6 +38,14 @@ class ContactService(ContactServiceInterface, BaseService):
         except Exception as e:
             self.log.error('Failed to start %s contact: %s' % (contact.name, e))
 
+    async def deregister_contacts(self):
+        try:
+            for contact in self.contacts:
+                await self._stop_c2_channel(contact=contact)
+                self.log.debug('Deregistered contact: %s' % contact.name)
+        except Exception as e:
+            self.log.error('Failed to stop %s contact: %s' % (contact.name, e))
+
     async def register_tunnel(self, tunnel):
         try:
             await self._start_c2_tunnel(tunnel=tunnel)
@@ -147,6 +155,10 @@ class ContactService(ContactServiceInterface, BaseService):
         loop = asyncio.get_event_loop()
         loop.create_task(tunnel.start())
         self.tunnels.append(tunnel)
+
+    async def _stop_c2_channel(self, contact):
+        if hasattr(contact, 'stop'):
+            await contact.stop()
 
     async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))

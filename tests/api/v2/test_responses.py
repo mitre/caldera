@@ -25,7 +25,7 @@ def base_world():
 
 
 @pytest.fixture
-def simple_webapp(loop, base_world):
+def simple_webapp(event_loop, base_world):
     async def raise_validation_error(request):
         raise errors.RequestValidationError(
             errors={

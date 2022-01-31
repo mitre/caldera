@@ -126,7 +126,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-                            <tbody @click.outside="selectedFactIndex = -1; factIndexToDelete = -1;">
+                            <tbody @click.outside="selectedFactIndex = -1; factIndexToDelete = -1; getSources();">
                                 <tr x-data="{ newFact: EMPTY_FACT_OBJECT }" x-show="showAddFactRow">
                                     <td></td>
                                     <td></td>
@@ -261,7 +261,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-                            <tbody @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1;">
+                            <tbody @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1; getSources();">
                                 <template x-if="showAddRuleRow">
                                     <tr x-data="{newRule: EMPTY_RULE_OBJECT}">
                                         <td></td>
@@ -434,7 +434,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-                            <tbody @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1;">
+                            <tbody @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1; getSources();">
                                 <tr x-show="showAddRelationshipRow">
                                     <td></td>
                                     <td>
