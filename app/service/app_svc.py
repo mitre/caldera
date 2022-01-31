@@ -127,6 +127,7 @@ class AppService(AppServiceInterface, BaseService):
 
     async def teardown(self, main_config_file='default'):
         await self._destroy_plugins()
+        await self._deregister_contacts()
         await self._save_configurations(main_config_file=main_config_file)
         await self._services.get('data_svc').save_state()
         await self._services.get('knowledge_svc').save_state()
@@ -146,6 +147,10 @@ class AppService(AppServiceInterface, BaseService):
             tunnel_module_name = tunnel_file.replace('/', '.').replace('\\', '.').replace('.py', '')
             tunnel_class = import_module(tunnel_module_name).Tunnel
             await contact_svc.register_tunnel(tunnel_class(self.get_services()))
+
+    async def _deregister_contacts(self):
+        contact_svc = self.get_service('contact_svc')
+        await contact_svc.deregister_contacts()
 
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):

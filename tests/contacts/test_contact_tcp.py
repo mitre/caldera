@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class TestTcpSessionHandler:
 
-    def test_refresh_with_socket_errors(self, loop):
+    def test_refresh_with_socket_errors(self, event_loop):
         handler = TcpSessionHandler(services=None, log=logger)
 
         session_with_socket_error = mock.Mock()
@@ -21,11 +21,11 @@ class TestTcpSessionHandler:
             mock.Mock()
         ]
 
-        loop.run_until_complete(handler.refresh())
+        event_loop.run_until_complete(handler.refresh())
         assert len(handler.sessions) == 1
         assert all(x is not session_with_socket_error for x in handler.sessions)
 
-    def test_refresh_without_socket_errors(self, loop):
+    def test_refresh_without_socket_errors(self, event_loop):
         handler = TcpSessionHandler(services=None, log=logger)
         handler.sessions = [
             mock.Mock(),
@@ -33,5 +33,5 @@ class TestTcpSessionHandler:
             mock.Mock()
         ]
 
-        loop.run_until_complete(handler.refresh())
+        event_loop.run_until_complete(handler.refresh())
         assert len(handler.sessions) == 3
