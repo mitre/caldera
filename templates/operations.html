@@ -655,7 +655,7 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter()"
                                                x-model="jitterMin"
                                                id="stealth-jitterMin"
                                                type="number"
@@ -665,7 +665,7 @@
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter(jitterMin+'/'+jitterMax)"
+                                               x-on:change.debounce.500ms="validateJitter()"
                                                x-model="jitterMax"
                                                id="stealth-jitterMax"
                                                type="number"
@@ -1671,11 +1671,9 @@
                 }
             },
 
-            validateJitter(newValue = '') {
-                if (!newValue.includes('/')) return false;
-                let [jitterMin, jitterMax] = newValue.split('/');
-                jitterMin = parseInt(jitterMin, 10);
-                jitterMax = parseInt(jitterMax, 10);
+            validateJitter() {
+                jitterMin = parseInt(this.jitterMin, 10);
+                jitterMax = parseInt(this.jitterMax, 10);
 
                 if (jitterMin < 0 || jitterMax < 0) {
                     toast(`Error: Jitter ${!jitterMin ? 'MIN' : 'MAX'} must be valid.`);
@@ -1686,7 +1684,7 @@
                     return false;
                 }
 
-                this.operationToStart.jitter = newValue;
+                this.operationToStart.jitter = `${jitterMin}/${jitterMax}`;
                 return true;
             },
 
