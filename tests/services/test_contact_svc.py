@@ -17,19 +17,19 @@ class TestProcessor:
 
 
 @pytest.fixture
-def setup_contact_service(loop, data_svc, agent, ability, operation, link, adversary):
+def setup_contact_service(event_loop, data_svc, agent, ability, operation, link, adversary):
     texecutor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
     tability = ability(tactic='discovery', technique_id='T1033', technique_name='Find', name='test',
                        description='find active user', privilege=None, executors=[texecutor])
     tability.HOOKS['special_executor'] = TestProcessor()
-    loop.run_until_complete(data_svc.store(tability))
+    event_loop.run_until_complete(data_svc.store(tability))
     tagent = agent(sleep_min=10, sleep_max=60, watchdog=0, executors=['special_executor'])
-    loop.run_until_complete(data_svc.store(tagent))
+    event_loop.run_until_complete(data_svc.store(tagent))
     toperation = operation(name='sample', agents=[tagent], adversary=adversary())
     tlink = link(command='', paw=tagent.paw, ability=tability, id='5212fca4-6544-49ce-a78d-a95d30e95705',
                  executor=texecutor)
-    loop.run_until_complete(toperation.apply(tlink))
-    loop.run_until_complete(data_svc.store(toperation))
+    event_loop.run_until_complete(toperation.apply(tlink))
+    event_loop.run_until_complete(data_svc.store(toperation))
     yield tlink
 
 
