@@ -112,7 +112,7 @@ def expected_replaced_source_dump(replaced_source_payload, mocker, mock_time):
 
 
 @pytest.fixture
-def test_source(loop, mocker, mock_time):
+def test_source(event_loop, mocker, mock_time):
     with mocker.patch('app.objects.secondclass.c_fact.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
@@ -121,7 +121,7 @@ def test_source(loop, mocker, mock_time):
         relationship = Relationship(source=fact, edge="alpha", origin="test_operation")
         source = Source(id='123', name='Test Source', facts=[fact],
                         rules=[rule], adjustments=[], relationships=[relationship])
-        loop.run_until_complete(BaseService.get_service('data_svc').store(source))
+        event_loop.run_until_complete(BaseService.get_service('data_svc').store(source))
         return source
 
 

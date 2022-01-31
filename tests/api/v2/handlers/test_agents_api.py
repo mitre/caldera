@@ -68,12 +68,12 @@ def expected_new_agent_dump(new_agent_payload, mocker, mock_time):
 
 
 @pytest.fixture
-def test_agent(loop, mocker, mock_time):
+def test_agent(event_loop, mocker, mock_time):
     with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
         mock_datetime.return_value = mock_datetime
         mock_datetime.now.return_value = mock_time
         test_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux')
-        loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
+        event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_agent))
         return test_agent
 
 
@@ -84,7 +84,7 @@ def test_executor(test_agent):
 
 
 @pytest.fixture
-def deploy_ability(test_executor, loop):
+def deploy_ability(test_executor, event_loop):
     ability = AbilitySchema().load(dict(ability_id='123',
                                         tactic='persistence',
                                         technique_id='auto-generated',
@@ -92,7 +92,7 @@ def deploy_ability(test_executor, loop):
                                         name='test deploy command',
                                         description='test ability',
                                         executors=[ExecutorSchema().dump(test_executor)]))
-    loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     return ability
 
 
