@@ -50,9 +50,9 @@ def test_goal():
 
 
 @pytest.fixture
-def test_objective(loop, test_goal):
+def test_objective(event_loop, test_goal):
     objective = Objective(id='123', name='test objective', description='a test objective', goals=[test_goal])
-    loop.run_until_complete(BaseService.get_service('data_svc').store(objective))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(objective))
     return objective
 
 
