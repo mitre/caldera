@@ -299,9 +299,9 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control auto-complete">
-                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
-                                    <div class="search-results is-size-7">
+                                <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
+                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>

@@ -305,9 +305,9 @@
                                     </div>
                                 </div>
                                 <div class="field has-addons" x-show="isAddingBootstrapAbility">
-                                    <div class="control is-expanded auto-complete">
-                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()">
-                                        <div class="search-results is-size-7">
+                                    <div class="control is-expanded auto-complete" x-data="{focusSearchResults: true}">
+                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
+                                        <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false">
                                             <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                                 <p @click="addBootstrapAbility(result.ability_id)" x-text="result.name"></p>
                                             </template>
@@ -342,9 +342,9 @@
                                     </div>
                                 </div>
                                 <div class="field has-addons" x-show="isAddingDeadmanAbility">
-                                    <div class="control is-expanded auto-complete">
-                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()">
-                                        <div class="search-results is-size-7">
+                                    <div class="control is-expanded auto-complete" x-data="{focusSearchResults: true}">
+                                        <input class="input is-small" placeholder="Search for an ability..." x-model="abilitySearchQuery" x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
+                                        <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false">
                                             <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                                 <p @click="addDeadmanAbility(result.ability_id)" x-text="result.name"></p>
                                             </template>

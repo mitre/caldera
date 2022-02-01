@@ -175,9 +175,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete">
-                                            <input class="input is-small" x-model="searchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
-                                            <div class="search-results is-size-7">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-model="searchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false">
                                                 <template x-for="result of searchResults" :key="result.ability_id">
                                                     <p @click="selectAbility(result)" x-text="result.name"></p>
                                                 </template>
@@ -440,7 +440,6 @@
             windowHref: '',
             searchQuery: '',
             searchResults: [],
-            scrollTop: document.body.scrollTop,
 
             tactics: [],
             selectedTactic: '',
@@ -725,13 +724,5 @@
 
     .tag.tactic {
         background-color: #1a1a1a;
-    }
-
-    .scroll-top {
-        width: 0;
-        position: fixed;
-        bottom: 40px;
-        right: 40px;
-        z-index: 2;
     }
 </style>
