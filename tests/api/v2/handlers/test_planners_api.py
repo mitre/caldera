@@ -7,17 +7,17 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def test_planner(loop, api_v2_client):
+def test_planner(event_loop, api_v2_client):
     planner = Planner(name="123test planner", planner_id="123", description="a test planner", plugin="planner")
-    loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
     return planner
 
 
 @pytest.fixture
-def test_planner_2(loop, api_v2_client):
+def test_planner_2(event_loop, api_v2_client):
     planner = Planner(name="atomic", planner_id="456", description="an alphabetically superior test planner (fake)",
                       plugin="planner")
-    loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
     return planner
 
 
