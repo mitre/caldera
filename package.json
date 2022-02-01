@@ -4,13 +4,13 @@
   "repository": "https://github.com/mitre/caldera",
   "license": "Apache-2.0",
   "devDependencies": {
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-html": "6.1.2",
-    "eslint-plugin-import": "^2.22.1",
+    "eslint": "^8.8.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-html": "^6.2.0",
+    "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-jinja2": "^0.1.0",
-    "stylelint": "^13.13.1",
-    "stylelint-config-standard": "^22.0.0"
+    "stylelint": "^14.3.0",
+    "stylelint-config-standard": "^24.0.0"
   },
   "scripts": {
     "lint-js": "eslint ./static/js/*.js ./templates/*.html",
