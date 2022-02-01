@@ -1306,7 +1306,9 @@
 
             addOperation() {
                 if (!this.operationToStart.name) {
-                    toast('Error: Operation name field is empty.');
+                    toast('Error: Operation name field is empty.', false);
+                } else if (!this.isJitterValid()) {
+                    toast('Jitter values are invalid', false);
                 } else {
                     this.operationToStart.autonomous = Number(this.operationToStart.autonomous);
                     this.operationToStart.use_learning_parsers = parseInt(this.operationToStart.use_learning_parsers, 10) === 1;
