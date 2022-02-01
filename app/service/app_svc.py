@@ -118,8 +118,8 @@ class AppService(AppServiceInterface, BaseService):
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
-    async def retrieve_compiled_file(self, name, platform):
-        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
+    async def retrieve_compiled_file(self, name, platform, location=''):
+        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform), location=location)
         signature = hashlib.sha256(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename()
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))

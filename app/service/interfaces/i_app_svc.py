@@ -53,7 +53,7 @@ class AppServiceInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def retrieve_compiled_file(self, name, platform):
+    def retrieve_compiled_file(self, name, platform, location=''):
         pass
 
     @abc.abstractmethod
