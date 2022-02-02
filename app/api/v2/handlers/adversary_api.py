@@ -1,3 +1,5 @@
+import json
+
 import aiohttp_apispec
 from aiohttp import web
 
@@ -66,3 +68,26 @@ class AdversaryApi(BaseObjectApi):
     async def delete_adversary(self, request: web.Request):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
+
+    async def create_on_disk_object(self, request: web.Request):
+        data = await request.json()
+        data.pop('id', None)
+        await self._error_if_object_with_id_exists(data.get(self.id_property))
+        access = await self.get_request_permissions(request)
+        obj = await self._api_manager.create_on_disk_object(data, access, self.ram_key, self.id_property,
+                                                            self.obj_class)
+        return obj
+
+    async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
+        data = {}
+        raw_body = await request.read()
+        if raw_body:
+            data = json.loads(raw_body)
+        data.pop('id', None)
+        obj_id = request.match_info.get(self.id_property, '')
+        if obj_id:
+            data[self.id_property] = obj_id
+        access = await self.get_request_permissions(request)
+        query = {self.id_property: obj_id}
+        search = {**query, **access}
+        return data, access, obj_id, query, search
