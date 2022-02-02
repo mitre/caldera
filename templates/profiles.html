@@ -301,7 +301,7 @@
                             <div class="field">
                                 <div class="control auto-complete" x-data="{focusSearchResults: true}">
                                     <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
-                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false">
+                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>
@@ -420,12 +420,17 @@
                             </div>
                             <div class="field is-horizontal">
                                 <div class="field-label is-small">
-                                    <label class="label">Tactic</label>
+                                    <label for="tactic-auto-fill" class="label">Tactic</label>
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input id="tactic-auto-fill" class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -437,8 +442,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -450,8 +460,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -709,6 +724,7 @@
             selectedTechnique: '',
             selectedAbilityId: '',
             abilitySearchQuery: '',
+            searchResults: [],
             abilitySearchResults: [],
             selectedAbility: {},
             selectedPlatform: '',
@@ -1012,6 +1028,17 @@
                 } else if (bOrA === 'before') {
                     this.selectedAbility.executors.unshift(template);
                 }
+            },
+
+            searchForAutoFill(field = 'tactic') {
+                const results = new Set();
+                if (!this.selectedAbility[field]) return;
+                this.abilities.forEach((ability) => {
+                    if (ability[field].toLowerCase().indexOf(this.selectedAbility[field].toLowerCase()) > -1) {
+                        results.add(ability[field]);
+                    }
+                });
+                this.searchResults = Array.from(results);
             },
 
             searchForAbility() {
