@@ -322,7 +322,7 @@
                                     <div class="select is-small is-fullwidth">
                                         <select x-model="selectedTactic" x-on:change="selectedAbilityId = ''">
                                             <option default>Choose a tactic</option>
-                                            <template x-for="tactic of [...new Set(abilities.map((e) => e.tactic))]" :key="tactic">
+                                            <template x-for="tactic of Array.from(new Set(abilities.map((e) => e.tactic))).sort()" :key="tactic">
                                                 <option x-bind:value="tactic" x-text="tactic"></option>
                                             </template>
                                         </select>
@@ -341,7 +341,7 @@
                                     <div class="select is-small is-fullwidth">
                                         <select x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''">
                                             <option default>Choose a technique</option>
-                                            <template :key="exploit.technique_id" x-for="exploit of [...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))">
+                                            <template :key="exploit.technique_id" x-for="exploit of ([...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))).sort((a,b) => { return a.technique_name === b.technique_name ? 0 : (a.technique_name > b.technique_name ? 1 : -1) })">
                                                 <option x-bind:value="exploit.technique_id" x-text="`${exploit.technique_id} | ${exploit.technique_name}`"></option>
                                             </template>
                                         </select>
