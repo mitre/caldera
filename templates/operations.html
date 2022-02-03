@@ -678,6 +678,9 @@
                                                 x-on:click="jitterMin = 2; jitterMax = 8;">
                                             Reset
                                         </button>
+                                        <p x-show="!isJitterValid()" class="pl-3 help has-text-danger">
+                                            Min and Max need to be >= 0, and Min must be <= Max
+                                        </p>
                                     </div>
                                     <p x-show="!isJitterValid()" class="help has-text-danger">
                                         Min and Max need to be >= 0, and Min must be <= Max
