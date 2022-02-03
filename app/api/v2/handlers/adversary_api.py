@@ -47,7 +47,7 @@ class AdversaryApi(BaseObjectApi):
                             'description': 'UUID of the adversary to be retrieved'}])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(AdversarySchema(partial=True),
-                                     description='Returns single objective in AdversarySchema format.')
+                                     description='Returns single adversary in AdversarySchema format.')
     async def get_adversary_by_id(self, request: web.Request):
         adversary = await self.get_object(request)
         return web.json_response(adversary)
@@ -75,7 +75,7 @@ class AdversaryApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['adversaries'])
     @aiohttp_apispec.request_schema(AdversarySchema(partial=True, exclude=['adversary_id']))
     @aiohttp_apispec.response_schema(AdversarySchema,
-                                     description='The updated Objective in ObjectiveSchema format.')
+                                     description='The updated adversary in AdversarySchema format.')
     async def update_adversary(self, request: web.Request):
         adversary = await self.update_on_disk_object(request)
         adversary = await self._api_manager.verify_adversary(adversary)
@@ -91,11 +91,11 @@ class AdversaryApi(BaseObjectApi):
                             'name': 'adversary_id',
                             'schema': {'type': 'string'},
                             'required': 'true',
-                            'description': 'UUID of the adversaries to be created or updated'
+                            'description': 'UUID of the adversary to be created or updated'
                           }])
     @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
     @aiohttp_apispec.response_schema(AdversarySchema,
-                                     description='A single adversaries, either newly created or updated, in AdversarySchema format.')
+                                     description='A single adversary, either newly created or updated, in AdversarySchema format.')
     async def create_or_update_adversary(self, request: web.Request):
         adversary = await self.create_or_update_on_disk_object(request)
         adversary = await self._api_manager.verify_adversary(adversary)
@@ -108,7 +108,7 @@ class AdversaryApi(BaseObjectApi):
                               'name': 'adversary_id',
                               'schema': {'type': 'string'},
                               'required': 'true',
-                              'description': 'UUID of the Adversary to be retrieved'
+                              'description': 'UUID of the adversary to be retrieved'
                           }])
     @aiohttp_apispec.response_schema(AdversarySchema(partial=True), code=204,
                                      description='HTTP 204 Status Code (No Content)')
