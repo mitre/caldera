@@ -343,11 +343,11 @@ class TestPlanningService:
             Fact(trait='a.b.d', value='2'),
             Fact(trait='a.b.e', value='3'),
         ]
-        
+
         operation.all_facts = AsyncMock(return_value=facts)
         operation.planner = MagicMock()
         planning_svc.load_module = AsyncMock(return_value=RequirementFake())
-        link.ability.requirements = [Requirement("fake_requirement", [{"fake": "relationship"}])]
+        link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = loop.run_until_complete(planning_svc.trim_links(operation, [link], agent))
 
