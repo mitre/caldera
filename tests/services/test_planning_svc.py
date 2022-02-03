@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import base64
+from unittest.mock import MagicMock, AsyncMock
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -8,6 +9,7 @@ from app.objects.c_source import Source
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
 
 
@@ -47,6 +49,12 @@ class PlannerFake:
     async def four(self):
         self.calls.append('four')
         self.next_bucket = None
+
+
+class RequirementFake:
+    """Fake requirement used to test trim links by missing requirements."""
+    async def enforce(self, link, operation):
+        return '0' in BaseWorld.decode_bytes(link.display['command'])
 
 
 def planner_stub(**kwargs):
@@ -322,6 +330,29 @@ class TestPlanningService:
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+    
+    def test_trim_links(self, loop, setup_planning_test, planning_svc):
+        ability, agent, operation, _ = setup_planning_test
+
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
+                              executor=next(ability.executors), status=0))
+        facts = [
+            Fact(trait='1_2_3', value='0'),
+            Fact(trait='1_2_3', value='4'),
+            Fact(trait='a.b.c', value='1'),
+            Fact(trait='a.b.d', value='2'),
+            Fact(trait='a.b.e', value='3'),
+        ]
+        
+        operation.all_facts = AsyncMock(return_value=facts)
+        operation.planner = MagicMock()
+        planning_svc.load_module = AsyncMock(return_value=RequirementFake())
+        link.ability.requirements = [Requirement("fake_requirement", [{"fake": "relationship"}])]
+
+        trimmed_links = loop.run_until_complete(planning_svc.trim_links(operation, [link], agent))
+
+        assert len(trimmed_links) == 1
+        assert BaseWorld.decode_bytes(trimmed_links[0].display['command']) == target_string
 
     def test_filter_bs(self, loop, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
