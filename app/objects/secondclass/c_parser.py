@@ -7,13 +7,7 @@ from app.utility.base_object import BaseObject
 class ParserSchema(ma.Schema):
 
     module = ma.fields.String()
-    parserconfigs = ma.fields.List(ma.fields.Nested(ParserConfigSchema()))
-
-    @ma.pre_load
-    def fix_relationships(self, parser, **_):
-        if 'relationships' in parser:
-            parser['parserconfigs'] = parser.pop('relationships')
-        return parser
+    relationships = ma.fields.List(ma.fields.Nested(ParserConfigSchema()))
 
     @ma.post_load()
     def build_parser(self, data, **_):
@@ -21,7 +15,6 @@ class ParserSchema(ma.Schema):
 
     @ma.post_dump()
     def prepare_parser(self, data, **_):
-        data['relationships'] = data.pop('parserconfigs')
         for pc, index in enumerate(data['relationships']):
             if isinstance(pc, ParserConfig):
                 data['relationships'][index] = pc.display
@@ -36,7 +29,7 @@ class Parser(BaseObject):
     def unique(self):
         return self.module
 
-    def __init__(self, module, parserconfigs):
+    def __init__(self, module, relationships):
         super().__init__()
         self.module = module
-        self.parserconfigs = parserconfigs
+        self.relationships = relationships
