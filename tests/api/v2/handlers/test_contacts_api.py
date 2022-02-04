@@ -49,4 +49,4 @@ class TestContactsApi:
         resp = await api_v2_client.get('/api/v2/contacts', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         output = await resp.json()
-        assert output == list('HTTP')
+        assert output == ['HTTP', 'HTML']
